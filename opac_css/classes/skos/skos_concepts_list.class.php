@@ -1,0 +1,87 @@
+<?php
+// +-------------------------------------------------+
+// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// +-------------------------------------------------+
+// $Id: skos_concepts_list.class.php,v 1.6 2015-04-03 11:16:24 jpermanne Exp $
+
+if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+require_once($class_path."/skos/skos_concept.class.php");
+require_once($class_path."/vedette/vedette_composee.class.php");
+
+/**
+ * class skos_concepts_list
+ * Controlleur d'une liste de concepts qui indexent un élément
+ */
+class skos_concepts_list {
+	
+	/**
+	 * Tableau des concepts associés à l'objet
+	 * @var skos_concept
+	 */
+	private $concepts = array();
+	
+	/**
+	 * Définit les concepts depuis les concepts qui indexent un objet
+	 * @param int $object_type Constante représentant le type de l'objet indexé
+	 * @param int $object_id Identifiant de l'objet indexé
+	 * @return boolean true si des concepts ont été trouvés, false sinon
+	 */
+	public function set_concepts_from_object($object_type, $object_id) {
+		global $dbh;
+		$query = "select num_concept, order_concept from index_concept where num_object = ".$object_id." and type_object = ".$object_type." order by order_concept";
+		$result = pmb_mysql_query($query, $dbh);
+		if ($result && pmb_mysql_num_rows($result)) {
+			while ($row = pmb_mysql_fetch_object($result)){
+				$this->concepts[$row->order_concept] = new skos_concept($row->num_concept);
+			}
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Définit les concepts depuis un tableau de concepts passé en paramètre
+	 * @param skos_concept $concepts
+	 */
+	public function set_concepts($concepts) {
+		$this->concepts = $concepts;
+	}
+	
+	/**
+	 * Ajoute un concept au tableau de concepts
+	 * @param skos_concept $concept
+	 */
+	public function add_concept($concept) {
+		$this->concepts[] = $concept;
+	}
+	
+	/**
+	 * Retourne le tableau des concepts de la liste
+	 * @return skos_concept Tableau des concepts de la liste
+	 */
+	public function get_concepts() {
+		return $this->concepts;
+	}
+	
+	/**
+	 * Retourne les concepts composés qui utilisent un élément
+	 * @param int $element_id Identifiant de l'élément
+	 * @param string $element_type Type de l'élément (Disponible dans vedette.xml)
+	 * @return skos_concept Tableau de concepts composés
+	 */
+	public function set_composed_concepts_built_with_element($element_id, $element_type) {
+		// On va chercher les vedettes construites avec l'élément
+		$vedettes_ids = vedette_composee::get_vedettes_built_with_element($element_id, $element_type);
+		foreach ($vedettes_ids as $vedette_id) {
+			// On va chercher les concepts correspondant à chaque vedette
+			if ($concept_id = vedette_composee::get_object_id_from_vedette_id($vedette_id, TYPE_CONCEPT_PREFLABEL)) {
+				$this->concepts[] = new skos_concept($concept_id);
+			}
+		}
+		if (!count($this->concepts)) {
+			return false;
+		}
+		return true;
+	}
+} // fin de définition de la classe index_concept

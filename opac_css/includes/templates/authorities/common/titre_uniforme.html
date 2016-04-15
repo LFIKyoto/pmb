@@ -1,0 +1,118 @@
+{% extends 'gabarit.html' %}
+
+{% block header %}
+	<h3><span>{{ msg.titre_uniforme_see_title }}</span></h3>
+{% endblock %}
+
+{% block aut_see %}
+	<div class="titreuniformelevel2">
+		{{ block.super}}
+	</div>
+{% endblock %}
+	
+{% block title %}
+	<div class=publisherlevel2>
+		<h3>{{ msg.titre_uniforme_detail | printf authority.name }}</h3>	
+			{% for auteur in authority.responsabilites.auteurs %}
+				{% if loop.first %}
+					<p>{{ msg.aut_oeuvre_form_auteur }} :
+				{% else %}/{% endif %}
+				<a href='index.php?lvl=author_see&id={{auteur.id}}'>{{ auteur.objet.display }}</a>
+				{% if loop.last %}
+					</p>
+				{% endif %}
+			{% endfor %}
+			</p>
+		{% if authority.form %}
+			<p>{{ msg.aut_oeuvre_form_forme }} : {{ authority.form }}</p>
+		{% endif %}
+		{% if authority.get_form_label %}
+			<p>{{ msg.aut_oeuvre_form_forme_list }} : {{ authority.get_form_label }}</p>
+		{% endif %}
+		{% if authority.date %}
+			<p>{{ msg.aut_oeuvre_form_date }} : {{ authority.date }}</p>
+		{% endif %}
+		{% if authority.place %}
+			<p>{{ msg.aut_oeuvre_form_lieu }} : {{ authority.place }}</p>
+		{% endif %}
+		{% if authority.subject %}
+			<p>{{ msg.aut_oeuvre_form_sujet }} : {{ authority.subject }}</p>
+		{% endif %}
+		{% if authority.intended_termination == 1 %}
+			<p>{{ msg.aut_oeuvre_form_completude }} : Oeuvre finie</p>
+		{% else %}
+			{% if authority.intended_termination == 2 %}
+				<p>{{ msg.aut_oeuvre_form_completude }} : Oeuvre infinie</p>
+			{% endif %}
+		{% endif %}		
+		{% if authority.intended_audience %}
+			<p>{{ msg.aut_oeuvre_form_public }} : {{ authority.intended_audience }}</p>
+		{% endif %}
+		{% if authority.history %}
+			<p>{{ msg.aut_oeuvre_form_histoire }} : {{ authority.history }}</p>
+		{% endif %}
+		{% if authority.context %}
+			<p>{{ msg.aut_oeuvre_form_contexte }} : {{ authority.context }}</p>
+		{% endif %}
+		{% if authority.distrib %}
+			{% for distribution in authority.distrib %}
+				{% if loop.first %}<p>{{ msg.aut_oeuvre_form_distribution }} : {% else %}; {% endif %}
+				{{ distribution.label }}
+				{% if loop.last %}</p>{% endif %}
+			{% endfor %}
+		{% endif %}
+		{% if authority.ref %}
+			{% for reference in authority.ref %}
+				{% if loop.first %}<p>{{ msg.aut_oeuvre_form_reference }} : {% else %}; {% endif %}
+				{{ reference.label }}
+				{% if loop.last %}</p>{% endif %}
+			{% endfor %}
+		{% endif %}		
+		{% if authority.tonalite %}
+			<p>{{ msg.aut_oeuvre_form_tonalite }} : {{ authority.tonalite }}</p>
+		{% endif %}
+		
+		{% if authority.get_key_label %}
+			<p>{{ msg.aut_oeuvre_form_tonalite_list }} : {{ authority.get_key_label }}</p>
+		{% endif %}
+		
+		{% if authority.coordinates %}
+			<p>{{ msg.aut_oeuvre_form_coordonnees }} : {{ authority.coordinates }}</p>
+		{% endif %}
+		
+		{% if authority.equinox %}
+			<p>{{ msg.aut_oeuvre_form_equinoxe }} : {{ authority.equinox }}</p>
+		{% endif %}
+		{% if authority.subdiv %}
+			{% for subdivision in authority.subdiv %}
+				{% if loop.first %}<p>Subdivision de forme : {% else %}; {% endif %}
+				{{ subdivision.label }}
+				{% if loop.last %}</p>{% endif %}
+			{% endfor %}
+		{% endif %}		
+		{% if authority.characteristic %}
+			<p>{{ msg.aut_oeuvre_form_caracteristique }} : {{ authority.characteristic }}</p>
+		{% endif %}
+		{% if authority.comment %}
+			<div class=aut_comment>{{ authority.comment | nl2br }}</div>
+		{% endif %}
+	</div>
+{% endblock %} 
+
+{% block details %}
+	{% if authority.hasChild %}
+		{{ authority.child_list }}
+	{% endif %}
+{% endblock %}
+
+{% block enrichment %}
+	{% if authority.enrichment %}
+		<h3>Editions numériques avec Galica et data.bnf</h3>
+		<div class='row'>
+			{% for gallica in authority.enrichment %}
+				<div class='colonne4'><a href='{{gallica.uri_gallica}}' target='_blank'>{{gallica.titre}}<br/>{{gallica.editeur}} ({{gallica.date}})</a></div>
+			{% endfor %}
+			<div class='row'></div>
+		</div>
+	{% endif %}
+{% endblock %}

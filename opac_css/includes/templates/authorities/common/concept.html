@@ -1,0 +1,21 @@
+{% extends 'gabarit.html' %}
+
+{% block header %}
+	{{ authority.broaders }}
+{% endblock %}
+
+{% block aut_see %}
+	<div class="conceptlevel2">
+		{{ block.super }}
+	</div>
+{% endblock %}
+	
+{% block title %}
+	{{ authority.title }}
+{% endblock %} 
+
+{% block details %}
+	{{ authority.narrowers }} 
+	{{ authority.details }}
+	{{ authority.authoritieslist }}
+{% endblock %}

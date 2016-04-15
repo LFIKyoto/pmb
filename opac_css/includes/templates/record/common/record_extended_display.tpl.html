@@ -1,0 +1,292 @@
+<!-- $Id: record_extended_display.tpl.html,v 1.16.2.6 2015-12-10 14:12:36 apetithomme Exp $ -->
+<div id="noticeNot">
+	<div class="parentNot">
+		<div id="blocNotice_descr">
+			
+			<!-- Affichage des onglets d'enrichissement -->
+			<ul id="onglets_isbd_public{{ record.id }}" class="onglets_isbd_publicNot">
+				<li id="onglet_detail{{ record.id }}" class="isbd_public_active"><a href="#" onclick="display_tab(this, 'detail', {{ record.id }})"><span>{{ msg.demandes_action_detail }}</span></a></li>
+			</ul>
+			
+			<!-- div conteneur des enrichissements -->
+			<div id="div_detail{{ record.id }}">
+				<div class="asideContentNot">	
+					{% if record.picture_url %}
+						<!-- Vignette de la notice -->
+						<div class="vignetteimgNot">
+							<div class="vignetteDocNot">
+								<img class="vignetteNot" src="{{ record.picture_url }}" />
+							</div>
+						</div>
+					{% endif %}
+					{% if record.cart_allow %}
+						<!-- Ajouter au panier -->
+						<div class="onglet_basketNot">
+							<a href="cart_info.php?id={{ record.id }}&amp;header={{ record.tit1 | urlencode }}" target="cart_info" class="img_basketNot"><img src="./includes/templates/record/common/styles/images/basket_blanc.png" border="0" title="{{ msg.record_display_add_to_cart }}" alt="{{ msg.record_display_add_to_cart }}"/>{{ msg.record_display_add_to_cart }}</a>
+						</div>
+					{% endif %}
+					<!-- Avis sur la notice -->
+					<div class="avisN">
+						<span class="ExtnotCom imgComment"><img class="imgComment" src="./styles/common/images/comment_w.png" border="0" alt="Commentaires"/></span><span class="avisN">{{ record.display_avis }}</span>
+					</div>
+					<!-- Permalink -->
+					<div class="lienP">
+						<a href="{{ record.permalink }}" title="{{ msg.record_display_permalink_label }}">{{ msg.record_display_permalink_label }}</a>
+					</div>
+				</div>
+				<!-- Contenu de la notice -->
+				<div class="notice_contenu">
+					{{ record.display_coins_span }}
+					{% block record_content %}
+						<table class="descr_notice">
+							<tbody>
+								<tr>
+									<td class="labelNot">
+										<span>{{ msg.tit1display_start }}</span>
+									</td>
+									<td>
+										<span id="exempl_titleNot">{{ record.tit1 }}</span>
+									</td>
+								</tr>
+								{% if record.serie.id %}
+									<tr>
+										<td class="labelNot">
+											<span>{{ msg.tparent_start }}</span> <!-- Serie -->
+										</td>
+										<td>
+											<span><a href="{{ record.liens_opac.lien_rech_serie | replace '!!id!!' record.serie.id }}">{{ record.serie.name }}</a>, {{ record.tnvol }}</span>
+										</td>
+									</tr>
+								{% endif %}
+								{% for auteur in record.responsabilites.auteurs %}
+									{% if loop.first %}
+										<tr>
+											<td class="labelNot">
+												<span>{{ msg.auteur_start }}</span>
+											</td>
+											<td>
+												<span>
+									{% else %}
+									 ; 
+									{% endif %}
+									<a href="{{ record.liens_opac.lien_rech_auteur | replace '!!id!!' auteur.id }}">{{ auteur.auteur_titre }}</a>{% if auteur.fonction_aff %}, {{ auteur.fonction_aff }}{% endif %}
+									{% if loop.last %}
+												</span>
+											</td>
+										</tr>
+									{% endif %}
+								{% endfor %}
+								{% if record.tdoc %}
+									<tr>
+										<td class="labelNot">
+											<span>{{ msg.typdocdisplay_start }}</span> <!-- Type de document-->
+										</td>
+										<td>
+											<span>
+												{% if record.niveau_biblio == 'm' %}
+													{{ record.tdoc }}
+												{% else %}
+													{{ record.biblio_doc }}
+												{% endif %}
+											</span>
+										</td>
+									</tr>
+								{% endif %}
+								{% if record.publishers.0.isbd_entry %}
+									<tr>
+										<td class="labelNot">
+											<span>{{ msg.editeur_start }}</span> <!-- Edition, Annee-->
+										</td>
+										<td>
+											<span><a href="{{ record.liens_opac.lien_rech_editeur | replace '!!id!!' record.publishers.0.id }}">{{ record.publishers.0.isbd_entry }}</a>, {{ record.year }}</span>
+										</td>
+									</tr>
+								{% endif %}
+								{% if record.collection.isbd_entry %}
+									<tr>
+										<td class="labelNot">
+											<span>{{ msg.coll_start }}</span>
+										</td>
+										<td>
+											<span><a href="{{ record.liens_opac.lien_rech_collection | replace '!!id!!' record.collection.id }}">{{ record.collection.isbd_entry }}</a></span>
+										</td>
+									</tr>
+								{% endif %}
+								{% if record.code %}
+									<tr>
+										<td class="labelNot">
+											<span>{{ msg.code_start }}</span>
+										</td>
+										<td>
+											<span>{{ record.code }}</span>
+										</td>
+									</tr>
+								{% endif %}
+								{% if record.display_size %}
+									<tr>
+										<td class="labelNot">
+											<span>{{ msg.size_start }}</span>
+										</td>
+										<td>
+											<span>{{ record.display_size }}</span>
+										</td>
+									</tr>
+								{% endif %}
+								{% if record.indexint %}
+									<tr>
+										<td class="labelNot">
+											<span>{{ msg.indexint_start }}</span>
+										</td>
+										<td>
+											<span><a href="{{ record.liens_opac.lien_rech_indexint | replace '!!id!!' record.indexint.indexint_id }}">{{ record.indexint.display }}</a></span>
+										</td>
+									</tr>
+								{% endif %}
+								{% for id_thes,thesaurus in record.categories %}
+									{% if global.opac_thesaurus %}
+										{% if loop.first %}
+											<tr>
+												<td class="labelNot">
+													<span>{{ msg.categories_start }}</span>
+												</td>
+												<td>
+										{% endif %}
+										{% for categorie in thesaurus %}
+											{% if global.opac_categories_categ_in_line %}
+												{% if loop.first %}
+													<p><strong>{{ categorie.object.thes.libelle_thesaurus }}</strong></p>
+												{% else %}
+													{{ global.pmb_keyword_sep }}
+												{% endif %}
+												<span><a href="{{ record.liens_opac.lien_rech_categ | replace '!!id!!' categorie.object.id }}" {% if global.opac_show_infobulles_categ %}title="{{ categorie.object.comment }}"{% endif %}>{{ categorie.format_label }}</a></span>
+											{% else %}
+												<p>[{{ categorie.object.thes.libelle_thesaurus }}] <a href="{{ record.liens_opac.lien_rech_categ | replace '!!id!!' categorie.object.id }}">{{ categorie.object.libelle }}</a></p>
+											{% endif %}
+										{% endfor %}
+										{% if loop.last %}
+												</td>
+											</tr>
+										{% endif %}
+									{% else %}
+										{% if id_thes == global.opac_thesaurus_defaut %}
+											{% if loop.first %}
+											<tr>
+												<td class="labelNot">
+													<span>{{ msg.categories_start }}</span>
+												</td>
+												<td>
+											{% endif %}
+											{% for categorie in thesaurus %}
+												{% if global.opac_categories_categ_in_line %}
+													{% if !loop.first %}
+														{{ global.pmb_keyword_sep }}
+													{% endif %}
+													<span><a href="{{ record.liens_opac.lien_rech_categ | replace '!!id!!' categorie.object.id }}">{{ categorie.object.libelle }}</a></span>
+												{% else %}
+													<p><a href="{{ record.liens_opac.lien_rech_categ | replace '!!id!!' categorie.object.id }}">{{ categorie.object.libelle }}</a></p>
+												{% endif %}
+											{% endfor %}
+											{% if loop.last %}
+													</td>
+												</tr>
+											{% endif %}
+										{% endif %}
+									{% endif %}
+								{% endfor %}
+								{% if record.resume %}
+									<tr>
+										<td class="labelNot">
+											<span>{{ msg.n_resume_start }}</span>
+										</td>
+										<td>
+											<span>{{ record.resume | nl2br }}</span>
+										</td>
+									</tr>
+								{% endif %}
+								{% if record.contenu %}
+									<tr>
+										<td class="labelNot">
+											<span>{{ msg.n_contenu_start }}</span>
+										</td>
+										<td>
+											<span>{{ record.contenu | nl2br }}</span>
+										</td>
+									</tr>
+								{% endif %}
+								{% for cp in record.p_perso %}
+									<tr>
+										<td class="labelNot">
+											<span>{{ cp.TITRE }}</span>
+										</td>
+										<td>
+											<span>{{ cp.AFF }}</span>
+										</td>
+									</tr>
+								{% endfor %}
+								{% for relation in record.relations_up %}
+									<tr>
+										<td class="labelNot">
+											<span>{{ relation.label }} :</span>
+										</td>
+										<td>
+											<ul>
+												{% for parent in relation.parents %}
+													<li><a href="{{ parent.get_permalink }}" title="{{ parent.tit1 }}">{{ parent.tit1 }}</a></li>
+												{% endfor %}
+											</ul>
+										</td>
+									</tr>
+								{% endfor %}
+								{% for relation in record.relations_down %}
+									<tr>
+										<td class="labelNot">
+											<span>{{ relation.label }} :</span>
+										</td>
+										<td>
+											<ul>
+												{% for child in relation.children %}
+													<li><a href="{{ child.get_permalink }}" title="{{ child.tit1 }}">{{ child.tit1 }}</a></li>
+												{% endfor %}
+											</ul>
+										</td>
+									</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					{% endblock record_content %}
+				</div>
+			</div>
+		</div>
+		<div class="clear"></div>
+		{% if record.availability.availability != 'none' %}
+			<!-- Bouton de reservation -->
+			{% if record.resas_datas.flag_resa_visible %}
+				{% if record.resas_datas.flag_resa_possible %}
+					{% if !record.resas_datas.flag_max_resa %}
+						<div id="resa_notice">
+							<a href="{{ record.resas_datas.href }}" onclick="{{ record.resas_datas.onclick }}" id="bt_resa_NotCourte">{{ msg.record_display_expl_reserve }}</a>
+							{% if record.resas_datas.nb_resas %}
+								<p class='record_nb_resas'>{{ msg.resa_nb_deja_resa | replace '!!nbresa!!' record.resas_datas.nb_resas }}</p>
+							{% endif %}
+						</div>
+						<div class='clear'></div>
+					{% endif %}
+				{% endif %}
+			{% endif %}
+		{% endif %}
+			
+		{% block articles %}
+		{% endblock articles %}
+			
+		{% if record.availability.availability != 'none' %}
+			 <!-- Exemplaire -->
+			<div id="zone_exemplaires">
+				{{ record.display_expl_responsive_list }}
+			</div>
+		{% endif %}
+		
+		<div id="zone_docnum">
+			{{ record.display_explnums }}
+		</div>
+	</div>
+</div>

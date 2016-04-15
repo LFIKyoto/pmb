@@ -1,0 +1,41 @@
+<div id="aut_details">
+	{% block header %}
+		<h3><span>Détail de l'autorité</span></h3>
+	{% endblock %}
+	<div id="aut_details_container">
+		<div id="aut_see" class="aut_see">
+			{% block aut_see %}
+				{% block title %}
+					<h3>{{authority.isbd_entry}}</h3>
+				{% endblock %}
+				{% block details %}
+					<p>Détails de notre autorité</p>
+				{% endblock %}
+				{% block aut_linked %}
+					{% if aut_link.display %}
+						<div class="aut_linked">
+							{{aut_link.display }}
+						</div>
+					{% endif %}
+				{% endblock %}
+				{% block indexing_concepts %}
+					<div class="indexing_concepts">	
+						{{authority.indexing_concepts }}
+					</div>
+				{% endblock %}	
+				{% block concept_composed %}
+					<div class="concepts_composed">	
+						{{authority.concepts_composed }}
+					</div>
+				{% endblock %}
+				{% block enrichment %}
+				{% endblock %}
+			{% endblock %}	
+		</div>
+		{% block records %}
+			<div id='aut_details_liste'>
+				{{ authority.recordslist }}
+			</div>	
+		{% endblock %}	
+	</div>
+</div>

@@ -1,0 +1,20 @@
+{% extends 'gabarit.html' %}
+
+{% block header %}
+	<h3><span>{{ msg.detail_indexint }}</span></h3>
+{% endblock %}
+	
+{% block title %}
+	<h3>
+		{{ authority.name }}
+		{% if authority.comment %}
+			: {{ authority.comment }}
+		{% endif %}
+	</h3>
+{% endblock %} 
+
+{% block details %}
+	{% if authority.has_child %}
+		{{ authority.child_list }}
+	{% endif %}
+{% endblock %}

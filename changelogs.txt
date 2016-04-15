@@ -1,0 +1,1056 @@
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+*                                    CHANGE_LOG_4.2.6                                                                  *
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+
+
+*******************
+ANOMALIES
+
+------------
+Acquisitions
+------------
+
+#12373 : Catalogage des suggestions importées
+Correction de l'erreur qui ne cataloguait que la première des suggestions importées.
+
+---------
+Catalogue
+---------
+
+#12838 : Vignette document numérique
+Correction de l'anomalie qui ne générait pas la vignette pour les documents numériques de type PDF en ligne.
+
+#12800 : Vignette des étagères
+Correction de l'anomalie qui n'affichait pas l'url de la vignette de l'étagère.
+
+#13031 : Impression d'un panier
+Correction du tri du panier à l'impression.
+
+#13044 : Thésaurus par défaut en catalogage
+Non-mémorisation du thésaurus en cours sur les champs personnalisés d'autorité basés sur les catégories.
+
+#13154 : Export des documents numériques
+Correction de l'export des documents numériques depuis un panier, si ces derniers ne sont pas stockés en base.
+
+------
+Divers
+------
+
+#12326 : Tri des notices par auteurs
+Correction de la méthode de tri des notices sur le critère auteur, en gestion et OPAC.
+
+#12310 : Optimisation de requêtes en gestion
+Optimisation / Correction de requêtes en gestion dans PMB
+
+#12693 : Compatibilité avec les serveurs Web
+Amélioration de la compatibilité de PMB avec d'autres serveurs Web qu'Apache.
+
+#12799 : Champs persos de type date répétable
+Quand on ajoute des champs persos répétables de type date, le calendrier présent dans le popup n'est plus vide.
+
+#13081 : Fichier XML des quotas
+Correction de la traduction par erreur des noms de table dans le fichier XML des quotas
+
+#13110 : Application du statut par défaut à l'enregistrement d'un document numérique
+Si lors de l'enregistrement d'un document numérique il n'y a pas de statut de précisé alors on applique le statut par défaut.
+
+---
+DSI
+---
+
+#11112 : Arborescence des veilles
+L'arborescence des veilles ne se replie plus automatiquement. Pour constater la correction il faut vider le cache du navigateur.
+
+#12497 : Duplication de bannette
+Quand on duplique une bannette, le template de notices pour l'email et les groupements par facettes sont désormais bien repris.
+
+#13032 : Rang d'un critère de groupement
+Correction des rangs des critères de groupement avec l'utilisation d'un template de bannette.
+
+--------
+Editions
+--------
+
+#12538 : URL absolues dans les fonctions de templates
+Prise en compte du paramètre pmb_opac_url pour la construction des liens vers les images et documents numériques dans les fonctions aff_gen_plus et aff_expl_num_vign_reduit.
+
+#12387 : Affichage des catégories en template de notice
+Correction des fonctions #categories et #categories_with_tpl afin de prendre en compte plusieurs thésaurus.
+
+#12994 : Enregistrement de template de bannette
+Correction de l'anomalie empêchant d'enregistrer un template de bannette si une apostrophe est présente dans celui-ci.
+
+----
+OPAC
+----
+
+#12361 : Recherche personnalisée IRTS Bretagne
+Modification de la requête de filtrage sur les localisations afin de ressortir également les notices de bulletins pour les exemplaires de la localisation sélectionnée.
+
+#12253 : Tri des étagères
+Le tri défini en gestion pour l'affichage d'une étagère est conservé en session.
+
+#12530 : Statistiques sur le navigateur de périodiques
+Les consultations des notices de périodiques dans le navigateur de périodiques sont ajoutées dans les statistiques.
+
+#12855 : Amélioration pour les Opac inclus dans une maquette
+Les fonctions dojos et le dépliage des notices n'étaient pas fonctionnels lorsque qu'il s'agissait d'un Opac inclus.
+
+#12905 : Libellé thes_libelle en recherche multicritères
+Ajout d'un span sur le libellé thes_libelle en multicritères
+
+#12978 : Affichage du mois de mai dans les templates Django
+Le mois de mai s'affiche correctement en format long et court dans les templates Django.
+
+#13006 : Statut de visibilité des documents numériques à l'OPAC
+Le statut de visibilité des documents numériques défini sur la notice prévaut sur le statut de visibilité défini sur le document numérique.
+Le paramètre OPAC 'show_links_invisible_docnums' rend visibles les vignettes quel que soit ce statut.
+
+#13076 : Affichage de la page d'inscription
+Correction d'une erreur à l'affichage de la page d'inscription en ligne.
+
+#13087 : Affichage des facettes en OPAC
+Correction d'une erreur lors de l'appel de ajax.php.
+
+#13135 : Facettes
+Ajout des facettes sur les étagères et le navigateur de sections.
+
+-------
+Portail
+-------
+
+#12260 : Bouton 'Vider le cache'
+Le bouton permettant de vider le cache apparait lorsqu'on a modifié un champ personnalisé d'un artice ou d'une rubrique, même si l'article ou la rubrique n'a pas été modifié.
+
+#13013 : Lien des veilles
+Correction du lien du flux RSS des veilles.
+
+#13042 : Flux RSS d'une veille
+Tri des items du flux RSS des veilles par date de publication décroissante.
+
+
+*******************
+EVOLUTIONS
+
+--------------
+Administration
+--------------
+
+#12786 : Vérificateur de liens
+Certaines url sont correctes mais le serveur ne renvoie pas d'entête. Dans ce cas, un message 'A vérifier manuellement' est affiché.
+
+#13094 : Préférences utilisateurs : Renseigner un entrepôt des notices supprimées par défaut
+Nouveau paramètre dans les préférences utilisateurs pour choisir un entrepôt de destination par défaut en suppression de notices d'un panier.
+
+---------
+Catalogue
+---------
+
+#12287 : Notice de bulletin
+Création d'une case à cocher en création de bulletin et en bulletinage, permettant de créer une notice de bulletin.
+
+#12734 : Navigation dans les pages
+Ajout des liens 'première' et 'dernière' page dans les résultats de recherche simple et multicritères, si l'étendue le permet.
+
+#12792 : Vider un panier après une réindexation du panier
+Suite à la réindexation d'un panier, apparition du bouton vider le panier.
+
+#12901 : Ordre des catégories en modification de notice
+Si le paramètre categories_affichage_ordre est défini sur ordre alphabétique, les catégories sont également triées par ordre alphabétique en modification de notice.
+
+#12931 : Vérification des url de vignette des notices
+Ajout du vérificateur de liens sur les url de vignette des notices, ainsi que dans le module de vérification des liens en administration.
+
+#12956 : Lien vers les autorités persos dans l'ISBD d'une notice
+Lien vers les autorités persos dans l'ISBD d'une notice
+
+-----------
+Circulation
+-----------
+
+#12898 : Retour des périodiques en circulation
+Possibilité de retourner plusieurs périodiques en circulation par sélection en cases à cocher.
+
+------
+Divers
+------
+
+#12542 : Amélioration de la gestion des automates de prêt 3M
+Amélioration de PMB pour la prise en charge des nouveaux automates 3M.
+
+#12513 : Recherche par géoréférencement
+En recherche multi-critères gestion et OPAC, possibilité de rechercher les notices géoréférencées ou non ainsi que les notices indexées avec des catégories géoréférencées ou non, via les opérateurs 'Est vide' et 'N'est pas vide' sur le critère 'Emprise'.
+
+---
+DSI
+---
+
+#12999 : Recherche de bannette
+Après enregistrement d'une bannette, filtrage de la liste des bannettes sur cette dernière créée.
+
+#12908 : Définition des TTL des veilles
+Clarification des deux libellés TTL dans la définition d'une veille et dans la définition d'une source de veille.
+
+----
+OPAC
+----
+
+#11243 : Affichage django des notices / fonctions pour les documents numériques
+Accès aux informations de documents numériques dans les templates django.
+Prise en compte des statuts de visibilité et du paramétrage de la visionneuse.
+
+#12357 : Sélecteur de tri
+Si le tri par défaut possède un libellé, les critères ne sont pas affichés dans le sélecteur.
+
+#12742 : Permettre de désactiver la barre d'acceptation des cookies
+Nouveau paramètre OPAC cookies_consent. Sa valeur par défaut est 1 (actif). 
+
+-------
+Portail
+-------
+
+#12509 : Date de modification du contenu éditorial
+Dans les cadres du portail affichant des articles ou des rubriques, il est possible d'afficher la date de dernière modification de ceux-ci.
+
+#12610 : Audit sur le contenu éditorial
+Ajout d'un bouton historique sur les articles et les rubriques.
+
+#13134 : Tri des CP du contenu éditorial (provisoire : ordre alpha)
+Tri alphabétique des champs personnalisés du contenu éditorial en affichage.
+
+
+
+
+
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+*                                    CHANGE_LOG_4.2.5                                                                  *
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+
+
+*******************
+ANOMALIES
+
+-----------
+Circulation
+-----------
+
+#12134 : Lien vers les éditions dans les réservations
+A partir du menu 'réservations en cours', le lien qui amène vers les éditions est renommé en 'Editions : en cours', ajout d'un lien nommé 'Editions : à traiter'.
+
+------
+Divers
+------
+
+#12223 : Erreur sur mise à jour
+Correction d'une erreur lors de la création d'une table selon la configuration de mysql.
+
+--------
+Editions
+--------
+
+#12102 : Fonction #group(); des templates de notices
+Correction de l'affichage : si le nombre de notices demandées est supérieur au nombre de notices liées, il n'y a plus de lignes vides.
+
+#12117 : Listes de prêts
+Conservation de la localisation sélectionnée lors de la navigation entre les différentes pages.
+
+#12135 : Export tableur des transferts
+Modification des cellules exportées pour un affichage identique au tableau des éditions.
+
+----
+OPAC
+----
+
+#12201 : Navigation dans les indexations décimales
+Correction de l'affichage django s'il existe des indexations filles.
+
+#12219 : Zotero en affichage django
+Correction de l'affichage django pour prendre en compte les coins zotero
+
+
+*******************
+EVOLUTIONS
+
+---------
+Catalogue
+---------
+
+#11978 : Bouton pour créer un panier
+Ajout du bouton pour créer un panier en haut de la pop-up s'ouvrant lors d'une mise en panier de plusieurs notices
+
+#12125 : Historique des recherches
+Le tri en cours est conservé lorsqu'on appelle une recherche de l'historique en gestion.
+
+-----------
+Circulation
+-----------
+
+#12123 : Recherche avancée sur les emprunteurs
+Ajout d'un opérateur 'est vide' sur le critère nombre de prêts pour retrouver les emprunteurs sans prêt en cours.
+
+--------
+Editions
+--------
+
+#12184 : Filtre dans les éditions des prêts
+Ajout d'un filtre 'Localisation des exemplaires' dans les prêts en cours, retards par lecteur et retards par date.
+
+----
+OPAC
+----
+
+#11974 : Export des prêts précédents
+Il est possible d'exporter les prêts précédents en tableur dans le compte lecteur.
+
+#12155 : Titre des documents numériques
+Ajout d'une balise span avec l'attribut class='title_docnum' afin de pouvoir styler le titre des documents numériques.
+
+-------
+Portail
+-------
+
+#12076 : Associations du portfolio
+Ajout d'un bouton permettant de tout cocher/décocher dans les associations du portfolio.
+
+#12094 : Enregistrement d'un contenu éditorial
+Ajout d'un message confirmant l'enregistrement d'un article ou d'une rubrique.
+
+
+
+
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+*                                    CHANGE_LOG_4.2.4                                                                  *
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+
+
+*******************
+ANOMALIES
+
+---------
+Autorités
+---------
+
+#11914 : Choix d'une catégorie parente
+Résolution d'une erreur javascript sur la sélection d'un parent en création de catégorie.
+
+---------
+Catalogue
+---------
+
+#11912 : Création du document numérique en bulletinage
+La saisie d'une url de document numérique est dorénavant bien prise en compte et crée le document numérique associé au bulletin.
+
+--------
+Editions
+--------
+
+#11931 : Lettres de retard
+Les lettres de retard par groupe s'impriment avec la même taille de police que les lettres de retard individuelles.
+
+----
+OPAC
+----
+
+#11929 : Ajout au panier d'un résultat de recherche multi-critères
+Le résultat complet de la recherche est mis au panier, pas seulement la première page.
+
+#12004 : Champ personnalisé d'exemplaire
+Correction de l'affichage du tableau des exemplaires si un champ personnalisé est visible à l'OPAC.
+
+#12050 : Affichage de l'aide
+Correction d'une erreur lors de l'affichage de l'aide.
+
+-------
+Portail
+-------
+
+#11900 : Correction Page not Found dans la construction du portail
+Correction d'un cas particulier du rechargement de l'OPAC en construction de portail après l'enregistrement d'un cadre sur la page index.php
+
+#11928 : Sélecteur par champ générique d'article ou de rubrique
+Correction d'une erreur d'affichage à la sélection de la source de données.
+
+
+*******************
+EVOLUTIONS
+
+--------------
+Administration
+--------------
+
+#12019 : Localisation par défaut en bulletinage
+Ajout d'un paramètre utilisateur permettant de sélectionner la localisation par défaut en bulletinage
+
+---------
+Catalogue
+---------
+
+#12016 : Déplacement d'un dépouillement
+En modification de dépouillement, un bouton permet de déplacer celui-ci vers un autre bulletin de périodique.
+
+------
+Divers
+------
+
+#11916 : Indexation des termes rejetés
+Les notices sont indexées avec les termes rejetés des catégories.
+
+#11970 : Vider un panier après une procédure d'action
+Après une action par procédure sur un panier (en circulation et catalogue), un bouton propose d'accéder au vidage du panier avec pré-sélection des éléments pointés ou non telle qu'elle a été effectuée pour l'action.
+
+--------
+Editions
+--------
+
+#11963 : Fonction #group(); pour les templates de notices
+Ajout d'un quatrième paramètre : texte à ajouter si le tableau de notices liées est plus grand que le nombre de notices à afficher
+
+----
+OPAC
+----
+
+#11894 : Tableau de résultat du comparateur
+La valeur 0 n'est plus affichée pour une meilleure lisibilité du tableau.
+
+#11951 : Onglets tags, avis et suggestion des notices
+Les onglets tags, avis et suggestion sont désormais dans des balises <li> séparées avec leur propre classe.
+
+#11971 : Notation des avis
+Les avis peuvent être notés avec une sélection par étoiles, les paramètres existants pmb_avis_note_display_mode et opac_avis_note_display_mode sont complétés avec deux possibilités supplémentaires.
+
+
+
+
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+*                                    CHANGE_LOG_4.2.3                                                                  *
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+
+
+*******************
+ANOMALIES
+
+---------
+Catalogue
+---------
+
+#11686 : Vérification de l'url associée en catalogage
+Un timeout est appliqué sur la vérification de l'url associée, la durée de ce timeout est modifiable en Administration / Outils / Vérificateur de liens.
+
+-----------
+Circulation
+-----------
+
+#11589 : Départ d'un exemplaire en transfert
+Changement du libellé 'Retour d'un exemplaire' en 'Départ d'un exemplaire'
+
+------
+Divers
+------
+
+#11651 : Impression pdf
+Mise à jour de la classe html2pdf de la version 4.03 à 4.04
+
+--------
+Editions
+--------
+
+#11594 : Circulation simplifiée des périodiques
+Correction du non-affichage des différents formats d'étiquettes de circulation en utf-8.
+
+#11709 : Templates de notices : informations d'exemplaires
+Ajout du prix de l'exemplaire dans les informations accessibles.
+
+----
+OPAC
+----
+
+#11444 : Indexation du numéro dans la collection
+Le numéro dans la collection est dorénavant indexé.
+
+#11573 : Affichage des avis
+Ajout de deux classes pour styler le nombre d'avis et la note de l'avis.
+
+#11601 : Dans le pop-up de réservation et d'impression d'un panier à l'Opac le style de la vue n'est pas pris en compte
+Dans les pop-ups à l'Opac si l'on a des vues avec des styles différents ce n'était pas le bon style qui était utilisé.
+
+#11622 : Destruction de l'environnement de construction de portail
+Prise en compte de la valeur -1 pour le paramètre GET cms_build_activate.
+Cela provoque la destruction de l'environnement de construction.
+
+#11649 : Mauvais affichage du comparateur
+Correction de l'affichage erroné du comparateur quand l'installation est en utf-8.
+
+#11758 : Connexion emprunteur pour les suggestions
+Ajout d'un div avec une classe autour des éléments du formulaire.
+
+#11774 : Etats des collections
+Correction de l'affichage des états des collections lorsque le paramètre opac_collstate_data est activé.
+
+#11780 : Message 'Aucun prêt en cours'.
+Ajout d'une balise span sur le message.
+
+-------
+Portail
+-------
+
+#11683 : Recherche * dans le contenu éditorial
+La recherche * sur le contenu éditorial fait ressortir toutes les rubriques et tous les articles.
+
+
+*******************
+EVOLUTIONS
+
+------------
+Acquisitions
+------------
+
+#11745 : Sélecteur de notices dans les commandes
+Ajout de l'indexation décimale dans l'affichage déplié de la notice.
+
+------
+Divers
+------
+
+#11553 : Champ personnalisé de type date
+La valeur par défaut en recherche (gestion et opac) n'est plus la date du jour, mais le message 'format_date_input_placeholder' des fichiers de message.
+
+#11721 : Adresse alternative d'envoi des emails
+Ajout d'un paramètre général et d'un paramètre OPAC intitulé mail_adresse_from permettant de définir une adresse alternative d'envoi des emails.
+
+----
+OPAC
+----
+
+#11540 : Image du panier au format png
+L'image du panier au format gif est remplacée par un format png.
+
+#11674 : Templates Django : documents numériques
+Ajout de la fonction display_bull_for_art_expl_num pour afficher les documents numériques du bulletin parent de la notice d'article affichée.
+
+#11737 : Prolongation d'un prêt avec un niveau de relance validé.
+Ajout du paramètre opac_pret_prolongation_blocage permettant de bloquer la prolongation d'un prêt par l'emprunteur si un niveau de relance est validé.
+
+#11785 : Bouton pour exporter les prêts dans un tableur sur le compte emprunteur
+Création du paramètre opac_empr_export_loans permettant d'afficher ou non ce bouton, et modification du libellé du bouton.
+
+#11790 : Images substituables
+Trois nouvelles images substituables via la nouvelle mécanique (#10476) :
+- group_by.png
+- group_by_grey.png
+- quest.png
+
+-------
+Portail
+-------
+
+#11656 : Contenu éditorial : retour en haut de page au clic sur une rubrique ou un article
+Dans le contenu éditorial, la page s'aligne avec le sommet du formulaire d'édition de la rubrique ou de l'article sélectionné.
+
+#11710 : Template Django dans les cadres HTML de portail
+Ajout de la gestion des templates Django dans les cadres de portail de type Code HTML.
+
+#11733 : Informations de rubrique parente dans une liste de rubriques
+Les informations de rubrique parente sont disponibles dans les modules liste de rubriques ET rubrique.
+
+
+
+
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+*                                    CHANGE_LOG_4.2.2                                                                  *
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+
+
+*******************
+ACTIONS
+
+------
+Divers
+------
+
+#11216 : Mise à jour de la documentation livrée avec PMB
+Mise à jour des fichiers du dossier pmb/doc
+
+
+*******************
+ANOMALIES
+
+--------------
+Administration
+--------------
+
+#10029 : Page blanche en pointage des importés
+Correction de l'inclusion des fichiers de calcul d'ISBN.
+
+#10240 : L'action d'encodage des mots de passe lecteurs ne traite pas tous les lecteurs
+L'action 'Encoder les mots de passe lecteurs pour la connexion à l'Opac' dans 'Administration > Outils > Nettoyage de base'  ne traitait pas tous les lecteurs de la base.
+
+#10508 : Taille de champs en base de données
+Augmentation des champs blob en mediumblob : empr_expl (table logopac), empr_expl (table statopac) et session (table opac_sessions)
+
+#10510 : Nettoyage de base : auteurs
+Correction de la fonction d'effacement des auteurs inutilisés qui provoquait un blocage.
+
+#10563 : Import fichiers Prisme
+Rendre possible l'import d'un fichier txt Prisme dans un PMB en utf-8
+
+#10675 : Encodage des mots de passe lecteurs
+Correction d'une boucle infinie sur l'encodage des mots de passe en nettoyage de base dans certains cas de synchronisation externe.
+
+#10679 : Planificateur : blocage selon la configuration
+Correction de l'erreur si le paramètre z39.50 import_modele est à 'func_other_customfields.inc.php'
+
+#10925 : Sauvegarde : prise en compte des champs de type geometry
+Correction de la sauvegarde des champs de type geometry qui bloquaient la restauration.
+
+#11275 : Mise à jour du schéma de la base de données
+Mise à jour du schéma de la base de données dans la version 5.19
+
+---------
+Autorités
+---------
+
+#10677 : Affichage des autorités liées
+Correction de l'affichage ISBD des éditeurs.
+
+---------
+Catalogue
+---------
+
+#10117 : Vérification de l'url associée bloque la page
+Passage du script en asynchrone.
+
+#10130 : Ne pas modifier la date de mise à jour des notices lors du calcul des nouveautés
+Lorsque que l'on enlève une notice des nouveautés, sa date de modification ne doit pas être modifiée.
+
+#10302 : Affichage champ personnalisé de type sélecteur d'autorité
+Correction de l'affichage du champ pour les notices dépliables.
+
+#10317 : Notices nouveautés
+Affichage de l'icone 'Nouveautés' pour les notices
+
+#10415 : Indexation catégories et champ personnalisé d'autorité catégorie
+Ne pas stocker en session le dernier thésaurus utilisé quand l'appel se fait sur un champ personnalisé d'autorité catégorie.
+
+#10678 : Envoi de recherche et documents numériques
+Pouvoir envoyer les documents numériques sans les exemplaires.
+
+#11281 : Actions rapides sur les paniers
+Relooking du sélecteur d'action rapide sur les paniers
+
+#11321 : Grille de catalogage et  ordinateurs Apple
+La combinaison ctrl+clic étant transformée en clic droit sur les ordinateurs Apple, ajout de la possibilité de faire cmd(anciennement pomme)+clic pour le même résultat.
+
+#9851 : Recherche multi-critères sur date de publication
+Correction des requêtes erronées sur la recherche par date de publication, pour les critères <, <=, > et >=.
+
+-----------
+Circulation
+-----------
+
+#10263 : Transferts : retour de prêt suite à une réservation
+En retour de prêt, l'exemplaire est retournable immédiatement dans sa localisation d'origine si le transfert fait suite à une réservation.
+
+#10348 : Filtres relances
+Retour du filtre sur les catégories qui n'apparaissait plus.
+
+#10353 : Relances : changement de libellé pour la colonne 'Lettre imprimée'
+Libellé changé à 'Lettre imprimée / Mail' pour les libellés français et 'Printed letters / Mails' pour les libellés anglais.
+
+#10368 : Problème avec la suppression par panier des lecteurs qui ont une réservation validée
+Blocage de la suppression si le lecteur possède une réservation validée.
+
+#10790 : Mise en panier d'emprunteurs
+Indication du nombre d'emprunteurs ajoutés dans un panier.
+
+#10915 : Erreur sur le prêt autonome à l'OPAC
+Reprise de la fonction d'origine self_checkout.
+Création d'une fonction spécifique pour bibloto.
+Mise à jour du manifest.
+
+--------
+Demandes
+--------
+
+#10717 :  Dans le module demande les champs personnalisés de type requete SQL ne sont pas cherchables
+Le sélecteur d'un champ personnalisé de type 'Liste de choix à partir d'une requête' était vide.
+
+------
+Divers
+------
+
+#10078 : Curl : options et proxy
+Possibilité de créer des tableaux d'options curl et de domaines où l'on ne doit pas utiliser le proxy. Tableaux à créer dans config_local.inc.php (gestion + opac)
+
+#10513 : Restauration d'une sauvegarde
+Correction du problème de restauration des données en base par la procédure emergency.
+
+#10687 : Inclusion d'un fichier d'image inexistant
+En gestion le fichier notification_empty.png n'est pas présent dans tous les styles mais il est dans le dossier images. 
+
+#9967 : Echec du gestionnaire des tâches + Import en double des champs personnalisés (Z39.50 et Connecteurs)
+Avec certains couples de fonctions d'import (paramètre import_modele dans 'Paramètres généraux' et 'Options z39.50') le planificateur des tâches n'était pas fonctionnel.
+Lors d'un import de notices (par les connecteurs ou le z39.50) et en passant par le formulaire, des champs personnalisés étaient parfois importés en double.
+
+---
+DSI
+---
+
+#10020 : Veille : création d'article, de notice ou de rubrique
+Correction des liens vers les articles et les rubriques. Mise à jour du libellé du bouton après création d'article, de notice ou de rubrique.
+
+#10103 : Veille : lien vers les notices externes
+Correction du lien pour voir les notices externes
+
+#10184 : Modification équation de recherche en erreur si apostrophe dans le commentaire
+Correction de l'objet envoyé à la requête de mise à jour.
+
+--------
+Editions
+--------
+
+#10190 : Templates : correction de la fonction #expl_num_vign_reduit(); pour les notices de bulletin
+Correction de la fonction de template pour prendre en compte les notices de bulletin.
+
+#10530 : Documentation des fonctions de consolidation
+Mise à jour des fonctions manquantes dans la documentation.
+
+------
+Fiches
+------
+
+#10693 : Les fiches ne sont plus affichées
+Dans le module 'Fiches', les fiches n'étaient plus affichées.
+
+----
+OPAC
+----
+
+#10077 : Filtre 'Abonnement actif' dans le navigateur de périodique
+Correction de la page blanche et de l'erreur javascript si pas d'abonnement actif.
+
+#10220 : Ajout de notices triées au panier
+Prise en compte du tri effectif pour l'ajout de notices dans un panier
+
+#10313 : Recherche par fréquence d'apparition
+Correction des requêtes affichant la liste des résultats.
+
+#10321 : Div aut_details
+Ajout d'une classe sur l'affichage des div 'id_details' liés à une bannette.
+
+#10360 : Navigateur de périodique : sélection du bon périodique
+Correction d'une erreur javascript dans le cas de l'affichage des notices au format Django
+
+#10375 : Répertoire temp de la visionneuse
+Le répertoire temp de la visionneuse a été supprimé par erreur du CVS le 03/06/15 dans la version de DEV.
+Le problème se retrouve aujourd'hui en 4.2 et en 4.3 DEV 
+
+#10387 : Ajout des attributs ALT et TITLE sur la vignette de la notice
+On affiche le titre de la notice dans la balise title, si celle-ci est vide.
+On affiche 'vignette' dans la balise alt.
+
+#10411 : Photothèque : notice dans le panier
+Affichage de la bonne icone de panier si la notice est déjà présente.
+
+#10414 : Lenteurs suggestions
+Limitation des suggestions aux 5 premiers mots recherchés
+
+#10527 : Modification d'un classe d'affichage personnalisée
+Suppression de l'affichage des notes de contenu dans la classe abiodoc
+
+#10548 : Visionneuse des documents numériques de type URL
+Correction du non-affichage de certains documents de type URL
+
+#10554 : Avis bbcode
+Ajout d'un bouton pour écrire en rouge
+Ajout d'un bouton de liste à puce
+
+#10621 : Rang de réservation non affiché à l'Opac
+Lorsque l'on réserve une notice à l'Opac dans la fenêtre de prise en compte de la réservation le rang n'était plus affiché.
+
+#10822 : Ajout d'attribut class
+Classes ajoutées sur les H3 en historique de recherche et en affichage de panier.
+
+#10873 : Fatal error affichage Django + droit d'accès
+Fatal error générée avec le nouvel affichage des notices en activant les droits d'accès sur les documents numériques
+
+#10899 : Tableau des prêts à l'opac
+Correction du colspan selon le paramétrage.
+
+#11070 : Impression documents numériques
+Ne pas proposer l'impression des documents avec un statut spécifique.
+
+#11146 : Ajout de span pour l'application de la css
+Modification des fichiers liés à l'affichage des autorités à l'Opac pour ajouter des span autours des espaces et du titre des pages.
+
+#11283 : Authentification par pop-up
+Dysfonctionnement des cookies réglé.
+
+#11323 : Suppression de div vides
+Suppression du div facettes dans la pages de section et de localisation, et suppression du div lvl1 dans les pages d'autorité.
+
+#11340 : Import de notice dans zotero
+La série était affectée en collection (Zotero), elle est désormais concaténée au titre, comme dans l'affichage ISBD.
+La collection est affectée en collection (Zotero).
+La mention d'édition est affectée à l'édition (Zotero).
+Le permalink était affecté à l'URL (Zotero), il est remplacé par l'url associée.
+
+#11368 : Facettes dans les pages autorités
+Correction pour le comparateur et le filtrage multiple par facettes dans les pages d'autorités
+
+#11451 : Erreur javascript sur pop-up d'aide des facettes
+Le pop-up d'aide des facettes n'apparaissait que sur une comparaison active, il est désormais disponible avant comparaison.
+
+#9855 : Dépliage impossible des notices sous Internet Explorer
+Résolution d'une erreur javascript bloquant le dépliage des notices sous Internet Explorer
+
+#9864 : Correction sur le paramètre OPAC empr_code_info
+Le code HTML du paramètre empr_code_info ne s'affiche que si l'emprunteur est correctement identifié.
+
+-------
+PORTAIL
+-------
+
+#10438 : Carrousel : temps de transition
+Correction de la prise en compte du temps de transition.
+
+#10456 : Carrousel Responsive : Erreur à la mise en cache 
+Correction d'une erreur JS apparaissant à l'affichage une fois mis en cache. 
+
+#11131 : Module liste de bannettes / construction du lien vers une bannette/une notice
+- La construction du lien vers une bannette n'était pas exploitée par Django.
+- Erreur dans la construction du lien vers la notice
+
+#9854 : Démarrage automatique du carrousel responsive
+Ajout du paramètre 'Transition automatique' permettant le démarrage du carrousel responsive.
+
+#9859 : Modules veille documentaire : correction de la fonction rss_link
+Suppression du double slash dans l'url rss de la veille documentaire
+
+
+*******************
+DEVELOPPEMENTS
+
+--------------
+Administration
+--------------
+
+#10384 : Gestion des suppressions OAI
+Gestion des suppressions pour les connecteurs OAI entrants.
+Lors de l'import automatique des notices, suppression des notices liées aux enregistrements marqués comme supprimés sur le serveur.
+
+---------
+Catalogue
+---------
+
+#11224 : Nouvelle class de mappage des metas données
+Ajout d'une nouvelle classe intermédiaire de mappage des métadonnées issues d'un dépôt WebDav et les champs de la notice associée.
+Un nouveau champ dans le paramétrage d'un connecteur WebDav permet d'associer une classe spécifique à un dépôt.
+Les classes spécifiques doivent héritées cette classe et être déposées dans le répertoire <pmb>/classes/webdav_mapper
+
+------
+Divers
+------
+
+#10920 : Champs perso date répétables
+Rendre les champs perso de type date répétables
+
+#10921 : Champ perso texte i18n
+Création d'un champ perso répétable de type texte avec gestion de la langue
+
+--------
+Editions
+--------
+
+#10152 : Circulation simplifiée des périodiques
+La circulation simplifiée des périodiques permet de ne pas bulletiner des exemplaires qui doivent partir en circulation.
+Pour l'activer, il faut cocher 'Type de la circulation Simplifiée' dans la gestion des abonnements.
+En Edition / Circulation Simplifiée, il y a deux formulaires:
+
+1)Impression des étiquettes de circulation
+Toutes les étiquettes de circulation des bulletins à recevoir entre deux dates sont imprimées.
+Le script d'impression /includes/simple_circ/custom_label_no_script.inc.php propose 2 formats d'étiquette (2*7 et 3*7)
+Il est personnalisable avec le paramètre serialcirc_simple_print_script
+Pour les étiquettes possédant plus d'un groupe de circulation, un codebarres est généré.
+
+2)Impression des listes de circulation
+les codebarres générés permettent d'imprimer des listes de destinataire complètes.
+Il suffit de les doucheter et d'accumuler les circulations. 
+l'impression se fait en PDF personalisable aussi.
+
+----
+OPAC
+----
+
+#10472 : Affichage Django dans les modes d'affichage des résultats de recherche
+Ajout du mode d'affichage Django pour les affichages multiples en résultat de recherche
+
+#10696 : Possibilité de désactiver la pagination dans les résultats de recherche
+Possibilité d'afficher tous les résultats de la recherche sur la même page.
+Ajout d'un paramètre pour définir un maximum de notices à afficher sur une même page.
+
+#10697 : Gestion des catégories dans l'affichage Django des notices
+Possibilité d'afficher les catégories dans les templates django de notices.
+Ajout de la classe authorities_collection afin de n'instancier qu'une seule fois les autorités qui apparaissent plusieurs fois dans la page.
+
+#10816 : Fonction de template django pour l'affichage des mois en format court
+Ajout d'une fonction django pour l'affichage des mois en format court (jan, fev, mars, avr...).
+Nom de la fonction : shortmonthletter
+
+-------
+Portail
+-------
+
+#10525 : Module liste de catégories
+Développement d'un module permettant de lister les formes retenues matchant la recherche via la forme rejetée.
+
+#10619 : Module liste de documents numériques
+Création d'un module de liste de documents numériques regroupables/hiérarchisables selon des facettes de notices
+
+#10956 : Module bannette
+Création d'un module d'affichage de bannette pour le portail
+
+#11124 : Module liste de veilles / construction du lien vers une veille
+Module liste de veilles :
+- Implémentation de la construction du lien vers une veille
+
+
+*******************
+EVOLUTIONS
+
+--------------
+Administration
+--------------
+
+#10224 : Affichage champ personnalisé basé sur les catégories
+Ajout d'une option au champ personnalisé permettant de tout afficher ou juste la dernière feuille de l'arbre.
+
+#10620 : Planificateur PMB : Substitution du catalog.xml 
+Substitution possible pour les types de tâches personnalisés
+
+#10857 : Calcul des droits d'accès
+La case à cocher 'Garder les droits spécifiques' est cochée par défaut.
+
+---------
+Catalogue
+---------
+
+#11113 : Choix de la valeur par défaut du champ 'nouveauté' dans les préférences utilisateurs
+La valeur par défaut du champ 'nouveauté' en création de notice est paramétrable par utilisateur.
+
+#11223 : Recherche multi-critères
+Possibilité de sélectionner plusieurs autorités sur un même critère, avec choix de l'opérateur et/ou entre ces opérateurs.
+
+-----------
+Circulation
+-----------
+
+#10845 : Liste de circulation
+Les champs suivants sont désormais ajoutables à la fiche de circulation : catégorie, statut, code statistique, groupe.
+
+--------
+Demandes
+--------
+
+#10298 : Champs personnalisés Demandes
+Ajout de champs personnalisés sur le module Demandes
+
+--------
+Editions
+--------
+
+#10227 : Import/export de templates de notices
+L'import/export des templates de notices est désormais possible.
+
+#11477 : Evolution de la fonction #ellipse(); dans les templates de notices
+Possibilité de tronquer sur le nombre de caractères ou sur le nombre de mots.
+
+----
+OPAC
+----
+
+#10168 : Corrections pour l'affichage Django des notices
+Repli sur les templates du dossier common dans le cas des templates absents du dossier personnalisé.
+Correction du problème d'affichage du bouton d'ajout au panier quand on n'en a pas le droit.
+
+#10476 : Mécanique pour changer les images
+Nouvelle fonction dans misc.inc.php : get_url_icon(nom_icone);
+
+Cette fonction cherche l'icône dans cet ordre :
+- Répertoire images du style client
+- Répertoire images du style common
+- Sinon Répertoire images de l'OPAC
+
+Mis en place pour les icônes de panier et pour la 'no_image' dans un carrousel du portail.
+
+#10561 : Création de messages pour le BBcode dans les avis
+Les libellés des boutons sont dans les fichiers de messages, donc substituables.
+
+#10935 : Suggestions : quantité et suggestions identiques
+Il est possible de saisir la quantité dans les suggestions. Les suggestions identiques sont autorisées si l'utilisateur est complètement anonyme : emprunteur non authentifié et adresse email non saisie.
+
+#11000 : Affichage django des notices / évolution du template common
+Ajout des catégories et des champs personnalisés
+
+#11080 : Historique : tout cocher/tout décocher et ordre des boutons
+Le bouton 'cocher toutes les cases' devient 'cocher/tout décocher' et est placé avant le bouton 'supprimer les recherches cochées'.
+
+#11427 : Amélioration de requêtes pour l'affichage des périodiques à l'OPAC 
+Modification de requêtes dans la classe d'affichage pour l'affichage des notices de périodique à l'OPAC 
+
+#9848 : Compte lecteur : export excel des prêts
+Ajout d'un bouton qui permet d'exporter les prêts en cours ou en retard au format excel avec mise en forme
+
+-------
+Portail
+-------
+
+#10426 : Module liste de bannettes / ajout de méthodes pour la source de données
+Ajout des sources de données :
+- depuis un champ de type de contenu d'une rubrique
+- depuis un champ de type de contenu d'un article
+- sélecteur par la valeur d'un champ générique d'article
+- sélecteur par la valeur d'un champ générique de rubrique
+
+#10800 : Span de construction portail
+Ajout d'une classe 'cmsNoStyle' sur les <span> représentant les cadres hors de la page courante du portail, en mode construction. 
+
+#11090 : Vider le cache
+Création d'un bouton pour vider le cache : celui-ci apparait en gestion du contenu éditorial, si un article ou une section est plus récent que le cache des cadres du portail.
+
+#11126 : Module liste d'items / utilisation des tags
+- Corrections pour l'affichage des tags pour la vue Django
+- Permettre de sélectionner une page pour la construction du lien vers le tag
+- Permettre de sélectionner une page pour la construction du lien vers l'item
+
+#11220 : Module liste d'items / Vue Django par Tags
+Nouvelle vue Django de liste d'items classés par Tags

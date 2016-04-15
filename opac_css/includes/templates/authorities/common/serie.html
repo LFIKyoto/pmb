@@ -1,0 +1,20 @@
+{% extends 'gabarit.html' %}
+
+{% block header %}
+	<h3><span>{{ msg.serie_see_title }}</span></h3>
+{% endblock %}
+
+{% block aut_see %}
+	<div class="serielevel2">
+		{{ block.super }}
+	</div>
+{% endblock %}
+	
+{% block title %}
+	<h3>
+		{{ msg.serie_details_serie | printf authority.name }}
+	</h3>
+{% endblock %} 
+
+{% block details %}
+{% endblock %}

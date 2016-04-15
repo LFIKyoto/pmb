@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Mimetypes supportés par la classe
+****************************************************************************************
+© 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+****************************************************************************************
+$Id: manifest.xml,v 1.1 2012-09-26 14:16:44 dgoron Exp $ -->
+
+<manifest name="audio">
+	<desc msg="Lecture des fichiers audio en visionneuse Flash. "/>
+	<screenshoot url="images/audio.class.png"></screenshoot>
+	<mimetypes>
+		<mimetype name="audio/mpeg"/>
+	</mimetypes>
+</manifest>

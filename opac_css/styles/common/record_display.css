@@ -1,0 +1,410 @@
+@charset "utf-8";
+/* -------------------------------------------------------*/
+/* -------------------------------------------------------*/
+/*                      Glyphe Icons                      */
+/* -------------------------------------------------------*/
+/* -------------------------------------------------------*/
+#resa_notice a:before,
+.actions_last_pageNot span:before,
+.plusN a:before,
+.avisNCourte a:before,
+.statutPartN span:before {
+	font-family: FontAwesome;
+	font-weight: normal;
+	font-style: normal;
+	display: inline-block;
+	text-decoration: inherit;
+	-webkit-font-smoothing: antialiased;
+}
+/* ---------------------------------------------------------------------*/
+/* ---------------------------------------------------------------------*/
+/*          Notice reduite     record_in_result_display                 */
+/* ---------------------------------------------------------------------*/
+/* ---------------------------------------------------------------------*/
+
+
+/* ---------------------------------------------------------*/
+/*                        Grid Layout                       */
+/* ---------------------------------------------------------*/
+.asideContentNot{
+	float:left;
+	margin-right: 15px;
+	width:20%;
+}
+.vignetteimgNot{
+
+}
+.parentNotCourte .vignetteimgNot{
+	width: 13%;
+	float:left;
+	margin-right: 2.5%;	
+}
+.notice_corps{
+	width: 56%;
+	float:left;
+}
+.panier_avis_notCourte{
+	margin-left: 74%;
+}
+/* ---------------------------------------------------------*/
+/*                      Notice reduite                      */
+/* ---------------------------------------------------------*/
+.parentNotCourte{
+	margin: 0px auto;
+	padding: 20px 5px 15px;
+	background-color: #fff;
+	border-bottom: 1px solid #e7e7e7;
+}
+/* ---------------------------------------------------------*/
+/*                        Picture                           */
+/* ---------------------------------------------------------*/
+.vignetteDocNot{
+	text-align: left;
+	overflow:hidden;
+}
+
+.vignetteNot{
+	width: 100%;
+	height: auto;
+	border: solid 1px #E6E6E6;
+}
+
+/* ---------------------------------------------------------*/
+/*                     Titre   Notice                       */
+/* ---------------------------------------------------------*/
+.title_notCourte h3{
+	margin-bottom: 10px;
+	font-size: 1.35em;
+	padding-top: 3px;
+}
+.title_notCourte h3 a{
+	text-decoration:none;
+	color:inherit;
+}
+/* ---------------------------------------------------------*/
+/*                     Notice summary                       */
+/* ---------------------------------------------------------*/
+.resume_notCourte span{
+	color:#666666;
+	line-height:16px;
+	font-style:italic;
+}
+.infoCompl_notCourte{
+	margin-bottom:10px;
+	font-weight: bold;
+}
+.infoCompl_notCourte span{
+	color:#666666;
+	font-size:90%;
+}
+/* ---------------------------------------------------------*/
+/*                       Notice complet                     */
+/* ---------------------------------------------------------*/
+.plusN{
+	margin:5px 0;
+}
+.plusN a{
+	text-decoration:none;
+	font-weight:bold;
+}
+.plusN a:before{
+	content: "\f196";
+	font-size: 120%;
+	vertical-align: bottom;
+	margin-right: 7px;
+	text-align: center;
+}
+/* ---------------------------------------------------------*/
+/*                      Avis commentaire                    */
+/* ---------------------------------------------------------*/
+span.imgComment,
+span.imgStatutPartN {
+    background-color: #787878;
+    padding: 7px 7px;
+}
+span.imgComment img.imgComment,
+span.imgStatutPartN img.imgStatutPartN{
+	vertical-align:middle;
+    line-height: 30px;
+	height: 18px;
+}
+.avisNCourte>a>img,
+.imgStatutPartN>a>img {
+	vertical-align: inherit;
+    vertical-align: text-bottom;
+}
+.avisNCourte2{
+	text-align:right;
+	margin-top:15px;
+}
+
+.avisNCourte2 a{
+	text-decoration:none;
+	font-style:italic;
+	font-size:90%;
+}
+.avisN a{
+	text-decoration:none;
+	font-weight: 500;
+	color: #525252;
+}
+.avisNCourte a{
+	text-decoration:none;
+	color: #555252;
+	margin-left: 5px;
+}
+.avisNCourte a:before{
+
+}
+/* ---------------------------------------------------------*/
+/*                            Panier                        */
+/* ---------------------------------------------------------*/
+.onglet_basketNotCourte .img_basketNotCourte img{
+	background-color: #787878;
+	padding: 7px;
+	margin-right: 7px;
+	vertical-align: middle;
+}
+.onglet_basketNotCourte .img_basketNotCourte{
+	text-decoration:none;
+	background-color: inherit;
+	color: #555252;
+	vertical-align: top;
+	line-height: 30px;
+}
+.onglet_basketNotCourte, .avisNCourte, .statutPartN {
+	background-color:#e9ebee;
+	margin-bottom:10px;
+	line-height: 30px;
+}
+
+span.StatutPartN{
+	text-decoration:none;
+	background-color: #e9ebee;
+	padding: 8px 8px 7px 0;
+	color: #555252;
+	margin-left: 5px;
+}
+
+.statutPartN2{
+	margin-top:15px;
+}
+/* ---------------------------------------------------------*/
+/*                          Reserver                        */
+/* ---------------------------------------------------------*/
+#resa_notice{
+	float:right;
+}
+
+#resa_notice h3{
+	border-bottom: none;
+}
+
+#resa_notice a{
+	text-decoration:none;
+	color: #5CB32A;
+}
+
+#resa_notice a:before{
+	content: "\f064";
+	font-size: 120%;
+	vertical-align: middle;
+	margin-right: 7px;
+	text-align: center;
+}
+.dispoLien_notice a{
+	text-decoration:none;
+	font-size:1.17em;
+	font-weight:600;
+}
+/* ---------------------------------------------------------------------*/
+/*                              Notice Footer                           */
+/* ---------------------------------------------------------------------*/
+.footer_notice {
+    margin: 15px 0 5px 0;
+}
+/* ---------------------------------------------------------------------*/
+/* ---------------------------------------------------------------------*/
+/*                 Notice Full  record_extended_display                 */
+/* ---------------------------------------------------------------------*/
+/* ---------------------------------------------------------------------*/
+
+/* ---------------------------------------------------------*/
+/*                        Grid Layout                       */
+/* ---------------------------------------------------------*/
+#noticeNot {
+    max-width: 98%;
+    margin: 0px auto;
+    padding: 0;
+}
+#blocNotice_descr {
+    padding: 0px;
+    margin-bottom: 30px;
+}
+
+/* ---------------------------------------------------------*/
+/*                    Enrichissisement                      */
+/* ---------------------------------------------------------*/
+#blocNotice_descr ul.onglets_isbd_publicNot {
+    width: 100%;
+    margin-bottom: 15px;
+    padding: 0;
+    position: static;
+}
+#blocNotice_descr ul.onglets_isbd_publicNot:after {
+	content:"";
+	display:block;
+	clear:both;
+}
+#blocNotice_descr ul.onglets_isbd_publicNot .isbd_public_active a {
+    background: #787878;
+}
+#blocNotice_descr ul.onglets_isbd_publicNot .isbd_public_active a span {
+    color: #ffffff;
+}
+#blocNotice_descr ul.onglets_isbd_publicNot li a {
+    display: block;
+    padding: 0px 9px;
+    text-decoration: none;
+    color: #565656;
+    border: 0;
+}
+#blocNotice_descr ul.onglets_isbd_publicNot li {
+    display: block;
+    float: left;
+    margin: 10px 6px 0px 0;
+    position: relative;
+    text-align: center;
+    color: #666666;
+    border-bottom: none;
+    min-height: 30px;
+    line-height: 30px;
+    background-color: #E0E2E6;
+    min-width: 24%;
+}
+#blocNotice_descr ul.onglets_isbd_publicNot li:hover{
+	  background: #787878;
+}
+#blocNotice_descr ul.onglets_isbd_publicNot li:hover a span {
+    color: #ffffff;
+}
+#blocNotice_descr ul.onglets_isbd_publicNot li img{
+	position:absolute;
+	right:3%;
+	top:20%;
+	background-color:#fff;
+	border-radius:50%;
+	padding:2px;
+}
+/* ---------------------------------------------------------*/
+/*                           Panier                         */
+/* ---------------------------------------------------------*/
+.onglet_basketNot {
+    float: none;
+  	background-color: #E9EBEE;
+  	
+    margin: 10px 0px;    
+}
+.onglet_basketNot .img_basketNot img {
+	background-color: #787878;
+	padding: 7px 8px;
+	margin-right: 7px;
+	vertical-align: middle;
+}
+.onglet_basketNot .img_basketNot {
+    text-decoration: none;
+    background-color: #e9ebee;
+    padding: 7px 8px 8px 0;
+    color: #555252;
+    vertical-align: top;
+    line-height: 29px;
+}
+.onglet_basketNotCourte2 {
+    text-align: right;
+}
+/* ---------------------------------------------------------*/
+/*                         Notice content                   */
+/* ---------------------------------------------------------*/
+.notice_contenu {
+    margin-left: 23%;
+    overflow: hidden;
+}
+.descr_notice {
+    width: 100%;
+}
+.descr_notice td {
+    padding: 4px;
+    min-width: 110px
+}
+.labelNot {
+    vertical-align: top;
+}
+/* ---------------------------------------------------------*/
+/*                     Titre   Notice                       */
+/* ---------------------------------------------------------*/
+#exempl_titleNot {
+    font-weight: bold;
+    font-size: 1.35em;
+}
+#exempl_titleNot {
+    font-weight: 600;
+    font-size: 1.2em;
+}
+/* ---------------------------------------------------------*/
+/*                       Notice complet                     */
+/* ---------------------------------------------------------*/
+.lienP a {
+    font-weight: 400;
+    text-decoration: none;
+    color:#525252
+
+}
+.lienP {
+	border-top: 1px solid #e7e7e7;
+	border-bottom: 1px solid #e7e7e7;
+	margin: 10px 0px 5px;
+	padding:2px 3px;
+	background-color: #E9EBEE;
+	padding-left: 7px;
+}
+/* ---------------------------------------------------------*/
+/*                      Avis commentaire                    */
+/* ---------------------------------------------------------*/
+.avisN{
+    line-height: 30px;
+    background-color: #E9EBEE;
+}
+span.avisN{
+margin-left:5px;
+}
+.asideContentNot > .avisN > span.avisN img.img_star_avis {
+	vertical-align: sub;
+}
+.avisN a+a{
+	margin-left:7px;
+}
+/* ---------------------------------------------------------*/
+/*                     exemplaires                          */
+/* ---------------------------------------------------------*/
+#zone_exemplaires {
+    margin-bottom: 15px;
+}
+#zone_exemplaires h3 span {
+    text-transform: uppercase;
+}
+.exemplairesNot th {
+    background-color: #AB0101;
+    color: #ffffff;
+    line-height: 22px;
+    text-align: left;
+}
+.exemplairesNot th,
+.exemplairesNot td {
+    padding: 0px 5px;
+}
+/* ---------------------------------------------------------*/
+/*                      Reservation                         */
+/* ---------------------------------------------------------*/
+#bt_resa_NotCourte {
+    font-weight: 600;
+}

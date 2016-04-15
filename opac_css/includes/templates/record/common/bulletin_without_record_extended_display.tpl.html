@@ -1,0 +1,108 @@
+<!-- $Id: bulletin_without_record_extended_display.tpl.html,v 1.1.2.4 2015-12-10 14:12:36 apetithomme Exp $ -->
+
+<div id="noticeNot">
+	<div class="parentNot">
+		<div id="blocNotice_descr">
+			
+			<ul id="onglets_isbd_public{{ bulletin.bulletin_id }}" class="onglets_isbd_publicNot">
+				<li id="onglet_detail{{ bulletin.bulletin_id }}" class="isbd_public_active"><a href="#" onclick="display_tab(this, 'detail', {{ bulletin.bulletin_id }})"><span>{{ msg.demandes_action_detail }}</span></a></li>
+			</ul>
+			
+			<div id="div_detail{{ bulletin.bulletin_id }}">
+				<div class="asideContentNot">	
+					<!-- Vignette de la notice -->
+					<div class="vignetteimgNot">
+						<div class="vignetteDocNot">
+							<img class="vignetteNot" src="./styles/common/images/no_image.jpg" />
+						</div>
+					</div>
+					{% if record.cart_allow %}
+						<!-- Ajouter au panier -->
+						<div class="onglet_basketNot">
+							<a href="cart_info.php?id={{ bulletin.bulletin_id }}&amp;lvl=analysis&amp;header={{ bulletin.bulletin_numero | urlencode }}+-+{{ bulletin.mention_date | urlencode }}" target="cart_info" class="img_basketNot"><img src="./includes/templates/record/common/styles/images/basket_blanc.png" border="0" title="{{ msg.record_display_add_to_cart }}" alt="{{ msg.record_display_add_to_cart }}"/>{{ msg.record_display_add_to_cart }}</a>
+						</div>
+					{% endif %}
+					<!-- Permalink -->
+					<div class="lienP">
+						<a href="{{ liens_opac.lien_rech_bulletin | replace '!!id!!' bulletin.bulletin_id }}" title="{{ msg.record_display_permalink_label }}">{{ msg.record_display_permalink_label }}</a>
+					</div>
+				</div>
+				<!-- Contenu de la notice -->
+				<div class="notice_contenu">
+					{{ record.display_coins_span }}
+					<table class="descr_notice">
+						<tbody>
+							<tr>
+								<td class="labelNot">
+									<span>{{ msg.tit1display_start }}</span>
+								</td>
+								<td>
+									<span id="exempl_titleNot">
+										<a href="{{ liens_opac.lien_rech_notice | replace '!!id!!' parent.id }}" title="{{ parent.tit1 }}">{{ parent.tit1 }}</a>
+										{{ bulletin.bulletin_numero }} - {{ bulletin.mention_date }}
+									</span>
+								</td>
+							</tr>
+							{% if bulletin.biblio_doc %}
+								<tr>
+									<td class="labelNot">
+										<span>{{ msg.typdocdisplay_start }}</span> <!-- Type de document-->
+									</td>
+									<td>
+										<span>{{ bulletin.biblio_doc }}</span>
+									</td>
+								</tr>
+							{% endif %}
+							{% if bulletin.aff_date_date %}
+								<tr>
+									<td class="labelNot">
+										<span>{{ msg.bull_date_date }}</span> <!-- Paru le -->
+									</td>
+									<td>
+										<span>{{ bulletin.aff_date_date }}</span>
+									</td>
+								</tr>
+							{% endif %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="clear"></div>
+		<!-- Bouton de reservation -->
+		{% if bulletin.resas_datas.flag_resa_visible %}
+			{% if bulletin.resas_datas.flag_resa_possible %}
+				{% if !bulletin.resas_datas.flag_max_resa %}
+					<div id="resa_notice">
+						<a href="{{ bulletin.resas_datas.href }}" onclick="{{ bulletin.resas_datas.onclick }}" id="bt_resa_NotCourte">{{ msg.record_display_expl_reserve }}</a>
+						{% if bulletin.resas_datas.nb_resas %}
+							<p class='record_nb_resas'>{{ msg.resa_nb_deja_resa | replace '!!nbresa!!' bulletin.resas_datas.nb_resas }}</p>
+						{% endif %}
+					</div>
+					<div class='clear'></div>
+				{% endif %}
+			{% endif %}
+		{% endif %}
+		
+		<!-- Depouillements -->
+		{% for article in bulletin.articles %}
+			{% if loop.first %}
+				<div id="zone_depouillements">
+					<!-- Lien pour ajouter tous les depouillements au panier? 
+					<a href=\"cart_info.php?id=".$id."&lvl=analysis&header=".rawurlencode(strip_tags($notice_header))."\" target=\"cart_info\" class=\"img_basket\" title='".$msg["cart_add_result_in"]."'>".$msg["cart_add_result_in"]."</a>"; -->
+					<h3>
+						<span id="titre_depouillements">{{ msg.bull_dep }}</span>
+					</h3>
+			{% endif %}
+			{{ article }}
+			{% if loop.last %}
+				</div>
+			{% endif %}
+		{% endfor %}
+		
+		 <!-- Exemplaire -->
+		<div id="zone_exemplaires">
+			{{ bulletin.display_expls }}
+		</div>
+	</div>
+</div>

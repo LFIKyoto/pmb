@@ -1,0 +1,133 @@
+#	Note explicative
+#
+#	Les contenus decrits ici ont pour but de renseigner les parametres
+#	dans la partie gestion de l'opac PMB. Les valeurs sont a renseigner 
+#	suivant les directives #obligatoire #recommande...
+#
+#	Il est possible que certains parametres non decrits ci-dessous n'aient pas l'affichage 
+#	souhaite, auquel cas il vous faudra contacter le realisateur de cette charte pour
+#	implementer le parametre en question.
+#	
+#	Une sauvegarde des valeurs est toujours souhaitee avant modification, 
+#	communement en collant le contenu du champ "Valeur" dans le champ "Explication"
+
+
+/*************************
+default_style_addon
+*************************/
+
+
+/*************************
+logosmall
+*************************/
+styles/eckbolsheim/images/blasonmairie.png
+
+
+/*************************
+biblio_main_header
+*************************/
+<!-- jQuery library -->
+<script type="text/javascript" src="./includes/javascript/jquery/jquery-1.4.4.min.js"></script>
+<!-- bxSlider library -->
+<script type="text/javascript" src="./includes/javascript/jquery/jquery.bxSlider.min.js"></script>
+<!-- library -->
+<script type="text/javascript" src="./includes/javascript/jquery/eckbolsheim.js"></script>
+
+
+/*************************
+biblio_preamble_p1
+*************************/
+<a href="./index.php"><img src="./styles/eckbolsheim/images/logo.jpg" /></a>
+
+
+/*************************
+biblio_preamble_p2
+*************************/
+<div id="slideshow">
+<ul id="slides">
+<li><img src="./styles/eckbolsheim/images/bandeau.jpg" /></li>
+<li><img src="./styles/eckbolsheim/images/bandeau2.jpg" /></li>
+<li><img src="./styles/eckbolsheim/images/bandeau3.jpg" /></li>
+<li><img src="./styles/eckbolsheim/images/bandeau4.jpg" /></li>
+</ul>
+</div>
+
+
+/*************************
+biblio_post_adress
+*************************/
+<ul id="menuDeroulant">
+<li><a href="./index.php">Accueil</a></li>
+<li><a href="./index.php">Infos pratiques</a></li>
+<li><a href="./index.php">Animations</a></li>
+<li><a href="./index.php">Partenaires</a></li>
+</ul>
+
+
+/*************************
+infopage carrousel
+*************************/
+<div id="infopage_carrousel">
+<h3><span>Consultez les nouveautés</span></h3>
+<!--<a id="plus_ouvrages" alt="" href="./index.php?lvl=etagere_see&id=#">&gt; Voir tous les ouvrages</a>-->
+</div>
+
+
+/*************************
+infopage actualités
+*************************/
+<div id="infopage_actualites">
+<h3><span>Actualités</span></h3>
+<table>
+<tr>
+<td><img src="./styles/eckbolsheim/images/img_actu.jpg" /></td>
+<td><h4>Exposition</h4>
+<p><b>« Beauté multiples au pays des insectes »</b>. Exposition photographique de Monique Stenger.<br />
+1er au 28 mars à la bibliothèque
+<br /><br />
+Monique Stenger, résident à Eckbolsheim est photographe amateur. Armée de son appareil photo, elle sillonne les rues, les jardins et les forêts. Elle nous propose un regard artistique sur la nature qui nous entoure. La macrophotographie d’insectes en révèle la richesse des formes et des couleurs et par là, nous sensibilise à la biodiversité.</p>
+
+<h4>WiFi à la bibliothèque !</h4>
+<p>Vous pouvez désormais vous connecter sur une borne WiFi à la bibliothèque. Venez avec votre ordinateur portable ou votre tablette ou votre IPhone et surfez sur la Toile !<br />
+Nous avons opté pour une solution permettant d’allumer ou de couper la connexion WiFi en fonction des publics accueillis.</p></td>
+</tr>
+</table>
+</div>
+
+
+/*************************
+infopage coups de coeur
+*************************/
+<div id="infopage_coupsdecoeur">
+<h3><span>Coups de coeur</span></h3>
+<table>
+<tr>
+<td><h4>Certaines n'avaient jamais vu la mer par Julie Otsuka et traduit par Carine Chich&eacute;reau, paru chez Ph&eacute;bus en 2012. (collection litt&eacute;rature &eacute;trang&egrave;re)</h4>
+Un pan de l'histoire am&eacute;ricaine est ici d&eacute;voil&eacute; avec l'immigration de femmes japonaises aux Etats-Unis dans les ann&eacute;es 1900. Apr&egrave;s un difficile voyage en mer, elles viennent pour &eacute;pouser un homme qu'elles n'ont jamais vu. Mais cet &eacute;poux qui s'&eacute;tait pr&eacute;sent&eacute; comme homme d'affaire ou g&eacute;rant d'un commerce n'est qu'un ouvrier agricole. Apr&egrave;s la p&eacute;riode de d&eacute;sillusion, les femmes tentent de s'adapter aux territoires immenses, &agrave; la langue et &agrave; la culture. Des enfants naissent et grandissent qui oublient tr&egrave;s vite les traditions japonaises. Chaque famille fait sa place tant bien que mal. Mais apr&egrave;s l'attaque de Pearl Harbor, les Japonais immigr&eacute;s sont tr&egrave;s vite accus&eacute;s d'espionage. Le gouvernement d&eacute;porte la communaut&eacute; japonaise dans des camps et les envoient travailler la terre dans l'Utah, le Nevada ou le Wyoming o&ugrave; il seront oubli&eacute;s de leurs anciens voisins.<br /><br />
+Avec une &eacute;criture magistrale, bouleversante,comme une incantation o&ugrave; les voix de toutes les Japonaises racontent leur destin, Julie Otsuka revient sur une histoire oubli&eacute;e. Le roman a obtenu le prix PEN/Faulkner for fiction aux Etats-Unis.</td>
+<td><img class="img_notice" src="https://gestion4.bibli.fr/eckbolsheim/getimage.php?url_image=http%3A%2F%2Fimages-eu.amazon.com%2Fimages%2FP%2F%21%21isbn%21%21.08.MZZZZZZZ.jpg&amp;noticecode=9782752906700&amp;vigurl=" alt="" hspace="4" vspace="2" align="right" /></td>
+</tr>
+<tr>
+<td><h4>Pourquoi Emma-Jane est tomb&eacute;e de l&rsquo;arbre et ce qui s&rsquo;ensuivit&hellip; de Lauren Tarshis chez Bayard</h4>
+Emma-Jane est une coll&eacute;gienne &eacute;trange, sens&eacute;e et calme. Elle aime observer les gens et ses camarades. C&rsquo;est d&rsquo;ailleurs comme cela qu&rsquo;elle aide et r&eacute;soud leurs soucis. Mais voil&agrave; qu&rsquo;aider Coleen Pomerantz va s&rsquo;av&eacute;rer plus compliqu&eacute;&hellip; Kaitlin, la fille populaire et tyrannique du coll&egrave;ge, soupconn&eacute;e de vouloir chipper l&rsquo;amie de Coleen ne va pas se laisser faire et remonter la piste jusqu'&agrave; elle. Le monde bien ordonn&eacute; d&rsquo;Emma-Jane va &eacute;clater&hellip;</td>
+<td><img class="img_notice" src="https://gestion4.bibli.fr/eckbolsheim/getimage.php?url_image=http%3A%2F%2Fimages-eu.amazon.com%2Fimages%2FP%2F%21%21isbn%21%21.08.MZZZZZZZ.jpg&amp;noticecode=9782747028363&amp;vigurl=" alt="" hspace="4" vspace="2" width="98" height="148" align="right" /></td>
+</tr>
+</table>
+</div>
+
+
+/*************************
+infopage prochainement
+*************************/
+<div id="infopage_prochainement">
+<h3><span>Prochainement</span></h3>
+<table>
+<tr>
+<td><h4>&gt; &quot;Autour du marchand v&eacute;nitien Marco Polo, une premi&egrave;re mondialisation&quot;.</h4>
+Jeudi 11 avril 2013 &agrave; 18h30
+<br /><br />
+Conf&eacute;rence pr&eacute;sent&eacute;e par Pierre Racine, professeur honoraire d'histoire m&eacute;di&eacute;vale de l'universist&eacute; de Strasbourg. Une s&eacute;ance de d&eacute;dicace est propos&eacute;e aux personnes ayant achet&eacute; le livre en librairie.</td>
+</tr>
+</table>
+</div>
+

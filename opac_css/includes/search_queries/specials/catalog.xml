@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- $Id: catalog.xml,v 1.8.4.1 2015-12-11 11:14:34 jpermanne Exp $ -->
+<specialfields>
+	<type name="combine" class="combine_search" path="combine"></type>
+	<type name="combine_unimarc" class="combine_search_unimarc" path="combine_unimarc"></type>
+	<type name="external_sources" class="external_sources" path="external_sources"></type>
+	<type name="periodique" class="periodique_search" path="periodique"></type>
+	<type name="openurl" class="openurl_search" path="openurl"></type>
+	<type name="facette" class="facette_search" path="facette"></type>
+	<type name="simple_search" class="simple_search_search" path="simple_search"></type>
+	<type name="navigation_section" class="navigation_section_search" path="navigation_section"></type>
+</specialfields>

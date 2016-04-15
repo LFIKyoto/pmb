@@ -1,0 +1,58 @@
+{% extends 'gabarit.html' %}
+
+{% block header %}
+	<h3><span>{{msg.publisher_see_title}}</span></h3>
+{% endblock %}
+
+{% block aut_see %}
+	<div class="authorlevel2">
+		{{block.super}}
+	</div>
+{% endblock %}
+	
+{% block title %}
+	<h3>
+		{{ msg.publisher_details_publisher  | printf authority.name }}{% if authority.web %} <a target="_blank" href="{{authority.web}}"><img src='./images/globe.gif'/></a>{% endif %}
+	</h3>
+{% endblock %} 
+
+{% block details %}
+	{% if authority.ed_comment %}
+		<div class='aut_comment'>{{authority.ed_comment}}</div>
+	{% endif %}
+	{% if authority.ville %}
+		<p>{{msg.publisher_details_location | printf authority.ville }}</p>
+	{% endif %}
+	{% if authority.adr1 %}
+		{% if authority.cp %}
+			{% if authority.ville %}
+				<p>
+					{{authority.adr1}}
+					{% if authority.adr2 %}
+						<br />{{authority.adr2}}
+					{% endif %}	
+					<br />{{authority.cp}} {{authority.ville}}
+					{% if authority.pays %}
+						<br />{{authority.pays}}
+					{% endif %}	
+				</p>
+			{% endif %}	
+		{% endif %}
+	{% endif %}	
+	
+	{% if authority.collections %}
+		<p>
+			{{ msg.publishers_collections }}
+			{% for collection in authority.collections %}
+				{% if loop.first %}
+					<ul>
+				{% endif %}	
+						<li><a href="./index.php?lvl=coll_see&id={{collection.id}}">{{ collection.name }}</a></li>
+				{% if loop.last %}
+					</ul>
+				{% endif %}	
+				
+			{% endfor %}
+		</p>
+	{% endif %}	
+{% endblock %} 

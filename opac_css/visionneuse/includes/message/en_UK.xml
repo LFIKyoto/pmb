@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<!-- Messages localisés en français
+****************************************************************************************
+© 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+****************************************************************************************
+$Id: en_UK.xml,v 1.4 2013-06-13 10:20:48 mbertin Exp $ -->
+<messages>
+	<entry code="close">Close</entry>
+	<entry code="fullscreen">Fullscreen</entry>
+	<entry code="normal">Normal</entry>
+	<entry code="nothing_to_display">Unavailable document</entry>
+	<entry code="forbidden_resources">Access to this document is forbidden</entry>
+	<entry code="download_doc">Download original document</entry>
+</messages>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Mimetypes supportés par la classe
+****************************************************************************************
+© 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+****************************************************************************************
+$Id: manifest.xml,v 1.4 2014-10-13 10:23:36 arenou Exp $ -->
+
+<manifest name="bookreader">
+	<desc msg="Affichage des documents BNF."/>
+	<screenshoot url="images/flexpdf.class.png"></screenshoot>
+	<mimetypes>
+		<mimetype name="application/bnf"/>
+		<mimetype name="application/bnf+zip"/>
+		<mimetype name="application/pdf"/>
+		<mimetype name="application/x-pdf"/>
+		<mimetype name="application/epub+zip"/>
+	</mimetypes>
+</manifest>

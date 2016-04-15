@@ -1,0 +1,208 @@
+{% extends 'record_extended_display.tpl.html' %}
+
+<!-- $Id: record_extended_display_b.tpl.html,v 1.2.2.3 2015-10-08 08:20:47 apetithomme Exp $ -->
+
+{% block record_content %}
+	<table class="descr_notice">
+		<tbody>
+			<tr>
+				<td class="labelNot">
+					<span>{{ msg.tit1display_start }}</span>
+				</td>
+				<td>
+					<span id="exempl_titleNot">
+						<a href="{{ record.liens_opac.lien_rech_notice | replace '!!id!!' record.bul_info.id }}" title="{{ record.bul_info.title }}">{{ record.bul_info.title }}</a>
+						{{ record.tit1 }}
+					</span>
+				</td>
+			</tr>
+			{% for auteur in record.responsabilites.auteurs %}
+				{% if loop.first %}
+					<tr>
+						<td class="labelNot">
+							<span>{{ msg.auteur_start }}</span>
+						</td>
+						<td>
+							<span>
+				{% else %}
+				 ; 
+				{% endif %}
+				<a href="{{ record.liens_opac.lien_rech_auteur | replace '!!id!!' auteur.id }}">{{ auteur.auteur_titre }}</a>{% if auteur.fonction_aff %}, {{ auteur.fonction_aff }}{% endif %}
+				{% if loop.last %}
+							</span>
+						</td>
+					</tr>
+				{% endif %}
+			{% endfor %}
+			{% if record.biblio_doc %}
+				<tr>
+					<td class="labelNot">
+						<span>{{ msg.typdocdisplay_start }}</span> <!-- Type de document-->
+					</td>
+					<td>
+						<span>{{ record.biblio_doc }}</span>
+					</td>
+				</tr>
+			{% endif %}
+			{% if record.bul_info.aff_date_date %}
+				<tr>
+					<td class="labelNot">
+						<span>{{ msg.bull_date_date }}</span> <!-- Paru le -->
+					</td>
+					<td>
+						<span>{{ record.bul_info.aff_date_date }}</span>
+					</td>
+				</tr>
+			{% endif %}
+			{% if record.publishers.0.isbd_entry %}
+				<tr>
+					<td class="labelNot">
+						<span>{{ msg.editeur_start }}</span> <!-- Edition, Annee-->
+					</td>
+					<td>
+						<span><a href="{{ record.liens_opac.lien_rech_editeur | replace '!!id!!' record.publishers.0.id }}">{{ record.publishers.0.isbd_entry }}</a>, {{ record.year }}</span>
+					</td>
+				</tr>
+			{% endif %}
+			{% if record.collection.isbd_entry %}
+				<tr>
+					<td class="labelNot">
+						<span>{{ msg.coll_start }}</span>
+					</td>
+					<td>
+						<span><a href="{{ record.liens_opac.lien_rech_collection | replace '!!id!!' record.collection.id }}">{{ record.collection.isbd_entry }}</a></span>
+					</td>
+				</tr>
+			{% endif %}
+			{% if record.code %}
+				<tr>
+					<td class="labelNot">
+						<span>{{ msg.code_start }}</span>
+					</td>
+					<td>
+						<span>{{ record.code }}</span>
+					</td>
+				</tr>
+			{% endif %}
+			{% if record.display_size %}
+				<tr>
+					<td class="labelNot">
+						<span>{{ msg.size_start }}</span>
+					</td>
+					<td>
+						<span>{{ record.display_size }}</span>
+					</td>
+				</tr>
+			{% endif %}
+			{% if record.indexint %}
+				<tr>
+					<td class="labelNot">
+						<span>{{ msg.indexint_start }}</span>
+					</td>
+					<td>
+						<span><a href="{{ record.liens_opac.lien_rech_indexint | replace '!!id!!' record.indexint.indexint_id }}">{{ record.indexint.display }}</a></span>
+					</td>
+				</tr>
+			{% endif %}
+			{% for id_thes,thesaurus in record.categories %}
+				{% if global.opac_thesaurus %}
+					{% if loop.first %}
+						<tr>
+							<td class="labelNot">
+								<span>{{ msg.categories_start }}</span>
+							</td>
+							<td>
+					{% endif %}
+					{% for categorie in thesaurus %}
+						{% if global.opac_categories_categ_in_line %}
+							{% if loop.first %}
+								<p><strong>{{ categorie.object.thes.libelle_thesaurus }}</strong></p>
+							{% else %}
+								{{ global.pmb_keyword_sep }}
+							{% endif %}
+							<span><a href="{{ record.liens_opac.lien_rech_categ | replace '!!id!!' categorie.object.id }}" {% if global.opac_show_infobulles_categ %}title="{{ categorie.object.comment }}"{% endif %}>{{ categorie.format_label }}</a></span>
+						{% else %}
+							<p>[{{ categorie.object.thes.libelle_thesaurus }}] <a href="{{ record.liens_opac.lien_rech_categ | replace '!!id!!' categorie.object.id }}">{{ categorie.object.libelle }}</a></p>
+						{% endif %}
+					{% endfor %}
+					{% if loop.last %}
+							</td>
+						</tr>
+					{% endif %}
+				{% else %}
+					{% if id_thes == global.opac_thesaurus_defaut %}
+						{% if loop.first %}
+						<tr>
+							<td class="labelNot">
+								<span>{{ msg.categories_start }}</span>
+							</td>
+							<td>
+						{% endif %}
+						{% for categorie in thesaurus %}
+							{% if global.opac_categories_categ_in_line %}
+								{% if !loop.first %}
+									{{ global.pmb_keyword_sep }}
+								{% endif %}
+								<span><a href="{{ record.liens_opac.lien_rech_categ | replace '!!id!!' categorie.object.id }}">{{ categorie.object.libelle }}</a></span>
+							{% else %}
+								<p><a href="{{ record.liens_opac.lien_rech_categ | replace '!!id!!' categorie.object.id }}">{{ categorie.object.libelle }}</a></p>
+							{% endif %}
+						{% endfor %}
+						{% if loop.last %}
+							</td>
+						</tr>
+						{% endif %}
+					{% endif %}
+				{% endif %}
+			{% endfor %}
+			{% if record.resume %}
+				<tr>
+					<td class="labelNot">
+						<span>{{ msg.n_resume_start }}</span>
+					</td>
+					<td>
+						<span>{{ record.resume | nl2br }}</span>
+					</td>
+				</tr>
+			{% endif %}
+			{% if record.contenu %}
+				<tr>
+					<td class="labelNot">
+						<span>{{ msg.n_contenu_start }}</span>
+					</td>
+					<td>
+						<span>{{ record.contenu | nl2br }}</span>
+					</td>
+				</tr>
+			{% endif %}
+			{% for cp in record.p_perso %}
+				<tr>
+					<td class="labelNot">
+						<span>{{ cp.TITRE }}</span>
+					</td>
+					<td>
+						<span>{{ cp.AFF }}</span>
+					</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+{% endblock record_content %}
+
+{% block articles %}
+	<!-- Depouillements -->
+	{% for article in record.articles %}
+		{% if loop.first %}
+			<div id="zone_depouillements">
+				<!-- Lien pour ajouter tous les depouillements au panier? 
+				<a href=\"cart_info.php?id=".$id."&lvl=analysis&header=".rawurlencode(strip_tags($notice_header))."\" target=\"cart_info\" class=\"img_basket\" title='".$msg["cart_add_result_in"]."'>".$msg["cart_add_result_in"]."</a>"; -->
+				<h3>
+					<span id="titre_depouillements">{{ msg.bull_dep }}</span>
+				</h3>
+		{% endif %}
+		{{ article }}
+		{% if loop.last %}
+			</div>
+		{% endif %}
+	{% endfor %}
+{% endblock articles %}

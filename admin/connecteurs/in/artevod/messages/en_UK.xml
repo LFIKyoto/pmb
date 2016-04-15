@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE XMLlist SYSTEM "../XMLlist.dtd" [<!ENTITY nbsp "&amp;nbsp;">]>
+
+<!-- messages localisés en français pour le connecteur arteVOD
+****************************************************************************************
+© 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+****************************************************************************************
+$Id: en_UK.xml,v 1.1 2015-06-15 12:55:33 pmbs Exp $ -->
+
+<XMLlist>
+	<entry code="artevod_key">Login for the authentication</entry>
+	<entry code="artevod_secret_key">Password for the authentication</entry>
+	<entry code="artevod_search_in">Search in</entry>
+	<entry code="artevod_movies">Movies</entry>
+	<entry code="artevod_xslt_file">xslt file for the unimarc conversion (if empty, we use the default sheet)</entry>
+	<entry code="artevod_xslt_file_linked">An xslt file has been linked : %s</entry>
+	<entry code="artevod_error_auth">Login/Password incorrect</entry>
+</XMLlist>

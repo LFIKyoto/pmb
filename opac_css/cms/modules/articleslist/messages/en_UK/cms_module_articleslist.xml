@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE XMLlist SYSTEM "../XMLlist.dtd" [<!ENTITY nbsp "&amp;nbsp;">]>
+
+<!-- messages localisés en français pour le module Articleslist
+****************************************************************************************
+© 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+****************************************************************************************
+$Id: cms_module_articleslist.xml,v 1.1 2015-06-16 10:24:26 pmbs Exp $ -->
+
+<XMLlist>
+	<entry code='cms_module_common_datasource_articles_sections'>Rubrics</entry>
+	<entry code='cms_module_common_datasource_all_articles'>All the articles</entry>
+	<entry code='cms_module_common_datasource_articles'>Articles</entry>
+	<entry code='cms_module_common_datasource_articles_categories'>Articles of the categories of a record</entry>
+	<entry code='cms_module_common_datasource_searcharticles'>Search in the articles</entry>
+	<entry code='cms_module_common_view_articleslist'>Articles list - Django template with link</entry>
+	<entry code='cms_module_articleslist_view_carousel'>Carousel view</entry>
+	<entry code='cms_module_articleslist_view_carousel_responsive'>Responsive carousel view</entry>
+	<entry code='cms_module_common_datasource_articles_by_article_categories'>Articles of the categories of an article</entry>
+	
+</XMLlist>

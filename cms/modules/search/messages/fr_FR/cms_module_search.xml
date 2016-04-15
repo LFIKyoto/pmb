@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE XMLlist SYSTEM "../XMLlist.dtd" [<!ENTITY nbsp "&amp;nbsp;">]>
+
+<!-- messages localisés en français pour le module de recherche
+****************************************************************************************
+© 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+****************************************************************************************
+$Id: cms_module_search.xml,v 1.1 2012-10-17 09:13:39 arenou Exp $ -->
+
+<XMLlist>
+	<entry code='cms_module_search_admin_form_label'>Configuration de la destination de la recherche</entry>
+	<entry code='cms_module_search_add_search_dest'>Ajouter</entry>
+	<entry code='cms_module_search_search_dest_name'>Nom</entry>
+	<entry code='cms_module_search_search_dest_page'>Page de destination</entry>
+	<entry code='cms_module_search_classique_dest'>Recherche classique dans le catalogue</entry>
+</XMLlist>

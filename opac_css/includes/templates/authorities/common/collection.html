@@ -1,0 +1,38 @@
+{% extends 'gabarit.html' %}
+
+{% block header %}
+	<h3><span>{{ msg.detail_coll }}</span></h3>
+{% endblock %}
+
+{% block aut_see %}
+	<div class="collectionlevel2">
+		{{ block.super }}
+	</div>
+{% endblock %}
+	
+{% block title %}
+	<h3>
+		{{ msg.collection_tpl_coll }} {{ authority.name }} {% if authority.collection_web %} <a target="_blank" href="{{ authority.collection_web }}"><img src='./images/globe.gif'/></a>{% endif %}
+	</h3>
+{% endblock %} 
+
+{% block details %}
+	<ul>
+		<li>{{ msg.collection_tpl_publisher }} : <a href="./index.php?lvl=publisher_see&id={{ authority.parent }}">{{ authority.publisher_libelle }}</a>
+		<li>{{ msg.collection_tpl_issn }} : {% if authority.issn %}{{ authority.issn }}{% else %}{{ msg.collection_tpl_no_issn }}{% endif %}</li>
+	</ul>
+	{% if authority.comment %}
+		<div class='aut_comment'>{{ authority.comment | nl2br }}</div>
+	{% endif %}
+	{% for subcollection in authority.subcollections %}
+		{% if loop.first %}
+			{{ msg.subcollection_attached }}
+			<ul>
+		{% endif %}	
+				<li><a href="./index.php?lvl=subcoll_see&id={{ subcollection.id }}">{{ subcollection.name }}</a></li>
+		{% if loop.last %}
+			</ul>
+			<div class='row'></div>
+		{% endif %}
+	{% endfor %}
+{% endblock %}

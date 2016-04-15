@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE XMLlist SYSTEM "../../../../../includes/XMLlist.dtd" [<!ENTITY nbsp "&amp;nbsp;">]>
+
+<!-- messages localisés en français
+****************************************************************************************
+© 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+****************************************************************************************
+$Id: fr_FR.xml,v 1.19 2015-06-11 07:53:25 ngantier Exp $ -->
+
+<XMLlist>
+<entry code="bibloto_service_endpoint">Adresse du web service</entry>
+<entry code="bibloto_service_endpoint_unrecorded">Enregistrer la source pour l'avoir</entry>
+<entry code="bibloto_pmb_ws_url">Url de la source permettant d'effectuer le prêt</entry>
+<entry code="bibloto_style_url">Url du style de l'automate de prêt</entry>
+<entry code="bibloto_checkout_activate">Prêt de documents</entry>
+<entry code="bibloto_checkout_activate_yes">Oui</entry>
+<entry code="bibloto_checkout_activate_no">Non</entry>
+<entry code="bibloto_auto_checkout">Activer la validation du prêt</entry>
+<entry code="bibloto_auto_checkout_yes">Oui</entry>
+<entry code="bibloto_auto_checkout_no">Non</entry>
+<entry code="bibloto_checkin_activate">Retour de documents</entry>
+<entry code="bibloto_checkin_activate_yes">Oui</entry>
+<entry code="bibloto_checkin_activate_no">Non</entry>
+<entry code="bibloto_resa_activate">Afficher les Réservations</entry>
+<entry code="bibloto_resa_activate_yes">Oui</entry>
+<entry code="bibloto_resa_activate_no">Non</entry>
+<entry code="bibloto_printer_activate">Impression du ticket de prêt</entry>
+<entry code="bibloto_printer_activate_yes">Oui</entry>
+<entry code="bibloto_printer_activate_no">Non</entry>
+<entry code="bibloto_printer_name">Nom de l'imprimante</entry>
+<entry code="bibloto_printer_tpl">Template du ticket de prêt</entry>
+<entry code="bibloto_sound_activate">Jouer les alertes sonores</entry>
+<entry code="bibloto_sound_activate_yes">Oui</entry>
+<entry code="bibloto_default_action">Ecran par défaut</entry>
+<entry code="bibloto_default_action_default">Choix de l'action</entry>
+<entry code="bibloto_default_action_checkout">Ecran de prêt</entry>
+<entry code="bibloto_default_action_checkin">Ecran de retour</entry>
+<entry code="bibloto_default_action_resa">Ecran des réservations</entry>
+<entry code="bibloto_default_action_end">Ecran par défaut sur la fin du prêt et du retour</entry>
+<entry code="bibloto_default_action_end_default">Choix de l'action</entry>
+<entry code="bibloto_default_action_end_home">Ecran d'accueil</entry>
+<entry code="bibloto_sound_activate_no">Non</entry>
+<entry code="bibloto_rfid_activate">Activer la RFID</entry>
+<entry code="bibloto_rfid_activate_yes">Oui</entry>
+<entry code="bibloto_rfid_activate_no">Non</entry>
+<entry code="bibloto_rfid_activate_empr">Activer la RFID pour la lecture de la carte lecteur</entry>
+<entry code="bibloto_rfid_activate_empr_yes">Oui</entry>
+<entry code="bibloto_rfid_activate_empr_no">Non</entry>
+<entry code="bibloto_rfid_activate_expl">Activer la RFID pour la lecture des tags de document</entry>
+<entry code="bibloto_rfid_activate_expl_yes">Oui</entry>
+<entry code="bibloto_rfid_activate_expl_no">Non</entry>
+<entry code="bibloto_rfid_driver">Driver RFID</entry>
+<entry code="bibloto_rfid_library_code">Code de la bibliothèque (10 caractères)</entry>
+<entry code="bibloto_rfid_serveur_url">Url du serveur RFID</entry>
+<entry code="bibloto_rfid_security_activate">Activer la gestion de l'antivol</entry>
+<entry code="bibloto_rfid_security_activate_yes">Oui</entry>
+<entry code="bibloto_rfid_security_activate_no">Non</entry>
+<entry code="bibloto_rfid_afi_security_code_on">Code AFI d'antivol actif</entry>
+<entry code="bibloto_rfid_afi_security_code_off">Code AFI d'antivol inactif</entry>
+<entry code="bibloto_msg_checkout_button">Libellé du bouton de prêt</entry>
+<entry code="bibloto_msg_checkin_button">Libellé du bouton de retour</entry>
+<entry code="bibloto_msg_resa_button">Libellé du bouton de réservation</entry>
+<entry code="bibloto_msg_printer_button">Libellé du bouton d'impression du ticket de prêt</entry>
+<entry code="bibloto_msg_exit_button">Libellé du bouton de retour à la page d'accueil</entry>
+<entry code="bibloto_msg_action_title">Libellé de la liste de tous les prêts en cours</entry>
+<entry code="bibloto_msg_checkout_title">Libellé de la liste des prêts effectués</entry>
+<entry code="bibloto_msg_checkin_title">Libellé de la liste des retours effectués</entry>
+<entry code="bibloto_msg_resa_title">Libellé de la liste des réservations</entry>
+<entry code="bibloto_msg_dialog_place_item_checkout">Message de l'action poser un document pour le prêt</entry>
+<entry code="bibloto_msg_dialog_place_item_checkin">Message de l'action poser un document pour le retour</entry>
+<entry code="bibloto_msg_dialog_too_many_items">Message d'erreur trop de documents</entry>
+<entry code="bibloto_msg_dialog_item_cb_unknown">Message d'erreur si document inconnu</entry>
+<entry code="bibloto_msg_dialog_checkout_possible">Message si exemplaire empruntable</entry>
+<entry code="bibloto_msg_dialog_checkout_ok">Message de prêt effectué</entry>
+<entry code="bibloto_msg_dialog_checkout_no">Message d'erreur de prêt</entry>
+<entry code="bibloto_msg_dialog_checkin_ok">Message de retour effectué</entry>
+<entry code="bibloto_msg_dialog_checkin_no_checkout">Message d'erreur en retour si le document n'est pas en prêt</entry>
+<entry code="bibloto_msg_dialog_checkin_no">Message d'erreur de retour</entry>
+<entry code="bibloto_msg_dialog_antivol_error">Message d'erreur d'antivol</entry>
+<entry code="bibloto_msg_dialog_exit">Libellé du bouton terminer</entry>
+<entry code="bibloto_timeout_disconnect">Timeout de déconnection en secondes</entry>
+<entry code="bibloto_home_tpl">Template de la page d'accueil</entry>
+<entry code="bibloto_empr_tpl">Template de la fiche emprunteur</entry>
+<entry code="bibloto_msg_checkout_valid_button">Libellé du bouton de validation du prêt</entry>
+</XMLlist>

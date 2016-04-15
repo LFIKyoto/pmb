@@ -1,0 +1,28 @@
+{% extends 'gabarit.html' %}
+
+{% block header %}
+	<h3><span>{{ msg.detail_coll }}</span></h3>
+{% endblock %}
+
+{% block aut_see %}
+	<div class="subcollectionlevel2">
+		{{ block.super }}
+	</div>
+{% endblock %}
+	
+{% block title %}
+	<h3>
+		{{ msg.subcollection_details_subcollection | printf authority.name }}
+	</h3>
+{% endblock %} 
+
+{% block details %}
+	<ul>	
+		<li>{{ msg.subcollection_details_author | printf "" }}<a href="./index.php?lvl=publisher_see&id={{ authority.publisher }}">{{ authority.publisher_libelle }}</a> 
+		<li>{{ msg.subcollection_details_collection | printf "" }}<a href="./index.php?lvl=coll_see&id={{ authority.parent }}">{{ authority.parent_libelle }}</a> </li>
+		<li>{{ msg.subcollection_details_issn | printf authority.issn }}{% if authority.issn %}{% else %}{{ msg.subcollection_details_no_issn }}{% endif %}</li>
+	</ul>
+	{% if authority.comment %}
+		<div class='aut_comment'>{{ authority.comment | nl2br }}</div>
+	{% endif %}
+{% endblock %}

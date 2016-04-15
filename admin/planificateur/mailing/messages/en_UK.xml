@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- messages localisés en français pour le mailing
+****************************************************************************************
+© 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+****************************************************************************************
+$Id: en_UK.xml,v 1.1 2015-06-15 12:55:34 pmbs Exp $ -->
+
+<XMLlist>
+	<entry code="planificateur_mailing_template">E-mail template</entry>
+	<entry code="planificateur_mailing_caddie_empr">Recipient borrower's basket</entry>
+	<entry code="mailing_unknown">E-mail template or basket of unknown borrowers</entry>
+</XMLlist>

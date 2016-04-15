@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE XMLlist SYSTEM "../../../../../includes/XMLlist.dtd" [<!ENTITY nbsp "&amp;nbsp;">]>
+
+<!-- messages localisés en français
+****************************************************************************************
+© 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+****************************************************************************************
+$Id: en_UK.xml,v 1.1 2015-06-26 08:26:29 pmbs Exp $ -->
+
+<XMLlist>
+<entry code="bibloto_service_endpoint">Address of the webservice</entry>
+<entry code="bibloto_service_endpoint_unrecorded">Register the source to have it</entry>
+<entry code="bibloto_pmb_ws_url">Url of the source of the loan (owner of the document)</entry>
+<entry code="bibloto_style_url">Url of the style of the SelfCheck system</entry>
+<entry code="bibloto_checkout_activate">Document loan</entry>
+<entry code="bibloto_checkout_activate_yes">Yes</entry>
+<entry code="bibloto_checkout_activate_no">No</entry>
+<entry code="bibloto_auto_checkout">Enable the loan validation</entry>
+<entry code="bibloto_auto_checkout_yes">Yes</entry>
+<entry code="bibloto_auto_checkout_no">No</entry>
+<entry code="bibloto_checkin_activate">Return of documents</entry>
+<entry code="bibloto_checkin_activate_yes">Yes</entry>
+<entry code="bibloto_checkin_activate_no">No</entry>
+<entry code="bibloto_resa_activate">Show the reservations</entry>
+<entry code="bibloto_resa_activate_yes">Yes</entry>
+<entry code="bibloto_resa_activate_no">No</entry>
+<entry code="bibloto_printer_activate">Printing of the loan ticket</entry>
+<entry code="bibloto_printer_activate_yes">Yes</entry>
+<entry code="bibloto_printer_activate_no">No</entry>
+<entry code="bibloto_printer_name">Name of the printer</entry>
+<entry code="bibloto_printer_tpl">Template of the loan ticket</entry>
+<entry code="bibloto_sound_activate">Enable the audio alerts</entry>
+<entry code="bibloto_sound_activate_yes">yes</entry>
+<entry code="bibloto_default_action">Default screen</entry>
+<entry code="bibloto_default_action_default">Choice of the action</entry>
+<entry code="bibloto_default_action_checkout">Loans screen</entry>
+<entry code="bibloto_default_action_checkin">Returns screen</entry>
+<entry code="bibloto_default_action_resa">Reservations screen</entry>
+<entry code="bibloto_default_action_end">Default screen after a loan or a return</entry>
+<entry code="bibloto_default_action_end_default">Choice of the action</entry>
+<entry code="bibloto_default_action_end_home">Home screen</entry>
+<entry code="bibloto_sound_activate_no">No</entry>
+<entry code="bibloto_rfid_activate">Enable the RFID</entry>
+<entry code="bibloto_rfid_activate_yes">Yes</entry>
+<entry code="bibloto_rfid_activate_no">No</entry>
+<entry code="bibloto_rfid_activate_empr">Enable the RFID to read reader cards</entry>
+<entry code="bibloto_rfid_activate_empr_yes">Yes</entry>
+<entry code="bibloto_rfid_activate_empr_no">No</entry>
+<entry code="bibloto_rfid_activate_expl">Enable the RFID to read document tags</entry>
+<entry code="bibloto_rfid_activate_expl_yes">Yes</entry>
+<entry code="bibloto_rfid_activate_expl_no">No</entry>
+<entry code="bibloto_rfid_driver">RFID Driver</entry>
+<entry code="bibloto_rfid_library_code">Library code (10 characters)</entry>
+<entry code="bibloto_rfid_serveur_url">URL of the RFID server</entry>
+<entry code="bibloto_rfid_security_activate">Enable the management of the anti-theft</entry>
+<entry code="bibloto_rfid_security_activate_yes">Yes</entry>
+<entry code="bibloto_rfid_security_activate_no">No</entry>
+<entry code="bibloto_rfid_afi_security_code_on">AFI anti-theft code active</entry>
+<entry code="bibloto_rfid_afi_security_code_off">AFI anti-theft code inactive</entry>
+<entry code="bibloto_msg_checkout_button">Label of the loan button</entry>
+<entry code="bibloto_msg_checkin_button">Label of the return button</entry>
+<entry code="bibloto_msg_resa_button">Label of the reservation button</entry>
+<entry code="bibloto_msg_printer_button">Label of the button to print the loan ticket</entry>
+<entry code="bibloto_msg_exit_button">Label of the button to return to the home page</entry>
+<entry code="bibloto_msg_action_title">Label of the list of all the ongoing loans</entry>
+<entry code="bibloto_msg_checkout_title">Label of the list of the lent documents</entry>
+<entry code="bibloto_msg_checkin_title">Label of the list of the returned documents</entry>
+<entry code="bibloto_msg_resa_title">Label of the list of the reservations</entry>
+<entry code="bibloto_msg_dialog_place_item_checkout">Message of the action place a document for the loan</entry>
+<entry code="bibloto_msg_dialog_place_item_checkin">Message of the action place a document for the return</entry>
+<entry code="bibloto_msg_dialog_too_many_items">Error message too many documents</entry>
+<entry code="bibloto_msg_dialog_item_cb_unknown">Error message if unknown document</entry>
+<entry code="bibloto_msg_dialog_checkout_possible">Message if copy is available on loan</entry>
+<entry code="bibloto_msg_dialog_checkout_ok">Message of loan made</entry>
+<entry code="bibloto_msg_dialog_checkout_no">Message of loan error</entry>
+<entry code="bibloto_msg_dialog_checkin_ok">Message of document returned</entry>
+<entry code="bibloto_msg_dialog_checkin_no_checkout">Error message in return if the document was not on loan</entry>
+<entry code="bibloto_msg_dialog_checkin_no">Message of return error</entry>
+<entry code="bibloto_msg_dialog_antivol_error">Message of anti-theft error</entry>
+<entry code="bibloto_msg_dialog_exit">Label of the Done button</entry>
+<entry code="bibloto_timeout_disconnect">Disconnection timeout in seconds</entry>
+<entry code="bibloto_home_tpl">Home page template</entry>
+<entry code="bibloto_empr_tpl">Borrower record template</entry>
+<entry code="bibloto_msg_checkout_valid_button">Label of the loan validation button</entry>
+</XMLlist>
