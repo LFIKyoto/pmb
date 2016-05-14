@@ -1,0 +1,97 @@
+@charset "utf-8";
+ /* +--------------------------------------------------------------------------+
+// 2015 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// +-------------------------------------------------+
+// $Id: fontAcontent.css,v 1.5.2.3 2016-01-25 15:02:59 wlair Exp $ */
+
+/*------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------*/
+
+#bandeau .infosBandeau .liensExtrn li:before,
+#footer .Ancre a:before,
+.itemAbrege  p.lirePlus:after,
+.itemAbrege  p.lirePlus a:after,
+.MenuHoriz .Nav>li .SousNav li a:after,
+.listBreves>.itemAbrege>a:after,
+.listBibli>.itemAbrege>a:after,
+.listEtageres>.itemAbrege>a:after,
+.fluxRSS>.itemAbrege>a:after,
+#search:after,
+#search:before,
+#search form:after,
+#search form:before,
+.search_advanced_link a:before,
+ul.search_tabs li#current:before,
+.listBreves .itemAbrege>ul li:after,
+.SliderHoriz .SliderNot .bx-prev:before,
+.SliderHoriz .SliderNot .bx-next:before,
+#lienHistorique a:before,
+.fluxRSS>.itemAbrege a:after,
+.itemSolo h4:after,
+#container #main .listItemsGen .itemAbrege h3 a:after,
+.listRubs h3 a:after,
+.listProd>h3:after,
+.listEtageresRub>h3:after,
+.fluxRSSRub>.itemAbrege h4 a:after,
+#facette_wrapper th:after,
+.infosArt>h3:after,
+.fleche>a:after,
+.lienFlux a:after,
+.accesFlux a:before,
+.SliderVertic .bx-wrapper .bx-prev:after,
+.SliderVertic .bx-wrapper .bx-next:after,
+.accesFlux a:after,
+.listeFluxRss a:after,
+#lienBouton a:after,
+.imgXL a:after,
+.rss_articles p i:before,
+#aut_details_liste>h3:after,
+.itemLogo .titreLogo:before,
+.itemLogo:first-child .titreLogo:after,
+.itemLogo:first-child .titreLogo:before,
+#liensPiedDePage a:before,
+#navigator a span:before,
+#navigator a span:after,
+#bt_resa:before,
+.liensExtAss li a:before,
+div#lienCnx a:before, 
+.fenetreActu a:before,
+.carrFondu p.voirPlus a:after,
+.SliderArt .bx-wrapper .bx-controls-direction a:before,
+.SliderNotFondu .bx-wrapper .bx-controls-direction a:before,
+#main .dijitArrowButtonInner:before,
+#main .dijitCalendarMonthContainer th.dijitCalendarArrow:before,
+.MenuHorizVues .NavVues>li:last-child a:after,
+.MenuHorizVues .NavVues>li:first-child a:before,
+div .itemSolo h2:before,
+.faq .bg-grey span:after,
+.faq h3:before,
+#resultatrech_liste>span.open_visionneuse a:before,
+#resultatrech_liste>span.affiner_recherche a:before,
+#resultatrech_liste>span.short_url a:before,
+#resultatrech_liste>span.search_bt_sugg a:before,
+#resultatrech_liste>span.search_bt_external a:before,
+.listItemsGen>h3:after,
+.listProdSimili>h3:after,
+.listRubs>h3:after,
+.SstitrePage h3:before,
+#resultatrech_liste>span.triSelector a:before,
+#resultatrech_liste span.printSearchResult a:before,
+.listTpl>h3:after,
+.enrichment_toutapprendre_lecons li .enrichment_toutapprendre_li a:before,
+.facette_compare_raz a:before,
+#facette_compare span.facette_compare:before,
+a.abonneItemVeille:after,
+#facette_wrapper > form > h3 > table > tbody > tr > td > a:before,
+.facette_compare_raz a:before,
+#facette_compare span.facette_compare:before,
+#active_facette tr>td>a:before {
+	font-family: FontAwesome;
+	font-weight: normal;
+	font-style: normal;
+	display: inline-block;
+	text-decoration: inherit;
+	-webkit-font-smoothing: antialiased;
+	width:1.3em;
+}
