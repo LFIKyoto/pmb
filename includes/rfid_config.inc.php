@@ -2,13 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rfid_config.inc.php,v 1.8 2013-04-10 12:39:04 ngantier Exp $
+// $Id: rfid_config.inc.php,v 1.9 2018-05-25 13:35:28 dgoron Exp $
 
 
 function get_rfid_port() {
 	global $pmb_rfid_ip_port, $_SERVER;
 	
-	// Donne le port rfid associé à l'ip du client 
+	// Donne le port rfid associé à l'ip du client
+	$rfid_port = '';
 	if( $pmb_rfid_ip_port) {
 		$rfid_cmds=explode(";",$pmb_rfid_ip_port);		
 		foreach($rfid_cmds as $rfid_cmd) {			
@@ -35,8 +36,8 @@ function get_rfid_js_header() {
 		url_serveur_rfid=\"".$pmb_rfid_serveur_url."\";
 		SerialPort=\"".get_rfid_port()."\";
 		LibraryCode='$pmb_rfid_library_code';
-		rfid_afi_security_active='".$codes_afi[0]."';
-		rfid_afi_security_off='".$codes_afi[1]."';
+		rfid_afi_security_active='".(isset($codes_afi[0]) ? $codes_afi[0] : '')."';
+		rfid_afi_security_off='".(isset($codes_afi[1]) ? $codes_afi[1] : '')."';
 	</script>
 	<script type='text/javascript' src='$base_path/javascript/pmbtoolkit.js'></script>
  	<script src='$base_path/javascript/soap.js'></script>

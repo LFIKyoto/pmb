@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_empr.class.php,v 1.18 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: serialcirc_empr.class.php,v 1.24 2018-11-20 12:36:40 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,8 +13,8 @@ require_once($include_path."/mail.inc.php");
 require_once($include_path."/serialcirc.inc.php");
 
 class serialcirc_empr{
-	var $empr_id;	// identifiant de l'emprunteur
-	var $circ_list;	// tableau d'instance de serialcirc_empr_circ
+	public $empr_id;	// identifiant de l'emprunteur
+	public $circ_list;	// tableau d'instance de serialcirc_empr_circ
 
 	public function __construct(){
 		$this->empr_id = $_SESSION['id_empr_session']*1;
@@ -100,7 +100,7 @@ class serialcirc_empr{
 	public function get_point_form(){
 		global $msg,$charset;
 		return "
-	<form method='post' action='' name='serialcirc_checkpoint'>
+	<form method='post' action='#' name='serialcirc_checkpoint'>
 		<input type='text' name='expl_to_point' value='' title='".htmlentities($msg['serialcirc_codebarre'],ENT_QUOTES,$charset)."' placeholder='".htmlentities($msg['serialcirc_codebarre'],ENT_QUOTES,$charset)."'/>
 		&nbsp;<input type='submit' class='bouton' value='".htmlentities($msg['serialcirc_point_expl'],ENT_QUOTES,$charset)."'/>
 	</form>";
@@ -109,7 +109,7 @@ class serialcirc_empr{
 	public function get_holding_form(){
 		global $msg,$charset;
 		return "
-	<form method='post' action='' name='serialcirc_holding'>
+	<form method='post' action='#' name='serialcirc_holding'>
 		<input type='text' name='expl_to_hold' value='' title='".htmlentities($msg['serialcirc_codebarre'],ENT_QUOTES,$charset)."' placeholder='".htmlentities($msg['serialcirc_codebarre'],ENT_QUOTES,$charset)."'/>
 		&nbsp;<input type='submit' class='bouton' value='".htmlentities($msg['serialcirc_hold_expl'],ENT_QUOTES,$charset)."'/>
 	</form>";
@@ -356,6 +356,7 @@ class serialcirc_empr{
 
 	public function unsubscribe($ids=array()){
 		if(is_array($ids)){
+			$ok_insert = true;
 			for($i=0 ; $i<count($ids) ; $i++){
 				$ids[$i]+=0;
 				$query = "insert into serialcirc_ask set 
@@ -368,11 +369,12 @@ class serialcirc_empr{
 					serialcirc_ask_comment =''";
 				$res = pmb_mysql_query($query);
 				if($res){
-					return true;
+					$this->ask_subscription_alert_mail_users_pmb($ids[$i],1);
 				}else{
-					return false;
+					$ok_insert = false;
 				}
-			}
+			}			
+			return $ok_insert;
 		}else{
 			return false;
 		}
@@ -391,9 +393,57 @@ class serialcirc_empr{
 			serialcirc_ask_comment =''";				
 		$result = pmb_mysql_query($query);
 		if($result){
+			$this->ask_subscription_alert_mail_users_pmb($serial_id);
 			return true;
 		}else{
 			return false;
+		}
+	}
+	
+	public function ask_subscription_alert_mail_users_pmb($serial_id, $annul=0) {
+		global $dbh;
+		global $msg, $charset;
+		global $opac_biblio_name, $opac_biblio_email ;
+		global $opac_url_base ;
+	
+		// paramétrage OPAC: choix du nom de la bibliothèque comme expéditeur
+		$requete = "select location_libelle, email, empr_location from empr, docs_location where empr_location=idlocation and id_empr='".$this->empr_id."' ";
+		$res = pmb_mysql_query($requete, $dbh);
+		$loc=pmb_mysql_fetch_object($res) ;
+		$PMBusernom = $loc->location_libelle ;
+		$PMBuserprenom = '' ;
+		$PMBuseremail = $loc->email ;
+		if ($PMBuseremail) {
+			$query = "select distinct empr_prenom, empr_nom, empr_cb, empr_mail, empr_tel1, empr_tel2, empr_ville, location_libelle, nom, prenom, user_email, date_format(sysdate(), '".$msg["format_date_heure"]."') as aff_quand, deflt2docs_location  from empr, docs_location, users where id_empr='".$this->empr_id."' and empr_location=idlocation and user_email like('%@%') and user_alert_serialcircmail=1";
+			$result = @pmb_mysql_query($query, $dbh);
+			$headers  = "MIME-Version: 1.0\n";
+			$headers .= "Content-type: text/html; charset=".$charset."\n";
+			$output_final='';
+			while ($empr=@pmb_mysql_fetch_object($result)) {
+				if (!$output_final) {
+					$output_final = "<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" /></head><body>" ;
+					if ($annul==1) {
+						$sujet = $msg["mail_obj_serialcirc_canceled"] ;
+						$output_final .= $sujet ;
+					} else {
+						$sujet = $msg["mail_obj_serialcirc_added"] ;
+						$output_final .= $sujet ;
+					}
+					$output_final .= "</strong></font></a> ".$empr->aff_quand."
+									<br /><strong>".$empr->empr_prenom." ".$empr->empr_nom."</strong>
+									<br /><i>".$empr->empr_mail." / ".$empr->empr_tel1." / ".$empr->empr_tel2."</i>";
+					if ($empr->empr_cp || $empr->empr_ville) $output_final .= "<br /><u>".$empr->empr_cp." ".$empr->empr_ville."</u>";
+					$output_final .= "<hr />".$msg['situation'].": ".$empr->location_libelle."<hr />";
+					
+					if ($serial_id) {
+						$perio=new notice_affichage($serial_id,0,0,0);
+						$perio->do_header_without_html();
+						$output_final .= "<h3>".$perio->notice_header_without_html."</h3>";
+					}
+					$output_final .= "<hr /></body></html> ";
+				}
+				$res_envoi=mailpmb($empr->nom." ".$empr->prenom, $empr->user_email,$sujet." ".$empr->aff_quand,$output_final,$PMBusernom, $PMBuseremail, $headers, "", "", 1);
+			}
 		}
 	}
 
@@ -445,18 +495,38 @@ class serialcirc_empr{
 		$display = str_replace("!!rows!!",$rows,$display);
 		return $display;
 	}
+	
+	public function get_display_save_notification($success=true) {
+		global $msg, $charset;
+	
+		$display = "<div id='serialcirc_ask_saved'>";
+		if($success) {
+			$display .= "<span class='serialcirc_ask_saved_success'>".htmlentities($msg['serialcirc_ask_saved_success'], ENT_QUOTES, $charset)."</span>";
+		} else {
+			$display .= "<span class='serialcirc_ask_saved_failed'>".htmlentities($msg['serialcirc_ask_saved_failed'], ENT_QUOTES, $charset)."</span>";
+		}
+		$display .= "</div>
+		<script type='text/javascript'>
+			setTimeout(function(){
+				if(document.getElementById('serialcirc_ask_saved')) {
+					document.getElementById('serialcirc_ask_saved').innerHTML='';
+				}
+			}, 4000);
+		</script>";
+		return $display;
+	}
 }
 
 class serialcirc_empr_circ{
-	var $empr_id;				// identifiant de l'emprunteur
-	var $num_serialcirc_diff;	// identifiant de serialcirc_diff
-	var $serialcirc;			// infos de serialcirc;
-	var $serialcirc_expl;		// infos de serialcirc_expl
-	var $rank;					// rang de l'emprunteur
-	var $unsubscribe;			// demande de désinscription
-	var $serial_id;
-	var $serial_title;
-	var $issue_title = "";
+	public $empr_id;				// identifiant de l'emprunteur
+	public $num_serialcirc_diff;	// identifiant de serialcirc_diff
+	public $serialcirc;			// infos de serialcirc;
+	public $serialcirc_expl;		// infos de serialcirc_expl
+	public $rank;					// rang de l'emprunteur
+	public $unsubscribe;			// demande de désinscription
+	public $serial_id;
+	public $serial_title;
+	public $issue_title = "";
 
 	public function __construct($empr_id,$id_serialcirc,$num_expl){
 		$this->empr_id = $empr_id*1;

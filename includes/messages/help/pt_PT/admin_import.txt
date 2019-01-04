@@ -1,4 +1,4 @@
-<h1>Administra&ccedil;&atilde;o de importa&ccedil;&otilde;es</h1>
+<h2>Administra&ccedil;&atilde;o de importa&ccedil;&otilde;es</h2>
 <p>Esta p&aacute;gina permite importar os dados ligados &agrave;s obras e/ou aos exemplares.</p>
 <p>O procedimento faz-se em diferentes tempos: 
 <ul>

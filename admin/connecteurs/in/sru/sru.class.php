@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sru.class.php,v 1.9 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: sru.class.php,v 1.13 2017-07-12 15:15:02 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,76 +11,28 @@ require_once($class_path."/connecteurs.class.php");
 require_once($class_path."/search.class.php");
 require_once($base_path."/admin/connecteurs/in/sru/sru_protocol.class.php");
 
-//
-// Scandir for PHP4
-//
-if(!function_exists('scandir'))
-{
-    function scandir($dir, $sortorder = 0)
-    {
-        if(is_dir($dir))
-        {
-            $dirlist = opendir($dir);
-           
-            while( ($file = readdir($dirlist)) !== false)
-            {
-                if(!is_dir($file))
-                {
-                    $files[] = $file;
-                }
-            }
-           
-            ($sortorder == 0) ? asort($files) : arsort($files);
-           
-            return $files;
-        }
-        else
-        {
-        return FALSE;
-        break;
-        }
-    }
-}
-
 class sru extends connector {
 	//Variables internes pour la progression de la rï¿½cupï¿½ration des notices
-	var $callback_progress;		//Nom de la fonction de callback progression passï¿½e par l'appellant
-	var $current_set;			//Set en cours de synchronisation
-	var $total_sets;			//Nombre total de sets sï¿½lectionnï¿½s
-	var $metadata_prefix;		//Prï¿½fixe du format de donnï¿½es courant
-	var $source_id;				//Numï¿½ro de la source en cours de synchro
-	var $n_recu;				//Nombre de notices reï¿½ues
-	var $xslt_transform;		//Feuille xslt transmise
-	var $sets_names;			//Nom des sets pour faire plus joli !!
-	var $del_old;				//Supression ou non des notices dejï¿½ existantes
-	var $schema_config;
+	public $current_set;			//Set en cours de synchronisation
+	public $total_sets;			//Nombre total de sets sï¿½lectionnï¿½s
+	public $metadata_prefix;		//Prï¿½fixe du format de donnï¿½es courant
+	public $n_recu;				//Nombre de notices reï¿½ues
+	public $xslt_transform;		//Feuille xslt transmise
+	public $sets_names;			//Nom des sets pour faire plus joli !!
+	public $schema_config;
 	
-	//Rï¿½sultat de la synchro
-	var $error;					//Y-a-t-il eu une erreur	
-	var $error_message;			//Si oui, message correspondant
-	
-    function sru($connector_path="") {
-    	parent::connector($connector_path);
+    public function __construct($connector_path="") {
+    	parent::__construct($connector_path);
     }
     
-    function get_id() {
+    public function get_id() {
     	return "sru";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 2;
 	}
-    
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-    
     
     /*Rï¿½cupï¿½re la grille d'automappage pour le remplissage automatique des champs de recherche
      * Exemple d'un ï¿½lï¿½ment du rendu: 
@@ -91,7 +43,7 @@ class sru extends connector {
      *   )
      * Donc dc.title correspond aux champs 'titre' et 'auteur'.
      *  */
-    function get_automap_config($filename) {
+    public function get_automap_config($filename) {
     	$result = array("cql_____" => array("XXX"));
 		$file = file_get_contents($filename);
 		$dom = new xml_dom_sru($file);
@@ -123,7 +75,7 @@ class sru extends connector {
      * Pour le mapping des champs serveur / PMB
      */
     
-    function make_field_combo_box($fiels, $field_name, $selected=array()) {
+    public function make_field_combo_box($fiels, $field_name, $selected=array()) {
     	global $msg, $charset;
     	$r="<select MULTIPLE size=\"5\" name='".$field_name."[]' >\n";
     	$r.="<option value='' style='color:#000000'>".htmlentities($msg["multi_select_champ"],ENT_QUOTES,$charset)."</font></option>\n";
@@ -142,7 +94,7 @@ class sru extends connector {
     
     /*Renvoi le formulaire de propriï¿½tï¿½ de la source
      */
-    function source_get_property_form($source_id) {
+    public function source_get_property_form($source_id) {
     	global $charset, $base_path;
 //    	
 //Rï¿½cupï¿½ration des paramï¿½tres de la source
@@ -151,8 +103,8 @@ class sru extends connector {
 		if ($params["PARAMETERS"]) {
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		if (!isset($allowed_indexes))
@@ -698,7 +650,7 @@ class sru extends connector {
 		return $form;
     }
     
-    function make_serialized_source_properties($source_id) {
+    public function make_serialized_source_properties($source_id) {
     	global $url,$sets,$formats,$del_deleted,$del_xsl_transform, $chosen_schema, $indexenabled, $max_record_count, $sru_cqlfail_means_global;
 
     	$oldparams=$this->get_source_params($source_id);
@@ -721,10 +673,10 @@ class sru extends connector {
 
     	foreach($indexenabled as $aninded) {
     		$aname = "field_map_".$aninded;
-    		global $$aname;
-//    		highlight_string(print_r($$aname, true));
-    		if (isset($$aname)) {
-    			$field_maps[$aninded] = $$aname;
+    		global ${$aname};
+//    		highlight_string(print_r(${$aname}, true));
+    		if (isset(${$aname})) {
+    			$field_maps[$aninded] = ${$aname};
     		}
     	}
     	$t["field_maps"] = $field_maps;
@@ -734,9 +686,9 @@ class sru extends connector {
     	if ($xslt_count) {
     		for ($i=1, $count=$xslt_count; $i<=$count; $i++) {
     			$aname = "xslt_select_".$i;
-    			global $$aname;
+    			global ${$aname};
     			
-    			if ($$aname == '__CUSTOM__') {
+    			if (${$aname} == '__CUSTOM__') {
     				$axslt_info = array();
     				$axslt_info["type"] = "custom_file"; 
     				if (($_FILES["xslt_file_".$i])&&(!$_FILES["xslt_file_".$i]["error"])) {
@@ -747,14 +699,14 @@ class sru extends connector {
     					$axslt_info["name"] = "";
     					$axslt_info["content"] = "";
     				}
-    			} else if (substr($$aname, 0, 12) == '__KEEP_INDEX') {
-    				$index_to_keep = substr($$aname, 12);
+    			} else if (substr(${$aname}, 0, 12) == '__KEEP_INDEX') {
+    				$index_to_keep = substr(${$aname}, 12);
 					$axslt_info = $old_style_sheets[$index_to_keep];
     			}
     			else {
     				$axslt_info = array();
     				$axslt_info["type"] = "built_in";
-    				$axslt_info["name"] = $$aname;
+    				$axslt_info["name"] = ${$aname};
     				$axslt_info["content"] = "built_in";
     			}
     			$style_sheets[] = $axslt_info;
@@ -765,31 +717,12 @@ class sru extends connector {
 		$this->sources[$source_id]["PARAMETERS"]=serialize($t);
 	}
 	
-	//Rï¿½cupï¿½ration  des proriï¿½tï¿½s globales par dï¿½faut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
-		$this->timeout=5;
-		$this->repository=2;
-		$this->retry=3;
-		$this->ttl=1800;
-		$this->parameters="";
-	}
-	
-	//Formulaire des propriï¿½tï¿½s gï¿½nï¿½rales
-	function get_property_form() {
-		$this->fetch_global_properties();
-		return "";
-	}
-	
-	function make_serialized_properties() {
-		$this->parameters="";
-	}
-	
 	/* Converti une recherche multi-critï¿½re PMB en CQL SRU
 	 * En se servant des options entrï¿½es dans le formulaire de la source
 	 * 
 	 */
 	
-	function mterms_to_cql($query, $sru_cqlfail_means_global) {
+	public function mterms_to_cql($query, $sru_cqlfail_means_global) {
 		global $allowed_indexes;
 		global $field_maps;
 		$cql = "";
@@ -829,7 +762,7 @@ class sru extends connector {
 	}
 	
 	//Fonction de recherche
-	function search($source_id,$query,$search_id) {
+	public function search($source_id,$query,$search_id) {
 		
 		$params=$this->get_source_params($source_id);
 		$this->fetch_global_properties();
@@ -837,8 +770,8 @@ class sru extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 
@@ -927,7 +860,7 @@ class sru extends connector {
 		
 	}
 	
-	function get_schemas_config() {
+	public function get_schemas_config() {
 
 		//Si on l'a dï¿½jï¿½ fait, on s'en souvient
 		if ($this->schema_config) {
@@ -966,7 +899,7 @@ class sru extends connector {
 		return $result;
 	}
 	
-	function record_schema_to_list_of_style_sheets($schema) {
+	public function record_schema_to_list_of_style_sheets($schema) {
 		$to_unimarc_style_sheets = array();
 		if ($schema) {
 			$schema_config = $this->get_schemas_config();
@@ -976,7 +909,7 @@ class sru extends connector {
 		return $to_unimarc_style_sheets;
 	}
 	
-	function rec_record($record, $source_id, $search_id) {
+	public function rec_record($record, $source_id, $search_id) {
 		global $charset,$base_path;
 		//On a un enregistrement unimarc, on l'enregistre
 		$rec_uni_dom=new xml_dom_sru($record,$charset, false);
@@ -1004,9 +937,7 @@ class sru extends connector {
 			if ($ref) {
 				//Si conservation des anciennes notices, on regarde si elle existe
 				if (!$this->del_old) {
-					$requete="select count(*) from entrepot_source_".$source_id." where ref='".addslashes($ref)."'";
-					$rref=pmb_mysql_query($requete);
-					if ($rref) $ref_exists=pmb_mysql_result($rref,0,0);
+					$ref_exists = $this->has_ref($source_id, $ref);
 				}
 				//Si pas de conservation des anciennes notices, on supprime
 				if ($this->del_old) {
@@ -1024,16 +955,11 @@ class sru extends connector {
 					$n_header["hl"]=$rec_uni_dom->get_value("unimarc/notice/hl");
 					$n_header["dt"]=$rec_uni_dom->get_value("unimarc/notice/dt");
 					
-					//Rï¿½cupï¿½ration d'un ID
-					$requete="insert into external_count (recid, source_id) values('".addslashes($this->get_id()." ".$source_id." ".$ref)."', ".$source_id.")";
-					$rid=pmb_mysql_query($requete);
-					if ($rid) $recid=pmb_mysql_insert_id();
+					//Récupération d'un ID
+					$recid = $this->insert_into_external_count($source_id, $ref);
 					
 					foreach($n_header as $hc=>$code) {
-						$requete="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid, search_id) values(
-						'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
-						'".$hc."','',-1,0,'".addslashes($code)."','',$recid, '$search_id')";
-						pmb_mysql_query($requete);
+						$this->insert_header_into_entrepot($source_id, $ref, $date_import, $hc, $code, $recid, $search_id);
 					}
 					if ($fs)
 					for ($i=0; $i<count($fs); $i++) {
@@ -1045,21 +971,14 @@ class sru extends connector {
 								$usubfield=$ss[$j]["ATTRIBS"]["c"];
 								$value=$rec_uni_dom->get_datas($ss[$j]);
 								$subfield_order=$j;
-								$requete="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid, search_id) values(
-								'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
-								'".addslashes($ufield)."','".addslashes($usubfield)."',".$field_order.",".$subfield_order.",'".addslashes($value)."',
-								' ".addslashes(strip_empty_words($value))." ',$recid, '$search_id')";
-								pmb_mysql_query($requete);
+								$this->insert_content_into_entrepot($source_id, $ref, $date_import, $ufield, $usubfield, $field_order, $subfield_order, $value, $recid, $search_id);
 							}
 						} else {
 							$value=$rec_uni_dom->get_datas($fs[$i]);
-							$requete="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid, search_id) values(
-							'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
-							'".addslashes($ufield)."','".addslashes($usubfield)."',".$field_order.",".$subfield_order.",'".addslashes($value)."',
-							' ".addslashes(strip_empty_words($value))." ',$recid, '$search_id')";
-							pmb_mysql_query($requete);
+							$this->insert_content_into_entrepot($source_id, $ref, $date_import, $ufield, $usubfield, $field_order, $subfield_order, $value, $recid, $search_id);
 						}
 					}
+					$this->rec_isbd_record($source_id, $ref, $recid);
 				}
 				$this->n_recu++;
 			}

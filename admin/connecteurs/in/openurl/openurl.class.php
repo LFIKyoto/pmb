@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: openurl.class.php,v 1.4 2012-02-15 14:40:40 arenou Exp $
+// $Id: openurl.class.php,v 1.8 2017-07-12 15:15:00 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,33 +14,20 @@ require_once($include_path."/parser.inc.php");
 
 class openurl extends connector {
 
-	function openurl($connector_path="") {
-    	parent::connector($connector_path);
+	public function __construct($connector_path="") {
+    	parent::__construct($connector_path);
     }
     
-    function get_id() {
+    public function get_id() {
     	return "openurl";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 2;
 	}
     
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-    
-    function get_libelle($message) {
-    	if (substr($message,0,4)=="msg:") return $this->msg[substr($message,4)]; else return $message;
-    }
-    
-    function source_get_property_form($source_id) {
+    public function source_get_property_form($source_id) {
 		global $charset,$base_path;
 		
 		$params=$this->get_source_params($source_id);
@@ -48,8 +35,8 @@ class openurl extends connector {
 		//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}
 		}else{
 			$file_params = file_get_contents($base_path."/admin/connecteurs/in/openurl/conf.xml");
@@ -149,7 +136,10 @@ class openurl extends connector {
 			$iheight = "350";
 		if (!isset($infobulle))
 			$infobulle = "";
+		if (!isset($byref_url))
+			$byref_url = '';
 
+		$result = "";
 //		$result ="
 //			<div class='row'>&nbsp;</div>
 //			<div class='row'>
@@ -443,7 +433,7 @@ class openurl extends connector {
 		return $result;
     }
     
-    function make_serialized_source_properties($source_id) {
+    public function make_serialized_source_properties($source_id) {
     	global $iwidth,$iheight,$libelle,$source_name,$infobulle;
     	global $protocole,$method,$tparameters,$byref_url;
     	global $serialization;
@@ -577,44 +567,27 @@ class openurl extends connector {
  // 	}
     	$this->sources[$source_id]["PARAMETERS"]=serialize($t);
 	}
-	
-	//Récupération  des proriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
-		$this->timeout=5;
-		$this->repository=2;
-		$this->retry=3;
-		$this->ttl=1800;
-		$this->parameters="";
-	}
-	
-	 //Formulaire des propriétés générales
-	function get_property_form() {
-		return "";
-	}
-    
-    function make_serialized_properties() {
-		$keys = array();
-		$this->parameters = serialize($keys);
-	}
 
-	function enrichment_is_allow(){
+	public function enrichment_is_allow(){
 		return true;
 	}
 	
-	function getEnrichmentHeader(){
+	public function getEnrichmentHeader(){
 		$header= array();
 		$header[]= "<!-- Script d'enrichissement pour OpenURL -->";
 		return $header;
 	}
 	
-	function getTypeOfEnrichment($source_id){
+	public function getTypeOfEnrichment($source_id){
+		$libelle = '';
+		$infobulle = '';
 		$params=$this->get_source_params($source_id);
 		if ($params["PARAMETERS"]) {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		$type['type'] = array(
@@ -628,14 +601,14 @@ class openurl extends connector {
 		return $type;
 	}
 	
-	function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array(),$page=1){
+	public function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array(),$page=1){
 		$params=$this->get_source_params($source_id);
 		if ($params["PARAMETERS"]) {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		$enrichment= array();
@@ -656,7 +629,7 @@ class openurl extends connector {
 		return $enrichment;
 	}
 	
-	function getByRefContent($source_id,$notice_id,$uri,$entity){
+	public function getByRefContent($source_id,$notice_id,$uri,$entity){
 		global $include_path;
 		global $openurl_map;
 		$openurl_map = array();
@@ -665,8 +638,8 @@ class openurl extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}
 		}
 		require_once ($include_path."/parser.inc.php") ;

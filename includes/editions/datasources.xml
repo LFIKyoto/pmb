@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
 <!-- sources de données pour les éditions
-$Id: datasources.xml,v 1.5 2014-10-28 18:03:43 mbertin Exp $ -->
+$Id: datasources.xml,v 1.6 2018-11-07 13:25:41 dgoron Exp $ -->
 
 <!-- DTD Rapide pour la formation du fichier
 datasources -> balise racine
@@ -609,6 +609,7 @@ value (dans values) -> Les valeurs de la liste ou le nom du fichier xml de PMB
 			<field id='notices_create_date' field='notices.create_date' label='msg:date_creation_query' type='date' input='calc'/>
 			<field id='notices_update_date' field='notices.update_date' label='msg:date_update_query' type='date' input='calc'/>
 			<field id='notices_commentaire_gestion' field='notices.commentaire_gestion' label='msg:comment_gestion_query' type='text' input='manual'/>
+			<field id='notices_thumbnail_url' field='notices.thumbnail_url' label='msg:notice_thumbnail_url' type='text' input='manual'/>
 			<field id='notices_lib_origine' field='CONCAT(origine_notice.orinot_nom,IF((origine_notice.orinot_pays != ""),origine_notice.orinot_pays,"")) AS origine' field_alias='origine' label='msg:origine_notice_query' type='integer' input='list'>
 				<join field_join='notices.origine_catalogage'>left join origine_notice on notices.origine_catalogage = origine_notice.orinot_id</join>
 				<values type='query'>
@@ -756,6 +757,18 @@ value (dans values) -> Les valeurs de la liste ou le nom du fichier xml de PMB
 					<value code='2'>msg:40</value>	
 				</values>
 			</field>
+			<field id='notices_notices_type_relations' field='notices_relations.relation_type' label='msg:notice_type_relations' type='text' input='list'>
+				<join field_join='linked_notice.linked_notice'>left join notices_relations ON notices.notice_id = notices_relations.num_notice LEFT JOIN notices AS linked_notice ON notices_relations.linked_notice=linked_notice.notice_id</join>
+				<values type='xml'>
+					<value>relationtypeup</value>	
+				</values>
+			</field>
+			<field id='notices_notices_relations' field='linked_notice.tit1' label='msg:notice_relations' type='integer' input='list'>
+				<join field_join='linked_notice.linked_notice'>left join notices_relations ON notices.notice_id = notices_relations.num_notice LEFT JOIN notices AS linked_notice ON notices_relations.linked_notice=linked_notice.notice_id</join>
+				<values type='query'>
+					<query>select notice_id as id, tit1 as list_value from notices order by 2 asc</query>	
+				</values>
+			</field>
 		</fields>
 	</datasource>
 	<datasource id='categories' name='msg:editions_datasource_categories'>
@@ -829,6 +842,62 @@ value (dans values) -> Les valeurs de la liste ou le nom du fichier xml de PMB
 					<value code='1'>Oui</value>
 				</values>
 			</field>
+		</fields>
+	</datasource>
+	<datasource id='explnum' name='msg:editions_datasource_explnum'>
+		<table>explnum</table>
+		<fields>
+			<field id='explnum_explnum__id' field='explnum.explnum_id' label='msg:editions_datasource_explnum_id' type='integer' input='manual'/>
+			<!--<field id='explnum_explnum__notice' field='explnum.explnum_notice' label='msg:editions_datasource_explnum_notice' type='text' input='manual'/>
+			<field id='explnum_explnum__bulletin' field='explnum.explnum_bulletin' label='msg:editions_datasource_explnum_bulletin' type='text' input='manual'/>-->
+			<field id='explnum_explnum_nom' field='explnum.explnum_nom' label='msg:explnum_nom' type='text' input='manual'/>
+			<field id='explnum_explnum_mimetype' field='explnum.explnum_mimetype' label='msg:extexplnum_minetype' type='text' input='manual'/>
+			<field id='explnum_explnum_url' field='explnum.explnum_url' label='msg:explnum_url' type='text' input='manual'/>
+			<field id='explnum_explnum_thumbnail_url' field='CONCAT("vig_num.php?explnum_id=", explnum.explnum_id) AS explnum_vignette' label='msg:editions_datasource_explnum_thumbnail_url' type='text' input='manual'/>
+			<field id='explnum_explnum_extfichier' field='explnum.explnum_extfichier' label='msg:extexplnum_extfichier' type='text' input='manual'/>
+			<field id='explnum_explnum_nomfichier' field='explnum.explnum_nomfichier' label='msg:explnum_fichier' type='text' input='manual'/>
+			<field id='explnum_statut_gestion_libelle' field='explnum_statut.gestion_libelle' label='msg:extexplnum_statut' type='integer' input='list'>
+				<join field_join='explnum_statut.id_explnum_statut'>left join explnum_statut on explnum.explnum_statut = explnum_statut.id_explnum_statut</join>
+				<values type='query'>
+					<query>select id_explnum_statut as id, gestion_libelle as list_value from explnum_statut order by 2 asc</query>	
+				</values>
+			</field>
+			<field id='explnum_explnum_url' field='explnum.explnum_url' label='msg:explnum_url' type='text' input='manual'/>
+			
+			<field id='explnum_location_location_libelle' field='explnum_location.location_libelle' label='msg:editions_datasource_explnum_locations' type='integer' input='list'>
+				<join field_join='explnum_location.num_location'>left join explnum_location on explnum.explnum_id = explnum_location.num_location</join>
+				<values type='query'>
+					<query>select idlocation as id, location_libelle as list_value from docs_location order by 2 asc</query>	
+				</values>
+			</field>		
+			<field id='explnum_lenders_lender_libelle' field='lenders.lender_libelle' label='msg:554' type='integer' input='list'>
+				<join field_join='lenders.idlender'>left join explnum_lenders on explnum_lenders.explnum_lender_num_explnum = explnum.explnum_id join lenders on lenders.idlender = explnum_lenders.explnum_lender_num_lender</join>
+				<values type='query'>
+					<query>select idlender as id, lender_libelle as list_value from lenders order by 2 asc</query>	
+				</values>
+			</field>
+			<field id='explnum_create_date' field='explnum.create_date' label='msg:exp_cre_date' type='date' input='calc'/>
+			<field id='explnum_update_date' field='explnum.update_date' label='msg:exp_upd_date' type='date' input='calc'/>
+			
+			<field id='explnum_audit_type_modif' field='audit.type_modif' label='msg:editions_datasource_explnum_audit_type' type='integer' input='list'>
+				<join>left join audit on explnum.explnum_id = audit.object_id AND audit.type_obj='22'</join>
+				<values type='enum'>
+					<value code='1'>msg:audit_type1</value>
+					<value code='2'>msg:audit_type2</value>
+					<value code='3'>msg:audit_type3</value>
+				</values>
+			</field>
+			<field id='explnum_audit_user' field='CONCAT(audit.user_name,IF((users.nom IS NULL),"",CONCAT(" (",IF((users.nom IS NULL),"",users.nom),IF((users.prenom IS NULL OR users.prenom = ""),"",CONCAT(", ",users.prenom)),")"))) AS intervenant_info' field_alias='intervenant_info' label='msg:editions_datasource_audit_intervenant' type='text' input='list'>
+				<before_joins>left join audit on explnum.explnum_id = audit.object_id AND audit.type_obj='22'</before_joins>
+				<join field_join='audit.user_name'>left join users on audit.user_id = users.userid</join>
+				<values type='query'>
+					<query>select audit.user_name as id, CONCAT(audit.user_name,IF((users.nom IS NULL),"",CONCAT(" (",IF((users.nom IS NULL),"",users.nom),IF((users.prenom IS NULL OR users.prenom = ""),"",CONCAT(", ",users.prenom)),")"))) as list_value from audit LEFT JOIN users ON audit.user_id = users.userid WHERE audit.type_obj='22' GROUP BY audit.user_name order by 2 asc</query>	
+				</values>
+			</field>
+			<field id='explnum_audit_date' field='audit.quand' label='msg:editions_datasource_audit_date' type='date' input='calc'>
+				<join>left join audit on explnum.explnum_id = audit.object_id AND audit.type_obj='22'</join>
+			</field>
+			
 		</fields>
 	</datasource>
 </datasources>

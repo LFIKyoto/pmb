@@ -34,10 +34,10 @@ if (!$ret) print $s->error_message."\n";
  * \ingroup server
  */
 class socket2http {
-	var $http_url="http://localhost/pmb";	/*!< \brief Adresse du serveur http a contacter */
-	var $http_url_login="http://localhost/pmb/main.php";	/*!< \brief URL du serveur http a contacter pour l'autentification par cookies */
-	var $http_port="";						/*!< \brief Port http du serveur */
-	var $http_use_cookie=false;				/*!< \brief Gestion d'une session par cookie sur le serveur : false=non, true=oui */
+	public $http_url="http://localhost/pmb";	/*!< \brief Adresse du serveur http a contacter */
+	public $http_url_login="http://localhost/pmb/main.php";	/*!< \brief URL du serveur http a contacter pour l'autentification par cookies */
+	public $http_port="";						/*!< \brief Port http du serveur */
+	public $http_use_cookie=false;				/*!< \brief Gestion d'une session par cookie sur le serveur : false=non, true=oui */
 	/**
 	 * \brief Variables de login par cookie
 	 * 
@@ -45,56 +45,56 @@ class socket2http {
 	 * Exemple : array("user"=>"ftetart","password"=>"xxxxx");\n
 	 * passe au serveur http les variables de connexion "user" et "password"
 	 */
-	var $http_cookie_login=array();
-	var $http_cookie_renew_pattern="";		/*!< \brief Expression régulière qui permet de détecter qu'une session par cookie a expiré */
-	var $http_use_ssl=false;				/*!< \brief Utiliser une connexion sécurisée par ssl : false=non, true=oui */
-	var $http_ssl_key="";					/*!< \brief Clé privée pour la connexion ssl*/
-	var $http_ssl_crt="";					/*!< \brief Clé publique pour l'autentification */
+	public $http_cookie_login=array();
+	public $http_cookie_renew_pattern="";		/*!< \brief Expression régulière qui permet de détecter qu'une session par cookie a expiré */
+	public $http_use_ssl=false;				/*!< \brief Utiliser une connexion sécurisée par ssl : false=non, true=oui */
+	public $http_ssl_key="";					/*!< \brief Clé privée pour la connexion ssl*/
+	public $http_ssl_crt="";					/*!< \brief Clé publique pour l'autentification */
 	/**
 	 * \brief Cookies reçus après l'authentification par session
 	 * \private
 	 */
-	var $http_cookies=array();
+	public $http_cookies=array();
 	/**
 	 * \brief Corps de la réponse http 
 	 * \private
 	 */
-	var $http_core="";
+	public $http_core="";
 	/**
 	 *  \brief Hearder de la réponse http
 	 *  \private
 	 */
-	var $http_header="";
+	public $http_header="";
 	/**
 	 * \brief Lien curl courant
 	 * \private
 	 */
-	var $curl_link;
+	public $curl_link;
 	
-	var $socket_max_connections=10;			/*!< \brief Nombre maximum de connexions autorisés au serveur de socket */
-	var $socket_port=6001;					/*!< \brief Numéro de port a écouter */
-	var $socket_bind_address="127.0.0.1"; 	/*!< \brief Adresse d'écoute */
+	public $socket_max_connections=10;			/*!< \brief Nombre maximum de connexions autorisés au serveur de socket */
+	public $socket_port=6001;					/*!< \brief Numéro de port a écouter */
+	public $socket_bind_address="127.0.0.1"; 	/*!< \brief Adresse d'écoute */
 	
 	/**
 	 * \brief Tableau des clients socket connectés
 	 * \private
 	 */
-	var $socket_clients=array();
+	public $socket_clients=array();
 	/**
 	 * \brief Socket serveur pour création d'une connexion
 	 * \private
 	 */
-	var $socket_server="";
+	public $socket_server="";
 	
-	var $error=false;						/*!< \brief Si true, il y a eu une erreur lors d'un traitement */
-	var $error_message="";					/*!< \brief Si ::error = true, message d'explication de l'erreur */
+	public $error=false;						/*!< \brief Si true, il y a eu une erreur lors d'un traitement */
+	public $error_message="";					/*!< \brief Si ::error = true, message d'explication de l'erreur */
 	
 	/**
 	 * \brief Constructeur
 	 * 
 	 * Ne prend aucun argument, tout est exécuté par la méthode start_bind .
 	 */
-    function socket2http() {
+    public function __construct() {
     }
     
     /**
@@ -104,7 +104,7 @@ class socket2http {
      * @return vide rien
      * \private
      */
-    function make_socket_error() {
+    public function make_socket_error() {
     	$this->error=true;
     	$this->error_message="Erreur ouverture du serveur de socket : ".socket_strerror(socket_last_error());
     }
@@ -119,7 +119,7 @@ class socket2http {
      * \note la variable interne ::socket_server contient la ressource de la socket serveur
      * \private
      */
-    function init_socket() {
+    public function init_socket() {
     	// Création d'une "TCP Stream socket"
 		$this->socket_server = socket_create(AF_INET, SOCK_STREAM, 0);
 		if (!$this->socket_server) {
@@ -149,7 +149,7 @@ class socket2http {
 	 * \private
 	 * \ingroup http	 
 	 */
-	function get_http_core($curl_ressource,$data) {
+	public function get_http_core($curl_ressource,$data) {
 		$this->http_core.=$data;
 		return strlen($data);
 	}
@@ -162,7 +162,7 @@ class socket2http {
 	 * \note Si l'entête passée dans $data est un cookie (Set-Cookie: ...), le cookie est stocké dans le tableau ::http_cookies
 	 * \private
 	 */
-	function get_http_header($curl_ressource,$data) {
+	public function get_http_header($curl_ressource,$data) {
 		if (strpos($data,"Set-Cookie:")!==false) {
 			$this->http_cookies[]=trim(substr($data,12));
 		}
@@ -177,7 +177,7 @@ class socket2http {
 	 * curl_setopt($this->curl_link,CURLOPT_URL,"http://localhost/pmb/main.php")
 	 * \private
 	 */
-	function prepare_http($http_params) {
+	public function prepare_http($http_params) {
 		//Initialisation de la connexion
     	$this->curl_link = curl_init();
 		curl_setopt($this->curl_link, CURLOPT_WRITEFUNCTION,array(&$this,"get_http_core"));
@@ -203,7 +203,7 @@ class socket2http {
 	 * \brief Fermeture de la connexion curl
 	 * \private
 	 */
-	function close_http() {
+	public function close_http() {
 		curl_close($this->curl_link);
 	}
 
@@ -216,7 +216,7 @@ class socket2http {
 	 * @return boolean true : La requête a réussie (la réponse est dans ::http_core), false : la requête a échoué
 	 * \private
 	 */
-	function make_logged_http_request($message,$id_client) {
+	public function make_logged_http_request($message,$id_client) {
 		global $protocol_prolonge;
 		//Initialisation de la requête
 		$http_params=array(
@@ -266,7 +266,7 @@ class socket2http {
 	 * @return boolean true : la requête a réussi, false : la requête a échoué
 	 * \private
 	 */
-	function make_http_request() {
+	public function make_http_request() {
 		$this->http_headers="";
 		$this->http_core="";
 		$cexec=curl_exec($this->curl_link);
@@ -289,7 +289,7 @@ class socket2http {
      * @return boolean true : la connexion/ouverture de la session a réussi, true : la connexion a échoué
      * \private
      */
-    function http_do_login() {
+    public function http_do_login() {
     	//Y-a-t-il une autentification par cookies ?
 		if ($this->http_use_cookie) {
 			//Préparation de la requête POST avec les éléments de login
@@ -336,7 +336,7 @@ class socket2http {
      * @return boolean true : le serveur répond bien, false : le serveur ne répond pas
      * \private
      */
-    function test_http_connection() {
+    public function test_http_connection() {
     	//Initialisation de la connexion
     	$http_params=array(
     		"URL"=>$this->http_url
@@ -360,7 +360,7 @@ class socket2http {
      * et gère les transferts des données reçues sur les différentes sockets vers le serveur http.
      * \private
      */
-    function make_loop() {
+    public function make_loop() {
     	
 		// $exec_cmd est la commande permettant de lancer le serveur de la borne de prêt, une fois ce service actif. 
 		// Affecté dans init_automate.php
@@ -446,7 +446,7 @@ class socket2http {
      * lance le serveur de socket et gère les évènements socket
      * @return boolean false : Il y a eu une erreur lors du lancement du service le flag sockets2http::error est à true, sinon ne retourne jamais !
      */
-    function start_bind() {
+    public function start_bind() {
     	//Tests de connexion au serveur http
     	if (!$this->test_http_connection()) return false; else
     	//Si c'est ok, test de connexion à la session par cookie

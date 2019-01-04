@@ -1,4 +1,4 @@
-<h1>Aanwinsten</h1>
+<h2>Aanwinsten</h2>
 </p><p>
 <b>Coördinaten</b> identiteitskaart van de bibliotheek.
 </p><p>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: connecteurs.tpl.php,v 1.11 2013-11-21 10:50:25 ngantier Exp $
+// $Id: connecteurs.tpl.php,v 1.13 2018-10-23 11:58:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -61,6 +61,9 @@ $admin_connecteur_source_global_params="
 			<div class='colonne3'><label for='opac_affiliate_search'/>".$msg["connecteurs_source_opac_affiliate_search"]."</label></div><div class='colonne_suite'><input type='checkbox' name='opac_affiliate_search' id='opac_affiliate_search' value='1' !!opac_affiliate_search!! /></div>
 		</div>
 		<div class='row'>
+			<div class='colonne3'><label for='gestion_selected'/>".$msg["connecteurs_source_gestion_selected"]."</label></div><div class='colonne_suite'><input type='checkbox' name='gestion_selected' id='gestion_selected' value='1' !!gestion_selected_checked!! /></div>
+		</div>
+		<div class='row'>
 			<div class='colonne3'><label for='comment'/>".$msg["connecteurs_source_desc"]."</label></div><div class='colonne_suite'><textarea class='saisie-30em' name='comment' id='comment'>!!comment!!</textarea></div>
 		</div>
 		<div class='row'>
@@ -90,8 +93,9 @@ $admin_connecteur_source_global_params="
 		</div>
 		<input type='hidden' name='act' value='update_source'/>
 	</div>
-	<div class='left'><input type='button' value='".$msg["76"]."' class='bouton' onClick='history.go(-1);'/>&nbsp;<input type='submit' value='".$msg["77"]."' class='bouton'/></div><div class='right'>!!bt_supprimer!!</div>
-	<div class='row'></div> 
+	<div class='row'>
+		<div class='left'><input type='button' value='".$msg["76"]."' class='bouton' onClick='history.go(-1);'/>&nbsp;<input type='submit' value='".$msg["77"]."' class='bouton'/></div><div class='right'>!!bt_supprimer!!</div>
+	</div> 
 </form>
 ";
 

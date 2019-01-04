@@ -2,63 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: askmdp.php,v 1.43.2.2 2015-10-23 14:52:53 arenou Exp $
+// $Id: askmdp.php,v 1.60 2018-04-25 10:36:19 dgoron Exp $
 
 $base_path=".";
 $is_opac_included = false;
 
 require_once($base_path."/includes/init.inc.php");
-require_once($base_path."/includes/error_report.inc.php") ;
-require_once($base_path."/includes/global_vars.inc.php");
-require_once($base_path.'/includes/opac_config.inc.php');
 
-// récupération paramètres MySQL et connection à la base
-require_once($base_path.'/includes/opac_db_param.inc.php');
-require_once($base_path.'/includes/opac_mysql_connect.inc.php');
-$dbh = connection_mysql();
-
-require_once($base_path."/includes/misc.inc.php");
-
-//Sessions !! Attention, ce doit être impérativement le premer include (à cause des cookies)
-require_once($base_path."/includes/session.inc.php");
-require_once($base_path.'/includes/start.inc.php');
-
-require_once($base_path."/includes/notice_authors.inc.php");
-require_once($base_path."/includes/notice_categories.inc.php");
-
-require_once($base_path."/includes/check_session_time.inc.php");
-
-// récupération localisation
-require_once($base_path.'/includes/localisation.inc.php');
-
-// version actuelle de l'opac
-require_once($base_path.'/includes/opac_version.inc.php');
-
-//si les vues sont activées (à laisser après le calcul des mots vides)
-// Il n'est pas possible de chagner de vue à ce niveau
-if($opac_opac_view_activate){
-	if(!$pmb_opac_view_class) $pmb_opac_view_class= "opac_view";
-	require_once($base_path."/classes/".$pmb_opac_view_class.".class.php");
-
-	$opac_view_class= new $pmb_opac_view_class($_SESSION["opac_view"],$_SESSION["id_empr_session"]);
-	if($opac_view_class->id){
-		$opac_view_class->set_parameters();
-		$opac_view_filter_class=$opac_view_class->opac_filters;
-		$_SESSION["opac_view"]=$opac_view_class->id;
-		if(!$opac_view_class->opac_view_wo_query) {
-			$_SESSION['opac_view_query']=1;
-		}
-	} else {
-		$_SESSION["opac_view"]=0;
-	}
-	$css=$_SESSION["css"]=$opac_default_style;
-}
-
-// fonctions de gestion de formulaire
-require_once($base_path.'/includes/javascript/form.inc.php');
+//fichiers nécessaires au bon fonctionnement de l'environnement
+require_once($base_path."/includes/common_includes.inc.php");
 
 require_once($base_path.'/includes/templates/common.tpl.php');
-require_once($base_path.'/includes/divers.inc.php');
 
 // classe de gestion des catégories
 require_once($base_path.'/classes/categorie.class.php');
@@ -73,6 +27,8 @@ require_once($base_path.'/classes/tags.class.php');
 
 // classe de gestion des réservations
 require_once($base_path.'/classes/resa.class.php');
+
+require_once($base_path.'/classes/quick_access.class.php');
 
 // pour l'affichage correct des notices
 require_once($base_path."/includes/templates/notice.tpl.php");
@@ -131,14 +87,16 @@ require_once ($base_path.'/includes/navigator.inc.php');
 $query = "SELECT valeur_param FROM parametres WHERE type_param='opac' AND sstype_param = 'biblio_name'";
 $result = pmb_mysql_query($query) or die ("*** Erreur dans la requ&ecirc;te <br />*** $query<br />\n");
 $row = pmb_mysql_fetch_array($result);
-$demandeemail= "<hr /><p class='texte'>".$msg[mdp_txt_intro_demande]."</p>
+$demandeemail= "<hr /><p class='texte'>".$msg['mdp_txt_intro_demande']."</p>
 	<form action=\"askmdp.php\" method=\"post\" ><br />
 	<input type=\"text\" name=\"email\" size=\"20\" border=\"0\" value=\"email@\" onFocus=\"this.value='';\">&nbsp;&nbsp;
 	<input type=\"hidden\" name=\"demande\" value=\"ok\" >
-	<input type='submit' name='ok' value='".$msg[mdp_bt_send]."' class='bouton'>
+	<input type='submit' name='ok' value='".$msg['mdp_bt_send']."' class='bouton'>
 	</form>"; 
 
 print "<blockquote>";
+if(!isset($email)) $email = '';
+if(!isset($demande)) $demande = '';
 $email = str_replace("%", "", $email);
 if ($demande!="ok" || $email=='') {
 
@@ -174,14 +132,14 @@ if ($demande!="ok" || $email=='') {
 					$res = pmb_mysql_query($rqt,$dbh);
 					
 					// Bonjour,<br /><br />Pour faire suite à votre demande de réinitialisation de mot de passe à <b>!!biblioname!!</b>, veuillez trouver ci-dessous le lien qui vous permettra d'effectuer ce changement : <br /><br />!!lien_mdp!!<br /><br /> - Pour rappel, votre identifiant est : !!login!!<br /><br />Si vous rencontrez des difficultés, adressez un mail à !!biblioemail!!.<br /><br />
-					$messagemail = $msg[mdp_mail_body] ;
+					$messagemail = $msg['mdp_mail_body'] ;
 					$messagemail = str_replace("!!login!!",$row->empr_login,$messagemail);
 					$messagemail = str_replace("!!biblioname!!","<a href=\"$opac_url_base\">".$biblio_name_temp."</a>",$messagemail);	
 					$lien_mdp = "<a href='".$opac_url_base."empr.php?lvl=change_password&emprlogin=".$row->empr_login."&password_key=".$password_key."'>".$opac_url_base."empr.php?lvl=change_password&emprlogin=".$row->empr_login."&password_key=".$password_key."</a>";
 					$messagemail = str_replace("!!lien_mdp!!",$lien_mdp,$messagemail);
 					$messagemail = str_replace("!!biblioemail!!","<a href=mailto:$opac_biblio_email>$biblio_email_temp</a>",$messagemail);
 		
-					$objetemail = str_replace("!!biblioname!!",$biblio_name_temp,$msg[mdp_mail_obj]);
+					$objetemail = str_replace("!!biblioname!!",$biblio_name_temp,$msg['mdp_mail_obj']);
 					print "<hr />";
 					
 					if($opac_parse_html){
@@ -195,17 +153,17 @@ if ($demande!="ok" || $email=='') {
 					if (!$res_envoi) {
 						print "<p class='texte'>Could not send information to $emails_empr[$i].</p><br />" ;
 					} else {
-						print "<p class='texte'>".$msg[mdp_sent_ok]." $emails_empr[$i].</p><br />" ;
+						print "<p class='texte'>".$msg['mdp_sent_ok']." $emails_empr[$i].</p><br />" ;
 					}
 				}
 			}
 		}
 		if (!$res_envoi) {
-			print "<hr /><p class='texte'>".str_replace("!!biblioemail!!","<a href=mailto:$opac_biblio_email>$opac_biblio_email</a>",$msg[mdp_no_email])."</p>" ;
+			print "<hr /><p class='texte'>".str_replace("!!biblioemail!!","<a href=mailto:$opac_biblio_email>$opac_biblio_email</a>",$msg['mdp_no_email'])."</p>" ;
 			print $demandeemail ;
 		}
 	} else {
-		print "<hr /><p class='texte'>".str_replace("!!biblioemail!!","<a href=mailto:$opac_biblio_email>$opac_biblio_email</a>",$msg[mdp_no_email])."</p>" ;
+		print "<hr /><p class='texte'>".str_replace("!!biblioemail!!","<a href=mailto:$opac_biblio_email>$opac_biblio_email</a>",$msg['mdp_no_email'])."</p>" ;
 		print $demandeemail ;
 	}
 }
@@ -236,26 +194,22 @@ if ($opac_show_bandeaugauche==0) {
 	$home_on_left = str_replace("!!common_tpl_lang_select!!", show_select_languages("empr.php"), $home_on_left);
 	
 	if (!$_SESSION["user_code"]) {
-		$loginform=str_replace('<!-- common_tpl_login_invite -->',$msg["common_tpl_login_invite"],$loginform);
+		$loginform=str_replace('<!-- common_tpl_login_invite -->','<h3 class="login_invite">'.$msg['common_tpl_login_invite'].'</h3>',$loginform);
 		$loginform__ = genere_form_connexion_empr();
 	} else {
-		$loginform__.="<b>".$empr_prenom." ".$empr_nom."</b><br />\n";
-		$loginform__.="<select name='empr_quick_access' onchange='if (this.value) window.location.href=this.value'>
-				<option value=''>".$msg["empr_quick_access"]."</option>
-				<option value='empr.php'>".$msg["empr_my_account"]."</option>";
-		if ($allow_loan || $allow_loan_hist) {
-			$loginform__.="<option value='empr.php?tab=loan_reza&lvl=all#empr-loan'>".$msg["empr_my_loans"]."</option>";
+		$loginform=str_replace('<!-- common_tpl_login_invite -->','',$loginform);
+		$loginform__ ="<b class='logged_user_name'>".$empr_prenom." ".$empr_nom."</b><br />\n";
+		if($opac_quick_access) {
+			$loginform__.= quick_access::get_selector();
+			$loginform__.="<br />";
+		} else {
+			$loginform__.="<a href=\"empr.php\" id=\"empr_my_account\">".$msg["empr_my_account"]."</a><br />";
 		}
-		if ($allow_book && $opac_resa) {
-			$loginform__.="<option value='empr.php?tab=loan_reza&lvl=all#empr-resa'>".$msg["empr_my_resas"]."</option>";
-		}
-		if ($opac_demandes_active && $allow_dema) {
-			$loginform__.="<option value='empr.php?tab=request&lvl=list_dmde'>".$msg["empr_my_dmde"]."</option>";
-		}
-		$loginform__.="</select><br />";
 		$loginform__.="<a href=\"index.php?logout=1\" id=\"empr_logout_lnk\">".$msg["empr_logout"]."</a>";
 	}
-	$loginform = str_replace("!!login_form!!",$loginform__,$loginform);
+	if(!$opac_quick_access_logout || !$opac_quick_access){
+		$loginform = str_replace("!!login_form!!",$loginform__,$loginform);
+	}
 	$footer= str_replace("!!contenu_bandeau!!",($opac_accessibility ? $accessibility : "").$home_on_left.$loginform.$meteo.$adresse,$footer);
 	$footer= str_replace("!!contenu_bandeau_2!!",$opac_facette_in_bandeau_2?$lvl1.$facette:"",$footer);
 }
@@ -272,7 +226,7 @@ $cms_build_info="";
 if($cms_build_activate == -1){
 	unset($_SESSION["cms_build_activate"]);
 }else if($cms_build_activate || $_SESSION["cms_build_activate"]){ // issu de la gestion
-	if($pageid){
+	if(isset($pageid) && $pageid) {
 		require_once($base_path."/classes/cms/cms_pages.class.php");
 		$cms_page= new cms_page($pageid);
 		$cms_build_info['page']=$cms_page->get_env();
@@ -289,7 +243,7 @@ if($cms_build_activate == -1){
 	$cms_build_info['infos_expl']=$infos_expl;
 	$cms_build_info['nb_results_tab']=$nb_results_tab;
 	$cms_build_info['search_type_asked']=$search_type_asked;
-	$cms_build_info=rawurlencode(serialize($cms_build_info));
+	$cms_build_info=rawurlencode(serialize(pmb_base64_encode($cms_build_info)));
 	$cms_build_info= "<input type='hidden' id='cms_build_info' name='cms_build_info' value='".$cms_build_info."' />";
 	$cms_build_info.="	
 	<script type='text/javascript'>

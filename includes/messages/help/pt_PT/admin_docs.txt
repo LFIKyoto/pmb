@@ -1,4 +1,4 @@
-<h1>Administra&ccedil;&atilde;o dos documentos</h1>
+<h2>Administra&ccedil;&atilde;o dos documentos</h2>
 
 <p>A sec&ccedil;&atilde;o de <b>administra&ccedil;&atilde;o dos documentos</b> permite definir os par&acirc;metros 
 da aplica&ccedil;&atilde;o para o empr&eacute;stimo e as estat&iacute;sticas sobre os documentos.

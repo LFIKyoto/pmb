@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: fr_FR.xml,v 1.8 2011-07-29 12:32:13 dgoron Exp $ -->
+$Id: fr_FR.xml,v 1.10 2018-08-01 15:17:06 dgoron Exp $ -->
 
 <XMLlist>
 	<entry code="rec_addr">Enregistrez une adresse pour pouvoir accéder aux propriétés de l'entrepôt</entry>
@@ -35,4 +35,6 @@ $Id: fr_FR.xml,v 1.8 2011-07-29 12:32:13 dgoron Exp $ -->
 	<entry code="oai_syncinfo_nonotice">Aucune notice dans la base.</entry>
 	<entry code="oai_clean_url">Récupérer la forme canonique de l'url renvoyée</entry>
 	<entry code="oai_last_sync">Depuis la dernière synchronisation</entry>
+	<entry code="oai_clean_html">Nettoyer le contenu HTML des notices ?</entry>
+	<entry code="oai_all_notices">Toutes les notices</entry>
 </XMLlist>

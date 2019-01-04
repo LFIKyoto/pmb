@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: liste_expl_dispo.php,v 1.9 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: liste_expl_dispo.php,v 1.15 2018-05-18 13:07:36 dgoron Exp $
 
 $base_path="./../..";
 $base_auth = "CIRCULATION_AUTH";
@@ -36,6 +36,22 @@ $rqt = "SELECT ".
 //echo $rqt;
 $res = pmb_mysql_query($rqt);
 $st = "odd";
+
+$colonnesarray=explode(",",$pmb_expl_data);
+$header_fields_persos='';
+if (strstr($pmb_expl_data, "#")) {
+	$cp=new parametres_perso("expl");
+	for ($i=0; $i<count($colonnesarray); $i++) {
+		if (substr($colonnesarray[$i],0,1)=="#") {
+			//champ personnalisé
+			if (!$cp->no_special_fields) {
+				$id=substr($colonnesarray[$i],1);
+				$header_fields_persos.="<th>".htmlentities($cp->t_fields[$id]['TITRE'],ENT_QUOTES,$charset)."</th>";
+			}
+		}
+	}
+}
+$liste = "";
 while (($data = pmb_mysql_fetch_array($res))) {
 	$sel_expl=1;
 	$statut="";
@@ -59,7 +75,28 @@ while (($data = pmb_mysql_fetch_array($res))) {
 		if($statut)$statut.=". ";
 		$statut.=$msg["transfert_demande_in_progress"];
 		$sel_expl=0;
-	}
+	}	
+
+	$fields_persos='';
+	if($cp){ 
+		// des champs perso sont à afficher
+		for ($i=0; $i<count($colonnesarray); $i++) {
+			if (substr($colonnesarray[$i],0,1)=="#") {
+				//id champ personnalisé
+				$id=substr($colonnesarray[$i],1);
+				$cp->get_values($data[3]); // expl_id
+				if (!$cp->no_special_fields) {
+					$aff_column=$cp->get_formatted_output((isset($cp->values[$id]) ? $cp->values[$id] : array()), $id);
+					if (!$aff_column) $aff_column="&nbsp;";
+					if($sel_expl) {
+						$fields_persos .= "<td onclick=\"parent.selExpl('".$data[1]."',$id_resa)\">".$aff_column."</td>";
+					}else{				
+						$fields_persos .= "<td>".$aff_column."</td>";
+					}
+				}
+			}
+		}
+	}	
 	if ($st=="odd")
 		$st = "even";
 	else
@@ -70,6 +107,7 @@ while (($data = pmb_mysql_fetch_array($res))) {
 						<td onclick=\"parent.selExpl('".$data[1]."',$id_resa)\">".$data[1]."</td>
 						<td onclick=\"parent.selExpl('".$data[1]."',$id_resa)\">".$data[2]."</td>
 						<td onclick=\"parent.selExpl('".$data[1]."',$id_resa)\">".$data[4]."</td>
+						".$fields_persos."		
 						<td onclick=\"parent.selExpl('".$data[1]."',$id_resa)\">".$statut."</td>
 					</tr>";
 	} else{
@@ -78,6 +116,7 @@ while (($data = pmb_mysql_fetch_array($res))) {
 						<td>".$data[1]."</td>
 						<td>".$data[2]."</td>
 						<td>".$data[4]."</td>
+						".$fields_persos."			
 						<td class='erreur'>".$statut."</td>
 					</tr>";
 	}	
@@ -85,14 +124,15 @@ while (($data = pmb_mysql_fetch_array($res))) {
 
 $global = "
 <div class='row'>
-	<div class='right'><a href='#' onClick='parent.kill_frame_expl();return false;'><img src='" . $base_path . "/images/close.gif' border='0' align='right'></a></div>
+	<div class='right'><a href='#' onClick='parent.kill_frame_expl();return false;'><img src='".get_url_icon('close.gif')."' style='border:0px' class='align_right'></a></div>
 	<h3>" . $msg["transferts_circ_resa_lib_choix_expl"] . "</h3>
 	<table>
 		<tr>
 			<th>" . $msg["transferts_circ_resa_titre_titre"] . "</th>
 			<th>" . $msg["transferts_circ_resa_titre_cb"] . "</th>
 			<th>" . $msg["transferts_circ_resa_titre_localisation"] . "</th>
-			<th align='left'>".$msg[651]."</th>
+			<th class='align_left'>".$msg[651]."</th>
+			".$header_fields_persos."
 			<th></th>
 		</tr>
 		!!liste!!

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sauvegarde_list.class.php,v 1.14 2015-04-04 15:14:33 Alexandre Exp $
+// $Id: sauvegarde_list.class.php,v 1.17 2017-11-07 15:20:00 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,11 +12,11 @@ include ($include_path."/templates/sauvegarde_list.tpl.php");
 class sauvegarde_list {
 	
 	//Données
-	var $date_saving; //Liste des dates de sauvegarde
-	var $logid; //Liste des fichiers à supprimer ou a restaurer
-	var $act; //Action
+	public $date_saving; //Liste des dates de sauvegarde
+	public $logid; //Liste des fichiers à supprimer ou a restaurer
+	public $act; //Action
 
-    function sauvegarde_list() {
+    public function __construct() {
     	global $date_saving;
     	global $logid;
     	global $act;
@@ -26,7 +26,7 @@ class sauvegarde_list {
     	$this->act=$act;
     }
     
-    function proceed() {
+    public function proceed() {
     	global $msg;
     	//Actions possibles :
     	//delete : suppression des jeux cochés
@@ -55,7 +55,7 @@ class sauvegarde_list {
     	return $this->showForm();
     }
     
-    function read_infos($filename) {
+    public function read_infos($filename) {
     	$tInfo=array();
     	$f=@fopen($filename,"r");
     	if (!$f) return $tInfo;
@@ -70,7 +70,7 @@ class sauvegarde_list {
     	return $tInfo;    	
     }
     
-    function showForm() {
+    public function showForm() {
     	global $form;
     	global $msg;
     	
@@ -99,24 +99,24 @@ class sauvegarde_list {
     	$requete.=" order by sauv_log_start_date desc";
     	$resultat=pmb_mysql_query($requete);
     	
-		$sty="class='brd' align=center";
-		$sty0="class='brd2' align=center";
+		$sty="class='brd center'";
+		$sty0="class='brd2 center'";
     	
-    	$sauvegarde_list="<table align=center celpadding=0 cellspacing=0>\n";
+    	$sauvegarde_list="<table class='center' celpadding=0 cellspacing=0>\n";
 		$sauvegarde_list.="<th $sty>&nbsp;</th><th $sty>&nbsp;</th>";
-    	$sauvegarde_list.="<th $sty colspan='4'><center>".$msg["sauv_list_th_info_set"]."</center></th>";
-    	$sauvegarde_list.="<th $sty colspan='4'><center>".$msg["sauv_list_th_info_file"]."</center></th>";
-    	$sauvegarde_list.="<th $sty colspan='3' rowspan='2'><center>".$msg["sauv_list_th_actions"]."</center></th>";
+    	$sauvegarde_list.="<th $sty colspan='4'>".$msg["sauv_list_th_info_set"]."</th>";
+    	$sauvegarde_list.="<th $sty colspan='4'>".$msg["sauv_list_th_info_file"]."</th>";
+    	$sauvegarde_list.="<th $sty colspan='3' rowspan='2'>".$msg["sauv_list_th_actions"]."</th>";
     	$sauvegarde_list.="<tr>";
 		$sauvegarde_list.="<th $sty>&nbsp;</th><th $sty>&nbsp;</th>";
-    	$sauvegarde_list.="<th $sty><center>".$msg["sauv_list_th_filename"]."</center></th>";
-    	$sauvegarde_list.="<th $sty><center>".$msg["sauv_list_th_date"]."</center></th>";
-    	$sauvegarde_list.="<th $sty><center>".$msg["sauv_list_th_final_state"]."</center></th>";
-    	$sauvegarde_list.="<th $sty><center>".$msg["sauv_list_th_user"]."</center></th>";
-    	$sauvegarde_list.="<th $sty><center>".$msg["sauv_list_th_set"]."</center></th>";
-    	$sauvegarde_list.="<th $sty><center>".$msg["sauv_list_th_hour"]."</center></th>";
-    	$sauvegarde_list.="<th $sty><center>".$msg["sauv_list_th_compr"]."</center></th>";
-    	$sauvegarde_list.="<th $sty><center>".$msg["sauv_list_th_crypt"]."</center></th>";
+    	$sauvegarde_list.="<th $sty>".$msg["sauv_list_th_filename"]."</th>";
+    	$sauvegarde_list.="<th $sty>".$msg["sauv_list_th_date"]."</th>";
+    	$sauvegarde_list.="<th $sty>".$msg["sauv_list_th_final_state"]."</th>";
+    	$sauvegarde_list.="<th $sty>".$msg["sauv_list_th_user"]."</th>";
+    	$sauvegarde_list.="<th $sty>".$msg["sauv_list_th_set"]."</th>";
+    	$sauvegarde_list.="<th $sty>".$msg["sauv_list_th_hour"]."</th>";
+    	$sauvegarde_list.="<th $sty>".$msg["sauv_list_th_compr"]."</th>";
+    	$sauvegarde_list.="<th $sty>".$msg["sauv_list_th_crypt"]."</th>";
    		$sauvegarde_list.="</tr>\n";
     	while ($res=pmb_mysql_fetch_object($resultat)) {
     		$sauvegarde_list.="<tr><td $sty><input type=\"checkbox\" name=\"logid[]\" value=\"".$res->sauv_log_id."\"></td>";
@@ -145,19 +145,19 @@ class sauvegarde_list {
     			$infos=array();
     		}
     		$sauvegarde_list.="<img src=\"images/".$succeed."\" width=20 height=20></td>";
-    		$sauvegarde_list.="<td $sty><center>".$res->sauv_log_file."</center></td>";
-    		$sauvegarde_list.="<td $sty><center>".$res->sauv_log_start_date."</center></td>";
-    		$sauvegarde_list.="<td $sty><center>".$succeed_message."</center></td>";
-    		$sauvegarde_list.="<td $sty><center>".$res->name."</center></td>";
+    		$sauvegarde_list.="<td $sty>".$res->sauv_log_file."</td>";
+    		$sauvegarde_list.="<td $sty>".$res->sauv_log_start_date."</td>";
+    		$sauvegarde_list.="<td $sty>".$succeed_message."</td>";
+    		$sauvegarde_list.="<td $sty>".$res->name."</td>";
     		if ($res->sauv_log_succeed==1) {
-    			$sauvegarde_list.="<td $sty><center>".$infos[Name]."</center></td>";
-    			$sauvegarde_list.="<td $sty><center>".$infos["Start time"]."</center></td>";
-    			$sauvegarde_list.="<td $sty><center>";
-    			if ($infos[Compress]=="1") $sauvegarde_list.="<img src=\"images/sauv_compress.png\">"; 
+    			$sauvegarde_list.="<td $sty>".$infos["Name"]."</td>";
+    			$sauvegarde_list.="<td $sty>".$infos["Start time"]."</td>";
+    			$sauvegarde_list.="<td $sty>";
+    			if (isset($infos["Compress"]) && $infos["Compress"]=="1") $sauvegarde_list.="<img src=\"images/sauv_compress.png\">"; 
     				else $sauvegarde_list.="&nbsp;";
     			$sauvegarde_list.="</td>";
     			$sauvegarde_list.="<td $sty>";
-    			if ($infos[Crypt]=="1") $sauvegarde_list.="<img src=\"images/sauv_crypted.png\">"; 
+    			if (isset($infos["Crypt"]) && $infos["Crypt"]=="1") $sauvegarde_list.="<img src=\"images/sauv_crypted.png\">"; 
     				else $sauvegarde_list.="<img src=\"images/sauv_noncrypted.png\">";
     			$sauvegarde_list.="</td>";
     			$sauvegarde_list.="<td $sty><input type=\"button\" value=\"".$msg["sauv_list_download"]."\" class=\"bouton\" onClick=\"document.location='admin/sauvegarde/download.php?logid=".$res->sauv_log_id."'\"></td>";

@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.82 2015-06-02 13:24:51 dgoron Exp $
+// $Id: main.inc.php,v 1.96 2018-07-13 06:58:05 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-echo window_title($database_window_title.$msg[5].$msg[1003].$msg[1001]);
+echo window_title($database_window_title.$msg['5'].$msg['1003'].$msg['1001']);
 
 // on a besoin des fonctions emprunteurs
 require_once('./circ/empr/empr_func.inc.php');
@@ -31,6 +31,9 @@ require_once("$include_path/resa_func.inc.php") ;
 require_once("$include_path/isbn.inc.php");
 require_once("$class_path/docs_location.class.php");
 require_once("$class_path/bannette.class.php");
+require_once($class_path.'/audit.class.php');
+require_once($class_path.'/indexation_stack.class.php');
+require_once($class_path.'/pnb/pnb_loan.class.php');
 
 if (($categ=='pretrestrict') && ($form_login) && ($form_password)) {
 	$query = "select id_empr, empr_cb from empr where empr_login='$form_login' and empr_password='".emprunteur::get_hashed_password($form_login,$form_password)."' " ;
@@ -41,35 +44,68 @@ if (($categ=='pretrestrict') && ($form_login) && ($form_password)) {
 }
 if (SESSrights & RESTRICTCIRC_AUTH) $sub="" ;
 
+pnb_loan::clean_loans();
+
 switch($categ) {
 	case 'pret':
-		echo window_title($database_window_title.$msg["5"]." : ".$msg["13"]);
+		echo window_title($database_window_title.$msg['5']." : ".$msg['13']);
 		switch($sub) {
+			case 'do_pret_resa':
+				require_once('./circ/do_pret_resa.inc.php');				
+				if(count($ids_resa)) {
+					$query_empr = "select empr_cb from empr where id_empr='".$id_empr."' ";
+					$result_empr = pmb_mysql_query($query_empr);
+					$form_cb = pmb_mysql_result($result_empr, 0, 'empr_cb');
+					if ($form_cb) {						
+						$temp = array();
+						foreach($ids_resa as $id_resa) {
+							$temp[] = do_pret_resa($id_resa, $force_pret);
+						}
+						$erreur_affichage = do_pret_resa_retour_affichage($temp); 								
+						$ficEmpr = new emprunteur($id_empr, $erreur_affichage, FALSE, 1);
+						print pmb_bidi($ficEmpr->fiche);
+					}else {
+						// emprunteur inconnu
+						error_message($msg['391'], $msg['392'], 1, './circ.php');
+					}
+				}else {
+					include("./circ/pret.inc.php");
+				}
+				break;
 			case 'pret_prolongation':
+			case 'pret_prolongation_bloc':
 				if ($id_doc) {
 					$id_bloc=$id_doc;
 				}
 				if ($id_bloc) {
-					include('./circ/prolongation.inc.php');
-					$query_empr="select id_empr from empr where empr_cb='$form_cb'";
+					require_once('./circ/prolongation.inc.php');
+					$query_empr="select id_empr from empr where empr_cb='".$form_cb."'";
 					$result_empr=pmb_mysql_query($query_empr);
 					$id_empr=pmb_mysql_result($result_empr,0,'id_empr');
-					$bloc_prolongation=0;
-					if ($id_empr) {
-						require_once("$class_path/emprunteur.class.php");
-						$temp=prolonger($id_bloc);
-						if ($temp!="") {
-							$erreur_affichage=$temp;
-						} else {
-							$erreur_affichage="<table border='0' cellpadding='1' height='40'><tr><td width='30'><span><img src='./images/info.png' /></span></td>
-							<td width='100%'><span class='erreur'>${msg[390]}</span></td></tr></table>";
+					$temp=array();
+					if ($sub=='pret_prolongation') {
+						$bloc_prolongation=0;
+						$ids=array(0=>($id_bloc*1));
+						$ok_msg='390';
+					} else {
+						$bloc_prolongation=1;
+						$ids=explode("  ",$id_bloc);
+						$date_retour=$date_retbloc;
+						$ok_msg='prets_prolong';
+					}
+					if (($id_empr)&&(count($ids)>0)) {
+						require_once($class_path."/emprunteur.class.php");
+						foreach ($ids as $dummykey=>$id){
+							$temp[]= prolonger($id);
 						}
+						$erreur_affichage = prolonger_retour_affichage($temp, $bloc_prolongation, $form_cb, $date_retour);
+						
 						$ficEmpr = new emprunteur($id_empr, $erreur_affichage, FALSE, 1);
 						$affichage= $ficEmpr->fiche;
 						print pmb_bidi($affichage);
 					} else {
 						// prolongation d'un prêt. exemplaire ou emprunteur inconnu
-						error_message($msg[391], $msg[392], 1, './circ.php');
+						error_message($msg['391'], $msg['392'], 1, './circ.php');
 					}
 				} else {
 					include("./circ/pret.inc.php");
@@ -78,43 +114,6 @@ switch($categ) {
 			case 'compte':
 				//Gestion des comptes financiers
 				include("./circ/comptes.inc.php");
-				break;
-			case 'pret_prolongation_bloc':
-				if ($id_doc) {
-					$id_bloc=$id_doc;
-				}
-				if ($id_bloc) {
-					require_once("./circ/prolongation.inc.php");
-
-					$ids=explode("  ",$id_bloc);
-					$date_retour=$date_retbloc;
-					$query_empr="select id_empr from empr where empr_cb='$form_cb'";
-					$result_empr=pmb_mysql_query($query_empr);
-					$id_empr=pmb_mysql_result($result_empr,0,'id_empr');
-					$temp="";
-					$bloc_prolongation=1;
-
-					if (($id_empr)&&(count($ids)>0)) {
-						require_once("$class_path/emprunteur.class.php");
-						foreach ($ids as $dummykey=>$id){
-							$temp .= prolonger($id);
-						}
-						if ($temp!="") {
-							$erreur_affichage=$temp;
-						} else {
-							$erreur_affichage="<table border='0' cellpadding='1' height='40'><tr><td width='30'><span><img src='./images/info.png' /></span></td>
-							<td width='100%'><span class='erreur'>${msg[prets_prolong]}</span></td></tr></table>";
-						}
-						$ficEmpr = new emprunteur($id_empr, $erreur_affichage, FALSE, 1);
-						$affichage= $ficEmpr->fiche;
-						print pmb_bidi($affichage);
-					} else {
-						// prolongation d'un prêt. exemplaire ou emprunteur inconnu
-						error_message($msg[391], $msg[392], 1, './circ.php');
-					}
-				} else {
-					include("./circ/pret.inc.php");
-				}
 				break;
 			case 'pret_express':
 				$pe_isbn=traite_code_isbn(stripslashes($pe_isbn));
@@ -143,10 +142,8 @@ switch($categ) {
 						$id_notice=pmb_mysql_insert_id();
 
 						audit::insert_creation (AUDIT_NOTICE, $id_notice) ;
-						notice::majNotices($id_notice);
-						notice::majNoticesGlobalIndex($id_notice,1);
-						notice::majNoticesMotsGlobalIndex($id_notice);
-
+						indexation_stack::push($id_notice, TYPE_NOTICE);
+						
 						if ($gestion_acces_active==1) {
 							require_once("$class_path/acces.class.php");
 							$ac= new acces();
@@ -254,7 +251,10 @@ switch($categ) {
 		include("./circ/empr/delete.inc.php");
 		break;
 	case 'empr_saisie':
-		if($pmb_javascript_office_editor) print $pmb_javascript_office_editor;
+		if($pmb_javascript_office_editor){
+			print $pmb_javascript_office_editor;
+			print "<script type='text/javascript' src='".$base_path."/javascript/tinyMCE_interface.js'></script>";
+		}
 		// affichage formulaire de saisie d'un emprunteur
 		include("./circ/empr/empr_saisie.inc.php");
 		break;
@@ -286,7 +286,10 @@ switch($categ) {
 			$cb_a_creer = $prefix.substr((string)str_pad($cb_a_creer, $nb_chiffres, "0", STR_PAD_LEFT),-$nb_chiffres);
 			// fin modif pour nouvelle méthode d'incrémentation*******************************************************************
 		} else $cb_a_creer="";
-		if($pmb_javascript_office_editor) print $pmb_javascript_office_editor;
+		if($pmb_javascript_office_editor){
+			print $pmb_javascript_office_editor;
+			print "<script type='text/javascript' src='".$base_path."/javascript/tinyMCE_interface.js'></script>";
+		}
 		show_empr_form("./circ.php?categ=empr_update","./circ.php?categ=empr_create",$dbh, $id, (string)$cb_a_creer,(string)$id_a_creer);
 		break;
 	case 'visu_ex':
@@ -326,8 +329,20 @@ switch($categ) {
 		break;
 	case 'resa_from_catal' :
 		// on est en pose de résa en arrivant avec un id_notice ou bulletin mais sans emprunteur
+		if(isset($id_notice)) $id_notice += 0; else $id_notice = 0;
+		if(isset($id_bulletin)) $id_bulletin += 0; else $id_bulletin = 0;
+		if(!isset($cb_initial)) $cb_initial = '';
 		if ($id_notice || $id_bulletin) {
-			get_cb( $msg['reserv_doc'], $msg[34], $msg['circ_tit_form_cb_empr'], './circ.php?categ=pret&id_notice='.$id_notice.'&id_bulletin='.$id_bulletin, 0);
+			require_once($class_path.'/event/events/event_resa.class.php');
+			$evt = new event_resa('resa', 'resa_from_catal');
+			$evt->set_resa($id_notice, $id_bulletin);
+			$evth = events_handler::get_instance();
+			$evth->send($evt);
+			if($evt->get_result()){
+				$cb_initial= $evt->get_result();
+			}	
+			get_cb( $msg['reserv_doc'], $msg[34], $msg['circ_tit_form_cb_empr'], './circ.php?categ=pret&id_notice='.$id_notice.'&id_bulletin='.$id_bulletin.(isset($force_resa) && $force_resa && $pmb_resa_records_no_expl ? '&force_resa=1' : ''), 0, $cb_initial);
+			
 		}
 		break;
 	case 'resa_planning_from_catal' :
@@ -370,7 +385,6 @@ switch($categ) {
 		break;
 	case 'search' :
 		// recherches emprunteurs
-		print $empr_menu_search;
 		switch ($sub) {
 			case "launch":
 				include("./circ/pret.inc.php");
@@ -388,9 +402,22 @@ switch($categ) {
 	case 'groupexpl' :
 		include("./circ/groupexpl/main.inc.php");
 		break;
+	case 'scan_request' : 
+		require_once('./circ/scan_request/main.inc.php');
+		break;
+	case 'search_perso' :
+		require_once('./circ/search_perso/main.inc.php');
+		break;
+	case 'plugin' :
+		$plugins = plugins::get_instance();
+		$file = $plugins->proceed("circ",$plugin,$sub);
+		if($file){
+			include $file;
+		}
+		break;
 	default:
 		echo window_title($database_window_title.$msg["5"]." : ".$msg["13"]);
-		if (SESSrights & RESTRICTCIRC_AUTH) get_login_empr_pret ( $msg[13], $msg[34], $msg[circ_tit_form_cb_empr], './circ.php?categ=pretrestrict', 0);
-		else get_cb( $msg[13], $msg[34], $msg[circ_tit_form_cb_empr], './circ.php?categ=pret', 0);
+		if (SESSrights & RESTRICTCIRC_AUTH) get_login_empr_pret ( $msg[13], $msg[34], $msg['circ_tit_form_cb_empr'], './circ.php?categ=pretrestrict', 0);
+		else get_cb( $msg[13], $msg[34], $msg['circ_tit_form_cb_empr'], './circ.php?categ=pret', 0);
 		break;
 	}

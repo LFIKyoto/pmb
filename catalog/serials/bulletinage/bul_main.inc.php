@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bul_main.inc.php,v 1.11 2011-12-05 15:17:35 ngantier Exp $
+// $Id: bul_main.inc.php,v 1.12 2016-05-06 12:44:27 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -17,6 +17,9 @@ switch($action) {
 		break;
 	case 'bul_duplicate':
 		include('./catalog/serials/bulletinage/bul_duplicate.inc.php');
+		break;
+	case 'bul_del_notice':
+		include('./catalog/serials/bulletinage/bul_del_notice.inc.php');
 		break;
 	case 'dupl_expl':
 	case 'expl_form':

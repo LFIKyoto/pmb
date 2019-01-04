@@ -1,39 +1,39 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_drag_n_drop.js,v 1.8 2014-11-19 08:17:09 ngantier Exp $
+// $Id: cms_drag_n_drop.js,v 1.9 2016-06-18 12:06:28 Alexandre Exp $
 
 
 /*
  * Utilisation :
- * 
+ *
  * Definition des elements pouvant être deplaces :
- *	
+ *
  * Attribut draggable="yes" (obligatoire)
  * Attribut dragtype="$TXT" (obligatoire= Type d'element a deplacer)
  * Attribut callback_before="$FCT" (Nom de la fonction appelee sur clic avant deplacement)
  * Attribut callback_after="$FCT" (Nom de la fonction appelee sur relache apres deplaçement)
  * Attribut dragflash="yes"  (Affichage d'un symbole au survol d'un element deplaçable)
- * Attribut dragicon="$IMG" (Image affichee lors du deplacement)	
+ * Attribut dragicon="$IMG" (Image affichee lors du deplacement)
  * Attribut dragtext="$TEXT" (Texte affiche lors du deplacement)
  * Attribut draghand="$ID" (ID de la poignee utilisee pour deplacer l'element)
- * 
+ *
  * Definition des elements recepteurs :
- * 
+ *
  * Attribut recept="yes" (obligatoire)
  * Attribut recepttype="$TXT" (obligatoire= Type d'element recepteur)
  * Attribut highlight=$FCT" (Nom de la fonction appelee au survol du recepteur)
  * Attribut downlight=$FCT" (Nom de la fonction apres au survol du recepteur)
- * 
+ *
  * Appeller la fonction "init_drag()" pour rechercher tous les elements deplaçables de la page
- * 
+ *
  * La fonction "dragtype_recepttype(dragged,target)" est appelee pour associer l'element deplace et l'element cible (si elle existe)
- * 
- * 
- */ 
- 
+ *
+ *
+ */
+
  //TODO = a modifier pour prendre en compte la possibilite d'avoir un recepteur acceptant +sieurs types d elements deplaçables
- 
+
 
 var	draggable=new Array(); 	//Elements deplaçables
 var recept=new Array();		//Elements recepteurs
@@ -105,11 +105,11 @@ function cms_mouse_down_draggable(e) {
 	if (e.stopPropagation) {
 		e.preventDefault();
 		e.stopPropagation();
-	} else { 
+	} else {
 		e.cancelBubble=true;
 		e.returnValue=false;
 	}
- 			
+
 	//Recuperation de l'element d'origine qui a reçu l'evenement
 	if (e.target) var targ=e.target; else var targ=e.srcElement;
 
@@ -120,7 +120,7 @@ function cms_mouse_down_draggable(e) {
 	if (current_drag) current_drag.parentNode.removeChild(current_drag);
 	current_drag=null;
 	dragged=null;
-	
+
 	//Recherche du premier parent qui a draggable comme attribut
 	while ((targ.getAttribute("draggable")!="yes")&&(targ.nodeName!="HTML")) {
 		targ=targ.parentNode;
@@ -132,17 +132,17 @@ function cms_mouse_down_draggable(e) {
 	var pos=getCoordinate(e);
 	posxdown=pos[0];
 	posydown=pos[1];
-	
+
 	pos_init_absolute=cms_findPos(targ);
 	//Il y a un element en cours de drag !
 	is_down=true;
-	
+
 	var to_create = true;
 	//Appel de la fonction callback before si elle existe
 	if (targ.getAttribute("callback_before")) {
 		 to_create = eval(targ.getAttribute("callback_before")+"(targ,e)");
 	}
-	
+
 	//Creation du clone qui bougera
 	if(to_create)
 		cms_create_dragged(targ);
@@ -157,12 +157,12 @@ function cms_mouse_down_draggable(e) {
 	}
 }
 
-//Evenement : passage au dessus d'un element draggable : on affiche un 
+//Evenement : passage au dessus d'un element draggable : on affiche un
 // petit symbole pour signifier qu'il est draggable
 function cms_mouse_over_draggable(e) {
 	if (!e) var e=window.event;
 	if (e.target) var targ=e.target; else var targ=e.srcElement;
-	
+
 	//Recherche du premier parent qui a draggable
 	while ((targ.getAttribute("draggable")!="yes")&&(targ.nodeName!="HTML")) {
 			targ=targ.parentNode;
@@ -190,7 +190,7 @@ function cms_mouse_over_draggable(e) {
 function cms_mouse_out_draggable(e) {
 	if (!e) var e=window.event;
 	if (e.target) var targ=e.target; else var targ=e.srcElement;
-	
+
 	//Recherche du premier parent qui a draggable
 	while ((targ.getAttribute("draggable")!="yes")&&(targ.nodeName!="HTML")) {
 		targ=targ.parentNode;
@@ -202,31 +202,31 @@ function cms_mouse_out_draggable(e) {
 
 //Quand on relache le clone, y-a-t-il un element recepteur en dessous ? Si oui, on retourne l'id
 function cms_is_on() {
-	
+
 	var i;
 	if (current_drag!=null) {
 		var current_drag_id=current_drag.getAttribute('id');
 
-	
+
 		var scrollbar_pos=0;
 		var dragged_id=current_drag_id.substring(0, current_drag_id.length-5);
 		var pos=cms_findPos(current_drag);
 
-		for (i=0; i<recept.length; i++) {      
-			if( (allow_drag[parent.frames['opac_frame'].document.getElementById(recept[i]).getAttribute('recepttype')]['all']==true) || 
-				(allow_drag[parent.frames['opac_frame'].document.getElementById(recept[i]).getAttribute('recepttype')][parent.frames['opac_frame'].document.getElementById(dragged_id).getAttribute('dragtype')]==true)  ) {		
-				
-				if ( ((pos[0]>r_x[i])&&(pos[0]<parseFloat(r_x[i])+parseFloat(r_width[i]))) &&				
-					((pos[1]>r_y[i])&&(pos[1]<parseFloat(r_y[i])+parseFloat(r_height[i]))) ) 	
+		for (i=0; i<recept.length; i++) {
+			if( (allow_drag[parent.frames['opac_frame'].document.getElementById(recept[i]).getAttribute('recepttype')]['all']==true) ||
+				(allow_drag[parent.frames['opac_frame'].document.getElementById(recept[i]).getAttribute('recepttype')][parent.frames['opac_frame'].document.getElementById(dragged_id).getAttribute('dragtype')]==true)  ) {
+
+				if ( ((pos[0]>r_x[i])&&(pos[0]<parseFloat(r_x[i])+parseFloat(r_width[i]))) &&
+					((pos[1]>r_y[i])&&(pos[1]<parseFloat(r_y[i])+parseFloat(r_height[i]))) )
 					return recept[i];
 
-			}			 
+			}
 		}
 	}
 	return false;
 }
 
-//Si la souris est au dessus du document et qu'on est en cours de drag, on annule tous les 
+//Si la souris est au dessus du document et qu'on est en cours de drag, on annule tous les
 // comportements par defaut du navigateur
 function cms_mouse_over(e) {
 	if (!e) var e=window.event;
@@ -244,8 +244,8 @@ function cms_mouse_over(e) {
 //On relache le bouton en cours de drag
 function cms_up_dragged(e) {
 	if (!e) var e=window.event;
-	//Si il y a un clone en cours de mouvement, on le supprime, on remet tout a zero et on 
-	// appelle la fonction qui gere le drag si elle existe et qu'il y a un recepteur en dessous 
+	//Si il y a un clone en cours de mouvement, on le supprime, on remet tout a zero et on
+	// appelle la fonction qui gere le drag si elle existe et qu'il y a un recepteur en dessous
 	if (current_drag!=null) {
 		//Y-a-t-il un recepteur en dessous du lâche ?
 		try{
@@ -259,14 +259,14 @@ function cms_up_dragged(e) {
 		} catch(e){
 			target=null;
 		}
-		
+
 		//Remise a zero
 		var pos=getCoordinate(e);
 		var coords_orig=cms_findPos(dragged);
 		var encx=posxdown-coords_orig[0];
 		var ency=posydown-coords_orig[1];
 
-		
+
 		var xdrop=pos[0]-encx;
 		var ydrop=pos[1]-ency;
 		posxdown=0;
@@ -274,9 +274,9 @@ function cms_up_dragged(e) {
 		is_down=false;
 		if (current_drag) current_drag.parentNode.removeChild(current_drag);
 		current_drag=null;
-		//Si il y a un recepteur : callback de la fonction d'association si elle existe 
+		//Si il y a un recepteur : callback de la fonction d'association si elle existe
 		if (target && !e.shiftKey) {
-			
+
 			if (eval("typeof "+dragged.getAttribute("dragtype")+"_"+parent.frames['opac_frame'].document.getElementById(target).getAttribute("recepttype")+"=='function'")) {
 				eval(dragged.getAttribute("dragtype")+"_"+parent.frames['opac_frame'].document.getElementById(target).getAttribute("recepttype")+"(dragged,parent.frames['opac_frame'].document.getElementById(target),xdrop,ydrop,coords_orig[0],coords_orig[1])");
 			}
@@ -289,7 +289,7 @@ function cms_up_dragged(e) {
 		if (dragged && dragged.getAttribute("callback_after")) {
 			eval(dragged.getAttribute("callback_after")+"(dragged,e,'"+target+"')");
 		}
-		cms_show_css_obj(dragged.getAttribute("id"));		
+		cms_show_css_obj(dragged.getAttribute("id"));
 		//On nettoie la reference a l'element d'origine
 		dragged=null;
 	}
@@ -298,35 +298,35 @@ function cms_up_dragged(e) {
 function show_cadre_depos(cadre,x,y){
 	var childs=cadre.childNodes;
 	var flag_found=false;
-	
+
 	var cadre_depos=parent.frames['opac_frame'].document.getElementById("cadre_depos");
 	for (var i=0; i<childs.length; i++) {
-		
+
 		var child_block=childs[i];
 		if((child_block.offsetWidth!=0)&&(child_block.offsetHeight!=0)) {
 			left_coords=cms_findPos(child_block);
 			//On a trouvé !
-			if (((x>=left_coords[0])&&(x<=left_coords[0]+child_block.offsetWidth))&&((y>=left_coords[1])&&(y<=left_coords[1]+child_block.offsetHeight))) {				
-				cadre_depos.style.left=left_coords[0]+"px";	
-				cadre_depos.style.top=left_coords[1]+"px";	
-				cadre_depos.style.zIndex=2000;		
+			if (((x>=left_coords[0])&&(x<=left_coords[0]+child_block.offsetWidth))&&((y>=left_coords[1])&&(y<=left_coords[1]+child_block.offsetHeight))) {
+				cadre_depos.style.left=left_coords[0]+"px";
+				cadre_depos.style.top=left_coords[1]+"px";
+				cadre_depos.style.zIndex=2000;
 				cadre_depos.style.width=100+"px";
 				cadre_depos.style.visibility="visible";
 				flag_found=true;
 				break;
 			}
-		}		
+		}
 	}
 	if (!flag_found) {
 
-		
+
 	}
 }
 
 //Evenement : Deplacement du clone (draggage)
 function cms_move_dragged(e) {
 	if (!e) var e=window.event;
-	//Si il y a un drag en cours 
+	//Si il y a un drag en cours
 	if (is_down) {
 		//On annule tous les comportements par defaut du navigateur
 		if (e.stopPropagation) {
@@ -350,7 +350,7 @@ function cms_move_dragged(e) {
 			var r=cms_is_on();
 		} catch(e){
 			var r=null;
-		}	
+		}
 		if (r) {
 			if ((r_highlight)&&(r_highlight!=r)) {
 				if (parent.frames['opac_frame'].document.getElementById(r_highlight).getAttribute('downlight'))
@@ -361,7 +361,7 @@ function cms_move_dragged(e) {
 			r_highlight=r;
 			show_cadre_depos(parent.frames['opac_frame'].document.getElementById(r),(pos[0]-encx),(pos[1]-ency));
 
-			
+
 		} else if ((r_highlight)&&parent.frames['opac_frame'].document.getElementById(r_highlight)) {
 			if (parent.frames['opac_frame'].document.getElementById(r_highlight).getAttribute('downlight')) {
 					eval(parent.frames['opac_frame'].document.getElementById(r_highlight).getAttribute('downlight')+"(parent.frames['opac_frame'].document.getElementById(r_highlight))");
@@ -383,7 +383,7 @@ function cms_move_dragged(e) {
 function cms_create_dragged(targ) {
 	//Recherche de la position d'origine
 	initpos=cms_findPos(targ);
-	
+
 	//Creation du clone si necessaire
 	if (current_drag==null) {
 		dragtext=targ.getAttribute("dragtext");
@@ -400,7 +400,7 @@ function cms_create_dragged(targ) {
 				clone.appendChild(parent.frames['opac_frame'].document.createTextNode(dragtext));
 			}
 		} else {
-			
+
 			if (targ.nodeName=='TR') {	//Et c'est encore IE qui fait des siennes !!!
 				fclone=targ.cloneNode(true);
 				t=parent.frames['opac_frame'].document.createElement('TABLE');
@@ -418,7 +418,7 @@ function cms_create_dragged(targ) {
 		current_drag.setAttribute("id",targ.getAttribute("id")+"drag_");
 		current_drag.setAttribute('handler',targ.getAttribute("handler"));
 		current_drag.className="dragged";
-		current_drag.appendChild(clone);
+		current_drag.appendChild(clone).classList.remove("cms_drag");
 		current_drag.style.position="absolute";
 		current_drag.style.visibility="hidden";
 		current_drag=parent.frames['opac_frame'].document.getElementById("att").appendChild(current_drag);
@@ -430,10 +430,10 @@ function cms_create_dragged(targ) {
 		current_drag.style.top=coords_orig[1]+"px";
 		current_drag.style.zIndex=2000;
 		current_drag.style.visibility="visible";
-		current_drag.style.cursor="move";		
-	//	current_drag.style.border="3px dashed red";		
-	//	current_drag.style.outline="2px solid red"; 
-		
+		current_drag.style.cursor="move";
+	//	current_drag.style.border="3px dashed red";
+	//	current_drag.style.outline="2px solid red";
+
 		if(!parent.frames['opac_frame'].document.getElementById("cadre_depos")){
 			cadre_depos=parent.frames['opac_frame'].document.createElement("div");
 			cadre_depos.setAttribute("id","cadre_depos");
@@ -443,7 +443,7 @@ function cms_create_dragged(targ) {
 			cadre_depos.style.visibility="hidden";
 			cadre_depos.style.backgroundColor="#000088";
 			cadre_depos=parent.frames['opac_frame'].document.getElementById("att").appendChild(cadre_depos);
-		}	
+		}
 	}
 }
 
@@ -454,7 +454,7 @@ function cms_parse_drag(n) {
 	var l;
 	var idh;
 	var tmp;
-	
+
 	//Pour le noeud passe, si c'est un noeud de type element (1), alors on regarde ses attributs
 	if(n.nodeType==1){
 		//C'est un recepteur
@@ -463,14 +463,14 @@ function cms_parse_drag(n) {
 				l=recept.length;
 				recept[l]=n.getAttribute("id");
 				cms_calc_recept(l);
-			}	
-			
-		} 
+			}
+
+		}
 		//C'est un element deplaçable
 		if (n.getAttribute("draggable")=="yes") {
 
 			draggable[draggable.length]=n.getAttribute("id");
-			
+
 			//Avec une poignee
 			if (n.getAttribute("handler")) {
 				idh=n.getAttribute("handler");
@@ -494,8 +494,8 @@ function cms_parse_drag(n) {
 			tmp=n;
 			tmp.onmousedown=function(e) {}
 			tmp.onmouseover=function(e) {}
-			tmp.onmouseout=function(e) {}			
-		}	
+			tmp.onmouseout=function(e) {}
+		}
 	}
 	//Si il a des enfants, on parse ses enfants !
 	if (n.hasChildNodes()) {
@@ -503,7 +503,7 @@ function cms_parse_drag(n) {
 			c=n.childNodes[i];
 			cms_parse_drag(c);
 		}
-	}	
+	}
 }
 
 //Recherche des recepteurs uniquement, a partir du noeud specifie
@@ -512,13 +512,13 @@ function cms_parse_drag_recept(n) {
 	var l;
 	var c;
 	//Pour le noeud passe, si c'est un noeud de type element (1), alors on regarde ses attributs
-	if(n.nodeType==1){ 
+	if(n.nodeType==1){
 		//C'est un recepteur
 		if (n.getAttribute("recept")=="yes") {
 			l=recept.length;
 			recept[l]=n.getAttribute("id");
-			cms_calc_recept(l);			  
-		} 
+			cms_calc_recept(l);
+		}
 	}
 	//Si il a des enfants, on parse ses enfants !
 	if (n.hasChildNodes()) {
@@ -539,7 +539,7 @@ function cms_init_recept() {
 	r_height=new Array();
 	r_highlight='';
 	recept=new Array();
-	
+
 	//Recherche de tous les recepteurs
 	cms_parse_drag_recept(parent.frames['opac_frame'].document.body);
 
@@ -559,19 +559,19 @@ function cms_init_drag() {
 	current_drag=null;
 	dragged=null;
 	shifton=false;
-	
+
 	r_x=new Array();
 	r_y=new Array();
 	r_width=new Array();
 	r_height=new Array();
 	r_highlight="";
-	
+
 	d_x=new Array();
 	d_y=new Array();
 	d_width=new Array();
 	d_height=new Array();
 	d_highlight="";
-	
+
 	//Recherche de tous les elements deplaçables et des recepteurs
 	cms_parse_drag(parent.frames['opac_frame'].document.body);
 	// Si pas de draggable ou de recept
@@ -604,7 +604,7 @@ function cms_init_drag() {
 
 //Calcul de l'encombrement de tous les recepteurs
 function cms_recalc_recept() {
-	
+
 	for(var i=0;i<recept.length;i++) {
 		cms_calc_recept(i);
 	}
@@ -621,7 +621,7 @@ function cms_calc_recept(i) {
 		r_width[i]=r.offsetWidth;
 		r_height[i]=r.offsetHeight;
 		r_highlight="";
-	} catch(err) {	
+	} catch(err) {
 		recept.splice(i,1);
 		r_x.splice(i,1);
 		r_y.splice(i,1);
@@ -631,14 +631,14 @@ function cms_calc_recept(i) {
 }
 
 function cms_recalc_draggable() {
-	
+
 	for(var i=0;i<draggable.length;i++) {
 		cms_calc_draggable(i);
 	}
 }
 //Calcul de l'encombrement d'un draggable
 function cms_calc_draggable(i) {
-	try {	
+	try {
 		var r=parent.frames['opac_frame'].document.getElementById(draggable[i]);
 		var pos=cms_findPos(r);
 		d_x[i]=pos[0];
@@ -646,7 +646,7 @@ function cms_calc_draggable(i) {
 		d_width[i]=r.offsetWidth;
 		d_height[i]=r.offsetHeight;
 		d_highlight="";
-	} catch(err) {	
+	} catch(err) {
 		draggable.splice(i,1);
 		d_x.splice(i,1);
 		d_y.splice(i,1);

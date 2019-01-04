@@ -1,11 +1,11 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_record_formations_ui.js,v 1.19 2015-02-10 17:45:39 arenou Exp $
+// $Id: nomenclature_record_formations_ui.js,v 1.27 2017-07-13 12:22:06 dgoron Exp $
 
 define(["dojo/_base/declare", "apps/nomenclature/nomenclature_record_formations","apps/nomenclature/nomenclature_record_formation", "apps/nomenclature/nomenclature_formation","apps/nomenclature/nomenclature_type_formation", "dojo/dom-construct", "dojo/on", "dojo/_base/lang", "apps/nomenclature/nomenclature_record_formation_ui", "dojo/topic", "dijit/registry", "dijit/_WidgetBase"], function(declare, RecordFormations, RecordFormation, Formation, TypeFormation, domConstruct, on, lang, RecordFormationUi, topic, registry, _WidgetBase){
 	/*
-	 *Classe nomenclature_record_formations_ui. Classe générant le formulaire permettant de représenter les formations d'une notice
+	 *Classe nomenclature_record_formations_ui. Classe gï¿½nï¿½rant le formulaire permettant de reprï¿½senter les formations d'une notice
 	 */
 	  return declare("nomenclature_record_formations_ui",[_WidgetBase], {
 			    
@@ -15,49 +15,51 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_record_formations"
 		  	name:null,
 		  	params:null,
 		  	dom_node:null,
-		  	formations_parametre:null, /** Tableau des formations standards (définies en administration) **/
+		  	formations_parametre:null, /** Tableau des formations standards (dï¿½finies en administration) **/
 		  	selector:null, 
 		  	main_div:null,
 		  	total_formation:0,
 		  	
-		    constructor: function(params, dom_node){
+		    constructor: function(params){
 		    	this.own(topic.subscribe("record_formation_ui", lang.hitch(this, this.handle_events)));
 		    	this.own(topic.subscribe("instrument_ui", lang.hitch(this, this.handle_events)));
-		    	//Pour le débug des événements, on s'amuse à tout capter pour voir
-		    	//topic.subscribe("record_formations_ui", lang.hitch(this, this.handle_events));
-		    	//topic.subscribe("record_formations", lang.hitch(this, this.handle_events));
-		    	//topic.subscribe("record_formation", lang.hitch(this, this.handle_events));
-		    	//topic.subscribe("nomenclature", lang.hitch(this, this.handle_events));
-		    	//topic.subscribe("nomenclature_ui", lang.hitch(this, this.handle_events));
-		    	//topic.subscribe("family", lang.hitch(this, this.handle_events));
-		    	//topic.subscribe("family_ui", lang.hitch(this, this.handle_events));
-		    	//topic.subscribe("musicstand", lang.hitch(this, this.handle_events));
-		    	//topic.subscribe("musicstand_ui", lang.hitch(this, this.handle_events));
-		    	//topic.subscribe("instrument", lang.hitch(this, this.handle_events));
-		    	//topic.subscribe("instrument_list", lang.hitch(this, this.handle_events));
-		    	//topic.subscribe("instrument_list_ui", lang.hitch(this, this.handle_events));
-		    	//topic.subscribe("exotic_instruments", lang.hitch(this, this.handle_events));
-		    	//topic.subscribe("exotic_instruments_ui", lang.hitch(this, this.handle_events));
-		    	//topic.subscribe("workshop_ui", lang.hitch(this, this.handle_events));
-		    	//topic.subscribe("workshops_ui", lang.hitch(this, this.handle_events));
-		    	//topic.subscribe("workshop", lang.hitch(this, this.handle_events));
+		    	this.own(topic.subscribe("voice_ui", lang.hitch(this, this.handle_events)));
+
+		    	
+		    	//		    	Pour le dï¿½bug des ï¿½vï¿½nements, on s'amuse ï¿½ tout capter pour voir
+		    	/*topic.subscribe("record_formations_ui", lang.hitch(this, this.handle_events));
+		    	topic.subscribe("record_formations", lang.hitch(this, this.handle_events));
+		    	topic.subscribe("record_formation", lang.hitch(this, this.handle_events));
+		    	topic.subscribe("nomenclature", lang.hitch(this, this.handle_events));
+		    	topic.subscribe("nomenclature_ui", lang.hitch(this, this.handle_events));
+		    	topic.subscribe("family", lang.hitch(this, this.handle_events));
+		    	topic.subscribe("family_ui", lang.hitch(this, this.handle_events));
+		    	topic.subscribe("musicstand", lang.hitch(this, this.handle_events));
+		    	topic.subscribe("musicstand_ui", lang.hitch(this, this.handle_events));
+		    	topic.subscribe("instrument", lang.hitch(this, this.handle_events));
+		    	topic.subscribe("instrument_list", lang.hitch(this, this.handle_events));
+		    	topic.subscribe("instrument_list_ui", lang.hitch(this, this.handle_events));
+		    	topic.subscribe("exotic_instruments", lang.hitch(this, this.handle_events));
+		    	topic.subscribe("exotic_instruments_ui", lang.hitch(this, this.handle_events));
+		    	topic.subscribe("workshop_ui", lang.hitch(this, this.handle_events));
+		    	topic.subscribe("workshops_ui", lang.hitch(this, this.handle_events));
+		    	topic.subscribe("workshop", lang.hitch(this, this.handle_events));*/
 
 		    	
 		    	/**
 		    	 * TODO: Get arguments pour instancier les formations correctes 
-		    	 *           - Formations existantes et déjà enregistrées pour la notice
+		    	 *           - Formations existantes et dï¿½jï¿½ enregistrï¿½es pour la notice
 		    	 *           - Infos pour en instancier de nouvelles
 		    	 */
 		    	this.record_formations = new RecordFormations(arguments[0].num_record);
 		    	this.set_params(arguments[0]);
-		    	this.set_dom_node(arguments[1]);
 		    	this.formations_parametre = new Array();
 		    	this.instanciate_param_formations();
 		    	this.record_formations_ui = new Array();
 		    },
 		    
 		    handle_events : function(evt_type,evt_args){
-		    	//pour le débug, on affiche tout ce que l'on voit passer
+		    	//pour le dï¿½bug, on affiche tout ce que l'on voit passer
 		    	//console.log("DEBUG",evt_type,evt_args);
 		    	switch(evt_type){
 		    		case "record_formation_ready" :
@@ -68,14 +70,17 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_record_formations"
 		    			break;
 		    		case "partial_record_created" :
 		    			//petit hack utile...
-		    			if(document.forms["notice"]['f_rel_id_'+(document.forms["notice"].max_rel.value-1)].value){
+		    			if(document.forms["notice"]['f_rel_id_'+(document.forms["notice"].max_rel.value-1)].value*1>0){
 		    				add_rel();
 		    			}
 		    			document.forms["notice"]['f_rel_id_'+(document.forms["notice"].max_rel.value-1)].value = evt_args.record_id;
 		    			document.forms["notice"]['f_rel_'+(document.forms["notice"].max_rel.value-1)].value = evt_args.record_title;
+		    			document.forms["notice"]['f_rel_id_notices_relations_'+(document.forms["notice"].max_rel.value-1)].value = evt_args.record_reverse_id_notices_relations;
+		    			document.forms["notice"]['f_rel_num_reverse_link_'+(document.forms["notice"].max_rel.value-1)].value = evt_args.record_reverse_num_reverse_link;
 		    			for(var i=0 ; i<document.forms["notice"]['f_rel_type_'+(document.forms["notice"].max_rel.value-1)].options.length ; i++){
 		     				if(document.forms["notice"]['f_rel_type_'+(document.forms["notice"].max_rel.value-1)].options[i].value == (registry.byId('nomenclature_datastore').get_relation_code()+"-down")){
 		    					document.forms["notice"]['f_rel_type_'+(document.forms["notice"].max_rel.value-1)].selectedIndex = i;
+		    					update_rel_reverse_type(document.forms["notice"]['f_rel_type_'+(document.forms["notice"].max_rel.value-1)], (document.forms["notice"].max_rel.value-1));
 		    					break;
 		    				}
 		    			}
@@ -168,8 +173,8 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_record_formations"
 			create_new_formation: function(){
 				/**
 				 * TODO: 
-				 * -Recuperation de l'id selectionné
-				 * -Instanciation d'une nouvelle formation avec le type (défini par l'id)
+				 * -Recuperation de l'id selectionnï¿½
+				 * -Instanciation d'une nouvelle formation avec le type (dï¿½fini par l'id)
 				 */
 				var id_formation = this.selector.options[this.selector.selectedIndex].value;
 				this.instanciate_formation_ui_from_id(id_formation);
@@ -238,10 +243,22 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_record_formations"
 				    	break;
 		    		}
 		    	}
+		    	for(var i=0 ; i<this.record_formations.record_formations.length ; i++){
+					this.record_formations_ui[i].set_order(i);
+				}
 		    },
 		    
 		    postCreate: function(){
 		    	this.init_record_formation();
+		    },
+		    check_validate:function(){
+		    	for(var i=0 ; i<this.record_formations_ui.length ; i++){
+		    		if(!this.record_formations_ui[i].check_validate()){
+		    			this.record_formations_ui[i].nomenclature_ui.focus_on_error();
+		    			return false;
+		    		}
+		    	}
+		    	return true;
 		    }
 	    });
 	});

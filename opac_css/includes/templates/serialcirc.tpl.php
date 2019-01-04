@@ -2,12 +2,20 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc.tpl.php,v 1.8 2013-04-26 07:37:42 arenou Exp $
+// $Id: serialcirc.tpl.php,v 1.9 2018-01-25 10:13:28 dgoron Exp $
 
 // templates pour gestion des autorités collections
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+global $serialcirc_circ_list_tpl;
+global $serialcirc_copy_resume;
+global $ask_transmission_mail;
+global $opac_biblio_name;
+global $report_late_mail;
+global $transmission_accepted_mail;
+global $ret_accepted_mail;
+global $serialcirc_hold_mail;
 
 $serialcirc_circ_list_tpl ="
 		<table>

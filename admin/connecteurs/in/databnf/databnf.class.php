@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: databnf.class.php,v 1.3 2015-04-03 11:16:27 jpermanne Exp $
+// $Id: databnf.class.php,v 1.8 2017-10-19 14:13:43 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,54 +14,41 @@ require_once("$class_path/rdf/arc2/ARC2.php");
 
 class databnf extends connector {
 	//Variables internes pour la progression de la récupération des notices
-	var $del_old;				//Supression ou non des notices dejà existantes
+	public $del_old;				//Supression ou non des notices dejà existantes
 	
-	var $profile;				//Profil wikipedia
-	var $match;					//Tableau des critères wikipedia
-	var $current_site;			//Site courant du profile (n°)
-	var $searchindexes;			//Liste des indexes de recherche possibles pour le site
-	var $current_searchindex;	//Numéro de l'index de recherche de la classe
-	var $match_index;			//Type de recherche (power ou simple)
-	var $types;					//Types de documents pour la conversino des notices
+	public $profile;				//Profil wikipedia
+	public $match;					//Tableau des critères wikipedia
+	public $current_site;			//Site courant du profile (n°)
+	public $searchindexes;			//Liste des indexes de recherche possibles pour le site
+	public $current_searchindex;	//Numéro de l'index de recherche de la classe
+	public $match_index;			//Type de recherche (power ou simple)
+	public $types;					//Types de documents pour la conversino des notices
 	
 	//Résultat de la synchro
-	var $error;					//Y-a-t-il eu une erreur	
-	var $error_message;			//Si oui, message correspondant
+	public $error;					//Y-a-t-il eu une erreur	
+	public $error_message;			//Si oui, message correspondant
 	
-    function databnf($connector_path="") {
-    	parent::connector($connector_path);
+    public function __construct($connector_path="") {
+    	parent::__construct($connector_path);
     }
     
-    function get_id() {
+    public function get_id() {
     	return "databnf";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 2;
 	}
     
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-    
-    function get_libelle($message) {
-    	if (substr($message,0,4)=="msg:") return $this->msg[substr($message,4)]; else return $message;
-    }
-    
-    function source_get_property_form($source_id) {
+    public function source_get_property_form($source_id) {
     	$params=$this->get_source_params($source_id);
     	if ($params["PARAMETERS"]) {
     		//Affichage du formulaire avec $params["PARAMETERS"]
     		$vars=unserialize($params["PARAMETERS"]);
     		foreach ($vars as $key=>$val) {
-    			global $$key;
-    			$$key=$val;
+    			global ${$key};
+    			${$key}=$val;
     		}
     	}
     	$form="
@@ -77,41 +64,23 @@ class databnf extends connector {
     	return $form;
     }
     
-    function make_serialized_source_properties($source_id) {
+    public function make_serialized_source_properties($source_id) {
     	global $sparql_endpoint_url;
     	$t["sparql_endpoint_url"]=$sparql_endpoint_url;
     	$this->sources[$source_id]["PARAMETERS"]=serialize($t);
 	}
-	
-	//Récupération  des proriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
-		$this->timeout=5;
-		$this->repository=2;
-		$this->retry=3;
-		$this->ttl=1800;
-		$this->parameters="";
-	}
-	
-	 //Formulaire des propriétés générales
-	function get_property_form() {
-		return "";
-	}
-    
-    function make_serialized_properties() {
-		$this->parameters = serialize(array());
-	}
 
-	function enrichment_is_allow(){
+	public function enrichment_is_allow(){
 		return true;
 	}
 	
-	function getEnrichmentHeader(){
+	public function getEnrichmentHeader(){
 		global $lang;
 		$header= array();
 		return $header;
 	}
 	
-	function getTypeOfEnrichment($source_id){
+	public function getTypeOfEnrichment($source_id){
 		$type['type'] = array(
 			array( 
 				'code' => "databnf_oeuvre",
@@ -126,7 +95,7 @@ class databnf extends connector {
 		return $type;
 	}
 	
-	function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array()){
+	public function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array()){
 		$enrichment= array();
 		$params=$this->unserialize_source_params($source_id);
 		$sparql_end_point=$params["PARAMETERS"]["sparql_endpoint_url"];
@@ -144,7 +113,7 @@ class databnf extends connector {
 		return $enrichment;
 	}
 	
-	function get_author_page($notice_id,$sparql_end_point){
+	public function get_author_page($notice_id,$sparql_end_point){
 		global $lang;
 		global $charset;
 		
@@ -158,7 +127,7 @@ class databnf extends connector {
 				$author_id = pmb_mysql_result($result,0,0);
 				$author_number = pmb_mysql_result($result,0,1);
 				$author_class = new auteur($author_id);
-				$author =  $author_class->isbd_entry;
+				$author =  $author_class->get_isbd();
 				
 				//On y va !
 				$config = array(
@@ -246,7 +215,7 @@ class databnf extends connector {
 							  <table width='100%'>
 								<tr>
 							  {% for record in result %}
-							 		<td align='center'><img src='{{record.url}}'/></td>
+							 		<td class='center'><img src='{{record.url}}'/></td>
 							  {% endfor %}
 							    </tr>
 							  </table>";
@@ -280,7 +249,7 @@ class databnf extends connector {
 					}
 					$rows=array_uft8_decode($rows);
 					$template="<h3>Bibliographie (BNF)</h3>
-						<div align='center'>
+						<div class='center'>
 						<div style='overflow-x:scroll;overflow-y:auto;width:850px;'>
 						<table>
 						   <tr>
@@ -332,7 +301,7 @@ class databnf extends connector {
 		return $html_to_return; 
 	}
 	
-	function noticeInfos($notice_id,$sparql_end_point){
+	public function noticeInfos($notice_id,$sparql_end_point){
 		global $lang,$charset;
 		
 		//On va rechercher l'isbn si il existe....

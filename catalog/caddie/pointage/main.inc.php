@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.10 2014-06-05 09:50:02 dgoron Exp $
+// $Id: main.inc.php,v 1.11 2016-03-13 11:39:26 Alexandre Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -33,7 +33,7 @@ switch ($moyen) {
 		include ("./catalog/caddie/pointage/search_history.inc.php");
 		break;
 	default:
-		$catalog_layout = str_replace('<!--!!sous_menu_choisi!! -->', "?", $catalog_layout);
+		$catalog_layout = str_replace('<!--!!sous_menu_choisi!! -->', "", $catalog_layout);
 		print $catalog_layout ;
 		print "<br /><br /><b>".$msg["caddie_select_pointage"]."</b>" ;
 		break;

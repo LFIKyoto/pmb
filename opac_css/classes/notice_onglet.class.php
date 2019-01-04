@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_onglet.class.php,v 1.4 2013-06-20 07:51:19 ngantier Exp $
+// $Id: notice_onglet.class.php,v 1.10 2017-12-19 13:56:54 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-require_once("./classes/notice_tpl_gen.class.php"); 
+require_once($class_path."/notice_tpl_gen.class.php"); 
 
 class notice_onglet {
 	
@@ -17,26 +17,24 @@ class notice_onglet {
 	
 	protected function fetch_data(){
 		if(!$this->id_tpl)return false;
-		$this->noti_tpl=new notice_tpl_gen($this->id_tpl);
-		
-			
+		$this->noti_tpl = notice_tpl_gen::get_instance($this->id_tpl);			
 	}
 
 	public function get_onglet_header(){
-		//print ($this->noti_tpl->name);
 		return($this->noti_tpl->name);
 	}	
 	
 	public function get_onglet_content($id_notice){
-		$tpl= $this->noti_tpl->build_notice($id_notice);		
-		
-		return $tpl;
+		return $this->noti_tpl->build_notice($id_notice);		
 	}
 } // class end
 
 class notice_onglets {
 	
-	public function __construct($ids=''){
+	protected static $notice_onglet;
+	protected $data_onglets_perso;
+	
+	public function __construct($ids='') {
 		global $opac_notices_format_onglets;
 
 		if(!$ids)$ids=$opac_notices_format_onglets;
@@ -44,15 +42,19 @@ class notice_onglets {
 		
 	}
 	
-	public function insert_onglets($id_notice,$retour_aff){			
+	public function insert_onglets($id_notice,$retour_aff) {			
 		$id_notice+=0;
 		$onglets_title="";
 		$onglets_content="";
-		if($this->ids){
+		if($this->ids) {
 			$onglets=explode(",", $this->ids);
-			foreach($onglets as $id_tpl){
-				if(is_numeric($id_tpl)){
-					$notice_onglet=new notice_onglet($id_tpl);
+			foreach($onglets as $id_tpl) {
+				if(is_numeric($id_tpl)) {
+					
+					if(!isset(static::$notice_onglet[$id_tpl])) {
+						static::$notice_onglet[$id_tpl] = new notice_onglet($id_tpl);
+					}
+					$notice_onglet=static::$notice_onglet[$id_tpl];
 					
 					$title=$notice_onglet->get_onglet_header();
 					$onglet_title="
@@ -66,7 +68,7 @@ class notice_onglets {
 						".$content."
 					</div>";
 					// Si pas de titre ou de contenu rien ne s'affiche.
-					if($title && $onglet_content){
+					if($title && $content){
 						$onglets_title.=$onglet_title;
 						$onglets_content.=$onglet_content;
 					}
@@ -84,6 +86,8 @@ class notice_onglets {
 		$id_notice+=0;
 		$onglets_title="";
 		$onglets_content="";
+		$this->data_onglets_perso = array();
+		
 		if($this->ids){
 			$onglets=explode(",", $this->ids);
 			$first=1;
@@ -113,27 +117,42 @@ class notice_onglets {
 					$onglets_content.="	<div class='row'></div>
 						<div id='div_public!!id!!' style='$display_onglet'>!!PUBLIC!!</div>";
 				}elseif(is_numeric($id_tpl)){
-					$notice_onglet=new notice_onglet($id_tpl);
+					if(!isset(static::$notice_onglet[$id_tpl])) {
+						static::$notice_onglet[$id_tpl] = new notice_onglet($id_tpl);
+					}
+					$notice_onglet=static::$notice_onglet[$id_tpl];
 		
-					$title=$notice_onglet->get_onglet_header();
-					if($title){
-						$onglets_title.="
+					$title = $notice_onglet->get_onglet_header();
+					$content = $notice_onglet->get_onglet_content($id_notice);										
+					if($title && $content){
+						$onglet_title = "
 							<li id='onglet_tpl_".$id_tpl."_".$id_notice."'  class='$class_onglet'>
 							<a href='#' title=\"".$title."\" onclick=\"show_what('tpl_".$id_tpl."_', '$id_notice'); return false;\">".$title."</a>
 							</li>";
 						
-						$onglets_content.="
+						$onglet_content = "
 							<div id='div_tpl_".$id_tpl."_".$id_notice."' style='$display_onglet'>
-							".$notice_onglet->get_onglet_content($id_notice)."
+							".$content."
 							</div>";
+
+						$this->data_onglets_perso[] = array(
+								'id' => $id_tpl,
+								'title' => $title,
+								'content' => $content,
+								'onglet_title' => $onglet_title,
+								'onglet_content' => $onglet_content,
+						);
+						$onglets_title.= $onglet_title;
+						$onglets_content.= $onglet_content;
 					}
 				}
-				
-				
 			}
 		}
-		
 		return $onglets_title.$li_tags."</ul><div class='row'></div>".$onglets_content;
+	}
+	
+	public function get_data_onglets_perso() {
+		return $this->data_onglets_perso;
 	}
 }	 // class end
 

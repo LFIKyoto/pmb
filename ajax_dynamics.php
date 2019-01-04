@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_dynamics.php,v 1.4 2013-04-12 09:25:31 mbertin Exp $
+// $Id: ajax_dynamics.php,v 1.5 2017-07-12 15:15:00 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -42,13 +42,13 @@ function array_uft8_decode($tab){
 if (strtoupper($charset)!="UTF-8") {
 	$t=array_keys($_POST);	
 	foreach($t as $v) {
-		global $$v;
-		utf8_decode_pmb($$v);
+		global ${$v};
+		utf8_decode_pmb(${$v});
 	}
 	$t=array_keys($_GET);	
 	foreach($t as $v) {
-		global $$v;	
-		utf8_decode_pmb($$v);
+		global ${$v};	
+		utf8_decode_pmb(${$v});
 	}
 	//On décode aussi les POST et les GET en plus de les mettre en global 
 	$_POST = array_uft8_decode($_POST);

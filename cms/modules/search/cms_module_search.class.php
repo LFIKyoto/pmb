@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_search.class.php,v 1.3 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: cms_module_search.class.php,v 1.7 2018-09-25 08:09:07 pmbs Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -28,7 +28,7 @@ class cms_module_search extends cms_module_common_module {
 						<a href='".$base_path."/cms.php?categ=manage&sub=".str_replace("cms_module_","",$this->class_name)."&quoi=module&search_dest=".$key."&action=get_form'>".$this->format_text($cal['name'])."</a>
 					&nbsp;
 						<a href='".$base_path."/cms.php?categ=manage&sub=".str_replace("cms_module_","",$this->class_name)."&quoi=module&search_dest_delete=".$key."&action=save_form' onclick='return confirm(\"".$this->format_text($this->msg['cms_module_search_delete_search_dest'])."\")'>
-							<img src='".$base_path."/images/trash.png' alt='".$this->format_text($this->msg['cms_module_root_delete'])."' title='".$this->format_text($this->msg['cms_module_root_delete'])."'/>
+							<img src='".get_url_icon('trash.png')."' alt='".$this->format_text($this->msg['cms_module_root_delete'])."' title='".$this->format_text($this->msg['cms_module_root_delete'])."'/>
 						</a>
 					</p>";
 			}
@@ -52,12 +52,15 @@ class cms_module_search extends cms_module_common_module {
 	}
 	
 	protected function get_managed_search_dest_form($search_dest){
+		global $opac_opac_view_activate;
+		
 		if($search_dest != "new"){
 			$infos = $this->managed_datas['module']['search_dests'][$search_dest];
 		}else{
 			$infos = array(
 				'name' => "",
-				'page' => 0
+				'page' => 0,
+                                'universe'=>0,
 			);
 		}
 		$form = "";
@@ -79,30 +82,74 @@ class cms_module_search extends cms_module_common_module {
 					<label for='cms_module_search_search_dest_page'>".$this->format_text($this->msg['cms_module_search_search_dest_page'])."</label>
 				</div>
 				<div class='colonne-suite'>
-					<select name='cms_module_search_page_dest' onchange='load_page_vars(this.value)'>";
+					<select name='cms_module_search_page_dest'>";
+		if($opac_opac_view_activate) {
+			$form.= $this->gen_options_opac_view($infos['page']);
+		}
 		//on va chercher les infos pour les pages du portail !
 		$query = "select id_page,page_name from cms_pages order by page_name asc";
 		$result = pmb_mysql_query($query);
 		$pages = array();
 		$pages[0] = $this->msg["cms_module_menu_menu_entry_page_choice"];
 		if(pmb_mysql_num_rows($result)){
-			$form.="
-						<option value='0' ".(!$infos['page'] ? "selected='selected'" : "").">".$this->format_text($this->msg['cms_module_search_classique_dest'])."</option>";
+			$form.= "
+					<optgroup label='".$this->format_text($this->msg['cms_module_search_cms_pages'])."'>";
 			while($row = pmb_mysql_fetch_object($result)){
 				$form.="
 						<option value='".$row->id_page."' ".($row->id_page == $infos['page'] ? "selected='selected'" : "").">".$this->format_text($row->page_name)."</option>";
-			}			
+			}
+			$form.= "
+					</optgroup>";
 		}
 		$form.="
 					</select>
-					<script type='text/javascript'>
-						function load_page_vars(page_id){
-							
-						}
-					</script>
 				</div>
-			</div>";
+			</div>
+                        <div class='row'>
+                            <div class='colonne3'>
+                                <label for='cms_module_search_search_dest_search'>".$this->format_text($this->msg['cms_module_search_search_dest_search'])."</label>
+			    </div>
+                        </div>
+                        <div class='colonne-suite'>
+				<select name='cms_module_search_search_dest_search'>
+                                    <option value='0' ".(!$infos['universe']?" selected='selected'":"").">".$this->format_text($this->msg['cms_module_search_search_dest_search_opac'])."</option>
+                ";
+                $query="select id_search_universe, search_universe_label from search_universes";
+                $result = pmb_mysql_query($query);
+                if(pmb_mysql_num_rows($result)){
+                    while ($row= pmb_mysql_fetch_object($result)) {
+                        $form.="<option value='".$row->id_search_universe."' ".($infos['universe']==$row->id_search_universe?" selected='selected'":"").">".$row->search_universe_label."</option>\n";
+                    }
+                }
+                $form.="</select>";
 		return $form;
+	}
+	
+	protected function get_opac_views_list(){
+		$opac_views = array();
+		$query = "select opac_view_id, opac_view_name from opac_views";
+		$result = pmb_mysql_query($query);
+		if(pmb_mysql_num_rows($result)){
+			while($row = pmb_mysql_fetch_object($result)) {
+				$opac_views[$row->opac_view_id] = $row->opac_view_name;
+			}
+		}
+		return $opac_views;
+	}
+	
+	protected function gen_options_opac_view($selected){
+		$opac_views = $this->get_opac_views_list();
+		$select = "
+					<optgroup label='".$this->format_text($this->msg['cms_module_search_opac_views'])."'>
+						<option value='0' ".(($selected == '0') ? "selected='selected'" : "").">".$this->format_text($this->msg['cms_module_search_opac_view_current'])."</option>
+						<option value='view_-1' ".(($selected === 'view_-1') ? "selected='selected'" : "").">".$this->format_text($this->msg['cms_module_search_opac_view_any'])."</option>";
+		foreach($opac_views as $key => $name){
+			$select.="
+						<option value='view_".$key."' ".(($selected === 'view_'.$key) ? "selected='selected'" : "").">".$this->format_text($name)."</option>";
+		}
+		$select.= "
+					</optgroup>";
+		return $select;
 	}
 	
 	public function save_manage_form(){
@@ -110,6 +157,7 @@ class cms_module_search extends cms_module_common_module {
 		global $search_dest_delete;
 		global $cms_module_search_search_dest_name;
 		global $cms_module_search_page_dest;
+                global $cms_module_search_search_dest_search;
 
 		$params = $this->managed_datas['module'];
 
@@ -121,30 +169,21 @@ class cms_module_search extends cms_module_common_module {
 			}
 			$params['search_dests'][$search_dest] = array(
 					'name' => stripslashes($cms_module_search_search_dest_name),
-					'page' => stripslashes($cms_module_search_page_dest)
+					'page' => stripslashes($cms_module_search_page_dest),
+                                        'universe' => stripslashes($cms_module_search_search_dest_search),
 			);
 		}
 		return $params;
 	}
 	
-	protected function get_max_search_dest_id($datas){
+	protected static function get_max_search_dest_id($datas){
 		$max = 0;
 		if(count($datas)){
 			foreach	($datas as $key => $val){
-				$key = str_replace("search_dest","",$key)*1; 
-				if($key>$max) $max = $key; 
+				$key = str_replace("search_dest","",$key)*1;
+				if($key>$max) $max = $key;
 			}
 		}
 		return $max;
 	}
-	
-//	public function execute_ajax(){
-//		global $charset;
-//		global $do;
-//		
-//		switch($do){
-//			case "get_pages" :
-//				break;
-//		}
-//	}
 }

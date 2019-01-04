@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.4 2009-05-16 11:11:53 dbellamy Exp $
+// $Id: main.inc.php,v 1.5 2017-01-26 15:36:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -43,7 +43,7 @@ switch ($quelle) {
 		include ("./circ/caddie/action/mailing.inc.php");
 		break;
 	default:
-		echo window_title($database_window_title.$msg[empr_caddie_menu]." : ".$msg["empr_caddie_menu_action"]);
+		echo window_title($database_window_title.$msg['empr_caddie_menu']." : ".$msg["empr_caddie_menu_action"]);
 		$empr_menu_panier_action = str_replace('!!sous_menu_choisi!!', "", $empr_menu_panier_action);
 		print $empr_menu_panier_action ;
 		print "<br /><br /><b>".$msg["caddie_select_action"]."</b>" ;

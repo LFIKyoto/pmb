@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_selector_notices_caddie.class.php,v 1.7 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: docwatch_selector_notices_caddie.class.php,v 1.8 2017-08-23 07:29:05 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -56,7 +56,8 @@ class docwatch_selector_notices_caddie extends docwatch_selector_notices {
 	
 	protected function gen_select(){
 		global $dbh,$charset;
-		if(!$this->parameters['caddies']){
+		
+		if(!isset($this->parameters['caddies']) || !$this->parameters['caddies']){
 			$this->parameters['caddies']= array();
 		}
 		$query ="select idcaddie, name from caddie where type='NOTI' order by name";

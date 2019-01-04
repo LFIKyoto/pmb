@@ -2,7 +2,7 @@
 // +--------------------------------------------------------------------------+
 // | PMB est sous licence GPL, la réutilisation du code est cadrée            |
 // +--------------------------------------------------------------------------+
-// $Id: help.php,v 1.2 2015-07-17 15:03:59 dgoron Exp $
+// $Id: help.php,v 1.3 2016-12-23 15:54:41 jpermanne Exp $
 
 //Impression
 
@@ -53,7 +53,7 @@ if ($action_help=="configure_time") {
 			<td>".$msg["planificateur_help_examples"]."</td>
 			<td>4<br />
 				2-14<br />
-				11-19{2}
+				11-19{2} ".$msg["planificateur_help_examples_explained"]."
 			</td>
 			<td>46<br />
 				2-44<br />

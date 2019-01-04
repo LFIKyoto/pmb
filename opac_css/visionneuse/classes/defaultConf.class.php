@@ -2,24 +2,24 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: defaultConf.class.php,v 1.4 2013-04-11 08:31:40 mbertin Exp $
+// $Id: defaultConf.class.php,v 1.5 2017-07-03 09:07:10 dgoron Exp $
 
 require_once("$visionneuse_path/classes/XMLClass.class.php");
 
 class defaultConf extends XMLClass{
-	var $defaultMimetype=array();	//tableau associatif mimetype => class  
-	var $file;						//xml à parser
-	var $analyseur;					//parseur
+	public $defaultMimetype=array();	//tableau associatif mimetype => class  
+	public $file;						//xml à parser
+	public $analyseur;					//parseur
 	
 	
-    function defaultConf(){
+    public function __construct(){
     	global $visionneuse_path;
     	$this->file = "$visionneuse_path/includes/defaultClassMimetype.xml";
     	$this->analyser();
     }
     
 	//Méthodes
-	function debutBalise($parser, $nom, $attributs){
+	public function debutBalise($parser, $nom, $attributs){
 		global $_starttag; $_starttag=true;
 		if($nom == 'MIMETYPE' && $attributs['TYPE'] && $attributs['CLASS']){
 			$this->defaultMimetype[$attributs['TYPE']] = $attributs['CLASS'];
@@ -30,12 +30,12 @@ class defaultConf extends XMLClass{
 	}
 	
 	//on fait tout dans la méthode débutBalise....
-	function finBalise($parser, $nom){//besoin de rien
+	public function finBalise($parser, $nom){//besoin de rien
 	}   
-	function texte($parser, $data){//la non plus
+	public function texte($parser, $data){//la non plus
 	}
 	
-	function analyser($file=""){
+	public function analyser($file=""){
  		global $charset;
 		
 		if (!($fp = @fopen($this->file , "r"))) {

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // Â© 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_watch.class.php,v 1.41.4.1 2015-08-28 09:15:54 jpermanne Exp $
+// $Id: docwatch_watch.class.php,v 1.51 2018-08-21 15:38:44 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,7 +15,9 @@ require_once($class_path."/docwatch/datasources/docwatch_datasource_articles.cla
 require_once($class_path."/docwatch/datasources/docwatch_datasource_sections.class.php");
 require_once($class_path."/docwatch/datasources/docwatch_datasource_rss.class.php");
 require_once($class_path."/docwatch/datasources/docwatch_datasource_external_sources.class.php");
+require_once($class_path."/docwatch/datasources/docwatch_datasource_monitoring_website.class.php");
 require_once($class_path."/docwatch/docwatch_item.class.php");
+require_once($class_path."/docwatch/docwatch_logo.class.php");
 
 /**
  * class docwatch_watch
@@ -127,6 +129,24 @@ class docwatch_watch extends docwatch_root{
 	protected $record_default_status;
 	
 	/**
+	 * Code de la langue d'indexation de notice par défaut pour les notices crées à partir des items de cette veille
+	 * @access protected
+	 */
+	protected $record_default_index_lang;
+	
+	/**
+	 * Code de la langue par défaut pour les notices crées à partir des items de cette veille
+	 * @access protected
+	 */
+	protected $record_default_lang;
+	
+	/**
+	 * Valeur du statut nouveauté par défaut pour les notices crées à partir des items de cette veille
+	 * @access protected
+	 */
+	protected $record_default_is_new;
+	
+	/**
 	 * Id du parent par défaut pour les articles crées via les items de cette veille
 	 * @access protected
 	 */
@@ -163,8 +183,25 @@ class docwatch_watch extends docwatch_root{
 	protected $section_default_publication_status;
 	
 	/**
+	 * Options RSS
+	 */
+	protected $watch_rss_link;
+	protected $watch_rss_lang;
+	protected $watch_rss_copyright;
+	protected $watch_rss_editor;
+	protected $watch_rss_webmaster;
+	protected $watch_rss_image_title;
+	protected $watch_rss_image_website;
+	
+	/**
+	 * Expression booléènne
+	 * @var string
+	 */
+	protected $boolean_expression;
+	
+	/**
 	 * 
-	 * @access proptected
+	 * @access protected
 	 */
 	protected $error;
 	
@@ -194,6 +231,14 @@ class docwatch_watch extends docwatch_root{
 		$this->desc = "";
 		$this->logo_url = "";
 		$this->parameters = array();
+		$this->watch_rss_link = "";
+		$this->watch_rss_lang = "";
+		$this->watch_rss_copyright = "";
+		$this->watch_rss_editor = "";
+		$this->watch_rss_webmaster = "";
+		$this->watch_rss_image_title = "";
+		$this->watch_rss_image_website = "";
+		$this->boolean_expression = "";
 		if($this->id){
 			//Query
 			$query = "select * from docwatch_watches where id_watch = '".$this->id."'";
@@ -210,12 +255,23 @@ class docwatch_watch extends docwatch_root{
 				$this->logo_url = $row->watch_logo_url;
 				$this->record_default_status = $row->watch_record_default_status;
 				$this->record_default_type = $row->watch_record_default_type;
+				$this->record_default_index_lang = $row->watch_record_default_index_lang;
+				$this->record_default_lang = $row->watch_record_default_lang;
+				$this->record_default_is_new = $row->watch_record_default_is_new;
 				$this->article_default_content_type = $row->watch_article_default_content_type;
 				$this->article_default_parent = $row->watch_article_default_parent;
 				$this->article_default_publication_status = $row->watch_article_default_publication_status;
 				$this->section_default_content_type = $row->watch_section_default_content_type;
 				$this->section_default_parent = $row->watch_section_default_parent;
 				$this->section_default_publication_status = $row->watch_section_default_publication_status;
+				$this->watch_rss_link = $row->watch_rss_link;
+				$this->watch_rss_lang = $row->watch_rss_lang;
+				$this->watch_rss_copyright = $row->watch_rss_copyright;
+				$this->watch_rss_editor = $row->watch_rss_editor;
+				$this->watch_rss_webmaster = $row->watch_rss_webmaster;
+				$this->watch_rss_image_title = $row->watch_rss_image_title;
+				$this->watch_rss_image_website = $row->watch_rss_image_website;
+				$this->boolean_expression = $row->watch_boolean_expression;
 				$query = "select id_datasource, datasource_type from docwatch_datasources where datasource_num_watch = ".$this->id;
 				$result = pmb_mysql_query($query,$dbh);
 				if($result && pmb_mysql_num_rows($result)){
@@ -251,7 +307,15 @@ class docwatch_watch extends docwatch_root{
 		global $docwatch_watch_ttl;
 		global $docwatch_watch_desc;
 		global $docwatch_watch_logo_url;
-	
+		global $docwatch_watch_watch_rss_link;
+		global $docwatch_watch_watch_rss_lang;
+		global $docwatch_watch_watch_rss_copyright;
+		global $docwatch_watch_watch_rss_editor;
+		global $docwatch_watch_watch_rss_webmaster;
+		global $docwatch_watch_watch_rss_image_title;
+		global $docwatch_watch_watch_rss_image_website;
+		global $docwatch_watch_boolean_expression;
+		
 		if (is_array($datasources_choice) && count($datasources_choice)) {
 			foreach ($datasources_choice as $datasource_choice) {
 				$this->parameters['datasources'][] = $datasource_choice;
@@ -265,6 +329,14 @@ class docwatch_watch extends docwatch_root{
 		$this->ttl = $docwatch_watch_ttl;
 		$this->desc = $docwatch_watch_desc;
 		$this->logo_url = $docwatch_watch_logo_url;
+		$this->watch_rss_link = $docwatch_watch_watch_rss_link;
+		$this->watch_rss_lang = $docwatch_watch_watch_rss_lang;
+		$this->watch_rss_copyright = $docwatch_watch_watch_rss_copyright;
+		$this->watch_rss_editor = $docwatch_watch_watch_rss_editor;
+		$this->watch_rss_webmaster = $docwatch_watch_watch_rss_webmaster;
+		$this->watch_rss_image_title = $docwatch_watch_watch_rss_image_title;
+		$this->watch_rss_image_website = $docwatch_watch_watch_rss_image_website;
+		$this->boolean_expression = stripslashes($docwatch_watch_boolean_expression);
 		
 	} // end of member function set_from_form
 	
@@ -295,12 +367,23 @@ class docwatch_watch extends docwatch_root{
 			watch_logo_url = '".$this->logo_url."',
 			watch_record_default_type = '".addslashes($this->record_default_type)."',
 			watch_record_default_status = '".$this->record_default_status."',
+			watch_record_default_index_lang = '".$this->record_default_index_lang."',
+			watch_record_default_lang = '".$this->record_default_lang."',
+			watch_record_default_is_new = '".$this->record_default_is_new."',
 			watch_article_default_parent = '".$this->article_default_parent."',
 			watch_article_default_content_type = '".$this->article_default_content_type."',
 			watch_article_default_publication_status = '".$this->article_default_publication_status."',
 			watch_section_default_parent = '".$this->section_default_parent."',
 			watch_section_default_content_type = '".$this->section_default_content_type."',
-			watch_section_default_publication_status = '".$this->section_default_publication_status."'
+			watch_section_default_publication_status = '".$this->section_default_publication_status."',
+			watch_rss_link = '".addslashes($this->watch_rss_link)."',
+			watch_rss_lang = '".addslashes($this->watch_rss_lang)."',
+			watch_rss_copyright = '".addslashes($this->watch_rss_copyright)."',
+			watch_rss_editor = '".addslashes($this->watch_rss_editor)."',
+			watch_rss_webmaster = '".addslashes($this->watch_rss_webmaster)."',
+			watch_rss_image_title = '".addslashes($this->watch_rss_image_title)."',
+			watch_rss_image_website = '".addslashes($this->watch_rss_image_website)."',
+			watch_boolean_expression = '".addslashes($this->boolean_expression)."'
 			".$clause;
 	
 		$result = pmb_mysql_query($query,$dbh);
@@ -308,7 +391,7 @@ class docwatch_watch extends docwatch_root{
 			if(!$this->id){
 				$this->id = pmb_mysql_insert_id($dbh);
 			}
-			if($this->parameters['datasources']){
+			if(isset($this->parameters['datasources']) && $this->parameters['datasources']){
 				foreach ($this->parameters['datasources'] as $key=>$datasource_type) {
 					if (in_array($datasource_type, $this->datasources)) {
 						$datasource_id = array_search($datasource_type,$this->datasources);
@@ -419,6 +502,25 @@ class docwatch_watch extends docwatch_root{
 	} // end of member function del_item
 
 	/**
+	 * Suppression des items périmés de sources supprimées
+	 */
+	protected function del_outdated_of_datasource_removed() {
+		global $dbh;
+		$query = "select id_item from docwatch_items 
+				left join docwatch_datasources on item_num_datasource=id_datasource
+				where date_add(item_added_date, INTERVAL ".$this->ttl." hour) < now() 
+				and id_datasource is null and item_status = 2 and item_num_watch = '".$this->id."'";
+		$result = pmb_mysql_query($query, $dbh);
+		if (pmb_mysql_num_rows($result)) {
+			while($row = pmb_mysql_fetch_object($result)){
+				$item = new docwatch_item($row->id_item);
+				$item->delete();
+			}
+		}
+		return true;
+	}
+	
+	/**
 	 * 
 	 *
 	 * @return bool
@@ -448,6 +550,7 @@ class docwatch_watch extends docwatch_root{
 		if($this->check_rights()){
 			$this->datasources_synced = array();
 			$this->del_outdated();
+			$this->del_outdated_of_datasource_removed();
 			$this->get_datasources();
 			foreach($this->datasources_objects as $datasource){
 				if(!$datasource->get_is_up_to_date()){
@@ -565,6 +668,30 @@ class docwatch_watch extends docwatch_root{
 	public function set_record_default_status($record_default_status) {
 	  $this->record_default_status = $record_default_status+0;
 	}
+	
+	public function get_record_default_index_lang() {
+		return $this->record_default_index_lang;
+	}
+	
+	public function set_record_default_index_lang($record_default_index_lang) {
+		$this->record_default_index_lang= $record_default_index_lang;
+	}
+	
+	public function get_record_default_lang() {
+		return $this->record_default_lang;
+	}
+	
+	public function set_record_default_lang($record_default_lang) {
+		$this->record_default_lang= $record_default_lang;
+	}
+	
+	public function get_record_default_is_new() {
+		return $this->record_default_is_new;
+	}
+	
+	public function set_record_default_is_new($record_default_is_new) {
+		$this->record_default_is_new= $record_default_is_new+0;
+	}
 	    
 	public function get_article_default_parent() {
 	  return $this->article_default_parent;
@@ -614,6 +741,70 @@ class docwatch_watch extends docwatch_root{
 		$this->section_default_publication_status = $section_default_publication_status+0;
 	}
 
+	public function get_watch_rss_link() {
+		return $this->watch_rss_link;
+	}
+	
+	public function set_watch_rss_link($watch_rss_link) {
+		$this->watch_rss_link = $watch_rss_link;
+	}
+	
+	public function get_watch_rss_lang() {
+		return $this->watch_rss_lang;
+	}
+	
+	public function set_watch_rss_lang($watch_rss_lang) {
+		$this->watch_rss_lang = $watch_rss_lang;
+	}
+	
+	public function get_watch_rss_copyright() {
+		return $this->watch_rss_copyright;
+	}
+	
+	public function set_watch_rss_copyright($watch_rss_copyright) {
+		$this->watch_rss_copyright = $watch_rss_copyright;
+	}
+	
+	public function get_watch_rss_editor() {
+		return $this->watch_rss_editor;
+	}
+	
+	public function set_watch_rss_editor($watch_rss_editor) {
+		$this->watch_rss_editor = $watch_rss_editor;
+	}
+	
+	public function get_watch_rss_webmaster() {
+		return $this->watch_rss_webmaster;
+	}
+	
+	public function set_watch_rss_webmaster($watch_rss_webmaster) {
+		$this->watch_rss_webmaster = $watch_rss_webmaster;
+	}
+	
+	public function get_watch_rss_image_title() {
+		return $this->watch_rss_image_title;
+	}
+	
+	public function set_watch_rss_image_title($watch_rss_image_title) {
+		$this->watch_rss_image_title = $watch_rss_image_title;
+	}
+	
+	public function get_watch_rss_image_website() {
+		return $this->watch_rss_image_website;
+	}
+	
+	public function set_watch_rss_image_website($watch_rss_image_website) {
+		$this->watch_rss_image_website = $watch_rss_image_website;
+	}
+
+	public function get_boolean_expression() {
+		return $this->boolean_expression;
+	}
+	
+	public function set_boolean_expression($boolean_expression) {
+		$this->boolean_expression = $boolean_expression;
+	}
+	
 	public function get_informations(){
 		global $dbh, $pmb_opac_url;
 		$datas = new stdClass();
@@ -629,12 +820,23 @@ class docwatch_watch extends docwatch_root{
 		$datas->formated_last_date = date("c",strtotime($this->last_date));
 		$datas->record_default_type = $this->record_default_type;
 		$datas->record_default_status = $this->record_default_status;
+		$datas->record_default_index_lang = $this->record_default_index_lang;
+		$datas->record_default_lang = $this->record_default_lang;
+		$datas->record_default_is_new = $this->record_default_is_new;
 		$datas->article_default_parent = $this->article_default_parent;
 		$datas->article_default_content_type = $this->article_default_content_type;
 		$datas->article_default_publication_status = $this->article_default_publication_status;
 		$datas->section_default_parent = $this->section_default_parent;
 		$datas->section_default_content_type = $this->section_default_content_type;
 		$datas->section_default_publication_status = $this->section_default_publication_status;
+		$datas->watch_rss_link = $this->watch_rss_link;
+		$datas->watch_rss_lang = $this->watch_rss_lang;
+		$datas->watch_rss_copyright = $this->watch_rss_copyright;
+		$datas->watch_rss_editor = $this->watch_rss_editor;
+		$datas->watch_rss_webmaster = $this->watch_rss_webmaster;
+		$datas->watch_rss_image_title = $this->watch_rss_image_title;
+		$datas->watch_rss_image_website = $this->watch_rss_image_website;
+		$datas->boolean_expression = $this->boolean_expression;
 		$datas->opac_link = $pmb_opac_url.'docwatch.php?id='.$this->id;
 		$datas->allowed_users = $this->allowed_users;
 		$datas->sources = array();
@@ -648,6 +850,14 @@ class docwatch_watch extends docwatch_root{
 		$datas->nb_sources = 0;
 		if (count($datas->sources)) {
 			$datas->nb_sources = count($datas->sources);
+		}
+		if($this->record_default_lang){
+		    $create_lang = new marc_list('lang');
+		    $langs[] = array(
+		        'lang_code' => $this->record_default_lang,
+		        'langue' => $create_lang->table[$this->record_default_lang]
+		    );
+		    $datas->record_default_lang_libelle = $langs[0]['langue'];
 		}
 		return $datas;
 	}
@@ -672,13 +882,24 @@ class docwatch_watch extends docwatch_root{
 			}
 		}
 		
+		$logo = new docwatch_logo($this->id);
+		
 		return array(
 			'id' => $this->id,
 			'title' => $this->title,
 			'desc' => $this->desc,
+			'logo' => $logo->format_datas(),
 			'logo_url' => $this->logo_url,
 			'last_date' => $this->last_date,
 			'rss_link' => $pmb_opac_url."docwatch?id=".$this->get_id(),
+			'watch_rss_link' => $this->watch_rss_link,
+			'watch_rss_lang' => $this->watch_rss_lang,
+			'watch_rss_copyright' => $this->watch_rss_copyright,
+			'watch_rss_editor' => $this->watch_rss_editor,
+			'watch_rss_webmaster' => $this->watch_rss_webmaster,
+			'watch_rss_image_title' => $this->watch_rss_image_title,
+			'watch_rss_image_website' => $this->watch_rss_image_website,
+			'boolean_expression' => $this->boolean_expression,
 			'category' => $categories,
 			'items' => $items
 		);
@@ -722,7 +943,7 @@ class docwatch_watch extends docwatch_root{
 					if(!$this->items){
 						$this->items = array();
 					}
-					if(!$this->items[$row->id_item]){
+					if(!isset($this->items[$row->id_item]) || !$this->items[$row->id_item]){
 						$this->items[$row->id_item] = new docwatch_item($row->id_item);
 					}
 				}
@@ -756,6 +977,10 @@ class docwatch_watch extends docwatch_root{
 			array(
 				'class' => 'docwatch_datasource_external_sources',
 				'label'=>$msg['dsi_docwatch_datasource_external_sources']
+			),
+			array(
+				'class' => 'docwatch_datasource_monitoring_website',
+				'label'=>$msg['dsi_docwatch_datasource_monitoring_website']
 			)
 		);
 		
@@ -774,15 +999,24 @@ class docwatch_watch extends docwatch_root{
 			<rss version=\"2.0\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\">
 				<channel>
 					<title>".htmlspecialchars ($this->title,ENT_QUOTES, $charset)."</title>
-					<link></link>
-					<description></description>
-					<language></language>
-					<copyright></copyright>
+					<link>".htmlspecialchars ($this->watch_rss_link,ENT_QUOTES, $charset)."</link>
+					<description>".htmlspecialchars ($this->desc,ENT_QUOTES, $charset)."</description>
+					<language>".htmlspecialchars ($this->watch_rss_lang,ENT_QUOTES, $charset)."</language>
+					<copyright>".htmlspecialchars ($this->watch_rss_copyright,ENT_QUOTES, $charset)."</copyright>
+					<managingEditor>".htmlspecialchars ($this->watch_rss_editor,ENT_QUOTES, $charset)."</managingEditor>
+					<webMaster>".htmlspecialchars ($this->watch_rss_webmaster,ENT_QUOTES, $charset)."</webMaster>
 					<generator>PMB Version ".$pmb_bdd_version."</generator>
 					<lastBuildDate>".addslashes(date("D, d M Y H:i:s O",strtotime($this->last_date)))."</lastBuildDate>
 					<ttl>".$this->ttl."</ttl>
-					<category></category>
-				!!items!!
+					<category></category>\n";
+		if ($this->logo_url || $this->watch_rss_image_title || $this->watch_rss_image_website) {
+			$xmlrss .= "					<image>
+						<url>".htmlspecialchars ($this->logo_url,ENT_QUOTES, $charset)."</url>
+						<title>".htmlspecialchars ($this->watch_rss_image_title,ENT_QUOTES, $charset)."</title>
+						<link>".htmlspecialchars ($this->watch_rss_image_website,ENT_QUOTES, $charset)."</link>
+					</image>";
+		}
+		$xmlrss .= "		!!items!!
 				</channel>
 			</rss>";								
 					
@@ -858,6 +1092,11 @@ class docwatch_watch extends docwatch_root{
 				'desc' => $msg['cms_module_watch_datasource_desc_desc']
 			),
 			array(
+					'var' => "logo",
+					'children' => docwatch_root::prefix_var_tree(docwatch_logo::get_format_data_structure(),"logo"),
+					'desc' => $msg['cms_module_watch_datasource_desc_logo']
+			),
+			array(
 				'var' => "logo_url",
 				'desc' => $msg['cms_module_watch_datasource_desc_logo_url']
 			),
@@ -896,22 +1135,25 @@ class docwatch_watch extends docwatch_root{
 	 * @return true if user have rights, false otherwise
 	 */
 	public function check_rights(){
-		if(in_array(SESSuserid, $this->allowed_users)){
+		global $PMBuserid;
+		
+		if(in_array(SESSuserid, $this->allowed_users) || $PMBuserid == 1){
 			return true;
 		}
 		return false;
 	}
 	
 	public static function check_watch_rights($watch_id){
-		global $dbh;
+		global $PMBuserid;
+		
 		if($watch_id){
 			$query = "select watch_allowed_users from docwatch_watches where id_watch = '".$watch_id."'";
-			$result = pmb_mysql_query($query, $dbh);
+			$result = pmb_mysql_query($query);
 			if(pmb_mysql_num_rows($result)){
 				$row = pmb_mysql_fetch_object($result);
 				$tab_users = explode(",",$row->watch_allowed_users);
 			}
-			if(in_array(SESSuserid, $tab_users)){
+			if(in_array(SESSuserid, $tab_users) || $PMBuserid == 1){
 				return true;
 			}
 			return false;

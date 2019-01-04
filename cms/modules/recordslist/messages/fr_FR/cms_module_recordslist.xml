@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: cms_module_recordslist.xml,v 1.14 2015-04-16 12:14:57 dgoron Exp $ -->
+$Id: cms_module_recordslist.xml,v 1.22 2018-02-26 10:45:34 arenou Exp $ -->
 
 <XMLlist>
 	<entry code='cms_module_common_datasource_similarrecords'>Notices similaires</entry>
@@ -26,4 +26,11 @@ $Id: cms_module_recordslist.xml,v 1.14 2015-04-16 12:14:57 dgoron Exp $ -->
 	<entry code='cms_module_recordslist_datasource_records_indexint'>Notices avec la même indexation décimale</entry>
 	<entry code='cms_module_recordslist_datasource_records_categories'>Notices avec des catégories communes</entry>
 	<entry code='cms_module_recordslist_datasource_records_last_read'>Dernières notices lues</entry>
+	<entry code='cms_module_common_datasource_records_by_concepts'>Notices indexées par des concepts</entry>
+	<entry code='cms_module_common_datasource_records_used_by_composed_concepts'>Notices utilisées par des concepts composés</entry>
+	<entry code='cms_module_common_filter_records_by_doctype'>Par types de document</entry>
+	<entry code='cms_module_recordslist_view_django_directory'>Vue depuis un répertoire de templates</entry>
+	<entry code='cms_module_recordslist_datasource_records_category'>Notices d'une catégorie</entry>
+	<entry code='cms_module_common_datasource_records_by_categories'>Notices indexées par des catégories</entry>
+	<entry code='cms_module_common_filter_records_by_cp'>Par valeur de champs perso</entry>
 </XMLlist>

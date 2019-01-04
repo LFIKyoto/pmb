@@ -2,16 +2,16 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: view.php,v 1.9 2013-04-04 09:44:23 mbertin Exp $
+// $Id: view.php,v 1.10 2017-11-07 15:31:19 ngantier Exp $
 
 // -----------------------------------------
 // ATTENTION CE FICHIER EST EN UTF-8
 // -----------------------------------------
 
-?>
+?><!DOCTYPE html>
 <html>
 <head>
-<META http-equiv="Content-Type" Content="text/html; charset=utf-8">
+<meta charset="utf-8"/>
 </head>
 <body>
 <?php

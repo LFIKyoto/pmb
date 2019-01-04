@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: stat_opac.tpl.php,v 1.7 2015-01-30 14:28:12 jpermanne Exp $
+// $Id: stat_opac.tpl.php,v 1.10 2017-04-26 06:40:49 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -18,10 +18,16 @@ $stat_opac_view_form ="
 			<br />
 			!!options_conso!!
 			<br />
-		</div>
-		<div class='row'>
-			<input class='bouton' type='submit' value='$msg[stat_add_view]' onClick=\"this.form.id_view.value='';this.form.id_req.value='';this.form.action='./admin.php?categ=opac&sub=stat&section=view_gestion';this.form.act.value='add_view';\"/>
-			!!btn_consolide!!
+			<div class='row'>
+				<div class='left'>
+					<input class='bouton' type='submit' value='$msg[stat_add_view]' onClick=\"this.form.id_view.value='';this.form.id_req.value='';this.form.action='./admin.php?categ=opac&sub=stat&section=view_gestion';this.form.act.value='add_view';\"/>
+					!!btn_consolide!!
+				</div>
+				<div class='right'>
+					<a href='".$base_path."/includes/interpreter/doc?group=consolidation' target='_blank'>".$msg['interpreter_doc_consolidation_link']."</a>
+				</div>
+			</div>
+			<br />
 		</div>
 	</form>
 
@@ -44,7 +50,7 @@ $stat_view_addview_form="
 				}
 				
 				function confirm_delete() {
-	       			result = confirm(\"${msg[confirm_suppr]}\");
+	       			result = confirm(\"".$msg['confirm_suppr']."\");
 	       			if(result) {
 	       				return true;
 					} else
@@ -109,7 +115,7 @@ $stat_view_addcol_form="
 				}
 				
 				function confirm_delete() {
-	       			result = confirm(\"${msg[confirm_suppr]}\");
+	       			result = confirm(\"".$msg['confirm_suppr']."\");
 	       			if(result) {
 	       				return true;
 					} else
@@ -190,7 +196,7 @@ $stat_view_request_form = "
 			}
 			
 			function confirm_delete() {
-       			result = confirm(\"${msg[confirm_suppr]}\");
+       			result = confirm(\"".$msg['confirm_suppr']."\");
        			if(result) {
        				return true;
 				} else

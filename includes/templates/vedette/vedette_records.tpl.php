@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_records.tpl.php,v 1.1 2014-10-02 13:17:57 arenou Exp $
+// $Id: vedette_records.tpl.php,v 1.7 2018-12-17 23:09:30 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -23,11 +23,12 @@ $vedette_records_tpl['vedette_records_selector']='
 		callback="vedette_composee_callback" 
 		value="!!vedette_element_label!!" 
 		rawlabel="!!vedette_element_rawlabel!!"
+		placeholder="['.$msg["vedette_records"].']"
 	/>
 	<input 
 		class="bouton" 
 		type="button" 
-		onclick="openPopUp(\'./select.php?what=notice&caller=!!caller!!&param1=!!caller!!_!!property_name!!_!!vedette_composee_order!!_!!vedette_composee_subdivision_id!!_element_!!vedette_composee_element_order!!_id&param2=!!caller!!_!!property_name!!_!!vedette_composee_order!!_!!vedette_composee_subdivision_id!!_element_!!vedette_composee_element_order!!_label&callback=vedette_composee_callback&infield=!!caller!!_!!property_name!!_!!vedette_composee_order!!_!!vedette_composee_subdivision_id!!_element_!!vedette_composee_element_order!!_label&deb_rech=\'+encodeURIComponent(document.getElementById(\'!!caller!!_!!property_name!!_!!vedette_composee_order!!_!!vedette_composee_subdivision_id!!_element_!!vedette_composee_element_order!!_label\').value), \'select_author0\', 500, 400, -2, -2, \'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes\')" 
+		onclick="openPopUp(\'./select.php?what=notice&caller=!!caller!!&param1=!!caller!!_!!property_name!!_!!vedette_composee_order!!_!!vedette_composee_subdivision_id!!_element_!!vedette_composee_element_order!!_id&param2=!!caller!!_!!property_name!!_!!vedette_composee_order!!_!!vedette_composee_subdivision_id!!_element_!!vedette_composee_element_order!!_label&callback=vedette_composee_callback&infield=!!caller!!_!!property_name!!_!!vedette_composee_order!!_!!vedette_composee_subdivision_id!!_element_!!vedette_composee_element_order!!_label&deb_rech=\'+encodeURIComponent(document.getElementById(\'!!caller!!_!!property_name!!_!!vedette_composee_order!!_!!vedette_composee_subdivision_id!!_element_!!vedette_composee_element_order!!_label\').getAttribute(\'rawlabel\')), \'selector\')" 
 		value="..." 
 	/>
 	<input 
@@ -41,6 +42,7 @@ $vedette_records_tpl['vedette_records_selector']='
 		name="!!caller!!_!!property_name!![!!vedette_composee_order!!][elements][!!vedette_composee_subdivision_id!!][!!vedette_composee_element_order!!][type]" 
 		value="vedette_records" 
 	/>
+	<input type="hidden" name="!!caller!!_!!property_name!![!!vedette_composee_order!!][elements][!!vedette_composee_subdivision_id!!][!!vedette_composee_element_order!!][available_field_num]" value="!!vedette_element_available_field_num!!" />
 </div>
 ';
 
@@ -49,22 +51,23 @@ var vedette_records = {
 	// parent : parent direct du selecteur
 	// vedette_composee_subdivision_id : id de la subdivision parente
 	// vedette_composee_element_order : ordre de l\'element
-	create_box : function(parent, vedette_composee_subdivision_id, vedette_composee_element_order, id, label, rawlabel) {
+	prefix: "['.$msg["vedette_records"].']",
+	create_box : function(caller_property_name, parent, vedette_composee_subdivision_id, vedette_composee_element_order, id, label, rawlabel, vedette_composee_order) {
 		var form = document.createElement("div");
-		form.setAttribute("id", "!!caller!!_!!property_name!!_!!vedette_composee_order!!_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order + "_form");
-		form.setAttribute("name", "!!caller!!_!!property_name!!_!!vedette_composee_order!!_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order+ "_form");
+		form.setAttribute("id", caller_property_name + "_" + vedette_composee_order + "_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order + "_form");
+		form.setAttribute("name", caller_property_name + "_" + vedette_composee_order + "_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order+ "_form");
 		form.setAttribute("class", "vedette_composee_element_form");
 		
 		var text = document.createElement("input");
-		text.setAttribute("id", "!!caller!!_!!property_name!!_!!vedette_composee_order!!_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order + "_label");
+		text.setAttribute("id", caller_property_name + "_" + vedette_composee_order + "_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order + "_label");
 		text.setAttribute("class", "saisie-20emr");
 		text.setAttribute("type", "text");
-		text.setAttribute("name", "!!caller!!_!!property_name!![!!vedette_composee_order!!][elements][" + vedette_composee_subdivision_id + "][" + vedette_composee_element_order + "][label]");
-		text.setAttribute("autfield", "!!caller!!_!!property_name!!_!!vedette_composee_order!!_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order + "_id");
+		text.setAttribute("name", caller_property_name + "[" + vedette_composee_order + "][elements][" + vedette_composee_subdivision_id + "][" + vedette_composee_element_order + "][label]");
+		text.setAttribute("autfield", caller_property_name + "_" + vedette_composee_order + "_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order + "_id");
 		text.setAttribute("completion", "notice");
 		text.setAttribute("autocompletion", "on");
 		text.setAttribute("autocomplete", "off");
-		text.setAttribute("placeholder", "['.$msg["vedette_records"].']");
+		text.setAttribute("placeholder", this.prefix);
 		text.setAttribute("vedettetype", "vedette_records");
 		if (label) {
 			text.setAttribute("value", label);
@@ -75,38 +78,52 @@ var vedette_records = {
 		text.setAttribute("callback", "vedette_composee_callback");
 			
 		var select = document.createElement("input");
-		select.setAttribute("id", "!!caller!!_!!property_name!!_!!vedette_composee_order!!_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order + "_select");
+		select.setAttribute("id", caller_property_name + "_" + vedette_composee_order + "_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order + "_select");
 		select.setAttribute("class", "bouton");
 		select.setAttribute("type", "button");
-		select.addEventListener("click", function(e){
-			var deb_rech = document.getElementById("!!caller!!_!!property_name!!_!!vedette_composee_order!!_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order + "_label").value;
-			openPopUp("./select.php?what=notice&caller=!!caller!!&param1=!!caller!!_!!property_name!!_!!vedette_composee_order!!_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order + "_id&param2=!!caller!!_!!property_name!!_!!vedette_composee_order!!_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order + "_label&callback=vedette_composee_callback&infield=!!caller!!_!!property_name!!_!!vedette_composee_order!!_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order + "_label&deb_rech=" + encodeURIComponent(deb_rech), "select_author0", 500, 400, -2, -2, "scrollbars=yes, toolbar=no, dependent=yes, resizable=yes");
+		select.addEventListener("click", (e) => {
+			var deb_rech = this.getRawLabel(caller_property_name + "_" + vedette_composee_order + "_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order + "_label");
+			openPopUp("./select.php?what=notice&caller=!!caller!!&param1="+ caller_property_name + "_" + vedette_composee_order + "_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order + "_id&param2="+ caller_property_name + "_" + vedette_composee_order + "_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order + "_label&callback=vedette_composee_callback&infield="+ caller_property_name + "_" + vedette_composee_order + "_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order + "_label" + (deb_rech ? "&deb_rech=" + encodeURIComponent(deb_rech) : ""), "selector");
 		}, false);
 		select.setAttribute("value", "...");
 		
 		var element_id = document.createElement("input");
-		element_id.setAttribute("id", "!!caller!!_!!property_name!!_!!vedette_composee_order!!_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order + "_id");
+		element_id.setAttribute("id", caller_property_name + "_" + vedette_composee_order + "_" + vedette_composee_subdivision_id + "_element_" + vedette_composee_element_order + "_id");
 		element_id.setAttribute("type", "hidden");
-		element_id.setAttribute("name", "!!caller!!_!!property_name!![!!vedette_composee_order!!][elements][" + vedette_composee_subdivision_id + "][" + vedette_composee_element_order + "][id]");
+		element_id.setAttribute("name", caller_property_name + "[" + vedette_composee_order + "][elements][" + vedette_composee_subdivision_id + "][" + vedette_composee_element_order + "][id]");
 		if (id) {
 			element_id.setAttribute("value", id);
 		}
 		
 		var element_type = document.createElement("input");
 		element_type.setAttribute("type", "hidden");
-		element_type.setAttribute("name", "!!caller!!_!!property_name!![!!vedette_composee_order!!][elements][" + vedette_composee_subdivision_id + "][" + vedette_composee_element_order + "][type]");
+		element_type.setAttribute("name", caller_property_name + "[" + vedette_composee_order + "][elements][" + vedette_composee_subdivision_id + "][" + vedette_composee_element_order + "][type]");
 		element_type.setAttribute("value", "vedette_records");
+		
+		var element_available_field_num = document.createElement("input");
+		element_available_field_num.setAttribute("type", "hidden");
+		element_available_field_num.setAttribute("name", caller_property_name + "[" + vedette_composee_order + "][elements][" + vedette_composee_subdivision_id + "][" + vedette_composee_element_order + "][available_field_num]");
+		element_available_field_num.setAttribute("value", parent.getAttribute("available_field_num"));
 		
 		form.appendChild(text);
 		form.appendChild(select);
 		form.appendChild(element_id);
 		form.appendChild(element_type);
+		form.appendChild(element_available_field_num);
 		parent.appendChild(form);
 	},
 	
+	getRawLabel: function(id) {
+		var el = document.getElementById(id)
+		if (el.value.indexOf(this.prefix + " ") != -1) {
+			return el.value.substr(this.prefix.length+1);
+		}
+		return el.value;	
+	},
+	
 	callback : function(id) {
-		document.getElementById(id).setAttribute("rawlabel", document.getElementById(id).value);
-		document.getElementById(id).value = "['.$msg["vedette_records"].'] " + document.getElementById(id).value;
+		document.getElementById(id).setAttribute("rawlabel", this.getRawLabel(id));
+		document.getElementById(id).value = this.prefix + " " + this.getRawLabel(id);
 	}
 }
 ';

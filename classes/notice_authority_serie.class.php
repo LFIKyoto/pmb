@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_authority_serie.class.php,v 1.5 2013-03-21 10:28:55 mbertin Exp $
+// $Id: notice_authority_serie.class.php,v 1.6 2017-04-25 15:22:13 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,24 +16,24 @@ require_once($class_path."/serie.class.php");
  * Classe pour les autorité classiques...
  */
 class notice_authority_serie extends iso2709_notices implements notice_authority_generic{
-	var $is_utf8;
-	var $type;
-	var $common_data;
-	var $specifics_data;
-	var $rejected_forms;
-	var $associated_forms;
-	var $parallel_forms;
-	var $use_rejected;
-	var $use_associated;
-	var $use_parallel;
-	var $import_subcoll;
+	public $is_utf8;
+	public $type;
+	public $common_data;
+	public $specifics_data;
+	public $rejected_forms;
+	public $associated_forms;
+	public $parallel_forms;
+	public $use_rejected;
+	public $use_associated;
+	public $use_parallel;
+	public $import_subcoll;
 
 	public function __construct($data="",$type="UNI",$file_charset="iso-8859-1",$import_subcoll=false){
 		if($file_charset == "utf-8"){
 			$this->is_utf8 = true;
 		}
 		$this->import_subcoll=$import_subcoll;
-		parent::iso2709($data,$type);
+		parent::__construct($data,$type);
 		$this->get_type();
 	}
 

@@ -2,9 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: external.inc.php,v 1.13 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: external.inc.php,v 1.20 2018-05-16 15:15:25 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $search;
+global $es;
+global $pmb_logs_activate, $ex_env, $user_query;
+
+require_once($class_path."/facettes_external.class.php");
+
+//Réinitialisation des facettes externes
+facettes_external::destroy_global_env();
+
 $nb_result_external=0;
 $flag=false;
 
@@ -19,8 +29,8 @@ if ($_SESSION["ext_type"]=="multi") {
    		//Vérification des champs vides
    	 	for ($i=0; $i<count($search); $i++) {
    	 		$field_="field_".$i."_".$search[$i];
-	   	 	global $$field_;
-   		 	$field=$$field_;
+	   	 	global ${$field_};
+   		 	$field=${$field_};
    		 	$s=explode("_",$search[$i]);
    		 	if ($s[0]=="f") {
    		 		$champ=$es->fixedfields[$s[1]]["TITLE"];
@@ -44,13 +54,16 @@ if ($_SESSION["ext_type"]=="multi") {
 		$nb_result_external=@pmb_mysql_result($resultat,0,0);
 		if ($nb_result_external) {
 			print pmb_bidi("<strong>".$es->make_human_query()."</strong> ".$nb_result_external." $msg[results] ");
-			print "<a href=\"#\" onclick=\"document.search_form.action='./index.php?lvl=more_results&mode=external'; document.search_form.submit(); return false;\">$msg[suite]&nbsp;<img src='./images/search.gif' border='0' align='absmiddle'/></a><br /><br />";
+			print $es->make_hidden_search_form('./index.php?lvl=more_results&mode=external','external_extended_form',"",false);
+			print "<input type='hidden' name='count' value='".$nb_result_external."'>";
+			print "</form>"; //Fermeture formulaire make_hidden_search_form
+			print "<a href=\"#\" onclick=\"document.external_extended_form.submit(); return false;\">$msg[suite]&nbsp;<img src='".get_url_icon('search.gif')."' style='border:0px' align='absmiddle'/></a><br /><br />";
 		}
 	}
 } else {
 	//Recherche "simple"
 	//Pour chaque case cochée,  on construit et on lance la recherche multicritère correspondante
-	global $external_sources;
+	global $external_sources, $source, $selected_sources;
 	$selected_sources = implode(',', $source);
 	$look_array=array("TITLE","AUTHOR","PUBLISHER","COLLECTION","SUBCOLLECTION","CATEGORY","INDEXINT","KEYWORDS","ABSTRACT","ALL");
 	$look_id=array(6,8,3,4,5,1,2,12,13,7);
@@ -63,13 +76,15 @@ if ($_SESSION["ext_type"]=="multi") {
 	
 	if (!$flag) {
 		$search[0]="s_2";
+		global $op_0_s_2;
 		$op_0_s_2="EQ";
+		global $field_0_s_2;
 		$field_0_s_2=$source;
 		
 		for ($i=0; $i<count($look_array); $i++) {
 			$look="look_".$look_array[$i];
-			if ($$look) {
-				$ex_env[$look]=$$look;
+			if (${$look}) {
+				$ex_env[$look]=${$look};
 			}
 		}
 		$ex_env["look_FIRSTACCESS"]=1;
@@ -80,33 +95,34 @@ if ($_SESSION["ext_type"]=="multi") {
 		$nb_result_external =0;
 		for ($k=0; $k<count($look_array); $k++) {		
 			$look="look_".$look_array[$k];
-			if ($$look) {
+			global ${$look};
+			if (${$look}) {
 				//Construction de la multi-critère		
 				$search[1]="f_".$look_id[$k];
 				
 				//opérateur
 				$op_="BOOLEAN";
 	    		$op="op_1_".$search[1];
-	    		global $$op;
-	    		$$op=$op_;
+	    		global ${$op};
+	    		${$op}=$op_;
 	    		    		
 	    		//contenu de la recherche
 	    		$field="field_1_".$search[1];
 	    		$field_=array();
 	    		$field_[0]=stripslashes($user_query);
-	    		global $$field;
-	    		$$field=$field_;
+	    		global ${$field};
+	    		${$field}=$field_;
 	    	    	
 	    	    //opérateur inter-champ
 	    		$inter="inter_1_".$search[1];
-	    		global $$inter;
-	    		$$inter="and";
+	    		global ${$inter};
+	    		${$inter}="and";
 	    		    		
 	    		//variables auxiliaires
 	    		$fieldvar_="fieldvar_1_".$search[1];
-	    		global $$fieldvar_;
-	    		$$fieldvar_="";
-	    		$fieldvar=$$fieldvar_;
+	    		global ${$fieldvar_};
+	    		${$fieldvar_}="";
+	    		$fieldvar=${$fieldvar_};
 	    		
 	    		$es=new search("search_simple_fields_unimarc");
 	    		$table=$es->make_search("f_".$look_id[$k]);
@@ -130,7 +146,7 @@ if ($_SESSION["ext_type"]=="multi") {
 					<input type='hidden' name='".$inter."' value='".htmlentities("and",ENT_QUOTES,$charset)."'/>
 					<input type='hidden' name='count' value='".$nb_result_external."'>";
 					print pmb_bidi("<strong>".$msg[$look_msg[$k]]."</strong> ".$nb_result_partial." $msg[results] ");
-					print "<a href=\"javascript:document.form_".$look_id[$k].".submit()\">$msg[suite]&nbsp;<img src='./images/search.gif' border='0' align='absmiddle'/></a><br />";
+					print "<a href=\"javascript:document.form_".$look_id[$k].".submit()\">$msg[suite]&nbsp;<img src='".get_url_icon('search.gif')."' style='border:0px' align='absmiddle'/></a><br />";
 					print "</form>\n";
 				}
 			}

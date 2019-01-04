@@ -2,11 +2,12 @@
  // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: options_selector.php,v 1.2 2009-05-16 11:05:14 dbellamy Exp $
+// $Id: options_selector.php,v 1.7 2017-11-07 15:31:19 ngantier Exp $
 
 //Gestion des options de type text
 $base_path = "../..";
 $base_auth = "CATALOGAGE_AUTH|ADMINISTRATION_AUTH";
+$base_title = "";
 include ($base_path."/includes/init.inc.php");
 
 require_once ("$include_path/parser.inc.php");
@@ -17,8 +18,8 @@ $options = stripslashes($options);
 //Si enregistrer
 if ($first == 1) {
 	$param["FOR"] = "selector";
-	$param["METHOD"][0][value] = stripslashes($METHOD);
-	$param["DATA_TYPE"][0][value] = $DATA_TYPE;
+	$param["METHOD"][0]['value'] = stripslashes($METHOD);
+	$param["DATA_TYPE"][0]['value'] = $DATA_TYPE;
 
 	$options = array_to_xml($param, "OPTIONS");
 	
@@ -44,7 +45,7 @@ if ($first == 1) {
 	
 	//Formulaire	
 	$form="
-	<h3>".$msg[procs_options_param].$name."</h3><hr />
+	<h3>".$msg['procs_options_param'].$name."</h3><hr />
 	<form class='form-$current_module' name='formulaire' action='options_selector.php' method='post'>
 	<h3>".$type_list[$type]."</h3>
 	<div class='form-contenu'>
@@ -52,15 +53,15 @@ if ($first == 1) {
 	<input type='hidden' name='name' value='".htmlentities(	$name,ENT_QUOTES,$charset)."'>
 	<table class='table-no-border' width=100%>	
 		<tr><td>".$msg['parperso_include_option_methode']."</td><td>
-		<table width=100% valign='center'>
-			<tr><td><center>".$msg['parperso_include_option_selectors_id']."
+		<table style='width:100%; vertical-align:center'>
+			<tr><td class='center'>".$msg['parperso_include_option_selectors_id']."
 			<br />
 			<input type='radio' name='METHOD' value='1' ".$method_checked[1].">
-			</center></td>
-			<td><center>".$msg['parperso_include_option_selectors_label']."
+			</td>
+			<td class='center'>".$msg['parperso_include_option_selectors_label']."
 			<br />
 			<input type='radio' name='METHOD' value='2' ".$method_checked[2].">
-			</center></td></tr>
+			</td></tr>
 		</table></td></tr>
 	
 		<tr><td>".$msg['include_option_type_donnees']."
@@ -72,6 +73,8 @@ if ($first == 1) {
 		<option value='5' ".$data_type_selected[5]." >".$msg['137']."</option>
 		<option value='6' ".$data_type_selected[6]." >".$msg['333']."</option>
 		<option value='7' ".$data_type_selected[7]." >".$msg['indexint_menu']."</option>
+		<option value='8' ".$data_type_selected[8]." >".$msg['titre_uniforme_search']."</option>
+		<option value='9' ".$data_type_selected[9]." >".$msg['skos_view_concepts_concepts']."</option>
 		</select></td></tr>
 
 	</table>

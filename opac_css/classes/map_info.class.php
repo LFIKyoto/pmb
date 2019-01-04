@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_info.class.php,v 1.3 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: map_info.class.php,v 1.5 2017-10-27 14:07:40 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,8 +12,7 @@ class map_info {
 
 	
 	public function __construct($id) {
-		$this->id=$id;
-		
+		$this->id=$id+0;
 	   	$this->fetch_datas();
   	} // end of member function __construct
 
@@ -42,7 +41,6 @@ class map_info {
   		$res=pmb_mysql_query($req);
   		if (pmb_mysql_num_rows($res)) {
   			if($r=pmb_mysql_fetch_object($res)){
-  				$this->map['id']=$r->map_id;
   				$this->map['echelle_num']=$r->map_echelle_num;
   				$this->map['projection_num']=$r->map_projection_num;
   				$this->map['ref_num']=$r->map_ref_num;
@@ -55,7 +53,7 @@ class map_info {
   						$r_echelle=pmb_mysql_fetch_object($res_echelle);
   						$this->map['echelle']=$r_echelle->map_echelle_name;
   						$this->isbd.=$this->map['echelle'];
-  						$this->public.="<tr><td align='right' class='bg-grey'><span class='etiq_champ'>".$msg["map_notice_echelle"]."</span></td><td>".$this->map['echelle']."</td></tr>";
+  						$this->public.="<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$msg["map_notice_echelle"]."</span></td><td>".$this->map['echelle']."</td></tr>";
   					}
   				}
   				if($this->map['projection_num']){
@@ -66,7 +64,7 @@ class map_info {
   						$this->map['projection']=$r_projection->map_projection_name;
   						if($this->isbd) $this->isbd.=" ; ";
   						$this->isbd.=$this->map['projection'];  							
-  						$this->public.="<tr><td align='right' class='bg-grey'><span class='etiq_champ'>".$msg["map_notice_projection"]."</span></td><td>".$this->map['projection']."</td></tr>";
+  						$this->public.="<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$msg["map_notice_projection"]."</span></td><td>".$this->map['projection']."</td></tr>";
   					}
   				}
   				if($this->map['ref_num']){
@@ -77,7 +75,7 @@ class map_info {
   						$this->map['ref']=$r_ref->map_ref_name;
   						if($this->isbd) $this->isbd.=". ";
   						$this->isbd.=$this->map['ref'];
-  						$this->public.="<tr><td align='right' class='bg-grey'><span class='etiq_champ'>".$msg["map_notice_ref"]."</span></td><td>".$this->map['ref']."</td></tr>";
+  						$this->public.="<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$msg["map_notice_ref"]."</span></td><td>".$this->map['ref']."</td></tr>";
   					}
   				} 
   								
@@ -88,10 +86,10 @@ class map_info {
   					if($this->isbd)$this->isbd.=" ";
   					$this->map['transcription']=$bounding_box->get_transcription();
   					$this->isbd.=$this->map['transcription'];
-  					$this->public.="<tr><td align='right' class='bg-grey'><span class='etiq_champ'>".$msg["map_notice_transcription"]."</span></td><td>".$this->map['transcription']."</td></tr>";
+  					$this->public.="<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$msg["map_notice_transcription"]."</span></td><td>".$this->map['transcription']."</td></tr>";
 				}
   				if($this->map['equinoxe']) $this->isbd.=" (".$this->map['equinoxe'].") ";
-  				if($this->map['equinoxe'])$this->public.="<tr><td align='right' class='bg-grey'><span class='etiq_champ'>".$msg["map_notice_equinoxe"]."</span></td><td>".$this->map['equinoxe']."</td></tr>";
+  				if($this->map['equinoxe'])$this->public.="<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$msg["map_notice_equinoxe"]."</span></td><td>".$this->map['equinoxe']."</td></tr>";
    				
   				if($this->isbd)$this->isbd=". - ".$this->isbd;
   			}

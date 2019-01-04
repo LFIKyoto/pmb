@@ -1,4 +1,4 @@
-<h1>Gestion des Rubriques</h1>
+<h2>Gestion des Rubriques</h2>
 
 <p>Ici, vous pouvez administrer les rubriques.</p>
 

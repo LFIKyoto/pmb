@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_collections.class.php,v 1.3 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: cms_collections.class.php,v 1.7 2017-11-24 14:54:47 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -93,7 +93,7 @@ class cms_collections extends cms_root{
 		global $msg,$charset;
 				
 		$list ="
-		<div class='row'>&nbsp</div>
+		<div class='row'>&nbsp;</div>
 		<hr />
 		<script type='text/javascript'>
 			function document_change_background(id){
@@ -146,7 +146,7 @@ class cms_collection extends cms_root{
 	}
 	
 	public function fetch_datas(){
-		$query = "select id_collection,collection_title, collection_description, collection_num_parent, collection_num_storage, count(id_document) as nb_doc from cms_collections left join cms_documents on document_type_object='collection' and document_num_object = id_collection where id_collection = ".$this->id." group by id_collection";
+		$query = "select id_collection,collection_title, collection_description, collection_num_parent, collection_num_storage, count(id_document) as nb_doc from cms_collections left join cms_documents on document_type_object='collection' and document_num_object = id_collection where id_collection = '".$this->id."' group by id_collection";
 		$result = pmb_mysql_query($query);
 		if(pmb_mysql_num_rows($result)){
 			$row = pmb_mysql_fetch_object($result);
@@ -262,10 +262,25 @@ class cms_collection extends cms_root{
 		foreach($this->documents as $document){
 			$list.= $document->get_item_render("openEditDialog");
 		}
-		
+		$upload_max_filesize = ini_get('upload_max_filesize');
+		if (!$upload_max_filesize) {
+			$upload_max_filesize = 50000;
+		} else {
+			$upload_max_filesize = trim($upload_max_filesize);
+			$last = strtolower($upload_max_filesize[strlen($upload_max_filesize)-1]);
+			switch($last) {
+				// Le modifieur 'G' est disponible depuis PHP 5.1.0
+				case 'g':
+					$upload_max_filesize *= 1024;
+				case 'm':
+					$upload_max_filesize *= 1024;
+				case 'k':
+					$upload_max_filesize *= 1024;
+			}
+		}
 		$list.= "
 		</div>
-			<div id='dropTarget' class='dropTarget document_item'><p>".htmlentities($msg['drag_files_here'],ENT_QUOTES,$charset)."</p></div>
+			<div id='dropTarget' class='dropTarget document_item'><p style='pointer-events: none;'>".htmlentities($msg['drag_files_here'],ENT_QUOTES,$charset)."</p></div>
 			<link href='./javascript/dojo/snet/fileUploader/resources/uploader.css' rel='stylesheet' type='text/css'/>
 			<script type='text/javascript'>
 				require(['dojo/_base/kernel', 'dojo/ready', 'snet/fileUploader/Uploader', 'dojox/widget/DialogSimple'], function(kernel, ready, Uploader, Dialog) {
@@ -273,7 +288,7 @@ class cms_collection extends cms_root{
 						var upl = new Uploader({
 							url: './ajax.php?module=ajax&categ=storage&sub=upload&id=".$this->num_storage."&type=collection&id_collection=".$this->id."',
 							dropTarget: 'dropTarget',
-							maxKBytes: 50000,
+							maxKBytes: ".$upload_max_filesize.",
 							maxNumFiles: 10,
 							append_div: 'document_list'
 						});
@@ -311,9 +326,25 @@ class cms_collection extends cms_root{
 			}
 			$form.=$document->get_item_form($selected);	
 		}
+		$upload_max_filesize = ini_get('upload_max_filesize');
+		if (!$upload_max_filesize) {
+			$upload_max_filesize = 50000;
+		} else {
+			$upload_max_filesize = trim($upload_max_filesize);
+			$last = strtolower($upload_max_filesize[strlen($upload_max_filesize)-1]);
+			switch($last) {
+				// Le modifieur 'G' est disponible depuis PHP 5.1.0
+				case 'g':
+					$upload_max_filesize *= 1024;
+				case 'm':
+					$upload_max_filesize *= 1024;
+				case 'k':
+					$upload_max_filesize *= 1024;
+			}
+		}
 		$form.="
 		</div>
-		<div id='dropTarget_".$this->id."' class='document_item dropTarget'><p>".htmlentities($msg['drag_files_here'],ENT_QUOTES,$charset)."</p></div>
+		<div id='dropTarget_".$this->id."' class='document_item dropTarget'><p style='pointer-events: none;'>".htmlentities($msg['drag_files_here'],ENT_QUOTES,$charset)."</p></div>
 		<link href='./javascript/dojo/snet/fileUploader/resources/uploader.css' rel='stylesheet' type='text/css'/>
 		<script type='text/javascript'>
 			require(['dojo/_base/kernel', 'dojo/ready', 'snet/fileUploader/Uploader', 'dojox/widget/DialogSimple'], function(kernel, ready, Uploader, Dialog) {
@@ -321,7 +352,7 @@ class cms_collection extends cms_root{
 					var upl = new Uploader({
 						url: './ajax.php?module=ajax&categ=storage&sub=upload&id=".$this->num_storage."&type=collection&id_collection=".$this->id."',
 						dropTarget: 'dropTarget_".$this->id."',
-						maxKBytes: 50000,
+						maxKBytes: ".$upload_max_filesize.",
 						maxNumFiles: 10,
 						append_div: 'document_list_".$this->id."'
 					});
@@ -343,9 +374,9 @@ class cms_collection extends cms_root{
 			document_url = '".addslashes($infos['url'])."',
 			document_path = '".addslashes($infos['path'])."',
 			document_create_date = '".addslashes($infos['create_date'])."',	
-			document_num_storage = ".($infos['num_storage']*1).",
+			document_num_storage = '".($infos['num_storage']*1)."',
 			document_type_object = 'collection',
-			document_num_object = ".$this->id."	
+			document_num_object = '".$this->id."'	
 		";
 		if(pmb_mysql_query($query)){
 			if($get_item_render){

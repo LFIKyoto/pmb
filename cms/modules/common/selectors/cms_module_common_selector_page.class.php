@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_page.class.php,v 1.6 2015-04-03 11:16:18 jpermanne Exp $
+// $Id: cms_module_common_selector_page.class.php,v 1.8 2018-01-24 15:33:28 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 //require_once($base_path."/cms/modules/common/selectors/cms_module_selector.class.php");
@@ -22,7 +22,7 @@ class cms_module_common_selector_page extends cms_module_common_selector{
 		//si on est sur une page de type Page en création de cadre, on propose la condition pré-remplie...
 		if($this->cms_build_env['lvl'] == "cmspage"){
 			if(!$this->id){
-				$this->parameters[] = $this->cms_build_env['get']['pageid'];
+				$this->parameters[] = (isset($this->cms_build_env['get']['pageid']) ? $this->cms_build_env['get']['pageid'] : '');
 			}
 		}
 		$form = "
@@ -52,7 +52,7 @@ class cms_module_common_selector_page extends cms_module_common_selector{
 		if(pmb_mysql_num_rows($result)){
 			while($row = pmb_mysql_fetch_object($result)){
 				$select.="
-						<option value='".$row->id_page."' ".(in_array($row->id_page,$this->parameters) ? "selected='selected'" : "").">".$this->format_text($row->page_name)."</option>";
+						<option value='".$row->id_page."' ".((is_array($this->parameters) && in_array($row->id_page,$this->parameters)) ? "selected='selected'" : "").">".$this->format_text($row->page_name)."</option>";
 			}
 		}else{
 			$select.= "

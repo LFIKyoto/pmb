@@ -2,14 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: abts_pointage.tpl.php,v 1.14 2015-02-14 13:28:49 Alexandre Exp $
+// $Id: abts_pointage.tpl.php,v 1.19 2017-11-24 14:53:54 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 $pointage_list ="
 <script type='text/javascript' src='./javascript/sorttable.js'></script>
-<a href='javascript:expandAll()'><img src='./images/expand_all.gif' border='0' id='expandall'></a>
-<a href='javascript:collapseAll()'><img src='./images/collapse_all.gif' border='0' id='collapseall'></a>
+<a href='javascript:expandAll()'><img src='".get_url_icon('expand_all.gif')."' border='0' id='expandall'></a>
+<a href='javascript:collapseAll()'><img src='".get_url_icon('collapse_all.gif')."' border='0' id='collapseall'></a>
 	!!a_recevoir!!
 	!!prochain_numero!!
 	!!en_retard!!
@@ -20,28 +20,26 @@ $pointage_list ="
 
 $pointage_form = "
 <script type='text/javascript' src='./javascript/tablist.js'></script>
-<h1>".$msg["4000"]." : ".$msg["pointage_libelle_form"]."</h3>
-<form class='form-$current_module' id='form_pointage' name='form_pointage' method='post' action=!!action!!>
+<h1>".$msg["4000"]." : ".$msg["pointage_libelle_form"]."</h1>
+<form class='form-$current_module' id='form_pointage' name='form_pointage' method='post' action='!!action!!'>
 	<h3>".$msg["4000"].":".$msg["pointage_libelle_form"]."</h3>
 	<div class='form-contenu'>
 		<input type='hidden' name='num_notice' id='num_notice' value='!!num_notice!!'/>
-		<div class='colonne2'>
-			<div class='row'>
-				<label for='form_pointage' class='etiquette'>".$msg["pointage_titre_filtre"]."</label>
-			</div>
-			<div class='row'>
-				".$msg["pointage_label_localisation"]." : !!localisation!!
-			</div>
-			<div class='row'>
-				&nbsp	
+		<div class='row'>
+			<div class='colonne2'>
+				<div class='row'>
+					<label for='form_pointage' class='etiquette'>".$msg["pointage_titre_filtre"]."</label>
+				</div>
+				<div class='row'>
+					".$msg["pointage_label_localisation"]." : !!localisation!!
+				</div>
 			</div>
 		</div>
 		<div class='row'>
-			
-		</div>
-		<div class='colonne2'>
-			<div class='row'>
-				<label for='abonnement_name' class='etiquette'>".$msg["pointage_titre_abonnements_liste"]."</label>
+			<div class='colonne2'>
+				<div class='row'>
+					<label for='abonnement_name' class='etiquette'>".$msg["pointage_titre_abonnements_liste"]."</label>
+				</div>
 			</div>
 		</div>		
 		<div class='row'>
@@ -49,16 +47,15 @@ $pointage_form = "
 		</div>
 		<!-- Fin du contenu -->
 		<div class='row'>
-			&nbsp	
-		</div>
-		<div class='row'>
-		<input type='hidden' id='act' name='act' value='' />
-		<div class='left'><input type=\"submit\" class='bouton' value='".$msg["actualiser"]."' onClick=\"document.getElementById('act').value='';if(test_form(this.form)==true) this.form.submit();else return false;\"/>&nbsp;
+			&nbsp;	
+		</div>			
+	</div>
+	<input type='hidden' id='act' name='act' value='' />
+	<div class='left'><input type=\"submit\" class='bouton' value='".$msg["actualiser"]."' onClick=\"document.getElementById('act').value='';if(test_form(this.form)==true) this.form.submit();else return false;\"/>&nbsp;
 		!!imprimer!!
 		!!imprime_abts_depasse!!
 		!!gestion_retard!!
-		</div>			
-	</div>
+	</div>			
 	<div class='row'></div>
 </form>
 ";			
@@ -74,7 +71,7 @@ $abts_gestion_retard_form_filter = "
 	function fonction_selecteur_fourn() {
 		name=this.getAttribute('id').substring(4);
 		name_id = name.substr(0,7)+'_id'+name.substr(7);
-		openPopUp('./select.php?what=fournisseur&caller=abts_gestion_retard_filter&param1='+name_id+'&param2='+name+'&dyn=1', 'select_fournisseur', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes');
+		openPopUp('./select.php?what=fournisseur&caller=abts_gestion_retard_filter&param1='+name_id+'&param2='+name+'&dyn=1', 'selector');
 	}
 	function fonction_raz_fourn() {
 		name=this.getAttribute('id').substring(4);
@@ -178,7 +175,7 @@ $abts_gestion_retard_form_filter = "
 $abts_gestion_retard_fournisseur_first = "
     <div class='row'>
         <input type='text' class='saisie-30emr' id='f_fourn!!ifourn!!' name='f_fourn!!ifourn!!' value=\"!!fourn_libelle!!\" completion=\"categories_mul\" autfield=\"f_fourn_id!!ifourn!!\" />
-        <input type='button' class='bouton_small' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=fournisseur&caller=abts_gestion_retard_filter&param1=f_fourn_id!!ifourn!!&param2=f_fourn!!ifourn!!&dyn=1', 'select_fournisseur', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes'); \" type='text'>
+        <input type='button' class='bouton_small' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=fournisseur&caller=abts_gestion_retard_filter&param1=f_fourn_id!!ifourn!!&param2=f_fourn!!ifourn!!&dyn=1', 'selector'); \" type='text'>
         <input type='button' class='bouton_small' value='$msg[raz]' onclick=\"this.form.f_fourn!!ifourn!!.value=''; this.form.f_fourn_id!!ifourn!!.value='0'; \" />
         <input type='hidden' name='f_fourn_id!!ifourn!!' id='f_fourn_id!!ifourn!!' value='!!fourn_id!!' />
         <input type='button' class='bouton_small' value='+' onClick=\"add_fourn();\"/>
@@ -187,7 +184,7 @@ $abts_gestion_retard_fournisseur_first = "
 $abts_gestion_retard_fournisseur_suite = "
     <div class='row'>
         <input type='text' class='saisie-30emr' id='f_fourn!!ifourn!!' name='f_fourn!!ifourn!!' value=\"!!fourn_libelle!!\" completion=\"categories_mul\" autfield=\"f_fourn_id!!ifourn!!\" />
-        <input type='button' class='bouton_small' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=fournisseur&caller=abts_gestion_retard_filter&param1=f_fourn_id!!ifourn!!&param2=f_fourn!!ifourn!!&dyn=1', 'select_fournisseur', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes'); \" type='text'>
+        <input type='button' class='bouton_small' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=fournisseur&caller=abts_gestion_retard_filter&param1=f_fourn_id!!ifourn!!&param2=f_fourn!!ifourn!!&dyn=1', 'selector'); \" type='text'>
         <input type='button' class='bouton_small' value='$msg[raz]' onclick=\"this.form.f_fourn!!ifourn!!.value=''; this.form.f_fourn_id!!ifourn!!.value='0'; \" />
         <input type='hidden' name='f_fourn_id!!ifourn!!' id='f_fourn_id!!ifourn!!' value='!!fourn_id!!' />
     </div>
@@ -245,7 +242,7 @@ $abts_gestion_retard_form = "
 		}
 		if(sel_relance){
 			var url='./print_relance.php?action=print_prepare&sel_relance='+sel_relance;
-			openPopUp(url,'print_rel',600,500,-2,-2,'scrollbars=yes,menubar=0,resizable=yes');
+			openPopUp(url,'print_rel');
 		} else {
 			alert ('".addslashes($msg["abts_gestion_retard_no_sel"])."');
 		}
@@ -293,11 +290,11 @@ $abts_gestion_retard_form = "
 
 $abts_gestion_retard_perio = "	
 <div id='perio_retard!!num_perio!!' class='notice-parent'>
-	<img src='./images/plus.gif' class='img_plus' name='imEx' id='perio_retard!!num_perio!!Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('perio_retard!!num_perio!!', true); return false;\" hspace='3'>
+	<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='perio_retard!!num_perio!!Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('perio_retard!!num_perio!!', true); return false;\" hspace='3'>
 	<span class='notice-heada'>
     	<small>
     		<span  class='statutnot1'  style='margin-right: 3px;'>
-    			<img src='./images/spacer.gif' width='10' height='10' />
+    			<img src='".get_url_icon('spacer.gif')."' width='10' height='10' />
     		</span>
     	</small>
     	<input type='checkbox' id='sel_perio_!!i_perio!!' name='perio' onClick=\"gestion_retard_sel(!!num_perio!!,this.checked);\" value='1' class='checkbox' /><a href='./catalog.php?categ=serials&sub=view&serial_id=!!num_perio!!'>!!perio_header!!</a>

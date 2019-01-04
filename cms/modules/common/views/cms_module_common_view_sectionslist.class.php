@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_sectionslist.class.php,v 1.5.4.1 2015-10-28 16:25:27 apetithomme Exp $
+// $Id: cms_module_common_view_sectionslist.class.php,v 1.11 2018-04-23 12:55:16 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -22,6 +22,10 @@ class cms_module_common_view_sectionslist extends cms_module_common_view_django{
 	}
 	
 	public function get_form(){
+		global $msg;
+		
+		if(!isset($this->parameters['load_articles_data'])) $this->parameters['load_articles_data'] = 0;
+		
 		$form="
 		<div class='row'>
 			<div class='colonne3'>
@@ -40,18 +44,32 @@ class cms_module_common_view_sectionslist extends cms_module_common_view_django{
 		$form.= $this->get_constructor_link_form("article");
 		$form.="	
 			</div>
+		</div>
+		<div class='row'>
+			<div class='colonne3'>
+				<label for='cms_module_common_view_sectionslist_load_articles_data'>".$this->format_text($this->msg['cms_module_common_view_sectionslist_load_articles_data'])."</label>
+			</div>
+			<div class='colonne-suite'>
+				".$msg[39]." <input type='radio' name='cms_module_common_view_sectionslist_load_articles_data' value='0' ".(!$this->parameters['load_articles_data'] ? "checked='checked'" : "")." />
+				".$msg[40]." <input type='radio' name='cms_module_common_view_sectionslist_load_articles_data' value='1' ".($this->parameters['load_articles_data'] ? "checked='checked'" : "")." />
+			</div>
 		</div>";
 		$form.= parent::get_form();
 		return $form;
 	}
 	
 	public function save_form(){
+		global $cms_module_common_view_sectionslist_load_articles_data;
+		
 		$this->save_constructor_link_form("section");
 		$this->save_constructor_link_form('article');
+		$this->parameters['load_articles_data'] = $cms_module_common_view_sectionslist_load_articles_data+0;
 		return parent::save_form();
 	}
 	
-	public function render($datas){	
+	public function render($datas){
+		if(!isset($this->parameters['load_articles_data'])) $this->parameters['load_articles_data'] = 0;
+		
 		//on rajoute nos éléments...
 		//le titre
 		$render_datas = array();
@@ -60,10 +78,29 @@ class cms_module_common_view_sectionslist extends cms_module_common_view_django{
 		if(is_array($datas) && count($datas)){
 			foreach($datas as $section){
 				$cms_section = new cms_section($section);
-				$infos= $cms_section->format_datas(true, true, true, true);
+				//Dans le cas d'une liste de rubriques affichée via un template django, on écrase les valeurs de lien définies par celles du module
+				if($this->parameters['links']['section']['var'] && $this->parameters['links']['section']['page']){
+					$cms_section->set_var_name($this->parameters['links']['section']['var']);
+					$cms_section->set_num_page($this->parameters['links']['section']['page']);
+				}
+				if($this->parameters['load_articles_data']) {
+					$infos= $cms_section->format_datas(true, true, true, true);
+				} else {
+					$infos= $cms_section->format_datas(true, false, true, true);
+				}
 				$infos['link'] = $this->get_constructed_link("section",$section);
-				foreach ($infos['articles'] as $i=>$article) {
-					$infos['articles'][$i]['link'] = $this->get_constructed_link("article",$article["id"]);
+				if (!empty($infos['articles'])) {
+					foreach ($infos['articles'] as $i=>$article) {
+						$infos['articles'][$i]['link'] = $this->get_constructed_link("article",$article["id"]);
+					}
+				}
+				if($cms_section->num_parent) {
+					$infos['parent']['link'] = $this->get_constructed_link("section",$infos['parent']["id"]);
+				}
+				if(count($infos['children'])) {
+					foreach ($infos['children'] as $i=>$child) {
+						$infos['children'][$i]['link'] = $this->get_constructed_link("section",$child["id"]);
+					}
 				}
 				$render_datas['sections'][]=$infos;
 			}
@@ -87,6 +124,26 @@ class cms_module_common_view_sectionslist extends cms_module_common_view_django{
 			'var' => "sections[i].link",
 			'desc'=> $this->msg['cms_module_common_view_section_link_desc']
 		);
+		foreach ($sections['children'] as $i => $section) {
+			if($section['var'] == 'sections[i].parent') {
+				$sections['children'][$i]['children'][] = array(
+						'var' => "sections[i].parent.link",
+						'desc'=> $this->msg['cms_module_common_view_section_link_desc']
+				);
+			}
+			if($section['var'] == 'sections[i].children') {
+				$sections['children'][$i]['children'][] = array(
+						'var' => "sections[i].children[i].link",
+						'desc'=> $this->msg['cms_module_common_view_section_link_desc']
+				);
+			}
+			if($section['var'] == 'sections[i].articles') {
+				$sections['children'][$i]['children'][] = array(
+						'var' => "sections[i].articles[i].link",
+						'desc'=> $this->msg['cms_module_common_view_article_link_desc']
+				);
+			}
+		}
 		$format[] = $sections;
 		$format = array_merge($format,parent::get_format_data_structure());
 		return $format;

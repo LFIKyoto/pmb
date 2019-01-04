@@ -2,9 +2,14 @@
 // +-------------------------------------------------+
 // Â© 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: transferts.tpl.php,v 1.17 2013-04-18 14:59:07 mbertin Exp $
+// $Id: transferts.tpl.php,v 1.39 2017-11-30 10:00:36 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+if(!isset($transferts_reception_lot)) $transferts_reception_lot = 0;
+if(!isset($transferts_retour_lot)) $transferts_retour_lot = 0;
+if(!isset($transferts_validation_actif)) $transferts_validation_actif = 0;
+if(!isset($transferts_envoi_lot)) $transferts_envoi_lot = 0;
 
 //*******************************************************************
 // Définition des templates pour les listes en edition
@@ -12,19 +17,17 @@ if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 $transferts_edition_tableau = "
 	<script type='text/javascript' src='./javascript/sorttable.js'></script>
 	<form class='form-edit' id='form-edit' name='form-edit' action='./edit.php?categ=transferts&sub=!!sub!!' method='post'>
-	<div class='row'>
 		<div class='left'>
 			!!filtres_edition!!
-			<input type='submit' class='bouton' value='".$msg["actualiser"]."' />
+			<input type='button' class='bouton' onclick=\"start_export('');\" value='".$msg["actualiser"]."' />
 			<input type='hidden' name='dest' value='' />
 		</div>
 		<div class='right'>
-			<img  src='./images/tableur.gif' border='0' align='top' onMouseOver ='survol(this);' onclick=\"start_export('TABLEAU');\" alt='Export tableau EXCEL' title='Export tableau EXCEL'/>&nbsp;&nbsp;
-			<img  src='./images/tableur_html.gif' border='0' align='top' onMouseOver ='survol(this);' onclick=\"start_export('TABLEAUHTML');\" alt='Export tableau HTML' title='Export tableau HTML'/>&nbsp;&nbsp;
+			<img  src='".get_url_icon('tableur.gif')."' border='0' class='align_top' onMouseOver ='survol(this);' onclick=\"start_export('TABLEAU');\" alt='".$msg['export_tableur']."' title='".$msg['export_tableur']."'/>&nbsp;&nbsp;
+			<img  src='".get_url_icon('tableur_html.gif')."' border='0' class='align_top' onMouseOver ='survol(this);' onclick=\"start_export('TABLEAUHTML');\" alt='".$msg['export_tableau_html']."' title='".$msg['export_tableau_html']."'/>&nbsp;&nbsp;
 		</div>
-	</div>
+		<div class='row'></div>
 	</form>
-	<div class='row'>&nbsp;</div>
 	<script type='text/javascript'>
 		function survol(obj){
 			obj.style.cursor = 'pointer';
@@ -42,10 +45,14 @@ $transferts_edition_tableau = "
 		<th>".$msg["transferts_edition_tableau_section"]."</th>
 		<th>".$msg["transferts_edition_tableau_cote"]."</th>
 		<th>".$msg["transferts_edition_tableau_expl"]."</th>
+		!!pp_perso!!
 		<th>".$msg["transferts_edition_tableau_empr"]."</th>
 		<th>".$msg["transferts_edition_tableau_expl_owner"]."</th>
+		<th>".$msg["transferts_popup_ask_date"]."</th>
 		!!colonnes_variables!!
 		<th>".$msg["transferts_edition_tableau_motif"]."</th>
+		<th>".$msg["transferts_edition_ask_user"]."</th>
+		<th>".$msg["transferts_edition_send_user"]."</th>
 	</tr>
 	!!lignes_tableau!!
 	</table>
@@ -57,10 +64,14 @@ $transferts_edition_ligne = "
 		<td>!!val_section!!</td>
 		<td>!!val_cote!!</td>
 		<td><a href='./circ.php?categ=visu_ex&form_cb_expl=!!val_expl!!'>!!val_expl!!</a></td>
+		!!pp_perso!!
 		<td><a href='./circ.php?categ=pret&form_cb=!!val_empr_cb!!'>!!val_empr_nom_prenom!!</a></td>
 		<td>!!val_expl_owner!!</td>
+		<td>!!transfert_ask_date_format!!</td>
 		!!colonnes_variables!!
 		<td>!!val_motif!!</td>
+		<td>!!transfert_ask_user!!</td>
+		<td>!!transfert_send_user!!</td>
 	</tr>
 	";
 
@@ -73,8 +84,12 @@ $transferts_edition_ligne_destination = "<td>!!val_dest!!</td>";
 $transferts_edition_ligne_source = "<td>!!val_source!!</td>";
 
 $transferts_edition_filtre_source = $msg["transferts_edition_filtre_origine"]."&nbsp;<select name='site_origine'>!!liste_sites_origine!!</select>&nbsp;";
+$transferts_edition_filtre_source_retours = $msg["transferts_edition_filtre_destination"]."&nbsp;<select name='site_origine'>!!liste_sites_origine!!</select>&nbsp;";
 
 $transferts_edition_filtre_destination = $msg["transferts_edition_filtre_destination"]."&nbsp;<select name='site_destination'>!!liste_sites_destination!!</select>&nbsp;";
+$transferts_edition_filtre_destination_retours = $msg["transferts_edition_filtre_origine"]."&nbsp;<select name='site_destination'>!!liste_sites_destination!!</select>&nbsp;";
+
+$transferts_edition_order = $msg["transferts_edition_order"]."&nbsp;<select name='select_order'>!!liste_order!!</select>&nbsp;";
 
 //*******************************************************************
 // Définition des templates pour le popup de demande de transfert
@@ -84,16 +99,17 @@ $transferts_popup_global = "
 		<script type='text/javascript' src='./javascript/sorttable.js'></script>
 		<form class='form-catalog' name='transferts' method='post' action='".$base_path."/catalog/transferts/transferts_popup.php?action=enregistre'>
 		<h3>".$msg["transferts_popup_lib_titre"]."</h3>
+		!!expl_fantome_checkbox!!				
 		<div class='form-contenu'>
-			".$msg["transferts_popup_lib_exemplaire"]."
+			".$msg["transferts_popup_lib_exemplaire"]."	
 			<table border='0' class='sortable'>		
 			<tr>
-				<th align='left'>".$msg[293]."</th>
-				<th align='left'>".$msg[296]."</th>
-				<th align='left'>".$msg[298]."</th>
-				<th align='left'>".$msg[295]."</th>
-				<th align='left'>".$msg[294]."</th>
-				<th align='left'>".$msg[651]."</th>
+				<th class='align_left'>".$msg[293]."</th>
+				<th class='align_left'>".$msg[296]."</th>
+				<th class='align_left'>".$msg[298]."</th>
+				<th class='align_left'>".$msg[295]."</th>
+				<th class='align_left'>".$msg[294]."</th>
+				<th class='align_left'>".$msg[651]."</th>
 			</tr>
 			!!liste_exemplaires!!
 			</table>
@@ -107,18 +123,88 @@ $transferts_popup_global = "
 				<textarea name='motif' cols=40 rows=5></textarea>
 			</div>
 			<div class='row'>&nbsp;</div>		
+			<div class='row'>
+				<label class='etiquette' for='transferts_popup_ask_date'>".htmlentities($msg['transferts_popup_ask_date'],ENT_QUOTES,$charset)."</label>
+				<input type='text' id='transferts_popup_ask_date' name='transferts_popup_ask_date' value='now'  style='width: 8em;' data-dojo-type='dijit/form/DateTextBox' required='true' />
+			</div>
 			<div class='row'>		
 				<label class='etiquette'>".$msg["transferts_popup_date_retour"]."</label>
-				<input type='button' class='bouton' name='bt_date_retour' value='!!date_retour!!' onClick=\"var reg=new RegExp('(-)', 'g'); openPopUp('".$base_path."/select.php?what=calendrier&caller=transferts&date_caller='+transferts.date_retour.value.replace(reg,'')+'&param1=date_retour&param2=bt_date_retour&auto_submit=NO&date_anterieure=YES', 'date_adhesion', 250, 320, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\">
-				<input type='hidden' name='date_retour' value='!!date_retour_mysql!!'>
+				<input type='text' id='date_retour' name='date_retour' value='!!date_retour_mysql!!'  style='width: 8em;' data-dojo-type='dijit/form/DateTextBox' required='true' />
 			</div>
+			!!table_exemplaire_fantome!!
+			<!--!!hook_tansfert_popup_result!!-->
 		</div>
 		<input type='submit' class='bouton_small' name='".$msg["transferts_popup_btValider"]."' value='".$msg["transferts_popup_btValider"]."'>
 		&nbsp;
 		<input type='button' class='bouton_small' name='".$msg["transferts_popup_btAnnuler"]."' value='".$msg["transferts_popup_btAnnuler"]."' onclick='window.close();'>
 		<input type='hidden' name='expl_ids' value='!!expl_ids!!'>
 		</form>
+		
 		";
+		
+$transferts_popup_expl_fantome_radio = "
+		<input type='radio' autocomplete='off' checked='checked' id='transfert_expl' name='transfert_type' value='0'/>
+		<label>$msg[transfert_expls]</label><br/>
+		
+		<input type='radio' autocomplete='off' id='transfert_ghost' name='transfert_type' value='1'/>
+		<label>$msg[transfert_ghost_expl]</label>
+		
+		<script type='text/javascript'>
+			var transfertTypeRadio = document.getElementsByName('transfert_type');
+			window.onload = function(){spanGroups = document.querySelectorAll('span[is_group=\"true\"]');}
+			var switchCheckboxes = function(display){
+				for(var i=0 ; i<spanGroups.length ; i++){
+					if(display){
+						spanGroups[i].style.display = '';
+						document.getElementById(spanGroups[i].id+'_checkbox').disabled = false;
+					}else{
+						spanGroups[i].style.display = 'none';
+						document.getElementById(spanGroups[i].id+'_checkbox').disabled = true;
+					}
+				}
+			}
+			var switchTransfertType = function(evt){
+				var clickedRadio = evt.target.getAttribute('id');
+				switch(clickedRadio){
+					case 'transfert_expl':
+						var tableVirtual = document.getElementById('ghost_table');
+						if(tableVirtual.style.display != 'none'){
+							tableVirtual.style.display = 'none';
+						}
+						switchCheckboxes(true);
+						break;
+					case 'transfert_ghost':
+						var tableVirtual = document.getElementById('ghost_table');
+						if(tableVirtual.style.display == 'none'){
+							tableVirtual.style.display = '';
+						}
+						if(document.body.offsetWidth < tableVirtual.offsetWidth){
+							window.resizeTo(tableVirtual.offsetWidth+50, document.body.offsetHeight);	
+						}
+						switchCheckboxes();
+						break;
+				}
+			}
+			for(var i=0 ; i<transfertTypeRadio.length ; i++){
+				transfertTypeRadio[i].addEventListener('click', switchTransfertType, false);
+			}
+		</script>
+		
+		";
+
+$transferts_popup_table_expl_fantomes = "
+		<div class='row' id='virtual_ex_div' >
+			<table style='display:none' border='0' id='ghost_table' class='sortable'>		
+				<tr>
+					<th class='align_left'>".$msg["transfert_ghost_expl_from"]."</th>
+					<th class='align_left'>".$msg[293]."</th>
+					<th class='align_left'>".$msg[296]."</th>
+					<th class='align_left'>".$msg["extexpl_statut"]."</th>
+					<th class='align_left'>".$msg["groupexpl_form_comment"]."</th> 
+				</tr>
+				!!liste_exemplaires_fantomes!!
+			</table>		
+		</div>";
 
 $transferts_popup_ligne_tableau = "
 		<tr class='!!class_ligne!!'>
@@ -128,6 +214,36 @@ $transferts_popup_ligne_tableau = "
 			<td>!!section_libelle!!</td>
 			<td>!!tdoc_libelle!!</td>
 			<td>!!lender_libelle!!</td>
+		</tr>
+		";
+		
+$transfert_popup_ligne_groupe_tableau = "
+		<th class='align_left'>!!group_libelle!!</th>
+		<th class='align_left' colspan='5'>!!group_expl_checkbox!!</th>
+		";
+		
+$transfert_popup_groups_checkbox = "
+		<span is_group='true' id='transfert_all_group_!!group_id!!'>
+			<input type='checkbox' autocomplete='off' value='!!group_id!!' name='transfert_all_group[]' id='transfert_all_group_!!group_id!!_checkbox'/>
+			!!group_expl_libelle!!
+		</span>
+		";
+
+
+$transferts_popup_ligne_tableau_ex_fantome = "
+		<tr class='!!class_ligne!!' id='ghost_line'>
+		 	<td>!!cb_ghost_from!!</td>
+			<td><input type='text' name='expl_virtual_cb' value='!!new_expl_cb!!' readonly/></td>
+			<td><input type='text' name='expl_virtual_cote' value='!!expl_cote!!'/></td>
+			<td>!!expl_status!!</td>
+			<td><textarea rows='2' name='expl_virtual_comment'></textarea></td>
+			<input type='hidden' name='from_codestat' value='!!expl_codestat!!'/>
+			<input type='hidden' name='from_location' value='!!expl_location!!'/>
+			<input type='hidden' name='from_owner' value='!!expl_owner!!'/>
+			<input type='hidden' name='from_section' value='!!expl_section!!'/>
+			<input type='hidden' name='from_typdoc' value='!!expl_typdoc!!'/>
+			<input type='hidden' name='from_!!parent_type!!' value='!!parent_num!!'/>
+			<input type='hidden' name='from_expl_parent_id' value='!!expl_parent_id!!'/>
 		</tr>
 		";
 
@@ -226,17 +342,19 @@ $transferts_validation_form_global = "
 $transferts_validation_tableau_definition = "
 		<table>
 		<tr>
-			<th align='left'>".$msg["233"]."</th>
-			<th align='left'>".$msg["232"]."</th>
-			<th align='left'>".$msg["296"]."</th>
-			<th align='left'>".$msg["297"]."</th>
-			<th align='left'>".$msg["transferts_circ_empr"]."</th>
-			<th align='left'>".$msg["transferts_circ_destination"]."</th>
-			<th align='left'>".$msg["651"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_creation"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_retour"]."</th>
-			<th align='left'>".$msg["transferts_circ_motif"]."</th>
-			<th><div align='center'><input type='button' class='bouton' name='+' onclick='SelAll(document.form_circ_trans_validation);' value='+'></div></th>
+			<th class='align_left'>".$msg["233"]."</th>
+			<th class='align_left'>".$msg["232"]."</th>
+			<th class='align_left'>".$msg["296"]."</th>
+			<th class='align_left'>".$msg["297"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_empr"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_destination"]."</th>
+			<th class='align_left'>".$msg["651"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_creation"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_retour"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_motif"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_ask_user"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_send_user"]."</th>
+			<th><div class='center'><input type='button' class='bouton' name='+' onclick='SelAll(document.form_circ_trans_validation);' value='+'></div></th>
 		</tr>
 		!!liste_lignes!!
 		</table>
@@ -254,18 +372,20 @@ $transferts_validation_tableau_ligne = "
 			<td>!!val_date_creation!!</td>
 			<td>!!val_date_retour!!</td>
 			<td>!!val_motif!!</td>
-			<td><div align='center'><input type='checkbox' name='sel_!!val_id!!' value='1'></div></td>
+			<td>!!transfert_ask_user!!</td>
+			<td>!!transfert_send_user!!</td>
+			<td><div class='center'><input type='checkbox' name='sel_!!val_id!!' value='1'></div></td>
 		</tr>
 		";
 
 $transferts_validation_acceptation_erreur = "
-		<div align='center' class='erreur'>
-			<img src='./images/warning.gif'><b>&nbsp;".$msg["transferts_circ_validation_erreur_acceptation"]."</b>
+		<div class='center erreur'>
+			<img src='".get_url_icon('warning.gif')."'><b>&nbsp;".$msg["transferts_circ_validation_erreur_acceptation"]."</b>
 		</div>
 		";
 
 $transferts_validation_acceptation_OK = "
-		<div align='center'>
+		<div class='center'>
 			<b>".$msg["transferts_circ_validation_accepte"]."</b>
 		</div>
 		";
@@ -285,14 +405,16 @@ $transferts_validation_liste_valide = "
 		<div class='form-contenu'>
 		<table class='sortable'>
 		<tr>
-			<th align='left'>".$msg["233"]."</th>
-			<th align='left'>".$msg["232"]."</th>
-			<th align='left'>".$msg["transferts_circ_empr"]."</th>
-			<th align='left'>".$msg["transferts_circ_destination"]."</th>
-			<th align='left'>".$msg["651"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_creation"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_retour"]."</th>
-			<th align='left'>".$msg["transferts_circ_motif"]."</th>
+			<th class='align_left'>".$msg["233"]."</th>
+			<th class='align_left'>".$msg["232"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_empr"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_destination"]."</th>
+			<th class='align_left'>".$msg["651"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_creation"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_retour"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_motif"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_ask_user"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_send_user"]."</th>
 		</tr>
 		!!liste_transferts!!		
 		</table>
@@ -311,14 +433,16 @@ $transferts_validation_liste_refus = "
 		<div class='form-contenu'>
 		<table class='sortable'>
 		<tr>
-			<th align='left'>".$msg["233"]."</th>
-			<th align='left'>".$msg["232"]."</th>
-			<th align='left'>".$msg["transferts_circ_empr"]."</th>
-			<th align='left'>".$msg["transferts_circ_destination"]."</th>
-			<th align='left'>".$msg["651"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_creation"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_retour"]."</th>
-			<th align='left'>".$msg["transferts_circ_motif"]."</th>
+			<th class='align_left'>".$msg["233"]."</th>
+			<th class='align_left'>".$msg["232"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_empr"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_destination"]."</th>
+			<th class='align_left'>".$msg["651"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_creation"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_retour"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_motif"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_ask_user"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_send_user"]."</th>
 		</tr>
 		!!liste_transferts!!		
 		</table>
@@ -343,6 +467,8 @@ $transferts_validation_liste_valide_ligne = "
 			<td>!!val_date_creation!!</td>
 			<td>!!val_date_retour!!</td>
 			<td>!!val_motif!!</td>
+			<td>!!transfert_ask_user!!</td>
+			<td>!!transfert_send_user!!</td>
 		</tr>
 		";
 
@@ -381,17 +507,19 @@ $transferts_envoi_tableau_definition = "
 		<script type='text/javascript' src='./javascript/sorttable.js'></script>
 		<table class='sortable'>
 		<tr>
-			<th align='left'>".$msg["233"]."</th>
-			<th align='left'>".$msg["232"]."</th>
-			<th align='left'>".$msg["transferts_circ_empr"]."</th>
-			<th align='left'>".$msg["transferts_circ_destination"]."</th>
-			<th align='left'>".$msg["651"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_creation"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_validation"]."</th>
-			<th align='left'>".$msg["transferts_circ_motif"]."</th>";
+			<th class='align_left'>".$msg["233"]."</th>
+			<th class='align_left'>".$msg["232"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_empr"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_destination"]."</th>
+			<th class='align_left'>".$msg["651"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_creation"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_validation"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_motif"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_ask_user"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_send_user"]."</th>";
 if ($transferts_envoi_lot=="1")
 	$transferts_envoi_tableau_definition .= "
-			<th><div align='center'><input type='button' class='bouton' name='+' onclick='SelAll(document.form_circ_trans_envoi);' value='+'></div></th>";
+			<th><div class='center'><input type='button' class='bouton' name='+' onclick='SelAll(document.form_circ_trans_envoi);' value='+'></div></th>";
 
 $transferts_envoi_tableau_definition .= "
 		</tr>
@@ -408,23 +536,25 @@ $transferts_envoi_tableau_ligne = "
 			<td>!!lender_libelle!!</td>
 			<td>!!val_date_creation!!</td>
 			<td>!!val_date_accepte!!</td>
-			<td>!!val_motif!!</td>";
+			<td>!!val_motif!!</td>
+			<td>!!transfert_ask_user!!</td>
+			<td>!!transfert_send_user!!</td>";
 
 if ($transferts_envoi_lot=="1")
 	$transferts_envoi_tableau_ligne .= "
-			<td><div align='center'><input type='checkbox' name='sel_!!val_id!!' value='1'></div></td>";
+			<td><div class='center'><input type='checkbox' name='sel_!!val_id!!' value='1'></div></td>";
 
 $transferts_envoi_tableau_ligne .= "
 		</tr>";
 
 $transferts_envoi_erreur = "
-		<div align='center' class='erreur'>
-			<img src='./images/warning.gif'><b>&nbsp;".$msg["transferts_circ_envoi_erreur"]."</b>
+		<div class='center erreur'>
+			<img src='".get_url_icon('warning.gif')."'><b>&nbsp;".$msg["transferts_circ_envoi_erreur"]."</b>
 		</div>
 		";
 
 $transferts_envoi_OK = "
-		<div align='center'>
+		<div class='center'>
 			<b>".$msg["transferts_circ_envoi_accepte"]."</b>
 		</div>
 		";
@@ -449,14 +579,16 @@ $transferts_envoi_liste_valide_envoi = "
 		<div class='form-contenu'>
 		<table class='sortable'>
 		<tr>
-			<th align='left'>".$msg["233"]."</th>
-			<th align='left'>".$msg["232"]."</th>
-			<th align='left'>".$msg["transferts_circ_empr"]."</th>
-			<th align='left'>".$msg["transferts_circ_destination"]."</th>
-			<th align='left'>".$msg["651"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_creation"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_validation"]."</th>
-			<th align='left'>".$msg["transferts_circ_motif"]."</th>
+			<th class='align_left'>".$msg["233"]."</th>
+			<th class='align_left'>".$msg["232"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_empr"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_destination"]."</th>
+			<th class='align_left'>".$msg["651"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_creation"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_validation"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_motif"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_ask_user"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_send_user"]."</th>
 		</tr>
 		!!liste_transferts!!		
 		</table>
@@ -478,6 +610,8 @@ $transferts_envoi_liste_valide_envoi_ligne = "
 			<td>!!val_date_creation!!</td>
 			<td>!!val_date_accepte!!</td>
 			<td>!!val_motif!!</td>
+			<td>!!transfert_ask_user!!</td>
+			<td>!!transfert_send_user!!</td>
 		</tr>
 		";
 
@@ -516,17 +650,19 @@ $transferts_reception_tableau_definition = "
 		<script type='text/javascript' src='./javascript/sorttable.js'></script>
 		<table class='sortable'>
 		<tr>
-			<th align='left'>".$msg["233"]."</th>
-			<th align='left'>".$msg["232"]."</th>
-			<th align='left'>".$msg["transferts_circ_empr"]."</th>
-			<th align='left'>".$msg["transferts_circ_source"]."</th>
-			<th align='left'>".$msg["651"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_creation"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_envoi"]."</th>
-			<th align='left'>".$msg["transferts_circ_motif"]."</th>";
+			<th class='align_left'>".$msg["233"]."</th>
+			<th class='align_left'>".$msg["232"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_empr"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_source"]."</th>
+			<th class='align_left'>".$msg["651"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_creation"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_envoi"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_motif"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_ask_user"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_send_user"]."</th>";
 if ($transferts_reception_lot=="1")
 	$transferts_reception_tableau_definition .= "
-			<th><div align='center'><input type='button' class='bouton' name='+' onclick='SelAll(document.form_circ_trans_reception);' value='+'></div></th>";
+			<th><div class='center'><input type='button' class='bouton' name='+' onclick='SelAll(document.form_circ_trans_reception);' value='+'></div></th>";
 
 $transferts_reception_tableau_definition .= "
 		</tr>
@@ -543,29 +679,31 @@ $transferts_reception_tableau_ligne = "
 			<td>!!lender_libelle!!</td>
 			<td>!!val_date_creation!!</td>
 			<td>!!val_date_envoi!!</td>
-			<td>!!val_motif!!</td>";
+			<td>!!val_motif!!</td>
+			<td>!!transfert_ask_user!!</td>
+			<td>!!transfert_send_user!!</td>";
 
 if ($transferts_reception_lot=="1")
 	$transferts_reception_tableau_ligne .= "
-			<td><div align='center'><input type='checkbox' name='sel_!!val_id!!' value='1'></div></td>";
+			<td><div class='center'><input type='checkbox' name='sel_!!val_id!!' value='1'></div></td>";
 
 $transferts_reception_tableau_ligne .= "
 			</tr>";
 
 $transferts_reception_erreur = "
-		<div align='center' class='erreur'>
-			<img src='./images/warning.gif'><b>&nbsp;".$msg["transferts_circ_reception_erreur"]."</b>
+		<div class='center erreur'>
+			<img src='".get_url_icon('warning.gif')."'><b>&nbsp;".$msg["transferts_circ_reception_erreur"]."</b>
 		</div>
 		";
 
 $transferts_reception_OK = "
-		<div align='center' class='row'>
+		<div class='center row'>
 			<b>".$msg["transferts_circ_reception_accepte"]."</b>
 		</div>
 		";
 
 $transferts_reception_avertissement_retour = "
-		<img src='./images/warning.gif' border=0> ".$msg["transfert_reception_avertissement_retour"]."<select>!!liste_statut_origine!!</select>
+		<img src='".get_url_icon('warning.gif')."' border=0> ".$msg["transfert_reception_avertissement_retour"]."<select>!!liste_statut_origine!!</select>
 		<br />";
 
 $transferts_reception_boutons_action = "
@@ -581,15 +719,17 @@ $transferts_reception_liste_valide_reception = "
 		<div class='form-contenu'>
 		<table class='sortable'>
 		<tr>
-			<th align='left'>".$msg["233"]."</th>
-			<th align='left'>".$msg["232"]."</th>
-			<th align='left'>".$msg["transferts_circ_empr"]."</th>
-			<th align='left'>".$msg["transferts_circ_source"]."</th>
-			<th align='left'>".$msg["651"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_creation"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_envoi"]."</th>
-			<th align='left'>".$msg["transferts_circ_motif"]."</th>
-			<th align='left' class='sorttable_nosort'>".$msg["transferts_circ_reception_section"].
+			<th class='align_left'>".$msg["233"]."</th>
+			<th class='align_left'>".$msg["232"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_empr"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_source"]."</th>
+			<th class='align_left'>".$msg["651"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_creation"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_envoi"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_motif"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_ask_user"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_send_user"]."</th>
+			<th class='align_left' class='sorttable_nosort'>".$msg["transferts_circ_reception_section"].
 				"<br /><select name='val_section_globale' onchange='sel_sections(this)'><option value=0>".$msg["grp_liste"]."</option>!!liste_sections!!</select></th>
 			</tr>
 		!!liste_transferts!!		
@@ -643,6 +783,8 @@ $transferts_reception_liste_valide_reception_ligne = "
 			<td>!!val_date_creation!!</td>
 			<td>!!val_date_accepte!!</td>
 			<td>!!val_motif!!</td>
+			<td>!!transfert_ask_user!!</td>
+			<td>!!transfert_send_user!!</td>
 			<td><select name='section_!!val_id!!'>!!val_section!!</select></td>
 		</tr>
 		";
@@ -709,20 +851,32 @@ $transferts_retour_filtre_etat = "
 		</select>
 		";
 
+$transferts_retour_filtre_dispo = "
+		&nbsp;".$msg["transferts_circ_retour_filtre_dispo_title"]."&nbsp;
+		<select name='f_etat_dispo'>
+			<option value=1 !!sel_1!!>" . $msg["transferts_circ_retour_filtre_dispo"] . "</option>		
+			<option value=2 !!sel_2!!>" . $msg["transferts_circ_retour_filtre_circ"] . "</option>		
+			<option value=0 !!sel_0!!>" . $msg["transferts_circ_retour_filtre_etat_tous"] . "</option>
+		</select>
+		";
+
 $transferts_retour_tableau_definition = "
-		<table class='expl-list'>
+		<script type='text/javascript' src='./javascript/sorttable.js'></script>
+		<table class='expl-list sortable'>
 		<tr>
-			<th align='left'>".$msg["233"]."</th>
-			<th align='left'>".$msg["232"]."</th>
-			<th align='left'>".$msg["transferts_circ_empr"]."</th>
-			<th align='left'>".$msg["transferts_circ_destination"]."</th>
-			<th align='left'>".$msg["651"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_reception"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_retour"]."</th>
-			<th align='left'>".$msg["transferts_circ_motif"]."</th>";
+			<th class='align_left'>".$msg["233"]."</th>
+			<th class='align_left'>".$msg["232"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_empr"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_destination"]."</th>
+			<th class='align_left'>".$msg["651"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_reception"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_retour"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_motif"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_ask_user"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_send_user"]."</th>";
 if ($transferts_retour_lot=="1")
 	$transferts_retour_tableau_definition .= "
-			<th><div align='center'><input type='button' class='bouton' name='+' onclick='SelAll(document.form_circ_trans_retour);' value='+'></div></th>";
+			<th><div class='center'><input type='button' class='bouton' name='+' onclick='SelAll(document.form_circ_trans_retour);' value='+'></div></th>";
 	
 $transferts_retour_tableau_definition .= "
 		</tr>
@@ -739,32 +893,34 @@ $transferts_retour_tableau_ligne = "
 			<td>!!lender_libelle!!</td>
 			<td>!!val_date_reception!!</td>
 			<td>
-				<input type='button' class='bouton' name='bt_date_retour_!!val_id!!' value='!!val_date_retour!!' onClick=\"var reg=new RegExp('(-)', 'g'); openPopUp('".$base_path."/select.php?what=calendrier&caller=form_circ_trans_retour&date_caller='+form_circ_trans_retour.date_retour_!!val_id!!.value.replace(reg,'')+'&param1=date_retour_!!val_id!!&param2=bt_date_retour_!!val_id!!&auto_submit=NO&date_anterieure=YES&after=chgDate%28id_value,!!val_id!!%29', 'date_retour', 250, 320, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\">
+				<input type='button' class='bouton' name='bt_date_retour_!!val_id!!' value='!!val_date_retour!!' onClick=\"var reg=new RegExp('(-)', 'g'); openPopUp('".$base_path."/select.php?what=calendrier&caller=form_circ_trans_retour&date_caller='+form_circ_trans_retour.date_retour_!!val_id!!.value.replace(reg,'')+'&param1=date_retour_!!val_id!!&param2=bt_date_retour_!!val_id!!&auto_submit=NO&date_anterieure=YES&after=chgDate%28id_value,!!val_id!!%29', 'calendar')\">
 				<input type='hidden' name='date_retour_!!val_id!!' value='!!val_date_retour_mysql!!'>
 			</td>
-			<td>!!val_motif!!</td>";
+			<td>!!val_motif!!</td>
+			<td>!!transfert_ask_user!!</td>
+			<td>!!transfert_send_user!!</td>";
 if ($transferts_retour_lot=="1")
 	$transferts_retour_tableau_ligne .= "
-			<td><div align='center'><input type='checkbox' name='sel_!!val_id!!' value='1'></div></td>";
+			<td><div class='center'><input type='checkbox' name='sel_!!val_id!!' value='1'></div></td>";
 
 $transferts_retour_tableau_ligne .= "
 	</tr>
 		";
 
 $transferts_retour_acceptation_erreur = "
-		<div align='center' class='erreur'>
-			<img src='./images/warning.gif'><b>&nbsp;".$msg["transferts_circ_validation_erreur_acceptation"]."</b>
+		<div class='center erreur'>
+			<img src='".get_url_icon('warning.gif')."'><b>&nbsp;".$msg["transferts_circ_validation_erreur_acceptation"]."</b>
 		</div>
 		";
 
 $transferts_retour_acceptation_OK = "
-		<div align='center'>
+		<div class='center'>
 			<b>".$msg["transferts_circ_retour_accepte"]."</b>
 		</div>
 		";
 
 $transferts_reset_OK = "
-		<div align='center'>
+		<div class='center'>
 			<b>".$msg["transferts_circ_reset"]."</b>
 		</div>
 		";
@@ -782,14 +938,16 @@ $transferts_retour_liste_valide = "
 		<div class='form-contenu'>
 		<table class='sortable'>
 		<tr>
-			<th align='left'>".$msg["233"]."</th>
-			<th align='left'>".$msg["232"]."</th>
-			<th align='left'>".$msg["transferts_circ_empr"]."</th>
-			<th align='left'>".$msg["transferts_circ_destination"]."</th>
-			<th align='left'>".$msg["651"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_reception"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_retour"]."</th>
-			<th align='left'>".$msg["transferts_circ_motif"]."</th>
+			<th class='align_left'>".$msg["233"]."</th>
+			<th class='align_left'>".$msg["232"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_empr"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_destination"]."</th>
+			<th class='align_left'>".$msg["651"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_reception"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_retour"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_motif"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_ask_user"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_send_user"]."</th>
 		</tr>
 		!!liste_transferts!!		
 		</table>
@@ -811,6 +969,8 @@ $transferts_retour_liste_valide_ligne = "
 			<td>!!val_date_reception!!</td>
 			<td>!!val_date_retour!!</td>
 			<td>!!val_motif!!</td>
+			<td>!!transfert_ask_user!!</td>
+			<td>!!transfert_send_user!!</td>
 		</tr>
 		";
 
@@ -833,18 +993,21 @@ $transferts_refus_form_global = "
 		".$transferts_script_case_a_cocher;
 
 $transferts_refus_tableau_definition = "
-		<table class='expl-list'>
+		<script type='text/javascript' src='./javascript/sorttable.js'></script>
+		<table class='expl-list sortable'>
 		<tr>
-			<th align='left'>".$msg["233"]."</th>
-			<th align='left'>".$msg["232"]."</th>
-			<th align='left'>".$msg["transferts_circ_empr"]."</th>
-			<th align='left'>".$msg["transferts_circ_source"]."</th>
-			<th align='left'>".$msg["651"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_creation"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_refus"]."</th>
-			<th align='left'>".$msg["transferts_circ_motif_refus"]."</th>
+			<th class='align_left'>".$msg["233"]."</th>
+			<th class='align_left'>".$msg["232"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_empr"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_source"]."</th>
+			<th class='align_left'>".$msg["651"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_creation"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_refus"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_motif_refus"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_ask_user"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_send_user"]."</th>
 			<th></th>
-			<th><div align='center'><input type='button' class='bouton' name='+' onclick='SelAll(document.form_circ_trans_refus);' value='+'></div></th>
+			<th><div class='center'><input type='button' class='bouton' name='+' onclick='SelAll(document.form_circ_trans_refus);' value='+'></div></th>
 		</tr>
 		!!liste_lignes!!
 		</table>
@@ -860,8 +1023,10 @@ $transferts_refus_tableau_ligne = "
 			<td>!!val_date_creation!!</td>
 			<td>!!val_date_refus!!</td>
 			<td>!!val_refusMotif!!</td>
+			<td>!!transfert_ask_user!!</td>
+			<td>!!transfert_send_user!!</td>
 			<td><input type='button' class='bouton' value='".$msg["transferts_circ_btRelancer"]."' onclick='document.location=\"!!action_formulaire!!&action=aff_redem&transid=!!val_id!!\"'></td>
-			<td><div align='center'><input type='checkbox' name='sel_!!val_id!!' value='1'></div></td>
+			<td><div class='center'><input type='checkbox' name='sel_!!val_id!!' value='1'></div></td>
 		</tr>";
 
 $transferts_refus_boutons_action = "
@@ -877,14 +1042,15 @@ $transferts_refus_liste_valide = "
 		<div class='form-contenu'>
 		<table class='sortable'>
 		<tr>
-			<th align='left'>".$msg["233"]."</th>
-			<th align='left'>".$msg["232"]."</th>
-			<th align='left'>".$msg["transferts_circ_empr"]."</th>
-			<th align='left'>".$msg["transferts_circ_source"]."</th>
-			<th align='left'>".$msg["651"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_creation"]."</th>
-			<th align='left'>".$msg["transferts_circ_date_refus"]."</th>
-			<th align='left'>".$msg["transferts_circ_motif_refus"]."</th>
+			<th class='align_left'>".$msg["233"]."</th>
+			<th class='align_left'>".$msg["232"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_empr"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_source"]."</th>
+			<th class='align_left'>".$msg["651"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_creation"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_date_refus"]."</th>
+			<th class='align_left'>".$msg["transferts_circ_motif_refus"]."</th>
+			<th class='align_left'>".$msg["transferts_edition_ask_user"]."</th>
 		</tr>
 		!!liste_transferts!!		
 		</table>
@@ -906,6 +1072,8 @@ $transferts_refus_liste_valide_ligne = "
 			<td>!!val_date_creation!!</td>
 			<td>!!val_date_refus!!</td>
 			<td>!!val_refusMotif!!</td>
+			<td>!!transfert_ask_user!!</td>
+			<td>!!transfert_send_user!!</td>
 		</tr>
 		";
 
@@ -927,7 +1095,7 @@ $transferts_refus_redemande_global = "
 			<div class='row'>&nbsp;</div>		
 			<div class='row'>		
 				<label class='etiquette'>".$msg["transferts_circ_refus_relance_retour"]."</label>
-				<input type='button' class='bouton' name='bt_date_retour' value='!!date_retour!!' onClick=\"var reg=new RegExp('(-)', 'g'); openPopUp('".$base_path."/select.php?what=calendrier&caller=form_circ_trans_redemande&date_caller='+form_circ_trans_redemande.date_retour.value.replace(reg,'')+'&param1=date_retour&param2=bt_date_retour&auto_submit=NO&date_anterieure=YES', 'date_adhesion', 250, 320, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\">
+				<input type='button' class='bouton' name='bt_date_retour' value='!!date_retour!!' onClick=\"var reg=new RegExp('(-)', 'g'); openPopUp('".$base_path."/select.php?what=calendrier&caller=form_circ_trans_redemande&date_caller='+form_circ_trans_redemande.date_retour.value.replace(reg,'')+'&param1=date_retour&param2=bt_date_retour&auto_submit=NO&date_anterieure=YES', 'calendar')\">
 				<input type='hidden' name='date_retour' value='!!date_retour_mysql!!'>
 			</div>
 		</div>
@@ -1037,15 +1205,15 @@ $transferts_admin_modif_ordre_loc_ligne = "
 			</tr>
 		";
 		
-$transferts_admin_modif_ordre_loc_ligne_flBas = "<a href='javascript:chgOrdre(!!idSite!!,1);' style='cursor:hand'><img src=\"".$base_path."/images/arrow_down.png\"  alt=\"".$msg["admin_transferts_lib_descend"]."\"></a>";
+$transferts_admin_modif_ordre_loc_ligne_flBas = "<a href='javascript:chgOrdre(!!idSite!!,1);' style='cursor:hand'><img src=\"".get_url_icon('arrow_down.png')."\"  alt=\"".$msg["admin_transferts_lib_descend"]."\"></a>";
 
-$transferts_admin_modif_ordre_loc_ligne_flHaut = "<a href='javascript:chgOrdre(!!idSite!!,-1);' style='cursor:hand'><img src='".$base_path."/images/arrow_up.png' alt=\"".$msg["admin_transferts_lib_monte"]."\"'></a>";
+$transferts_admin_modif_ordre_loc_ligne_flHaut = "<a href='javascript:chgOrdre(!!idSite!!,-1);' style='cursor:hand'><img src='".get_url_icon('arrow_up.png')."' alt=\"".$msg["admin_transferts_lib_monte"]."\"'></a>";
 
 $transferts_admin_statuts_loc_liste = "
 		<table>
 		<tr>
-			<th align='left'>".$msg["admin_transferts_statutsDef_site"]."</th>
-			<th align='left'>".$msg["admin_transferts_statutsDef_statuts"]."</th>
+			<th class='align_left'>".$msg["admin_transferts_statutsDef_site"]."</th>
+			<th class='align_left'>".$msg["admin_transferts_statutsDef_statuts"]."</th>
 		</tr>
 		!!liste_sites!!
 		</table>
@@ -1104,7 +1272,7 @@ $transferts_admin_purge_defaut = "
 			<div class='row'>&nbsp;</div>
 			<div class='row'>		
 				<label class='etiquette'>".$msg["admin_transferts_date_purge"]."</label>
-				<input type='button' class='bouton' name='bt_date_purge' value='!!date_purge!!' onClick=\"var reg=new RegExp('(-)', 'g'); openPopUp('".$base_path."/select.php?what=calendrier&caller=transferts&date_caller='+transferts.date_purge.value.replace(reg,'')+'&param1=date_purge&param2=bt_date_purge&auto_submit=NO&date_anterieure=YES', 'date_purge', 250, 320, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\">
+				<input type='button' class='bouton' name='bt_date_purge' value='!!date_purge!!' onClick=\"var reg=new RegExp('(-)', 'g'); openPopUp('".$base_path."/select.php?what=calendrier&caller=transferts&date_caller='+transferts.date_purge.value.replace(reg,'')+'&param1=date_purge&param2=bt_date_purge&auto_submit=NO&date_anterieure=YES', 'calendar')\">
 				<input type='hidden' name='date_purge' value='!!date_purge_mysql!!'>
 			</div>
 			<div class='row'>&nbsp;</div>

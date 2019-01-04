@@ -11,7 +11,7 @@
 * xsd:anyType and user-defined types.
 *
 * @author   Dietrich Ayala <dietrich@ganx4.com>
-* @version  $Id: class.soap_val.php,v 1.1 2007-10-14 15:00:53 gueluneau Exp $
+* @version  $Id: class.soap_val.php,v 1.2 2017-04-19 12:37:02 dgoron Exp $
 * @access   public
 */
 class soapval extends nusoap_base {
@@ -21,42 +21,42 @@ class soapval extends nusoap_base {
 	 * @var string
 	 * @access private
 	 */
-	var $name;
+	public $name;
 	/**
 	 * The XML type name (string or false)
 	 *
 	 * @var mixed
 	 * @access private
 	 */
-	var $type;
+	public $type;
 	/**
 	 * The PHP value
 	 *
 	 * @var mixed
 	 * @access private
 	 */
-	var $value;
+	public $value;
 	/**
 	 * The XML element namespace (string or false)
 	 *
 	 * @var mixed
 	 * @access private
 	 */
-	var $element_ns;
+	public $element_ns;
 	/**
 	 * The XML type namespace (string or false)
 	 *
 	 * @var mixed
 	 * @access private
 	 */
-	var $type_ns;
+	public $type_ns;
 	/**
 	 * The XML element attributes (array or false)
 	 *
 	 * @var mixed
 	 * @access private
 	 */
-	var $attributes;
+	public $attributes;
 
 	/**
 	* constructor

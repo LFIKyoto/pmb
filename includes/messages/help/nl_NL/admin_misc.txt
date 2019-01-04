@@ -1,4 +1,4 @@
-<h1>Outils</h1>
+<h2>Outils</h2>
 <p>Vous trouverez ici diff&eacute;rentes options. </p>
 <p>
 <b>Nettoyage de la base</b> permet de faire du m&eacute;nage dans les bases de donn&eacute;es : supprimer les notices sans exemplaires, etc.

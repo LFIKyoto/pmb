@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2005 Guillaume Boitel g.boitel@wanadoo.fr
 // +-------------------------------------------------+
-// $Id: create_proc.class.php,v 1.8 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: create_proc.class.php,v 1.12 2017-11-21 12:00:59 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,28 +13,28 @@ require_once($class_path."/parametres_perso.class.php");
 require_once($include_path."/templates/create_proc.tpl.php");
 
 class create_proc {
-	var $nom_proc;		// nom de la procédure
-	var $comment;		// commentaire de la procédure
-	var $userautorisation;	// utilisateur pouvant utiliser cette procédure
-	var $print_field;	// champs à afficher
-	var $fixed_params;	// paramètres fixes
-	var $op_param;		// opérature lié au paramètre fixe
-	var $val_param;		// valeur lié au paramèter fixe
-	var $dynamic_params;	// paramètres variables
-	var $op_var;		// opérature lié au paramètre fixe
-	var $val_var;		// valeur lié au paramèter fixe
-	var $list_fields;	// champs interrogeable
-	var $operateur;		// listes des opérateurs
-	var $op_type;		// liens entre types de données et opérateurs
-	var $pp;		// champs perso
-	var $etape;		// etape de la création
-	var $r;			// champs !!field_list!!
-	var $sf;		// champs !!already_selected_fields!!
-	var $url;		// url courrante
-	var $url_next;		// url pour l'étape suivante
+	public $nom_proc;		// nom de la procédure
+	public $comment;		// commentaire de la procédure
+	public $userautorisation;	// utilisateur pouvant utiliser cette procédure
+	public $print_field;	// champs à afficher
+	public $fixed_params;	// paramètres fixes
+	public $op_param;		// opérature lié au paramètre fixe
+	public $val_param;		// valeur lié au paramèter fixe
+	public $dynamic_params;	// paramètres variables
+	public $op_var;		// opérature lié au paramètre fixe
+	public $val_var;		// valeur lié au paramèter fixe
+	public $list_fields;	// champs interrogeable
+	public $operateur;		// listes des opérateurs
+	public $op_type;		// liens entre types de données et opérateurs
+	public $pp;		// champs perso
+	public $etape;		// etape de la création
+	public $r;			// champs !!field_list!!
+	public $sf;		// champs !!already_selected_fields!!
+	public $url;		// url courrante
+	public $url_next;		// url pour l'étape suivante
 	
 	// constructeur
-	function create_proc($nom_proc,$comment,$userautorisation,$print_field, $fixed_params, $op_param, $val_param, $dynamic_params, $op_var, $val_var) {
+	public function __construct($nom_proc,$comment,$userautorisation,$print_field, $fixed_params, $op_param, $val_param, $dynamic_params, $op_var, $val_var) {
 		$this->nom_proc = $nom_proc;
 		$this->comment = $comment;
 		$this->userautorisation = $userautorisation;
@@ -54,7 +54,7 @@ class create_proc {
 	}
 	
 	// parser du fichier de configuration
-	function parse_config(){
+	public function parse_config(){
 		global $include_path;
 		global $lang;
 		
@@ -84,7 +84,7 @@ class create_proc {
 	}
 	
 	// modification de la priorité d'affichage
-	function mod_prio($up){
+	public function mod_prio($up){
 		$tmp = $this->print_field[$up-1];
 		$this->print_field[$up-1]=$this->print_field[$up];
 		$this->print_field[$up]=$tmp;
@@ -92,7 +92,7 @@ class create_proc {
 	}
 	
 	// formulaire du choix des paramètres fixes
-	function choix_param() {
+	public function choix_param() {
 		global $charset;
 		global $msg;
 		
@@ -177,7 +177,7 @@ class create_proc {
 				$this->sf.="</td>";
 				
 				// Boutton de supression
-				$this->sf.="<td width='20'><input type='button' class='bouton' value='".$msg["raz"]."' onClick=\"this.form.delete_param.value='".$n."'; this.form.action='$url'; this.form.target=''; this.form.submit();\"></td>";
+				$this->sf.="<td style='width:20px'><input type='button' class='bouton' value='".$msg["raz"]."' onClick=\"this.form.delete_param.value='".$n."'; this.form.action='$url'; this.form.target=''; this.form.submit();\"></td>";
 				
 				$this->sf.="</tr>\n";
 				$n++;
@@ -207,7 +207,7 @@ class create_proc {
 	}
 	
 	// formulaire du choix des paramètres variables
-	function choix_var(){
+	public function choix_var(){
 		global $charset;
 		global $msg;
 		
@@ -292,7 +292,7 @@ class create_proc {
 				$this->sf.="</td>";
 				
 				// Boutton de supression
-				$this->sf.="<td width='20'><input type='button' class='bouton' value='".$msg["raz"]."' onClick=\"this.form.delete_var.value='".$n."'; this.form.action='$url'; this.form.target=''; this.form.submit();\"></td>";
+				$this->sf.="<td style='width:20px'><input type='button' class='bouton' value='".$msg["raz"]."' onClick=\"this.form.delete_var.value='".$n."'; this.form.action='$url'; this.form.target=''; this.form.submit();\"></td>";
 				
 				$this->sf.="</tr>\n";
 				$n++;
@@ -322,7 +322,7 @@ class create_proc {
 	}
 	
 	// formulaire du choix des champs à afficher
-	function choix_champ() {
+	public function choix_champ() {
 		global $charset;
 		global $msg;
 		
@@ -394,13 +394,13 @@ class create_proc {
 				$this->sf.="</td>";
 				
 				// Boutton de supression
-				$this->sf.="<td width='20'><input type='button' class='bouton' value='".$msg["raz"]."' onClick=\"this.form.delete_field.value='".$n."'; this.form.action='$url'; this.form.target=''; this.form.submit();\"></td>";
+				$this->sf.="<td style='width:20px'><input type='button' class='bouton' value='".$msg["raz"]."' onClick=\"this.form.delete_field.value='".$n."'; this.form.action='$url'; this.form.target=''; this.form.submit();\"></td>";
 				
 				// Bouttons de priorités
-				if( ($i==0) || (($i==1)&&($delete_field=="0")) ) $this->sf .="<td width='20'>&nbsp;</td>";
-				else $this->sf.="<td width='20'><input type='button' class='bouton' value='+' onClick=\"this.form.add_prio.value='".$n."'; this.form.action='$url'; this.form.target=''; this.form.submit();\"></td>";
-				if( ($i==count($this->print_field)-1) || (($i==count($this->print_field)-2)&&($delete_field==count($this->print_field)-1)) ) $this->sf .="<td width='20'>&nbsp;</td>";
-				else $this->sf.="<td width='20'><input type='button' class='bouton' value='-' onClick=\"this.form.min_prio.value='".$n."'; this.form.action='$url'; this.form.target=''; this.form.submit();\"></td>";
+				if( ($i==0) || (($i==1)&&($delete_field=="0")) ) $this->sf .="<td style='width:20px'>&nbsp;</td>";
+				else $this->sf.="<td style='width:20px'><input type='button' class='bouton' value='+' onClick=\"this.form.add_prio.value='".$n."'; this.form.action='$url'; this.form.target=''; this.form.submit();\"></td>";
+				if( ($i==count($this->print_field)-1) || (($i==count($this->print_field)-2)&&($delete_field==count($this->print_field)-1)) ) $this->sf .="<td style='width:20px'>&nbsp;</td>";
+				else $this->sf.="<td style='width:20px'><input type='button' class='bouton' value='-' onClick=\"this.form.min_prio.value='".$n."'; this.form.action='$url'; this.form.target=''; this.form.submit();\"></td>";
 				
 				$this->sf.="</tr>\n";
 				$n++;
@@ -438,10 +438,9 @@ class create_proc {
 	}
 	
 	// création de la requête SQL
-	function make_proc() {
+	public function make_proc() {
 		global $msg;
 		global $current_module;
-		global $base_path;
 		
 		// récupération des champs à afficher
 		if(count($this->print_field)==0) return "erreur"; // gestion de l'erreur a améliorer
@@ -637,17 +636,16 @@ class create_proc {
 		return $create_proc_form;
 	}
 	
-	function choix_info() {
+	public function choix_info() {
 		global $msg;
 		global $current_module;
-		global $base_path;
 		
 		// on n'utilse pas le template prévu pour cette étape
 		$create_proc_form="
 <form class='form-$current_module' name='search_form' action='!!url!!' method='post'>
 	<h3>".$msg["create_proc"]." (!!etape!!/5)</h3>
 	<div class='form-contenu'>
-		<div class='erreur' align='justify'><img src='".$base_path."/images/alert.gif'>".$msg["warn_create_proc"]."</div>
+		<div class='erreur align_justify'><img src='".get_url_icon('alert.gif')."'>".$msg["warn_create_proc"]."</div>
 		<br />
 		<div class='row'>
 			<label class='etiquette' for='form_name'>$msg[705]</label>
@@ -663,8 +661,8 @@ class create_proc {
 		</div>
 		<div class='row'>
 			<label class='etiquette' for='form_comment'>$msg[procs_autorisations]</label>
-			<input type='button' class='bouton_small' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);' align='middle'>
-			<input type='button' class='bouton_small' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);' align='middle'>
+			<input type='button' class='bouton_small align_middle' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);'>
+			<input type='button' class='bouton_small align_middle' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);'>
 		</div>
 		<div class='row'>
 			!!autorisations_users!!
@@ -697,7 +695,7 @@ class create_proc {
 	}
 	
 	// Gestion de l'affichage
-	function show_form($url,$url_next, $etape=1) {
+	public function show_form($url,$url_next, $etape=1) {
 		// $url : url courrante
 		// $url_next : url pour l'étape suivante
 		global $create_proc_form;

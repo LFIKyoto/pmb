@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_section.class.php,v 1.25.2.2 2015-11-24 10:50:04 jpermanne Exp $
+// $Id: cms_section.class.php,v 1.46 2018-08-03 09:07:41 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,8 +10,8 @@ require_once($class_path."/cms/cms_editorial.class.php");
 
 class cms_section extends cms_editorial {
 	public $num_parent;		// id du parent
-	public $articles = array('full' => null,'filter' => null );
-	public $children = array('full' => null,'filter' => null );
+	public $articles;
+	public $children;
 	function __construct($id=0,$num_parent=0){
 		//on gère les propriétés communes dans la classe parente
 		parent::__construct($id,"section");
@@ -46,10 +46,6 @@ class cms_section extends cms_editorial {
 		if(strpos($this->end_date,"0000-00-00")!== false){
 			$this->end_date = "";
 		}
-		
-		$this->get_descriptors();
-		$this->get_fields_type();
-		$this->get_documents();
 	}
 	
 	public function save(){
@@ -62,7 +58,7 @@ class cms_section extends cms_editorial {
 			$save = "insert into ";
 			
 			//on place la nouvelle rubrique à la fin par défaut
-			$query = "SELECT id_section FROM cms_sections WHERE section_num_parent=".addslashes($this->num_parent);
+			$query = "SELECT id_section FROM cms_sections WHERE section_num_parent='".$this->num_parent."'";
 			$result = pmb_mysql_query($query,$dbh);
 			$order = ",section_order = '".(pmb_mysql_num_rows($result)+1)."' ";
 			
@@ -86,6 +82,7 @@ class cms_section extends cms_editorial {
 		//on commence par tout retirer...
 		$del = "delete from cms_sections_descriptors where num_section = '".$this->id."'";
 		pmb_mysql_query($del,$dbh);
+		$this->get_descriptors();
 		for($i=0 ; $i<count($this->descriptors) ; $i++){
 			$rqt = "insert into cms_sections_descriptors set num_section = '".$this->id."', num_noeud = '".$this->descriptors[$i]."',section_descriptor_order='".$i."'";
 			pmb_mysql_query($rqt,$dbh);
@@ -97,6 +94,9 @@ class cms_section extends cms_editorial {
 		//enfin les éléments du type de contenu
 		$types = new cms_editorial_types("section");
 		$types->save_type_form($this->num_type,$this->id);
+		
+		$this->save_concepts();
+		
 		$this->maj_indexation();
 		
 		$this->save_documents();
@@ -107,7 +107,7 @@ class cms_section extends cms_editorial {
 		if (!$num_parent) $num_parent = $this->num_parent;
 			
 		//on place la nouvelle rubrique à la fin par défaut
-		$query = "SELECT id_section FROM cms_sections WHERE section_num_parent=".addslashes($num_parent);
+		$query = "SELECT id_section FROM cms_sections WHERE section_num_parent=".($num_parent*1);
 		$result = pmb_mysql_query($query,$dbh);
 		if ($result) $order = ",section_order = '".(pmb_mysql_num_rows($result)+1)."' ";
 		else $order = ",section_order = 1";
@@ -127,6 +127,7 @@ class cms_section extends cms_editorial {
 		$id = pmb_mysql_insert_id();
 		
 		//au tour des descripteurs...
+		$this->get_descriptors();
 		for($i=0 ; $i<count($this->descriptors) ; $i++){
 			$rqt = "insert into cms_sections_descriptors set num_section = '".$id."', num_noeud = '".$this->descriptors[$i]."',section_descriptor_order='".$i."'";
 			pmb_mysql_query($rqt,$dbh);
@@ -140,7 +141,7 @@ class cms_section extends cms_editorial {
 		$types->duplicate_type_form($this->num_type,$id,$this->id);
 		$new_section->maj_indexation();
 		
-		$new_section->documents_linked = $this->documents_linked;
+		$new_section->documents_linked = $this->get_documents();
 		$new_section->save_documents();
 		
 		if ($recursive) {
@@ -181,7 +182,7 @@ class cms_section extends cms_editorial {
 		}else{
 			$opts = "";
 		}
-		$rqt = "select id_section, section_title from cms_sections where section_num_parent = '".$parent."'";
+		$rqt = "select id_section, section_title from cms_sections where section_num_parent = '".$parent."' order by section_order";
 		$res = pmb_mysql_query($rqt,$dbh);
 		if(pmb_mysql_num_rows($res)){
 			while($row = pmb_mysql_fetch_object($res)){
@@ -219,8 +220,11 @@ class cms_section extends cms_editorial {
 	}
 	
 	public function format_datas($get_children= true,$get_articles = true,$filter = true, $get_parent=false){
+		global $lang, $thesaurus_concepts_active;
+		
 		$documents = array();
 		if($this->formated_datas === null){
+			$this->get_documents();
 			foreach($this->documents_linked as $id_doc){
 				$document = new cms_document($id_doc);
 				$documents[] = $document->format_datas();
@@ -234,35 +238,51 @@ class cms_section extends cms_editorial {
 				'publication_state' => $this->publication_state,
 				'start_date' => $this->start_date,
 				'end_date' => $this->end_date,
-				'descriptors' => $this->descriptors,
+				'descriptors' => $this->get_descriptors(),
+				'num_type' => $this->num_type,
+				'fields_type' => $this->get_fields_type(),
 				'type' => $this->type_content,
-				'fields_type' => $this->fields_type,
-				'create_date' => $this->create_date,
+				'create_date' => format_date($this->create_date),
 				'documents' => $documents,
 				'nb_documents' => count($documents),
-				'last_update_date' => format_date($this->last_update_date)
+				'last_update_date' => format_date($this->last_update_date),
+				'permalink' => $this->get_permalink(),
+				'social_media_sharing' => $this->get_social_media_block()
 			);
+			if($thesaurus_concepts_active == 1){
+				$this->formated_datas['concepts'] = $this->index_concept->get_concepts();
+			}
+			if($this->get_avis_allowed()) {
+				$this->formated_datas['avis_display'] = $this->get_display_avis_detail();
+			}
+        }
+		$formated_datas = $this->formated_datas;
+		
+		if ($lang != "fr_FR") {
+			$this->format_datas_lang($formated_datas, $lang);
 		}
 		$formated_datas = $this->formated_datas;
 		if($get_children){
-			if($filter && $this->children['filter'] === null){
-				$this->children['filter'] = $this->get_children($filter);
-			}else if ($this->children['full'] === null){
-				$this->children['full'] = $this->get_children($filter);
+			
+			if($filter && !isset($this->children['filter'])){
+			    $this->children['filter'] = $this->get_children($get_articles,$filter);
+			}else if(!isset($this->children['full'])){
+			    $this->children['full'] = $this->get_children($get_articles,$filter);
 			}
-			if(filter){
+			if($filter){
 				$formated_datas['children'] = $this->children['filter'];
 			}else{
 				$formated_datas['children'] = $this->children['full'];
 			}
 		}
 		if($get_articles){
-			if($filter && $this->articles['filter'] === null){
+			
+			if($filter && !isset($this->articles['filter'])){
 				$this->articles['filter'] = $this->get_articles($filter);
-			}else if ($this->articles['full'] === null){
+			}else if (!isset($this->articles['full'])){
 				$this->articles['full'] = $this->get_articles($filter);
 			}
-			if(filter){
+			if($filter){
 				$formated_datas['articles'] = $this->articles['filter'];
 			}else{
 				$formated_datas['articles'] = $this->articles['full'];
@@ -275,12 +295,31 @@ class cms_section extends cms_editorial {
 		return $formated_datas;
 	}
 	
-	public function get_children($filter){
+	private function format_datas_lang(&$array, $lang) {
+		$lang = strtolower($lang);
+		foreach ($this->fields_type as $key => $value) {
+			switch ($key) {
+				case "section_title_".$lang:
+					if ($value) $array["title"] = $value["values"][0]["format_value"];
+					break;
+				case "section_resume_".$lang:
+					if ($value)	$array["resume"] = $value["values"][0]["format_value"];
+					break;
+				default:
+					if (strpos($key, $lang) !== false) {
+						if ($value) $array["fields_type"][str_replace("_".$lang, "", $key)] = $value;
+					}
+					break;
+			}
+		}
+	}
+
+	public function get_children($get_articles,$filter){
 		global $dbh;
 		if(($filter && $this->children['filter'] === null) || !$filter && $this->children['full'] === null){
 			if($this->id){
 				$children = array();
-				$query = "select id_section from cms_sections JOIN cms_editorial_publications_states ON section_publication_state=id_publication_state where section_num_parent = ".$this->id;
+				$query = "select id_section from cms_sections JOIN cms_editorial_publications_states ON section_publication_state=id_publication_state where section_num_parent = '".$this->id."'";
 				if($filter){
 					$query.= " and ((section_start_date != 0 and to_days(section_start_date)<=to_days(now()) and to_days(section_end_date)>=to_days(now()))||(section_start_date != 0 and section_end_date =0 and to_days(section_start_date)<=to_days(now()))||(section_start_date = 0 and to_days(section_end_date)>=to_days(now()))||(section_start_date = 0 and section_end_date = 0)) and (editorial_publication_state_opac_show=1".(!$_SESSION['id_empr_session'] ? " and editorial_publication_state_auth_opac_show = 0" : "").") ";;
 				}
@@ -289,7 +328,7 @@ class cms_section extends cms_editorial {
 				if(pmb_mysql_num_rows($result)){
 					while ($row = pmb_mysql_fetch_object($result)){
 						$child = cms_provider::get_instance("section",$row->id_section) ;
-						$children[] = $child->format_datas();
+						$children[] = $child->format_datas(true,$get_articles,$filter);
 					}
 				}
 				if($filter){
@@ -312,7 +351,7 @@ class cms_section extends cms_editorial {
 		if(($filter && $this->articles['filter'] === null) || !$filter && $this->articles['full'] === null){
 			$articles = array();
 			if($this->id){
-				$query = "select id_article from cms_articles JOIN cms_editorial_publications_states ON article_publication_state=id_publication_state where num_section = ".$this->id;
+				$query = "select id_article from cms_articles JOIN cms_editorial_publications_states ON article_publication_state=id_publication_state where num_section = '".$this->id."'";
 				if($filter){
 					$query.= " and ((article_start_date != 0 and to_days(article_start_date)<=to_days(now()) and to_days(article_end_date)>=to_days(now()))||(article_start_date != 0 and article_end_date =0 and to_days(article_start_date)<=to_days(now()))||(article_start_date=0 and article_end_date=0)||(article_start_date = 0 and to_days(article_end_date)>=to_days(now()))) and (editorial_publication_state_opac_show=1".(!$_SESSION['id_empr_session'] ? " and editorial_publication_state_auth_opac_show = 0" : "").") ";
 				}
@@ -363,5 +402,16 @@ class cms_section extends cms_editorial {
 			);			
 		}			
 		return $format;
+	}
+	
+	public function update_permalink(){
+		if(isset($this->formated_datas) && isset($this->formated_datas['permalink'])){
+			$this->formated_datas['permalink'] = $this->get_permalink();
+		}
+	}
+	
+	public function get_display_avis_detail() {
+		$avis = new avis($this->id, AVIS_SECTIONS);
+		return $avis->get_display_detail();
 	}
 }

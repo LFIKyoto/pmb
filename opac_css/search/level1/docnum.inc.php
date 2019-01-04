@@ -2,18 +2,20 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docnum.inc.php,v 1.29 2015-06-12 07:51:22 arenou Exp $
+// $Id: docnum.inc.php,v 1.34 2018-04-18 14:51:32 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $gestion_acces_active, $gestion_acces_empr_notice;
+global $gestion_acces_empr_docnum;
+global $opac_stemming_active;
+global $opac_search_cache_duration;
 
 // premier niveau de recherche OPAC sur les documents numériques
 
 // inclusion classe pour affichage notices (level 1)
 require_once($base_path.'/includes/templates/notice.tpl.php');
 require_once($base_path.'/classes/notice.class.php');
-
-//calcul restriction
-if ($opac_search_other_function) require_once($include_path."/".$opac_search_other_function);
 
 $restrict_opac_view='';
 if($_SESSION["opac_view"] && $_SESSION["opac_view_query"] ){
@@ -104,17 +106,17 @@ if($restrict_opac_view)  $old_clause.=" and ".$restrict_opac_view;
 //creation table tempo search_result_notices_ contenant les ids des notices visibles pour le lecteur courant.
 $tx = session_id();
 $table_tempo_notices = "search_result_notices_".$tx;
-pmb_mysql_query("drop table if exists $table_tempo_notices", $dbh);
+pmb_mysql_query("drop table if exists $table_tempo_notices");
 $q_table_tempo_notices = "create temporary table ".$table_tempo_notices." engine=memory ".$q_restrict ;
-$res_table_tempo_notices = pmb_mysql_query($q_table_tempo_notices,$dbh);
+$res_table_tempo_notices = pmb_mysql_query($q_table_tempo_notices);
 
 //ajout index
 $q_index_tempo_notices = "alter table ".$table_tempo_notices." add index i_id(notice_id)";
-pmb_mysql_query($q_index_tempo_notices,$dbh);
+pmb_mysql_query($q_index_tempo_notices);
 
 //creation table tempo search_result_explnum_ contenant les ids des documents numériques et les ids de notices pour monographies/articles.
 $table_tempo_explnum = "search_result_explnum_".$tx;
-pmb_mysql_query("drop table if exists $table_tempo_explnum", $dbh);
+pmb_mysql_query("drop table if exists $table_tempo_explnum");
 
 //droits d'acces emprunteur/document numérique
 $acces_j='';
@@ -129,15 +131,15 @@ if ($gestion_acces_active==1 && $gestion_acces_empr_docnum==1) {
 }
 
 $q_table_tempo_explnum = "create temporary table $table_tempo_explnum engine=memory select explnum_id, explnum_notice as notice_id from explnum join $table_tempo_notices on explnum_notice=notice_id $acces_j where explnum_notice!=0 $q_restrict";
-$res_table_tempo_explnum = pmb_mysql_query($q_table_tempo_explnum,$dbh);
+$res_table_tempo_explnum = pmb_mysql_query($q_table_tempo_explnum);
 
 //ajout dans la table tempo search_result_explnum_ des ids des documents numériques et des ids de notices pour les notices de periodique des bulletins.
 $q_in_tempo_explnum = "insert ignore into $table_tempo_explnum select explnum_id, bulletin_notice as notice_id from explnum join bulletins on explnum_bulletin=bulletin_id $acces_j where num_notice=0 and bulletin_notice in (select notice_id from $table_tempo_notices) $q_restrict";
-$res_in_tempo_explnum = pmb_mysql_query($q_in_tempo_explnum,$dbh);
+$res_in_tempo_explnum = pmb_mysql_query($q_in_tempo_explnum);
 
 //ajout dans la table tempo search_result_explnum_ des ids des documents numériques et des ids de notices pour les notices de bulletins.
 $q_in_tempo_explnum = "insert ignore into $table_tempo_explnum select explnum_id, num_notice as notice_id from explnum join bulletins on explnum_bulletin=bulletin_id $acces_j where num_notice in (select notice_id from $table_tempo_notices) $q_restrict";
-$res_in_tempo_explnum = pmb_mysql_query($q_in_tempo_explnum,$dbh);
+$res_in_tempo_explnum = pmb_mysql_query($q_in_tempo_explnum);
 
 $search_terms = $aq->get_positive_terms($aq->tree);
 //On enlève le dernier terme car il s'agit de la recherche booléenne complète
@@ -154,7 +156,7 @@ if($new_clause) {
 		
 	//suppression des recherches obsoletes en cache
 	$q_cache_del= "delete from search_cache where delete_on_date < NOW()";
-	pmb_mysql_query($q_cache_del,$dbh);
+	pmb_mysql_query($q_cache_del);
 	
 	//recuperation signature recherche
 	$str_to_hash = "type_search=explnum";
@@ -163,7 +165,7 @@ if($new_clause) {
 	
 	//la recherche brute est elle en cache ?
 	$q_cache_read = "select value from search_cache where object_id='".addslashes($sign)."'";
-	$r_cache_read = pmb_mysql_query($q_cache_read, $dbh);
+	$r_cache_read = pmb_mysql_query($q_cache_read);
 
 	//si oui, recuperation
 	if (pmb_mysql_num_rows($r_cache_read)) {
@@ -179,7 +181,7 @@ if($new_clause) {
 		
 		// Recherche des documents numeriques correspondants a la recherche.
 		$q_explnum = "select distinct(explnum_id), $pert from explnum where $new_clause";
-		$r_explnum = pmb_mysql_query($q_explnum, $dbh);
+		$r_explnum = pmb_mysql_query($q_explnum);
 		$nb_explnum = pmb_mysql_num_rows($r_explnum);	
 		$t_explnum = array();
 		$s_explnum = '';
@@ -187,34 +189,36 @@ if($new_clause) {
 			while ($o=pmb_mysql_fetch_object($r_explnum)) {
 				$t_explnum[$o->explnum_id]=$o->pert;
 			}
+			if(count($t_explnum)) {
+				$s_explnum = implode(',',array_keys($t_explnum));
+			}
+			
+			//mise en cache des resultats de la recherche
+			$str_to_cache = serialize($t_explnum);
+			$q_cache_insert = "insert into search_cache set object_id ='".addslashes($sign)."', value ='".addslashes($str_to_cache)."', delete_on_date = now() + interval ".$opac_search_cache_duration." second";
+			pmb_mysql_query($q_cache_insert);
 		}
-		if(count($t_explnum)) {
-			$s_explnum = implode(',',array_keys($t_explnum));
-		}
-
-		//mise en cache des resultats de la recherche
-		$str_to_cache = serialize($t_explnum);
-		$q_cache_insert = "insert into search_cache set object_id ='".addslashes($sign)."', value ='".addslashes($str_to_cache)."', delete_on_date = now() + interval ".$opac_search_cache_duration." second";
-		pmb_mysql_query($q_cache_insert,$dbh);
-		
 	}
 
 	//restriction des resultats
-	$q_nb_result_docnum = "select count(distinct(explnum_id)) from $table_tempo_explnum where explnum_id in (".$s_explnum.") " ;
-	$r_nb_result_docnum = pmb_mysql_query($q_nb_result_docnum,$dbh);
 	$nb_result_docnum=0;
-	if($r_nb_result_docnum && pmb_mysql_num_rows($r_nb_result_docnum)){
-		$nb_result_docnum = pmb_mysql_result($r_nb_result_docnum,0,0);
+	if($s_explnum) {
+		$q_nb_result_docnum = "select count(distinct(explnum_id)) from $table_tempo_explnum where explnum_id in (".$s_explnum.") " ;
+		$r_nb_result_docnum = pmb_mysql_query($q_nb_result_docnum);
+		if($r_nb_result_docnum && pmb_mysql_num_rows($r_nb_result_docnum)){
+			$nb_result_docnum = pmb_mysql_result($r_nb_result_docnum,0,0);
+		}
 	}
 	
 	//recherche des types de documents des notices concernees
-	$req_typdoc = "select distinct(typdoc) from notices join $table_tempo_explnum on notices.notice_id=$table_tempo_explnum.notice_id where explnum_id in (".$s_explnum.")";
-	$res_typdoc = pmb_mysql_query($req_typdoc, $dbh);
-	
 	$t_typdoc=array();
-	if($res_typdoc && pmb_mysql_num_rows($res_typdoc)){
-		while (($tpd=pmb_mysql_fetch_object($res_typdoc))) {
-			$t_typdoc[]=$tpd->typdoc;
+	if($s_explnum) {
+		$req_typdoc = "select distinct(typdoc) from notices join $table_tempo_explnum on notices.notice_id=$table_tempo_explnum.notice_id where explnum_id in (".$s_explnum.")";
+		$res_typdoc = pmb_mysql_query($req_typdoc);
+		if($res_typdoc && pmb_mysql_num_rows($res_typdoc)){
+			while (($tpd=pmb_mysql_fetch_object($res_typdoc))) {
+				$t_typdoc[]=$tpd->typdoc;
+			}
 		}
 	}
 	$l_typdoc=implode(',',$t_typdoc);	
@@ -225,8 +229,8 @@ if($new_clause) {
 		print '<strong>'.$msg['docnum'].'</strong> '.$nb_result_docnum.' '.$msg['results'].' ';
 		// si il y a d'autres résultats, je met le lien 'plus de résultats'
 		// Le lien validant le formulaire est inséré avant le formulaire, cela évite les blancs à l'écran
-		print "<a href=\"#\" onclick=\"document.forms['search_docnum'].submit(); return false;\">".$msg['suite']."&nbsp;<img src='./images/search.gif' border='0' align='absmiddle'/></a>";
-		$form = "<div style=search_result><form name=\"search_docnum\" action=\"./index.php?lvl=more_results\" method=\"post\">";
+		print "<a href=\"#\" onclick=\"document.forms['search_docnum'].submit(); return false;\">".$msg['suite']."&nbsp;<img src='".get_url_icon('search.gif')."' style='border:0px' align='absmiddle'/></a>";
+		$form = "<div class='search_result'><form name=\"search_docnum\" action=\"./index.php?lvl=more_results\" method=\"post\">";
 		$form .= "<input type=\"hidden\" name=\"user_query\" value=\"".htmlentities(stripslashes($user_query),ENT_QUOTES,$charset)."\">\n";
 		if (function_exists("search_other_function_post_values")){ $form .=search_other_function_post_values(); }
 		$form .= "<input type=\"hidden\" name=\"mode\" value=\"docnum\">\n";

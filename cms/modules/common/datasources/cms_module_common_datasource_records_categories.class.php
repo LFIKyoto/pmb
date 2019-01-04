@@ -2,16 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_records_categories.class.php,v 1.8 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: cms_module_common_datasource_records_categories.class.php,v 1.11 2018-06-06 14:23:50 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-class cms_module_common_datasource_records_categories extends cms_module_common_datasource_list{
+class cms_module_common_datasource_records_categories extends cms_module_common_datasource_records_list{
 	
-	public function __construct($id=0){
-		parent::__construct($id);
-		$this->limitable = true;
-	}
 	/*
 	 * On défini les sélecteurs utilisable pour cette source de donnée
 	 */
@@ -21,7 +17,32 @@ class cms_module_common_datasource_records_categories extends cms_module_common_
 			"cms_module_common_selector_env_var"
 		);
 	}
-
+	
+	/*
+	 * On défini les critères de tri utilisable pour cette source de donnée
+	 */
+	protected function get_sort_criterias() {
+		$return  = parent::get_sort_criterias();
+		$return[] = "pert";
+		return $return;
+	}
+	public function get_form(){
+	    $form = parent::get_form();
+	    $form.= '
+        <div class="row">
+            <div class="colonne3"><label for="'.$this->get_form_value_name('autopostage').'">'.$this->format_text($this->msg['cms_module_common_datasource_records_categories_use_autopostage']).'</label></div>
+            <div class="colonne_suite">
+                '.$this->format_text($this->msg['yes']).' <input type="radio" '.($this->parameters['autopostage'] == 1 ? 'checked="checked"' : '').' name="'.$this->get_form_value_name('autopostage').'" value="1"/>
+                '.$this->format_text($this->msg['no']).' <input type="radio" '.($this->parameters['autopostage'] == 0 ? 'checked="checked"' : '').' name="'.$this->get_form_value_name('autopostage').'" value="0"/></div>
+        </div>';
+	    
+	    return $form;
+	}
+	
+	public function save_form(){
+	    $this->parameters['autopostage'] = $this->get_value_from_form('autopostage');
+	    return parent::save_form();
+	}
 	/*
 	 * Récupération des données de la source...
 	 */
@@ -33,7 +54,7 @@ class cms_module_common_datasource_records_categories extends cms_module_common_
 			$query = "select distinct notice_id 
 				from notices join notices_categories on notice_id=notcateg_notice 
 				join cms_articles_descriptors on cms_articles_descriptors.num_noeud=notices_categories.num_noeud 
-				and num_article=".$selector->get_value();
+				and num_article='".($selector->get_value()*1)."'";
 			
 			$result = pmb_mysql_query($query,$dbh);
 			$return = array();
@@ -44,23 +65,26 @@ class cms_module_common_datasource_records_categories extends cms_module_common_
 				}
 			}
 			$return['records'] = $this->filter_datas("notices",$return['records']);
-			$return['records'] = array_slice($return['records'], 0, $this->parameters['nb_max_elements']);
 			
 			if(!count($return['records'])) return false;
-			// on tri par pertinence
-			$query = "SELECT notice_id
-			FROM notices
-			JOIN notices_categories ON notice_id = notcateg_notice
-			JOIN cms_articles_descriptors ON cms_articles_descriptors.num_noeud = notices_categories.num_noeud
-			AND num_article =".$selector->get_value()." where notice_id in(".implode(',', $return['records']).")group by notice_id order by count(*) desc, create_date desc";
-		
-			$result = pmb_mysql_query($query,$dbh);
-			$return = array();
-			if($result && (pmb_mysql_num_rows($result) > 0)){
-				$return["title"] = "Liste de notices";
-				while($row = pmb_mysql_fetch_object($result)){
-					$return["records"][] = $row->notice_id;
+			if ($this->parameters["sort_by"] == 'pert') {
+				// on tri par pertinence
+				$query = "SELECT notice_id
+						FROM notices
+						JOIN notices_categories ON notice_id = notcateg_notice
+						JOIN cms_articles_descriptors ON cms_articles_descriptors.num_noeud = notices_categories.num_noeud
+						AND num_article ='".($selector->get_value()*1)."' where notice_id in ('".implode("','", $return['records'])."') group by notice_id order by count(*) ".$this->parameters["sort_order"].", create_date desc
+						limit ".$this->parameters['nb_max_elements'];
+				$result = pmb_mysql_query($query,$dbh);
+				$return = array();
+				if(pmb_mysql_num_rows($result) > 0){
+					$return["title"] = "Liste de notices";
+					while($row = pmb_mysql_fetch_object($result)){
+						$return["records"][] = $row->notice_id;
+					}
 				}
+			} else {
+				$return = $this->sort_records($return["records"]);
 			}
 			return $return;
 		}

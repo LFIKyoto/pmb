@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
-<!-- $Id: sort.xml,v 1.23 2015-03-11 14:39:41 dgoron Exp $ -->
+<!-- $Id: sort.xml,v 1.24 2018-05-22 10:06:56 dgoron Exp $ -->
 <sort reference="notices" referencekey="notice_id">
 	
 	<field name="title" type="text" typefield="select" id="1">
@@ -429,6 +429,11 @@
 		</var>
 		<table>
 			<tablefield>map_equinoxe</tablefield>
+		</table>
+	</field>
+	<field name="notice_is_new_gestion" type="text" typefield="select" id="34">
+		<table>
+			<tablefield>notice_date_is_new</tablefield>
 		</table>
 	</field>
 </sort>

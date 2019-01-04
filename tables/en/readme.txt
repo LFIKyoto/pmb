@@ -1,3 +1,8 @@
+-- +-------------------------------------------------+
+-- © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+-- +-------------------------------------------------+
+-- $Id: readme.txt,v 1.7 2016-03-30 09:04:52 mbertin Exp $
+
 ------------------------------------------------------------------------------------------------------------------
 
 Description of the files
@@ -81,8 +86,9 @@ The development team
 # Contents of the table abts_periodicites
 # Contents of the table categories
 # Contents of the table classements
+# Contents of the table cms_editorial_types
 # Contents of the table empr_statut
-# Contents of the table infopages
+# Contents of the table explnum_statut
 # Contents of the table lenders
 # Contents of the table lignes_actes_statuts
 # Contents of the table noeuds
@@ -93,6 +99,7 @@ The development team
 # Contents of the table pclassement
 # Contents of the table sauv_sauvegardes
 # Contents of the table sauv_tables
+# Contents of the table serialcirc_tpl
 # Contents of the table suggestions_categ
 # Contents of the table thesaurus
 # Contents of the table users
@@ -121,6 +128,7 @@ The development team
 # Contents of the table expl_custom
 # Contents of the table expl_custom_lists
 # Contents of the table facettes
+# Contents of the table infopages
 # Contents of the table notice_tpl
 # Contents of the table notice_tplcode
 # Contents of the table procs
@@ -136,7 +144,10 @@ The development team
 # Contents of the table statopac_vues_col
 
 \_/-\_/-\_/-\_/-\_/-\_/-\_/-\            bibliportail.sql
-# Contenu nécéssaire à la demo du portail
+# Base complète avec un portail pagéo de démo
+
+\_/-\_/-\_/-\_/-\_/-\_/-\_/-\            biblizen.sql
+# Base complète avec un portail zen de démo
 
 \_/-\_/-\_/-\_/-\_/-\_/-\_/-\            data_test.sql
 # Contents of the table analysis

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_categories.inc.php,v 1.9 2015-04-03 11:16:16 jpermanne Exp $
+// $Id: notice_categories.inc.php,v 1.10 2017-01-25 18:02:00 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -52,7 +52,7 @@ function get_notice_langues($notice=0, $quelle_langues=0) {
 }
 
 function construit_liste_langues($tableau) {
-
+	$langues = "";
 	for ($i = 0 ; $i < sizeof($tableau) ; $i++) {
 		if ($langues) $langues.=" ";
 		$langues .= $tableau[$i]["langue"]." (<i>".$tableau[$i]["lang_code"]."</i>)";

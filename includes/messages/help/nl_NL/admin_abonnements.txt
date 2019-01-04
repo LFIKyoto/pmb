@@ -1,4 +1,4 @@
-<h1>Abonnementenadministratie</h1>
+<h2>Abonnementenadministratie</h2>
 
 <p>In de <b>Abonnementenadministratie</b> kun je de instellingen voor het gebruik van abonnementen ingeven.
 <ul>

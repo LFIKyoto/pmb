@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fournisseur.inc.php,v 1.15 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: fournisseur.inc.php,v 1.19 2017-11-21 13:38:21 dgoron Exp $
 
 /*
  * caller	= nom du formulaire appelant
@@ -35,10 +35,57 @@ if($f_user_input=="" && $user_input=="") {
 	if (($f_user_input)&&(!$user_input)) $user_input=$f_user_input;	
 }
 
-$sel_search_form = str_replace("!!deb_rech!!", htmlentities(stripslashes($f_user_input),ENT_QUOTES,$charset), $sel_search_form);
-print $sel_search_form;
-print $jscript;
-show_results($dbh, $user_input, $nbr_lignes, $page);
+if($bt_ajouter == "no"){
+	$bouton_ajouter="";
+}else{
+	$bouton_ajouter= "<input type='button' class='bouton_small' onclick=\"document.location='$base_url&action=add&deb_rech='+this.form.f_user_input.value\" value='".$msg['acquisition_ajout_fourn']."' />";
+}
+
+switch($action){
+	case 'add':
+		if(count(entites::get_entities())) {
+			$fournisseur_form = str_replace("!!sel_bibli!!", entites::getBibliHtmlSelect(SESSuserid, entites::getSessionBibliId(), FALSE, array('class'=>'saisie-50em','id'=>'id_bibli','name'=>'id_bibli')), $fournisseur_form);
+			$fournisseur_form = str_replace("!!deb_saisie!!", htmlentities(stripslashes($f_user_input),ENT_QUOTES,$charset), $fournisseur_form);
+			print $fournisseur_form;
+		} else {
+			//Pas de bibliothèques définies pour l'utilisateur
+			$error_msg.= htmlentities($msg["acquisition_err_coord"],ENT_QUOTES, $charset)."<div class='row'></div>";
+			error_message($msg[321], $error_msg.htmlentities($msg["acquisition_err_par"],ENT_QUOTES, $charset), '1', '');
+		}
+		break;
+	case 'update':
+		if(count(entites::get_entities())) {
+			// vérification validité des données fournies.
+			if (entites::exists_rs($raison,$id_bibli,0)) {
+				error_form_message($raison.$msg["acquisition_raison_already_used"]);
+				break;
+			}
+			$entites = new entites();
+			$entites->type_entite = '0';
+			$entites->num_bibli = $id_bibli;
+			$entites->raison_sociale = $raison;
+			$entites->num_cp_client = $num_cp;
+			$entites->save();
+		} else {
+			//Pas de bibliothèques définies pour l'utilisateur
+			$error_msg.= htmlentities($msg["acquisition_err_coord"],ENT_QUOTES, $charset)."<div class='row'></div>";
+			error_message($msg[321], $error_msg.htmlentities($msg["acquisition_err_par"],ENT_QUOTES, $charset), '1', '');
+		}
+		$sel_search_form = str_replace("!!bouton_ajouter!!", $bouton_ajouter, $sel_search_form);
+		$sel_search_form = str_replace("!!deb_rech!!", htmlentities(stripslashes($raison),ENT_QUOTES,$charset), $sel_search_form);
+		print $sel_search_form;
+		print $jscript;
+		show_results($dbh, $raison, 0, 0);
+		break;
+	default:
+		$sel_search_form = str_replace("!!bouton_ajouter!!", $bouton_ajouter, $sel_search_form);
+		$sel_search_form = str_replace("!!deb_rech!!", htmlentities(stripslashes($f_user_input),ENT_QUOTES,$charset), $sel_search_form);
+		print $sel_search_form;
+		print $jscript;
+		show_results($dbh, $user_input, $nbr_lignes, $page);
+		break;
+}
+
 
 
 // affichage des membres de la page
@@ -101,16 +148,16 @@ function show_results($dbh, $user_input, $nbr_lignes=0, $page=0, $id = 0) {
 		$precedente = $page-1;
 
 		// affichage du lien précédent si nécessaire
-		print '<hr /><div align=center>';
+		print '<hr /><div class="center">';
 		if($precedente > 0)
-		print "<a href='$base_url&page=$precedente&nbr_lignes=$nbr_lignes&user_input=".rawurlencode(stripslashes($user_input))."&no_display=$no_display'><img src='./images/left.gif' border='0' title='$msg[48]' alt='[$msg[48]]' hspace='3' align='middle' /></a>";
+		print "<a href='$base_url&page=$precedente&nbr_lignes=$nbr_lignes&user_input=".rawurlencode(stripslashes($user_input))."&no_display=$no_display'><img src='".get_url_icon('left.gif')."' border='0' title='$msg[48]' alt='[$msg[48]]' hspace='3' class='align_middle' /></a>";
 		for($i = 1; $i <= $nbepages; $i++) {
 			if($i==$page)
 				print "<b>$i/$nbepages</b>";
 		}
 
 	if($suivante<=$nbepages)
-		print "<a href='$base_url&page=$suivante&nbr_lignes=$nbr_lignes&user_input=".rawurlencode(stripslashes($user_input))."&no_display=$no_display'><img src='./images/right.gif' border='0' title='$msg[49]' alt='[$msg[49]]' hspace='3' align='middle' /></a>";
+		print "<a href='$base_url&page=$suivante&nbr_lignes=$nbr_lignes&user_input=".rawurlencode(stripslashes($user_input))."&no_display=$no_display'><img src='".get_url_icon('right.gif')."' border='0' title='$msg[49]' alt='[$msg[49]]' hspace='3' class='align_middle' /></a>";
 	}
 		print '</div>';
 }

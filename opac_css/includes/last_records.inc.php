@@ -2,17 +2,21 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: last_records.inc.php,v 1.23 2015-04-03 11:16:16 jpermanne Exp $
+// $Id: last_records.inc.php,v 1.26 2018-09-27 13:06:42 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($base_path.'/classes/notice_display.class.php');
 
+if(!isset($last_records)) $last_records = '';
 if (!$last_records) $last_records=$opac_show_dernieresnotices_nb;
+if(!isset($plus)) $plus = '';
 if ($plus) $last_records = $last_records + $plus;
 
-if($_SESSION["opac_view"] && $_SESSION["opac_view_query"] ){
+if(isset($_SESSION["opac_view"]) && $_SESSION["opac_view"] && $_SESSION["opac_view_query"] ){
 	$opac_view_restrict=" notice_id in (select opac_view_num_notice from  opac_view_notices_".$_SESSION["opac_view"].") ";
+} else {
+	$opac_view_restrict="";
 }
 
 //droits d'acces emprunteur/notice
@@ -42,7 +46,7 @@ if(pmb_mysql_num_rows($result)) {
 //	print "<blockquote>\n";
 	if ($opac_notices_depliable) print $begin_result_liste;
 	while($notice = pmb_mysql_fetch_object($result)) {
-    	print pmb_bidi(aff_notice($notice->notice_id));
+    	print pmb_bidi(aff_notice($notice->notice_id, 0, 1, 0, '', '', 0, 1, 1));
 	}
 //	print "</blockquote>\n";
 	$plus = $plus + 10;

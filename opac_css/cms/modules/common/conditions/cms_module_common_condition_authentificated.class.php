@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_condition_authentificated.class.php,v 1.6 2014-11-19 10:57:30 ngantier Exp $
+// $Id: cms_module_common_condition_authentificated.class.php,v 1.7 2016-09-20 10:25:42 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -19,7 +19,6 @@ class cms_module_common_condition_authentificated extends cms_module_common_cond
 	}
 	
 	public function check_condition(){
-		global $log_ok;
 		$selector = $this->get_selected_selector();
 		$value = $selector->get_value();
 		//si vrai, alors seulement ce qui est authentifié...

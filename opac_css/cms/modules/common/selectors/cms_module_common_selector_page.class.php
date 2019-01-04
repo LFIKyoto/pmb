@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_page.class.php,v 1.6 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: cms_module_common_selector_page.class.php,v 1.9 2017-11-30 10:53:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 //require_once($base_path."/cms/modules/common/selectors/cms_module_selector.class.php");
@@ -22,7 +22,7 @@ class cms_module_common_selector_page extends cms_module_common_selector{
 		//si on est sur une page de type Page en création de cadre, on propose la condition pré-remplie...
 		if($this->cms_build_env['lvl'] == "cmspage"){
 			if(!$this->id){
-				$this->parameters[] = $this->cms_build_env['get']['pageid'];
+				$this->parameters[] = (isset($this->cms_build_env['get']['pageid']) ? $this->cms_build_env['get']['pageid'] : '');
 			}
 		}
 		$form = "
@@ -71,5 +71,25 @@ class cms_module_common_selector_page extends cms_module_common_selector{
 			$this->value = $this->parameters;
 		}
 		return $this->value;
+	}
+	
+	public function get_human_description_selector(){
+		$description = "";
+		if(is_array($this->parameters)) {
+			$query= "select id_page, page_name from cms_pages order by page_name";
+			$result = pmb_mysql_query($query);
+			if(pmb_mysql_num_rows($result)){			
+				while($row = pmb_mysql_fetch_object($result)){
+					if(in_array($row->id_page,$this->parameters)){
+						if(array_search($row->id_page, $this->parameters) == 0){
+							$description .= $this->format_text($row->page_name);
+						}else{
+							$description .= ", ".$this->format_text($row->page_name);
+						}			
+					}
+				}
+			}
+		}
+		return $description;		
 	}
 }

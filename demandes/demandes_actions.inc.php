@@ -2,9 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes_actions.inc.php,v 1.15 2015-05-20 14:39:30 dgoron Exp $
+// $Id: demandes_actions.inc.php,v 1.16 2017-01-31 15:41:41 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($idaction)) $idaction = 0;
+if(!isset($idnote)) $idnote = 0;
+if(!isset($iddocnum)) $iddocnum = 0;
+if(!isset($act)) $act = '';
 
 require_once($class_path."/demandes_actions.class.php");
 require_once($class_path."/demandes.class.php");

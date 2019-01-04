@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: filter_results.class.php,v 1.4 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: filter_results.class.php,v 1.5 2017-01-31 15:41:41 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -45,6 +45,8 @@ class filter_results {
 			$ac= new acces();
 			$dom_2= $ac->setDomain(1);
 			$query = $dom_2->getFilterQuery($this->user,4,'id_notice',$this->notice_ids);
+		} else {
+			$query = '';
 		}
 		return $query;
 	}

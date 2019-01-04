@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: fr_FR.xml,v 1.1.2.1 2015-09-22 08:31:55 jpermanne Exp $ -->
+$Id: fr_FR.xml,v 1.5 2018-08-06 11:59:02 plmrozowski Exp $ -->
 
 <!DOCTYPE XMLlist SYSTEM "../../../../includes/XMLlist.dtd" >
 <XMLlist>
@@ -18,6 +18,7 @@ $Id: fr_FR.xml,v 1.1.2.1 2015-09-22 08:31:55 jpermanne Exp $ -->
   <entry code="classtypepage">Fonctions de classification des types de page</entry>
   <entry code="classurlexternes">Fonctions sur les urls externes</entry>
   <entry code="classnoticesbulletins">Fonctions sur les notices et les bulletins</entry>
+  <entry code="classbannettes">Fonctions sur les bannettes</entry>
    
   
   <!-- #mots_saisis($param,$parser); -->
@@ -50,10 +51,20 @@ $Id: fr_FR.xml,v 1.1.2.1 2015-09-22 08:31:55 jpermanne Exp $ -->
   <entry code="adresse_ip_input_description"></entry>
   <entry code="adresse_ip_output_description"></entry>
   
+  <!-- #adresse_ip_forward($param, $parser); -->
+  <entry code="adresse_ip_description">Retourne l'adresse IP de l'utilisateur en cas de proxy</entry>
+  <entry code="adresse_ip_input_description"></entry>
+  <entry code="adresse_ip_output_description"></entry>
+  
   <!-- #user_agent($param, $parser); -->
   <entry code="user_agent_description">Retourne le user agent de l'utilisateur</entry>
   <entry code="user_agent_input_description"></entry>
   <entry code="user_agent_output_description"></entry>
+  
+  <!-- #top_level_domain($param, $parser); -->
+  <entry code="top_level_domain_description">Retourne le le domaine de premier niveau</entry>
+  <entry code="top_level_domain_input_description"></entry>
+  <entry code="top_level_domain_output_description"></entry>
   
   <!-- #var_post($param, $parser); -->
   <entry code="var_post_description">Retourne une valeur de la variable $_POST</entry>
@@ -400,5 +411,22 @@ $Id: fr_FR.xml,v 1.1.2.1 2015-09-22 08:31:55 jpermanne Exp $ -->
   <entry code="bulletin_id_description">Retourne l'identifiant du bulletin cliqué ou développé</entry>
   <entry code="bulletin_id_input_description"></entry>
   <entry code="bulletin_id_output_description"></entry>
+    
+  
+  
+  
+  <!-- ****************                Fonctions sur les bannettes                  ****************** -->
+  
+  
+  
+  <!-- #abo_bannette($param, $parser); -->
+  <entry code="abo_bannette_description">Retourne le nombre d'abonnements aux bannettes</entry>
+  <entry code="abo_bannette_input_description"></entry>
+  <entry code="abo_bannette_output_description"></entry>
+  
+  <!-- #desabo_bannette($param, $parser); -->
+  <entry code="desabo_bannette_description">Retourne le nombre de désabonnements aux bannettes</entry>
+  <entry code="desabo_bannette_input_description"></entry>
+  <entry code="desabo_bannette_output_description"></entry>
     
 </XMLlist>

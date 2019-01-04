@@ -2,32 +2,47 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: all.inc.php,v 1.46.2.8 2015-10-29 10:56:59 jpermanne Exp $
+// $Id: all.inc.php,v 1.77 2018-12-12 14:31:40 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+require_once($include_path."/notice_authors.inc.php");
+
+if(!isset($prolonge_id)) $prolonge_id = 0;
+if(!isset($action)) $action = '';
 //Récupération des variables postées, on en aura besoin pour les liens
-$page=$_SERVER[SCRIPT_NAME];
+$page=$_SERVER['SCRIPT_NAME'];
 
 
 if ($dest=="TABLEAU") {
 	//Export excel
-	$fname=str_replace(" ","",microtime());
-	$fname=str_replace("0.","",$base_path."/temp/".$fname);
-	require_once ("$class_path/writeexcel/class.writeexcel_workbook.inc.php");
-	require_once ("$class_path/writeexcel/class.writeexcel_worksheet.inc.php");
-	$workbook = new writeexcel_workbook($fname);
-	$worksheet = $workbook->addworksheet();
+	require_once ($class_path."/spreadsheet.class.php");
+	$worksheet = new spreadsheet();
 	//formats
-	$workbook->set_custom_color(12, 00, 204, 255);
-	$heading_blue = $workbook->addformat(array('fg_color' => 12));
-	$heading_10 = $workbook->addformat(array('bold' => 1, 'size' => 10));
-	$heading_12 = $workbook->addformat(array('bold' => 1, 'size' => 12));
+	$heading_blue = array(
+		'fill' => array(
+			'type' => PHPExcel_Style_Fill::FILL_SOLID,
+            'color' => array('rgb' => '00CCFF')
+		)
+	);
+	$heading_10 = array(
+		'font' => array(
+			'bold' => true,
+			'size' => 10
+		)
+	);
+	$heading_12 = array(
+		'font' => array(
+			'bold' => true,
+			'size' => 12
+		)
+	);
 } else {
-	echo"<form action='empr.php' method='post' name='FormEmpr'>";
-	echo"<input name='lvl' value='all' type='hidden'>";	
-	echo"<input name='prolonge_id' value='0' type='hidden'>";
-	
+    switch($action) {
+        case 'group_prolonge_pret':
+            group_prolonge_pret($id_groupe, $group_prolonge_pret_date);
+            break;
+    }
 	// Si click bouton de prolongation, et prolongation autorisée 
 	if($prolonge_id>0 && $opac_pret_prolongation==1){
 		//Il faut prolonger un livre
@@ -71,69 +86,104 @@ if ($dest=="TABLEAU") {
 		}
 		
 		$today = sql_value("SELECT CURRENT_DATE()");
-		$date_prolongation = sql_value("SELECT DATE_ADD('$date_retour', INTERVAL $duree_prolongation DAY)");
-		$diff = sql_value("SELECT DATEDIFF('$date_retour','$today')");
+		$diff = sql_value("SELECT DATEDIFF('$date_retour', '$today')");
 		
-		if($diff<-$duree_prolongation || $diff>$duree_prolongation) {
+		if ($diff < -$duree_prolongation || $diff > $duree_prolongation) {
 			$prolongation = FALSE;
-			echo $msg["loan_extend_false"]."<br />";		
+			echo $msg["loan_extend_false"] . "<br />";		
 		}
-			
-		if($prolongation==TRUE)	{		
+		$empr_date_expiration = sql_value("SELECT empr_date_expiration FROM empr WHERE id_empr=".$id_empr);
+		
+		if ($pmb_pret_date_retour_adhesion_depassee) {
+			$date_prolongation = sql_value("SELECT DATE_ADD('$date_retour', INTERVAL $duree_prolongation DAY)");
+		} else {
+			if ($empr_date_expiration < $today) {
+				$prolongation = FALSE;
+				echo $msg['empr_no_prolongation_adhesion_depassee'] . "<br />";			
+			}
+			$date_prolongation = sql_value("SELECT if('" . $empr_date_expiration."'>DATE_ADD('" . $date_retour . "', INTERVAL '$duree_prolongation' DAY),DATE_ADD('" . $date_retour . "', INTERVAL '$duree_prolongation' DAY),'" . $empr_date_expiration . "')");
+		}
+		if ((!$pmb_pret_date_retour_adhesion_depassee) && ($prolongation==TRUE)) {
+			if ($date_prolongation < $date_retour) {
+				$prolongation = FALSE;
+				echo $msg['empr_no_prolongation_retour_ahesion_depassee'] . "<br />";
+			}
+		}
+		if ($prolongation == TRUE) {
 			$cpt_prolongation++;
-				
+			
 			if ($pmb_utiliser_calendrier) {
 				$req_date_calendrier = "select date_ouverture from ouvertures where ouvert=1 and num_location='".$expl_location."' and DATEDIFF(date_ouverture,'$date_prolongation')>=0 order by date_ouverture asc limit 1";
 				$res_date_calendrier = pmb_mysql_query($req_date_calendrier);
-		
+				
 				if (pmb_mysql_num_rows($res_date_calendrier) > 0) {
 					$date_prolongation=pmb_mysql_result($res_date_calendrier,0,0);
 				}
 			}
 			// Memorisation de la nouvelle date de prolongation	
-			$query = "update pret set cpt_prolongation='".$cpt_prolongation."', pret_retour='".$date_prolongation."', niveau_relance = 0, date_relance = '0000-00-00', printed=0 where pret_idexpl=".$prolonge_id;
+			$query = "update pret set cpt_prolongation='" . $cpt_prolongation . "', pret_retour='" . $date_prolongation . "', niveau_relance = 0, date_relance = '0000-00-00', printed=0 where pret_idexpl=" . $prolonge_id;
 			$result = pmb_mysql_query($query, $dbh);
+			
+			// Memorisation de la nouvelle date de prolongation dans la table d'archive
+			$res_arc=pmb_mysql_query("select pret_arc_id from pret where pret_idexpl=".$prolonge_id."",$dbh);
+			if($res_arc && pmb_mysql_num_rows($res_arc)){
+				$query = "update pret_archive set arc_cpt_prolongation='".$cpt_prolongation."', arc_fin='".$date_prolongation."' where arc_id = ".pmb_mysql_result($res_arc,0,0);
+				pmb_mysql_query($query,$dbh);
+			}
 		}	
-	
 	}
-}	
+}
 	
 // REQUETE SQL
 
 $sql = "SELECT notices_m.notice_id as num_notice_mono, bulletin_id, IF(pret_retour>sysdate(),0,1) as retard, expl_id," ;
 $sql.= "date_format(pret_retour, '".$msg["format_date_sql"]."') as aff_pret_retour, pret_retour, "; 
 $sql.= "date_format(pret_date, '".$msg["format_date_sql"]."') as aff_pret_date, " ;
-$sql.= "trim(concat(ifnull(notices_m.tit1,''),ifnull(notices_s.tit1,''),' ',ifnull(bulletin_numero,''), if(mention_date, concat(' (',mention_date,')') ,if (date_date, concat(' (',date_format(date_date, '".$msg["format_date_sql"]."'),')') ,'')))) as tit, if(notices_m.notice_id, notices_m.notice_id, notices_s.notice_id) as not_id, tdoc_libelle, empr_location, location_libelle ";
+$sql.= "trim(concat(ifnull(notices_m.tit1,''),ifnull(notices_s.tit1,''),' ',ifnull(bulletin_numero,''), if(mention_date, concat(' (',mention_date,')') ,if (date_date, concat(' (',date_format(date_date, '".$msg["format_date_sql"]."'),')') ,'')))) as tit, "; 
+$sql.= "if(notices_m.notice_id, notices_m.notice_id, notices_s.notice_id) as not_id, if(notices_m.tparent_id, notices_m.tparent_id, notices_s.tparent_id) as tparent_id, if(notices_m.tnvol, notices_m.tnvol, notices_s.tnvol) as tnvol, ";
+$sql.= "tdoc_libelle, empr_location, location_libelle ";
 $sql.= "FROM (((exemplaires LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) ";
 $sql.= "        LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) ";
 $sql.= "        LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id), ";
-$sql.= "        docs_type, docs_location , pret, empr ";
-$sql.= "WHERE expl_typdoc = idtyp_doc and pret_idexpl = expl_id  and empr.id_empr = pret.pret_idempr and expl_location = idlocation ";
+$sql.= "        docs_type, docs_location , pret left join pnb_orders_expl on pnb_orders_expl.pnb_order_expl_num=pret.pret_idexpl, empr ";
+$sql.= "WHERE expl_typdoc = idtyp_doc and pret_idexpl = expl_id  and empr.id_empr = pret.pret_idempr and expl_location = idlocation and pnb_orders_expl.pnb_order_expl_num is null";
 $sql.= $critere_requete;
+
 $req = pmb_mysql_query($sql) or die("Erreur SQL !<br />".$sql."<br />".pmb_mysql_error()); 
 $nb_elements = pmb_mysql_num_rows($req) ;
 
 if (!$dest) {
+	global $opac_cart_allow;
 	if ($lvl=="late") $class_aff_expl="class='liste-expl-empr-late'" ;
 	$class_aff_expl="class='liste-expl-empr-all'" ;
 	if ($opac_empr_export_loans) {
 		echo "<input class=\"bouton\" type=\"button\" value=\"".$msg["print_loans_bt"]."\" name=\"print_loans_bt\" id=\"print_loans_bt\" onClick=\"location.href='empr.php?tab=".$tab."&lvl=".$lvl."&dest=TABLEAU'\">";
 	}
+	if ($opac_empr_export_loans && $nb_elements) {
+		echo "&nbsp;";
+	}
+	if ($nb_elements && $opac_cart_allow) {
+		echo "<span class='addCart'><input type=\"button\" class=\"bouton\" id=\"add_cart_loans_bt\" value=\"".$msg["add_cart_loans_bt"]."\" onClick=\"javascript:document.add_cart_loans.submit();\"></span>";
+		echo "<form name='add_cart_loans' method='post' action='cart_info.php?lvl=loans_".$lvl."' target='cart_info' style='display:none'></form>";
+	}
 }
 if ($nb_elements) {
 	if (!$dest) {
-		echo"<table $class_aff_expl width='100%'>";
+		echo"<form action='empr.php' method='post' name='FormEmpr'>";
+		echo"<input name='lvl' value='all' type='hidden'>";
+		echo"<input name='prolonge_id' value='0' type='hidden'>";
+		echo"<table $class_aff_expl style='width:100%'>";
 		echo "<tr>" ;
-		if ($lvl!="late") echo "<th><center>".$msg["empr_late"]."</center></th>" ;
 		echo "<th>".$msg["title"]."</th>
 			<th>".$msg["author"]."</th>
 			<th>".$msg["typdoc_support"]."</th>
-			<th><center>".$msg["date_loan"]."</center></th>
-			<th><center>".$msg["date_back"]."</center></th>";	
+			<th class='center'>".$msg["date_loan"]."</th>
+			<th class='center'>".$msg["date_back"]."</th>";	
 		if($opac_pret_prolongation==1 && $allow_prol) {
-			echo "<th><center>".$msg["opac_titre_champ_nb_prolongation"]."</center></th>";
-			echo "<th><center>".$msg["opac_titre_champ_prolongation"]."</center></th>";
+			echo "<th class='center'>".$msg["opac_titre_champ_nb_prolongation"]."</th>";
+			echo "<th class='center'>".$msg["opac_titre_champ_prolongation"]."</th>";
 		}
+		if ($lvl!="late") echo "<th class='center'>".$msg["empr_late"]."</th>" ;
 		echo "</tr>" ;
 		$odd_even=1;
 		$loc_cours="";
@@ -151,8 +201,19 @@ if ($nb_elements) {
 								<td colspan='".$colspan."'>".$msg["expl_header_location_libelle"]." : ".$loc_cours."</td>
 							</tr>";
 			}
-			$id_expl =$data['expl_cb'];
 			$titre = $data['tit'];
+			
+			// récupération du titre de série
+			$titre_serie="";
+			if ($data['tparent_id'] && $data['not_id']) {
+				$parent = new serie($data['tparent_id']);
+				$titre_serie = $parent->name;
+				if($data['tnvol'])
+					$titre_serie .= ', '.$data['tnvol'];
+			}
+			if($titre_serie) {
+				$titre = $titre_serie.'. '.$titre;
+			}
 			
 			// **********
 			$responsab = array("responsabilites" => array(),"auteurs" => array());  // les auteurs
@@ -163,7 +224,7 @@ if ($nb_elements) {
 			if ($as!== FALSE && $as!== NULL) {
 				$auteur_0 = $responsab["auteurs"][$as] ;
 				$auteur = new auteur($auteur_0["id"]);
-				$mention_resp = $auteur->isbd_entry;
+				$mention_resp = $auteur->get_isbd();
 			} else {
 				$as = array_keys ($responsab["responsabilites"], "1" ) ;
 				$aut1_libelle = array();			
@@ -171,7 +232,7 @@ if ($nb_elements) {
 					$indice = $as[$i] ;
 					$auteur_1 = $responsab["auteurs"][$indice] ;
 					$auteur = new auteur($auteur_1["id"]);
-					$aut1_libelle[]= $auteur->isbd_entry;
+					$aut1_libelle[]= $auteur->get_isbd();
 				}
 				$mention_resp = implode (", ",$aut1_libelle) ;
 			}
@@ -186,32 +247,36 @@ if ($nb_elements) {
 					$pair_impair="even";
 					$odd_even=0;
 			}
-			
-			if ($data['num_notice_mono']) $tr_javascript=" class='$pair_impair expl-empr-retard' onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./index.php?lvl=notice_display&id=".$data['num_notice_mono']."&seule=1';\" style='cursor: pointer' ";
-				else $tr_javascript=" class='$pair_impair expl-empr-retard' onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./index.php?lvl=bulletin_display&id=".$data['bulletin_id']."';\" style='cursor: pointer' ";
+			$tr_javascript = " class='$pair_impair ".($data['retard'] ? 'expl-empr-retard' : '')."' onmouseover=\"this.className='surbrillance ".($data['retard'] ? 'expl-empr-retard' : '')."'\" onmouseout=\"this.className='$pair_impair ".($data['retard'] ? 'expl-empr-retard' : '')."'\"";
+			if ($data['num_notice_mono']) {
+				$tr_javascript .= " onmousedown=\"document.location='./index.php?lvl=notice_display&id=".$data['num_notice_mono']."&seule=1';\" style='cursor: pointer' ";
+			} else {
+				$tr_javascript .= " onmousedown=\"document.location='./index.php?lvl=bulletin_display&id=".$data['bulletin_id']."';\" style='cursor: pointer' ";
+			}
 			$deb_ligne = "<tr $tr_javascript>";
 			echo $deb_ligne ;
-			/* test de date de retour dépassée */
-			if ($lvl!="late") 
-				if ($data['retard']) echo "<td class='expl-empr-retard'><center><b>&times;</b></center></td>";
-					else echo "<td>&nbsp;</td>";
-			echo "<td>".$titre."</td>";    
-			echo "<td>".$auteur."</td>";
-			echo "<td>".$data["tdoc_libelle"]."</td>";    
-			echo "<td><center>".$data['aff_pret_date']."</center></td>"; 
+			echo "<td column_name='".htmlentities($msg["title"],ENT_QUOTES,$charset)."'>".$titre."</td>";    
+			echo "<td column_name='".htmlentities($msg["author"],ENT_QUOTES,$charset)."'>".$auteur."</td>";
+			echo "<td column_name='".htmlentities($msg["typdoc_support"],ENT_QUOTES,$charset)."'>".$data["tdoc_libelle"]."</td>";    
+			echo "<td column_name='".htmlentities($msg["date_loan"],ENT_QUOTES,$charset)."' class='center'>".$data['aff_pret_date']."</td>"; 
 				
-			if ($data['retard']) echo "<td class='expl-empr-retard'><center>".$data['aff_pret_retour']."</center></td>";
-				else echo "<td><center>".$data['aff_pret_retour']."</center></td>";
+			if ($data['retard']) echo "<td class='expl-empr-retard' column_name='".htmlentities($msg["date_back"],ENT_QUOTES,$charset)."'>".$data['aff_pret_retour']."</td>";
+				else echo "<td column_name='".htmlentities($msg["date_back"],ENT_QUOTES,$charset)."' class='center'>".$data['aff_pret_retour']."</td>";
 			// Paramètre de l'opac $opac_pret_prolongation autorisant la gestion des prolongations
 			if ($opac_pret_prolongation==1 && $allow_prol) {
 				$prolongation=TRUE;
+				$no_prolong_explanation = '';
 				$expl_id = $data['expl_id'] ;
-				$query = "select cpt_prolongation, pret_date,pret_retour, expl_location, niveau_relance from pret, exemplaires where expl_id=pret_idexpl and pret_idexpl='".$data['expl_id']."'";
+				$query = "select cpt_prolongation, pret_date,pret_retour, expl_location, niveau_relance, short_loan_flag from pret, exemplaires where expl_id=pret_idexpl and pret_idexpl='".$data['expl_id']."'";
 				$result = pmb_mysql_query($query, $dbh);
 				$data_expl = pmb_mysql_fetch_array($result);
 				$nb_prolongation = $cpt_prolongation = $data_expl['cpt_prolongation'];
 				$pret_date =  $data_expl['pret_date'];
 				$date_retour= $data_expl['pret_retour'];
+				if ($data_expl['short_loan_flag']) {
+					$prolongation = FALSE;
+					$no_prolong_explanation = $msg['empr_no_prolongation_short_loan_flag'];
+				}
 				$cpt_prolongation++;
 				
 				$duree_prolongation=$opac_pret_duree_prolongation;	
@@ -225,6 +290,7 @@ if ($nb_elements) {
 					if(($pmb_pret_restriction_prolongation==1) && ($cpt_prolongation>$pret_nombre_prolongation)) {
 						// Limitation simple de la prolongation
 						$prolongation=FALSE;
+						$no_prolong_explanation = $msg['empr_no_prolongation_limit'];
 					} else if($pmb_pret_restriction_prolongation==2) {
 						// Limitation du pret par les quotas
 						//Initialisation des quotas pour nombre de prolongations
@@ -234,7 +300,10 @@ if ($nb_elements) {
 						$struct["EXPL"] = $expl_id;						
 						$pret_nombre_prolongation=$qt -> get_quota_value($struct);		
 	
-						if($cpt_prolongation>$pret_nombre_prolongation) $prolongation=FALSE;
+						if($cpt_prolongation>$pret_nombre_prolongation){
+							$prolongation=FALSE;
+							$no_prolong_explanation = $msg['empr_no_prolongation_limit'];
+						}
 	
 						//Initialisation des quotas la durée de prolongations
 						$qt = new quota("PROLONG_TIME_QUOTA");
@@ -244,10 +313,31 @@ if ($nb_elements) {
 					} // fin if gestion par quotas
 				} // fin else if pmb_pret_restriction_prolongation>0
 	
-				$date_prolongation=sql_value("SELECT DATE_ADD('$date_retour', INTERVAL $duree_prolongation DAY)");
-				$diff=sql_value("SELECT DATEDIFF('$date_retour','$today')");
-				if($diff<-$duree_prolongation || $diff>$duree_prolongation) {
-					$prolongation=FALSE;
+				$empr_date_expiration=sql_value("SELECT empr_date_expiration FROM empr WHERE id_empr=".$id_empr);
+				
+				if($pmb_pret_date_retour_adhesion_depassee) {
+					$date_prolongation=sql_value("SELECT DATE_ADD('$date_retour', INTERVAL $duree_prolongation DAY)");
+				} else {
+					if ($empr_date_expiration < $today) {
+						$prolongation=FALSE;
+						$no_prolong_explanation = $msg['empr_no_prolongation_adhesion_depassee'];
+					}
+					$date_prolongation=sql_value("SELECT if('".$empr_date_expiration."'>DATE_ADD('".$date_retour."', INTERVAL '$duree_prolongation' DAY),DATE_ADD('".$date_retour."', INTERVAL '$duree_prolongation' DAY),'".$empr_date_expiration."')");
+				}
+				if ((!$pmb_pret_date_retour_adhesion_depassee) && ($prolongation==TRUE)) {
+					if ($date_prolongation<$date_retour) {
+						$prolongation=FALSE;
+						$no_prolong_explanation = $msg['empr_no_prolongation_retour_ahesion_depassee'];
+					}
+				}
+				if ($prolongation==TRUE) {
+					$diff=sql_value("SELECT DATEDIFF('$date_retour','$today')");
+					if($diff<-$duree_prolongation || $diff>$duree_prolongation) {
+						$prolongation=FALSE;
+						$date_deb_prolongation = sql_value("SELECT DATE_ADD('$date_retour', INTERVAL -$duree_prolongation DAY)");
+						$date_fin_prolongation = sql_value("SELECT DATE_ADD('$date_retour', INTERVAL $duree_prolongation DAY)");
+						$no_prolong_explanation = sprintf($msg['empr_prolongation_not_yet_dispo'],formatdate($date_deb_prolongation),formatdate($date_fin_prolongation));
+					}
 				}
 				
 				$req_date_calendrier = "select date_ouverture from ouvertures where ouvert=1 and num_location='".$data_expl['expl_location']."' and DATEDIFF(date_ouverture,'$date_prolongation')>=0 order by date_ouverture asc limit 1";
@@ -282,16 +372,18 @@ if ($nb_elements) {
 						$nbexpl_en_pret = pmb_mysql_result($res, 0, 0);
 						if(($nbexpl-$nbexpl_en_pret) < $nbresa){
 							$prolongation=FALSE;
+							$no_prolong_explanation = $msg['empr_no_prolongation_resa'];
 						}
 					}					
 				}				
 	
-				echo "<td><center>".$nb_prolongation."/".$pret_nombre_prolongation."</center></td>";
+				echo "<td column_name='".htmlentities($msg["opac_titre_champ_nb_prolongation"],ENT_QUOTES,$charset)."' class='center'>".$nb_prolongation."/".$pret_nombre_prolongation."</td>";
 				
 				//Blocage des prolongations si relance sur pret, selon paramètre
 				if ($opac_pret_prolongation_blocage) {
 					if ($data_expl['niveau_relance']!='0') {
 						$prolongation=false;
+						$no_prolong_explanation = $msg['empr_no_prolongation_relance'];
 					}
 				}
 				
@@ -305,24 +397,27 @@ if ($nb_elements) {
 					// Bouton de prolongation
 					if (sql_value("SELECT DATEDIFF('$date_retour','$date_prolongation')") == 0) {
 						$prolongation=false;
+						$no_prolong_explanation = $msg['empr_no_prolongation_date_prolongation'];
 					}
 				}
 				
 				$js="onmousedown=\"if (event) e=event; else e=window.event; if (e.target) elt=e.target; else elt=e.srcElement; e.cancelBubble = true; if (e.stopPropagation) e.stopPropagation(); return false;\" ";
 				if ($prolongation) {
-					echo "<td><center><a href='./empr.php?prolongation=$aff_date_prolongation&prolonge_id=$expl_id&tab=loan_reza&lvl=$lvl#empr-loan' $js >$aff_date_prolongation</a></center></td>";
+					echo "<td column_name='".htmlentities($msg["opac_titre_champ_prolongation"],ENT_QUOTES,$charset)."' class='center'><a href='./empr.php?prolongation=$aff_date_prolongation&prolonge_id=$expl_id&tab=loan_reza&lvl=$lvl#empr-loan' $js >$aff_date_prolongation</a></td>";
 				} else {
-					echo "<td style='cursor: default' $js ><center>&nbsp;</center></td>";
+					echo "<td column_name='".htmlentities($msg["opac_titre_champ_prolongation"],ENT_QUOTES,$charset)."' style='cursor: default' $js class='center'><img src='".get_url_icon("no_prolongation.png")."' style='border:0px' title='".htmlentities($no_prolong_explanation,ENT_QUOTES,$charset)."' alt=''/></td>";
 				}
 		
 			} // fin if prolongeable	
+			/* test de date de retour dépassée */
+			if ($lvl!="late")
+				if ($data['retard']) echo "<td class='expl-empr-retard' column_name='".htmlentities($msg["empr_late"],ENT_QUOTES,$charset)."'><b>&times;</b></td>";
+				else echo "<td column_name='".htmlentities($msg["empr_late"],ENT_QUOTES,$charset)."'>&nbsp;</td>";
 			echo "</tr>\n";
 	
 		} // fin du while
 		
 		echo "</table>";
-		
-		
 		echo"</form>";
 	} elseif ($dest=="TABLEAU") {
 		//Titre
@@ -335,10 +430,6 @@ if ($nb_elements) {
 		//Entêtes
 		$line = 2;
 		$x=0;
-		if ($lvl!="late") {
-			$worksheet->write($line,$x,$msg["empr_late"],$heading_10);
-			$x++;
-		}
 		$worksheet->write($line,$x,$msg["title"],$heading_10);
 		$worksheet->write($line,$x+1,$msg["authors"],$heading_10);
 		$worksheet->write($line,$x+2,$msg["typdoc_support"],$heading_10);
@@ -346,6 +437,9 @@ if ($nb_elements) {
 		$worksheet->write($line,$x+4,$msg["date_back"],$heading_10);
 		if ($opac_pret_prolongation==1 && $allow_prol) {
 			$worksheet->write($line,$x+5,$msg["opac_titre_champ_nb_prolongation"],$heading_10);
+		}
+		if ($lvl!="late") {
+			$worksheet->write($line,$x+6,$msg["empr_late"],$heading_10);
 		}
 		//Valeurs
 		$loc_cours="";
@@ -357,7 +451,6 @@ if ($nb_elements) {
 				$worksheet->write($line,$x,$msg["expl_header_location_libelle"]." : ".$loc_cours,$heading_12);
 				$line++;
 			}
-			$id_expl =$data['expl_cb'];
 			$titre = $data['tit'];
 			$responsab = array("responsabilites" => array(),"auteurs" => array());  // les auteurs
 			$responsab = get_notice_authors($data['not_id']) ;
@@ -365,7 +458,7 @@ if ($nb_elements) {
 			if ($as!== FALSE && $as!== NULL) {
 				$auteur_0 = $responsab["auteurs"][$as] ;
 				$auteur = new auteur($auteur_0["id"]);
-				$mention_resp = $auteur->isbd_entry;
+				$mention_resp = $auteur->get_isbd();
 			} else {
 				$as = array_keys ($responsab["responsabilites"], "1" ) ;
 				$aut1_libelle = array();
@@ -373,17 +466,11 @@ if ($nb_elements) {
 					$indice = $as[$i] ;
 					$auteur_1 = $responsab["auteurs"][$indice] ;
 					$auteur = new auteur($auteur_1["id"]);
-					$aut1_libelle[]= $auteur->isbd_entry;
+					$aut1_libelle[]= $auteur->get_isbd();
 				}
 				$mention_resp = implode (", ",$aut1_libelle) ;
 			}
 			$mention_resp ? $auteur = $mention_resp : $auteur="";
-			if ($lvl!="late") {
-				if ($data['retard']) {
-					$worksheet->write($line,$x,"x");
-				}
-				$x++;
-			}
 			$worksheet->write($line,$x,$titre);
 			$worksheet->write($line,$x+1,$auteur);
 			$worksheet->write($line,$x+2,$data["tdoc_libelle"]);
@@ -415,6 +502,11 @@ if ($nb_elements) {
 				}
 				$worksheet->write($line,$x+5,$nb_prolongation."/".$pret_nombre_prolongation);
 			}
+			if ($lvl!="late") {
+				if ($data['retard']) {
+					$worksheet->write($line,$x+6,"x");
+				}
+			}
 		}
 	} 
 	
@@ -441,13 +533,47 @@ if($opac_show_group_checkout) aff_pret_groupes();
 if(file_exists($base_path."/empr/all_extended.inc.php"))require_once($base_path."/empr/all_extended.inc.php");
 
 if ($dest=="TABLEAU") {
-	$workbook->close();
-	header("Content-Type: application/x-msexcel; name=\"empr.xls"."\"");
-	header("Content-Disposition: inline; filename=\"empr.xls"."\"");
-	$fh=fopen($fname, "rb");
-	fpassthru($fh);
-	unlink($fname);
+	$worksheet->download('empr.xls');
 	die();
+}
+
+function group_prolonge_pret($id_groupe, $group_prolonge_pret_date) {
+    
+    if(!$id_groupe && !$group_prolonge_pret_date) return;    
+    $members = array();
+    $requete = "select EMPR.id_empr AS id, EMPR.empr_nom AS nom , EMPR.empr_prenom AS prenom, EMPR.empr_cb AS cb, EMPR.empr_categ AS id_categ, EMPR.type_abt AS id_abt";
+    $requete .= " FROM empr EMPR, empr_groupe MEMBERS";
+    $requete .= " WHERE MEMBERS.empr_id=EMPR.id_empr";
+    $requete .= " AND MEMBERS.groupe_id=" . $id_groupe;
+    $requete .= " ORDER BY EMPR.empr_nom, EMPR.empr_prenom";
+    $result = pmb_mysql_query($requete);
+    $nb_members = pmb_mysql_num_rows($result);
+    if($nb_members) {
+        while($mb = pmb_mysql_fetch_object($result)) {
+            $members[] = array( 'nom' => $mb->nom,
+                'prenom' => $mb->prenom,
+                'cb' => $mb->cb,
+                'id' => $mb->id,
+                'id_categ' => $mb->id_categ,
+                'id_abt' => $mb->id_abt);
+        }
+    }
+    $nb_members = sizeof($members);
+    if(!$nb_members) return;
+    
+    $expls = array();
+    foreach ($members as $empr) {
+        $req = "select pret_idexpl from pret where pret_idempr=".$empr['id'];
+        $res = pmb_mysql_query($req);
+        while ($r = pmb_mysql_fetch_object($res)) {
+            $expls[] = array(
+                'id' => $r->pret_idexpl,
+            );
+        }
+        $req = "update pret set pret_retour='".$group_prolonge_pret_date."', cpt_prolongation=cpt_prolongation+1 where pret_retour<'".$group_prolonge_pret_date."' and pret_idempr=".$empr['id'];
+        $res = pmb_mysql_query($req);
+    }
+    return $expls;
 }
 
 function aff_pret_groupes(){
@@ -473,7 +599,9 @@ function aff_pret_groupes(){
 		$sql = "SELECT notices_m.notice_id as num_notice_mono, bulletin_id, IF(pret_retour>sysdate(),0,1) as retard, expl_id, empr.id_empr as emprunteur, " ;
 		$sql.= "date_format(pret_retour, '".$msg["format_date_sql"]."') as aff_pret_retour, pret_retour, "; 
 		$sql.= "date_format(pret_date, '".$msg["format_date_sql"]."') as aff_pret_date, " ;
-		$sql.= "trim(concat(ifnull(notices_m.tit1,''),ifnull(notices_s.tit1,''),' ',ifnull(bulletin_numero,''), if(mention_date, concat(' (',mention_date,')') ,if (date_date, concat(' (',date_format(date_date, '".$msg["format_date_sql"]."'),')') ,'')))) as tit, if(notices_m.notice_id, notices_m.notice_id, notices_s.notice_id) as not_id, tdoc_libelle, location_libelle ";
+		$sql.= "trim(concat(ifnull(notices_m.tit1,''),ifnull(notices_s.tit1,''),' ',ifnull(bulletin_numero,''), if(mention_date, concat(' (',mention_date,')') ,if (date_date, concat(' (',date_format(date_date, '".$msg["format_date_sql"]."'),')') ,'')))) as tit, ";
+		$sql.= "if(notices_m.notice_id, notices_m.notice_id, notices_s.notice_id) as not_id, if(notices_m.tparent_id, notices_m.tparent_id, notices_s.tparent_id) as tparent_id, if(notices_m.tnvol, notices_m.tnvol, notices_s.tnvol) as tnvol, ";
+		$sql.= "tdoc_libelle, location_libelle ";
 		$sql.= "FROM (((exemplaires LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) ";
 		$sql.= "        LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) ";
 		$sql.= "        LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id), ";
@@ -488,14 +616,14 @@ function aff_pret_groupes(){
 			if (!$dest) {
 				echo "<br>";	
 				echo"<h3><span>".$titre_goup."</span></h3>";
-				echo"<table $class_aff_expl width='100%'>";
+				echo"<table $class_aff_expl style='width:100%'>";
 				echo "<tr>" ;
-				if ($lvl!="late") echo "<th><center>".$msg["empr_late"]."</center></th>" ;
 				echo " <th>".$msg["extexpl_emprunteur"]."</th>
 					  <th>".$msg["title"]."</th>					
 					  <th>".$msg["typdoc_support"]."</th>					 
-					  <th><center>".$msg["date_loan"]."</center></th>
-					  <th><center>".$msg["date_back"]."</center></th>";
+					  <th class='center'>".$msg["date_loan"]."</th>
+					  <th class='center'>".$msg["date_back"]."</th>";
+				if ($lvl!="late") echo "<th class='center'>".$msg["empr_late"]."</th>" ;
 				echo "</tr>" ;
 				$odd_even=1;
 				$loc_cours="";
@@ -506,7 +634,6 @@ function aff_pret_groupes(){
 								<td colspan='".($lvl!="late"?"6":"5")."'>".$msg["expl_header_location_libelle"]." : ".$loc_cours."</td>
 							</tr>";
 					} 
-					$id_expl =$data['expl_cb'];
 	
 					// on affiche les résultats 
 					if ($odd_even==0) {
@@ -521,24 +648,56 @@ function aff_pret_groupes(){
 						else $tr_javascript=" class='$pair_impair' onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./index.php?lvl=bulletin_display&id=".$data['bulletin_id']."';\" style='cursor: pointer' ";
 					$deb_ligne = "<tr $tr_javascript>";
 					echo $deb_ligne ;
-					/* test de date de retour dépassée */
-					if ($lvl!="late") 
-						if ($data['retard']) echo "<td class='expl-empr-retard'><center><b>&times;</b></center></td>";
-						else echo "<td>&nbsp;</td>";
+					
+					// récupération du titre de série
+					$titre_serie="";
+					if ($data['tparent_id']) {
+						$parent = new serie($data['tparent_id']);
+						$titre_serie = $parent->name;
+						if($data['tnvol'])
+							$titre_serie .= ', '.$data['tnvol'];
+					}
+					if($titre_serie) {
+						$data['tit'] = $titre_serie.'. '.$data['tit'];
+					}
+					
 					$empr=get_info_empr($data['emprunteur']);
-					echo "<td>".$empr['nom']." ".$empr['prenom']."</td>";
-					echo "<td>".$data['tit']."</td>";    
-					echo "<td>".$data["tdoc_libelle"]."</td>";
-					echo "<td><center>".$data['aff_pret_date']."</center></td>"; 
+					echo "<td column_name='".htmlentities($msg["extexpl_emprunteur"],ENT_QUOTES,$charset)."'>".$empr['nom']." ".$empr['prenom']."</td>";
+					echo "<td column_name='".htmlentities($msg["title"],ENT_QUOTES,$charset)."'>".$data['tit']."</td>";    
+					echo "<td column_name='".htmlentities($msg["typdoc_support"],ENT_QUOTES,$charset)."'>".$data["tdoc_libelle"]."</td>";
+					echo "<td column_name='".htmlentities($msg["date_loan"],ENT_QUOTES,$charset)."' class='center'>".$data['aff_pret_date']."</td>"; 
 						
-					if ($data['retard']) echo "<td class='expl-empr-retard'><center>".$data['aff_pret_retour']."</center></td>";
-						else echo "<td><center>".$data['aff_pret_retour']."</center></td>";
-	
+					if ($data['retard']) echo "<td column_name='".htmlentities($msg["date_back"],ENT_QUOTES,$charset)."' class='expl-empr-retard'>".$data['aff_pret_retour']."</td>";
+						else echo "<td column_name='".htmlentities($msg["date_back"],ENT_QUOTES,$charset)."' class='center'>".$data['aff_pret_retour']."</td>";
+						/* test de date de retour dépassée */
+					if ($lvl!="late")
+						if ($data['retard']) echo "<td column_name='".htmlentities($msg["empr_late"],ENT_QUOTES,$charset)."' class='expl-empr-retard'><b>&times;</b></td>";
+						else echo "<td column_name='".htmlentities($msg["empr_late"],ENT_QUOTES,$charset)."'>&nbsp;</td>";
 					echo "</tr>\n";
 			
 				} // fin du while
 				
 				echo "</table>";
+				print "
+        		<script type='text/javascript'>
+        			function group_prolonge_pret_test() {
+        				if (document.getElementById('group_prolonge_pret_date').value == '') {
+        					alert(pmbDojo.messages.getMessage('empr', 'group_prolonge_pret_no_date'));
+        					return false;
+        				}
+        				if (confirm(pmbDojo.messages.getMessage('empr', 'group_prolonge_pret_confirm'))) {
+        					return true;
+        				}
+        				return false;
+        			}
+        		</script>
+                <form style='margin-bottom:0px;padding-bottom:0px;' action='empr.php?tab=loan_reza&lvl=all&id_groupe=" . $r_goupe->id_groupe . "' method='post' name='FormGroup'>
+            		<div class='row'>
+            			<input type='button' name='group_prolonge_pret' class='bouton' value='" . $msg["group_prolonge_pret"] . "' onclick=\"if(group_prolonge_pret_test()){this.form.action+='&action=group_prolonge_pret'; this.form.submit();}\" />
+            			<input type='text' style='width: 10em;' name='group_prolonge_pret_date' id='group_prolonge_pret_date' value='' title='" . $msg['group_prolonge_pret_date_title'] . "'
+            					data-dojo-type='dijit/form/DateTextBox' required='false' />
+            		</div>
+                </form>";
 			} else {
 				$line+=2;
 				$x=0;
@@ -548,15 +707,15 @@ function aff_pret_groupes(){
 				//Entêtes
 				$line+=2;
 				$x=0;
-				if ($lvl!="late") {
-					$worksheet->write($line,$x,$msg["empr_late"],$heading_10);
-					$x++;
-				}
+				
 				$worksheet->write($line,$x,$msg["extexpl_emprunteur"],$heading_10);
 				$worksheet->write($line,$x+1,$msg["title"],$heading_10);
 				$worksheet->write($line,$x+2,$msg["typdoc_support"],$heading_10);
 				$worksheet->write($line,$x+3,$msg["date_loan"],$heading_10);
 				$worksheet->write($line,$x+4,$msg["date_back"],$heading_10);
+				if ($lvl!="late") {
+					$worksheet->write($line,$x+5,$msg["empr_late"],$heading_10);
+				}
 				//Valeurs
 				$loc_cours="";
 				while ($data = pmb_mysql_fetch_array($req)) {
@@ -567,18 +726,17 @@ function aff_pret_groupes(){
 						$worksheet->write($line,$x,$msg["expl_header_location_libelle"]." : ".$loc_cours,$heading_12);
 						$line++;
 					}
-					if ($lvl!="late") {
-						if ($data['retard']) {
-							$worksheet->write($line,$x,"x");
-						}
-						$x++;
-					}
 					$empr=get_info_empr($data['emprunteur']);
 					$worksheet->write($line,$x,$empr['nom']." ".$empr['prenom']);
 					$worksheet->write($line,$x+1,$data['tit']);
 					$worksheet->write($line,$x+2,$data["tdoc_libelle"]);
 					$worksheet->write($line,$x+3,$data['aff_pret_date']);
 					$worksheet->write($line,$x+4,$data['aff_pret_retour']);
+					if ($lvl!="late") {
+						if ($data['retard']) {
+							$worksheet->write($line,$x+5,"x");
+						}
+					}
 				}
 			}
 		}

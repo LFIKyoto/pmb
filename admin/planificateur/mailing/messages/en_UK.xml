@@ -4,10 +4,11 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: en_UK.xml,v 1.1 2015-06-15 12:55:34 pmbs Exp $ -->
+$Id: en_UK.xml,v 1.2 2017-08-18 15:29:02 jpermanne Exp $ -->
 
 <XMLlist>
 	<entry code="planificateur_mailing_template">E-mail template</entry>
 	<entry code="planificateur_mailing_caddie_empr">Recipient borrower's basket</entry>
 	<entry code="mailing_unknown">E-mail template or basket of unknown borrowers</entry>
+	<entry code="planificateur_mailing_email_cc">Destinataire supplémentaire en copie cachée</entry>
 </XMLlist>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: metasMapper.class.php,v 1.1.2.2 2015-10-20 10:03:24 arenou Exp $
+// $Id: metasMapper.class.php,v 1.5 2017-10-05 11:02:10 jpermanne Exp $
 
 
 class metasMapper {
@@ -113,7 +113,7 @@ class metasMapper {
 		return $keywords;
 	}
 	
-	public function get_notice_id($metas, $mimetype="", $name=""){
+	public function get_notice_id($metas, $mimetype="", $name="",$doindex=true){
 		global $pmb_keyword_sep;
 		
 		$this->metas = $metas;
@@ -158,7 +158,9 @@ class metasMapper {
 		$notice_id=$this->create_notice();
 		$notice_id=$this->dedoublonne($notice_id);
 		// Indexation
-		\notice::majNoticesTotal($notice_id);
+		if($doindex){
+			\notice::majNoticesTotal($notice_id);
+		}
 		return $notice_id;
 	}
 
@@ -224,29 +226,34 @@ class metasMapper {
 		
 		$ind_wew = $this->data['tit1']." ".$this->data['tit4'];
 		$ind_sew = \strip_empty_words($ind_wew) ;
+		
+		if(!$this->data['date_parution'] && $this->data['year']){
+			$this->data['date_parution'] = extraitdate($this->data['year']);
+		}
 			
 		$query = "insert into notices set
 				tit1 = '".addslashes($this->data['tit1'])."',".
-						($this->data['code'] ? "code='".$this->data['code']."',":"").
-						"ed1_id = '".$ed_1."',".
-						($this->data['tit4'] ? "tit4 = '".addslashes($this->data['tit4'])."'," : "").
-						($this->data['npages'] ? "npages = '".addslashes($this->data['npages'])."'," : "").
-						($this->data['index_l'] ? "index_l = '".addslashes($this->data['index_l'])."'," : "")."
+				($this->data['code'] ? "code='".$this->data['code']."',":"").
+				"ed1_id = '".$ed_1."',".
+				($this->data['tit4'] ? "tit4 = '".addslashes($this->data['tit4'])."'," : "").
+				($this->data['npages'] ? "npages = '".addslashes($this->data['npages'])."'," : "").
+				($this->data['index_l'] ? "index_l = '".addslashes($this->data['index_l'])."'," : "")."
 				year = '".$this->data['year']."',
 				tparent_id = '".$num_serie."',
 				niveau_biblio='m',
 				niveau_hierar='0',
 				statut = '".$this->config['default_statut']."',
-				index_wew = '".$ind_wew."',
-				index_sew = '".$ind_sew."',
+				index_wew = '".addslashes($ind_wew)."',
+				index_sew = '".addslashes($ind_sew)."',
 				n_resume = '".addslashes($this->data['n_resume'])."',
-				lien = '".addslashes($url)."',
-				index_n_resume = '".\strip_empty_words($this->data['n_resume'])."',".
+				lien = '".addslashes($url)."',".
+				($this->data['date_parution'] ? "date_parution = '".addslashes($this->data['date_parution'])."'," : "")."
+				index_n_resume = '".addslashes(\strip_empty_words($this->data['n_resume']))."',".
 				($this->data['thumbnail_content'] ? "thumbnail_url = 'data:image/png;base64,".base64_encode($this->data['thumbnail_content'])."',":"").
 				"create_date = ".($this->data['create_date'] ? "'".addslashes($this->data['create_date'])."'": "sysdate()").",
 				update_date = sysdate()";
 		pmb_mysql_query($query);
-		format_date($value);
+
 		$notice_id = pmb_mysql_insert_id();
 
 		//traitement audit

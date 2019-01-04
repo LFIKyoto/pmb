@@ -2,10 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: factures.tpl.php,v 1.26 2015-02-05 15:38:36 jpermanne Exp $
+// $Id: factures.tpl.php,v 1.33 2018-05-26 06:51:25 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+if(!isset($id_bibli)) $id_bibli = 0;
+if(!isset($id_cde)) $id_cde = 0;
+if(!isset($id_fac)) $id_fac = 0;
+if(!isset($id_exercice)) $id_exercice = 0;
 
 $faclist_form = "
 <script type='text/javascript'>
@@ -14,12 +18,12 @@ $faclist_form = "
 	}
 	function sort_by_col(type){
 		document.forms['search'].sortBy.value = type;
-		document.forms['search'].submit();					
+		document.forms['search'].submit();
 	}
 </script>
 <form class='form-$current_module' id='act_list_form' name='act_list_form' method='post' action=\"\" >
 	<div class='form-contenu'>
-		<table width='100%' ><tbody>
+		<table style='width:100%' ><tbody>
 			<tr>
 			<th onMouseOver ='survol(this);' onClick='sort_by_col(\"!!sortBy_1_1!!\");'>".htmlentities($msg['38'],ENT_QUOTES, $charset)."!!sortBy_1_2!!</th>
 			<th onMouseOver ='survol(this);' onClick='sort_by_col(\"!!sortBy_2_1!!\");'>".htmlentities($msg['acquisition_act_num_cde'],ENT_QUOTES, $charset)."!!sortBy_2_2!!</th>
@@ -48,56 +52,6 @@ $faclist_form = "
 <div class='form' >
 	<!-- nav_bar -->
 </div>
-";
-
-
-$faclist_bt_chk ="<input type='button' id='bt_chk' class='bouton_small' value='".$msg['acquisition_sug_checkAll']."' onClick=\"checkAll('act_list_form', 'chk', check); return false;\" />";
-$faclist_bt_supChk = "<input type='button' class='bouton_small' value='$msg[63]' onClick=\"supChk();\" />";
-
-$faclist_bt_pay="<input type='button' class='bouton_small' value='".$msg['acquisition_fac_bt_pay']."' onClick=\"faclist_pay();\" />";
-
-$faclist_script = "
-<script type='text/javascript'>
-
-	var check = true;
-
-	//Coche et decoche les elements de la liste
-	function checkAll(the_form, the_objet, do_check) {
-	
-		var elts = document.forms[the_form].elements[the_objet+'[]'];
-		var elts_cnt  = (typeof(elts.length) != 'undefined')
-	              ? elts.length
-	              : 0;
-	
-		if (elts_cnt) {
-			for (var i = 0; i < elts_cnt; i++) {
-				elts[i].checked = do_check;
-			} 
-		} else {
-			elts.checked = do_check;
-		}
-		if (check == true) {
-			check = false;
-			document.getElementById('bt_chk').value ='".$msg['acquisition_sug_uncheckAll']."';
-		} else {
-			check = true;
-			document.getElementById('bt_chk').value ='".$msg['acquisition_sug_checkAll']."';	
-		}
-		return true;
-	}
-	
-	
-	function faclist_pay() {
-		r = confirm(\"".$msg['acquisition_faclist_pay']."\");
-		if (r) {
-			document.forms['act_list_form'].setAttribute('action', './acquisition.php?categ=ach&sub=fact&action=list_pay&id_bibli='+document.getElementById('id_bibli').value);
-			document.forms['act_list_form'].submit();
-			return true;	
-		}
-		return false;
-	}
-		
-</script>
 ";
 
 
@@ -181,7 +135,7 @@ $fact_modif_form = "
 		<br /> 
 
 		<div class='row'>
-			<img id='comment_Img' src='./images/plus.gif' class='img_plus' onclick=\"javascript:expandBase('comment_', true);\"/>
+			<img id='comment_Img' src='".get_url_icon('plus.gif')."' class='img_plus' onclick=\"javascript:expandBase('comment_', true);\"/>
     		<label class='etiquette'>".htmlentities($msg['acquisition_commentaires'], ENT_QUOTES, $charset)."</label>&nbsp;
 		</div>
 		<div class='row' style='margin-left:30px'>
@@ -309,27 +263,27 @@ $fact_modif_form.= "
 		
 		<!-- form_search -->
 	<div>
-		<table width='100%' frame='all' style='table-layout:fixed;'>
+		<table frame='all' style='table-layout:fixed; width:100%'>
 			<tr>
-				<th width='3%'>&nbsp;</th>
-				<th width='12%'>".htmlentities($msg['acquisition_act_tab_code'], ENT_QUOTES, $charset)."</th>
-				<th width='25%'>".htmlentities($msg['acquisition_act_tab_lib'], ENT_QUOTES, $charset)."</th>";
+				<th style='width:3%'>&nbsp;</th>
+				<th style='width:12%'>".htmlentities($msg['acquisition_act_tab_code'], ENT_QUOTES, $charset)."</th>
+				<th style='width:25%'>".htmlentities($msg['acquisition_act_tab_lib'], ENT_QUOTES, $charset)."</th>";
 if ($acquisition_gestion_tva){
-	$fact_modif_form.= "<th width='8%'>".htmlentities($msg['acquisition_act_tab_priht'], ENT_QUOTES, $charset)."</th>
-						<th width='20%'>".htmlentities($msg['acquisition_act_tab_typ'], ENT_QUOTES, $charset).'<br />'.htmlentities($msg['acquisition_tva'], ENT_QUOTES, $charset).' / '.htmlentities($msg['acquisition_remise'], ENT_QUOTES, $charset)."</th>";
+	$fact_modif_form.= "<th style='width:8%'>".htmlentities($msg['acquisition_act_tab_priht'], ENT_QUOTES, $charset)."</th>
+						<th style='width:20%'>".htmlentities($msg['acquisition_act_tab_typ'], ENT_QUOTES, $charset).'<br />'.htmlentities($msg['acquisition_tva'], ENT_QUOTES, $charset).' / '.htmlentities($msg['acquisition_remise'], ENT_QUOTES, $charset)."</th>";
 } else {
-	$fact_modif_form.= "<th width='8%'>".htmlentities($msg['acquisition_act_tab_prittc'], ENT_QUOTES, $charset)."</th>
-						<th width='20%'>".htmlentities($msg['acquisition_act_tab_typ'], ENT_QUOTES, $charset).'<br />'.htmlentities($msg['acquisition_remise'], ENT_QUOTES, $charset)."</th>";
+	$fact_modif_form.= "<th style='width:8%'>".htmlentities($msg['acquisition_act_tab_prittc'], ENT_QUOTES, $charset)."</th>
+						<th style='width:20%'>".htmlentities($msg['acquisition_act_tab_typ'], ENT_QUOTES, $charset).'<br />'.htmlentities($msg['acquisition_remise'], ENT_QUOTES, $charset)."</th>";
 }
 $fact_modif_form.= "
-				<th width='18%'>".htmlentities($msg['acquisition_act_tab_bud'], ENT_QUOTES, $charset)."</th>
-				<th width='7%'>".htmlentities($msg['acquisition_act_tab_solfac'], ENT_QUOTES, $charset)."</th>
-				<th width='7%'>".htmlentities($msg['acquisition_act_tab_fac'], ENT_QUOTES, $charset)."</th>
+				<th style='width:18%'>".htmlentities($msg['acquisition_act_tab_bud'], ENT_QUOTES, $charset)."</th>
+				<th style='width:7%'>".htmlentities($msg['acquisition_act_tab_solfac'], ENT_QUOTES, $charset)."</th>
+				<th style='width:7%'>".htmlentities($msg['acquisition_act_tab_fac'], ENT_QUOTES, $charset)."</th>
 			</tr>
 		</table>
 	</div>
 
-	<iframe class='acquisition' name='list_lig' id='list_lig' width='100%' height='350'></iframe>		
+	<iframe class='acquisition' name='list_lig' id='list_lig' width='100%' height='350px'></iframe>		
 		
 	<div class='row'></div>
 
@@ -347,7 +301,7 @@ $fact_modif_form.= "
 
 <div class='row'>
 	<div class='left'>
-		<input type='button' class='bouton' value='".$msg['76']."' onclick=\"document.location='./acquisition.php?categ=ach&sub=fact&action=list&id_bibli=$id_bibli' \" />
+		<input type='button' class='bouton' value='".$msg['76']."' onclick=\"document.location='./acquisition.php?categ=ach&sub=fact&action=list&id_bibli=$id_bibli&id_exercice=$id_exercice' \" />
 		<!-- bouton_enr -->
 		<!-- bouton_pay -->
 		<!-- bouton_audit -->
@@ -373,7 +327,7 @@ try {
 //	template de création/modification pour les lignes de factures
 //	------------------------------------------------------------------------------
 $frame_modif = " 
-<table width='100%' frame='all' style='table-layout:fixed;background-color:transparent;'>
+<table frame='all' style='table-layout:fixed;background-color:inherit; width:100%'>
 
 	<form id='frame_modif' name='frame_modif' method='post' action=\"\" >
 		<input type='hidden' id='max_lig' name='max_lig' value='!!max_lig!!' />
@@ -440,30 +394,30 @@ $frame_modif.="
 
 $frame_row = "
 <tr>
-	<td width='3%'>
+	<td style='width:3%'>
 		<label class='etiquette' >!!no!!</label>
 		<input type='hidden' id='id_lig[!!no!!]' name='id_lig[!!no!!]' value='!!id_lig!!' /> 
 		<input type='hidden' id='id_prod[!!no!!]' name='id_prod[!!no!!]' value='!!id_prod!!' />
 	</td>
-	<td width='12%' valign='top'>
+	<td style='width:12%; vertical-align:top'>
 		<input id='code[!!no!!]' name='code[!!no!!]' class='saisie-10emd' style='width:95%' type='text'   readonly='readonly' tabindex='-1' value='!!code!!' />\n
 	</td>
-	<td width='25%' valign='top'>
+	<td style='width:25%; vertical-align:top'>
 		<textarea id='lib[!!no!!]' name='lib[!!no!!]' class='saisie-10emd' style='width:95%' rows='2' wrap='virtual' readonly='readonly' tabindex='-1' >!!lib!!</textarea>
 	</td>
-	<td width='8%' valign='top'>
+	<td style='width:8%; vertical-align:top'>
 		<input id='prix[!!no!!]' name='prix[!!no!!]' style='width:95%;text-align:right;' type='text' value='!!prix!!' />
 	</td>
-	<td width='20%' valign='top'>
+	<td style='width:20%; vertical-align:top'>
 		<!-- select_typ -->
 	</td>
-	<td width='18%' valign='top'>
+	<td style='width:18%; vertical-align:top'>
 		<!-- select_bud -->
 	</td>
-	<td width='7%'>
+	<td style='width:7%'>
 		<input id='sol[!!no!!]' name='sol[!!no!!]' class='saisie-10emd' style='text-align:right;width:95%' type='text'  readonly='readonly' tabindex='-1' value='!!sol!!' />
 	</td>
-	<td width='7%'>
+	<td style='width:7%'>
 		<a name='ancre[!!no!!]'></a>
 		<input id='fac[!!no!!]' name='fac[!!no!!]' class='saisie-10em' style='text-align:right;width:95%' type='text' tabindex='-1' value='!!fac!!' />
 	</td>	
@@ -471,34 +425,34 @@ $frame_row = "
 ";
 
 
-$frame_row_fa_header="<tr class='tab_sep'><td width='3%'>&nbsp;</td><td width='12%'>&nbsp;</td><td width='25%'><strong>".htmlentities($msg['acquisition_fac_sai'], ENT_QUOTES, $charset)."</strong></td><td width='8%'>&nbsp;</td><td width='20%'>&nbsp;</td><td width='18%'>&nbsp;</td><td width='7%'>&nbsp;</td><td width='7%'>&nbsp;</td></tr>";
+$frame_row_fa_header="<tr class='tab_sep'><td style='width:3%'>&nbsp;</td><td style='width:12%'>&nbsp;</td><td style='width:25%'><strong>".htmlentities($msg['acquisition_fac_sai'], ENT_QUOTES, $charset)."</strong></td><td style='width:8%'>&nbsp;</td><td style='width:20%'>&nbsp;</td><td style='width:18%'>&nbsp;</td><td style='width:7%'>&nbsp;</td><td style='width:7%'>&nbsp;</td></tr>";
 
 $frame_row_fa = "
 <tr>
-	<td width='3%'>
+	<td style='width:3%'>
 		<input type='checkbox' tabindex='-1' id='chk[!!no!!]' name='chk[!!no!!]' value='1' />			
 		<input type='hidden' id='id_lig[!!no!!]' name='id_lig[!!no!!]' value='!!id_lig!!' /> 
 		<input type='hidden' id='id_prod[!!no!!]' name='id_prod[!!no!!]' value='!!id_prod!!' />
 	</td>
-	<td width='12%' valign='top'>
+	<td style='width:12%; vertical-align:top'>
 		<input id='code[!!no!!]' name='code[!!no!!]' class='saisie-10emd' style='width:95%' type='text'   readonly='readonly' tabindex='-1' value='!!code!!' />\n
 	</td>
-	<td width='25%' valign='top'>
+	<td style='width:25%; vertical-align:top'>
 		<textarea id='lib[!!no!!]' name='lib[!!no!!]' class='saisie-10emd' style='width:95%' rows='2' wrap='virtual' readonly='readonly' tabindex='-1' >!!lib!!</textarea>
 	</td>
-	<td width='8%' valign='top'>
+	<td style='width:8%; vertical-align:top'>
 		<input id='prix[!!no!!]' name='prix[!!no!!]' class='saisie-10emd' style='width:95%;text-align:right;' type='text' value='!!prix!!' readonly='readonly' />
 	</td>
-	<td width='20%' valign='top'>
+	<td style='width:20%; vertical-align:top'>
 		<!-- select_typ -->
 	</td>
-	<td width='18%' valign='top'>
+	<td style='width:18%; vertical-align:top'>
 		<!-- select_bud -->
 	</td>
-	<td width='7%' valign='top'>
+	<td style='width:7%; vertical-align:top'>
 		&nbsp;
 	</td>
-	<td width='7%' valign='top'>
+	<td style='width:7%; vertical-align:top'>
 		<input type='hidden' id='fac[!!no!!]' name='fac[!!no!!]' value='!!fac!!' />
 		<input id='afffac[!!no!!]' name='afffac[!!no!!]' class='saisie-10emd' style='text-align:right;width:95%' type='text' value='!!fac!!' readonly='readonly' tabindex='-1' />
 	</td>
@@ -508,28 +462,28 @@ $frame_row_fa = "
 
 $frame_row_fa_arc="
 <tr>
-	<td width='3%'>
+	<td style='width:3%'>
 		<label class='etiquette' >!!no!!</label>
 	</td>
-	<td width='12%' valign='top'>
+	<td style='width:12%; vertical-align:top'>
 		<input id='code[!!no!!]' name='code[!!no!!]' class='saisie-10emd' style='width:95%' type='text'   readonly='readonly' tabindex='-1' value='!!code!!' />\n
 	</td>
-	<td width='25%' valign='top'>
+	<td style='width:25%; vertical-align:top'>
 		<textarea id='lib[!!no!!]' name='lib[!!no!!]' class='saisie-10emd' style='width:95%' rows='2' wrap='virtual' readonly='readonly' tabindex='-1' >!!lib!!</textarea>
 	</td>
-	<td width='8%' valign='top'>
+	<td style='width:8%; vertical-align:top'>
 		<input id='prix[!!no!!]' name='prix[!!no!!]' class='saisie-10emd' style='width:95%;text-align:right;' type='text' value='!!prix!!' readonly='readonly' />
 	</td>
-	<td width='20%' valign='top'>
+	<td style='width:20%; vertical-align:top'>
 		<!-- select_typ -->
 	</td>
-	<td width='18%' valign='top'>
+	<td style='width:18%; vertical-align:top'>
 		<!-- select_bud -->
 	</td>
-	<td width='7%' valign='top'>
+	<td style='width:7%; vertical-align:top'>
 		&nbsp;
 	</td>
-	<td width='7%' valign='top'>
+	<td style='width:7%; vertical-align:top'>
 		<input id='afffac[!!no!!]' name='afffac[!!no!!]' class='saisie-10emd' style='text-align:right;width:95%' type='text' value='!!fac!!' readonly='readonly' tabindex='-1' />
 	</td>
 </tr>			
@@ -537,8 +491,8 @@ $frame_row_fa_arc="
 
 //types modifiables
 $select_typ[0] = "<input type='hidden' id='typ[!!no!!]' name='typ[!!no!!]' value='!!typ!!' />
-				<input  type='text' id='lib_typ[!!no!!]' name='lib_typ[!!no!!]' class='saisie-10emr' style='width:70%;' value='!!lib_typ!!' title='!!lib_typ!!' onchange=\"openPopUp('../../../select.php?what=types_produits&caller=frame_modif&param1=typ[!!no!!]&param2=lib_typ[!!no!!]&param3=rem[!!no!!]&param4=tva[!!no!!]&id_fou=!!id_fou!!&close=1', 'select_type', 400, 400, -2, -2,'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes');\" />&nbsp;
-				<input type='button' tabindex='-1' class='bouton' value='".$msg['parcourir']."' onclick=\"openPopUp('../../../select.php?what=types_produits&caller=frame_modif&param1=typ[!!no!!]&param2=lib_typ[!!no!!]&param3=rem[!!no!!]&param4=tva[!!no!!]&id_fou=!!id_fou!!&close=1', 'select_type', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes');\" />
+				<input  type='text' id='lib_typ[!!no!!]' name='lib_typ[!!no!!]' class='saisie-10emr' style='width:70%;' value='!!lib_typ!!' title='!!lib_typ!!' onchange=\"openPopUp('../../../select.php?what=types_produits&caller=frame_modif&param1=typ[!!no!!]&param2=lib_typ[!!no!!]&param3=rem[!!no!!]&param4=tva[!!no!!]&id_fou=!!id_fou!!&close=1', 'selector');\" />&nbsp;
+				<input type='button' tabindex='-1' class='bouton' value='".$msg['parcourir']."' onclick=\"openPopUp('../../../select.php?what=types_produits&caller=frame_modif&param1=typ[!!no!!]&param2=lib_typ[!!no!!]&param3=rem[!!no!!]&param4=tva[!!no!!]&id_fou=!!id_fou!!&close=1', 'selector');\" />
 				<br />";
 if ($acquisition_gestion_tva) {
 	$select_typ[0].= "<input type='text' id='tva[!!no!!]' name='tva[!!no!!]' value='!!tva!!' class='saisie-10emd' style='width:35%;text-align:right;' readonly='readonly' />%&nbsp;";
@@ -560,9 +514,9 @@ $select_typ[1].= "
 //rubriques modifiables
 $select_rub[0] = "
 			<input type='hidden' id='rub[!!no!!]' name='rub[!!no!!]' value='!!id_rub!!' />
-			<input  type='text' id='lib_rub[!!no!!]' name='lib_rub[!!no!!]' class='saisie-10emr' style='width:95%;' value='!!lib_rub!!' title='!!lib_rub!!' onchange=\"openPopUp('../../../select.php?what=budgets&caller=frame_modif&param1=rub[!!no!!]&param2=lib_rub[!!no!!]&id_bibli=$id_bibli&id_exer='+document.getElementById('id_exer').value+'&close=1', 'select_rubriques', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes');\" />
+			<input  type='text' id='lib_rub[!!no!!]' name='lib_rub[!!no!!]' class='saisie-10emr' style='width:95%;' value='!!lib_rub!!' title='!!lib_rub!!' onchange=\"openPopUp('../../../select.php?what=budgets&caller=frame_modif&param1=rub[!!no!!]&param2=lib_rub[!!no!!]&id_bibli=$id_bibli&id_exer='+document.getElementById('id_exer').value+'&close=1', 'selector');\" />
 			<br />
-			<input type='button' tabindex='-1' class='bouton' value='".$msg['parcourir']."' onclick=\"openPopUp('../../../select.php?what=rubriques&caller=frame_modif&param1=rub[!!no!!]&param2=lib_rub[!!no!!]&id_bibli=$id_bibli&id_exer='+document.getElementById('id_exer').value+'&close=1', 'select_rubriques', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes');\" />&nbsp;";
+			<input type='button' tabindex='-1' class='bouton' value='".$msg['parcourir']."' onclick=\"openPopUp('../../../select.php?what=rubriques&caller=frame_modif&param1=rub[!!no!!]&param2=lib_rub[!!no!!]&id_bibli=$id_bibli&id_exer='+document.getElementById('id_exer').value+'&close=1', 'selector');\" />&nbsp;";
 
 //rubriques non modifiables
 $select_rub[1] = "
@@ -603,7 +557,7 @@ $bt_pay = "<input type='button' class='bouton' value='".$msg['acquisition_fac_bt
 					list_lig.document.forms['frame_modif'].submit(); 
 				} return false; \" />";
 
-$bt_audit = "<input type='button' class='bouton' value='".$msg['audit_button']."' onClick=\"openPopUp('./audit.php?type_obj=4&object_id=".$id_fac."', 'audit_popup', 700, 500, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes')\" title='".$msg['audit_button']."' />";
+$bt_audit = "<input type='button' class='bouton' value='".$msg['audit_button']."' onClick=\"openPopUp('./audit.php?type_obj=4&object_id=".$id_fac."', 'audit_popup')\" title='".$msg['audit_button']."' />";
 
 $form_search = "	<hr />
 			<div class='row'>

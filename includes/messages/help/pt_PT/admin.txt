@@ -1,5 +1,5 @@
-<h1>Administra&ccedil;&atilde;o</h1>
-<p>Acedeu ao m&oacute;dulo de administra&ccedil;&atilde;o do PMB. As opera&ccedil;&otilde;es efectuadas afectar&atilde;o toda a funcionalidade da aplica&ccedil;&atilde;o. Por favor <b>tenha cuidado</b> quando usa este m&oacute;dulo. Antes de fazer qualquer coisa aqui, pense no impacto que causar&aacute; nos dados. Na d&uacute;vida, convidamo-lo(a) a <b>enviar-nos um email</b> para <a href="mailto:pmb.user@sigb.net"><b>pmb.user@sigb.net</b></a>. Teremos todo o gosto em ajudar!</p>
+<h2>Administra&ccedil;&atilde;o</h2>
+<p>Acedeu ao m&oacute;dulo de administra&ccedil;&atilde;o do PMB. As opera&ccedil;&otilde;es efectuadas afectar&atilde;o toda a funcionalidade da aplica&ccedil;&atilde;o. Por favor <b>tenha cuidado</b> quando usa este m&oacute;dulo. Antes de fazer qualquer coisa aqui, pense no impacto que causar&aacute; nos dados. Na d&uacute;vida, convidamo-lo(a) a <b>enviar-nos um email</b> para <a href="https://pmb.community/">https://pmb.community</a>. Teremos todo o gosto em ajudar!</p>
 
 
 <h2>cat&aacute;logo</h2>

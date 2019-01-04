@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesBackup.class.php,v 1.2 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: pmbesBackup.class.php,v 1.4 2017-06-22 08:49:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,22 +11,20 @@ require_once($base_path."/admin/sauvegarde/lib/api.inc.php");
 require_once("$class_path/crypt.class.php");
 
 class pmbesBackup extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	/* Liste des groupes de tables */
-	function listGroupsTables() {
+	public function listGroupsTables() {
 		global $dbh;
 		
 		if (SESSrights & SAUV_AUTH) {
@@ -49,7 +47,7 @@ class pmbesBackup extends external_services_api_class {
 	}
 	
 	/* Liste des tables non intégrées dans les groupes */
-	function listTablesUnsaved() {
+	public function listTablesUnsaved() {
 		global $dbh;
 
 		if (SESSrights & SAUV_AUTH) {
@@ -81,7 +79,7 @@ class pmbesBackup extends external_services_api_class {
 	}
 	
 	/* Lancement d'une sauvegarde */
-	function launchBackup($id_sauvegarde) {
+	public function launchBackup($id_sauvegarde) {
 		global $base_path, $dbh,$PMBuserid, $PMBusername, $msg;
 		
 		if (SESSrights & SAUV_AUTH) {
@@ -361,6 +359,26 @@ class pmbesBackup extends external_services_api_class {
 			write_log("Backup complete",$logid);
 			$report[] = "Backup complete";
 			
+			//Récupération de la taille du fichier
+			$tmp_msg = '';
+			if ($tmp_size = filesize($path_name)) {
+				if ($tmp_size < 1000) {
+					$tmp_msg = "Backup size : ".round($tmp_size,3)." bytes";
+				} else {
+					$tmp_size = $tmp_size / 1024;
+					if ($tmp_size < 1000) {
+						$tmp_msg = "Backup size : ".round($tmp_size,3)." Ko";
+					} else {
+						$tmp_size = $tmp_size / 1024;
+						$tmp_msg = "Backup size : ".round($tmp_size,3)." Mo";
+					}
+				}
+			}
+			if (trim($tmp_msg)) {
+				write_log($tmp_msg,$logid);
+				$report[] = $tmp_msg;
+			}
+			
 			//Succeed
 			$requete="update sauv_log set sauv_log_succeed=1 where sauv_log_id=".$logid;
 			@pmb_mysql_query($requete);
@@ -433,7 +451,7 @@ class pmbesBackup extends external_services_api_class {
 	}
 	
 	/* liste des jeux de sauvegardes */
-	function listSetBackup() {
+	public function listSetBackup() {
 		global $dbh;
 			
 		if (SESSrights & SAUV_AUTH) {
@@ -463,7 +481,7 @@ class pmbesBackup extends external_services_api_class {
 		}
 	}
 	
-	function listSauvPerformed() {
+	public function listSauvPerformed() {
 		global $dbh;
 		
 		if (SESSrights & SAUV_AUTH) {
@@ -494,7 +512,7 @@ class pmbesBackup extends external_services_api_class {
 		}
 	}
 	
-	function deleteSauvPerformed($ids_log) {
+	public function deleteSauvPerformed($ids_log) {
 		global $base_path;
 		
 		if (SESSrights & SAUV_AUTH) {

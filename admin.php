@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: admin.php,v 1.49 2015-06-26 13:15:12 dgoron Exp $
+// $Id: admin.php,v 1.65 2018-12-19 13:59:19 ngantier Exp $
 
 // définition du minimum nécessaire 
 $base_path=".";                            
@@ -15,7 +15,6 @@ require_once ("$base_path/includes/init.inc.php");
 require("$include_path/account.inc.php");
 require_once("$class_path/iso2709.class.php");
 require("$include_path/templates/admin.tpl.php");
-
 // remplacement de !!help_link!! par le lien correspondant
 if ($pmb_show_help) {
 	$pos = strrpos($_SERVER["SCRIPT_NAME"], "/") + 1;
@@ -213,7 +212,59 @@ switch($categ) {
 		$admin_layout = str_replace('!!menu_contextuel!!', $admin_menu_loans, $admin_layout);
 		include("./admin/loans/main.inc.php");
 		break;
-default:
+	case 'pnb':
+		$admin_layout = str_replace('!!menu_contextuel!!', $admin_menu_pnb, $admin_layout);
+		include("./admin/pnb/main.inc.php");
+		break;
+	case 'scan_request':
+		$admin_layout = str_replace('!!menu_contextuel!!', $admin_menu_scan_request, $admin_layout);
+		include("./admin/scan_request/main.inc.php");
+		break;
+	case 'plugin' :
+		$plugins = plugins::get_instance();
+		$file = $plugins->proceed("admin",$plugin,$sub,$admin_layout);
+		if($file){
+			include $file;
+		}
+		break;
+	case 'material':
+		$admin_layout = str_replace ( '!!menu_contextuel!!', $admin_menu_material, $admin_layout );
+		include("./admin/nomenclature/main.inc.php");
+		break;
+	case 'contact_form':
+		$admin_layout = str_replace ( '!!menu_contextuel!!', $admin_menu_contact_form, $admin_layout );
+		include("./admin/contact_form/main.inc.php");
+		break;
+	case 'search_universes':  
+		$admin_layout = str_replace ( '!!menu_contextuel!!', $admin_menu_search_universes, $admin_layout );
+		if ($opac_search_universes_activate) {
+		    require_once($class_path."/modules/module_admin.class.php");
+		    $module_admin = new module_admin();
+		    $module_admin->set_url_base($base_path."/admin.php?categ=search_universes");
+		    if(!isset($id)) $id = 0;
+		    $module_admin->set_object_id($id);
+		    $module_admin->proceed_search_universes();
+		}
+		break;
+	case 'mails_waiting':
+		$admin_layout = str_replace ( '!!menu_contextuel!!', '', $admin_layout );
+		print $admin_layout;
+		if ($pmb_mails_waiting) {
+			require_once($class_path."/modules/module_admin.class.php");
+			$module_admin = new module_admin();
+			$module_admin->set_url_base($base_path.'/admin.php?categ='.$categ.'&sub='.$sub);
+			$module_admin->proceed_mails_waiting();
+		}
+		break;
+	case 'vignette':
+	    $admin_layout = str_replace('!!menu_contextuel!!', $admin_vignette_menu, $admin_layout);
+	    include("./admin/vignette/main.inc.php");
+	    break;
+	case 'composed_vedettes':
+		$admin_layout = str_replace ( '!!menu_contextuel!!', '', $admin_layout );
+		include("./admin/composed_vedettes/main.inc.php");
+		break;
+	default:
 		$admin_layout = str_replace('!!menu_contextuel!!', "", $admin_layout);
 		$admin_layout = str_replace('!!menu_sous_rub!!', "", $admin_layout);
 		print $admin_layout;

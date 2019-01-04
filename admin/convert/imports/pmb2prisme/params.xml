@@ -7,10 +7,10 @@
 	<!-- Type de l'entrée -->
 	<input type="xml" rootelement="*" noticeelement="notice" specialexport="yes"/>
 	<!-- Type de sortie -->
-	<output importable="no" type="custom" script="output_prisme.inc.php" suffix="txt" mimetype="application/text"/>
+	<output importable="no" type="custom" script="pmb2prisme_output.class.php" suffix="txt" mimetype="application/text"/>
 	<step type="custom">
-		<script>to_txt.inc.php</script>
-		<callback>convert_txt_prisme</callback>
+		<script>pmb2prisme.class.php</script>
+		<callback>convert_data</callback>
 		<op>EPIRES-CLERMONT FERRAND</op>
 	</step>
 </params>

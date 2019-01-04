@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: view_log.inc.php,v 1.7 2009-05-16 11:12:04 dbellamy Exp $
+// $Id: view_log.inc.php,v 1.10 2017-11-21 12:01:00 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -76,7 +76,7 @@ if($fp=fopen($logfile, 'r')) {
 				case E_COMPILE_ERROR:
 				case E_USER_ERROR:
 				case E_ERROR;
-					$evt_icon="<img src='./images/alert.gif' align='left'>";
+					$evt_icon="<img src='".get_url_icon('alert.gif')."' class='align_left'>";
 					$bgcolor='#ffffff';
 					break;
 				case E_PARSE:
@@ -84,17 +84,17 @@ if($fp=fopen($logfile, 'r')) {
 				case E_CORE_WARNING:
 				case E_USER_WARNING:
 				case E_WARNING:
-					$evt_icon="<img src='./images/warning.gif' align='left'>";
+					$evt_icon="<img src='".get_url_icon('warning.gif')."' class='align_left'>";
 					$bgcolor='#ffffff';
 					break;
 				case E_USER_NOTICE:
 				case E_NOTICE:
-					$evt_icon="<img src='./images/info.gif' align='left'>";
+					$evt_icon="<img src='".get_url_icon('info.gif')."' class='align_left'>";
 					$bgcolor='#e0e0e0';
 					break;
 			}
 
-			print "<tr><td valign='top' bgcolor='$bgcolor'>$evt_icon";
+			print "<tr><td style='vertical-align:top' bgcolor='$bgcolor'>$evt_icon";
 				print '<b>'.$valeur['errortype'].'</b>&nbsp;';
 			print $valeur['datetime'];
 			print '<br />'.$valeur['errormsg'].'<br />';

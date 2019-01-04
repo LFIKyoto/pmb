@@ -4,10 +4,11 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.1.4.1 2015-10-13 07:44:54 dgoron Exp $ -->
+$Id: manifest.xml,v 1.4 2017-06-05 09:56:07 vtouchard Exp $ -->
 
 <manifest>
-	<name>Liste d'items (Veille documentaire)</name>
+	<name lang="fr_FR">Liste d'items (Veille documentaire)</name>
+	<name lang="en_UK">Items list (Documentary watch)</name>
 	<author>
 		<name>Dimitri GORON</name>
 		<organisation>PMB Services</organisation>
@@ -24,6 +25,9 @@ $Id: manifest.xml,v 1.1.4.1 2015-10-13 07:44:54 dgoron Exp $ -->
 			<view>cms_module_itemslist_view_django</view>
 			<view>cms_module_itemslist_view_django_by_tags</view>
 		</views>
+		<filters>
+			<filter>cms_module_itemslist_filter_by_interest</filter>
+		</filters>
 		<conditions>
 			<condition>cms_module_common_condition_global_var</condition>
 		</conditions>

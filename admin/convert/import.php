@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: import.php,v 1.7 2008-07-15 15:44:06 ohennequin Exp $
+// $Id: import.php,v 1.8 2017-02-17 15:34:01 dgoron Exp $
 
 
 //Interface de lancement de l'import
@@ -19,7 +19,7 @@ function _item_($param) {
 	global $catalog_visible;
 	
 	$catalog[]=$param['NAME'];
-	$catalog_visible[]=$param['VISIBLE'];
+	$catalog_visible[]=(isset($param['VISIBLE']) ? $param['VISIBLE'] : '');
 }
 
 //Lecture des différents imports possibles

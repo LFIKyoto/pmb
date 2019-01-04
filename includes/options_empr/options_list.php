@@ -2,15 +2,18 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: options_list.php,v 1.30 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: options_list.php,v 1.32 2017-02-24 15:34:34 dgoron Exp $
 
 //Gestion des options de type list
 $base_path="../..";
 $base_auth = "CATALOGAGE_AUTH|ADMINISTRATION_AUTH";
+$base_title = "";
 include($base_path."/includes/init.inc.php");
 
 require_once("$include_path/parser.inc.php");
 require_once("$include_path/fields_empr.inc.php");
+
+if(!isset($first)) $first = '';
 
 function tonum($n) {
 	return $n*1;
@@ -21,26 +24,27 @@ $options=stripslashes($options);
 if ($first==1) {
 	$param["FOR"]="list";
 	if ($MULTIPLE=="yes")
-		$param[MULTIPLE][0][value]="yes";
+		$param['MULTIPLE'][0]['value']="yes";
 	else
-		$param[MULTIPLE][0][value]="no";
+		$param['MULTIPLE'][0]['value']="no";
 
 	if ($AUTORITE=="yes")
-		$param[AUTORITE][0][value]="yes";
+		$param['AUTORITE'][0]['value']="yes";
 	else
-		$param[AUTORITE][0][value]="no";
+		$param['AUTORITE'][0]['value']="no";
 	if ($CHECKBOX=="yes")
-		$param[CHECKBOX][0][value]="yes";	
+		$param['CHECKBOX'][0]['value']="yes";	
 	else
-		$param[CHECKBOX][0][value]="no";
+		$param['CHECKBOX'][0]['value']="no";
 	if ($NUM_AUTO=="yes")
-		$param[NUM_AUTO][0][value]="yes";
+		$param['NUM_AUTO'][0]['value']="yes";
 	else
-		$param[NUM_AUTO][0][value]="no";
+		$param['NUM_AUTO'][0]['value']="no";
 	/*
 	 * On regarde si il n'y a pas un doubon dans les valeurs
 	 */
-	 //On enlève les valeurs vide
+	//On enlève les valeurs vide
+	if (!$VALUE) $VALUE = array();
 	foreach ( $VALUE as $key => $value ) {
        if($value === ""){
        		unset($VALUE[$key]);
@@ -64,11 +68,13 @@ if ($first==1) {
 		exit();
 	}
 	
-	$requete="delete from ".$_custom_prefixe_."_custom_lists where ".$_custom_prefixe_."_custom_champ=".$idchamp;
-	pmb_mysql_query($requete);
-	$requete="SELECT datatype FROM ".$_custom_prefixe_."_custom WHERE idchamp = $idchamp";
-	$resultat = pmb_mysql_query($requete);
-	$dtype = pmb_mysql_result($resultat,0,0);
+	if ($idchamp) {
+		$requete="delete from ".$_custom_prefixe_."_custom_lists where ".$_custom_prefixe_."_custom_champ=".$idchamp;
+		pmb_mysql_query($requete);
+		$requete="SELECT datatype FROM ".$_custom_prefixe_."_custom WHERE idchamp = $idchamp";
+		$resultat = pmb_mysql_query($requete);
+		$dtype = pmb_mysql_result($resultat,0,0);
+	}
 	for ($i=0; $i<count($ITEM); $i++) {
 		if($VALUE[$i] !== "") {
 			/* On ne met pas a jour car on ne peut modifier que les valeurs qui ne sont pas utilisées*/
@@ -80,10 +86,10 @@ if ($first==1) {
 		}			
 	}
 	
-	$param[UNSELECT_ITEM][0][VALUE]=stripslashes($UNSELECT_ITEM_VALUE);
-	$param[UNSELECT_ITEM][0][value]="<![CDATA[".stripslashes($UNSELECT_ITEM_LIB)."]]>";	
-	$param[DEFAULT_VALUE][0][value]=stripslashes($DEFAULT_VALUE);
-	$param[CHECKBOX_NB_ON_LINE][0][value]=stripslashes($CHECKBOX_NB_ON_LINE);
+	$param['UNSELECT_ITEM'][0]['VALUE']=stripslashes($UNSELECT_ITEM_VALUE);
+	$param['UNSELECT_ITEM'][0]['value']="<![CDATA[".stripslashes($UNSELECT_ITEM_LIB)."]]>";	
+	$param['DEFAULT_VALUE'][0]['value']=stripslashes($DEFAULT_VALUE);
+	$param['CHECKBOX_NB_ON_LINE'][0]['value']=stripslashes($CHECKBOX_NB_ON_LINE);
 	$options=array_to_xml($param,"OPTIONS");
 	?>
 	<script>
@@ -93,23 +99,31 @@ if ($first==1) {
 	</script>
 	<?php
 } else {
-	print "<h3>".$msg[procs_options_param].$name."</h3><hr />";
+	print "<h3>".$msg['procs_options_param'].$name."</h3><hr />";
 	if (!$first) {
 		if($options){
 			$param=_parser_text_no_function_("<?xml version='1.0' encoding='".$charset."'?>\n".$options,"OPTIONS");
 		}
-		if ($param["FOR"]!="list")  {
+		if (!isset($param["FOR"]) || $param["FOR"]!="list")  {
 			$param=array();
 			$param["FOR"]="list";
+			$param['MULTIPLE'][0]['value'] = '';
+			$param['AUTORITE'][0]['value'] = '';
+			$param['CHECKBOX'][0]['value'] = '';
+			$param['CHECKBOX_NB_ON_LINE'][0]['value'] = '';
+			$param['NUM_AUTO'][0]['value'] = '';
+			$param['UNSELECT_ITEM'][0]['VALUE'] = '';
+			$param['UNSELECT_ITEM'][0]['value'] = '';
+			$param['DEFAULT_VALUE'][0]['value'] = '';
 		}
-		$MULTIPLE=$param[MULTIPLE][0][value];
-		$AUTORITE=$param[AUTORITE][0][value];
-		$CHECKBOX=$param[CHECKBOX][0][value];
-		$CHECKBOX_NB_ON_LINE=$param[CHECKBOX_NB_ON_LINE][0][value];
-		$NUM_AUTO=$param[NUM_AUTO][0][value];
-		$UNSELECT_ITEM_VALUE=$param[UNSELECT_ITEM][0][VALUE];
-		$UNSELECT_ITEM_LIB=$param[UNSELECT_ITEM][0][value];
-		$DEFAULT_VALUE=$param[DEFAULT_VALUE][0][value];
+		$MULTIPLE=$param['MULTIPLE'][0]['value'];
+		$AUTORITE=$param['AUTORITE'][0]['value'];
+		$CHECKBOX=$param['CHECKBOX'][0]['value'];
+		$CHECKBOX_NB_ON_LINE=$param['CHECKBOX_NB_ON_LINE'][0]['value'];
+		$NUM_AUTO=$param['NUM_AUTO'][0]['value'];
+		$UNSELECT_ITEM_VALUE=$param['UNSELECT_ITEM'][0]['VALUE'];
+		$UNSELECT_ITEM_LIB=$param['UNSELECT_ITEM'][0]['value'];
+		$DEFAULT_VALUE=$param['DEFAULT_VALUE'][0]['value'];
 		
 		//Récupération des valeurs de la liste
 		if ($idchamp) {
@@ -205,34 +219,34 @@ if ($first==1) {
 				<input type="hidden" name="_custom_prefixe_" value="<?php echo $_custom_prefixe_; ?>">
 				<table class='table-no-border' width=100%>
 					<tr>
-						<td><?php echo $msg[procs_options_liste_multi]; ?></td>
+						<td><?php echo $msg['procs_options_liste_multi']; ?></td>
 						<td><input type="checkbox" value="yes" name="MULTIPLE" <?php if ($MULTIPLE=="yes") echo "checked"; ?>></td>
 					</tr>
 					<tr>
-						<td><?php echo $msg[pprocs_options_liste_authorities]; ?></td>
+						<td><?php echo $msg['pprocs_options_liste_authorities']; ?></td>
 						<td><input type="checkbox" value="yes" name="AUTORITE" <?php if ($AUTORITE=="yes") echo "checked"; ?>></td>
 					</tr>
 					<tr>
-						<td><?php echo $msg[pprocs_options_liste_checkbox]; ?></td>
+						<td><?php echo $msg['pprocs_options_liste_checkbox']; ?></td>
 						<td>
 							<input type="checkbox" value="yes" name="CHECKBOX" <?php if ($CHECKBOX=="yes") echo "checked"; ?>/>
-							&nbsp;<?php echo $msg[pprocs_options_liste_checkbox_nb_on_line]; ?><input class='saisie-2em' type="text" name="CHECKBOX_NB_ON_LINE" value="<?php echo htmlentities($CHECKBOX_NB_ON_LINE,ENT_QUOTES,$charset); ?>"/>
+							&nbsp;<?php echo $msg['pprocs_options_liste_checkbox_nb_on_line']; ?><input class='saisie-2em' type="text" name="CHECKBOX_NB_ON_LINE" value="<?php echo htmlentities($CHECKBOX_NB_ON_LINE,ENT_QUOTES,$charset); ?>"/>
 						</td>					
 					</tr>					
 					<tr>
-						<td><?php echo $msg[num_auto_list]; ?></td>
+						<td><?php echo $msg['num_auto_list']; ?></td>
 						<td><input type="checkbox" value="yes" name="NUM_AUTO" <?php if ($NUM_AUTO=="yes") echo "checked"; ?>></td>
 					</tr>
 					<tr>
-						<td><?php echo $msg[procs_options_choix_vide]; ?></td>
-						<td><?php echo $msg[procs_options_value]; ?> : <input type="text" size="5" name="UNSELECT_ITEM_VALUE" value="<?php echo htmlentities($UNSELECT_ITEM_VALUE,ENT_QUOTES,$charset); ?>">&nbsp;<?php echo $msg[procs_options_label]; ?> : <input type="text" name="UNSELECT_ITEM_LIB" value="<?php echo htmlentities($UNSELECT_ITEM_LIB,ENT_QUOTES,$charset); ?>"></td>
+						<td><?php echo $msg['procs_options_choix_vide']; ?></td>
+						<td><?php echo $msg['procs_options_value']; ?> : <input type="text" size="5" name="UNSELECT_ITEM_VALUE" value="<?php echo htmlentities($UNSELECT_ITEM_VALUE,ENT_QUOTES,$charset); ?>">&nbsp;<?php echo $msg['procs_options_label']; ?> : <input type="text" name="UNSELECT_ITEM_LIB" value="<?php echo htmlentities($UNSELECT_ITEM_LIB,ENT_QUOTES,$charset); ?>"></td>
 					</tr>
 					<tr>
 						<td><?php echo $msg["proc_options_default_value"]; ?></td>
-						<td><?php echo $msg[procs_options_value]; ?> : <input type="text" class="saisie-10em" name="DEFAULT_VALUE" value="<?php echo htmlentities($DEFAULT_VALUE,ENT_QUOTES,$charset);?>"></td>
+						<td><?php echo $msg['procs_options_value']; ?> : <input type="text" class="saisie-10em" name="DEFAULT_VALUE" value="<?php echo htmlentities($DEFAULT_VALUE,ENT_QUOTES,$charset);?>"></td>
 					</tr>
 				</table>
-			<hr /><?php echo $msg[procs_options_liste_options]; ?><br />
+			<hr /><?php echo $msg['procs_options_liste_options']; ?><br />
 	<?php 
 	if ($idchamp) {
 		?>
@@ -262,8 +276,8 @@ if ($first==1) {
 						}
 					}
 				}
-				echo "<tr><td ".(!$is_deletable?"title='".htmlentities($msg[perso_field_used],ENT_QUOTES,$charset)."' ":"")."><input type=\"hidden\" name=\"EXVAL[]\" value=\"".htmlentities($VALUE[$i],ENT_QUOTES,$charset)."\"><input type=\"checkbox\" name=\"DEL[$n]\" value=\"1\" ".(!$is_deletable?"disabled='disabled' ":"")."></td>
-					<td ".(!$is_deletable?"title='".htmlentities($msg[perso_field_used],ENT_QUOTES,$charset)."' ":"")."><input class='saisie-10em' type=\"text\" value=\"".htmlentities($VALUE[$i],ENT_QUOTES,$charset)."\" name=\"VALUE[]\" ".(!$is_deletable?"readonly='readonly' ":"")."></td>
+				echo "<tr><td ".(!$is_deletable?"title='".htmlentities($msg['perso_field_used'],ENT_QUOTES,$charset)."' ":"")."><input type=\"hidden\" name=\"EXVAL[]\" value=\"".htmlentities($VALUE[$i],ENT_QUOTES,$charset)."\"><input type=\"checkbox\" name=\"DEL[$n]\" value=\"1\" ".(!$is_deletable?"disabled='disabled' ":"")."></td>
+					<td ".(!$is_deletable?"title='".htmlentities($msg['perso_field_used'],ENT_QUOTES,$charset)."' ":"")."><input class='saisie-10em' type=\"text\" value=\"".htmlentities($VALUE[$i],ENT_QUOTES,$charset)."\" name=\"VALUE[]\" ".(!$is_deletable?"readonly='readonly' ":"")."></td>
 					<td><input class='saisie-20em' type=\"text\" value=\"".htmlentities($ITEM[$i],ENT_QUOTES,$charset)."\" name=\"ITEM[]\"></td>";
 				echo "<td><input class='saisie-10em' type=\"text\" value=\"".htmlentities($ORDRE[$i],ENT_QUOTES,$charset)."\" name=\"ORDRE[]\"></td>";
 				echo "</tr>";
@@ -279,8 +293,8 @@ if ($first==1) {
 	<?php 
 	if ($idchamp) {
 		?>
-		<input class="bouton" type="submit" value="<?php echo $msg[ajouter]; ?>" onClick="this.form.first.value=2">&nbsp;
-		<input class="bouton" type="submit" value="<?php echo $msg[procs_options_suppr_options_coche]; ?>" onClick="this.form.first.value=3">&nbsp;
+		<input class="bouton" type="submit" value="<?php echo $msg['ajouter']; ?>" onClick="this.form.first.value=2">&nbsp;
+		<input class="bouton" type="submit" value="<?php echo $msg['procs_options_suppr_options_coche']; ?>" onClick="this.form.first.value=3">&nbsp;
 		<input class="bouton" type="submit" value="<?php echo $msg["proc_options_sort_list"];?>" onClick="this.form.first.value=4">&nbsp;
 		<?php 
 	}

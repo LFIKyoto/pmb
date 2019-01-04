@@ -1,4 +1,4 @@
-<h1>Módulo de Administração</h1>
+<h2>Módulo de Administração</h2>
 <p>Este módulo afeta o funcionamento geral da aplicação. Tenha <b>cuidado</b> ao utilizá-lo. Antes de executar qualquer comando, pense no impacto que seus dados sofrerão. 
 
 <h2>Exemplares/Registros</h2>

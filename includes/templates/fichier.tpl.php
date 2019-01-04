@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fichier.tpl.php,v 1.3 2012-02-09 12:47:51 dbellamy Exp $
+// $Id: fichier.tpl.php,v 1.4 2016-03-29 15:31:33 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -24,7 +24,10 @@ $fichier_menu = "
 		<li><a href='./fichier.php?categ=gerer&mode=champs'>".$msg['fichier_gestion_champs']."</a></li>
 		
 		<li><a href='./fichier.php?categ=gerer&mode=reindex'>".$msg['fichier_gestion_reindex']."</a></li>				
-	</ul>	
+	</ul>";
+	
+$plugins = plugins::get_instance();
+$fichier_menu.= $plugins->get_menu('fichier')."	
 </div>
 ";
 

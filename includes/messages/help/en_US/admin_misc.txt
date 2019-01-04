@@ -1,4 +1,4 @@
-<h1>Tools</h1>
+<h2>Tools</h2>
 <p>You'll find here the following options. </p>
 <p>
 <b>Database cleanup</b> to clean the database ex : delete volumes without items, etc.

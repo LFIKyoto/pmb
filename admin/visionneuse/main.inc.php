@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.2 2010-07-02 09:45:56 arenou Exp $
+// $Id: main.inc.php,v 1.3 2017-07-21 12:41:38 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -23,7 +23,10 @@ if(sizeof($mimetypeConf)==0){
 
 switch($sub) {
 	case 'class':
-		$admin_layout = str_replace('!!menu_sous_rub!!', $msg["visionneuse_admin_class"].($quoi != "" ? " > $quoi" : ""), $admin_layout);
+		if (!isset($quoi)) {
+			$quoi = '';
+		}
+		$admin_layout = str_replace('!!menu_sous_rub!!', $msg["visionneuse_admin_class"].(($quoi != "") ? " > $quoi" : ""), $admin_layout);
 		print $admin_layout;
 		echo window_title($database_window_title.$msg["visionneuse_admin_menu"].$msg[1003].$msg[1001]);
 		include('./admin/visionneuse/class_dispo.inc.php');

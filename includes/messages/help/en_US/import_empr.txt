@@ -6,23 +6,19 @@
 
 $content = "
   <p><b>PMB : import-mini-howto</b> </p>
-  <p><strong>Dans la colone de  gauche</strong>, il y a le nom des champs de la base de donn&eacute;e.<br />
-    C'est dans ces champs que l'on va entrer les l'information sur les lecteurs.</p>
-  <p><strong>Dans la colone du centre</strong> figure la position du champ dans
+  <p><strong>Dans la colonne de  gauche</strong> sont pr&eacute;sents le nom des champs de la base de donn&eacute;es pour y ins&eacute;rer les informations des lecteurs &agrave; importer.</p>
+  <p><strong>Dans la colonne du centre</strong> figure la position du champ dans
     le fichier ex:<br />
-    2003,&quot;3&quot;,&quot;Archambault&quot;,... <br />2003 est la 1&egrave;re position,
-    c'est l'ann&eacute;e o&ugrave; l'&eacute;tudiant 
-    est entr&eacute; &agrave; l'&eacute;cole, &quot;3&quot; est en 2e position, c'est la session en cours de
-    l'&eacute;tudiant 
-    &quot;Archambault&quot; est la 3e position, c'est le nom de famille de l'&eacute;tudiant.</p>
-  <p><strong>Dans la colone de droite</strong>, c'est un exemple de la premi&egrave;re
-    ligne du fichier, elle peut &ecirc;tre 
-    tr&egrave;s utile s'i l'on veut chang&eacute; la position dans le fichier. Ne pas oublier
-    de cliquer sur 
-    Actualiser pour que les changements soient pris en compte.</p>
+    &quot;12527&quot;,&quot;Archambault&quot;,&quot;rue de... <br />
+    &quot;12528&quot;,&quot;Baudin&quot;,&quot;rue de... <br />
+    12527 est la 1&egrave;re position,
+    c'est le code-barres du lecteur, la 2e position est le nom de famille du lecteur, la 3e son adresse, etc..</p>
+  <p><strong>La colonne de droite</strong> correspond au d&eacute;coupage de la premi&egrave;re
+    ligne du fichier.</p>
   <p><strong>Les champs en rouge</strong>, sont des champ non modifiables par
     l'utilisateur, ils 
     vont se remplir tout seul.</p>
+  <p>Les champs marqu&eacute;s du signe * doivent &ecirc;tre imp&eacute;rativement renseign&eacute;s.</p>
 ";
 
 print $content;

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bulletin_display.inc.php,v 1.56.2.3 2015-09-24 15:48:15 dgoron Exp $
+// $Id: bulletin_display.inc.php,v 1.88 2018-11-21 10:48:33 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -16,6 +16,25 @@ require_once($base_path.'/classes/notice_affichage.class.php');
 require_once($include_path."/resa_func.inc.php"); 
 require_once($base_path.'/classes/notice.class.php');
 require_once($class_path."/acces.class.php");
+require_once($class_path."/scan_request/scan_request.class.php");
+require_once($class_path."/map/map_locations_controler.class.php");
+require_once($include_path."/templates/notice_display.tpl.php");
+require_once($class_path."/collstate.class.php");
+require_once($class_path."/notice_relations_collection.class.php");
+require_once($class_path."/filter_results.class.php");
+
+function get_articles_from_bulletin($id) {
+	$articles = array();
+	$query = "SELECT * FROM analysis, notices WHERE analysis_bulletin='$id' AND notice_id = analysis_notice order by analysis_notice";
+	$result = pmb_mysql_query($query);
+	if (pmb_mysql_num_rows($result)) {
+		while(($article = pmb_mysql_fetch_array($result))) {
+			$articles[] = $article["analysis_notice"];
+		}
+	}
+	$filter_results = new filter_results(implode(',', $articles));
+	return $filter_results->get_array_results();
+}
 
 /*
  * gestion des droits...
@@ -33,7 +52,7 @@ if ($gestion_acces_active==1 && ($gestion_acces_empr_docnum || $gestion_acces_em
 		$dom_3= $ac->setDomain(3);
 	}
 }
-
+$id+=0;
 $requete = "SELECT bulletin_id, bulletin_numero, bulletin_notice, mention_date, date_date, bulletin_titre, bulletin_cb, date_format(date_date, '".$msg["format_date_sql"]."') as aff_date_date,num_notice FROM bulletins WHERE bulletin_id='$id'";
 
 $resdep = @pmb_mysql_query($requete, $dbh);
@@ -53,7 +72,16 @@ while(($obj=pmb_mysql_fetch_array($resdep))) {
 			if($statut_temp->notice_visible_opac_abon && !$_SESSION['id_empr_session'])	$acces_v=FALSE;
 		} else 	$acces_v=FALSE;
 	}
-	
+	//Visible - Mais est-elle visible dans la vue OPAC ?
+	if($acces_v && $opac_opac_view_activate) {
+		if(!empty($_SESSION["opac_view"]) && !empty($_SESSION["opac_view_query"])){
+			$query = "select opac_view_num_notice from opac_view_notices_".$_SESSION["opac_view"]." where opac_view_num_notice =".$perio_id;
+			$result = pmb_mysql_query($query);
+			if(!pmb_mysql_num_rows($result)) {
+				$acces_v = FALSE;
+			}
+		}
+	}
 	if($id && $acces_v) {
 		//on peut voir les bulletins de ce périodique...
 		//on regarde si on a vraiment de voir ce bulletin en particulier (si on a une notice de bulletin)
@@ -68,7 +96,17 @@ while(($obj=pmb_mysql_fetch_array($resdep))) {
 					if(!$statut_temp->notice_visible_opac) $acces_v=FALSE;
 					if($statut_temp->notice_visible_opac_abon && !$_SESSION['id_empr_session'])	$acces_v=FALSE;
 				} else 	$acces_v=FALSE;
-			}	
+			}
+			//Visible - Mais est-elle visible dans la vue OPAC ?
+			if($acces_v && $opac_opac_view_activate) {
+				if(!empty($_SESSION["opac_view"]) && !empty($_SESSION["opac_view_query"])){
+					$query = "select opac_view_num_notice from opac_view_notices_".$_SESSION["opac_view"]." where opac_view_num_notice =".$obj['num_notice'];
+					$result = pmb_mysql_query($query);
+					if(!pmb_mysql_num_rows($result)) {
+						$acces_v = FALSE;
+					}
+				}
+			}
 		}
 		if($acces_v){
 			//on est maintenant sur que ce bulletin est visible !
@@ -102,8 +140,8 @@ while(($obj=pmb_mysql_fetch_array($resdep))) {
 						if(!$notice->eformat) $info_bulle=$msg["open_link_url_notice"];
 						else $info_bulle=$notice->eformat;
 						// ajout du lien pour les ressources électroniques
-						$res_print_link .= "&nbsp;<span class='notice_link'><a href=\"".$notice->lien."\" target=\"__LINK__\" type=\"external_url_notice\">";
-						$res_print_link .= "<img src=\"".get_url_icon('globe.gif', 1)."\" border=\"0\" align=\"middle\" hspace=\"3\"";
+						$res_print_link .= "&nbsp;<span class='notice_link'><a href=\"".$notice->lien."\" target=\"_blank\" type=\"external_url_notice\">";
+						$res_print_link .= "<img src=\"".get_url_icon('globe.gif', 1)."\" style='border:0px' class='align_middle' hspace=\"3\"";
 						$res_print_link .= " alt=\"";
 						$res_print_link .= $info_bulle;
 						$res_print_link .= "\" title=\"";
@@ -136,7 +174,7 @@ while(($obj=pmb_mysql_fetch_array($resdep))) {
 				}else{
 					//on cherches des documents numériques
 					if($gestion_acces_active==1 && $gestion_acces_empr_docnum == 1){
-						$join = $dom_3->getJoin($_SESSION['id_empr_sesssion'], 16, explnum_id);
+						$join = $dom_3->getJoin($_SESSION['id_empr_session'], 16, explnum_id);
 					}else{
 						$join = " join explnum_statut on explnum_docnum_statut = id_explnum_statut and (".($_SESSION['id_empr_session'] ? "explnum_visible_opac = 1": "explnum_visible_opac = 1 and explnum_visible_opac_abon = 0").") ";
 					}
@@ -165,9 +203,9 @@ while(($obj=pmb_mysql_fetch_array($resdep))) {
 					}
 					
 					if($opac_visionneuse_allow){
-						$res_print_docnum="&nbsp;<a href='#' onclick=\"open_visionneuse(sendToVisionneuse,".$explnumrow->explnum_id.");return false;\" alt='' title=''>";
+						$res_print_docnum="&nbsp;<a href='#' onclick=\"open_visionneuse(sendToVisionneuse,".$explnumrow->explnum_id.");return false;\" title=''>";
 					}else{
-						$res_print_docnum= "&nbsp;<a href=\"./doc_num.php?explnum_id=".$explnumrow->explnum_id."\" target=\"__LINK__\">";
+						$res_print_docnum= "&nbsp;<a href=\"./doc_num.php?explnum_id=".$explnumrow->explnum_id."\" target=\"_blank\">";
 					}
 					$res_print_docnum .= "<img src=\"".get_url_icon("globe_orange.png")."\" ";
 					$res_print_docnum .= " alt=\"";
@@ -178,7 +216,7 @@ while(($obj=pmb_mysql_fetch_array($resdep))) {
 					$res_print_docnum .= "</a>";
 				}elseif($nb_docnum > 1){
 					$info_bulle=$msg["info_docs_num_notice"];
-					$res_print_docnum = "&nbsp;<a href='#docnum'><img src=\"".get_url_icon("globe_rouge.png")."\" alt=\"".htmlentities($info_bulle,ENT_QUOTES,$charset)."\" \" title=\"".htmlentities($info_bulle,ENT_QUOTES,$charset)."\"/></a>";
+					$res_print_docnum = "&nbsp;<a href='#docnum'><img src=\"".get_url_icon("globe_rouge.png")."\" title=\"".htmlentities($info_bulle,ENT_QUOTES,$charset)."\" alt=\"\"/></a>";
 				}
 			}
 			
@@ -192,25 +230,29 @@ while(($obj=pmb_mysql_fetch_array($resdep))) {
 			}
 			$notice3->fetch_visibilite();
 			if (!$icon) $icon="icon_per.gif";
+			if (!isset($icon_doc)) {
+				$icon_doc = marc_list_collection::get_instance('icondoc');
+				$icon_doc = $icon_doc->table;
+			}
 			$icon = $icon_doc["b".$typdocchapeau];
 			
 			$num_notice=$obj['num_notice'];
 			
 			//carrousel pour la navigation
 			if($opac_show_bulletin_nav)
-				$res_print = do_carroussel($obj);
+				$res_print = do_carrousel($obj);
 			else $res_print="";
 			
 			if ($opac_notices_format != AFF_ETA_NOTICES_TEMPLATE_DJANGO) {
 				//$res_print .= "<h3><img src=./images/$icon /> ".$notice3->print_resume(1,$css)."."." <b>".$obj["bulletin_numero"]."</b>".($nb_docnum ? "&nbsp;<a href='#docnum'>".($nb_docnum > 1 ? "<img src='./images/globe_rouge.png' />" : "<img src='./images/globe_orange.png' />")."</a>" : "")."</h3>\n";
-				$res_print .= "<h3><img src='".get_url_icon($icon)."' /> ".$notice3->print_resume(1,$css)."."." <b>".$obj["bulletin_numero"]."</b>";
+				$res_print .= "<div class='bulletin_header'><h3><img src='".get_url_icon($icon)."' alt=''/> ".$notice3->print_resume(1,$css)."."." <b>".$obj["bulletin_numero"]."</b>";
 				if($res_print_link){
 					$res_print .=$res_print_link;
 				}
 				if($res_print_docnum){
 					$res_print .=$res_print_docnum."</h3>\n";
 				}else{
-					$res_print .="</h3>\n";
+					$res_print .="</h3></div>\n";
 				}
 				
 				if ($obj['bulletin_titre']) {
@@ -221,36 +263,42 @@ while(($obj=pmb_mysql_fetch_array($resdep))) {
 				if ($obj['bulletin_cb']) {
 					$res_print .= "<br />".$msg["code_start"]." ".htmlentities($obj['bulletin_cb'],ENT_QUOTES, $charset)."\n";
 					$code_cb_bulletin = $obj['bulletin_cb'];
-				} 
+				} else {
+					$code_cb_bulletin = "";
+				}
 			
 				do_image($res_print, $code_cb_bulletin, 0 ) ;
 			
+				print $res_print ;
+				
+				// construction des dépouillements
+				$depouill = "<div class='bulletin_analysis'>";
+				$articles = get_articles_from_bulletin($id);
+				if(count($articles)) {
+					$depouill .= "<br /><h3>".$msg['bull_dep']."</h3>";
+					if ($opac_notices_depliable) $depouill .= $begin_result_liste;
+					if ($opac_cart_allow) $depouill.="<a href=\"cart_info.php?id=".$id."&lvl=analysis&header=".rawurlencode(strip_tags($notice_header))."\" target=\"cart_info\" class=\"img_basket\" title='".$msg["cart_add_result_in"]."'>".$msg["cart_add_result_in"]."</a>";
+					$depouill.= "<blockquote>";
+					foreach ($articles as $article) {
+						$depouill.= pmb_bidi(aff_notice($article));
+					}
+					$depouill.= "</blockquote>";
+				} else {
+					$depouill .= $msg["no_analysis"];
+				}
+				$depouill .= "</div>";
+				
 				if ($num_notice) {
 					
 					// Il y a une notice de bulletin
-					print $res_print ;	
 					$opac_notices_depliable = 0;
 					$seule=1;
+					print $notice_display_header;
 	 				print pmb_bidi(aff_notice($num_notice,0,0)) ;	
+	 				print $notice_display_footer;
 				} else {
-					// construction des dépouillements
-					$depouill= "<br /><h3>".$msg['bull_dep']."</h3>";
-					$requete = "SELECT * FROM analysis, notices, notice_statut WHERE analysis_bulletin='$id' AND notice_id = analysis_notice AND statut = id_notice_statut and ((notice_visible_opac=1 and notice_visible_opac_abon=0)".($_SESSION["user_code"]?" or (notice_visible_opac_abon=1 and notice_visible_opac=1)":"").") order by analysis_notice"; 
-					$res = @pmb_mysql_query($requete, $dbh);
-					if (pmb_mysql_num_rows($res)) {
-						if ($opac_notices_depliable) $depouill .= $begin_result_liste;
-						if ($opac_cart_allow) $depouill.="<a href=\"cart_info.php?id=".$id."&lvl=analysis&header=".rawurlencode(strip_tags($notice_header))."\" target=\"cart_info\" class=\"img_basket\" title='".$msg["cart_add_result_in"]."'>".$msg["cart_add_result_in"]."</a>"; 		
-						$depouill.= "<blockquote>";
-						while(($obj=pmb_mysql_fetch_array($res))) {
-							$depouill.= pmb_bidi(aff_notice($obj["analysis_notice"]));
-						}
-						$depouill.= "</blockquote>";
-					} else $depouill = $msg["no_analysis"];
-					pmb_mysql_free_result($res);
-					print $res_print ;	
-					print $depouill ;
-					
-					if ($expl_visible)	{	
+					print '<div id="expl_area_' . $id . '">';
+					if ($expl_visible)	{
 						if (!$opac_resa_planning) {
 							$resa_check=check_statut(0,$id) ;
 							if ($resa_check) {
@@ -288,10 +336,24 @@ while(($obj=pmb_mysql_fetch_array($resdep))) {
 						}
 					}
 					
+					//Demande de numérisation
+					if ($opac_scan_request_activate && $_SESSION['id_empr_session'] && $allow_scan_request) {
+						$scan_request = new scan_request();
+						$scan_request->add_linked_records(array('bulletins' => array($id)));
+						print "<br />".$scan_request->get_link_in_record($id, 'bulletins');
+					}
+					
 					if ($docnum_visible || $opac_show_links_invisible_docnums) {
-	  					if (($explnum = show_explnum_per_notice(0, $id, ''))) print pmb_bidi("<a name='docnum'><h3>".$msg["explnum"]."</h3></a>".$explnum);
+	  					if (($explnum = show_explnum_per_notice(0, $id, ''))) print pmb_bidi("<h3><span id='titre_explnum'>".$msg["explnum"]."</span></h3>".$explnum);
 					}	
+
+					if($opac_map_activate==1 || $opac_map_activate==3){
+						print map_locations_controler::get_map_location($memo_expl, '0_'.$id);
+					}					
+					print '</div>';
 				}
+				
+				print $depouill;
 				print notice_affichage::autres_lectures (0,$id);
 			} else {
 				print $res_print;
@@ -299,7 +361,9 @@ while(($obj=pmb_mysql_fetch_array($resdep))) {
 					// Il y a une notice de bulletin
 					$opac_notices_depliable = 0;
 					$seule=1;
+					print $notice_display_header;
 					print pmb_bidi(aff_notice($num_notice,0,0)) ;
+					print $notice_display_footer;
 				} else {
 					// On utilise un template django
 					require_once($base_path."/cms/modules/common/includes/pmb_h2o.inc.php");
@@ -322,14 +386,10 @@ while(($obj=pmb_mysql_fetch_array($resdep))) {
 					
 					// on va chercher les infos de dépouillements
 					$obj['articles'] = array();
-					$query = "SELECT * FROM analysis, notices, notice_statut WHERE analysis_bulletin='$id' AND notice_id = analysis_notice AND statut = id_notice_statut and ((notice_visible_opac=1 and notice_visible_opac_abon=0)".($_SESSION["user_code"]?" or (notice_visible_opac_abon=1 and notice_visible_opac=1)":"").") order by analysis_notice";
-					$result = @pmb_mysql_query($query, $dbh);
-					if (pmb_mysql_num_rows($result)) {
-						while(($article = pmb_mysql_fetch_array($result))) {
-							$obj['articles'][] = record_display::get_display_in_result($article["analysis_notice"]);
-						}
+					$articles = get_articles_from_bulletin($id);
+					foreach ($articles as $article) {
+						$obj['articles'][] = record_display::get_display_in_result($article);
 					}
-					
 					// on va cherche les infos de résa
 					$resas_datas = array(
 							'nb_resas' => 0,
@@ -382,6 +442,30 @@ while(($obj=pmb_mysql_fetch_array($resdep))) {
 					} else {
 						$resas_datas['flag_resa_visible'] = false;
 					}
+					if ($docnum_visible || $opac_show_links_invisible_docnums) {
+						if (($explnum = show_explnum_per_notice(0, $id, ''))) {
+							$obj['display_explnum'] = pmb_bidi("<h3><span id='titre_explnum'>".$msg["explnum"].($nb_explnum_visible ? " (".$nb_explnum_visible.")" : "")."</span></h3>".$explnum);
+						}
+					}
+					//Demande de numérisation
+					if ($opac_scan_request_activate && $_SESSION['id_empr_session'] && $allow_scan_request) {
+						$scan_request = new scan_request();
+						$scan_request->add_linked_records(array('bulletins' => array($id)));
+					} else {
+						$scan_request = null;
+					}
+					
+					// Etat des collections
+					if ($pmb_collstate_advanced) {
+						$collstate = new collstate(0, 0, $id);
+						if($pmb_etat_collections_localise) {
+							$collstate->get_display_list("",0,0,0,1);
+						} else { 	
+							$collstate->get_display_list("",0,0,0,0);
+						}
+						$obj['display_bulletins_list'] = "<h3><span id='titre_etat_coll'>".$msg["perio_etat_coll"]."</span></h3>";
+						$obj['display_bulletins_list'].= $collstate->liste;
+					}
 					
 					// On envoie le tout au template
 					if (file_exists($include_path."/templates/record/".$opac_notices_format_django_directory."/bulletin_without_record_extended_display.tpl.html")) {
@@ -389,18 +473,21 @@ while(($obj=pmb_mysql_fetch_array($resdep))) {
 					} else {
 						$template = $include_path."/templates/record/common/bulletin_without_record_extended_display.tpl.html";
 					}
-					$h2o = new H2o($template);
+					$h2o = H2o_collection::get_instance($template);
 					
-					print $h2o->render(array('bulletin' => $obj, 'parent' => $notice3, 'liens_opac' => $liens_opac, 'resas_datas' => $resas_datas));
+					print $h2o->render(array('bulletin' => $obj, 'parent' => $notice3, 'liens_opac' => $liens_opac, 'resas_datas' => $resas_datas, 'scan_request' => $scan_request));
 				}
 			}
+		} else {
+			print "<h3>".htmlentities($msg['record_display_forbidden'],ENT_QUOTES,$charset).'</h3>';
 		}
+	} else {
+		print "<h3>".htmlentities($msg['record_display_forbidden'],ENT_QUOTES,$charset).'</h3>';
 	}
 }
-pmb_mysql_free_result($resdep);
 
-function do_carroussel($bull){
-	global $gestion_acces_active,$gestion_acces_empr_notice;
+function do_carrousel($bull){
+	global $gestion_acces_active,$gestion_acces_empr_notice,$opac_navigateur_bulletin_number;
 	global $msg;
 	if ($gestion_acces_active==1 && $gestion_acces_empr_notice==1) {
 		$ac = new acces();
@@ -418,7 +505,7 @@ function do_carroussel($bull){
 	$requete = "select * from (".$requete_noti." union ".$requete_bull.") as uni";
 	
 	
-	$requete = "(".$requete." where date_date < '".$bull['date_date']."' order by date_date desc limit 0,3) union (".$requete." where date_date >= '".$bull['date_date']."' order by date_date asc limit 0,4)";
+	$requete = "(".$requete." where date_date < '".$bull['date_date']."' order by date_date desc limit 0,".$opac_navigateur_bulletin_number.") union (".$requete." where date_date >= '".$bull['date_date']."' order by date_date asc limit 0,".($opac_navigateur_bulletin_number+1).")";
 
 	$res_caroussel = pmb_mysql_query($requete);
 	if(pmb_mysql_num_rows($res_caroussel)){
@@ -436,62 +523,64 @@ function do_carroussel($bull){
 				}
 			}
 		}
-		$carroussel = "
-			<table class='carroussel_bulletin' style=''>
-				<tr>";
+		$carrousel = "
+			<div id='carrousel_bulletin' class='main_wrapper'>
+				<table class='carroussel_bulletin' style=''>
+					<tr>";
 				
 		$taille = 100;
 		//on a des bulletins précédent
 		if (sizeof($previous)>0){
-			$taille =$taille - 4;
+			$taille =$taille - ($opac_navigateur_bulletin_number+1);
 		}
 		//on a des bulletins suivant
 		if(sizeof($next)>0){
-			$taille =$taille - 4;
+			$taille =$taille - ($opac_navigateur_bulletin_number+1);
 		}
 					
 		//ceux d'avant
-		//on égalise  : 3 de chaque coté
-		if(sizeof($previous)>0)$carroussel .= "<td style='width:4%;'><a href='index.php?lvl=bulletin_display&id=".$previous[0]['bulletin_id']."'><img align='middle' src='images/previous1.png'/></a></td>";
-		for($i=0 ; $i<(3-sizeof($previous)); $i++){
-			if($i<(3-sizeof($previous))-1)
-				$carroussel .="<td style='width:".($taille/((3*2)+1))."%;'>&nbsp;</td>";
+		//on égalise  : $opac_navigateur_bulletin_number de chaque coté
+		if(sizeof($previous)>0)$carrousel .= "<td style='width:4%;'><a href='index.php?lvl=bulletin_display&id=".$previous[0]['bulletin_id']."'><img class='align_middle' src='".get_url_icon('previous1.png')."' alt=''/></a></td>";
+		for($i=0 ; $i<($opac_navigateur_bulletin_number-sizeof($previous)); $i++){
+			if($i<($opac_navigateur_bulletin_number-sizeof($previous))-1)
+				$carrousel .="<td style='width:".($taille/(($opac_navigateur_bulletin_number*2)+1))."%;'>&nbsp;</td>";
 			else{
-				if(!$link_perio=get_perio_link($bull['bulletin_notice'],'before'))$carroussel .="<td style='width:".($taille/((3*2)+1))."%;'>&nbsp;</td>";
-				else $carroussel .="<td class='active' style='width:".($taille/((3*2)+1))."%;'>$link_perio</td>";	
+				if(!$link_perio=get_perio_link($bull['bulletin_notice'],'before'))$carrousel .="<td style='width:".($taille/(($opac_navigateur_bulletin_number*2)+1))."%;'>&nbsp;</td>";
+				else $carrousel .="<td class='active' style='width:".($taille/(($opac_navigateur_bulletin_number*2)+1))."%;'>$link_perio</td>";	
 			} 
 		}
 		
 		if(sizeof($previous)>0){
 			for($i=sizeof($previous)-1 ; $i>=0 ; $i--){
-				$carroussel .="<td class='active' style='width:".($taille/((3*2)+1))."%;'><a href='index.php?lvl=bulletin_display&id=".$previous[$i]['bulletin_id']."'>".$previous[$i]['bulletin_numero'].($previous[$i]['bulletin_titre'] ? " - ".$previous[$i]['bulletin_titre'] : "")."<br />".($previous[$i]['mention_date'] ? $previous[$i]['mention_date'] :$previous[$i]['aff_date_date'] )."</a></td>";
+				$carrousel .="<td class='active' style='width:".($taille/(($opac_navigateur_bulletin_number*2)+1))."%;'><a href='index.php?lvl=bulletin_display&id=".$previous[$i]['bulletin_id']."'>".$previous[$i]['bulletin_numero'].($previous[$i]['bulletin_titre'] ? " - ".$previous[$i]['bulletin_titre'] : "")."<br />".($previous[$i]['mention_date'] ? $previous[$i]['mention_date'] :$previous[$i]['aff_date_date'] )."</a></td>";
 			}
 		}
 		//le bull courant en évidence
-		$carroussel .="<td class='current_bull_carroussel' style='width:".($taille/((3*2)+1))."%;'><a href='index.php?lvl=bulletin_display&id=".$current['bulletin_id']."'>".$current['bulletin_numero'].($current['bulletin_titre'] ? " - ".$current['bulletin_titre'] : "")."<br />".($current['mention_date'] ? $current['mention_date'] :$current['aff_date_date'] )."</a></td>";
+		$carrousel .="<td class='current_bull_carroussel' style='width:".($taille/(($opac_navigateur_bulletin_number*2)+1))."%;'><a href='index.php?lvl=bulletin_display&id=".$current['bulletin_id']."'>".$current['bulletin_numero'].($current['bulletin_titre'] ? " - ".$current['bulletin_titre'] : "")."<br />".($current['mention_date'] ? $current['mention_date'] :$current['aff_date_date'] )."</a></td>";
 		//la suite
 		if(sizeof($next)>0){
 			for($i=0 ; $i<sizeof($next) ; $i++){
-				$carroussel .="<td class='active' style='width:".($taille/((3*2)+1))."%;'><a href='index.php?lvl=bulletin_display&id=".$next[$i]['bulletin_id']."'>".$next[$i]['bulletin_numero'].($next[$i]['bulletin_titre'] ? " - ".$next[$i]['bulletin_titre'] : "")."<br />".($next[$i]['mention_date'] ? $next[$i]['mention_date'] :$next[$i]['aff_date_date'] )."</a></td>";
+				$carrousel .="<td class='active' style='width:".($taille/(($opac_navigateur_bulletin_number*2)+1))."%;'><a href='index.php?lvl=bulletin_display&id=".$next[$i]['bulletin_id']."'>".$next[$i]['bulletin_numero'].($next[$i]['bulletin_titre'] ? " - ".$next[$i]['bulletin_titre'] : "")."<br />".($next[$i]['mention_date'] ? $next[$i]['mention_date'] :$next[$i]['aff_date_date'] )."</a></td>";
 			}
 		}
-		//on égalise  : 3 de chaque coté
-		for($i=0 ; $i<(3-sizeof($next)) ; $i++){
+		//on égalise  : $opac_navigateur_bulletin_number de chaque coté
+		for($i=0 ; $i<($opac_navigateur_bulletin_number-sizeof($next)) ; $i++){
 			if($i){
-				$carroussel .="<td style='width:".($taille/((3*2)+1))."%;'>&nbsp;</td>";
+				$carrousel .="<td style='width:".($taille/(($opac_navigateur_bulletin_number*2)+1))."%;'>&nbsp;</td>";
 			}else{
-				if(!$link_perio=get_perio_link($bull['bulletin_notice'],'after'))	$carroussel .="<td style='width:".($taille/((3*2)+1))."%;'>&nbsp;</td>";
-				else $carroussel .="<td class='active' style='width:".($taille/((3*2)+1))."%;'>$link_perio</td>";	
+				if(!$link_perio=get_perio_link($bull['bulletin_notice'],'after'))	$carrousel .="<td style='width:".($taille/(($opac_navigateur_bulletin_number*2)+1))."%;'>&nbsp;</td>";
+				else $carrousel .="<td class='active' style='width:".($taille/(($opac_navigateur_bulletin_number*2)+1))."%;'>$link_perio</td>";	
 			}
 		}
-		if(sizeof($next)>0)$carroussel .= "<td style='width:4%;'><a href='index.php?lvl=bulletin_display&id=".$next[0]['bulletin_id']."'><img align='middle' src='images/next1.png'/></a></td>";
+		if(sizeof($next)>0)$carrousel .= "<td style='width:4%;'><a href='index.php?lvl=bulletin_display&id=".$next[0]['bulletin_id']."'><img class='align_middle' src='".get_url_icon('next1.png')."' alt=''/></a></td>";
 		//on ferme le tout
-			$carroussel .= "
-				</tr>
-			</table>";
+			$carrousel .= "
+					</tr>
+				</table>
+			</div>";
 	}
 	
-	return $carroussel;
+	return $carrousel;
 }
 
 // Construction des tritres suivants et précédants
@@ -499,60 +588,53 @@ function get_perio_link($id,$sens) {
 	global $dbh,$lang,$include_path;
 	global $msg;
 	global $charset;
-	global $relation_listup;
 	global $opac_notice_affichage_class;
 	
+	$notice_relations = notice_relations_collection::get_object_instance($id);
+	
 	//Recherche des notices parentes
-	$requete="select linked_notice, relation_type, rank from notices_relations join notices on notice_id=linked_notice 
-	where num_notice=".$id." 
-	order by rank ";	
-	$result_linked=pmb_mysql_query($requete,$dbh);
-	if (pmb_mysql_num_rows($result_linked)) {
+	$parents = $notice_relations->get_parents();
+	if($notice_relations->get_nb_parents()) {
 		$parser = new XMLlist_perio("$include_path/marc_tables/$lang/relationtypeup.xml",1,1);
 		$parser->analyser();
-		$listup= $parser->table_serial;			
-		//Pour toutes les notices liées
-		$link=""; 
-		while(($r_rel=pmb_mysql_fetch_object($result_linked))) {
-			if($listup[$r_rel->relation_type]==$sens){
-				$current = new $opac_notice_affichage_class($r_rel->linked_notice,"",0,0,1);
-				$current->do_header_without_html();
-				$link="<a href='index.php?lvl=notice_display&id=".$r_rel->linked_notice."'> ".$current->notice_header_without_html."</a>";
-				return $link;
+		$listup= $parser->table_serial;
+		foreach ($parents as $parents_relations) {
+			foreach ($parents_relations as $parent) {
+				if($listup[$parent->get_relation_type()]==$sens){
+					$current = new $opac_notice_affichage_class($parent->get_linked_notice(),"",0,0,1);
+					$current->do_header_without_html();
+					$link="<a href='index.php?lvl=notice_display&id=".$parent->get_linked_notice()."'> ".$current->notice_header_without_html."</a>";
+					return $link;
+				}
 			}
 		}
 	}
 	
 	//Recherche des notices filles
-	$requete="select num_notice, relation_type, rank from notices_relations join notices on notice_id=linked_notice
-	where linked_notice=".$id."
-	order by rank ";	
-	$result_linked=pmb_mysql_query($requete,$dbh);
-	if (!pmb_mysql_num_rows($result_linked)) {
-		return "";
-	}	
-	$parser = new XMLlist_perio("$include_path/marc_tables/$lang/relationtypedown.xml",1,1);
-	$parser->analyser();
-	$listdown= $parser->table_serial;
-	//Pour toutes les notices liées
-	$link="";
-	while(($r_rel=pmb_mysql_fetch_object($result_linked))) {
-		if($listdown[$r_rel->relation_type]==$sens){
-			$current = new $opac_notice_affichage_class($r_rel->num_notice,"",0,0,1);
-			$current->do_header_without_html();
-			$link="<a href='index.php?lvl=notice_display&id=".$r_rel->num_notice."'> ".$current->notice_header_without_html."</a>";
-			return $link;
+	$childs = $notice_relations->get_childs();
+	if($notice_relations->get_nb_childs()) {
+		$parser = new XMLlist_perio("$include_path/marc_tables/$lang/relationtypedown.xml",1,1);
+		$parser->analyser();
+		$listdown= $parser->table_serial;
+		foreach ($childs as $childs_relations) {
+			foreach ($childs_relations as $child) {
+				if($listdown[$child->get_relation_type()]==$sens){
+					$current = new $opac_notice_affichage_class($child->get_linked_notice(),"",0,0,1);
+					$current->do_header_without_html();
+					$link="<a href='index.php?lvl=notice_display&id=".$child->get_linked_notice()."'> ".$current->notice_header_without_html."</a>";
+					return $link;
+				}
+			}
 		}
 	}
 	return "";	
 }
 
-
 class XMLlist_perio extends XMLlist {
-	var $current_serial;
-	var $table_serial;
+	public $current_serial;
+	public $table_serial;
 
-	function debutBalise($parser, $nom, $attributs) {
+	public function debutBalise($parser, $nom, $attributs) {
 		global $_starttag; $_starttag=true;
 
 		if($nom == 'ENTRY' && $attributs['CODE']){
@@ -571,7 +653,7 @@ class XMLlist_perio extends XMLlist {
 	}
 
 	
-	function texte($parser, $data) {
+	public function texte($parser, $data) {
 		global $_starttag;
 		if($this->current){
 			if ($_starttag) {

@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestion.js,v 1.1 2014-08-19 13:13:58 dgoron Exp $
+// $Id: suggestion.js,v 1.2 2017-09-28 09:23:37 dgoron Exp $
 
 //selection origine
 function sel_orig() {
@@ -9,7 +9,7 @@ function sel_orig() {
     var name_id = name.substr(0,4)+'_id'+name.substr(8);
     var name_statut = name.substr(0,4)+'_statut'+name.substr(8);
     var deb_rech = document.getElementById(name).value;
-    openPopUp('./select.php?what=origine&caller=search&param1='+name_id+'&param2='+name+'&param3='+name_statut+'&deb_rech='+encode_URL(deb_rech)+'&callback=filtrer_user', 'select_user', 500, 400, -2, -2, '');
+    openPopUp('./select.php?what=origine&caller=search&param1='+name_id+'&param2='+name+'&param3='+name_statut+'&deb_rech='+encode_URL(deb_rech)+'&callback=filtrer_user', 'selector');
 }
 
 
@@ -85,7 +85,7 @@ function add_orig() {
 }
 
 
-//callback après selection origine
+//callback aprï¿½s selection origine
 function after_orig(f_orig) {
 	var suffixe=f_orig.substr(5);
 	console.log(suffixe);

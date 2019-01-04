@@ -2,9 +2,16 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.2 2014-04-02 14:17:23 arenou Exp $
+// $Id: main.inc.php,v 1.3 2017-01-31 15:41:41 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($action)) $action = '';
+if(!isset($id)) $id = 0;
+if(!isset($id_theme)) $id_theme = 0;
+if(!isset($id_type)) $id_type = 0;
+if(!isset($id_statut)) $id_statut = 0;
+if(!isset($num_demande)) $num_demande = 0;
 
 require_once($class_path."/faq_question.class.php");
 require_once($class_path."/faq_questions.class.php");

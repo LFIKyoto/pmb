@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: last_records.tpl.php,v 1.13 2011-09-01 08:19:21 ngantier Exp $
+// $Id: last_records.tpl.php,v 1.14 2018-01-25 10:13:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
+
+global $last_records_header;
+global $last_records_footer;
 
 // template for PMB OPAC
 

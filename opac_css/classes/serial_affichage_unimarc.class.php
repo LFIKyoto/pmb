@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serial_affichage_unimarc.class.php,v 1.2 2015-04-03 11:16:18 jpermanne Exp $
+// $Id: serial_affichage_unimarc.class.php,v 1.3 2017-03-21 11:32:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,11 +15,11 @@ require_once("$class_path/notice_affichage_unimarc.class.php");
 class serial_affichage_unimarc extends notice_affichage_unimarc {
 	
 	public function __construct($id, $liens, $cart=0, $to_print=0, $entrepots_localisations=array()){
-		parent::notice_affichage_unimarc($id, $liens, $cart, $to_print, $entrepots_localisations);
+		parent::__construct($id, $liens, $cart, $to_print, $entrepots_localisations);
 	}
 
 	// récupération des valeurs en table---------------------------------------
-	function fetch_data() {
+	public function fetch_data() {
 		global $dbh;
 	
 		$requete = "SELECT source_id FROM external_count WHERE rid=".addslashes($this->notice_id);

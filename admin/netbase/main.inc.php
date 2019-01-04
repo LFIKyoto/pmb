@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.10 2009-09-01 05:30:30 touraine37 Exp $
+// $Id: main.inc.php,v 1.11 2017-12-05 14:23:52 wlair Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -11,4 +11,7 @@ print $admin_layout;
 
 ?>
 
-<br /><br /><iframe name="ititre" frameborder="0" scrolling="auto" width="600" height="700" src="./admin/netbase/clean.php">
+<br /><br />
+<div class="row">
+    <iframe name="ititre" frameborder="0" scrolling="auto" width="600" height="700" src="./admin/netbase/clean.php">
+</div>

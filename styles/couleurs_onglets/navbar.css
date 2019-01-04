@@ -1,7 +1,7 @@
 /* +--------------------------------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: navbar.css,v 1.22 2014-01-08 10:10:32 touraine37 Exp $ */
+// $Id: navbar.css,v 1.23 2015-09-24 14:04:30 dgoron Exp $ */
 
 /* navbar : �cran de login */
 #navbar-index{
@@ -353,6 +353,33 @@
 	border-bottom: 1px solid #FFF0A7;
 	}
 #navbar-dashboard.current a {
+	color: #000;
+	border-bottom:0px ;
+	padding-bottom:2px;	
+	}
+	
+#navbar-semantic {
+	float:left;
+	margin:0;
+	margin-right:5px;
+	padding:0px 0px 0px 10px;
+	border-top:2px solid #765;
+	border-left:2px solid #765;
+	border-bottom:1px solid #765;
+	background: #FFF0A7;
+	}
+#navbar-semantic a {
+	float:left;
+	padding:5px 13px 2px 6px;
+	border-right:2px solid #765;
+	border-bottom:0px solid #765;
+	height: 100%;
+	text-decoration:none;
+	}
+#navbar-semantic.current {
+	border-bottom: 1px solid #FFF0A7;
+	}
+#navbar-semantic.current a {
 	color: #000;
 	border-bottom:0px ;
 	padding-bottom:2px;	

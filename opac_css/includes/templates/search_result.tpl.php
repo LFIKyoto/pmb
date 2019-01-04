@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_result.tpl.php,v 1.13 2015-03-18 10:32:48 apetithomme Exp $
+// $Id: search_result.tpl.php,v 1.19 2018-06-04 14:50:58 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
+
+global $search_result_affiliate_lvl1;
+global $search_extented_result_affiliate_lvl1;
 
 // template for PMB OPAC
 /*
@@ -36,7 +39,7 @@ $search_result_affiliate_lvl1 = "
 			
 		</div>
 		<div id='!!mode!!_results_affiliate'>
-			<strong>".$msg['in_affiliate_source']."</strong><img src='images/patience.gif' />
+			<strong>".$msg['in_affiliate_source']."</strong><img src='".get_url_icon('patience.gif')."' />
 		</div>
 		<script type='text/javascript'>
 			var !!mode!!_search = new http_request();
@@ -48,12 +51,12 @@ $search_result_affiliate_lvl1 = "
 				var strong = document.createElement('strong');
 				strong.innerHTML = \"".$msg['in_affiliate_source']."\";
 				div.appendChild(strong);
-				var text_node = document.createTextNode(' '+((rep.nb_results.total || rep.nb_results.total === 0) ? rep.nb_results.total : rep.nb_results) + ' ". $msg['results']." ');
+				var text_node = document.createTextNode(' '+((rep.nb_results.total || rep.nb_results.total === 0) ? rep.nb_results.total : rep.nb_results) + ' '+pmbDojo.messages.getMessage('search', 'results')+' ');
 				div.appendChild(text_node);
 				if(rep.nb_results>0 || rep.nb_results.total>0){
 					var a = document.createElement('a');
 					a.setAttribute('href','#');
-					a.innerHTML = \"".$msg['suite']."&nbsp;<img src='./images/search.gif' border='0' align='absmiddle'/>\";
+					a.innerHTML = \"".$msg['suite']."&nbsp;<img src='".get_url_icon('search.gif')."' style='border:0px' align='absmiddle'/>\";
 					if(a.addEventListener){
 						a.addEventListener('click',function(){
 							document.!!form_name!!.action='./index.php?lvl=more_results&tab=affiliate';
@@ -79,7 +82,7 @@ $search_result_affiliate_lvl1 = "
 			}
 		</script>
 	</blockquote>
-	<div style=search_result>
+	<div class='search_result'>
 		!!form!!
 	</div>
 </div>";
@@ -94,7 +97,7 @@ $search_extented_result_affiliate_lvl1 = "
 			
 		</div>
 		<div id='!!mode!!_results_affiliate'>
-			<strong>".$msg['in_affiliate_source']."</strong><img src='images/patience.gif' />
+			<strong>".$msg['in_affiliate_source']."</strong><img src='".get_url_icon('patience.gif')."' />
 		</div>
 		<script type='text/javascript'>
 			var !!mode!!_search = new http_request();
@@ -106,12 +109,12 @@ $search_extented_result_affiliate_lvl1 = "
 				var strong = document.createElement('strong');
 				strong.innerHTML = \"".$msg['in_affiliate_source']."\";
 				div.appendChild(strong);
-				var text_node = document.createTextNode(' '+(rep.nb_results.total ? rep.nb_results.total : rep.nb_results) + ' ". $msg['results']." ');
+				var text_node = document.createTextNode(' '+(rep.nb_results.total ? rep.nb_results.total : rep.nb_results) + ' '+pmbDojo.messages.getMessage('search', 'results')+' ');
 				div.appendChild(text_node);
 				if(rep.nb_results>0 || rep.nb_results.total>0){
 					var a = document.createElement('a');
 					a.setAttribute('href','#');
-					a.innerHTML = \"".$msg['suite']."&nbsp;<img src='./images/search.gif' border='0' align='absmiddle'/>\";
+					a.innerHTML = \"".$msg['suite']."&nbsp;<img src='".get_url_icon('search.gif')."' style='border:0px' align='absmiddle'/>\";
 					if(a.addEventListener){
 						a.addEventListener('click',function(){
 							document.!!form_name!!.action='./index.php?lvl=more_results&mode=extended&tab=affiliate';
@@ -131,7 +134,7 @@ $search_extented_result_affiliate_lvl1 = "
 			}
 		</script>
 	</blockquote>
-	<div style=search_result>
+	<div class='search_result'>
 		!!form!!
 	</div>
 </div>";

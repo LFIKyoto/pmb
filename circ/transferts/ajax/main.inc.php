@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.2 2008-06-12 08:30:55 ohennequin Exp $
+// $Id: main.inc.php,v 1.8 2018-12-27 14:36:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+require_once($base_path."/circ/transferts/affichage.inc.php");
+require_once($class_path.'/encoding_normalize.class.php');
 
 switch ($action) {
 
@@ -35,7 +38,11 @@ switch ($action) {
 		//et change la localisation d'un exemplaire
 		include("./circ/transferts/ajax/chg_section_retour.inc.php");
 		break;
-		
+	
+	case "list":
+		require_once($class_path.'/list/lists_controller.class.php');
+		lists_controller::proceed_ajax($object_type, 'transferts');
+		break;
 	default:
 		//par defaut on renvoie une erreur
 		ajax_http_send_error('400',$msg["ajax_commande_inconnue"]);

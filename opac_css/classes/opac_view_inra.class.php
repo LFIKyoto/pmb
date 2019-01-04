@@ -2,14 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: opac_view_inra.class.php,v 1.3 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: opac_view_inra.class.php,v 1.4 2017-03-21 11:32:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/opac_view.class.php");
 
 class opac_view_inra extends opac_view {
-	var $corresp_centres=array(
+	public $corresp_centres=array(
 		28=>5,
 		34=>1,
 		23=>4,
@@ -32,11 +32,11 @@ class opac_view_inra extends opac_view {
 	);
 	
 	// constructeur
-	function opac_view_inra($id=0,$id_empr=0) {	
-		parent::opac_view($id,$id_empr);
+	public function __construct($id=0,$id_empr=0) {	
+		parent::__construct($id,$id_empr);
 	}
 
-    function list_views(){
+    public function list_views(){
     	global $dbh;
     	      	
     	//A l'INRA, 2 vues de base par utilisateur...
@@ -72,7 +72,7 @@ class opac_view_inra extends opac_view {
 		$this->opac_views_list = array_unique($this->opac_views_list);
     }
     
-	function get_list($name='', $value_selected=0) {
+	public function get_list($name='', $value_selected=0) {
 		global $dbh,$charset;
 		global $opac_url_base;
 

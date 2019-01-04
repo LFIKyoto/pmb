@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: origins.class.php,v 1.1 2011-12-20 13:12:44 arenou Exp $
+// $Id: origins.class.php,v 1.3 2017-06-30 14:08:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,7 +11,7 @@ require_once($include_path."/templates/origin.tpl.php");
 
 
 class origins {
-	var $type;
+	public $type;
 	
 	public function __construct(){
 		//pas grand chose à faire
@@ -21,6 +21,7 @@ class origins {
 	public function proceed(){
 		global $sub;
 		global $action;
+		global $id, $origin_name, $origin_country, $origin_diffusible;
 		
 		switch ($action){
 			case "add" :

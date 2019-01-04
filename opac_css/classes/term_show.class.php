@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: term_show.class.php,v 1.16 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: term_show.class.php,v 1.19 2017-10-18 10:22:21 ngantier Exp $
 //
 // Gestion de l'affichage d'un notice d'un terme du thésaurus
 
@@ -15,32 +15,32 @@ require_once("$class_path/aut_link.class.php");
 
 class term_show {
 
-	var $base_query;				//Paramètres supplémentaires passés dans les URL
-	var $term;						//Terme à afficher
-	var $parent_link;				//Nom de la fonction à appeller pour afficher les liens d'action à côté des catégories
-	var $url_for_term_show;			//URL a rappeller
-	var $keep_tilde;
-	var $id_thes = 0;
-	var $thes;
+	public $base_query;				//Paramètres supplémentaires passés dans les URL
+	public $term;						//Terme à afficher
+	public $parent_link;				//Nom de la fonction à appeller pour afficher les liens d'action à côté des catégories
+	public $url_for_term_show;			//URL a rappeller
+	public $keep_tilde;
+	public $id_thes = 0;
+	public $thes;
 	
-    function term_show($term,$url_for_term_show,$base_query,$parent_link,$keep_tilde=0, $id_thes) {
+    public function __construct($term,$url_for_term_show,$base_query,$parent_link,$keep_tilde=0, $id_thes) {
     	$this->base_query=$base_query;
     	$this->term=$term;
     	$this->parent_link=$parent_link;
     	$this->url_for_term_show=$url_for_term_show;
-    	$this->keep_tilde=$keep_tilde;
-    	$this->id_thes = $id_thes;
-		$this->thes = new thesaurus($id_thes); 
+    	$this->keep_tilde=$keep_tilde+0;
+    	$this->id_thes = $id_thes+0;
+		$this->thes = new thesaurus($this->id_thes); 
     }
     
-    function has_child($categ_id) {
+    public function has_child($categ_id) {
 		$requete = "select count(1) from noeuds where num_parent = '".$categ_id."' ";
 		$resultat=pmb_mysql_query($requete);
 		return pmb_mysql_result($resultat,0,0);
 	}
 
 	//Récupération du chemin
-	function get_categ_lib_($categ_id) {
+	public function get_categ_lib_($categ_id) {
 		global $charset;
 		
 		$re="";
@@ -68,7 +68,7 @@ class term_show {
 		return $re;
 	}
 
-	function get_categ_lib($categ_id, $categ_libelle,$force_link=false) {
+	public function get_categ_lib($categ_id, $categ_libelle,$force_link=false) {
 		global $charset;
 		
 		$r=new category($categ_id);
@@ -91,14 +91,14 @@ class term_show {
 			}else{
 				$re="<a href=\"".$this->url_for_term_show.'?term='.rawurlencode($r->libelle).'&id_thes='.$r->thes->id_thesaurus.'&'.$this->base_query."\">".htmlentities($r->libelle,ENT_QUOTES,$charset).'</a>';
 			}
-			if ($path) $re.='&nbsp;<font size=1>('.$path.')</font>';
+			if ($path) $re.='&nbsp;('.$path.')';
 		} else {
 			if ($path) $re=$path;
 		}
 		return $re;
 	}
 
-	function is_same_lib($categ_libelle,$categ_id) {
+	public function is_same_lib($categ_libelle,$categ_id) {
 		$r=new category($categ_id);
 		if( pmb_strtolower(convert_diacrit($r->libelle)) == pmb_strtolower(convert_diacrit($categ_libelle))){
 			return true;
@@ -107,14 +107,14 @@ class term_show {
 		}
 	}
 
-	function show_tree($categ_id,$prefixe,$level,$max_level) {
+	public function show_tree($categ_id,$prefixe,$level,$max_level) {
 		
 		global $charset;
 		global $msg;
 		global $lang;
 		global $dbh;
 		$pl=$this->parent_link;
-		global $$pl;
+		global ${$pl};
 		
 		$res='';
 		
@@ -126,11 +126,11 @@ class term_show {
 				if($r2->categ_libelle[0] != "~"){
 					$visible=$pl($r2->categ_id,$r2->categ_see);
 					if ($visible["VISIBLE"]) {
-						$res.='<font size=2>'.$visible['LINK'].'&nbsp;'.$prefixe." - <a href=\"".$this->url_for_term_show.'?term='.rawurlencode($r2->categ_libelle).'&id_thes='.$this->id_thes.'&'.$this->base_query."\">".htmlentities($r2->categ_libelle,ENT_QUOTES,$charset).'</a></font>';
+						$res.=$visible['LINK'].'&nbsp;'.$prefixe." - <a href=\"".$this->url_for_term_show.'?term='.rawurlencode($r2->categ_libelle).'&id_thes='.$this->id_thes.'&'.$this->base_query."\">".htmlentities($r2->categ_libelle,ENT_QUOTES,$charset).'</a>';
 						if ($r2->categ_see) {
-							$res.='<br /><font size=1>&nbsp;&nbsp;<i>'.$msg['term_show_see'].' '.$this->get_categ_lib($r2->categ_see,$r2->categ_libelle,true);
+							$res.='<br />&nbsp;&nbsp;<i>'.$msg['term_show_see'].' '.$this->get_categ_lib($r2->categ_see,$r2->categ_libelle,true);
 							//if ($this->is_same_lib($r2->categ_libelle,$r2->categ_see)) $res.=' - '.htmlentities($r2->categ_libelle,ENT_QUOTES,$charset);
-							$res.='</i></font>';
+							$res.='</i>';
 						}
 						$res.='<br />';
 					}
@@ -141,14 +141,14 @@ class term_show {
 		return $res;
 	}
 
-	function get_level($categ_id) {
+	public function get_level($categ_id) {
 		$l=0;
 		$parent=new category($categ_id);
 		$l=count($parent->path_table);
 		return $l;
 	}
 
-	function show_notice() {
+	public function show_notice() {
 		global $history,$history_thes;
 		global $charset;
 		global $msg;
@@ -156,7 +156,7 @@ class term_show {
 		global $lang;
 		global $thesaurus_mode_pmb;
 		$pl=$this->parent_link;
-		global $$pl;
+		global ${$pl};
 
 		$res='';
 		
@@ -238,7 +238,7 @@ class term_show {
 							$res1.=$visible["LINK"]."&nbsp;<a href=\"".$this->url_for_term_show.'?term='.rawurlencode($r_ta->categ_libelle).'&id_thes='.$this->id_thes.'&'.$this->base_query."\">".htmlentities($r_ta->categ_libelle,ENT_QUOTES,$charset).'</a>';
 						}
 					}
-					if ($res1!='') $res.=''.$msg['term_show_see_also'].'<blockquote><font size=2><i>'.$res1.'</i></font></blockquote>';
+					if ($res1!='') $res.=''.$msg['term_show_see_also'].'<blockquote><i>'.$res1.'</i></blockquote>';
 					$res.= '</blockquote>';
 				}
 				
@@ -275,7 +275,7 @@ class term_show {
 					if(count($res1)){
 						$res.='<blockquote>'.$msg['aut_link'].' :';
 						foreach ( $res1 as $key => $value ) {
-       						$res.='<font size=2><i><blockquote>'.htmlentities($key,ENT_QUOTES,$charset).' : '.implode(",",$value).'</blockquote></i></font>';
+       						$res.='<i><blockquote>'.htmlentities($key,ENT_QUOTES,$charset).' : '.implode(",",$value).'</blockquote></i>';
 						}
 						$res.= '</blockquote>';
 					}
@@ -287,7 +287,7 @@ class term_show {
 	}
 	
 	
-	function do_query($mode,$param=""){
+	public function do_query($mode,$param=""){
 		global $lang;
 		$select="SELECT DISTINCT noeuds.id_noeud AS categ_id, ";
 		$from="FROM noeuds ";

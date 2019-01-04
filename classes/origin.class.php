@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: origin.class.php,v 1.2 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: origin.class.php,v 1.4 2017-06-30 14:08:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,17 +10,17 @@ if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
  * Classe de gestion d'une origine...
  */
 class origin {
-	var $id;			// Identifiant de l'origine
-	var $type;			// Type associé à l'origine
-	var $name;			// Nom de l'origine
-	var $country;		// Pays d'orgine
-	var $diffusible;	// Booléen pour définir si les éléments de l'origine sont exportables...
+	public $id;			// Identifiant de l'origine
+	public $type;			// Type associé à l'origine
+	public $name;			// Nom de l'origine
+	public $country;		// Pays d'orgine
+	public $diffusible;	// Booléen pour définir si les éléments de l'origine sont exportables...
 	
 	
 	public function __construct($id=0,$type="authorities"){
 		$this->type = $type;
-		$this->id = $id;
-		if($this->id!=0){
+		$this->id = $id+0;
+		if($this->id){
 			$this->_fetch_data();
 		}else{
 			$this->name = "";
@@ -70,7 +70,6 @@ class origin {
 		}else{
 			//TODO check utilisation
 			$query = "delete from origin_".$this->type." where id_origin_".$this->type." = ".$this->id;
-			print $query;
 			$result = pmb_mysql_query($query);
 			if($result) return true;
 		}

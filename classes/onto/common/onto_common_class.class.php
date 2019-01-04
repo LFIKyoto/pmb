@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_class.class.php,v 1.8 2014-04-22 09:10:22 arenou Exp $
+// $Id: onto_common_class.class.php,v 1.11 2018-09-06 10:12:16 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -31,6 +31,12 @@ class onto_common_class extends onto_common_root {
 	protected $properties;
 
 	/**
+	 * 
+	 * @access protected
+	 */
+	protected $sub_class_of;
+
+	/**
 	 * Tableau associatif des restrictions associées à chaque propriété de la classe.
 	 * L'étiquette du tableau est l'URI de la propriété concernée
 	 * @access private
@@ -52,6 +58,7 @@ class onto_common_class extends onto_common_root {
 		parent::__construct($uri,$ontology);
 		$this->get_properties();
 		$this->get_restrictions();
+		$this->get_properties_and_restrictions_from_sub_class_of();
 	} // end of member function __construct
 
 	/**
@@ -100,10 +107,10 @@ class onto_common_class extends onto_common_root {
 		$this->label = $this->ontology->get_class_label($this->uri);
 	}
 	
-	protected function get_restrictions(){
+	public function get_restrictions(){
 		foreach($this->properties as $property){
 			$this->onto_restrictions[$property->uri] = $this->ontology->get_restriction($this->uri,$property->uri);
-		}	
+		}
 	}
 	
 	public function get_property_range($uri_property) {
@@ -133,4 +140,30 @@ class onto_common_class extends onto_common_root {
 		return $this->onto_restrictions[$uri_property];
 	}
 	
-} // end of onto_common_class
+	public function get_base_uri(){
+		global $opac_url_base;
+		return $opac_url_base."/".$this->pmb_name."#";
+	}
+	
+	/**
+	 * 
+	 */
+	public function get_sub_class_of() {
+		if (!isset($this->sub_class_of)) {
+			$this->sub_class_of = $this->ontology->get_sub_class_of($this->uri);
+		}
+		return $this->sub_class_of;
+	} 
+	
+	public function get_properties_and_restrictions_from_sub_class_of() {
+		$properties = array();
+		foreach ($this->get_sub_class_of() as $sub_class_of) {
+			$properties = $this->ontology->get_class_properties($sub_class_of);
+			foreach($properties as $property_uri){
+				$this->set_property($this->get_property($property_uri));
+				$this->onto_restrictions[$property_uri] = $this->ontology->get_restriction($sub_class_of,$property_uri);
+			}
+		}
+		return $properties;
+	}
+} // end of onto_common_class;

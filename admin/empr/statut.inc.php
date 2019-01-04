@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: statut.inc.php,v 1.9 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: statut.inc.php,v 1.13 2018-10-12 12:18:37 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+require_once($class_path."/list/configuration/empr/list_configuration_empr_statut_ui.class.php");
 
 // gestion des statut d'emprunteur
 ?>
@@ -23,86 +25,10 @@ function test_form(form)
 <?php
 
 function show_statut($dbh) {
-	global $msg;
+	print list_configuration_empr_statut_ui::get_instance()->get_display_list();
+}
 
-	print "<table>
-	<tr>
-		<th>".$msg[103]."</th>
-		<th>".$msg["empr_short_no_allow_loan"]."</th>
-		<th>".$msg["empr_short_no_allow_loan_hist"]."</th>
-		<th>".$msg["empr_short_no_allow_book"]."</th>
-		<th>".$msg["empr_short_no_allow_opac"]."</th>
-		<th>".$msg["empr_short_no_allow_dsi"]."</th>
-		<th>".$msg["empr_short_no_allow_dsi_priv"]."</th>
-		<th>".$msg["empr_short_no_allow_sugg"]."</th>
-		<th>".$msg["empr_short_no_allow_liste_lecture"]."</th>
-		<th>".$msg["empr_short_no_allow_dema"]."</th>		
-		<th>".$msg["empr_short_no_allow_prol"]."</th>
-		<th>".$msg["empr_short_no_allow_avis"]."</th>
-		<th>".$msg["empr_short_no_allow_tag"]."</th>
-		<th>".$msg["empr_short_no_allow_pwd"]."</th>
-		<th>".$msg["empr_short_no_allow_self_checkout"]."</th>
-		<th>".$msg["empr_short_no_allow_self_checkin"]."</th>
-		<th>".$msg["empr_short_no_allow_serialcirc"]."</th>
-	</tr>";
-
-	// affichage du tableau des statuts
-	$requete = "SELECT idstatut, statut_libelle, allow_loan, allow_loan_hist, allow_book, allow_opac, allow_dsi, allow_dsi_priv, allow_sugg, allow_dema, allow_prol, allow_avis, allow_tag , allow_pwd, allow_liste_lecture, allow_self_checkout, allow_self_checkin, allow_serialcirc FROM empr_statut ORDER BY statut_libelle ";
-	$res = pmb_mysql_query($requete, $dbh);
-	$nbr = pmb_mysql_num_rows($res);
-
-	$parity=1;
-	for($i=0;$i<$nbr;$i++) {
-		$row=pmb_mysql_fetch_object($res);
-		if ($parity % 2) {
-			$pair_impair = "even";
-			} else {
-				$pair_impair = "odd";
-				}
-		$parity += 1;
-		$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./admin.php?categ=empr&sub=statut&action=modif&id=$row->idstatut';\" ";
-        if ($row->idstatut>2) print "<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td>$row->statut_libelle</td>";
-              else print "<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td><strong>$row->statut_libelle</strong></td>"; 
-
-		if($row->allow_loan) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-		if($row->allow_loan_hist) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-		if($row->allow_book) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-		if($row->allow_opac) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-		if($row->allow_dsi) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-		if($row->allow_dsi_priv) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-		if($row->allow_sugg) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-		if($row->allow_liste_lecture) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-		if($row->allow_dema) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";		
-		if($row->allow_prol) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-		if($row->allow_avis) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-		if($row->allow_tag) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-		if($row->allow_pwd) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-		if($row->allow_self_checkout) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-		if($row->allow_self_checkin) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-		if($row->allow_serialcirc) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";		
-		print "</tr>";
-		}
-	print "</table>
-		<input class='bouton' type='button' value=\" ".$msg['empr_statut_create_bt']." \" onClick=\"document.location='./admin.php?categ=empr&sub=statut&action=add'\" />";
-	}
-
-function statut_form($statut_libelle="", $allow_loan=1, $allow_loan_hist=0, $allow_book=1, $allow_opac=1, $allow_dsi=1, $allow_dsi_priv=1, $allow_sugg=1, $allow_liste_lecture=1, $allow_dema=1, $allow_prol=1, $allow_avis=1, $allow_tag=1, $allow_pwd=1, $allow_self_checkout=0, $allow_self_checkin=0, $allow_serialcirc=0, $id=0) {
+function statut_form($statut_libelle="", $allow_loan=1, $allow_loan_hist=0, $allow_book=1, $allow_opac=1, $allow_dsi=1, $allow_dsi_priv=1, $allow_sugg=1, $allow_liste_lecture=1, $allow_dema=1, $allow_prol=1, $allow_avis=1, $allow_tag=1, $allow_pwd=1, $allow_self_checkout=0, $allow_self_checkin=0, $allow_serialcirc=0, $allow_scan_request=0, $allow_contribution=0, $id=0) {
 
 	global $msg;
 	global $admin_empr_statut_form;
@@ -110,8 +36,8 @@ function statut_form($statut_libelle="", $allow_loan=1, $allow_loan_hist=0, $all
 
 	$admin_empr_statut_form = str_replace('!!id!!', $id, $admin_empr_statut_form);
 
-	if(!$id) $admin_empr_statut_form = str_replace('!!form_title!!', $msg[empr_statut_create], $admin_empr_statut_form);
-		else $admin_empr_statut_form = str_replace('!!form_title!!', $msg[empr_statut_modif], $admin_empr_statut_form);
+	if(!$id) $admin_empr_statut_form = str_replace('!!form_title!!', $msg['empr_statut_create'], $admin_empr_statut_form);
+		else $admin_empr_statut_form = str_replace('!!form_title!!', $msg['empr_statut_modif'], $admin_empr_statut_form);
 
 	$admin_empr_statut_form = str_replace('!!libelle!!', htmlentities($statut_libelle,ENT_QUOTES, $charset), $admin_empr_statut_form);
 	$admin_empr_statut_form = str_replace('!!libelle_suppr!!', addslashes($statut_libelle), $admin_empr_statut_form);
@@ -163,6 +89,12 @@ function statut_form($statut_libelle="", $allow_loan=1, $allow_loan_hist=0, $all
 	if ($allow_serialcirc) $checkbox="checked"; else $checkbox="";
 	$admin_empr_statut_form = str_replace('!!allow_serialcirc!!', $checkbox, $admin_empr_statut_form);
 	
+	if ($allow_scan_request) $checkbox="checked"; else $checkbox="";
+	$admin_empr_statut_form = str_replace('!!allow_scan_request!!', $checkbox, $admin_empr_statut_form);
+	
+	if ($allow_contribution) $checkbox="checked"; else $checkbox="";
+	$admin_empr_statut_form = str_replace('!!allow_contribution!!', $checkbox, $admin_empr_statut_form);
+	
 	print confirmation_delete("./admin.php?categ=empr&sub=statut&action=del&id=");
 	print $admin_empr_statut_form;
 
@@ -177,12 +109,30 @@ switch($action) {
 		if ($nbr > 0) {
 			error_form_message($statut_libelle.$msg["empr_statut_label_already_used"]);
 		} else {
+			if (!isset($allow_loan)) $allow_loan = 0;
+			if (!isset($allow_loan_hist)) $allow_loan_hist = 0;
+			if (!isset($allow_book)) $allow_book = 0;
+			if (!isset($allow_opac)) $allow_opac = 0;
+			if (!isset($allow_dsi)) $allow_dsi = 0;
+			if (!isset($allow_dsi_priv)) $allow_dsi_priv = 0;
+			if (!isset($allow_sugg)) $allow_sugg = 0;
+			if (!isset($allow_dema)) $allow_dema = 0;
+			if (!isset($allow_prol)) $allow_prol = 0;
+			if (!isset($allow_avis)) $allow_avis = 0;
+			if (!isset($allow_tag)) $allow_tag = 0;
+			if (!isset($allow_pwd)) $allow_pwd = 0;
+			if (!isset($allow_liste_lecture)) $allow_liste_lecture = 0;
+			if (!isset($allow_self_checkout)) $allow_self_checkout = 0;
+			if (!isset($allow_self_checkin)) $allow_self_checkin = 0;
+			if (!isset($allow_serialcirc)) $allow_serialcirc = 0;
+			if (!isset($allow_scan_request)) $allow_scan_request = 0;
+			if (!isset($allow_contribution)) $allow_contribution = 0;
 			// O.K.,  now if item already exists UPDATE else INSERT
 			if($id) {
-				$requete = "UPDATE empr_statut SET statut_libelle='$statut_libelle', allow_loan='$allow_loan', allow_loan_hist='$allow_loan_hist', allow_book='$allow_book', allow_opac='$allow_opac', allow_dsi='$allow_dsi', allow_dsi_priv='$allow_dsi_priv', allow_sugg='$allow_sugg', allow_dema='$allow_dema', allow_prol='$allow_prol', allow_avis='$allow_avis', allow_tag='$allow_tag', allow_pwd='$allow_pwd', allow_liste_lecture='$allow_liste_lecture', allow_self_checkout='$allow_self_checkout', allow_self_checkin='$allow_self_checkin', allow_serialcirc='$allow_serialcirc' WHERE idstatut=$id ";
+				$requete = "UPDATE empr_statut SET statut_libelle='".$statut_libelle."', allow_loan='".$allow_loan."', allow_loan_hist='".$allow_loan_hist."', allow_book='".$allow_book."', allow_opac='".$allow_opac."', allow_dsi='".$allow_dsi."', allow_dsi_priv='".$allow_dsi_priv."', allow_sugg='".$allow_sugg."', allow_dema='".$allow_dema."', allow_prol='".$allow_prol."', allow_avis='".$allow_avis."', allow_tag='".$allow_tag."', allow_pwd='".$allow_pwd."', allow_liste_lecture='".$allow_liste_lecture."', allow_self_checkout='".$allow_self_checkout."', allow_self_checkin='".$allow_self_checkin."', allow_serialcirc='".$allow_serialcirc."', allow_scan_request='".$allow_scan_request."', allow_contribution = '".$allow_contribution."' WHERE idstatut=".$id;
 				$res = pmb_mysql_query($requete, $dbh);
 			}else {
-				$requete = "INSERT INTO empr_statut set idstatut=0, statut_libelle='$statut_libelle', allow_loan='$allow_loan', allow_loan_hist='$allow_loan_hist', allow_book='$allow_book', allow_opac='$allow_opac', allow_dsi='$allow_dsi', allow_dsi_priv='$allow_dsi_priv', allow_sugg='$allow_sugg', allow_dema='$allow_dema', allow_prol='$allow_prol', allow_avis='$allow_avis', allow_tag='$allow_tag', allow_pwd='$allow_pwd', allow_liste_lecture='$allow_liste_lecture', allow_self_checkout='$allow_self_checkout', allow_self_checkin='$allow_self_checkin', allow_serialcirc='$allow_serialcirc' ";
+				$requete = "INSERT INTO empr_statut set idstatut=0, statut_libelle='".$statut_libelle."', allow_loan='".$allow_loan."', allow_loan_hist='".$allow_loan_hist."', allow_book='".$allow_book."', allow_opac='".$allow_opac."', allow_dsi='".$allow_dsi."', allow_dsi_priv='".$allow_dsi_priv."', allow_sugg='".$allow_sugg."', allow_dema='".$allow_dema."', allow_prol='".$allow_prol."', allow_avis='".$allow_avis."', allow_tag='".$allow_tag."', allow_pwd='".$allow_pwd."', allow_liste_lecture='".$allow_liste_lecture."', allow_self_checkout='".$allow_self_checkout."', allow_self_checkin='".$allow_self_checkin."', allow_serialcirc='".$allow_serialcirc."', allow_scan_request='".$allow_scan_request."', allow_contribution = '".$allow_contribution."' ";
 				$res = pmb_mysql_query($requete, $dbh);
 			}
 		}
@@ -194,11 +144,11 @@ switch($action) {
 		break;
 	case 'modif':
 		if ($id){
-			$requete = "SELECT idstatut, statut_libelle, allow_loan, allow_loan_hist, allow_book, allow_opac, allow_dsi, allow_dsi_priv, allow_sugg, allow_liste_lecture, allow_dema, allow_prol, allow_avis, allow_tag, allow_pwd, allow_self_checkout, allow_self_checkin, allow_serialcirc FROM empr_statut WHERE idstatut=$id ";
+			$requete = "SELECT idstatut, statut_libelle, allow_loan, allow_loan_hist, allow_book, allow_opac, allow_dsi, allow_dsi_priv, allow_sugg, allow_liste_lecture, allow_dema, allow_prol, allow_avis, allow_tag, allow_pwd, allow_self_checkout, allow_self_checkin, allow_serialcirc, allow_scan_request, allow_contribution FROM empr_statut WHERE idstatut=$id ";
 			$res = pmb_mysql_query($requete, $dbh);
 			if(pmb_mysql_num_rows($res)) {
 				$row=pmb_mysql_fetch_object($res);
-				statut_form($row->statut_libelle, $row->allow_loan, $row->allow_loan_hist, $row->allow_book, $row->allow_opac, $row->allow_dsi, $row->allow_dsi_priv, $row->allow_sugg, $row->allow_liste_lecture, $row->allow_dema, $row->allow_prol, $row->allow_avis, $row->allow_tag, $row->allow_pwd, $row->allow_self_checkout, $row->allow_self_checkin, $row->allow_serialcirc, $id);
+				statut_form($row->statut_libelle, $row->allow_loan, $row->allow_loan_hist, $row->allow_book, $row->allow_opac, $row->allow_dsi, $row->allow_dsi_priv, $row->allow_sugg, $row->allow_liste_lecture, $row->allow_dema, $row->allow_prol, $row->allow_avis, $row->allow_tag, $row->allow_pwd, $row->allow_self_checkout, $row->allow_self_checkin, $row->allow_serialcirc, $row->allow_scan_request, $row->allow_contribution, $id);
 			} else {
 				show_statut($dbh);
 			}

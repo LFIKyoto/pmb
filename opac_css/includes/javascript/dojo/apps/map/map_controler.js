@@ -1,15 +1,20 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_controler.js,v 1.8 2015-04-17 12:50:58 vtouchard Exp $
+// $Id: map_controler.js,v 1.15 2017-09-05 08:37:29 vtouchard Exp $
 
-define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby", "dojo/dom-construct", "dojo/dom-style", "dojo/query", "dojo/request", "dojo/on", "dojo/_base/lang", "dojo/json", "dojox/geo/openlayers/widget/Map", "apps/map/dialog_notice"], function(declare, Dialog, dom, standby, domConstruct, domStyle, query, request, on, lang ,json, Map, DialogNotice){
+const TYPE_RECORD = 11;
+const TYPE_LOCATION = 15;
+
+define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/Standby", "dojo/dom-construct", "dojo/dom-style", "dojo/query", "dojo/request", "dojo/on", "dojo/_base/lang", "dojo/json", "dojox/geo/openlayers/widget/Map", "apps/map/dialog_notice"], function(declare, Dialog, dom, standby, domConstruct, domStyle, query, request, on, lang ,json, Map, DialogNotice){
 	/*
-	 *Classe map_controler. C'est la classe qui va contenir l'objet openLayer associé à une carte
-	 */ 
+	 *Classe map_controler. C'est la classe qui va contenir l'objet openLayer associï¿½ ï¿½ une carte
+	 */
 	return declare("map_controler", Map, {
 		mode: "",
 		dataLayers:null,
+		type:null,
+		data:null,
 		layersURL: "",
 		searchId:0,
 		nbLayers:0,
@@ -29,50 +34,69 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 		cluster:true,
 		nbLayersReceived:0,
 		editionStates:null,
-		//Les paramètres du constructeur sont un noeud dom auquel sera rattaché la carte OpenLayers & un objet json représentant les données de l'emprises
+                nodeId:"",
+                id_img_plus:"",
+		//Les paramï¿½tres du constructeur sont un noeud dom auquel sera rattachï¿½ la carte OpenLayers & un objet json reprï¿½sentant les donnï¿½es de l'emprises
 		constructor:function(){
-			//Conversion de degree decimaux en metre (la projection 4326 définie la terre en tant qu'une elipse alors que la 900913 la définie en tant qu'une sphère)
-			this.projFrom = new OpenLayers.Projection("EPSG:4326");
+			//console.log(this);
+			//Conversion de degree decimaux en metre (la projection 4326 dï¿½finie la terre en tant qu'une elipse alors que la 900913 la dï¿½finie en tant qu'une sphï¿½re)
+                    this.projFrom = new OpenLayers.Projection("EPSG:4326");
 		    this.projTo = new OpenLayers.Projection("EPSG:900913");
 		    this.formatWKT = new OpenLayers.Format.WKT();
 		    this.mode = arguments[0]['mode'];
-			this.noticesIds = {};
-			this.alreadyZoomed = false;
-			this.hoveredFeature = new Array();
-			
-			switch(this.mode){
-				case "search_result" :
-				case "visualization" : 
-					if(arguments[0]['searchId']){
-						this.searchId = arguments[0]['searchId'];
-					}
-					if(arguments[0]['layers_url']){
-						this.layersURL = arguments[0]['layers_url'];
-					}else{
-						this.dataLayers=arguments[0]['layers'];	
-					    //Set la vue initiale sur la carte (la vue initiale contient toutes les emprises)
-					    this.initialBounds =new OpenLayers.Bounds(this.transformInitialBounds(arguments[0]['initialFit']));
-			            this.initialBounds=this.initialBounds.transform(this.projFrom,this.projTo);
-					}
-					break;
-				case "edition" :
-					this.hiddenField = arguments[0]['hiddenField'];
-					this.dataLayers=arguments[0]['layers'];	
-					this.searchHolds = arguments[0]['searchHolds'];	
-				    //Set la vue initiale sur la carte (la vue initiale contient toutes les emprises)
-				    this.initialBounds =new OpenLayers.Bounds(this.transformInitialBounds(arguments[0]['initialFit']));
-		            this.initialBounds=this.initialBounds.transform(this.projFrom,this.projTo);
-		            this.editionStates = new Array();
-					break;
-				case 'search_criteria' :
-					this.hiddenField = arguments[0]['hiddenField'];
-					this.searchHolds = arguments[0]['searchHolds'];	
-					break;
-			}
+		    this.type = arguments[0]['type'];
+                    this.noticesIds = {};
+                    this.alreadyZoomed = false;
+                    this.hoveredFeature = new Array();
+                    switch(this.mode){
+                        case "search_result" :
+                        case "facette" :
+                        case "visualization" : 
+                            if(arguments[0]['searchId']){
+                                    this.searchId = arguments[0]['searchId'];
+                            }
+                            if(arguments[0]['layers_url']){
+                                    this.layersURL = arguments[0]['layers_url'];
+                            }else{
+                                this.dataLayers=arguments[0]['layers'];	
+                                //Set la vue initiale sur la carte (la vue initiale contient toutes les emprises)
+                                this.initialBounds =new OpenLayers.Bounds(this.transformInitialBounds(arguments[0]['initialFit']));
+                                this.initialBounds=this.initialBounds.transform(this.projFrom,this.projTo);
+                            }
+                            if(arguments[0]['data']){
+                                this.data = arguments[0].data;
+                            }
+                            if(arguments[0]['id']) {
+                                this.nodeId = arguments[0]['id'];
+                            }
+                            if(arguments[0]['id_img_plus']) {
+                                this.id_img_plus = arguments[0]['id_img_plus'];
+                            }
+                        
+                            break;
+                        case "edition" :
+                            this.hiddenField = arguments[0]['hiddenField'];
+                            this.dataLayers=arguments[0]['layers'];	
+                            this.searchHolds = arguments[0]['searchHolds'];	
+                            //Set la vue initiale sur la carte (la vue initiale contient toutes les emprises)
+                            this.initialBounds =new OpenLayers.Bounds(this.transformInitialBounds(arguments[0]['initialFit']));
+                            this.initialBounds=this.initialBounds.transform(this.projFrom,this.projTo);
+                            this.editionStates = new Array();
+                                break;
+                        case 'search_criteria' :
+                            this.hiddenField = arguments[0]['hiddenField'];
+                            if (arguments[0]['initialFit']) {
+                            	this.initialBounds = new OpenLayers.Bounds(this.transformInitialBounds(arguments[0]['initialFit']));
+                            	this.initialBounds = this.initialBounds.transform(this.projFrom, this.projTo);
+                            } else {
+                            	this.searchHolds = arguments[0]['searchHolds'];
+                            }
+                            break;
+                    }
 		},
 		
 		/*
-		 * C'est à cet instant que les attributs du widget son vraiment initialisés
+		 * C'est ï¿½ cet instant que les attributs du widget son vraiment initialisï¿½s
 		 * 
 		 */
 		buildRendering:function(){
@@ -81,14 +105,17 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 			this.standby = new standby({target: this.domNode, zIndex: 10000000});
 			document.body.appendChild(this.standby.domNode);
 			this.standby.startup();
-			//chargement spécifique
+			//chargement spï¿½cifique
 			this.map.olMap.addControl(new OpenLayers.Control.PanZoomBar());
 			switch(this.mode){
 				case 'search_result':
 					this.map.olMap.addControl(new OpenLayers.Control.LayerSwitcher());
 					break;
 				case 'visualization':
-					//this.map.olMap.addControl(new OpenLayers.Control.LayerSwitcher());
+					this.map.olMap.addControl(new OpenLayers.Control.LayerSwitcher());
+					break;
+				case "facette" :
+					this.map.olMap.addControl(new OpenLayers.Control.LayerSwitcher());
 					break;
 				case 'edition':
 					//nothing
@@ -97,6 +124,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 			//pour tous
 			var formatLonlats = lang.hitch(this,"formatLonlats");
 			this.map.olMap.addControl(new OpenLayers.Control.MousePosition({id: "ll_mouse", formatOutput: formatLonlats}));
+			
 			//Ajout de la mini carte
 			var ovControl = new OpenLayers.Control.OverviewMap();
 			ovControl.isSuitableOverview = function() {
@@ -111,7 +139,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 		
 		
 		/*
-		 * Méthode d'initialisation des données des layers (appels Ajax pour récupérer les données)
+		 * Mï¿½thode d'initialisation des donnï¿½es des layers (appels Ajax pour rï¿½cupï¿½rer les donnï¿½es)
 		 * 
 		 */
 		initDatas:function(){
@@ -120,7 +148,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 					this.dataLayers = new Array({	
 						name: this.mode,
 						type: this.mode,
-						color: "#000000",
+						color: "#FF0000",
 						holds: [],
 						editable: true,
 						ajax:false
@@ -130,6 +158,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 					}
 					this.drawLayer(this.dataLayers[0], 0);
 					break;
+				case "facette" :
 				case "visualization" :
 				case "search_result" :
 					var bounds = this.map.olMap.calculateBounds();
@@ -176,7 +205,6 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 			this.initialBounds = new OpenLayers.Bounds(this.transformInitialBounds(obj.initialFit));
             this.initialBounds = this.initialBounds.transform(this.projFrom,this.projTo);
             this.dataLayers = obj.layers;
-            
             this.layersURL = null;
             this.initDatas();
 		},
@@ -221,7 +249,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 		
 		
 		/*
-		 * Méthode d'ajout des layers
+		 * Mï¿½thode d'ajout des layers
 		 * 
 		 */
 		drawLayer:function(layerParam, numLayer){
@@ -233,17 +261,17 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 				};
 			var styleLayerSelect = {
 				    strokeWidth: 2,
-				    strokeColor: "blue",
+                	strokeColor: "rgba(0,0,0,0.5)",
 				    fillOpacity: 0.4,
-				    fillColor: "blue"
+                	fillColor: "rgba(0,0,0,0.5)"
 				};
 	        var styleDefault = OpenLayers.Util.applyDefaults(styleLayerDefault, OpenLayers.Feature.Vector.style["default"]);
 	        var style = new OpenLayers.StyleMap({
 	            'default': styleDefault,
 	            'select': styleLayerSelect
 	        });
-	        
-		    //Permet de décoder du WKT (on récupère une feature ou un tableau de features après la lecture)
+			
+		    //Permet de dï¿½coder du WKT (on rï¿½cupï¿½re une feature ou un tableau de features aprï¿½s la lecture)
 		    this.formatWKT = new OpenLayers.Format.WKT();
 			
 			var layer = new OpenLayers.Layer.Vector(layerParam.name+"_"+numLayer, {styleMap: style});
@@ -259,13 +287,13 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 					    strokeColor: layerParam.color,
 					    fillOpacity: 0.4,
 					    fillColor: layerParam.color
-					};
+				};
 				var featureI = this.formatWKT.read(layerParam.holds[i].wkt);
 				featureI.geometry.transform(this.projFrom, this.projTo);
 //				featureI.attributes.records_length = layerParam.holds[i].objects.record.length;
 //				featureI.attributes.class = featureI.geometry.CLASS_NAME;
 				featureI.records_ids = layerParam.holds[i].objects.record;
-				if(this.mode == "search_result"){
+				if(this.mode == "search_result" || this.mode == "visualization" || this.mode == "facette"){
 					featureI.style = styleEmprise;
 					if(layerParam.holds[i].color!=null){
 						featureI.style.fillColor = layerParam.holds[i].color;
@@ -286,7 +314,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 						}
 					}	
 				}
-				featureI.id = numLayer+"_"+"feature"+"_"+i;		
+				featureI.id = numLayer+"_"+"feature_"+this.map.olMap.id+"_"+i;		
 				features.push(featureI);
 			}
 			layer.addFeatures(features);
@@ -310,6 +338,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 						this.saveCurrentState();
 					}
 					break;
+				case "facette" :
 				case 'visualization':
 					break;
 			}
@@ -318,7 +347,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 				this.testDatas();
 			}
 		},
-		featureEditionClick:function(e){	
+		featureEditionClick:function(e){
 			if(this.map_controls.edition.active && e.feature.geometry.CLASS_NAME == "OpenLayers.Geometry.Point" && e.feature._sketch){
 				if(this.popupEdition == null){
 					var callbackMethodCreate = lang.hitch(e.feature, this.createPopup);
@@ -355,11 +384,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 				    this.handleBtnOk = on(dom.byId('btnPopup'),'click', lang.hitch(this, "coordsChange"));
 				    if(dom.byId('btnDelPopup') != null)
 				    	on(dom.byId('btnDelPopup'),'click', lang.hitch(this, "delPtPop", e.feature));
-				    /*if(!this.saisieDegDec){
-				    	domStyle.set(dom.byId('lonLatPopup'), 'display', 'block');
-				    	domStyle.set(dom.byId('degMinSec'), 'display', 'none');
-				    }*/
-				    
+
 				    on(dom.byId('radioLonLat'), 'click', callbackRadio);
 				    on(dom.byId('radioDegMinSec'), 'click', callbackRadio);
 				    
@@ -374,9 +399,6 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 				    
 				    on(dom.byId('inputLon'), 'change', editCallbackLonLat);
 				    on(dom.byId('inputLat'), 'change', editCallbackLonLat);
-				    
-				    
-				    //degres minutes secondes : fina = degree + minutes/60 + secondes/3600
 				}
 				else{
 					if(e.feature.popup == null){
@@ -454,6 +476,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 									var geom = bounds.toGeometry();
 									geom = geom.transform(this.projTo, this.projFrom);
 									domConstruct.place("<form method='post' name='affineRecherche' action='./index.php?lvl=more_results&mode=extended'>" +
+											"<input type='hidden' name='search_type_asked' value='extended_search' />" +
 											"<input type='hidden' name='search[0]' value='s_1' />" +
 											"<input type='hidden' name='search[1]' value='f_78' />" +
 											"<input type='hidden' name='inter_0_s_1' value='' />" +
@@ -479,6 +502,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 				case 'search_criteria':
 					
 					break;
+				case "facette" :
 				case 'visualization':
 				case 'search_result':
 					var callbackHover = lang.hitch(this, "highlightHolds");
@@ -489,6 +513,10 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 						if(dom.byId('el'+key+'Parent')!=null){
 								on(dom.byId('el'+key+'Parent'),"mouseover",callbackHover);
 								on(dom.byId('el'+key+'Parent'),"mouseout",callbackOut);
+						}
+						if(dom.byId('record_container_'+key)!=null){
+							on(dom.byId('record_container_'+key),"mouseover",callbackHover);
+							on(dom.byId('record_container_'+key),"mouseout",callbackOut);
 						}
 					}
 					this.domNode.addEventListener("mouseleave", callbackMapOut, false);
@@ -501,37 +529,33 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 		},
 			
 		/* 
-		 * Met la notice correspondant à l'emprise survolée en surbrillance
+		 * Met la notice correspondant ï¿½ l'emprise survolï¿½e en surbrillance
 		 * 
 		 */
 		highlightRecord:function(e){
-			
 			var indiceFeature = e.feature.id.split('_');
 			var indiceLayer = e.feature.layer.name.split('_');
-			//Notices à highlighter
+			//Notices ï¿½ highlighter
 			var listeIds = this.dataLayers[indiceLayer[indiceLayer.length-1]].holds[indiceFeature[indiceFeature.length-1]].objects['record'];
 			
 			var toHighlight = [];
 
 				for(var i=0 ; i<listeIds.length ; i++){
-					//La notice n'est pas déjà highlightée
+					//La notice n'est pas dï¿½jï¿½ highlightï¿½e
 					if(this.hoveredFeature.indexOf(e.feature)==-1){
 						this.hoveredFeature.push(e.feature);
 					}
 					toHighlight.push(listeIds[i]);
 				}
 				for(var i=0 ; i<toHighlight.length ; i++){
-					//console.log('to highlight', toHighlight);
 					this.highlightNotice(toHighlight[i]);
-//					console.log(this.featureByNotice[toHighlight[i]]);
-//					console.log('passage highlight holds');
-					this.highlightFeatures(this.featureByNotice[toHighlight[i]], "blue");
+                	this.highlightFeatures(this.featureByNotice[toHighlight[i]], "rgba(0,0,0,0.3)");
 					
 				}
 			
 		},
 		/*
-		 * Fonction de clonage des features, récupére la géometrie & les propriétés de base (les ids et le layer sont changés afin d'éviter tout bug) 
+		 * Fonction de clonage des features, rï¿½cupï¿½re la gï¿½ometrie & les propriï¿½tï¿½s de base (les ids et le layer sont changï¿½s afin d'ï¿½viter tout bug) 
 		 * 
 		 */
 		cloneFeature:function(feature){
@@ -596,14 +620,14 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 			
 		
 		/*
-		 * Appellée au survol d'une notice dans le dom, récupère l'id de la notice et passe les features au layer d'highlight
+		 * Appellï¿½e au survol d'une notice dans le dom, rï¿½cupï¿½re l'id de la notice et passe les features au layer d'highlight
 		 * 
 		 */
 		highlightHolds:function(e){
 			var patternNombre = /\d+/g;
 			var idNot = e.currentTarget.getAttribute('id').match(patternNombre)[0];
 
-			this.highlightFeatures(this.featureByNotice[idNot], "blue");
+            this.highlightFeatures(this.featureByNotice[idNot], "rgba(0,0,0,0.3)");
 		},
 			
 		
@@ -612,14 +636,14 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 		 * Copie les features constituant une emprise sur le layer d'highlight
 		 * 
 		 */
-		highlightFeatures:function(arrayFeature, color){
+		highlightFeatures:function(arrayFeature, color, libelle){
 			if(arrayFeature){
 				if(this.layerHighlight==null){
 					this.layerHighlight = new OpenLayers.Layer.Vector("highlight");				
 					this.map.olMap.addLayer(this.layerHighlight);
 			    	this.map.olMap.setLayerIndex(this.layerHighlight,100);
 				}
-				var style = {fillColor: color, strokeWidth: 1, strokeColor: color, fillOpacity: 0.7};
+				var style = {fillColor: color, strokeWidth: 1, strokeColor: color, fillOpacity: 0.7, title: libelle};
 				for(var i=0 ; i<arrayFeature.length ; i++){
 					var clonedFeature = this.cloneFeature(arrayFeature[i]);
 					var numLayer = arrayFeature[i].layer.name.split('_');
@@ -635,7 +659,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 		},
 		
 		/* 
-		 * Appellée à l'arrêt du survol d'une notice dans le dom, supprime toute les features du layer d'highlight 
+		 * Appellï¿½e ï¿½ l'arrï¿½t du survol d'une notice dans le dom, supprime toute les features du layer d'highlight 
 		 */
 		downlightHolds:function(e){
 			
@@ -649,23 +673,29 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 					
 		/*
 		 * Methode de surbrillance des notices dans le dom
-		 * prend en paramètre un id de notice
+		 * prend en paramï¿½tre un id de notice
 		 */
 		highlightNotice:function(idNotice){
 			if(dom.byId('el'+idNotice+'Parent')!=null){
 				domStyle.set(dom.byId('el'+idNotice+'Parent'), "border", "1px red solid");
 				domStyle.set(dom.byId('el'+idNotice+'Child'), "border", "1px red solid");
-			}	
+			}
+			if(dom.byId('record_container_'+idNotice)!=null){
+				domStyle.set(dom.byId('record_container_'+idNotice), "border", "1px red solid");
+			}
 		},
 			
 		/*
 		 * Methode de downbrillance des notices dans le dom
-		 * Prend en paramètre un id de notice
+		 * Prend en paramï¿½tre un id de notice
 		 */
 		downlightNotice:function(idNotice){
 			if(dom.byId('el'+idNotice+'Parent')!=null){
 				domStyle.set(dom.byId('el'+idNotice+'Parent'), "border", "");
 				domStyle.set(dom.byId('el'+idNotice+'Child'), "border", "");
+			}
+			if(dom.byId('record_container_'+idNotice)!=null){
+				domStyle.set(dom.byId('record_container_'+idNotice), "border", "");
 			}
 		},
 		
@@ -702,7 +732,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 			var indiceFeature = e.feature.id.split('_');
 			var indiceLayer = e.feature.layer.name.split('_');
 			var listeIds = this.dataLayers[indiceLayer[indiceLayer.length-1]].holds[indiceFeature[indiceFeature.length-1]].objects['record'];
-		 
+			
 			if(listeIds.length >= 1){
 				if(this.popup == null ){
 					this.popup = new DialogNotice({
@@ -722,7 +752,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 		},
 		
 		/*
-		 * Retourne une structure JSON décrivant la box courante de la carte
+		 * Retourne une structure JSON dï¿½crivant la box courante de la carte
 		 */
 		get_visible_box:function(){
 			var bounds = this.map.olMap.calculateBounds();
@@ -752,18 +782,18 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 			}
 			return retourJSON;
 		},
-			initFeatureByNotice:function(){
+		initFeatureByNotice:function(){
 			this.featureByNotice = new Object();
 			for(var i=0 ; i<this.dataLayers.length ; i++){
 				for(var j=0 ; j<this.dataLayers[i].holds.length ; j++){
 					if(this.dataLayers[i].holds[j].objects && this.dataLayers[i].holds[j].objects['record']){
 						for(var h=0 ; h<this.dataLayers[i].holds[j].objects['record'].length ; h++){
-							if(this.map.olMap.getLayersByName(this.dataLayers[i].name+'_'+i)[0].getFeatureById(i+'_feature_'+j)!=null){
+							if(this.map.olMap.getLayersByName(this.dataLayers[i].name+'_'+i)[0].getFeatureById(i+'_feature_'+this.map.olMap.id+'_'+j)!=null){
 								if(!this.featureByNotice[this.dataLayers[i].holds[j].objects['record'][h]]){
 									this.featureByNotice[this.dataLayers[i].holds[j].objects['record'][h]] = new Array();
 								}
-								if(this.featureByNotice[this.dataLayers[i].holds[j].objects['record'][h]].indexOf(this.map.olMap.getLayersByName(this.dataLayers[i].name+'_'+i)[0].getFeatureById(i+'_feature_'+j))==-1){
-									this.featureByNotice[this.dataLayers[i].holds[j].objects['record'][h]].push(this.map.olMap.getLayersByName(this.dataLayers[i].name+'_'+i)[0].getFeatureById(i+'_feature_'+j));
+								if(this.featureByNotice[this.dataLayers[i].holds[j].objects['record'][h]].indexOf(this.map.olMap.getLayersByName(this.dataLayers[i].name+'_'+i)[0].getFeatureById(i+'_feature_'+this.map.olMap.id+'_'+j))==-1){
+									this.featureByNotice[this.dataLayers[i].holds[j].objects['record'][h]].push(this.map.olMap.getLayersByName(this.dataLayers[i].name+'_'+i)[0].getFeatureById(i+'_feature_'+this.map.olMap.id+'_'+j));
 								}	
 							}
 						}				
@@ -773,7 +803,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 		},
 		
 		/*
-		 * Check si des emprises sont présentes dans les layers
+		 * Check si des emprises sont prï¿½sentes dans les layers
 		 * 
 		 */
 		testDatas:function(){
@@ -836,12 +866,8 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 			    				case 'olControlDrawFeatureRegPoly':
 			    					var subPanel = query('.subpanel', e.object.map.div);
 			    					for(var i=0 ; i<subPanel.length ; i++){
-			    						//console.log('subpanel class:', subPanel[i].className.split(' ')[1]);
-			    						
 			    						subPanel[i].className = "subpanelActive "+subPanel[i].className.split(' ')[1]+" olButton";
 			    					}
-			    				//	this.map_controls.regPoly.deax
-			    				//	this.createFormRegularPoly();
 			    					break;
 			    			}
 			    			break;
@@ -856,12 +882,12 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 			    			case 'olControlModifyFeature':
 			    				//Si select feature contient un element-> on l'utilise
 			    				if(this.featureSelected != null){
-			    					this.map_controls.edition.selectFeature(this.featureSelected);	
+			    					this.map_controls.edition.selectFeature(this.featureSelected);
 			    				}
 			    				break;
 			    			case 'olControlResizeFeature':
 			    				if(this.featureSelected != null){
-			    					this.map_controls.redimensionne.selectFeature(this.featureSelected);	
+			    					this.map_controls.redimensionne.selectFeature(this.featureSelected);
 			    				}
 			    				break;
 			    			}
@@ -871,7 +897,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 			    			case 'olControlDelete':
 			    				//Si select feature contient un element-> on l'utilise
 			    				if(this.featureSelected != null){
-			    					this.map_controls.del.select(this.featureSelected);	
+			    					this.map_controls.del.select(this.featureSelected);
 			    					this.featureSelected = null;
 			    				}
 			    				break;
@@ -956,6 +982,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 	    			break;
 	    	}
 	    		break;
+	    	case "facette" :
 	    	case 'visualization':
 	    		switch(e.object.CLASS_NAME){
 		    		case "OpenLayers.Control.SelectFeature":
@@ -996,7 +1023,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 	    },
   
 	    /*
-	     * Fonction appelée lors de l'appui sur le bouton d'ajout de point du formulaire de saisie fine des points d'une features (ligne & polygone uniquement)  
+	     * Fonction appelï¿½e lors de l'appui sur le bouton d'ajout de point du formulaire de saisie fine des points d'une features (ligne & polygone uniquement)  
 	     * La fonction ajoute une ligne de plus aux formulaires de saisie
 	     */
 	    addButtonEdit:function(e){
@@ -1011,7 +1038,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 					"<div style='float:left;'><label>" +pmbDojo.messages.getMessage("carto", "carto_lon_abbr")+ ": </label><input style='width:30px' type='text' value='' id='pt_"+parseInt(nbPts+1)+"_lon_deg' name='pt_"+parseInt(nbPts+1)+"_lon_deg'/><label>\xB0</label><input style='width:30px' type='text' value='' id='pt_"+parseInt(nbPts+1)+"_lon_min' name='pt_"+parseInt(nbPts+1)+"_lat_min'/><label>'</label><input style='width:30px' type='text' value='' id='pt_"+parseInt(nbPts+1)+"_lon_sec' name='pt_"+parseInt(nbPts+1)+"_lat_sec'/><label>\"</label>&nbsp;&nbsp;</div>" +
 			  		"<div><label>" +pmbDojo.messages.getMessage("carto", "carto_lat_abbr")+ ": </label><input style='width:30px' type='text' value='' id='pt_"+parseInt(nbPts+1)+"_lat_deg' name='pt_"+parseInt(nbPts+1)+"_lat_deg'/><label>\xB0</label><input style='width:30px' type='text' value='' id='pt_"+parseInt(nbPts+1)+"_lat_min' name='pt_"+parseInt(nbPts+1)+"_lat_min'/><label>'</label><input style='width:30px' type='text' value='' id='pt_"+parseInt(nbPts+1)+"_lat_sec' name='pt_"+parseInt(nbPts+1)+"_lat_sec'/><label>\"</label></div></div><br/>",dom.byId('saisieDegSex').childNodes[dom.byId('saisieDegSex').childNodes.length-1], "after");
 	    	
-	    	//TODO: add events sur edit de ce pt ajouté
+	    	//TODO: add events sur edit de ce pt ajoutï¿½
 	    	on(dom.byId("pt_"+parseInt(nbPts+1)+"_lat_deg"), 'change', callbackOnChangeInputSex);
 	    	on(dom.byId("pt_"+parseInt(nbPts+1)+"_lat_min"), 'change', callbackOnChangeInputSex);
 	    	on(dom.byId("pt_"+parseInt(nbPts+1)+"_lat_sec"), 'change', callbackOnChangeInputSex);
@@ -1025,14 +1052,14 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 	    
 	    
 	    /*
-	     * Validation des points en mode création
+	     * Validation des points en mode crï¿½ation
 	     */
 	    validatePt:function(e){
 	    },
 	    
 	    selectFeatureEdition:function(e){
 	    	if(this.getCurrentActivatedControl().displayClass == "olControlModifyFeature"){
-	    	this.editedFeature = e.feature;
+	    		this.editedFeature = e.feature;
 				var arrayPtSketch = [];
 				var callbackCreatePtForm = lang.hitch(this, this.createFormFromFeature);
 				if(dom.byId('ptsDetails')!=null){
@@ -1065,8 +1092,8 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 		},
 		
 		/*
-		 * Fonction appelée a la selection d'une feature en édition 
-		 * La fonction va générer un formulaire prérempli contenant les coordonées des points de l'emprises
+		 * Fonction appelï¿½e a la selection d'une feature en ï¿½dition 
+		 * La fonction va gï¿½nï¿½rer un formulaire prï¿½rempli contenant les coordonï¿½es des points de l'emprises
 		 */
 		createFormFromFeature:function(e){
 			//TODO:IF SUR LA GEOMETRY DE LA FEATURE EN COURS DEDITION, IF POINT CAS PARTICULIER, PAS DE DRAGVERTICE, SEULEMENT UN MOVE DE LA FEATURE
@@ -1078,8 +1105,8 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 		validateModification:function(){
 			var ptsEdited = query('div[edited="true"]');
 			
-			//Recuperer toutes les valeurs des différents inputs, les convertirs & les affécters aux différents pts édités 
-			//End le false drag uniquement à la fin pour éviter de redraw toutes les sketchs features 
+			//Recuperer toutes les valeurs des diffï¿½rents inputs, les convertirs & les affecters aux diffï¿½rents pts ï¿½ditï¿½s 
+			//End le false drag uniquement ï¿½ la fin pour ï¿½viter de redraw toutes les sketchs features 
 			if(dom.byId('typeForm').value == "edition"){
 				var arrayObjCoords = [];
 				if(this.editedFeature.geometry.CLASS_NAME == "OpenLayers.Geometry.Point"){
@@ -1091,7 +1118,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 					var newPt = new OpenLayers.LonLat(newLon, newLat);
 					newPt = newPt.transform(this.projFrom, this.projTo);
 					this.editedFeature.move(newPt);
-					this.setHiddenField(this.editedFeature);	
+					this.setHiddenField(this.editedFeature);
 					this.saveCurrentState();
 				}else{
 					var arrayPtSketch = [];
@@ -1155,7 +1182,6 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 					}
 				}
 				if(dom.byId('ptsDetails')!=null){
-					//domStyle.set(dom.byId('ptsEdit'), "display", "block");
 					domConstruct.destroy('ptsDetails');
 				}
 				if(this.editedFeature.layer.events.listeners.featureover != null){
@@ -1263,8 +1289,8 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 			}
 			
 		},
-		/* Callback appelé lors d'une modification dans un input de type degrés decimal
-		 * Report de la modification dans le formulaire de saisie en degrés sexagesimaux
+		/* Callback appelï¿½ lors d'une modification dans un input de type degrï¿½s decimal
+		 * Report de la modification dans le formulaire de saisie en degrï¿½s sexagesimaux
 		 */
 		onChangeInputLonLat:function(e){
 			var numPt = e.target.id.split('_')[1];
@@ -1277,8 +1303,8 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 			parent.setAttribute('edited', 'true');
 		},
 		/* 
-		 * Callback appelé lors d'une modification dans un input de type degré sexagésimal
-		 * Report de la modification dans le formulaire de saisie en degrés décimaux
+		 * Callback appelï¿½ lors d'une modification dans un input de type degrï¿½ sexagï¿½simal
+		 * Report de la modification dans le formulaire de saisie en degrï¿½s dï¿½cimaux
 		 */
 		onChangeInputSex:function(e){
 
@@ -1385,7 +1411,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 			}
 		},
 		buttonImportWkt:function(){
-			//Le popup doit être stocké pour la suppression au onHide
+			//Le popup doit ï¿½tre stockï¿½ pour la suppression au onHide
 			var callbackValideImport = lang.hitch(this, this.valideImportWkt);  
 			var callbackAddTextArea = lang.hitch(this, this.addTextWkt);
 			var callbackPopupImportClose = lang.hitch(this, this.destroyPopup);
@@ -1474,6 +1500,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 						this.alreadyZoomed = true;
 					}
 					break;
+				case "facette" :
 				case 'visualization':
 					this.initPanel();
 					this.initExport(layer);
@@ -1641,7 +1668,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 				if(this.popupEdition != null){
 					this.popupEdition.hide();
 				}
-				//Prendre le form du dessus, le supprimer et le recréer une fois le drag terminé
+				//Prendre le form du dessus, le supprimer et le recrï¿½er une fois le drag terminï¿½
 				if(dom.byId('detailPoint')!=null){
 					domConstruct.destroy('introPt');
 					if(dom.byId('ptsEdit') != null)
@@ -1725,8 +1752,6 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
           var self = this; 
             OpenLayers.Util.extend(control, {
                 draw: function () {
-                    // this Handler.Box will intercept the shift-mousedown
-                    // before Control.MouseDefault gets to see it
                     this.box = new OpenLayers.Handler.Box( control,
                         {	
                     		"done": this.affinage
@@ -1772,7 +1797,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 								}
 							    /*html2canvas(document.getElementById('map_search'), {onrendered: function(canvas) {
 							       	var ctxMap = canvas.getContext("2d");
-							    	//Génération d'une chaine a partir du svg des emprises & creation du canvas sur lequel limage va être aposée
+							    	//Gï¿½nï¿½ration d'une chaine a partir du svg des emprises & creation du canvas sur lequel limage va ï¿½tre aposï¿½e
 							    	
 							    	var svgXml = (new XMLSerializer()).serializeToString(document.querySelector('svg'));
 							    	var img = new Image();
@@ -1821,7 +1846,6 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
             });
             this.map_controls.affinage = control;
             this.map.olMap.addControl(this.map_controls.affinage);
-          
 		},
 		initSubPanel:function(){
 			var callbackBtn = lang.hitch(this, this.pushBtnSubPanel);
@@ -1897,7 +1921,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 			}
 			if(valASplit.split('\xB0')[1].split('\'')[1].split('\"')[1] == "S"){
 				retour[0] = -retour[0];
-			}			
+			}
 			return retour;
 		},
 		toDecimal:function(deg, min, sec){
@@ -1930,9 +1954,9 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 					if(dom.byId('lonLatPopup') != null)
 						domStyle.set(dom.byId('lonLatPopup'), "display", "none");
 					var editedFeature = this.map.olMap.getLayersByName(dom.byId('layerName').value)[0].getFeatureById(dom.byId('featureName').value);
-					editedFeature.popup.updateSize();	
+					editedFeature.popup.updateSize();
 					e.target.parentNode.style.height = e.target.parentNode.offsetHeight+10+"px";
-				}	
+				}
 				e.target.checked = "true";
 			}
 		},
@@ -2071,7 +2095,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 			}
 			domConstruct.place("<div id='ptsDetails'>"+header+pmbDojo.messages.getMessage("carto","carto_sexagesimal_degrees") +": <input type='radio' checked='true' name='choixTypeCoords' id='degSex'/><br/>" +
 					pmbDojo.messages.getMessage("carto","carto_decimal_degrees")+": <input type='radio' name='choixTypeCoords' id='degDec'/><br/><input type='hidden' value='"+mode+"' id='typeForm'/> <div id='listePt' style='overflow-y:scroll; height:300px;'>"+lignePt+"</div><input type='button' class='bouton' value='"+ pmbDojo.messages.getMessage("carto","carto_validate_label") +"' id='valideModif' name='validModif'/></div>", divAppend, place);
-
+			
 			if(dom.byId('ptsEdit')!=null)
 				domStyle.set(dom.byId('ptsEdit'), 'display', 'none');
 			
@@ -2181,7 +2205,6 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 			    			if(confirm(pmbDojo.messages.getMessage("carto","carto_warning_point_delete"))){
 			    				this.featureSelected.geometry.components[0].removePoint(ptADel.geometry);
 			    				this.setHiddenField(featureGlobale);
-					    		
 			    				this.map_controls.edition.unselectFeature(featureGlobale);
 					    		this.map_controls.edition.selectFeature(featureGlobale);
 					    		if(this.mode == 'edition'){
@@ -2196,7 +2219,6 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 			    			if(confirm(pmbDojo.messages.getMessage("carto","carto_warning_point_delete"))){
 					    		this.featureSelected.geometry.removePoint(ptADel.geometry);
 					    		this.setHiddenField(featureGlobale);
-					    		
 					    		this.map_controls.edition.unselectFeature(featureGlobale);
 					    		this.map_controls.edition.selectFeature(featureGlobale);
 					    		if(this.mode == 'edition'){
@@ -2334,7 +2356,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 						featureI.style.label = data[j].objects.record.length.toString();
 //						if(data[j].objects.record.length>20){
 //							featureI.style.pointRadius = 20; 
-//					}
+//						}
 						if(data[j].objects.record.length > 20){
 							featureI.style.pointRadius = 14;
 							if(data[j].objects.record.length > 100){
@@ -2345,7 +2367,7 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 		    		featureI.records_ids = data[j].objects.record;
 		    		featureI.attributes.records_length = data[j].objects.record.length;
 		    		featureI.attributes.class = featureI.geometry.CLASS_NAME;
-		    		featureI.id = i+"_"+"feature"+"_"+j;
+		    		featureI.id = i+"_"+"feature_"+this.map.olMap.id+"_"+j;
 		    		//this.dataLayers[i].holds.push(data[j]);
 		    		featureI.geometry.transform(this.projFrom, this.projTo);
 		    		this.featuresByZoom[zoomLevel][i].push(featureI);
@@ -2363,23 +2385,25 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 	    	currentLayer.removeAllFeatures();
 	    	//this.map.olMap.layers[i].destroyFeatures();
 	    	//console.log('features zoom length', this.featuresByZoom[zoomLevel][i].length);
-			var features = new Array();
-			if(this.featuresByZoom[zoomLevel][i]){
-				currentLayer.addFeatures(this.featuresByZoom[zoomLevel][i]);
-	    		this.dataLayers[i].holds = [];
-	    		for(var j=0 ; j<this.featuresByZoom[zoomLevel][i].length ; j++){
-	    			var obj = {};
-	    			obj.objects = {};
-	    			obj.objects.record = this.featuresByZoom[zoomLevel][i][j].records_ids;
-	    			this.dataLayers[i].holds.push(obj);
-	    		}
-	    		this.initFeatureByNotice();
-	    		
+                var features = new Array();
+                if(this.featuresByZoom[zoomLevel][i]){
+                    currentLayer.addFeatures(this.featuresByZoom[zoomLevel][i]);
+                    this.dataLayers[i].holds = [];
+                    for(var j=0 ; j<this.featuresByZoom[zoomLevel][i].length ; j++){
+                            var obj = {};
+                            obj.objects = {};
+                            obj.objects.record = this.featuresByZoom[zoomLevel][i][j].records_ids;
+                            this.dataLayers[i].holds.push(obj);
+                    }
+                    this.initFeatureByNotice();
 	    	}
-			this.nbLayersReceived++;
-			if(this.nbLayersReceived==(this.dataLayers.length)){
-				this.hidePatience();	
-			}
+                this.nbLayersReceived++;
+
+                if(this.nbLayersReceived==(this.dataLayers.length)){
+                        this.hidePatience();	
+                }  
+                
+                this.map.olMap.updateSize(); 
 	    },
 	    zoomEnd:function(event){
 	    	if(this.cluster){
@@ -2403,7 +2427,6 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 						this.printByZoomLevel(event.object.zoom, i);
 					}
 				}else{
-					
 					for(var i=0 ; i<this.dataLayers.length ; i++){
 						var callbackHolds = lang.hitch(this,"callbackCluster", i, event.object.zoom);
 						request.post(this.dataLayers[i].data_url,{
@@ -2413,6 +2436,8 @@ define(["dojo/_base/declare", "dijit/Dialog", "dojo/dom", "dojox/widget/Standby"
 					}
 				}		
 	    	}
+                
+                this.map.olMap.updateSize(); 
 	    },
 	    swapMode: function(e){
 	    	if(this.cluster){

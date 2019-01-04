@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: parser.inc.php,v 1.1 2008-06-03 15:36:02 ngantier Exp $
+// $Id: parser.inc.php,v 1.4 2018-11-29 07:59:47 dgoron Exp $
 
 
 /*----------------------------------------------------------------------------------------
@@ -131,8 +131,9 @@ function _parser_text_($xml, $fonction, $rootelement) {
 	}
 }
 
-function _parser_text_no_function_($xml, $rootelement) {
+function _parser_text_no_function_($xml, $rootelement, $full_path = '') {
 	global $charset;
+	global $class_path;
 	$vals = array();
 	$index = array();
 	if ($xml) {
@@ -160,6 +161,33 @@ function _parser_text_no_function_($xml, $rootelement) {
 				exit;
 			}
 			$param_var = $param[$rootelement][0];
+			
+			//Paramétrage de substitution par l'interface
+			if($full_path) {
+				$path = substr($full_path, 0, strrpos($full_path, '/'));
+				$filename = substr($full_path, strrpos($full_path, '/')+1);
+				switch ($rootelement) {
+					case 'CATALOG':
+						require_once($class_path.'/misc/files/misc_file_catalog.class.php');
+						$misc_file_catalog = new misc_file_catalog($path, $filename);
+						if(isset($param_var['ACTION'])) {
+							$param_var['ACTION'] = $misc_file_catalog->apply_substitution($param_var['ACTION']);
+						} elseif(isset($param_var['ITEM'])) {
+							$param_var['ITEM'] = $misc_file_catalog->apply_substitution($param_var['ITEM']);
+						}
+						break;
+					case 'INDEXATION':
+						require_once($class_path.'/misc/files/misc_file_indexation.class.php');
+						$misc_file_indexation = new misc_file_indexation($path, $filename);
+						$param_var['FIELD'] = $misc_file_indexation->apply_substitution($param_var['FIELD']);
+						break;
+					case 'SORT':
+						require_once($class_path.'/misc/files/misc_file_sort.class.php');
+						$misc_file_sort = new misc_file_sort($path, $filename);
+						$param_var['FIELD'] = $misc_file_sort->apply_substitution($param_var['FIELD']);
+						break;
+				}
+			}
 			return $param_var;
 		}
 	}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_agenda_view_calendar.class.php,v 1.11 2015-03-12 11:12:33 mbertin Exp $
+// $Id: cms_module_agenda_view_calendar.class.php,v 1.15 2018-07-06 13:55:36 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -70,30 +70,32 @@ class cms_module_agenda_view_calendar extends cms_module_common_view{
 	public function render($datas){
 		$html_to_display = "
 		<div id='cms_module_calendar_".$this->id."' data-dojo-props='onChange : cms_module_agenda_highlight_events,getClassForDate:cms_module_agenda_get_class_day'; dojoType='dijit.Calendar' style='width:100%;'></div>";
+		$legend ="";
+		$styles = array();
+		$events = array();
+		$event_list= "";
 		if($this->parameters>0 && count($datas['events'])){
 			$legend ="<div class='row'>";
 			$event_list= "
 		<ul class='cms_module_agenda_view_calendar_eventslist'>";
 			$nb_displayed=0;
 			$date_time = mktime(0,0,0);
-			$styles = array();
 			$calendar = array();
-			$events = array();
 			foreach($datas['events'] as $event){
-				if($event['event_start']){
+				if(isset($event['event_start']) && $event['event_start']){
  					$events[] =$event;
 					if(!in_array($event['calendar'],$calendar)){
 						$calendar[] = $event['calendar'];
 						$legend.="
-						<div style='float:left;'>
-							<div style='float:left;width:1em;height:1em;background-color:".$event['color']."'></div>
-							<div style='float:left;'>&nbsp;".$this->format_text($event['calendar'])."&nbsp;&nbsp;</div>
-						</div>";
+							<div style='float:left;'>
+								<div style='float:left;width:1em;height:1em;background-color:".$event['color']."'></div>
+								<div style='float:left;'>&nbsp;".$this->format_text($event['calendar'])."&nbsp;&nbsp;</div>
+							</div>";
 					}
 					$styles[$event['id_type']] = $event['color'];
 					if($nb_displayed<$this->parameters['nb_displayed_events_under'] && ($event['event_start']['time']>= $date_time || $event['event_end']['time']>= $date_time)){
 						$event_list.="
-			<li><a href='".$this->get_constructed_link("event",$event['id'])."' title='".$this->format_text($event['calendar'])."' alt='".$this->format_text($event['title'])."'><span class='cms_module_agenda_event_".$event['id_type']."'>".$this->get_date_to_display($event['event_start']['format_value'],$event['event_end']['format_value'])."</span> : ".$this->format_text($event['title'])."</a></li>";
+				<li><a href='".$this->get_constructed_link("event",$event['id'])."' title='".$this->format_text($event['calendar'])."' alt='".$this->format_text($event['title'])."'><span class='cms_module_agenda_event_".$event['id_type']."'>".$this->get_date_to_display($event['event_start']['format_value'],$event['event_end']['format_value'])."</span> : ".$this->format_text($event['title'])."</a></li>";
 						$nb_displayed++;
 					}
 				}
@@ -109,12 +111,12 @@ class cms_module_agenda_view_calendar extends cms_module_common_view{
 		if(is_array($styles) && count($styles)){
 			foreach($styles as $id =>$color){
 				$html_to_display.="
-					#".$this->get_module_dom_id()." td.cms_module_agenda_event_".$id." {
-						background : ".$color.";		
-					}
-					#".$this->get_module_dom_id()." .cms_module_agenda_view_calendar_eventslist .cms_module_agenda_event_".$id." {
-						color : ".$color.";		
-					}
+						#".$this->get_module_dom_id()." td.cms_module_agenda_event_".$id." {
+							background : ".$color.";
+						}
+						#".$this->get_module_dom_id()." .cms_module_agenda_view_calendar_eventslist .cms_module_agenda_event_".$id." {
+							color : ".$color.";
+						}
 				";
 			}
 		}
@@ -131,16 +133,21 @@ class cms_module_agenda_view_calendar extends cms_module_common_view{
 			function cms_module_agenda_get_class_day(date,locale){
 				var classname='';
 				dojo.forEach(events,function (event){
-					start_day = new Date(event['event_start']['time']*1000);
-					start_day.setHours(1,0,0,0);
-					if(event['event_end']){
-						end_day = new Date(event['event_end']['time']*1000);
-						end_day.setHours(1,0,0,0);
-					}else end_day = false;
-					if((date.valueOf()>=start_day.valueOf() && (end_day && date.valueOf()<=end_day.valueOf())) || date.valueOf()==start_day.valueOf()){
-						if(classname) classname+=' ';
-						classname+='cms_module_agenda_event_'+event.id_type;
-					}
+						start_day = new Date(event['event_start']['time']*1000);
+						start_day.setHours(1,0,0,0);
+						if(event['event_end']){
+							end_day = new Date(event['event_end']['time']*1000);
+							end_day.setHours(1,0,0,0);
+						}else end_day = false;
+						if((date.valueOf()>=start_day.valueOf() && (end_day && date.valueOf()<=end_day.valueOf())) || date.valueOf()==start_day.valueOf()){
+							if (classname.indexOf('cms_module_agenda_event_'+event.id_type) === -1) classname+='cms_module_agenda_event_'+event.id_type;
+							if (classname) {
+								classname+= ' ';
+								if(classname.indexOf('cms_module_agenda_multiple_events') === -1) {
+									classname+=' cms_module_agenda_multiple_events ';
+								}
+							}
+						}
 				});
 				return classname;
 			}

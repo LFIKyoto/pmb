@@ -2,13 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr.tpl.php,v 1.159 2015-06-30 13:27:42 dgoron Exp $
+// $Id: empr.tpl.php,v 1.193 2018-09-19 14:18:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+if(!isset($group_id)) $group_id = 0;
+if(!isset($force_finance)) $force_finance = 0;
+if(!isset($short_loan)) $short_loan = 0;
+
+
 // templates pour les forms emprunteurs
 //   ----------------------------------
-$select1_prop = "scrollbars=yes, toolbar=no, dependent=yes, resizable=yes";
 
 // template pour la liste emprunteurs
 $empr_list_tmpl = "
@@ -88,16 +92,11 @@ function test_form(form)
 ";
 
 // $empr_cb_tmpl : template pour le form de saisie code-barre en recherche
-if ($pmb_rfid_activate==1 && $pmb_rfid_serveur_url ) {
-
 $empr_cb_tmpl = "
 <script type='text/javascript'>
 <!--
-function aide_search_empr()
-	{
-		var fenetreAide;
-		var prop = 'scrollbars=yes, resizable=yes';
-		fenetreAide = openPopUp('./help.php?whatis=search_empr', 'regex_howto', 500, 400, -2,- 2, prop);
+function aide_search_empr() {
+		openPopUp('./help.php?whatis=search_empr', 'regex_howto');
 	}
 function test_form(form) {
 	if (form.form_cb.value.replace(/^\s+|\s+$/g,'').length == 0) {
@@ -108,54 +107,11 @@ function test_form(form) {
 
 -->
 
-</script>
-$rfid_js_header
-!!script!!
-
-<h1>!!title!!</h1>
-<form class='form-$current_module' id='saisie_cb_ex' name='saisie_cb_ex' method='post' action='!!form_action!!' onSubmit='return test_form(this)'>
-<h3>!!titre_formulaire!!</h3>
-<div class='form-contenu'>
-	<div class='row'>
-		<label class='etiquette' for='form_cb'>!!message!!</label>
-		</div>
-	<div class='row'>
-		<input class='saisie-20em' id='form_cb' type='text' name='form_cb' value='!!cb_initial!!' title='$msg[3000]' /> !!restrict_location!!
-		</div>
-	</div>
-<div class='row'>
-	<div class='left'>
-		<input type='submit' class='bouton' value='$msg[502]'/>
-	</div>
-	<div class='right'>
-		<a href='./circ.php?categ=search'>".$msg['empr_search_advanced']."</a>
-	</div>
-	<div class='row'></div>
-</div>
-</form>
-<script type='text/javascript'>
-document.forms['saisie_cb_ex'].elements['form_cb'].focus();
-	init_rfid_empr();
 </script>";
-} else
-$empr_cb_tmpl = "
-<script type='text/javascript'>
-<!--
-function aide_search_empr()
-	{
-		var fenetreAide;
-		var prop = 'scrollbars=yes, resizable=yes';
-		fenetreAide = openPopUp('./help.php?whatis=search_empr', 'regex_howto', 500, 400, -2 ,-2, prop);
-	}
-function test_form(form) {
-	if (form.form_cb.value.replace(/^\s+|\s+$/g,'').length == 0) {
-		form.form_cb.value='*';
-		}
-	return true;
-	}
--->
-</script>
-!!script!!
+if ($pmb_rfid_activate==1 && $pmb_rfid_serveur_url ) {
+	$empr_cb_tmpl .=$rfid_js_header;
+}
+$empr_cb_tmpl .="!!script!!
 
 <h1>!!title!!</h1>
 <form class='form-$current_module' id='saisie_cb_ex' name='saisie_cb_ex' method='post' action='!!form_action!!' onSubmit='return test_form(this)'>
@@ -171,16 +127,18 @@ function test_form(form) {
 <div class='row'>
 	<div class='left'>
 		<input type='submit' class='bouton' value='$msg[502]'/>
+		<input type='button' class='bouton' value='".$msg['empr_search_advanced']."' onclick='document.location=\"./circ.php?categ=search\"'>
 	</div>
-	<div class='right'>
-		<a href='./circ.php?categ=search'>".$msg['empr_search_advanced']."</a>
-	</div>
+	<div class='right'></div>
 </div>
 <div class='row'></div>
 </form>
 <script type='text/javascript'>
-document.forms['saisie_cb_ex'].elements['form_cb'].focus();
-</script>";
+document.forms['saisie_cb_ex'].elements['form_cb'].focus();";
+if ($pmb_rfid_activate==1 && $pmb_rfid_serveur_url ) {
+	$empr_cb_tmpl .="init_rfid_empr();";
+}
+$empr_cb_tmpl .="</script>";
 
 // $login_empr_pret_tmpl : template pour le form de saisie login/password en mode circ restreint
 $login_empr_pret_tmpl = "
@@ -248,13 +206,10 @@ document.forms['saisie_cb_ex'].elements['form_cb'].focus();
 </script>
 ";
 
-// $PDF_win_prop : propriétés pour la fenetre d'impression PDF fiche lecteur
-$PDF_win_prop = "toolbar=no, dependent=yes, resizable=yes";
-
 if ($pmb_rfid_activate==1 ) {
 	if(!$rfid_port) $rfid_port= get_rfid_port();
 	if($pmb_rfid_serveur_url) {
-		$indicateur_rfid="<img src='./images/sauv_succeed.png' id='indicateur' align='top' ><span  class='erreur' id='indicateur_nb_doc'></span>";
+		$indicateur_rfid="<img src='".get_url_icon('sauv_succeed.png')."' id='indicateur' class='align_top' ><span  class='erreur' id='indicateur_nb_doc'></span>";
 	}	
 	if( $pmb_rfid_serveur_url){
 		$script_rfid_antivol="
@@ -279,18 +234,20 @@ if ($pmb_rfid_activate==1 ) {
 	
 	$empr_pret_allowed="
 		<div id='loan_zone' >
-			<div class='left'>
-				$rfid_js_header
-				<script src='./javascript/rfid/rfid_pret.js'></script>
-					
-				$script_rfid_antivol
-				$rfid_input_cb
-				$indicateur_rfid
-				".(($pmb_short_loan_management==1)?"<br /><span id='short_loan_msg' class='short_loan_msg'>".((($short_loan==1) || (!$short_loan && $deflt_short_loan_activate))?$msg['short_loan_enabled']:$msg['short_loan_disabled']).'</span>':'')."
-			</div>
-			<div class='right'>
-				<input type='button' name='express' id='express' class='bouton' value='".$msg['pret_express']."' onClick=\"document.location='./circ.php?categ=express&id_empr=!!id!!&groupID=$groupID".(($pmb_short_loan_management==1)?"&short_loan='+document.getElementById('short_loan').value;":"'")."\" />
-				<!-- short_loan -->
+			<div class='row'>
+				<div class='left'>
+					$rfid_js_header
+					<script src='./javascript/rfid/rfid_pret.js'></script>
+						
+					$script_rfid_antivol
+					$rfid_input_cb
+					$indicateur_rfid
+					".(($pmb_short_loan_management==1)?"<br /><span id='short_loan_msg' class='short_loan_msg'>".((($short_loan==1) || (!$short_loan && $deflt_short_loan_activate))?$msg['short_loan_enabled']:$msg['short_loan_disabled']).'</span>':'')."
+				</div>
+				<div class='right'>
+					<input type='button' name='express' id='express' class='bouton' value='".$msg['pret_express']."' onClick=\"document.location='./circ.php?categ=express&id_empr=!!id!!&groupID=$groupID".(($pmb_short_loan_management==1)?"&short_loan='+document.getElementById('short_loan').value;":"'")."\" />
+					<!-- short_loan -->
+				</div>
 			</div>
 			<div class='row'>
 				<table id='table_pret_tmp' name='table_pret_tmp'>
@@ -307,7 +264,7 @@ if ($pmb_rfid_activate==1 ) {
 	<div id='loan_zone' >
 		<div class='left'>
 			<!-- custom_fields -->
-			<input type='text' class='saisie-15em' id='cb_doc' name='cb_doc' value='' /><input type='submit' name='ajouter' class='bouton' value='$msg[925]' onClick=\"if (check_form(this.form)) {unload_off();this.form.submit();} else return false;\" />
+			<input type='text' class='saisie-15em' id='cb_doc' name='cb_doc' value='' /><input type='submit' name='ajouter' class='bouton' value='$msg[925]' onClick=\"if (check_form(this.form)) {this.form.submit();} else return false;\" />
 			".(($pmb_short_loan_management==1)?"<br /><span id='short_loan_msg' class='short_loan_msg'>".((($short_loan==1) || (!$short_loan && $deflt_short_loan_activate))?$msg['short_loan_enabled']:$msg['short_loan_disabled']).'</span>':'')."
 		</div>
 		<div class='right'>
@@ -353,7 +310,8 @@ if ($pmb_short_loan_management==1) {
 $printer_ticket_script = '';
 $printer_ticket_link = '';
 
-if($pmb_printer_name || $pdfcartelecteur_printer_handler==2) {
+if($pmb_printer_name || $pdfcartelecteur_printer_card_handler==2) {
+	
 	$printer_ticket_script = "
 	<div id='printer_script'></div>
 	<script type='text/javascript'>
@@ -386,27 +344,95 @@ if($pmb_printer_name || $pdfcartelecteur_printer_handler==2) {
          		alert('".$msg['printer_not_found']."');
          	}
         } 
+         				
+        function printer_raspberry_send_ticket(url) {
+         	
+         	var req = new http_request();
+         	var tpl;
+         	var printer = '';
+			var printer_id = 0;
+         	var raspberry_ip = '';
+			var printer_type = '';
+         	
+         	//Quelle est l'imprimante sélectionnée ?
+         	if (req.request('./ajax.php?module=circ&categ=zebra_print_pret&sub=get_selected_printer')) {
+				alert ( req.get_text() );
+			} else {
+				printer = req.get_text();
+			}
+			if (printer == '') {
+				alert('".$msg['user_printer_not_found']."');
+				return;
+			}
+			
+			var temp = printer.split('@');
+			printer_id = temp[0];
+			raspberry_ip = temp[1];
+
+			//On interroge le raspberry pour connaitre le type d'imprimante (et savoir si elle est bien sur ce raspberry)
+			if (req.request('http://' + raspberry_ip + '/getPrinter?idPrinter=' + printer_id)) {
+				alert ( req.get_text() );
+			} else {
+				printer_type = req.get_text();
+			}
+			if (printer_type == '' || printer_type == 'unknown') {
+				alert('".$msg['user_printer_type_not_found']."');
+				return;
+			}
+
+			//On va générer le template en fonction de l'imprimante
+			url = url + '&printer_type=' + printer_type;
+			if(req.request(url)){
+				alert ( req.get_text() );
+			} else {
+				tpl = req.get_text();
+			}
+         	if (tpl.length == 0) {
+         		alert('".$msg['printer_tpl_error']."');
+         		return;
+         	}
+
+			//On envoie l'impression
+			var xhr = new XMLHttpRequest();
+			xhr.open('POST', 'http://' + raspberry_ip + '/print?', true);
+			xhr.setRequestHeader('Content-type', 'text/plain');
+			xhr.send(JSON.stringify({idPrinter:printer_id,xml:tpl}));
+						
+         	return;
+         				
+        }
 		
 	</script>";
 }
 if($pmb_printer_name) {
-	$printer_ticket_script.= "
-	<script type='text/javascript'>
-
-		function printer_jzebra_print_ticket(url) {
-			printer_get_jzebra();
-			var req = new http_request();
-			if(req.request(url)){
-				// Il y a une erreur. 
-				alert ( req.get_text() );			
-			}else { 
-				printer_jzebra_send_ticket(req.get_text(),'".$pmb_printer_name."','850');
-				return 1;	
+	if (substr($pmb_printer_name,0,9) == 'raspberry') {
+		$printer_ticket_script.= "
+		<script type='text/javascript'>
+		
+			function printer_jzebra_print_ticket(url) {
+				printer_raspberry_send_ticket(url);
 			}
-		}
-	</script>	
-	";
-	$printer_ticket_link="<a href='#' onclick=\"printer_jzebra_print_ticket('./ajax.php?module=circ&categ=zebra_print_pret&sub=all&id_empr=!!id!!'); return false;\"><img src='./images/print.gif' alt='".htmlentities($msg['print_print'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['print_print'],ENT_QUOTES,$charset)."' align='middle' border='0'></a>";
+		</script>
+		";
+	} else {
+		$printer_ticket_script.= "
+		<script type='text/javascript'>
+	
+			function printer_jzebra_print_ticket(url) {
+				printer_get_jzebra();
+				var req = new http_request();
+				if(req.request(url)){
+					// Il y a une erreur.
+					alert ( req.get_text() );
+				}else {
+					printer_jzebra_send_ticket(req.get_text(),'".$pmb_printer_name."','850');
+					return 1;
+				}
+			}
+		</script>
+		";
+	}
+	$printer_ticket_link="<a href='#' onclick=\"printer_jzebra_print_ticket('./ajax.php?module=circ&categ=zebra_print_pret&sub=all&id_empr=!!id!!'); return false;\"><img src='".get_url_icon('print.gif')."' alt='".htmlentities($msg['print_print'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['print_print'],ENT_QUOTES,$charset)."' class='align_middle' border='0'></a>";
 
 }else if($pmb_printer_ticket_url) {
 	$printer_ticket_script="		
@@ -417,7 +443,9 @@ if($pmb_printer_name) {
 		// On initialise la classe:
 		var req = new http_request();
 		
-		if(netscape.security.PrivilegeManager)netscape.security.PrivilegeManager.enablePrivilege('UniversalBrowserRead');	
+		if(typeof netscape !== 'undefined') {
+			if(netscape.security.PrivilegeManager)netscape.security.PrivilegeManager.enablePrivilege('UniversalBrowserRead');
+		}
 		// Execution de la requete
 		if(req.request(url,1,'xml='+".pmb_escape()."(cmd))){
 			// Il y a une erreur. Afficher le message retourne
@@ -432,7 +460,9 @@ if($pmb_printer_name) {
 		// On initialise la classe:
 		var req = new http_request();
 		
-		if(netscape.security.PrivilegeManager)netscape.security.PrivilegeManager.enablePrivilege('UniversalBrowserRead');	
+		if(typeof netscape !== 'undefined') {
+			if(netscape.security.PrivilegeManager)netscape.security.PrivilegeManager.enablePrivilege('UniversalBrowserRead');
+		}
 		// Execution de la requete
 		if(req.request(url)){
 			// Il y a une erreur. Afficher le message retourne
@@ -445,7 +475,7 @@ if($pmb_printer_name) {
 	}
 	</script>";
 	
-	$printer_ticket_link="&nbsp;<a href='#' onclick=\"print_ticket('./ajax.php?module=circ&categ=print_pret&sub=all&id_empr=!!id!!'); return false;\"><img src='./images/print.gif' alt='Imprimer...' title='Imprimer...' align='middle' border='0'></a>";
+	$printer_ticket_link="&nbsp;<a href='#' onclick=\"print_ticket('./ajax.php?module=circ&categ=print_pret&sub=all&id_empr=!!id!!'); return false;\"><img src='".get_url_icon('print.gif')."' alt='Imprimer...' title='Imprimer...' class='align_middle' border='0'></a>";
 }
 									
 $empr_tmpl = "
@@ -489,45 +519,42 @@ $printer_ticket_script
 </script>
 <script type='text/javascript' src='./javascript/tablist.js'></script>
 <div id=\"el!!id!!Parent\" class=\"notice-parent\">
-   		<h1><div class='left'><img src=\"./images/plus.gif\" class=\"img_plus\" name=\"imEx\" id=\"el!!id!!Img\" title=\"".$msg['admin_param_detail']."\" border=\"0\" onClick=\"expandBase('el!!id!!', true); return false;\">
-   		!!image_caddie_empr!! !!prenom!! !!nom!! <font size='2'>".$msg['empr_nb_pret'].": !!info_nb_pret!! ".$msg['empr_nb_resa'].": !!info_nb_resa!! !!info_resa_planning!! !!header_format!!</font></div><div class='right'><font size='2'>!!empr_resume!! !!empr_statut_libelle!!</font></div></h1>
+   		<h1 id='empr-name'><div class='left'><img src=\"".get_url_icon('plus.gif')."\" class=\"img_plus\" name=\"imEx\" id=\"el!!id!!Img\" title=\"".$msg['admin_param_detail']."\" border=\"0\" onClick=\"expandBase('el!!id!!', true); return false;\">
+   		!!image_caddie_empr!! <span class='empr-name h3-like'>!!prenom!! !!nom!!</span> ".$msg['empr_nb_pret'].": !!info_nb_pret!! ".$msg['empr_nb_resa'].": !!info_nb_resa!! !!info_resa_planning!! !!header_format!!</div><div class='right'>!!empr_resume!! !!empr_statut_libelle!!</div></h1>
    		</div>
 	<div class='row'><div class='right'>!!empr_picture!!</div></div>
 <div id=\"el!!id!!Child\" class=\"notice-child\" style=\"margin-left:7px;display:none;\"!!depliee!!>
-<script type='text/javascript'>
-	initIt();
-</script>
 <div id='bloc_adresse_empr'>
 	<div class='colonne3'>
 		<div class='row'>
 			!!adr1!!
-			</div>
+		</div>
 		<div class='row'>
 			!!adr2!!
-			</div>
+		</div>
 		<div class='row'>
 			!!cp!!&nbsp;!!ville!!
-			</div>
+		</div>
 		<div class='row'>
 			!!pays!!
-			</div>
+		</div>
 		<div class='row'>
-			<strong>!!tel1!!</strong> / <strong>!!tel2!!</strong>
-			</div>
+			<strong>".$msg['empr_fiche_tel']."</strong> !!tel!!
+		</div>
 		<div class='row'>
-			$msg[58]$msg[1901] !!mail_all!!
-			</div>
+			<strong>$msg[58]$msg[1901]</strong> !!mail_all!!
+		</div>
 	</div>
 	<div class='colonne3'>
 		<div class='row'>
 			<strong>$msg[74] : </strong>!!prof!!
-			</div>
+		</div>
 		<div class='row'>
 			<strong>$msg[75] : </strong>!!date!!
-			</div>
+		</div>
 		<div class='row'>
 			<strong>$msg[125] : </strong>!!sexe!!
-			</div>
+		</div>
 	</div>
 	<div class='colonne_suite'></div>
 
@@ -536,39 +563,39 @@ $printer_ticket_script
 <div class='colonne3'>
 	<div class='row'>
 		<strong>$msg[1403]</strong>
-		</div>
+	</div>
 	<div class='row'>
 		<strong>$msg[1401] : </strong>!!adhesion!!
-		</div>
+	</div>
 	<div class='row'>
 		<strong>$msg[1402] : </strong>!!expiration!!
-		</div>
+	</div>
 	<div class='row'>
 		<strong>".$msg['date_dern_emprunt']." : </strong>!!last_loan_date!!
-		</div>
 	</div>
+</div>
 <div class='colonne3'>
 	<div class='row'>
 		<strong>$msg[60] : </strong>!!codestat!!
-		</div>
+	</div>
 	<div class='row'>
 		<strong>$msg[59] : </strong>!!categ!!
-		</div>
+	</div>
 	<div class='row'>
 		<strong>$msg[38] : </strong>!!cb!!
-		</div>
 	</div>
 	!!abonnement!!
+</div>
 <div class='colonne_suite'>
 	<!-- !!localisation!! -->
 	<div class='row'>!!groupes!!
-		</div>
+	</div>
 	<div class='row'>
 		<strong>".$msg['empr_login']." : </strong>!!empr_login!!
-		</div>
+	</div>
 	<div class='row'>
-			!!empr_pwd!!
-		</div>
+		!!empr_pwd!!
+	</div>
 </div>
 </div>
 <div class='row'></div>
@@ -594,10 +621,10 @@ $empr_tmpl .= "
 !!relance!!
 <hr />
 <div class='row'>
-	<div class='left'>
+	<div class='left' id='empr_form_actions_buttons'>
 		<input type='button' name='modifier' class='bouton' value='$msg[62]' onClick=\"document.location='./circ.php?categ=empr_saisie&id=!!id!!&groupID=$groupID';\" />
 		<input type='button' name='dupliquer' class='bouton' value='".$msg['empr_duplicate_button']."' onClick=\"document.location='./circ.php?categ=empr_duplicate&id=!!id!!';\" />
-		<input type='button' name='imprimercarte' class='bouton' value='".$msg['imprimer_carte']."' onClick=\"openPopUp('./pdf.php?pdfdoc=carte-lecteur&id_empr=!!id!!', 'print_PDF', 600, 500, -2, -2, '$PDF_win_prop');\" />";
+		<input type='button' id='imprimercarte' name='imprimercarte' class='bouton' value='".$msg['imprimer_carte']."' onClick=\"openPopUp('./pdf.php?pdfdoc=carte-lecteur&id_empr=!!id!!', 'print_PDF');\" />";
 
 switch ($pdfcartelecteur_printer_card_handler) {
 
@@ -606,28 +633,46 @@ switch ($pdfcartelecteur_printer_card_handler) {
 	case '1' :
 		
 		if (file_exists("print_cb.php")) {
-			$empr_tmpl.= "<a href='#' onClick='h=new http_request(); h.request(\"print_cb.php?cb=!!cb!!&label=!!prenom!! !!nom!!\", false,\"\", false, function(){},function(){},\"impr_cb\")' ><img src='./images/print.gif' alt='".htmlentities($msg['print_print'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['print_print'],ENT_QUOTES,$charset)."' align='middle' border='0'></a>";
+			$empr_tmpl.= "<a href='#' onClick='h=new http_request(); h.request(\"print_cb.php?cb=!!cb!!&label=!!prenom!! !!nom!!\", false,\"\", false, function(){},function(){},\"impr_cb\")' ><img src='".get_url_icon('print.gif')."' alt='".htmlentities($msg['print_print'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['print_print'],ENT_QUOTES,$charset)."' class='align_middle' border='0'></a>";
 		}
 		break;		
 		
 	//impression avec applet jzebra
 	case '2' :
 		
-		$empr_tmpl.= "
-		<script type='text/javascript'>
-			function printer_jzebra_print_card(url) {
-				
-				printer_get_jzebra();
-				var req = new http_request();
-				if(req.request(url)){
-					alert ( req.get_text() );
-				} else {
-					printer_jzebra_send_ticket(req.get_text(), '".$pdfcartelecteur_printer_card_name."','850');
-					return 1;
+		if (substr($pmb_printer_name,0,9) == 'raspberry') {
+			$empr_tmpl.= "
+			<script type='text/javascript'>
+			
+				function printer_jzebra_print_card(url) {
+					var req = new http_request();
+					if(req.request(url)){
+						alert ( req.get_text() );
+					}else {
+						printer_raspberry_send_ticket(req.get_text());
+						return 1;
+					}
 				}
-			}
-		</script>";
-		$empr_tmpl.= "<a href='#' onclick=\"printer_jzebra_print_card('./ajax.php?module=circ&categ=zebra_print_card&sub=one&id_empr=!!id!!'); return false;\"><img src='./images/print.gif' alt='".htmlentities($msg['print_print'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['print_print'],ENT_QUOTES,$charset)."' align='middle' border='0'></a>";
+			</script>
+			";
+		} else {
+			$empr_tmpl.= "
+			<script type='text/javascript'>
+				function printer_jzebra_print_card(url) {
+					
+					printer_get_jzebra();
+					var req = new http_request();
+					if(req.request(url)){
+						alert ( req.get_text() );
+					} else {
+						printer_jzebra_send_ticket(req.get_text(), '".$pdfcartelecteur_printer_card_name."','850');
+						return 1;
+					}
+				}
+			</script>";
+		}
+		//AUCUN TEMPLATE DE CARTE PAR IMPRIMANTE TICKET DE PRET POUR LE MOMENT...
+		//$empr_tmpl.= "<a href='#' onclick=\"printer_jzebra_print_card('./ajax.php?module=circ&categ=zebra_print_card&sub=one&id_empr=!!id!!'); return false;\"><img src='".get_url_icon('print.gif')."' alt='".htmlentities($msg['print_print'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['print_print'],ENT_QUOTES,$charset)."' class='align_middle' border='0'></a>";
 		
 		break;
 	
@@ -654,7 +699,7 @@ switch ($pdfcartelecteur_printer_card_handler) {
 		</script>
 		";
 		
-		$empr_tmpl.= "<a href='#' onclick=\"printer_ajax_print_card('./ajax.php?module=circ&categ=zebra_print_card&sub=one&id_empr=!!id!!'); return false;\"><img src='./images/print.gif' alt='".htmlentities($msg['print_print'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['print_print'],ENT_QUOTES,$charset)."' align='middle' border='0'></a>";
+		$empr_tmpl.= "<a href='#' onclick=\"printer_ajax_print_card('./ajax.php?module=circ&categ=zebra_print_card&sub=one&id_empr=!!id!!'); return false;\"><img src='".get_url_icon('print.gif')."' alt='".htmlentities($msg['print_print'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['print_print'],ENT_QUOTES,$charset)."' class='align_middle' border='0'></a>";
 		break;
 		
 }
@@ -667,7 +712,6 @@ $empr_tmpl .= "
 		</div>
 	</div>
 <br /><br />
-<h3>".$msg['ajouterpret']."</h3>
 ";
 if ($pmb_rfid_activate==1) {
 	if(!$pmb_rfid_pret_mode) {
@@ -695,21 +739,20 @@ if($pmb_sur_location_activate){
 	$th_colspan_shorloan=10;
 }
 $empr_tmpl .= "
+<h3>".$msg['ajouterpret']."</h3>
 <!--
 <div class='row'>
 	<label for='cb_doc' class='etiquette'>$msg[61]</label>
 	</div>
 -->
-<div class='row'>
-		!!empr_case_pret!!
-		<input type='hidden' name='cb_empr' value='!!cb!!' />
-		<input type='hidden' name='id_empr' id='id_empr' value='!!id!!' />
-		<input type='hidden' name='group_id' value='$group_id' />
-		<input type='hidden' name='groupID' value='$groupID' />
-		<input type='hidden' name='categ' value='pret' />
-		<input type='hidden' name='sub' value='pret_suite' />
-		<input type='hidden' name='force_finance' value='$force_finance' />
-</div>
+!!empr_case_pret!!
+<input type='hidden' name='cb_empr' value='!!cb!!' />
+<input type='hidden' name='id_empr' id='id_empr' value='!!id!!' />
+<input type='hidden' name='group_id' value='$group_id' />
+<input type='hidden' name='groupID' value='$groupID' />
+<input type='hidden' name='categ' value='pret' />
+<input type='hidden' name='sub' value='pret_suite' />
+<input type='hidden' name='force_finance' value='$force_finance' />
 <div class='row'></div>
 </form>
 
@@ -723,15 +766,43 @@ if (document.forms['pret_doc'].elements['cb_doc']!=undefined){
 <div class='row'>
 	!!pret_msg!! &nbsp;
 	</div>
-<script type='text/javascript' src='./javascript/sorttable.js'></script>
+<script type='text/javascript' src='./javascript/sorttable.js'></script>";
+if ($pmb_utiliser_calendrier) {
+	$empr_tmpl .= "
+	<script type='text/javascript'>
+		function test_jour_ouverture(f_caller,id,id_value,lib,lib_value,loc_id) {
+			var req = new XMLHttpRequest();
+			req.open('GET', './ajax.php?module=ajax&categ=calendrier&action=test_ouverture&loc_id='+loc_id+'&id_value='+id_value+'&lib_value='+lib_value, true);
+			req.onreadystatechange = function (aEvt) {
+		 		if (req.readyState == 4) {
+		  			if(req.status == 200) {
+		    			my_array = JSON.parse(req.responseText);
+		    			if (my_array[0] != undefined) {
+							if (confirm(\"".$msg['prolongation_date_fermeture']."\")) {
+								id_value = my_array[0];
+								lib_value = my_array[1];
+							}
+		    			}
+		    			document.forms[f_caller].elements[id].value = id_value;
+						document.forms[f_caller].elements[lib].value = lib_value;
+						document.forms[f_caller].submit();
+					}
+		  		}
+		  	};
+			req.send(null);			
+		}	
+	</script>
+	";
+}
+$empr_tmpl .= "
 <table class='sortable'>
 	<thead>
 	<tr>
 	<form class='form-$current_module' name='prolong_bloc' action='circ.php'>
 		<th colspan='6'>
 			<h3>$msg[349] &nbsp;(!!nb_prets_encours!!)&nbsp;&nbsp;
-			<input type='button' name='imprimerlistedocs' class='bouton' value='".$msg['imprimer']."' onClick=\"openPopUp('./pdf.php?pdfdoc=ticket_pret&id_empr=!!id!!', 'print_PDF', 600, 500, -2, -2, '$PDF_win_prop');\" />
-			&nbsp;<input type='button' name='imprimerlistedocs' class='bouton' value='".$msg['imprimer_liste_pret']."' onClick=\"openPopUp('./pdf.php?pdfdoc=liste_pret&id_empr=!!id!!', 'print_PDF', 600, 500, -2, -2, '$PDF_win_prop');\" />
+			<input type='button' name='imprimerlistedocs' class='bouton' value='".$msg['imprimer']."' onClick=\"openPopUp('./pdf.php?pdfdoc=ticket_pret&id_empr=!!id!!', 'print_PDF');\" />
+			&nbsp;<input type='button' name='imprimerlistedocs' class='bouton' value='".$msg['imprimer_liste_pret']."' onClick=\"openPopUp('./pdf.php?pdfdoc=liste_pret&id_empr=!!id!!', 'print_PDF');\" />
 			&nbsp;!!mail_liste_pret!!
 			$printer_ticket_link
 			&nbsp;!!lettre_retard!!&nbsp;!!mail_retard!!&nbsp;
@@ -748,12 +819,12 @@ if (document.forms['pret_doc'].elements['cb_doc']!=undefined){
 	<form class='form-$current_module' name='sel_bloc'>
 		<th>$msg[293]</th>
 		<th size='50%'>$msg[652]</th>
-		<th><center>$msg[294]<br />$msg[296]</center></th>$th_sur_location
-		<th><center>$msg[298]<br />$msg[295]</center></th>
-		<th><center>$msg[653]</center></th>
-		<th><center>".$msg['pret_date_retour_initial']."</center></th>
-		<th><center>".$msg['pret_compteur_prolongation']."</center></th>
-		<th><center>$msg[654]</center></th>
+		<th>$msg[294]<br />$msg[296]</th>$th_sur_location
+		<th>$msg[298]<br />$msg[295]</th>
+		<th>$msg[653]</th>
+		<th>".$msg['pret_date_retour_initial']."</th>
+		<th>".$msg['pret_compteur_prolongation']."</th>
+		<th>$msg[654]</th>
 		<th class='sorttable_nosort'>
 			!!bouton_cocher_prolong!!
 			<input type='hidden' name='id_inpret' value=\"!!id_inpret!!\">
@@ -765,7 +836,7 @@ if (document.forms['pret_doc'].elements['cb_doc']!=undefined){
 	!!pret_list!!
 	</tbody>
 </table>
-<div class='row'><hr /></div>";
+<div class='row'><hr /></div><div>!!digital_loans_table!!</div>";
 
 if ($pmb_short_loan_management==1) {
 $empr_tmpl.="
@@ -777,12 +848,12 @@ $empr_tmpl.="
 	<form class='form-$current_module' name='sel_bloc'>
 		<th>$msg[293]</th>
 		<th size='50%'>$msg[652]</th>
-		<th><center>$msg[294]<br />$msg[296]</center></th>$th_sur_location
-		<th><center>$msg[298]<br />$msg[295]</center></th>
-		<th><center>$msg[653]</center></th>
-		<th><center>".$msg['pret_date_retour_initial']."</center></th>
-		<th><center>".$msg['pret_compteur_prolongation']."</center></th>
-		<th><center>$msg[654]</center></th>
+		<th>$msg[294]<br />$msg[296]</th>$th_sur_location
+		<th>$msg[298]<br />$msg[295]</th>
+		<th>$msg[653]</th>
+		<th>".$msg['pret_date_retour_initial']."</th>
+		<th>".$msg['pret_compteur_prolongation']."</th>
+		<th>$msg[654]</th>
 		<th class='sorttable_nosort'></th>
 	</form>
 	</tr>
@@ -809,13 +880,21 @@ if ($pmb_resa_planning) {
 	$empr_tmpl.= "
 	<div class='row'><hr /></div>
 	<div class='row'>
-		<h3>".$msg['resa_menu_planning']."&nbsp;<input type='button' name='Ajouter_resa_planning' class='bouton' value='".$msg[925]."' onClick=\"document.location='./circ.php?categ=resa_planning&resa_action=search_resa&id_empr=!!id!!&groupID=$groupID';\" /></h3>
+		<div class='left'>
+			<h3>".$msg['resa_menu_planning']."&nbsp;<input type='button' name='Ajouter_resa_planning' class='bouton' value='".$msg[925]."' onClick=\"document.location='./circ.php?categ=resa_planning&resa_action=search_resa&id_empr=!!id!!&groupID=$groupID';\" /></h3>
+		</div>
 	</div>
 	!!resa_planning_list!!
 ";
 }
 
-$empr_tmpl.="			
+$empr_tmpl.="
+<div class='row'>
+	!!dsi!!
+</div>
+<div class='row'>
+	!!caddies!!
+</div>
 <div class='row'>
 	!!serialcirc_empr!!
 </div>	
@@ -825,7 +904,7 @@ $empr_tmpl.="
 $empr_tmpl_consultation = "
 <div id=\"el!!id!!Parent\" class=\"notice-parent\">
 	<div class='left'>
-		<img src=\"./images/plus.gif\" class=\"img_plus\" name=\"imEx\" id=\"el!!id!!Img\" title=\"".$msg['admin_param_detail']."\" border=\"0\" onClick=\"expandBase('el!!id!!', true); return false;\">
+		<img src=\"".get_url_icon('plus.gif')."\" class=\"img_plus\" name=\"imEx\" id=\"el!!id!!Img\" title=\"".$msg['admin_param_detail']."\" border=\"0\" onClick=\"expandBase('el!!id!!', true); return false;\">
    		!!image_suppr_caddie_empr!!&nbsp;!!image_caddie_empr!! &nbsp; <a href=!!lien_vers_empr!!>!!nom!! !!prenom!!</a>
    	</div>
    	<div class='right'>
@@ -928,8 +1007,6 @@ $empr_tmpl_consultation .= "
 ";
 
 // propriété du sélecteur de groupe
-$select2_prop = "scrollbars=yes, toolbar=no, dependent=yes, width=300, height=400, resizable=yes";
-
 if ($pmb_rfid_activate==1 && $pmb_rfid_serveur_url ) {
 		
 	$rfid_script_empr="
@@ -1016,25 +1093,55 @@ $rfid_script_empr
 			alert(\"$msg[65]\");
 			form.form_nom.focus();
 			return false;
-		}
+		}";
+if ($empr_birthdate_optional == 0) {
+	$empr_form .="
+			if(form.form_year.value.replace(/^\s+|\s+$/g,'').length == 0) {
+				alert(\"$msg[762]\");
+				form.form_year.focus();
+				return false;
+			}";
+}
+$empr_form .="
+		!!empr_create_script_call!!
 		unload_off();
 		return check_form();
 	}
 </script>
+!!empr_create_script_loader!!
 <script type='text/javascript' src='javascript/tablist.js'></script>
 <script type='text/javascript' src='javascript/ajax.js'></script>
 <script type='text/javascript'>
-	no_init_drag=true;
-	widths=new Array(".$msg['empr_field_widths'].");
-	var msg_move_width='".addslashes($msg['move_width'])."';
-	var msg_move_save='".addslashes($msg['move_save'])."';
-	var msg_move_invisible='".addslashes($msg['move_invisible'])."';
-	var msg_move_visible='".addslashes($msg['move_visible'])."';
+	widths=new Array(".$msg['empr_field_widths'].");	
+	var msg_move_to_absolute_pos='".addslashes($msg['move_to_absolute_pos'])."';
+	var msg_move_to_relative_pos='".addslashes($msg['move_to_relative_pos'])."';
 	var msg_move_saved_ok='".addslashes($msg['move_saved_ok'])."';
 	var msg_move_saved_error='".addslashes($msg['move_saved_error'])."';
+	var msg_move_up_tab='".addslashes($msg['move_up_tab'])."';
+	var msg_move_down_tab='".addslashes($msg['move_down_tab'])."';
+	var msg_move_position_tab='".addslashes($msg['move_position_tab'])."';
+	var msg_move_position_absolute_tab='".addslashes($msg['move_position_absolute_tab'])."';
+	var msg_move_position_relative_tab='".addslashes($msg['move_position_relative_tab'])."';
+	var msg_move_invisible_tab='".addslashes($msg['move_invisible_tab'])."';
+	var msg_move_visible_tab='".addslashes($msg['move_visible_tab'])."';
+	var msg_move_inside_tab='".addslashes($msg['move_inside_tab'])."';
+	var msg_move_save='".addslashes($msg['move_save'])."';
+	var msg_move_first_plan='".addslashes($msg['move_first_plan'])."';
+	var msg_move_last_plan='".addslashes($msg['move_last_plan'])."';
+	var msg_move_first='".addslashes($msg['move_first'])."';
+	var msg_move_last='".addslashes($msg['move_last'])."';
+	var msg_move_infront='".addslashes($msg['move_infront'])."';
+	var msg_move_behind='".addslashes($msg['move_behind'])."';
+	var msg_move_up='".addslashes($msg['move_up'])."';
+	var msg_move_down='".addslashes($msg['move_down'])."';
+	var msg_move_invisible='".addslashes($msg['move_invisible'])."';
+	var msg_move_visible='".addslashes($msg['move_visible'])."';
+	var msg_move_saved_onglet_state='".addslashes($msg['move_saved_onglet_state'])."';
+	var msg_move_open_tab='".addslashes($msg['move_open_tab'])."';
+	var msg_move_close_tab='".addslashes($msg['move_close_tab'])."';
 	
 </script>
-<script type='text/javascript' src='javascript/move_empr.js'></script>
+<script type='text/javascript' src='javascript/move.js'></script>
 <h1>!!entete!!</h1>
 <form class='form-$current_module' id='empr_form' name='empr_form' method='post' action='!!form_action!!&id=!!id!!&groupID=$groupID'>
 
@@ -1044,12 +1151,14 @@ $rfid_script_empr
 	
 	<div style='float:left'><h3>!!nom!!&nbsp;!!prenom!!</h3></div>
 	<div style='float:right'><label for='form_statut' class='etiquette'>".$msg['empr_statut_menu']."</label>&nbsp;<select id='form_statut' name='form_statut'>!!statut!!</select>&nbsp;";
+
 if ($PMBuserid==1 && $pmb_form_editables==1) {
-	$empr_form.= "<input type='button' class='bouton_small' value='".$msg['empr_edit_format']."' onClick=\"if (inedit){get_pos()};move_parse_dom();init_drag();\" id='bt_inedit'/>";
+	$empr_form.="<input type='button' class='bouton_small' value='".$msg["empr_edit_format"]."' onClick=\"expandAll(); move_parse_dom(relative)\" id=\"bt_inedit\"/><input type='button' class='bouton_small' value='Relatif' onClick=\"expandAll(); move_parse_dom((!relative))\" style=\"display:none\" id=\"bt_swap_relative\"/>";
 }
 if ($pmb_form_editables==1) {
-	$empr_form.= "<input type='button' class='bouton_small' value=\"".$msg['empr_origin_format']."\" onClick=\"get_pos(1); if (inedit) {move_parse_dom();init_drag();} \" />";
+	$empr_form.="<input type='button' class='bouton_small' value=\"".$msg["empr_origin_format"]."\" onClick=\"get_default_pos(); expandAll();  ajax_parse_dom(); if (inedit) move_parse_dom(relative); else initIt();\"/>";
 }
+
 	$empr_form.= "
 	</div>
 	<div class='row'></div>
@@ -1062,12 +1171,12 @@ if ($pmb_form_editables==1) {
 		<div class='row'>
 			<!-- empr_grille_location -->
 		</div>
-	
-		<div class='form-empr-fgrp' id='g0'>
-		
-			<div class='row' id='g0_r0' etirable='yes' recept='yes' recepttype='circrow' highlight='circrow_highlight' downlight='circrow_downlight' >
+				
+		<div class='row'></div>
+		<div class='form-empr-fgrp ui-clearfix' id='g0' etirable='yes' >
+			
 				<!--   Nom   -->
-				<div class='colonne3' id='g0_r0_f0' movable='yes' title='".$msg[67]."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne3' id='g0_r0_f0' movable='yes' title='".$msg[67]."' >
 					<div class='row'>
 						<label class='etiquette' for='form_nom'>".$msg[67]."</label>
 					</div>
@@ -1076,7 +1185,7 @@ if ($pmb_form_editables==1) {
 					</div>
 				</div>
 				<!--   Prénom   -->
-				<div class='colonne3' id='g0_r0_f1' movable='yes' title='".$msg[68]."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne3' id='g0_r0_f1' movable='yes' title='".$msg[68]."' >
 					<div class='row'>
 						<label for='form_prenom' class='etiquette'>".$msg[68]."</label>
 					</div>
@@ -1085,21 +1194,22 @@ if ($pmb_form_editables==1) {
 					</div>
 				</div>
 				<!--   CB   -->
-				<div class='colonne'  id='g0_r0_f2' movable='yes' title='".$msg[38]."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne'  id='g0_r0_f2' movable='yes' title='".$msg[38]."' >
 					<div class='row'>
 						<label for='form_cb' class='etiquette'>".$msg[38]."</label>
 					</div>
 					<div class='row'>
 						<input class='saisie-10emr' id='f_cb' name='f_cb' readonly value=\"!!cb!!\" />
-						<input type='button' class='bouton' value='".$msg['parcourir']."' onclick=\"openPopUp('./circ/setcb.php?f_cb='+this.form.f_cb.value, 'getcb', 220, 200, -2, -2, 'toolbar=no, resizable=yes')\" />
+						<input type='button' class='bouton' value='".$msg['parcourir']."' onclick=\"openPopUp('./circ/setcb.php?f_cb='+this.form.f_cb.value, 'getcb')\" />
+						
 					</div>
 				</div>
-				<div class='row'></div>
-			</div>
-	
-			<div class='row' id='g0_r1' etirable='yes' recept='yes' recepttype='circrow' highlight='circrow_highlight' downlight='circrow_downlight' >
+				<div class='colonne'  id='g0_r0_f3' movable='yes' title='".$msg[38]."' >
+						!!camera!!
+				</div>
+			
 				<!--   Adresse 1   -->
-				<div class='colonne2'  id='g0_r1_f0' movable='yes' title='".$msg[69]."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne2'  id='g0_r1_f0' movable='yes' title='".$msg[69]."' >
 					<div class='row'>
 						<label for='form_adr1' class='etiquette'>".$msg[69]."</label>
 					</div>
@@ -1108,30 +1218,27 @@ if ($pmb_form_editables==1) {
 					</div>
 				</div>
 				<!--   Code postal   -->
-				<div class='colonne10' id='g0_r1_f1' movable='yes' title='".$msg[71]."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne10' id='g0_r1_f1' movable='yes' title='".$msg[71]."' >
 					<div class='row'>
 						<label for='form_cp' class='etiquette'>".$msg[71]."</label>
 					</div>
 					<div class='row'>
-						<input type='text' class='saisie-5em' id='form_cp' name='form_cp' maxlength='10' value='!!cp!!' onchange=\"openPopUp('./select.php?what=codepostal&caller=empr_form&param1=form_ville&param2=form_cp&deb_rech='+this.form.form_cp.value, 'select_codepostal', 400, 400, -2, -2, '$select1_prop')\" />
+						<input type='text' class='saisie-5em' id='form_cp' name='form_cp' maxlength='10' value='!!cp!!' onchange=\"openPopUp('./select.php?what=codepostal&caller=empr_form&param1=form_ville&param2=form_cp&deb_rech='+".pmb_escape()."(this.form.form_cp.value), 'selector')\" />
 					</div>
 				</div>
 				<!--   Ville   -->
-				<div class='colonne_suite' id='g0_r1_f2' movable='yes' title='".$msg[72]."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne_suite' id='g0_r1_f2' movable='yes' title='".$msg[72]."' >
 					<div class='row'>
 						<label for='form_ville' class='etiquette'>".$msg[72]."</label>
 					</div>
 					<div class='row'>
 						<input type='text' class='saisie-20em' id='form_ville' name='form_ville' value=\"!!ville!!\" />
-						<input type='button'  class='bouton' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=codepostal&caller=empr_form&param1=form_ville&param2=form_cp&deb_rech='+this.form.form_cp.value, 'select_codepostal', 400, 400, -2, -2, '$select1_prop')\" />
+						<input type='button'  class='bouton' value='".$msg['parcourir']."' onclick=\"var scp = this.form.form_cp.value; if(!this.form.form_cp.value) { scp=this.form.form_ville.value; } openPopUp('./select.php?what=codepostal&caller=empr_form&param1=form_ville&param2=form_cp&deb_rech='+".pmb_escape()."(scp), 'selector')\" />
 					</div>
 				</div>
-				<div class='row'></div>
-			</div>
-		
-			<div class='row' id='g0_r2' etirable='yes' recept='yes' recepttype='circrow' highlight='circrow_highlight' downlight='circrow_downlight' >
+				
 				<!--   Adresse 2   -->
-				<div class='colonne2' id='g0_r2_f0' movable='yes' title='".$msg[70]."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne2' id='g0_r2_f0' movable='yes' title='".$msg[70]."' >
 					<div class='row'>
 						<label for='form_adr2' class='etiquette'>".$msg[70]."</label>
 					</div>
@@ -1140,22 +1247,17 @@ if ($pmb_form_editables==1) {
 					</div>
 				</div>
 				<!--   Pays   -->
-				<div class='colonne_suite' id='g0_r2_f1' movable='yes' title='".$msg['empr_pays']."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne_suite' id='g0_r2_f1' movable='yes' title='".$msg['empr_pays']."' >
 					<div class='row'>
 						<label for='form_pays' class='etiquette'>".$msg['empr_pays']."</label>
 					</div>
 					<div class='row'>
 						<input type='text' class='saisie-40em' id='form_pays' name='form_pays' maxlength='255' value='!!pays!!' />
 					</div>
-				</div>
-				<div class='row'></div>
-			</div>
+				</div>				
 			
-			<div class='row'>&nbsp;</div>
-			
-			<div class='row' id='g0_r3' etirable='yes' recept='yes' recepttype='circrow' highlight='circrow_highlight' downlight='circrow_downlight' >
 				<!--   Téléphone 1   -->
-				<div class='colonne4' id='g0_r3_f0' movable='yes' title='".$msg[73]."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne4' id='g0_r3_f0' movable='yes' title='".$msg[73]."' >
 					<div class='row'>
 						<label for='form_tel1' class='etiquette'>".$msg[73]."</label>
 					</div>
@@ -1166,7 +1268,7 @@ if ($pmb_form_editables==1) {
 					</div>
 				</div>
 				<!--   Téléphone 2   -->
-				<div class='colonne4' id='g0_r3_f1' movable='yes' title='".$msg['73tel2']."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne4' id='g0_r3_f1' movable='yes' title='".$msg['73tel2']."' >
 					<div class='row'>
 						<label for='form_tel2' class='etiquette'>".$msg['73tel2']."</label>
 					</div>
@@ -1175,33 +1277,31 @@ if ($pmb_form_editables==1) {
 					</div>
 				</div>
 				<!--   E-mail   -->
-				<div class='colonne_suite' id='g0_r3_f2' movable='yes' title='".$msg[58]."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne_suite' id='g0_r3_f2' movable='yes' title='".$msg[58]."' >
 					<div class='row'>
 						<label for='form_mail' class='etiquette'>".$msg[58]."</label>
 					</div>
 					<div class='row'>
 						<input type='text'  class='saisie-40em' size=50 id='form_mail' name='form_mail' value='!!mail!!' />
 					</div>
-				</div>
-				<div class='row'></div>
-			</div>	
-			
+				</div>				
+				<div class='row'></div>			
 		</div>
-				
-		<div class='form-empr-fgrp' id='g1' >	
+			
+		<div class='row'></div>	
+		<div class='form-empr-fgrp ui-clearfix' id='g1'  etirable='yes' >
 		
-			<div class='row' id='g1_r0' etirable='yes' recept='yes' recepttype='circrow' highlight='circrow_highlight' downlight='circrow_downlight' >
 				<!--   Profession   -->
-				<div class='colonne4' id='g1_r0_f0' movable='yes' title='".$msg[74]."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne4' id='g1_r0_f0' movable='yes' title='".$msg[74]."' >
 					<div class='row'>
 						<label for='form_prof' class='etiquette'>".$msg[74]."</label>
 					</div>
 					<div class='row'>
-						<input type='text' class='saisie-20em' id='form_prof' name='form_prof' value='!!prof!!'>
+						<input type='text' class='saisie-20emr' id='form_prof' name='form_prof' value='!!prof!!' autfield='form_prof' completion='profession' autocomplete='off'>
 					</div>
 				</div>
 				<!--   Sexe   -->
-				<div class='colonne4' id='g1_r0_f1' movable='yes' title='".$msg[125]."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne4' id='g1_r0_f1' movable='yes' title='".$msg[125]."' >
 					<div class='row'>
 						<label class='etiquette' for='form_sexe'>".$msg[125]."</label>
 					</div>
@@ -1214,24 +1314,22 @@ if ($pmb_form_editables==1) {
 					</div>
 				</div>
 				<!--   Date de naissance   -->
-				<div class='colonne_suite' id='g1_r0_f2' movable='yes' title='".$msg[75]."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne_suite' id='g1_r0_f2' movable='yes' title='".$msg[75]."' >
 					<div class='row'>
 						<label for='form_year' class='etiquette'>".$msg[75]."</label>
 					</div>
 					<div class='row'>
 						<input type='text'  class='saisie-10em' id='form_year' name='form_year' maxlength='4' value='!!year!!' />
 					</div>
-				</div>
+				</div>				
 				<div class='row'></div>
-			</div>
-
 		</div>
-		
-		<div class='form-empr-fgrp' id='g2' >
+								
+		<div class='row'></div>								
+		<div class='form-empr-fgrp ui-clearfix' id='g2'  etirable='yes' >
 			
-			<div class='row' id='g2_r0' etirable='yes' recept='yes' recepttype='circrow' highlight='circrow_highlight' downlight='circrow_downlight' >
 				<!--   Categorie   -->
-				<div class='colonne4' id='g2_r0_f0' movable='yes' title='".$msg[59]."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne4' id='g2_r0_f0' movable='yes' title='".$msg[59]."' >
 					<div class='row'>
 						<label for='form_categ' class='etiquette'>".$msg[59]."</label>
 					</div>
@@ -1240,7 +1338,7 @@ if ($pmb_form_editables==1) {
 					</div>
 				</div>
 				<!--   Code statistique   -->
-				<div class='colonne4' id='g2_r0_f1' movable='yes' title='".$msg[60]."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne4' id='g2_r0_f1' movable='yes' title='".$msg[60]."' >
 					<div class='row'>
 						<label for='form_codestat' class='etiquette'>".$msg[60]."</label>
 					</div>
@@ -1249,7 +1347,7 @@ if ($pmb_form_editables==1) {
 					</div>
 				</div>
 				<!--   Ajout à un groupe existant   -->
-				<div class='colonne_suite' id='g2_r0_f2' movable='yes' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight' title='".htmlentities($msg['empr_form_ajoutgroupe'],ENT_QUOTES,$charset)."' >
+				<div class='colonne_suite' id='g2_r0_f2' movable='yes'  title='".htmlentities($msg['empr_form_ajoutgroupe'],ENT_QUOTES,$charset)."' >
 					<div class='row'>
 						<label for='form_ajoutgroupe' class='etiquette'>".$msg['empr_form_ajoutgroupe']."</label>
 					</div>
@@ -1257,19 +1355,20 @@ if ($pmb_form_editables==1) {
 						!!groupe_ajout!!
 					</div>
 				</div>
+				
 				<div class='row'></div>
-			</div>
 	
 				<!--   Localisation du lecteur   -->
 				<!-- !!localisation!! -->
 		
+				<div class='row'></div>
 		</div>
 		
-		<div class='form-empr-fgrp' id='g3' >
+		<div class='row'></div>		
+		<div class='form-empr-fgrp ui-clearfix' id='g3'  etirable='yes' >
 		
-			<div class='row' id='g3_r0' etirable='yes' recept='yes' recepttype='circrow' highlight='circrow_highlight' downlight='circrow_downlight' >
 				<!--   Adhésion   -->
-				<div class='colonne4' id='g3_r0_f0' movable='yes' title='".$msg[1403]." : ".$msg[1401]."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne4' id='g3_r0_f0' movable='yes' title='".$msg[1403]." : ".$msg[1401]."' >
 					<div class='row'>
 						<label for='form_adhe_ini' class='etiquette'>".$msg[1403]." : ".$msg[1401]."</label>
 					</div>
@@ -1277,7 +1376,7 @@ if ($pmb_form_editables==1) {
 						<strong>!!adhesion!!</strong>
 					</div>
 				</div>
-				<div class='colonne4' id='g3_r0_f1' movable='yes' title='".$msg[1403]." : ".$msg[1402]."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne4' id='g3_r0_f1' movable='yes' title='".$msg[1403]." : ".$msg[1402]."' >
 					<div class='row'>
 						<label for='form_adhe_end' class='etiquette'>".$msg[1403]." : ".$msg[1402]."</label>
 					</div>
@@ -1286,27 +1385,25 @@ if ($pmb_form_editables==1) {
 					</div>
 				</div>
 				<!--   Relance adhesion -->
-				<div class='colonne_suite' id='g3_r0_f2' movable='yes' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight' title='".htmlentities($msg['empr_exp_adh'],ENT_QUOTES,$charset)."'>
+				<div class='colonne_suite' id='g3_r0_f2' movable='yes'  title='".htmlentities($msg['empr_exp_adh'],ENT_QUOTES,$charset)."'>
 					&nbsp;!!adhesion_proche_depassee!!
 				</div>
-				<div class='row'></div>
-			</div>
+				
 	
-			<div class='row' id='g3_r1' etirable='yes' recept='yes' recepttype='circrow' highlight='circrow_highlight' downlight='circrow_downlight' >
-				<div class='colonne' id='g3_r1_f1' movable='yes' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight' title='".htmlentities($msg['finance_type_abt'],ENT_QUOTES,$charset)."'>
+				<div class='colonne' id='g3_r1_f1' movable='yes'  title='".htmlentities($msg['finance_type_abt'],ENT_QUOTES,$charset)."'>
 				<!--Type d'abonnement -->
 				!!typ_abonnement!!
 				</div>
+				
 				<div class='row'></div>
-			</div>
 		
 		</div>
 	
-		<div class='form-empr-fgrp' id='g4'>
+		<div class='row'></div>
+		<div class='form-empr-fgrp ui-clearfix' id='g4' etirable='yes' >
 		
-			<div class='row' id='g4_r0' etirable='yes' recept='yes' recepttype='circrow' highlight='circrow_highlight' downlight='circrow_downlight' >
 				<!--   Langue   -->
-				<div class='colonne4' id='g4_r0_f0' movable='yes' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight' title='".htmlentities($msg['empr_langue_opac'],ENT_QUOTES,$charset)."'>
+				<div class='colonne4' id='g4_r0_f0' movable='yes'  title='".htmlentities($msg['empr_langue_opac'],ENT_QUOTES,$charset)."'>
 					<div class='row'>
 						<label for='' class='etiquette'>".$msg['empr_langue_opac']."</label>
 					</div>
@@ -1314,7 +1411,7 @@ if ($pmb_form_editables==1) {
 						!!combo_empr_lang!!
 					</div>
 				</div>
-				<div class='colonne4' id='g4_r0_f1' movable='yes' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight' title='".htmlentities($msg['empr_login'],ENT_QUOTES,$charset)."'>
+				<div class='colonne4' id='g4_r0_f1' movable='yes'  title='".htmlentities($msg['empr_login'],ENT_QUOTES,$charset)."'>
 					<div class='row'>
 						<label for='form_empr_login' class='etiquette'>".$msg['empr_login']."</label>
 					</div>
@@ -1325,7 +1422,7 @@ if ($pmb_form_editables==1) {
 		
 		if ($ldap_accessible) {
 			$empr_form .= "<!-- AuthLDAP - MaxMan -->
-				<div class='colonne4' id='g4_r0_f2' movable='yes' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight' title='AuthLDAP' >
+				<div class='colonne4' id='g4_r0_f2' movable='yes'  title='AuthLDAP' >
 					<div class='row'>
 						<label for='form_ldap' class='etiquette'>AuthLDAP</label>
 					</div>
@@ -1335,7 +1432,7 @@ if ($pmb_form_editables==1) {
 				</div>";	
 		}	
 		$empr_form .= "
-				<div class='colonne_suite' id='g4_r0_f3' movable='yes' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight' title='".htmlentities($msg['empr_password'],ENT_QUOTES,$charset)."' >
+				<div class='colonne_suite' id='g4_r0_f3' movable='yes'  title='".htmlentities($msg['empr_password'],ENT_QUOTES,$charset)."' >
 					<div class='row'>
 						<label for='form_empr_password' class='etiquette'>".$msg['empr_password']."</label>
 					</div>
@@ -1343,24 +1440,24 @@ if ($pmb_form_editables==1) {
 						<input type='text' class='saisie-15em' id='form_empr_password' name='form_empr_password' value='' maxlength='255' />
 					</div>
 				</div>
-				<div class='row'></div>
-			</div>";
+				
+			";
 		if($pmb_opac_view_activate ){
 			$empr_form .= "
-				<div class='row' id='g4_r1' etirable='yes' recept='yes' recepttype='circrow' highlight='circrow_highlight' downlight='circrow_downlight' >
 				<!--   vue Opac du lecteur   -->
 				<!-- !!opac_view!! -->
-				<div class='row'></div>
-				</div>";
+				
+				";
 		}
 		$empr_form .= "	
+				<div class='row'></div>
 		</div>
 	
-		<div class='form-empr-fgrp' id='g5' >
+		<div class='row'></div>
+		<div class='form-empr-fgrp ui-clearfix' id='g5' etirable='yes'  >
 		
-			<div class='row' id='g5_r0' etirable='yes' recept='yes' recepttype='circrow' highlight='circrow_highlight' downlight='circrow_downlight' >
 				<!--   Message   -->
-				<div class='colonne' id='g5_r0_f0' movable='yes' title='".$msg[523]."' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight'>
+				<div class='colonne' id='g5_r0_f0' movable='yes' title='".$msg[523]."' >
 					<div class='row'>
 						<label for='form_codestat' class='etiquette'>".$msg[523]."</label>
 					</div>
@@ -1368,24 +1465,22 @@ if ($pmb_form_editables==1) {
 						<textarea id='f_message_empr' class='saisie-80em' name='form_empr_msg' cols='62' rows='2' wrap='virtual'>!!empr_msg!!</textarea>
 					</div>
 				</div>
+				
 				<div class='row'></div>
-			</div>
 			
 		</div>
 	
-		<div class='form-empr-fgrp' id='g6' >	
-			<div class='row' id='g6_r0' etirable='yes' recept='yes' recepttype='circrow' highlight='circrow_highlight' downlight='circrow_downlight' >
+		<div class='row'></div>
+		<div class='form-empr-fgrp ui-clearfix' id='g6' etirable='yes'  >	
 				!!champs_perso!!
+				
 				<div class='row'></div>
-			</div>
 			
 		</div>
 
-		<div class='form-empr-fgrp' id='g7' >
-			<div class='row' id='g7_r0' etirable='yes' recept='yes' recepttype='circrow' highlight='circrow_highlight' downlight='circrow_downlight' >
-				!!empr_notice_override!!
-				<div class='row'></div>
-			</div>
+		<div class='row'></div>
+		<div class='form-empr-fgrp ui-clearfix' id='g7'  etirable='yes' >
+				!!empr_notice_override!!				
 		</div>
 
 	</div>
@@ -1427,7 +1522,7 @@ $empr_edit_tmpl = "
 
 $empr_tmpl_fiche_affichage = "
 <div class='row'>
-	<h1>!!prenom!! !!nom!! <font size='2'>".$msg['empr_nb_pret'].": !!info_nb_pret!! ".$msg['empr_nb_resa'].": !!info_nb_resa!! !!info_resa_planning!!</font>&nbsp;<input type=button class=bouton  onclick=\"document.location='./circ.php?categ=pret&form_cb=!!cb!!';\" value='".htmlentities($msg['retour_goto_pret'],ENT_QUOTES, $charset)."'></h1>
+	<h1>!!prenom!! !!nom!! ".$msg['empr_nb_pret'].": !!info_nb_pret!! ".$msg['empr_nb_resa'].": !!info_nb_resa!! !!info_resa_planning!!&nbsp;<input type=button class=bouton  onclick=\"document.location='./circ.php?categ=pret&form_cb=!!cb!!';\" value='".htmlentities($msg['retour_goto_pret'],ENT_QUOTES, $charset)."'></h1>
 	</div>
 <div class='colonne3'>
 	<strong>$msg[1401] : </strong>!!adhesion!!
@@ -1456,8 +1551,8 @@ $empr_tmpl_fiche_affichage = "
 	<th>$msg[294]</th>
 	<th>$msg[expl_location]</th>
 	<th>$msg[653]</th>
-	<th><center>".$msg['pret_date_retour_initial']."</center></th>
-	<th><center>".$msg['pret_compteur_prolongation']."</center></th>
+	<th>".$msg['pret_date_retour_initial']."</th>
+	<th>".$msg['pret_compteur_prolongation']."</th>
 	<th>$msg[654]</th>
 	</tr>
 	!!pret_list!!
@@ -1519,7 +1614,7 @@ $empr_autre_compte_tmpl="
 		 }
 	</script>
 	<div class='row'>
-		<h1>!!prenom!! !!nom!! <font size='2'>".$msg['empr_nb_pret'].": !!info_nb_pret!! ".$msg['empr_nb_resa'].": !!info_nb_resa!!</font></h1>
+		<h1>!!prenom!! !!nom!! ".$msg['empr_nb_pret'].": !!info_nb_pret!! ".$msg['empr_nb_resa'].": !!info_nb_resa!!</h1>
 	</div>
 	<div class='row'><a href='circ.php?categ=pret&id_empr=$id'>".$msg["finance_form_empr_go_back"]."</a></div>
 	<div class='row'>
@@ -1573,7 +1668,7 @@ $empr_autre_compte_tmpl="
 
 $empr_comptes_tmpl="
 	<div class='row'>
-		<h1>!!prenom!! !!nom!! <font size='2'>".$msg['empr_nb_pret'].": !!info_nb_pret!! ".$msg['empr_nb_resa'].": !!info_nb_resa!!</font></h1>
+		<h1>!!prenom!! !!nom!! ".$msg['empr_nb_pret'].": !!info_nb_pret!! ".$msg['empr_nb_resa'].": !!info_nb_resa!!</h1>
 	</div>
 	<div class='row'><a href='circ.php?categ=pret&id_empr=$id'>".$msg["finance_form_empr_go_back"]."</a></div>
 	<div class='row'>
@@ -1610,7 +1705,7 @@ $empr_retard_tpl ="
 	<script type='text/javascript' src='./javascript/tablist.js'></script>
 	<script type='text/javascript' src='./javascript/sorttable.js'></script>
 	<div class='row'>
-		<h1>!!prenom!! !!nom!! <font size='2'>".$msg['empr_nivo_relance'].": !!nivo_relance!! </font></h1>
+		<h1>!!prenom!! !!nom!! ".$msg['empr_nivo_relance'].": !!nivo_relance!! </h1>
 	</div>
 	<div class='row'><a href='circ.php?categ=pret&id_empr=!!id!!'>".$msg["finance_form_empr_go_back"]."</a></div>
 	<h3>".$msg["empr_histo_late"]."</h3>
@@ -1623,3 +1718,31 @@ $empr_retard_tpl ="
 		 initIt();
 	</script>
 ";
+
+$empr_pnb_loans_tmpl = "
+<table class='sortable'>
+	<thead>
+	<tr>
+	<form class='form-$current_module' name='prolong_bloc' action='circ.php'>
+		<th colspan='6'>
+			<h3>$msg[349] &nbsp;(!!nb_prets_encours!!)&nbsp;&nbsp;
+			<input type='button' name='imprimerlistedocs' class='bouton' value='".$msg['imprimer']."' onClick=\"openPopUp('./pdf.php?pdfdoc=ticket_pret&id_empr=!!id!!', 'print_PDF');\" />
+			&nbsp;<input type='button' name='imprimerlistedocs' class='bouton' value='".$msg['imprimer_liste_pret']."' onClick=\"openPopUp('./pdf.php?pdfdoc=liste_pret&id_empr=!!id!!', 'print_PDF');\" />
+			</h3>
+		</th>
+	</form>
+	</tr>
+	<tr>
+	<form class='form-$current_module' name='sel_bloc'>
+		<th>$msg[293]</th>
+		<th size='50%'>$msg[652]</th>
+		<th>$msg[653]</th>
+		<th>".$msg['pret_date_retour_initial']."</th>
+	</form>
+	</tr>
+	</thead>
+	<tbody>
+	!!pret_list!!
+	</tbody>
+</table>
+<div class='row'><hr /></div>";

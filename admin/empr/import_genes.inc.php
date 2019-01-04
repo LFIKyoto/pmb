@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: import_genes.inc.php,v 1.16 2015-06-02 13:24:51 dgoron Exp $
+// $Id: import_genes.inc.php,v 1.18 2017-10-18 14:55:13 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -58,17 +58,15 @@ function show_import_choix_fichier($dbh) {
 	print "
 	<script type='text/javascript'>
 
-function display_part(type)
-{
-	var type_import = document.getElementById('div_ensae');
-	if(type == 'ensae')
-	{
+function display_part(type) {
+	var type_import = document.getElementById('type_import');
+	if(type == 'ensae') {
 		var div_ensae = document.getElementById('div_ensae');
 		div_ensae.style.display = 'table-cell';
 		var div_ensai = document.getElementById('div_ensai');
 		div_ensai.style.display = 'none';	
-		type_import.value='maj_complete';
-		
+		type_import.value='maj_complete';	
+		document.getElementById('type_ensae_maj_complete').checked = true;		
 	} else {
 		var div_ensae = document.getElementById('div_ensae');
 		div_ensae.style.display = 'none';
@@ -76,12 +74,21 @@ function display_part(type)
 		div_ensai.style.display = 'table-cell';
 		type_import.value='insert_or_update';
 	}
-	
 } 
+
+function update_ensae(value) {
+	var type_import = document.getElementById('type_import');
+	if(value == 'maj_complete') {
+		type_import.value='maj_complete';
+	} else {
+		type_import.value='insert_only';
+	}
+}
 </script>
 	
 	<form class='form-$current_module' name='form1' ENCTYPE=\"multipart/form-data\" method='post' action=\"./admin.php?categ=empr&sub=implec&action=1\">
 	<h3>Choix du fichier d'import des élèves GENES</h3>
+	<input type='hidden' name='type_import' id='type_import' value='maj_complete' />
 	<div class='form-contenu'>
 		<div class='row'>
 			<label class='etiquette' for='import_lec'>".$msg["import_lec_fichier"]."</label>
@@ -104,14 +111,17 @@ function display_part(type)
 	    <br />
 	    <div style='display:table'>
 	    	<div style='display:table-row'>
-		    	<div id=div_ensae style='display:table-cell;width:50%'>
+		    	<div id='div_ensae' style='display:table-cell;width:50%'>
+	        		<div class='row'>
+	        			<input type='radio' name='type_ensae' id='type_ensae_maj_complete' value='maj_complete' checked='checked' onclick='update_ensae(this.value)'> Mise à jour complète
+	        			<input type='radio' name='type_ensae' id='type_ensae_insert_only' value='insert_only' onclick='update_ensae(this.value)'> Ajout uniquement
+	        		</div>
 		    		<div class='row'>
 						<p>L'ordre des colonnes dans votre fichier doit être :<br />
-						<font size='1'>Identifiant de l'étudiant ; Code-barres ; Voie ; Nom ; Prénom ; Mail ; Mail perso ; Numéro de casier ; Civilité ; Année de date de naissance ; Téléphone 1 ; Téléphone 2 ; Identifiant OPAC</font>
+						Identifiant de l'étudiant ; Code-barres ; Voie ; Nom ; Prénom ; Mail ; Mail perso ; Numéro de casier ; Civilité ; Année de date de naissance ; Téléphone 1 ; Téléphone 2 ; Identifiant OPAC
 						</p>
 					</div>
 					<div class='row'>
-				        <input type=hidden name='type_import' id='type_import' value='maj_complete' />
 				        <label class='etiquette' for='type_import'>Mise à jour complète</label>
 				        Marquer les lecteurs appartenant aux groupes ci-dessous et ayant pour catégorie et localisation les choix ci-dessous
 				        <blockquote>"."
@@ -151,10 +161,10 @@ function display_part(type)
 						</blockquote>
 					</div>
 				</div>
-				<div id=div_ensai style='display:table-cell;width:50%;display:none'>
+				<div id='div_ensai' style='display:table-cell;width:50%;display:none'>
 					<div class='row'>
 						<p>L'ordre des colonnes dans votre fichier doit être :<br />
-						<font size='1'>Nom ; Prénom ; Mail ; Mail perso ; Catégorie ; Groupe 1 ; Groupe 2 ; Groupe 3 ;  Libellé du statut ; Libellé de la localisation ; Pays ; Date d'adhésion du lecteur ; Date d'expiration du lecteur ; Code-barres ; Identifiant OPAC ; Téléphone 1 ; Téléphone 2</font>
+						Nom ; Prénom ; Mail ; Mail perso ; Catégorie ; Groupe 1 ; Groupe 2 ; Groupe 3 ;  Libellé du statut ; Libellé de la localisation ; Pays ; Date d'adhésion du lecteur ; Date d'expiration du lecteur ; Code-barres ; Identifiant OPAC ; Téléphone 1 ; Téléphone 2
 						</p>
 					</div>
 					<div class='row'>
@@ -197,7 +207,7 @@ function cre_login($nom, $prenom, $dbh) {
 
 function import_eleves_ensae($separateur, $dbh, $type_import){
 	global $idchamp, $id_grp, $empr_location_id, $empr_location_lib, $id_categ_empr, $idemprcaddie ;
-	
+
 	if (!isset($id_grp)) $id_grp=array();
     //La structure du fichier texte doit être la suivante : 
     //id_etudiant/CB/Voie/Nom/Prénom/courriel/courriel_perso/casier/libelle_etat_civil/année de naissance/tel dom/tel_mobile/identifiant OPAC/
@@ -231,6 +241,7 @@ function import_eleves_ensae($separateur, $dbh, $type_import){
         while (!feof($fichier)) {
         	$buffer = fgets($fichier, 4096);
             $tab = explode($separateur, $buffer);
+
             $idetudiant=trim(str_replace(" ","",$tab[0]));
 			if ($idetudiant!="id_etudiant" && $idetudiant!="") {
 				// ce n'est pas la première ligne d'entête de colonne
@@ -299,6 +310,9 @@ function import_eleves_ensae($separateur, $dbh, $type_import){
 	
 	                case 1:
 	                	//Cet élève est déja enregistré
+	                	if ($type_import != 'maj_complete') {
+	                		break;
+	                	}
 	                	$empr=pmb_mysql_fetch_object($nb) ;
 	                    $req_update = "UPDATE empr SET empr_nom='".addslashes($nom)."', empr_prenom='".addslashes($prenom)."', empr_cb='".addslashes($cb)."', ";
 	                    $req_update .= "empr_tel1='".addslashes($tel1)."', empr_tel2='".addslashes($tel2)."', empr_year = '".addslashes($anneenaiss)."', empr_categ =$id_categ_empr, empr_codestat=8, empr_modif='$date_auj', empr_sexe='$sexe', ";
@@ -321,11 +335,11 @@ function import_eleves_ensae($separateur, $dbh, $type_import){
 	                    break;
 	                default:
 	                    print("<b>Echec pour l'élève suivant (Erreur : ".pmb_mysql_error().") : </b><br />");
-	                    print "<ul><li><font color=red><b>Absent de la base PMB $voie</b></font></li>
-								<li><font color=red>$nom</font></li>
-								<li><font color=red>$prenom</font></li>
-								<li><font color=red>$cb</font></li>
-								<li><font color=red>$idetudiant</font></li>
+	                    print "<ul><li><span style='color:red'><b>Absent de la base PMB $voie</b></span></li>
+								<li><span style='color:red'>$nom</span></li>
+								<li><span style='color:red'>$prenom</span></li>
+								<li><span style='color:red'>$cb</span></li>
+								<li><span style='color:red'>$idetudiant</span></li>
 								</ul>";
 	                    print("<br />");
 						break;
@@ -562,10 +576,10 @@ function import_eleves_ensai($separateur, $dbh, $type_import){
 	                break;
 	                default:
 	                  
-	                    print "<ul><li><font color=red><b>Echec pour l'élève suivant déjà présent: </b></font></li>
-								<li><font color=red>$nom</font></li>
-								<li><font color=red>$prenom</font></li>
-								<li><font color=red>$cb</font></li>
+	                    print "<ul><li><span style='color:red'><b>Echec pour l'élève suivant déjà présent: </b></span></li>
+								<li><span style='color:red'>$nom</span></li>
+								<li><span style='color:red'>$prenom</span></li>
+								<li><span style='color:red'>$cb</span></li>
 								</ul>";
 	                    print("<br />");
 						break;

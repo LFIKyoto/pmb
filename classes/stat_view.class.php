@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: stat_view.class.php,v 1.14 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: stat_view.class.php,v 1.23 2017-11-21 12:00:59 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,13 +15,13 @@ require_once ($class_path . "/stat_query.class.php");
 
 class stat_view {
 	
-	var $action='';
-	var $section='';
+	public $action='';
+	public $section='';
 	
 	/**
 	 * Constructeur
 	 */
-	function stat_view($section='',$act=''){
+	public function __construct($section='',$act=''){
 		$this->action = $act;
 		$this->section = $section;
 	}
@@ -29,7 +29,7 @@ class stat_view {
 	/**
 	 * Execution des différentes actions
 	 */
-	function proceed(){
+	public function proceed(){
 		global $msg, $id_col, $col_name, $expr_col, $expr_filtre, $view_name, $view_comment, $id_view; 
 		global $id, $id_req, $move, $conso, $date_deb,$date_fin,$date_ech, $list_ck,$remove_data;
 		
@@ -160,20 +160,22 @@ class stat_view {
 	/**
 	 * On fait appel au formulaire qui affiche la liste des vues
 	 */
-	function do_form(){
+	public function do_form(){
 		global $stat_opac_view_form, $msg;	
 		global $msg, $dbh;
  		global $charset;
  		global $javascript_path;
-		
+		global $open_view,$alert_consolid;
  		
 	 	print "
 			<script type=\"text/javascript\" src=\"".$javascript_path."/tablist.js\"></script>
-			<a href=\"javascript:expandAll()\"><img src='./images/expand_all.gif' border='0' id=\"expandall\" /></a>
-			<a href=\"javascript:collapseAll()\"><img src='./images/collapse_all.gif' border='0' id=\"collapseall\" /></a>
+			<span class='item-expand'>
+				<a href=\"javascript:expandAll()\"><img src='".get_url_icon('expand_all.gif')."' style='border:0px' id=\"expandall\" /></a>
+				<a href=\"javascript:collapseAll()\"><img src='".get_url_icon('collapse_all.gif')."' style='border:0px' id=\"collapseall\" /></a>
+			</span>
 			";
 
-	 	$requete_vue = "select * from statopac_vues order by date_consolidation desc";
+	 	$requete_vue = "select * from statopac_vues order by date_consolidation desc, nom_vue";
 	 	$res = pmb_mysql_query($requete_vue,$dbh);
 	 	$vue_affichage="";	
 		if(pmb_mysql_num_rows($res) == 0){			
@@ -184,7 +186,7 @@ class stat_view {
 		} else {		
 			$vue_affichage="";
 			$parity=1;
-			$btn_consolide= "<input class='bouton' type='submit' value=\"".$msg[stat_consolide_view]."\" onClick=\"this.form.act.value='consolide_view'; document.view.action='./admin.php?categ=opac&sub=stat&section=view_list'\"/>";
+			$btn_consolide= "<input class='bouton' type='submit' value=\"".$msg['stat_consolide_view']."\" onClick=\"this.form.act.value='consolide_view'; document.view.action='./admin.php?categ=opac&sub=stat&section=view_list'\"/>";
 			while(($vue = pmb_mysql_fetch_object($res))){
 				$min_date='';
 				$max_date='';
@@ -209,16 +211,16 @@ class stat_view {
 					$btn_exec = "<input type='submit' class='bouton_small' name='exec_request' value='$msg[708]' onClick='document.view.action=\"./admin.php?categ=opac&sub=stat&section=view_list\";this.form.act.value=\"exec_req\"; this.form.id_req.value=\"$request->idproc\"; this.form.id_view.value=\"$vue->id_vue\";'/>";
 					$btn_save = "<input type='submit' class='bouton_small' name='save_request' value='".$msg["procs_bt_export"]."' onClick='document.view.action=\"./export.php?quoi=stat\";this.form.act.value=\"save_req\"; this.form.id_req.value=\"$request->idproc\"; this.form.id_view.value=\"$vue->id_vue\";'/>";
 					$liste_requete.="<tr class='$pair_impair'  $tr_javascript style='cursor: pointer'>
-										<td width=10>$btn_exec</td>
+										<td style='width:10px'>$btn_exec</td>
 										<td $td_action><strong>$request->name</strong><br /><small>$request->comment</small></td><td>
 						";	
 					if (preg_match_all("|!!(.*)!!|U",$request->requete,$query_parameters)) $liste_requete.="<a href='admin.php?categ=opac&sub=stat&section=view_list&act=configure&id_req=".$request->idproc."'>".$msg["procs_options_config_param"]."</a>";
-					$liste_requete.="</td><td width=10>$btn_save</td></tr>";					
+					$liste_requete.="</td><td style='width:10px'>$btn_save</td></tr>";					
 				}
 				
 				$tab_list="<table><tr><th colspan='4'>".htmlentities($vue->nom_vue,ENT_QUOTES, $charset)."</th></tr>".$liste_requete."</table>";
 				$lien = "<a href='./admin.php?categ=opac&sub=stat&section=view_gestion&act=update_view&id_view=$vue->id_vue'>".htmlentities($vue->nom_vue,ENT_QUOTES, $charset) ."</a>";
-				$space = "<small><span style='margin-right: 3px;'><img src='./images/spacer.gif' width='10' height='10' /></span></small>";
+				$space = "<small><span style='margin-right: 3px;'><img src='".get_url_icon('spacer.gif')."' style='width:10px' height='10' /></span></small>";
 				$checkbox = "<input type='checkbox' class='checkbox' id='box$vue->id_vue' name='list_ck[]' value='$vue->id_vue' />"; 				
 				$btn = "<div class='row'>
 						<input class='bouton_small' type='button' value=\"".$msg['stat_add_request']."\" onClick=\"document.location='./admin.php?categ=opac&sub=stat&section=query&act=update_request&id_view=$vue->id_vue';\" />
@@ -226,10 +228,14 @@ class stat_view {
 					</div>";
 				$date_conso='';
 				if ($vue->date_consolidation!=='0000-00-00 00:00:00') {
-					$date_conso = sprintf($msg['stat_view_date_conso'],formatdate($vue->date_consolidation),$view_scope);
+					$date_conso = sprintf($msg['stat_view_date_conso'],formatdate($vue->date_consolidation,true),$view_scope);
 				}	
 				$libelle_titre = $space.$checkbox.$space.$lien.$space.$date_conso;
-				$vue_affichage.=gen_plus($vue->id_vue,$libelle_titre,$tab_list.$btn);
+				$maximise = false;
+				if ($open_view == $vue->id_vue) {
+					$maximise = true;
+				}
+				$vue_affichage.=gen_plus($vue->id_vue,$libelle_titre,$tab_list.$btn,$maximise);
 			}
 			
 			
@@ -248,8 +254,8 @@ class stat_view {
 				}
 			}
 			$options = "<div id='opt_consoParent' class='notice-parent'>";
-			$options .= "<img id='opt_consoImg' class='img_plus' hspace='3' border='0' onClick=\"expandBase('opt_conso',true);return false;\" title='requete' name='imEx' src=\"./images/plus.gif\" />";
-			$options .= "$space <span class='notice-heada'>".htmlentities($msg[stat_options_consolidation],ENT_QUOTES,$charset)."</span>";
+			$options .= "<img id='opt_consoImg' class='img_plus' style='border:0px; margin:3px 3px' onClick=\"expandBase('opt_conso',true);return false;\" title='requete' name='imEx' src=\"".get_url_icon('plus.gif')."\" />";
+			$options .= "$space <span class='notice-heada'>".htmlentities($msg['stat_options_consolidation'],ENT_QUOTES,$charset)."</span>";
 			$options .= "$space $stat_scope";
 			$options .= "</div>";	
 			$options_contenu ="<div class='row'>
@@ -269,11 +275,11 @@ class stat_view {
 			$stat_opac_view_form=str_replace("!!btn_consolide!!",$btn_consolide,$stat_opac_view_form);
 			
 			$btn_date_deb = "<input type='hidden' name='date_deb' value='!!date_deb!!'/><input type='button' name='date_deb_lib' class='bouton_small' value='!!date_deb_lib!!'   
-				onClick=\"openPopUp('./select.php?what=calendrier&caller=view&date_caller=!!date_deb!!&param1=date_deb&param2=date_deb_lib&auto_submit=NO&date_anterieure=YES', 'date_deb', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes');\" />";
+				onClick=\"openPopUp('./select.php?what=calendrier&caller=view&date_caller=!!date_deb!!&param1=date_deb&param2=date_deb_lib&auto_submit=NO&date_anterieure=YES', 'calendar');\" />";
 			$btn_date_fin = "<input type='hidden' name='date_fin' value='!!date_fin!!'/><input type='button' name='date_fin_lib' class='bouton_small'   value='!!date_fin_lib!!'
-				onClick=\"openPopUp('./select.php?what=calendrier&caller=view&date_caller=!!date_fin!!&param1=date_fin&param2=date_fin_lib&auto_submit=NO&date_anterieure=YES', 'date_fin', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes');\" />";
+				onClick=\"openPopUp('./select.php?what=calendrier&caller=view&date_caller=!!date_fin!!&param1=date_fin&param2=date_fin_lib&auto_submit=NO&date_anterieure=YES', 'calendar');\" />";
 			$btn_date_echeance = "<input type='hidden' name='date_ech' value='!!date_ech!!'/><input type='button' name='date_ech_lib' class='bouton_small' value='!!date_ech_lib!!'  
-				onClick=\"openPopUp('./select.php?what=calendrier&caller=view&date_caller=!!date_ech!!&param1=date_ech&param2=date_ech_lib&auto_submit=NO&date_anterieure=YES', 'date_ech', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes');\" />";
+				onClick=\"openPopUp('./select.php?what=calendrier&caller=view&date_caller=!!date_ech!!&param1=date_ech&param2=date_ech_lib&auto_submit=NO&date_anterieure=YES', 'calendar');\" />";
 			
 			$date_debut = strftime("%Y-%m-%d", mktime(0, 0, 0, date('m'), date('d')-1, date('y'))); 
 			$btn_date_deb=str_replace("!!date_deb!!",$date_debut,$btn_date_deb);
@@ -287,6 +293,10 @@ class stat_view {
 			$stat_opac_view_form=str_replace("!!date_deb_btn!!",$btn_date_deb,$stat_opac_view_form);
 			$stat_opac_view_form=str_replace("!!date_fin_btn!!",$btn_date_fin,$stat_opac_view_form);
 			$stat_opac_view_form=str_replace("!!echeance_btn!!",$btn_date_echeance,$stat_opac_view_form);
+			
+			if ($alert_consolid) {
+				$stat_opac_view_form.=display_notification($msg["stat_import_consolide"]);
+			}
 	 	}
 	 	
 		return $stat_opac_view_form;
@@ -296,7 +306,7 @@ class stat_view {
 	/**
 	 * On fait appel au formulaire d'ajout d'une vue
 	 */
-	function do_addview_form($vue_id=''){
+	public function do_addview_form($vue_id=''){
 		global $stat_view_addview_form;
 		global $msg, $charset;
 		global $dbh;
@@ -314,8 +324,8 @@ class stat_view {
 			return $stat_view_addview_form;
 			
 		} else {
-			$btn_add_col = "<input class='bouton' type='submit'  value=\"".$msg[stat_add_col]."\" onClick='this.form.act.value=\"add_col\"; document.addview.action=\"./admin.php?categ=opac&sub=stat&section=colonne&action=addcol\";'/>";
-			$bouton_reinit_view="<input class='bouton' type='submit'  value=\"".$msg[stat_reinit_view]."\" onClick='this.form.act.value=\"reinit\";'/>";
+			$btn_add_col = "<input class='bouton' type='submit'  value=\"".$msg['stat_add_col']."\" onClick='this.form.act.value=\"add_col\"; document.addview.action=\"./admin.php?categ=opac&sub=stat&section=colonne&action=addcol\";'/>";
+			$bouton_reinit_view="<input class='bouton' type='submit'  value=\"".$msg['stat_reinit_view']."\" onClick='this.form.act.value=\"reinit\";'/>";
 			$btn_suppr = "<input class='bouton' type='submit'  value='$msg[63]' onClick='if(confirm_delete()) this.form.act.value=\"suppr_view\";'/>";
 			
 			$requete = "select nom_vue, comment from statopac_vues where id_vue='".addslashes($vue_id)."'";
@@ -339,7 +349,7 @@ class stat_view {
 				$stat_view_addview_form=str_replace("!!view_title!!",$msg["stat_view_modif_title"],$stat_view_addview_form);
 				return $stat_view_addview_form;
 			} else {
-				$res="<table width=100%>\n";
+				$res="<table style='width:100%'>\n";
 				$res.="<tr><th>".$msg["stat_col_order"]."</th><th>".$msg["stat_col_name"]."</th><th>".$msg["stat_col_expr"]."</th><th>".$msg["stat_col_filtre"]."</th><th>".$msg['stat_col_type']."</th>";
 				$parity=1;
 				$n=0;
@@ -354,14 +364,14 @@ class stat_view {
 					$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\"  ";
 					$action_td=" onmousedown=\"document.location='./admin.php?categ=opac&sub=stat&section=colonne&act=update_col&id_col=$r->id_col&id_view=$vue_id';\" ";
 					$res.="<tr class='$pair_impair' style='cursor: pointer' $tr_javascript>";
-					$res.="<td align='center'>";
+					$res.="<td class='center'>";
 				    $res.="<input type='button' class='bouton_small' value='-' onClick='document.location=\"./admin.php?categ=opac&sub=stat&section=view_gestion&act=update_view&move=down&id_col=".$r->id_col."&id_view=$vue_id\"'/></a>";
 				    $res .= "<input type='button' class='bouton_small' value='+' onClick='document.location=\"./admin.php?categ=opac&sub=stat&section=view_gestion&act=update_view&move=up&id_col=".$r->id_col."&id_view=$vue_id\"'/>";
 					$res.="</td>";
-					$res.="<td $action_td align='center'><b>".htmlentities($r->nom_col,ENT_QUOTES,$charset)."</b></td>
-						<td $action_td align='center'>".htmlentities($r->expression,ENT_QUOTES,$charset)."</td>
-						<td $action_td align='center'>".htmlentities($r->filtre,ENT_QUOTES,$charset)."</td>
-						<td $action_td align='center'>".htmlentities($r->datatype,ENT_QUOTES,$charset)."</td>";
+					$res.="<td $action_td class='center'><b>".htmlentities($r->nom_col,ENT_QUOTES,$charset)."</b></td>
+						<td $action_td class='center'>".htmlentities($r->expression,ENT_QUOTES,$charset)."</td>
+						<td $action_td class='center'>".htmlentities($r->filtre,ENT_QUOTES,$charset)."</td>
+						<td $action_td class='center'>".htmlentities($r->datatype,ENT_QUOTES,$charset)."</td>";
 				}
 				$res.="</tr></table>";
 				$stat_view_addview_form=str_replace("!!table_colonne!!",$res,$stat_view_addview_form);
@@ -374,7 +384,7 @@ class stat_view {
 	/**
 	 * On fait appel au formulaire d'ajout de colonne
 	 */
-	function do_col_form($id_col=''){
+	public function do_col_form($id_col=''){
 		global $stat_view_addcol_form, $msg, $charset, $id_view; 
 		global $dbh;
 		
@@ -436,7 +446,7 @@ class stat_view {
 	/**
 	 * On insere ou enregistre une colonne
 	 */
-	function save_col($id_col='', $col_name='',$expr_col='',$expr_filtre='', $vue_id=''){
+	public function save_col($id_col='', $col_name='',$expr_col='',$expr_filtre='', $vue_id=''){
 		global $datatype;
 		global $dbh;
 		
@@ -462,7 +472,7 @@ class stat_view {
 	/**
 	 * On insere ou enregistre une vue
 	 */
-	function save_view($vue_id='', $view_name='',$view_comment=''){
+	public function save_view($vue_id='', $view_name='',$view_comment=''){
 		global $dbh;
 		
 		if(!$vue_id){
@@ -477,7 +487,7 @@ class stat_view {
 	/**
 	 * Supprime une vue et ces colonnes associées
 	 */
-	function delete_view($vue_id){
+	public function delete_view($vue_id){
 		global $dbh;
 		
 		if($vue_id){
@@ -495,7 +505,7 @@ class stat_view {
 	/**
 	 * Réinitialise la vue à zéro
 	 */
-	function reinitialiser_view($vue_id=''){
+	public function reinitialiser_view($vue_id=''){
 		global $dbh;
 		
 		if($vue_id){
@@ -513,7 +523,7 @@ class stat_view {
 	/**
 	 * Supprime une colonne
 	 */
-	function delete_col($id_col){
+	public function delete_col($id_col){
 		global $dbh;
 		
 		if($id_col){
@@ -542,7 +552,7 @@ class stat_view {
 	/**
 	 * Changer l'ordre dans la liste en montant un élément
 	 */
-	function monter_element($col_id=''){
+	public function monter_element($col_id=''){
 		global $dbh;
 		
 		$requete="select ordre from statopac_vues_col where id_col='".$col_id."'";
@@ -565,7 +575,7 @@ class stat_view {
 	/**
 	 * Changer l'ordre dans la liste en descendant un élément
 	 */
-	function descendre_element($col_id=''){
+	public function descendre_element($col_id=''){
 		global $dbh;
 		
 		$requete="select ordre from statopac_vues_col where id_col='".$col_id."'";
@@ -593,7 +603,7 @@ class stat_view {
 	 * Verification de la presence et de la syntaxe des parametres de la requete
 	 * retourne true si OK, le nom du parametre entre parentheses sinon
 	 */
-	function check_param($requete) {
+	public function check_param($requete) {
 		$query_parameters=array();
 		//S'il y a des termes !!*!! dans la requête alors il y a des paramètres
 		if (preg_match_all("|!!(.*)!!|U",$requete,$query_parameters)) {
@@ -609,7 +619,7 @@ class stat_view {
 	/**
 	 * On fait appel au formulaire d'ajout d'une requete à la vue
 	 */
-	function do_import_req_form($vue_id=''){
+	public function do_import_req_form($vue_id=''){
 		global $stat_view_import_req_form;
 		global $msg, $charset;
 		
@@ -622,7 +632,7 @@ class stat_view {
 	/**
 	 * On importe la requête à la vue
 	 */
-	function do_import_req($vue_id=''){
+	public function do_import_req($vue_id=''){
 		global $dbh, $msg, $charset;
 		
 		if($vue_id){
@@ -728,15 +738,11 @@ class stat_view {
 					//maj num_vue sur requete
 					pmb_mysql_query("UPDATE statopac_request SET num_vue=".$vue_id." WHERE idproc=".$idStat, $dbh);
 					
+					$add_url='';
 					if($nbColAjout){
-						print "<h3>".$msg["stat_import_consolide"]."</h3>";
+						$add_url='&alert_consolid=1';
 					}
-					print "<form class='form-$current_module' name=\"dummy\" method=\"post\" action=\"./admin.php?categ=opac&sub=stat&section=view_list\" >
-					<input type='submit' class='bouton' name=\"id_form\" value=\"Ok\" />
-					</form>";
-					if(!$nbColAjout){
-						print "<script type=\"text/javascript\">document.dummy.submit();</script>";
-					}
+					print "<script type=\"text/javascript\">document.location='./admin.php?categ=opac&sub=stat&section=view_list&open_view=".$vue_id.$add_url."';</script>";
 				}
 			
 			} else {

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: encoding_normalize.class.php,v 1.1 2015-04-07 15:21:03 vtouchard Exp $
+// $Id: encoding_normalize.class.php,v 1.10 2018-06-13 12:41:19 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -48,13 +48,19 @@ class encoding_normalize {
 		return $array;
 	}
 	
-	protected static function charset_normalize($elem,$input_charset){
+	public static function charset_normalize($elem,$input_charset){
 		global $charset;
 		if(is_array($elem)){
-			foreach ($elem as $key =>$value){
-				$elem[$key] = encoding_normalize::charset_normalize($value,$input_charset);
+			if(count($elem)) {
+				foreach ($elem as $key =>$value){
+					$elem[$key] = encoding_normalize::charset_normalize($value,$input_charset);
+				}
 			}
 		}else{
+			// Si c'est un numérique on ne fait rien
+			if (is_numeric($elem)) {
+				return $elem;
+			}
 			//PMB dans un autre charset, on converti la chaine...
 			$elem = self::clean_cp1252($elem, $input_charset);
 			if($charset != $input_charset){
@@ -68,7 +74,16 @@ class encoding_normalize {
 		return json_encode(self::utf8_normalize($obj),JSON_HEX_APOS | JSON_HEX_QUOT);
 	}
 	
-	protected static function clean_cp1252($str,$charset){
+	public static function json_decode($obj,$assoc=false){
+	    $elem = json_decode($obj,$assoc);
+	    foreach ($elem as $key =>$value){
+	        $json[encoding_normalize::charset_normalize($key,'utf-8')] = encoding_normalize::charset_normalize($value,'utf-8');
+	    }
+	    return $json;
+	}
+	
+	public static function clean_cp1252($str,$charset){
+		$cp1252_map = array();
 		switch($charset){
 			case "utf-8" :
 				$cp1252_map = array(
@@ -89,19 +104,22 @@ class encoding_normalize {
 					"\xe2\x80\x99" => "\x27", /* RIGHT SINGLE QUOTATION MARK */
 					"\xe2\x80\x9c" => "\x22", /* LEFT DOUBLE QUOTATION MARK */
 					"\xe2\x80\x9d" => "\x22", /* RIGHT DOUBLE QUOTATION MARK */
-					"\xe2\x80\xa2" => "\b7", /* BULLET */
+					"\xe2\x80\xa2" => "\xc2\xb7", /* BULLET */
 					"\xe2\x80\x93" => "\x20", /* EN DASH */
-					"\xe2\x80\x94" => "\x20\x20", /* EM DASH */
+					"\xe2\x80\x94" => " - ", /* EM DASH */
 					"\xcb\x9c" => "\x7e",   /* SMALL TILDE */
 					"\xe2\x84\xa2" => "?", /* TRADE MARK SIGN */
 					"\xc5\xa1" => "s",   /* LATIN SMALL LETTER S WITH CARON */
 					"\xe2\x80\xba" => "\x3e;", /* SINGLE RIGHT-POINTING ANGLE QUOTATION*/
 					"\xc5\x93" => "oe",   /* LATIN SMALL LIGATURE OE */
 					"\xc5\xbe" => "z",   /* LATIN SMALL LETTER Z WITH CARON */
-					"\xc5\xb8" => "Y"    /* LATIN CAPITAL LETTER Y WITH DIAERESIS*/
+					"\xc5\xb8" => "Y",    /* LATIN CAPITAL LETTER Y WITH DIAERESIS*/
+					"\xe2\x80\xaf" => "", /*  NARROW NO-BREAK SPACE */
+					"\xe2\x80\x89" => "", /* THIN SPACE */
 				);
 				break;
 			case "iso8859-1" :
+			case "iso-8859-1" :
 				$cp1252_map = array(
 					"\x80" => "EUR", /* EURO SIGN */
 					"\x82" => "\xab", /* SINGLE LOW-9 QUOTATION MARK */
@@ -120,7 +138,7 @@ class encoding_normalize {
 					"\x92" => "\x27", /* RIGHT SINGLE QUOTATION MARK */
 					"\x93" => "\x22", /* LEFT DOUBLE QUOTATION MARK */
 					"\x94" => "\x22", /* RIGHT DOUBLE QUOTATION MARK */
-					"\x95" => "\b7", /* BULLET */
+					"\x95" => "\xc2\xb7", /* BULLET */
 					"\x96" => "\x20", /* EN DASH */
 					"\x97" => "\x20\x20", /* EM DASH */
 					"\x98" => "\x7e",   /* SMALL TILDE */
@@ -134,5 +152,22 @@ class encoding_normalize {
 				break;
 		}
 		return strtr($str, $cp1252_map);
+	}
+
+	public static function utf8_decode($elem){
+		global $charset;
+		if($charset != "utf-8"){
+			if(is_array($elem)){
+				foreach ($elem as $key =>$value){
+					$elem[$key] = encoding_normalize::utf8_decode($value);
+				}
+			}else if(is_object($elem)){
+				$elem = encoding_normalize::obj2array($elem);
+				$elem = encoding_normalize::utf8_decode($elem);
+			}else{
+				$elem = utf8_decode($elem);
+			}
+		}
+		return $elem;
 	}
 }

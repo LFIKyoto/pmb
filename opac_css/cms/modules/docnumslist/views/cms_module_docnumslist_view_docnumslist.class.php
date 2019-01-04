@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_docnumslist_view_docnumslist.class.php,v 1.1.2.8 2015-12-03 20:26:08 arenou Exp $
+// $Id: cms_module_docnumslist_view_docnumslist.class.php,v 1.9 2015-12-31 15:06:52 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -79,7 +79,7 @@ class cms_module_docnumslist_view_docnumslist extends cms_module_common_view {
 	});	
 </script>';
 		$headers[] = '<script type="text/javascript">
-	require(["dojo/_base/declare", "dojo/_base/lang", "dijit/registry", "dojo/dom", "dojo/on", "dojo/ready", "dojo/dom-style", "dojo/topic"], function(declare, lang, registry, dom, on, ready, domStyle, topic){
+	require(["dojo/_base/declare", "dojo/_base/lang", "dijit/registry", "dojo/dom", "dojo/on", "dojo/ready", "dojo/dom-style", "dojo/topic", "dojo/window"], function(declare, lang, registry, dom, on, ready, domStyle, topic, win){
 		ready(function(){
 			var Pager = declare(null, {
 				domId: "",
@@ -97,7 +97,7 @@ class cms_module_docnumslist_view_docnumslist extends cms_module_common_view {
 					this.model.store.getExplnums(item.parent).then(lang.hitch(this,this.render));
 				},
 				
-				switch: function(item){
+				switchPagin: function(item){
 					registry.byId("'.$this->get_module_dom_id().'_tree").switchItem(item);		
 				},
 				
@@ -112,12 +112,12 @@ class cms_module_docnumslist_view_docnumslist extends cms_module_common_view {
 							if(response[i].id == this.itemClicked.id){
 								if(response[i-1]){
 									content+= "<span style=\'margin-right:10px;cursor:pointer;\' id=\'pager_previous\' title=\'"+response[i-1].name+"\'>'.$this->format_text($this->msg['cms_module_docnumslist_view_pager_previous']).'<\/span>";
-									previous = lang.hitch(this,this.switch,response[i-1]);
+									previous = lang.hitch(this,this.switchPagin,response[i-1]);
 								}
 								content+= "<span id=\'pager_current\' style=\'font-weight:bold;\'>"+this.itemClicked.name+"<\/span>";
 								if(response[i+1]){
 									content+= "<span style=\'margin-left:10px;cursor:pointer;\' id=\'pager_next\' title=\'"+response[i+1].name+"\'>'.$this->format_text($this->msg['cms_module_docnumslist_view_pager_next']).'<\/span>";
-									next = lang.hitch(this,this.switch,response[i+1]);
+									next = lang.hitch(this,this.switchPagin,response[i+1]);
 								}
 								break;
 							}
@@ -141,23 +141,24 @@ class cms_module_docnumslist_view_docnumslist extends cms_module_common_view {
 				state: "",
 				fullscreenStyle: "",
 				constructor: function(domId){
+					var fs = win.getBox();
 					this.fullscreenStyle = {
 						node: {
 							position: "fixed",
 							top: "0px",
 							left: "0px",
-							width: "100%",
-							height: "100%",
+							height: (fs.h)+"px",
+							width: (fs.w)+"px",
 							background: "rgba(0, 0, 0, 0.5)"
 						},
 						container: {
-							top: "2%",
+							top: (fs.h*0.02)+"px",
 							margin: "auto",
-							height: "95%",
-							width: "95%"
+							height: (fs.h*0.90)+"px",
+							width: (fs.w*0.95)+"px"
 						},
 						treeContainer: {
-							width: "20%"
+							width: ((fs.h*0.90)*0.2)+"px"
 						}
 					};
 					this.style = {};
@@ -171,6 +172,7 @@ class cms_module_docnumslist_view_docnumslist extends cms_module_common_view {
 					on(dom.byId(this.domId+"_fullscreen"),"click",lang.hitch(this,this.clicked));
 				},
 				clicked: function(){
+				
 					if(this.state == true){
 						this.state = false;
 						dom.byId(this.domId+"_fullscreen").innerHTML = "'.$this->msg['cms_module_docnumslist_view_fullsceen'].'";
@@ -186,6 +188,7 @@ class cms_module_docnumslist_view_docnumslist extends cms_module_common_view {
 						this.setStyle(registry.byId("'.$this->get_module_dom_id().'_treeContainer").domNode, this.fullscreenStyle.treeContainer);
 						registry.byId("'.$this->get_module_dom_id().'_container").resize();
 					}
+					
 				},
 				saveStyle : function(node,type){
 					var computedStyle = domStyle.get(node);
@@ -200,7 +203,9 @@ class cms_module_docnumslist_view_docnumslist extends cms_module_common_view {
 					}
 				},
 				setStyle: function(node,newStyle){
+					try{
 					domStyle.set(node, newStyle);
+					}catch(e){}
 				}
 			});
 			switcher = new FSSwitcher("'.$this->get_module_dom_id().'");
@@ -213,6 +218,9 @@ class cms_module_docnumslist_view_docnumslist extends cms_module_common_view {
 	public function render($datas){
 		$html  = '';
 		$html  = '
+		<div class="itemSolo">		
+			<h2>'.$this->cadre_name.'</h2>	
+		</div>	
 		<div id="'.$this->get_module_dom_id().'_container" data-dojo-type="dijit/layout/BorderContainer" style="background-color:white;height:500px;width:100%">
 			<div data-dojo-type="dijit/layout/ContentPane" data-dojo-props="region:\'top\'" style="padding:5px;text-align:center;width:100%;">
             	<h6 style="cursor:pointer" id="'.$this->get_module_dom_id().'_fullscreen">'.$this->format_text($this->msg['cms_module_docnumslist_view_fullsceen']).'</h6>

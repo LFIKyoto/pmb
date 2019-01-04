@@ -2,11 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_aiss.inc.php,v 1.3 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: func_aiss.inc.php,v 1.4 2018-01-09 08:54:31 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // DEBUT paramétrage propre à la base de données d'importation :
+global $class_path; //Nécessaire pour certaines inclusions
 require_once($class_path."/serials.class.php");
 require_once($class_path."/categories.class.php");
 require_once($class_path."/noeuds.class.php");

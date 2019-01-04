@@ -2,7 +2,7 @@
 	****************************************************************************************
 	© 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 	****************************************************************************************
-	$Id: manifest.xml,v 1.2 2014-03-11 09:59:06 mbertin Exp $ -->
+	$Id: manifest.xml,v 1.4 2018-06-05 07:49:29 ngantier Exp $ -->
 <manifest>
 	<name>pmbesImport</name>
 	<description>msg:pmbesConvertImport_description</description>                                                                          
@@ -38,6 +38,22 @@
 				<param name="convert_type_id" type="scalar" dataType="integer" description="msg:convert_input_convert_type_id"/>
 				<param name="import" type="scalar" dataType="boolean" description="msg:convert_input_import"/>
 				<param name="source_id" type="scalar" dataType="integer" description="msg:convert_input_source_id"/>
+				<param name="do_not_convert" type="scalar" dataType="boolean" description="msg:convert_input_do_not_convert"/>
+			</inputs>
+			<outputs>                    
+				<result type="array" name="results">
+					<result name="notice" type="scalar" dataType="string"  description="msg:convert_output_notice"/>
+					<result name="converted_notice" type="scalar" dataType="string"  description="msg:convert_output_converted_notice"/> 
+				</result>                                                                                    
+			</outputs>
+		</method>
+		<method name="convert_by_path" rights="" version="1.0" comment="msg:convert_by_path_description">
+			<inputs>
+				<param name="notice" type="scalar" dataType="string" description="msg:convert_input_notice"/>
+				<param name="convert_path" type="scalar" dataType="string" description="msg:convert_input_convert_path"/>
+				<param name="import" type="scalar" dataType="boolean" description="msg:convert_input_import"/>
+				<param name="source_id" type="scalar" dataType="integer" description="msg:convert_input_source_id"/>
+				<param name="do_not_convert" type="scalar" dataType="boolean" description="msg:convert_input_do_not_convert"/>
 			</inputs>
 			<outputs>                    
 				<result type="array" name="results">

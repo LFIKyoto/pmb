@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_layer_model_authority.class.php,v 1.5 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: map_layer_model_authority.class.php,v 1.7 2016-11-05 14:49:08 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($class_path."/map/map_layer_model.class.php");
@@ -104,8 +104,12 @@ class map_layer_model_authority extends map_layer_model {
 
 
 
-  protected function get_layer_model_type(){
-  	return "authority";
-  }
+ 	protected function get_layer_model_type(){
+  		return "authority";
+  	}
+  
+ 	protected function get_layer_model_name() {
+  		return "authority";
+  	}
 
 } // end of map_layer_model_authority

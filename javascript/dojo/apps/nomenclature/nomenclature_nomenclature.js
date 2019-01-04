@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_nomenclature.js,v 1.47 2015-02-05 08:15:46 dgoron Exp $
+// $Id: nomenclature_nomenclature.js,v 1.56 2016-03-01 15:47:48 apetithomme Exp $
 
 define(["dojo/_base/declare", "apps/nomenclature/nomenclature_family","apps/nomenclature/nomenclature_musicstand","apps/nomenclature/nomenclature_instrument","apps/nomenclature/nomenclature_instruments_list", "apps/nomenclature/nomenclature_workshop", "dojo/_base/lang", "dojo/json", "dojo/topic", "dijit/registry"], function(declare, Family, Musicstand, Instrument, Instruments_list, Workshop, lang, JSON, topic, registry){
 	/*
@@ -27,11 +27,13 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_family","apps/nome
 			record_formation:null,
 			workshops_abbreviation:"",
 			hash:null,
+			divisble_effective: null,
 			
-		    constructor: function(abbreviation,families_tree,indefinite_character,workshops_tree, exotics_tree, record_formation){
+		    constructor: function(abbreviation,families_tree,indefinite_character,workshops_tree, exotics_tree, record_formation, families_notes){
 		    	tree = families_tree;
-		   		this.init_families(tree);
-		   		this.indefinite_character = indefinite_character || "~";
+		    	if(!families_notes) families_notes = new Array();
+		   		this.init_families(tree, families_notes);
+		   		this.indefinite_character = indefinite_character  || "~";
 		   		this.set_record_formation(record_formation);
 				this.exotic_instruments_list = new Instruments_list();
 				this.exotic_instruments_list.set_nomenclature(this);
@@ -51,7 +53,7 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_family","apps/nome
 		    	return this.hash;
 		    },
 		    
-		    init_families: function(tree){
+		    init_families: function(tree, notes){
 		   		this.families = new Array();
 		   		for(var i=0 ; i<tree.length ; i++){
 		   			var family =  new Family();
@@ -70,10 +72,12 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_family","apps/nome
 		   				musicstand.set_used_by_workshops(tree[i].musicstands[j].used_by_workshops);
 		   				family.add_musicstand(musicstand);
 		   			}
+		   			if(notes[tree[i].id]) {
+		   				family.set_note(notes[tree[i].id]);
+		   			}
 		   			this.add_family(family);
 		   		}
 		    },
-		    
 		    
 		    get_record_formation_hash : function(){
 		    	return this.record_formation.get_hash();
@@ -82,8 +86,9 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_family","apps/nome
 		    init_workshops: function(tree){
 		   		this.workshops = new Array();
 		   		for(var i=0 ; i<tree.length ; i++){
-		   			var workshop =  new Workshop(i);
+		   			var workshop =  new Workshop(i, i+1);
 		   			workshop.set_label(tree[i].label);
+		   			workshop.set_defined(tree[i].defined);
 		   			workshop.set_id(tree[i].id);
 		   			workshop.set_nomenclature(this);
 		   			for(j=0 ; j<tree[i].instruments.length ; j++){
@@ -92,6 +97,7 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_family","apps/nome
 		   				instrument.set_order(tree[i].instruments[j].order);
 		   				instrument.set_standard(tree[i].instruments[j].standard);
 		   				instrument.set_workshop(workshop);
+		   				instrument.set_id_workshop_instrument(tree[i].instruments[j].id_workshop_instrument);
 		   				workshop.instruments_list.add_instrument(instrument);
 		   			}
 		   			this.add_workshop(workshop);
@@ -103,10 +109,12 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_family","apps/nome
 		    		var instrument = new Instrument(tree[i].code, tree[i].name);
 		    		instrument.set_effective(tree[i].effective);
 		    		instrument.set_order(tree[i].order);
+		    		instrument.set_id_exotic_instrument(tree[i].id_exotic_instrument);
 		    		if(tree[i].other)
 		    		for(var j=0 ; j<tree[i].other.length ; j++){
 		    			var other_instrument = new Instrument(tree[i].other[j].code, tree[i].other[j].name);
 		    			other_instrument.set_order(tree[i].other[j].order);
+		    			other_instrument.set_id_exotic_instrument(tree[i].other[j].id_exotic_instrument);
 		    			instrument.add_other_instrument(other_instrument);
 		    		}
 		    		this.exotic_instruments_list.add_instrument(instrument);
@@ -161,8 +169,15 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_family","apps/nome
 		    		 * Commentaire utile pour le debug: 
 		    		 * console.log('STATE: ', state, 'i: ', i, 'carac: ', this.abbreviation[i]);
 		    		 */
+		    		//Hack pour que les espaces ne soient pas pris en compte
+		    		//console.log('STATE: ', state, 'i: ', i, 'carac: ', this.abbreviation[i]);
+		    		if(this.abbreviation[i] === " "){
+		    			continue;
+		    		}
 		    		var carac = this.abbreviation[i];
+		    		
 		    		switch(state){
+		    			
 		    		case "START":
 		    		case "NEW_FAMILY":
 		    			//on attend un chiffre ou le caractère indéfini
@@ -301,13 +316,27 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_family","apps/nome
 		    						this.musicstand_effective = carac;
 		    						state = "MUSICSTAND";
 		    					}
+		    				}else if(carac == this.indefinite_character){ //Cas d'un ateliers indéfini
+		    					if(!this.get_next_musicstand()){
+				    				state = "ERROR";
+				    				error.push({
+		    							'position':i,
+			    						'msg':registry.byId('nomenclature_datastore').get_message('nomenclature_js_nomenclature_error_analyze_end_musicstand_def')
+		    						});
+		    					}else{
+			    					this.musicstand_effective = carac;
+			    					state = "MUSICSTAND";
+		    					}
+		    					/**
+		    					 * TODO: new musicstand indefinite effective
+		    					 */
 		    				}else{
 		    						state = "ERROR";
 				    				error.push({
 		    							'position':i,
 			    						'msg':registry.byId('nomenclature_datastore').get_message('nomenclature_js_nomenclature_error_analyze_no_numeric')
 		    						});
-		    					}
+		    				}
 		    			}
 		    			break;
 		    		case "NEW_INSTRUMENT":
@@ -318,17 +347,7 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_family","apps/nome
 	    						'msg':registry.byId('nomenclature_datastore').get_message('nomenclature_js_nomenclature_error_analyze_already_instrument_def')
     						});
 		    			}else{
-		    				if(!isNaN(carac)){
-		    					this.instrument = this.get_standard_instrument();
-		    					//on regarde le pupitre...
-		    					if(this.families[this.current_family].get_musicstand(this.current_musicstand).get_divisable()){
-		    						this.musicstand_part++;
-		    						this.instrument.set_effective(carac);
-		    						this.instrument.set_part(this.musicstand_part);
-		    					}
-		    					state = "INSTRUMENT_STANDARD";
-		    				}else{
-		    					switch(carac){
+		    				switch(carac){
 		    					case ']':
 		    					case '.':
 		    					case '-':
@@ -345,13 +364,109 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_family","apps/nome
 			    						'msg':registry.byId('nomenclature_datastore').get_message('nomenclature_js_nomenclature_error_analyze_already_musicstand_detail_def')
 		    						});
 		    						break;
-		    					default:
-		    						this.instrument = this.get_no_standard_instrument();
-		    						this.instrument.set_code(carac);
-		    						state = "INSTRUMENT_NO_STANDARD";
+		    					default: 
+		    						if(this.families[this.current_family].get_musicstand(this.current_musicstand).get_divisable()){
+		    							if(!isNaN(carac)){
+		    								this.instrument = this.get_standard_instrument();
+				    						this.instrument.set_effective(carac);
+				    						this.instrument.set_indefinite_effective(false);
+		    							}else{
+			    							switch(carac){
+						    					case this.indefinite_character:
+						    						this.instrument = this.get_standard_instrument();
+						    						this.instrument.set_effective(0);
+						    						this.instrument.set_indefinite_effective(true);
+					    							break;
+					    						default:
+					    							this.instrument = this.get_no_standard_instrument();
+						    						this.instrument.set_code(carac);
+					    							break;
+					    						
+					    					}
+		    							}
+				    					state = "INSTRUMENT_FROM_DIVISABLE";
+				    				}else if(!isNaN(carac)){
+				    					this.instrument = this.get_standard_instrument();
+				    					//on regarde le pupitre...
+				    					if(this.families[this.current_family].get_musicstand(this.current_musicstand).get_divisable()){
+				    						this.musicstand_part++;
+				    						this.instrument.set_effective(carac);
+				    						this.instrument.set_part(this.musicstand_part);
+				    					}
+				    					state = "INSTRUMENT_STANDARD";
+				    				}else{
+			    						this.instrument = this.get_no_standard_instrument();
+			    						this.instrument.set_code(carac);
+			    						state = "INSTRUMENT_NO_STANDARD";
+				    				}
 		    						break;
-		    					}
 		    				}
+		    			}
+		    			break;
+		    		case "INSTRUMENT_FROM_DIVISABLE":
+		    			if(!this.instrument_definition_in_progress){
+		    				state = "ERROR";
+    						error.push({
+    							'position':i,
+	    						'msg':registry.byId('nomenclature_datastore').get_message('nomenclature_js_nomenclature_error_analyze_no_instrument_def')
+    						});
+		    			}else{
+			    			if(!isNaN(carac)){
+			    				if(this.instrument.is_standard()){ //Si l'instrument est standard et que l'on a un entier, alors il s'agit de l'effectif
+			    					this.instrument.set_effective(this.instrument.get_effective()+carac);
+			    				}else{ //Si l'instrument est déjà déclaré en tant qu'instrument non standard alors on concatène le caractère à son code
+			    					this.instrument.set_code(this.instrument.get_code()+carac); 
+			    				}
+			    			}else{
+			    				switch(carac){
+			    					case '-':
+			    						state = "ERROR";
+			    						error.push({
+			    							'position':i,
+				    						'msg':registry.byId('nomenclature_datastore').get_message('nomenclature_js_nomenclature_error_analyze_close_musicstand_detail')
+			    						});
+			    						break;
+			    					case '[':
+			    						state = "ERROR";
+			    						error.push({
+			    							'position':i,
+				    						'msg':registry.byId('nomenclature_datastore').get_message('nomenclature_js_nomenclature_error_analyze_already_musicstand_detail_def')
+			    						});
+			    						break;
+			    					case '.':
+			    						if(this.finalize_current_instrument()){
+				    						state = "NEW_INSTRUMENT";
+				    					}else{
+				    						state = "ERROR";
+				    						error.push({
+				    							'position':i,
+					    						'msg':this.instrument.error_message
+				    						});
+				    					}
+			    						break;
+			    					case ']':
+			    						state = "MUSICSTAND";
+			    						break;
+			    					default:
+			    						/**
+			    						 * On a un caractère donc, c'est un instrument non standard (2Vn2 par exemple)
+			    						 */
+			    						if(this.instrument.is_standard()){
+			    							/**
+			    							 * L'instrument est encore déclaré en tant que standard 
+			    							 * donc on écrase le code et on le passe en non standard
+			    							 */
+			    							this.instrument.set_standard(false);
+			    							this.instrument.set_code(carac);
+			    						}else{
+			    							/**
+			    							 * On concatène le code 
+			    							 */
+			    							this.instrument.set_code(this.instrument.get_code()+carac);
+			    						}
+			    						break;
+			    				}
+			    			}
 		    			}
 		    			break;
 		    		case "INSTRUMENT_STANDARD":
@@ -578,27 +693,29 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_family","apps/nome
 			finalize_current_musicstand: function(){
 				if(this.musicstand_definition_in_progress){
 					if(this.finalize_current_instrument()){
-						//on regarde si le seul isntrument est standard et dispose d'un effectif > 1
-						if(!this.families[this.current_family].get_musicstand(this.current_musicstand).get_used_by_workshops() && this.families[this.current_family].get_musicstand(this.current_musicstand).get_instruments().length == 1){
-							var instruments = this.families[this.current_family].get_musicstand(this.current_musicstand).get_instruments();
-							var new_instruments = new Array();
-							for(var i=0 ; i<instruments.length ; i++){
-								var instrument = instruments[i];
-								if(instrument.is_standard()){
-									this.families[this.current_family].get_musicstand(this.current_musicstand).set_instruments(new Array());
-									for(var j=0 ; j< instrument.get_effective() ; j++){
-										var current = lang.clone(this.families[this.current_family].get_musicstand(this.current_musicstand).get_standard_instrument());	
-										current.set_order(j+1);
-										current.set_effective(1);
-										this.families[this.current_family].get_musicstand(this.current_musicstand).add_instrument(current);
-									}
+						//on regarde si le seul instrument est standard et dispose d'un effectif > 1
+						//console.log(this.families[this.current_family].get_musicstand(this.current_musicstand).get_instruments());
+						if((!this.families[this.current_family].get_musicstand(this.current_musicstand).get_used_by_workshops()) 
+								&& (this.families[this.current_family].get_musicstand(this.current_musicstand).get_instruments().length == 1) 
+								&& (this.families[this.current_family].get_musicstand(this.current_musicstand).get_instruments()[0].get_effective() > 1)
+								&& (!this.families[this.current_family].get_musicstand(this.current_musicstand).get_divisable())){
+							var instrument = this.families[this.current_family].get_musicstand(this.current_musicstand).get_instruments()[0];
+							if(instrument.is_standard() ){
+								this.families[this.current_family].get_musicstand(this.current_musicstand).set_instruments(new Array());
+								for(var j=0 ; j< instrument.get_effective() ; j++){
+									var current = lang.clone(this.families[this.current_family].get_musicstand(this.current_musicstand).get_standard_instrument());	
+									current.set_order(j+1);
+									current.set_effective(1);
+									this.families[this.current_family].get_musicstand(this.current_musicstand).add_instrument(current);
 								}
-							};
+							}
 						}
 						if(this.musicstand_effective == this.indefinite_character){
+							this.families[this.current_family].get_musicstand(this.current_musicstand).set_effective(0);
 							this.families[this.current_family].get_musicstand(this.current_musicstand).set_indefinite_effective(true);
 						}else{
 							this.families[this.current_family].get_musicstand(this.current_musicstand).set_effective(this.musicstand_effective);
+							this.families[this.current_family].get_musicstand(this.current_musicstand).set_indefinite_effective(false);
 						}
 						if(!this.families[this.current_family].get_musicstand(this.current_musicstand).check()){
 							return false;
@@ -630,7 +747,13 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_family","apps/nome
 						//cas ou seul l'effectif est défini, on prend alors l'instrument standard avec l'effectif correspondant
 						this.instrument = lang.clone(this.families[this.current_family].get_musicstand(this.current_musicstand).get_standard_instrument());
 					}
-					this.instrument.set_effective(this.musicstand_effective);
+					if(this.musicstand_effective == this.indefinite_character){
+						this.instrument.set_effective(0);
+						this.instrument.set_indefinite_effective(true);
+					}else{
+						this.instrument.set_effective(this.musicstand_effective);	
+					}
+					
 					this.instrument_definition_in_progress = true;
 					this.finalize_current_instrument();
 				}
@@ -715,7 +838,7 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_family","apps/nome
 					this.families[i].calc_abbreviation();
 					abbreviation += this.families[i].get_abbreviation();
 					if(i<this.families.length-1)
-					abbreviation+="-";
+					abbreviation+=" - ";
 				}
 				this.abbreviation = abbreviation;
 			},

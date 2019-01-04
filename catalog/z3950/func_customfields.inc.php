@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: func_customfields.inc.php,v 1.3.4.1 2015-09-02 09:32:05 mbertin Exp $
+// $Id: func_customfields.inc.php,v 1.5 2017-12-04 10:33:10 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -73,6 +73,9 @@ function traite_categories_for_form($tableau_600="",$tableau_601="",$tableau_602
 
 function traite_categories_from_form() {
 
+}
+
+function traite_concepts_for_form($tableau_606 = array()) {
 }
 	
 ?>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: stemming.class.php,v 1.1 2012-12-06 09:38:25 arenou Exp $
+// $Id: stemming.class.php,v 1.4 2017-10-03 14:58:55 tsamson Exp $
 
 
 class stemming {
@@ -65,21 +65,21 @@ class stemming {
 		for($i=0; $i<strlen($clean_word) ; $i++){
 			switch($clean_word[$i]){
 				case "i" :
-					if(in_array($this->clean_word[$i-1],$this->vowels) && in_array($clean_word[$i+1],$this->vowels)){
+					if(isset($this->clean_word[$i-1]) && in_array($this->clean_word[$i-1],$this->vowels) && isset($clean_word[$i+1]) && in_array($clean_word[$i+1],$this->vowels)){
 						$this->clean_word.= strtoupper($clean_word[$i]);
 					}else{
 						$this->clean_word.= $clean_word[$i];
 					}
 					break;
 				case "u" :
-					if($this->clean_word[$i-1] == "q" || (in_array($this->clean_word[$i-1],$this->vowels) && in_array($clean_word[$i+1],$this->vowels))){
+					if((isset($this->clean_word[$i-1]) && $this->clean_word[$i-1] == "q") || (isset($this->clean_word[$i-1]) && in_array($this->clean_word[$i-1],$this->vowels) && isset($clean_word[$i+1]) && in_array($clean_word[$i+1],$this->vowels))){
 						$this->clean_word.= strtoupper($clean_word[$i]);
 					}else{
 						$this->clean_word.= $clean_word[$i];
 					}
 					break;
 				case "y" :
-					if(in_array($this->clean_word[$i-1],$this->vowels) || in_array($clean_word[$i+1],$this->vowels)){
+					if((isset($this->clean_word[$i-1]) && in_array($this->clean_word[$i-1],$this->vowels)) || (isset($clean_word[$i+1]) && in_array($clean_word[$i+1],$this->vowels))){
 						$this->clean_word.= strtoupper($clean_word[$i]);
 					}else{
 						$this->clean_word.= $clean_word[$i];
@@ -138,6 +138,7 @@ class stemming {
 	}	
 	
 	protected function standard_suffix_removal(){
+		$end = false;
 		foreach($this->standard_suffixes as $suffix){
 			//si le sufixe correspond, on applique la règle associée
 			if(substr($this->stem,-strlen($suffix)) == $suffix){
@@ -154,7 +155,9 @@ class stemming {
 					case "ables":
 					case "istes":
 						$this->delete_if_in_r("r2",$suffix);
-						break(2);
+						//break(2);
+						$end = true;
+						break;
 					case "atrice":
 					case "ateur":
 					case "ation":
@@ -166,21 +169,29 @@ class stemming {
 								$this->delete_if_in_r_else_replace("r2","ic","iqU");
 							}
 						}
-						break(2);
+						//break(2);
+						$end = true;
+						break;
 					case "logie":
 					case "logie":
 						$this->replace_if_in_r("r2",$suffix,"log");
-						break(2);
+						//break(2);
+						$end = true;
+						break;
 					case "usion":
 					case "ution":
 					case "usions":
 					case "utions":
 						$this->replace_if_in_r("r2",$suffix,"u");
-						break(2);
+						//break(2);
+						$end = true;
+						break;
 					case "ence":
 					case "ences":
 						$this->replace_if_in_r("r2",$suffix,"ent");
-						break(2);
+						//break(2);
+						$end = true;
+						break;
 					case "ement":
 					case "ements":
 						//supprime le suffixe dans RV
@@ -205,7 +216,9 @@ class stemming {
 						}else if($this->preceded_by($suffix,"Ièr")){
 							$this->replace_if_in_r("rv","Ièr","i");
 						}
-						break(2);
+						//break(2);
+						$end = true;
+						break;
 					case "ité":
 					case "ités":
 						$this->delete_if_in_r("r2",$suffix);
@@ -216,7 +229,9 @@ class stemming {
 						}else if($this->preceded_by($suffix,"iv")){
 							$this->delete_if_in_r("r2","iv");
 						}
-						break(2);
+						//break(2);
+						$end = true;
+						break;
 					case "if":
 					case "ive":
 					case "ifs":
@@ -229,32 +244,46 @@ class stemming {
 								$this->delete_if_in_r_else_replace("r2","ic",'iqU');
 							}	
 						}
-						break(2);
+						//break(2);
+						$end = true;
+						break;
 					case "eaux":
 						$this->replace_suffix($suffix,"eau");
-						break(2);
+						//break(2);
+						$end = true;
+						break;
 					case "aux":
 						$this->replace_if_in_r("r1",$suffix,"al");
-						break(2);
+						//break(2);
+						$end = true;
+						break;
 					case "euse":
 					case "euses":
 						$this->delete_if_in_r("r2",$suffix);
-						$this->replace_if_in_r("r1",$suffix,"eux");	
-						break(2);
+						$this->replace_if_in_r("r1",$suffix,"eux");
+						//break(2);
+						$end = true;
+						break;
 					case "issement":
 					case "issements":
 						if(!in_array(substr($this->clean_word,-(strlen($suffix)+1),1),$this->vowels)){
 							$this->delete_if_in_r("r1",$suffix);
 						}
-						break(2);
+						//break(2);
+						$end = true;
+						break;
 					case "amment":
 						$this->replace_if_in_r("rv",$suffix,"ant");
 						$this->do_step_2a = true;
-						break(2);
+						//break(2);
+						$end = true;
+						break;
 					case "emment":
 						$this->replace_if_in_r("rv",$suffix,"ent");
 						$this->do_step_2a = true;
-						break(2);
+						//break(2);
+						$end = true;
+						break;
 					case "ment":
 					case "ments":
 						if(in_array(substr($this->clean_word,-(strlen($suffix)+1),1),$this->vowels)){
@@ -264,9 +293,12 @@ class stemming {
 							}
 							$this->do_step_2a = true;
 						}
-						break(2);
+						//break(2);
+						$end = true;
+						break;
 				}
 			}
+			if($end) break;
 		}
 		if($this->clean_word == $this->stem){
 			$this->do_step_2a = true;
@@ -367,6 +399,7 @@ class stemming {
 		if(substr($this->stem,-1,1) == "s" && !in_array(substr($this->stem,-2,1),array("a","i","o","u","è","s"))){
 			$this->stem = substr($this->stem,0,strlen($this->stem)-1);
 		}
+		$end = false;
 		foreach($this->residual_suffixes as $suffix){
 			if(substr($this->stem,-strlen($suffix)) == $suffix){
 				switch($suffix){
@@ -376,23 +409,32 @@ class stemming {
 								$this->delete_if_in_r("r2",$suffix);
 							}
 						}
-						break(2);
+						//break(2);
+						$end = true;
+						break;
 					case "ier" :
 					case "ière" :
 					case "Ier" :
 					case "Ière" :
 						$this->replace_if_in_r("rv",$suffix,"i");
-						break(2);
+						//break(2);
+						$end = true;
+						break;
 					case "e" :
 						$this->delete_if_in_r("rv",$suffix);
-						break(2);
+						//break(2);
+						$end = true;
+						break;
 					case "ë" :
 						if($this->preceded_by($suffix,"gu")){
 							$this->delete_if_in_r("rv",$suffix);
 						}
-						break(2);
+						//break(2);
+						$end = true;
+						break;
 				}
 			}
+			if($end) break;
 		}
 	}
 	
@@ -559,10 +601,10 @@ class stemming {
 	}
 	
 	protected function sort_suffixes(){
-		usort($this->standard_suffixes,array($this,_sort_suffixes));
-		usort($this->verbs_suffixes_i,array($this,_sort_suffixes));
-		usort($this->others_verbs_suffixes,array($this,_sort_suffixes));
-		usort($this->residual_suffixes,array($this,_sort_suffixes));
+		usort($this->standard_suffixes,array($this,'_sort_suffixes'));
+		usort($this->verbs_suffixes_i,array($this,'_sort_suffixes'));
+		usort($this->others_verbs_suffixes,array($this,'_sort_suffixes'));
+		usort($this->residual_suffixes,array($this,'_sort_suffixes'));
 	}
 	
 	protected function _sort_suffixes($a,$b){

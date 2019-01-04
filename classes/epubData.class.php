@@ -2,27 +2,27 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: epubData.class.php,v 1.3 2013-07-04 12:55:49 arenou Exp $
+// $Id: epubData.class.php,v 1.6 2017-06-30 14:08:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-class epubData {
+class epub_Data {
 	
-	var $filename = ''; //Fichier source de l'eBook
-	var $opfFile = ''; //Fichier d'entrée de l'eBook
-	var $opfDir = ''; //Répertoire d'entrée de l'eBook
-	var $metas = array(); //Tableau des métadatas de l'eBook
-	var $items = array(); //Liste des fichiers composant l'eBook
-	var $spine = array(); //Ordre d'affichage des fichiers
-	var $spineToc = ''; //Fichier table des matières
-	var $spinePageMap = ''; //Fichier liste des pages
-	var $pages = array(); //Liste des pages
-	var $toc = array(); //Table des matières
-	var $charset = ''; //Charset de l'epub
-	var $cover_item;	//path vers l'image de couverture
+	public $filename = ''; //Fichier source de l'eBook
+	public $opfFile = ''; //Fichier d'entrée de l'eBook
+	public $opfDir = ''; //Répertoire d'entrée de l'eBook
+	public $metas = array(); //Tableau des métadatas de l'eBook
+	public $items = array(); //Liste des fichiers composant l'eBook
+	public $spine = array(); //Ordre d'affichage des fichiers
+	public $spineToc = ''; //Fichier table des matières
+	public $spinePageMap = ''; //Fichier liste des pages
+	public $pages = array(); //Liste des pages
+	public $toc = array(); //Table des matières
+	public $charset = ''; //Charset de l'epub
+	public $cover_item;	//path vers l'image de couverture
 	
 	//Constructeur
-	public function epubData($filename){
+	public function __construct($filename){
 		if (is_file($filename)){
 			$this->filename = $filename;
 			if ($this->isValidEpub()) {
@@ -84,6 +84,9 @@ class epubData {
 			$tmpArray = explode("/",$tmpFile);
 			$this->opfFile =array_pop($tmpArray);
 			$this->opfDir = implode("/",$tmpArray)."/";
+			if ($this->opfDir == '/') {
+				$this->opfDir = '';
+			}
 			$contents = $this->getContentFile($this->opfDir.$this->opfFile);
 			//On cherche le charset
 			$this->charset = strtolower(mb_detect_encoding($contents));

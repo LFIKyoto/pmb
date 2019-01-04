@@ -1,4 +1,4 @@
-<h1>Sauvegardes</h1>
+<h2>Sauvegardes</h2>
 </p><p>
 <b>Lieux</b> localisation sur le disque ou le r&eacute;seau des sauvegardes
 </p><p>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: synchro_rdf.class.php,v 1.7 2015-06-05 13:07:32 dgoron Exp $
+// $Id: synchro_rdf.class.php,v 1.8 2017-06-02 14:46:13 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,7 +14,7 @@ require_once($class_path."/notice.class.php");
 
 class synchro_rdf{
 	// proprietes
-	var $config = array(
+	public $config = array(
 			'db_host' => SQL_SERVER,
 			'db_name' => DATA_BASE,
 			'db_user' => USER_NAME,
@@ -33,20 +33,20 @@ class synchro_rdf{
 				//'dump' 
 			)
 	);
-	var $baseURI = "http://www.sigb.net/";
-	var $baseUriConcept;
-	var $baseUriThesaurus;
-	var $baseUriManifestation;
-	var $baseUriExpression;
-	var $baseUriOeuvre;
-	var $baseUriAuteur;
+	public $baseURI = "http://www.sigb.net/";
+	public $baseUriConcept;
+	public $baseUriThesaurus;
+	public $baseUriManifestation;
+	public $baseUriExpression;
+	public $baseUriOeuvre;
+	public $baseUriAuteur;
 	
-	var $entiteMapping=array();
-	var $auteurMapping=array();
-	var $bulletinMapping=array();
+	public $entiteMapping=array();
+	public $auteurMapping=array();
+	public $bulletinMapping=array();
 
-	var $store;
-	var $prefix="PREFIX dc: <http://purl.org/dc/elements/1.1/> \n
+	public $store;
+	public $prefix="PREFIX dc: <http://purl.org/dc/elements/1.1/> \n
 			PREFIX rdagroup1elements: <http://rdvocab.info/Elements/> \n
 			PREFIX rdagroup2elements: <http://RDVocab.info/ElementsGr2/> \n
 			PREFIX rdarelationships: <http://rdvocab.info/RDARelationshipsWEMI/> \n
@@ -57,7 +57,7 @@ class synchro_rdf{
 			PREFIX skos: <http://www.w3.org/2004/02/skos/core#> \n";	
 
 	// constructeur
-	function synchro_rdf($session_id=0,$activateEndpoint=false,$altBaseUri='') {
+	public function __construct($session_id=0,$activateEndpoint=false,$altBaseUri='') {
 		global $charset;
 		
 		//Pour créer des tables temporaires
@@ -98,7 +98,7 @@ class synchro_rdf{
 		return;
 	}
 	
-	function loadMapping(){
+	public function loadMapping(){
 		global $class_path;
 	
 		$xmlFile = $class_path."/synchro_rdf.xml";
@@ -111,7 +111,7 @@ class synchro_rdf{
 	
 	
 		foreach($mapping['OBJECT'] as $object){
-			$target=$object['TARGET'];
+			$target=(isset($object['TARGET']) ? $object['TARGET'] : '');
 			$targetList=explode(",",$target);
 			$arrayName=$object['TYPE']."Mapping";
 			if($object['TYPE']=='entite'){
@@ -123,18 +123,18 @@ class synchro_rdf{
 					}
 					$arrayFields[$field['NAME']]=array(
 							'function'=>$field['FUNCTION'],
-							'lang'=>$field['LANG'],
+							'lang'=>(isset($field['LANG']) ? $field['LANG'] : ''),
 							'distinct'=>$field['DISTINCT'],
 							'detail'=>$detail
 					);
 				}
 				foreach($targetList as $target){
 					$this->entiteMapping[$target][$object['NAME']]=array(
-							'uniqueVar'=>$object['UNIQUEVAR'],
+							'uniqueVar'=>(isset($object['UNIQUEVAR']) ? $object['UNIQUEVAR'] : ''),
 							'definition'=>$object['DEFINITIONTRIPLET'][0],
 							'fields'=>$arrayFields,
-							'links'=>$object['LINK'],
-							'authors'=>$object['AUTHORS']
+							'links'=>(isset($object['LINK']) ? $object['LINK'] : ''),
+							'authors'=>(isset($object['AUTHORS']) ? $object['AUTHORS'] : '')
 					);
 				}
 			}else{
@@ -155,18 +155,18 @@ class synchro_rdf{
 					}
 					$arrayFields[$field['NAME']]=array(
 							'function'=>$field['FUNCTION'],
-							'lang'=>$field['LANG'],
+							'lang'=>(isset($field['LANG']) ? $field['LANG'] : ''),
 							'distinct'=>$field['DISTINCT'],
 							'detail'=>$detail
 					);
 				}
 				foreach($targetList as $target){
 					$this->entiteMapping[$target][$object['NAME']]=array(
-							'uniqueVar'=>$object['UNIQUEVAR'],
+							'uniqueVar'=>(isset($object['UNIQUEVAR']) ? $object['UNIQUEVAR'] : ''),
 							'definition'=>$object['DEFINITIONTRIPLET'][0],
 							'fields'=>$arrayFields,
-							'links'=>$object['LINK'],
-							'authors'=>$object['AUTHORS']
+							'links'=>(isset($object['LINK']) ? $object['LINK'] : ''),
+							'authors'=>(isset($object['AUTHORS']) ? $object['AUTHORS'] : '')
 					);
 				}
 			}else{
@@ -177,7 +177,7 @@ class synchro_rdf{
 		return;
 	}
 	
-	function initStore(){
+	public function initStore(){
 		$this->store = ARC2::getStore($this->config);
 		if (!$this->store->isSetUp()) {
 			$this->store->setUp();
@@ -185,12 +185,12 @@ class synchro_rdf{
 		return;
 	}
 	
-	function truncateStore(){
+	public function truncateStore(){
 		$this->store->reset();
 		return;
 	}
 	
-	function exportStoreXml(){
+	public function exportStoreXml(){
 		//Récupération des préfixes
 		$ns = array();
 		$tmpArray=explode("\n",$this->prefix);
@@ -208,7 +208,7 @@ class synchro_rdf{
 		return $rdfxml2;
 	}
 	
-	function existsUri($uri){
+	public function existsUri($uri){
 		$q ="SELECT * WHERE {
   				".$uri." rdf:type ?o .
 			}
@@ -226,7 +226,7 @@ class synchro_rdf{
 		}
 	}
 	
-	function existsTriple($arrayTriple){
+	public function existsTriple($arrayTriple){
 		$q =$this->prefix."SELECT * WHERE {
   				".$arrayTriple[0]." ".$arrayTriple[1]." ".$arrayTriple[2]." .
   				?s ?p ?o
@@ -245,7 +245,7 @@ class synchro_rdf{
 		}
 	}
 	
-	function deleteTriple($s,$p,$o,$filter=''){
+	public function deleteTriple($s,$p,$o,$filter=''){
 		$q =$this->prefix."DELETE {
 				   ".$s." ".$p." ".$o.".
 				}";
@@ -264,7 +264,7 @@ class synchro_rdf{
 		return;
 	}
 	
-	function storeTriples($arrayTriples){
+	public function storeTriples($arrayTriples){
 		if(count($arrayTriples)){
 			
 			$q = $this->prefix."INSERT INTO <pmb> {\n";
@@ -287,7 +287,7 @@ class synchro_rdf{
 		return;
 	}
 	
-	function updateTripleLinks($uri1,$uri2){
+	public function updateTripleLinks($uri1,$uri2){
 		//DELETE-INSERT-WHERE ne fonctionnant pas sur notre version actuelle de sparql, on est obligés de faire une procédure au lieu d'une simple requête
 		
 		$arrayTriples=array();
@@ -365,7 +365,7 @@ class synchro_rdf{
 		return;
 	}
 	
-	function updateAuthority($id,$typeAuthority){
+	public function updateAuthority($id,$typeAuthority){
 		global $dbh;
 	
 		if($typeAuthority=='oeuvre'){
@@ -418,7 +418,7 @@ class synchro_rdf{
 		return;
 	}
 	
-	function replaceAuthority($fromId,$toId,$typeAuthority){
+	public function replaceAuthority($fromId,$toId,$typeAuthority){
 		global $dbh;
 	
 		if($typeAuthority=='oeuvre'){
@@ -475,7 +475,7 @@ class synchro_rdf{
 		return;
 	}
 	
-	function getRdfNotice($idNotice){
+	public function getRdfNotice($idNotice){
 		global $dbh;
 		
 		$arrayTriples=array();
@@ -585,7 +585,7 @@ class synchro_rdf{
 					}
 				}
 				//on crée les liens
-				if(count($entiteDetail['links'])){
+				if(is_array($entiteDetail['links']) && count($entiteDetail['links'])){
 					foreach($entiteDetail['links'] as $link){
 						$triplet=array();
 						$triplet[0]='<'.$uriManifestation.'>';
@@ -597,7 +597,7 @@ class synchro_rdf{
 				//on enregistre le fait que l'entité a déjà été créée
 				$exportedUris[]=$uri;
 				//cas particulier des auteurs liés
-				if(count($entiteDetail['authors'])){
+				if(is_array($entiteDetail['authors']) && count($entiteDetail['authors'])){
 					foreach($entiteDetail['authors'][0]['FIELD'] as $author){
 						if(count($arrayNotice[$author['CODE_CHAMP']][$author['CODE_SS_CHAMP']])){
 							foreach($arrayNotice[$author['CODE_CHAMP']][$author['CODE_SS_CHAMP']] as $auteurNotice){
@@ -753,7 +753,7 @@ class synchro_rdf{
 		return $arrayTriples;
 	}
 	
-	function getRdfBulletin($idBulletin){
+	public function getRdfBulletin($idBulletin){
 		global $dbh;
 		
 		$arrayTriples=array();
@@ -864,7 +864,7 @@ class synchro_rdf{
 		return $arrayTriples;
 	}
 	
-	function addRdf($idNotice,$idBulletin){
+	public function addRdf($idNotice,$idBulletin){
 		if($idNotice){
 			$arrayRdf=$this->getRdfNotice($idNotice);
 		}else{
@@ -878,7 +878,7 @@ class synchro_rdf{
 					$this->storeTriples($detail['definition']);
 					$this->storeTriples($detail['data']);
 				}
-				if(count($detail['links'])){
+				if(is_array($detail['links']) && count($detail['links'])){
 					foreach($detail['links'] as $link){
 						if(!$this->existsTriple($link)){
 							$this->storeTriples(array($link));
@@ -890,7 +890,7 @@ class synchro_rdf{
 		return;
 	}
 	
-	function getUris($idNotice,$idBulletin){
+	public function getUris($idNotice,$idBulletin){
 		global $dbh;
 		
 		$arrayUris=array();
@@ -923,7 +923,7 @@ class synchro_rdf{
 		return $arrayUris;
 	}
 	
-	function delRdf($idNotice,$idBulletin){
+	public function delRdf($idNotice,$idBulletin){
 		global $dbh;
 		
 		if($idNotice){
@@ -1047,7 +1047,7 @@ class synchro_rdf{
 		return;
 	}
 	
-	function cleanAuthors(){
+	public function cleanAuthors(){
 		//on va chercher tous les auteurs du graphe non utilisés
 		$q =$this->prefix."SELECT ?s WHERE {
 				{ 
@@ -1076,30 +1076,30 @@ class synchro_rdf{
 	 * Méthodes thésaurus
 	 */
 	
-	function storeThesaurusDefinition($idThes){
+	public function storeThesaurusDefinition($idThes){
 		$arrayRdfThes=$this->getRdfThesaurus($idThes);
 		$this->storeTriples($arrayRdfThes);
 		return;
 	}
 	
-	function delThesaurusDefinition($idThes){
+	public function delThesaurusDefinition($idThes){
 		$uriThes=$this->baseUriThesaurus.$idThes;
 		$this->deleteTriple('<'.$uriThes.'>','?p','?o');
 	}
 	
-	function storeConcept($idNoeud){
+	public function storeConcept($idNoeud){
 		$arrayRdfConcept=$this->getRdfConcept($idNoeud);
 		$this->storeTriples($arrayRdfConcept);
 		return;
 	}
 	
-	function delConcept($idNoeud){
+	public function delConcept($idNoeud){
 		$uriConcept=$this->baseUriConcept.$idNoeud;
 		$this->deleteTriple('<'.$uriConcept.'>','?p','?o');
 		return;
 	}
 	
-	function getRdfThesaurus($idThes){
+	public function getRdfThesaurus($idThes){
 		$arrayTriples=array();
 		$uriThes=$this->baseUriThesaurus.$idThes;
 		
@@ -1130,7 +1130,7 @@ class synchro_rdf{
 		return $arrayTriples;
 	}
 	
-	function getRdfConcept($idNoeud){
+	public function getRdfConcept($idNoeud){
 		global $lang;
 		
 		$arrayTriples=array();
@@ -1302,13 +1302,13 @@ class synchro_rdf{
 			$titles[(int)substr($value['code'],0,1)-1]=$value['value'];
 		}
 		$value=$titles[0];
-		if(trim($titles[2])){
+		if(isset($titles[2]) && trim($titles[2])){
 			$value .= " = ".$titles[2];
 		}
-		if(trim($titles[3])){
+		if(isset($titles[3]) && trim($titles[3])){
 			$value .= " : ".$titles[3];
 		}
-		if(trim($titles[1])){
+		if(isset($titles[1]) && trim($titles[1])){
 			$value .= " ; ".$titles[1];
 		}
 		return $value;
@@ -1332,6 +1332,7 @@ class synchro_rdf{
 	}
 	
 	private function authorName($arrayValues){
+		$value = '';
 		if(count($arrayValues)>1){
 			foreach($arrayValues as $valueTitre){
 				if(trim($valueTitre['value'])){

@@ -1,4 +1,4 @@
-<h1>Management of imports</h1>
+<h2>Management of imports</h2>
 <p>This page lets you manage the import of data linked to records or copies.</p>
 
 <p>The procedure is composed of different steps : 

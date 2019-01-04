@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rss_see.inc.php,v 1.5 2014-09-30 09:48:10 mbertin Exp $
+// $Id: rss_see.inc.php,v 1.6 2017-01-31 15:41:41 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -11,7 +11,7 @@ require_once($base_path."/classes/rss_flux.class.php");
 
 print "<div id='aut_details'>\n";
 
-print pmb_bidi("<h3>$logo_rss_si_rss &nbsp;<span>".$msg[show_rss_dispo]."</span></h3>\n");
+print pmb_bidi("<h3>$logo_rss_si_rss &nbsp;<span>".$msg['show_rss_dispo']."</span></h3>\n");
 
 if ($id) {	
 	$id+=0;

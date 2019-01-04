@@ -12,7 +12,7 @@
 	<!-- Début de conversion -->	
 
 	<step type="custom">
-		<script>catmarc.inc.php</script>
+		<script>catmarciso2unimarc.class.php</script>
 		<callback>cut_header</callback>
 	</step>
 	<step type="isotoxml" format="usmarc">

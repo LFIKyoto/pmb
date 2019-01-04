@@ -2,23 +2,28 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr_list.inc.php,v 1.56 2015-04-24 14:20:58 dbellamy Exp $
+// $Id: empr_list.inc.php,v 1.79 2018-04-19 08:30:22 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($id_notice)) $id_notice = 0;
+if(!isset($id_bulletin)) $id_bulletin = 0;
 
 require_once ("$class_path/emprunteur.class.php");
 require_once ("$class_path/docs_location.class.php");
 require_once("$class_path/empr_caddie.class.php");
 require_once("$class_path/search.class.php");
+require_once($class_path.'/event/events/event_query_overload.class.php');
 
 function iconepanier($id_emprunteur) {
 	global $empr_show_caddie;
-	global $selector_prop_ajout_caddie_empr;
 	global $msg;
 	$img_ajout_empr_caddie="";
 	if ($empr_show_caddie) {
-		$img_ajout_empr_caddie = "\n<td><img src='./images/basket_empr.gif' align='middle' alt='basket' title=\"${msg[400]}\" ";
-		$img_ajout_empr_caddie .= "onmousedown=\"if (event) e=event; else e=window.event; if (e.target) elt=e.target; else elt=e.srcElement; e.cancelBubble = true; if (e.stopPropagation) e.stopPropagation();\" onmouseup=\"if (event) e=event; else e=window.event; if (e.target) elt=e.target; else elt=e.srcElement; if (elt.nodeName=='IMG') openPopUp('./cart.php?object_type=EMPR&item=".$id_emprunteur."', 'cart', 600, 700 , -2, -2, '$selector_prop_ajout_caddie_empr'); return false;\" style=\"cursor: pointer\"></td>\n";
+		$img_ajout_empr_caddie = "\n<td><img src='".get_url_icon('basket_empr.gif')."' class='align_middle' alt='basket' title=\"${msg[400]}\" ";
+		$img_ajout_empr_caddie .= "onmousedown=\"if (event) e=event; else e=window.event; if (e.target) elt=e.target; else elt=e.srcElement; e.cancelBubble = true; if (e.stopPropagation) e.stopPropagation();\" onmouseup=\"if (event) e=event; else e=window.event; if (e.target) elt=e.target; else elt=e.srcElement; if (elt.nodeName=='IMG') openPopUp('./cart.php?object_type=EMPR&item=".$id_emprunteur."', 'cart'); return false;\" ";
+		$img_ajout_empr_caddie .= "onMouseOver=\"show_div_access_carts(event,".$id_emprunteur.",'EMPR');\" onMouseOut=\"set_flag_info_div(false);\" ";
+		$img_ajout_empr_caddie .= "style=\"cursor: pointer\"></td>\n";
 	}
 	return $img_ajout_empr_caddie;
 }
@@ -39,6 +44,9 @@ if ($nb_per_page_empr != "")
 else
 	$nb_per_page = 10;
 
+$clause = '';
+if(!isset($empr_location_id)) $empr_location_id = '';
+
 switch ($sub) {
 	case "launch":
 		$sc=new search(true,"search_fields_empr");
@@ -51,7 +59,7 @@ switch ($sub) {
 			$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["GET"]["sub"]="";
 			$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["POST"]["sub"]="";
 			$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["HUMAN_QUERY"]=$sc->make_human_query();
-			$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["HUMAN_TITLE"]=$msg["search_emprunteur"];
+			$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["HUMAN_TITLE"]= "[".$msg["param_empr"]."] ".$msg["search_emprunteur"];
 			$_POST["page"]=0;
 			$page=0;
 		}
@@ -62,6 +70,7 @@ switch ($sub) {
 			$_SESSION["session_history"][$_SESSION["CURRENT"]]["EMPR"]["PAGE"]=$page+1;
 			$_SESSION["session_history"][$_SESSION["CURRENT"]]["EMPR"]["HUMAN_QUERY"]=$sc->make_human_query();
 			$_SESSION["session_history"][$_SESSION["CURRENT"]]["EMPR"]["SEARCH_TYPE"]="empr";
+			$_SESSION["session_history"][$_SESSION["CURRENT"]]["EMPR"]['TEXT_LIST_QUERY']='';
 			$_SESSION["session_history"][$_SESSION["CURRENT"]]["EMPR"]["TEXT_QUERY"]="";
 		}
 
@@ -90,7 +99,7 @@ switch ($sub) {
 		    	exit();
 		    }
 
-		    print $sc->make_hidden_search_form($url,"form_filters");
+		    print $sc->make_hidden_search_form($url,"form_filters_extended");
 
 		    $res=pmb_mysql_query($requete,$dbh);
 		    $human_requete = $sc->make_human_query();
@@ -109,13 +118,38 @@ switch ($sub) {
 		break;
 	default :
 		if ($form_cb) {
-			$clause = "WHERE empr_nom like '".str_replace("*", "%", $form_cb)."%' " ;
+			$elts = explode(' ', $form_cb);
+			if(count($elts)>1) {
+				$sql_elts = array();
+				foreach ($elts as $elt) {
+					$elt = str_replace("*", "%", trim($elt));
+					if($elt) {
+						$sql_elts[] = "(empr_nom like '".$elt."%' OR empr_nom like '% ".$elt."%' OR empr_prenom like '".$elt."%' OR empr_prenom like '% ".$elt."%')";
+					}
+				}
+				if(count($sql_elts)) {
+					$clause = "WHERE ((".implode(' AND ',$sql_elts).") OR empr_cb like '".str_replace("*", "%", $form_cb)."%')" ;
+				}
+			}
+			if(!$clause) {
+				$clause = "WHERE (empr_nom like '".str_replace("*", "%", $form_cb)."%' OR empr_prenom like '".str_replace("*", "%", $form_cb)."%' OR empr_cb like '".str_replace("*", "%", $form_cb)."%')" ;
+			}
+			/**
+			 * Publication d'un évenement à l'affichage d'un lecteur
+			 */
+			$evt_handler = events_handler::get_instance();
+			$event = new event_query_overload("empr", "search_query_overload");
+			$evt_handler->send($event);
+
+			if($event->get_query_overload()){
+				$clause.= $event->get_query_overload();
+			}
 		}
 		if ($empr_location_id && $pmb_lecteurs_localises)
 			$clause .= " and empr_location='$empr_location_id'" ;
 
 		// on récupére le nombre de lignes qui vont bien
-		if (!$nbr_lignes) {
+		if (!isset($nbr_lignes)) {
 			$requete = "SELECT COUNT(1) FROM empr $clause ";
 			$res = pmb_mysql_query($requete, $dbh);
 			$nbr_lignes = @pmb_mysql_result($res, 0, 0);
@@ -123,7 +157,7 @@ switch ($sub) {
 		break;
 }
 
-if (!$page) $page=1;
+if (!isset($page)) $page=1;
 $debut =($page-1)*$nb_per_page;
 
 if ($nbr_lignes == 1) {
@@ -133,9 +167,9 @@ if ($nbr_lignes == 1) {
 
 	$id = @pmb_mysql_result($res, '0', 'id');
 	if ($id) {
-		$erreur_affichage="<table border='0' cellpadding='1' >
-		<tr><td width='33'>&nbsp;<span>&nbsp;</span></td>
-				<td width='100%'>";
+		$erreur_affichage="<table style='border:0px' cellpadding='1' >
+		<tr><td style='width:33%'>&nbsp;<span>&nbsp;</span></td>
+				<td style='width:100%'>";
 		$erreur_affichage.="&nbsp;<span>&nbsp;</span>";
 		$erreur_affichage.="</td></tr></table>";
 		if ($id_notice || $id_bulletin) {
@@ -143,7 +177,7 @@ if ($nbr_lignes == 1) {
 			if ($type_resa) {
 				echo "<script type='text/javascript'> parent.location.href='./circ.php?categ=resa_planning&resa_action=add_resa&id_empr=$id&groupID=$groupID&id_notice=$id_notice&id_bulletin=$id_bulletin'; </script>";
 			} else {
-				echo "<script type='text/javascript'> parent.location.href='./circ.php?categ=resa&id_empr=$id&groupID=$groupID&id_notice=$id_notice&id_bulletin=$id_bulletin'; </script>";
+				echo "<script type='text/javascript'> parent.location.href='./circ.php?categ=resa&id_empr=$id&groupID=$groupID&id_notice=$id_notice&id_bulletin=$id_bulletin".($force_resa && $pmb_resa_records_no_expl ? '&force_resa=1' : '')."'; </script>";
 			}
 		} else {
 			$empr = new emprunteur($id, $erreur_affichage, FALSE, 1);
@@ -181,11 +215,11 @@ if ($nbr_lignes == 1) {
 		if (!$empr_location_id) $empr_location_id=-1;
 		if (array_search("l",explode(",",$empr_filter_rows))!==FALSE) {
 			$lo="f".$filter->fixedfields["l"]["ID"];
-			global $$lo;
-			if (!$$lo) {
+			global ${$lo};
+			if (!${$lo}) {
 				$tableau=array();
 				$tableau[0]=$empr_location_id;
-				$$lo=$tableau;
+				${$lo}=$tableau;
 			}
 		}
 		$requete = "SELECT id_empr,empr_cb,empr_nom,empr_prenom,empr_adr1,empr_ville,empr_year FROM empr $clause group by id_empr ORDER BY empr_nom, empr_prenom ";
@@ -210,7 +244,7 @@ if ($nbr_lignes == 1) {
 				$t["row"]["onmousedown"]="document.location=\"./circ.php?categ=resa&id_empr=!!id_empr!!&groupID=$groupID&id_notice=$id_notice&id_bulletin=$id_bulletin\";";
 			}
 		} else {
-			$t["row"]["onmousedown"]="document.location=\"./circ.php?categ=pret&form_cb=!!b!!\";";
+			$t["row"]["onmousedown"]="if(event.ctrlKey || event.metaKey) { window.open(\"./circ.php?categ=pret&form_cb=!!b!!\",\"_blank\"); } else { document.location=\"./circ.php?categ=pret&form_cb=!!b!!\"; }";
 		}
 		$t["row"]["onmouseout"]="this.className='!!parity!!'";
 		$filter->scripts=$t;
@@ -224,30 +258,35 @@ if ($nbr_lignes == 1) {
 			switch ($sub) {
 				case "launch":
 					$url_base = "./circ.php?categ=search&sub=launch";
-					$aff_filters.="<input type='button' class='bouton' onClick=\"document.form_filters.action='$url_to_search_form'; document.form_filters.target='$search_target'; document.form_filters.submit(); return false;\" value=\"".$msg["search_back"]."\"/>";
+					$aff_filters.="<input type='button' class='bouton' onClick=\"document.form_filters_extended.action='$url_to_search_form'; document.form_filters_extended.target='$search_target'; document.form_filters_extended.submit(); return false;\" value=\"".$msg["search_back"]."\"/>";
 					if ($empr_show_caddie)
 						 $aff_filters.="&nbsp;&nbsp;<input type='button' class='bouton' value='".$msg["add_empr_cart"]."' onClick=\"popCaddie(document.forms['AddToCaddie']); return false;\">";
-
 					break;
 				default:
 					if ($empr_location_id == -1) $empr_location_id = 0;
 					$url_base = "./circ.php?categ=pret&form_cb=".rawurlencode($form_cb)."&id_notice=$id_notice"."&id_bulletin=$id_bulletin&empr_location_id=$empr_location_id";
-					$aff_filters.="<form class='form-$current_module' id='form_filters' name='form_filters' method='post' action='".$url_base."&nb_per_page=$nb_per_page' onSubmit='this.page.value=\"1\";'><h3>".$msg["filters_tris"]."</h3>";
-					$aff_filters.="<div class='form-contenu'><input type='hidden' name='page' value='$page'>
-									<div id=\"el1Parent\" class=\"notice-parent\"><img src=\"./images/plus.gif\" class=\"img_plus\" name=\"imEx\" id=\"el1Img\" title=\"".$msg['admin_param_detail']."\" border=\"0\" onClick=\"expandBase('el1', true); return false;\">
-		   								<b>".$msg["filters"]."</b></div>
-								<div id=\"el1Child\" style=\"margin-left:7px;display:none;\">";
-					$aff_filters.=$filter->display_filters();
-					$aff_filters.="</div><div class='row'></div><div id=\"el2Parent\" class=\"notice-parent\"><img src=\"./images/plus.gif\" class=\"img_plus\" name=\"imEx\" id=\"el2Img\" title=\"".$msg['admin_param_detail']."\" border=\"0\" onClick=\"expandBase('el2', true); return false;\">
-									<b>".$msg["tris_dispos"]."</b></div>
-									<div id=\"el2Child\" style=\"margin-left:7px;display:none;\">";
-					$aff_filters.=$filter->display_sort();
-					$aff_filters.="</div></div><div class='row'></div><div class='row'><input type='submit' class='bouton' value='".$msg["empr_sort_filter_button"]."'>";
-					if ($empr_show_caddie)
-						 $aff_filters.="&nbsp;&nbsp;<input type='button' class='bouton' value='".$msg["add_empr_cart"]."' onClick=\"popCaddie(document.forms['AddToCaddie']); return false;\">";
-					$aff_filters.="</div></form>";
 					break;
 			}
+			$aff_filters.="<form class='form-$current_module' id='form_filters' name='form_filters' method='post' action='".$url_base."&nb_per_page=$nb_per_page' onSubmit='this.page.value=\"1\";'><h3>".$msg["filters_tris"]."</h3>";
+			if ($sub=="launch") {
+				$aff_filters.=$sc->make_hidden_form_content();
+			}
+			$aff_filters.="<div class='form-contenu'>";
+			if ($sub!="launch") {
+				$aff_filters.="<input type='hidden' name='page' value='$page'>";
+			}
+			$aff_filters.="<div id=\"el1Parent\" class=\"notice-parent\"><img src=\"".get_url_icon('plus.gif')."\" class=\"img_plus\" name=\"imEx\" id=\"el1Img\" title=\"".$msg['admin_param_detail']."\" border=\"0\" onClick=\"expandBase('el1', true); return false;\">
+		   							<b>".$msg["filters"]."</b></div>
+									<div id=\"el1Child\" style=\"margin-left:7px;display:none;\">";
+			$aff_filters.=$filter->display_filters();
+			$aff_filters.="</div><div class='row'></div><div id=\"el2Parent\" class=\"notice-parent\"><img src=\"".get_url_icon('plus.gif')."\" class=\"img_plus\" name=\"imEx\" id=\"el2Img\" title=\"".$msg['admin_param_detail']."\" border=\"0\" onClick=\"expandBase('el2', true); return false;\">
+								<b>".$msg["tris_dispos"]."</b></div>
+						<div id=\"el2Child\" style=\"margin-left:7px;display:none;\">";
+			$aff_filters.=$filter->display_sort();
+			$aff_filters.="</div></div><div class='row'></div><div class='row'><input type='submit' class='bouton' value='".$msg["empr_sort_filter_button"]."'>";
+			if ($empr_show_caddie && $sub!="launch")
+				$aff_filters.="&nbsp;&nbsp;<input type='button' class='bouton' value='".$msg["add_empr_cart"]."' onClick=\"popCaddie(document.forms['AddToCaddie']); return false;\">";
+			$aff_filters.="</div></form>";
 			$aff_filters.="<br />".$filter->make_human_filters();
 			$aff_filters.=$script_filters;
 			$empr_list_tmpl=str_replace("!!filters_list!!",$aff_filters,$empr_list_tmpl);
@@ -278,7 +317,7 @@ if ($nbr_lignes == 1) {
 				$empr_list_tmpl=str_replace("!!filters_list!!",$aff_filters.$script_filters,$empr_list_tmpl);
 				break;
 		}
-		$empr_list .= "<table border='0' width='100%'>";
+		$empr_list .= "<table style='border:0px; width:100%'>";
 		while(($empr=pmb_mysql_fetch_object($res))) {
 			$recherche_groupe=@pmb_mysql_query("SELECT libelle_groupe FROM empr_groupe, groupe WHERE empr_id=".$empr->id_empr." AND groupe_id=id_groupe ORDER BY libelle_groupe");
 			$grp=array();

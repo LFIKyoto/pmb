@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes_actions.tpl.php,v 1.15 2015-05-20 14:39:30 dgoron Exp $
+// $Id: demandes_actions.tpl.php,v 1.19 2017-11-23 15:56:57 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -20,7 +20,7 @@ $js_liste_action = "
 
 $content_liste_action = "
 	<input type='hidden' id='iddemande' name='iddemande' value='!!iddemande!!'/>
-	<input type='hidden' id='last_modified' value='!!last_modified!!'/>
+	<input type='hidden' id='last_modified' name='last_modified' value='!!last_modified!!'/>
 	<h3>".$msg['demandes_action_liste']."</h3>
 	<div class='form-contenu'>
 		<table>
@@ -47,7 +47,7 @@ $content_liste_action = "
 	</div>
 	<div class='row'>
 		<div class='left'>
-			<input type='submit' class='bouton' value='".$msg['demandes_action_add']."' onclick='!!change_action_form!!this.form.act.value=\"add_action\"' />
+			<input type='submit' class='bouton' value='".$msg['demandes_action_add']."' onclick='!!change_action_form!!if(this.form.idaction!=undefined){this.form.idaction.value=\"\";}this.form.last_modified.value=\"\";this.form.act.value=\"add_action\"' />
 		</div>
 		<div class='right'>
 			!!btn_suppr!!
@@ -110,7 +110,7 @@ $form_modif_action = "
 			<label class='etiquette'>".$msg['demandes_action_sujet']."</label>
 		</div>
 		<div class='row'>
-			<input type='texte' class='saisie-50em' name='sujet' id='sujet' value='!!sujet!!' />
+			<input type='text' class='saisie-50em' name='sujet' id='sujet' value='!!sujet!!' />
 		</div>
 		<div class='row'>
 			<label class='etiquette'>".$msg['demandes_action_detail']."</label>
@@ -134,11 +134,11 @@ $form_modif_action = "
 		<div class='row'>
 			<div class='colonne3'>
 				<input type='hidden' id='date_debut' name='date_debut' value='!!date_debut!!' />
-				<input type='button' class='bouton' id='date_debut_btn' name='date_debut_btn' value='!!date_debut_btn!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=modif_action&date_caller=!!date_debut!!&param1=date_debut&param2=date_debut_btn&auto_submit=NO&date_anterieure=YES', 'date_debut', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\"/>
+				<input type='button' class='bouton' id='date_debut_btn' name='date_debut_btn' value='!!date_debut_btn!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=modif_action&date_caller=!!date_debut!!&param1=date_debut&param2=date_debut_btn&auto_submit=NO&date_anterieure=YES', 'calendar')\"/>
 			</div>
 			<div class='colonne3'>
 				<input type='hidden' id='date_fin' name='date_fin' value='!!date_fin!!' />
-				<input type='button' class='bouton' id='date_fin_btn' name='date_fin_btn' value='!!date_fin_btn!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=modif_action&date_caller=!!date_fin!!&param1=date_fin&param2=date_fin_btn&auto_submit=NO&date_anterieure=YES', 'date_fin', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\"/>
+				<input type='button' class='bouton' id='date_fin_btn' name='date_fin_btn' value='!!date_fin_btn!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=modif_action&date_caller=!!date_fin!!&param1=date_fin&param2=date_fin_btn&auto_submit=NO&date_anterieure=YES', 'calendar')\"/>
 			</div>
 			<div class='colonne3'>&nbsp;</div>
 		</div>
@@ -155,13 +155,13 @@ $form_modif_action = "
 		</div>
 		<div class='row'>
 			<div class='colonne3'>
-				<input type='texte' class='saisie-20em' name='time_elapsed' id='time_elapsed' value='!!time_elapsed!!' />
+				<input type='text' class='saisie-20em' name='time_elapsed' id='time_elapsed' value='!!time_elapsed!!' />
 			</div>			
 			<div class='colonne3'>
-				<input type='texte' class='saisie-10em' name='cout' id='cout' value='!!cout!!' />
+				<input type='text' class='saisie-10em' name='cout' id='cout' value='!!cout!!' />
 			</div>
 			<div class='colonne3'>
-				<input type='texte' class='saisie-10em' name='progression' id='progression' value='!!progression!!' />
+				<input type='text' class='saisie-10em' name='progression' id='progression' value='!!progression!!' />
 			</div>
 		</div>		
 		<div class='row'></div>	

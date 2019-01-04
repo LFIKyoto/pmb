@@ -2,24 +2,22 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_logo.tpl.php,v 1.3 2012-10-17 10:17:49 arenou Exp $
+// $Id: cms_logo.tpl.php,v 1.5 2017-11-23 10:29:08 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 $cms_logo_form_tpl ="
-	<div class='row'>
-		<div class='colonne'>
-			<div class='row'>
-				<label for='cms_editorial_form_logo'>".$msg['cms_editorial_form_logo']."</label>
-			</div> 
-			<div class='row'>
-				<div id='cms_logo_vign'>
-					<img id='cms_logo_vign_img' src='./cms_vign.php?type=!!type!!&id=!!id!!&mode=vign' class='cms_log_vign'/>
-				</div>
-				<div>
-					<span>".$msg['cms_editorial_form_logo_new']."</span>&nbsp;
-					!!field!!
-				</div>
+	<div id='el1Child_0' class='row' movable='yes' title=\"".htmlentities($msg['cms_editorial_form_logo'], ENT_QUOTES, $charset)."\">
+		<div class='row'>
+			<label for='cms_editorial_form_logo'>".$msg['cms_editorial_form_logo'].$msg['cms_editorial_form_logo_prefered_formats']."</label>
+		</div> 
+		<div class='row'>
+			<div id='cms_logo_vign'>
+				<img id='cms_logo_vign_img' src='./cms_vign.php?type=!!type!!&id=!!id!!&mode=vign' class='cms_log_vign'/>
+			</div>
+			<div>
+				<span>".$msg['cms_editorial_form_logo_new']."</span>&nbsp;
+				!!field!!
 			</div>
 		</div>
 	</div>";

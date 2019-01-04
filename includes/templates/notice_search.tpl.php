@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_search.tpl.php,v 1.25 2014-10-30 16:09:35 dgoron Exp $
+// $Id: notice_search.tpl.php,v 1.26 2017-01-26 16:07:10 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+if(!isset($option_show_notice_fille)) $option_show_notice_fille = 0;
+if(!isset($option_show_expl)) $option_show_expl = 0;
 
 // en-tête et pied de page
 $layout_begin = "";

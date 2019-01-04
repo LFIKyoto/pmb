@@ -2,10 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fournisseurs.tpl.php,v 1.24 2011-08-11 15:39:30 dbellamy Exp $
+// $Id: fournisseurs.tpl.php,v 1.25 2017-01-26 15:36:34 dgoron Exp $
 
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+if(!isset($id_bibli)) $id_bibli = 0;
 
 //	------------------------------------------------------------------------------
 //	$coord_form2 : template form edition des coordonnées des fournisseurs 
@@ -46,14 +48,14 @@ $coord_form2 = "
 	</div>
 	<hr />
 	<div class='row'>
-		<label class='etiquette' for='comment'>".htmlentities($msg[acquisition_commentaires],ENT_QUOTES,$charset)."</label>
+		<label class='etiquette' for='comment'>".htmlentities($msg['acquisition_commentaires'],ENT_QUOTES,$charset)."</label>
 	</div>
 	<div class='row'>
 		<textarea id='comment' name='comment' class='saisie-80em' cols='62' rows='6' wrap='virtual'>!!commentaires!!</textarea>
 	</div>
 	<div class= 'colonne2'>
 		<div class='row'>
-			<label class='etiquette' for='siret'>".htmlentities($msg[acquisition_siret],ENT_QUOTES,$charset)."</label>
+			<label class='etiquette' for='siret'>".htmlentities($msg['acquisition_siret'],ENT_QUOTES,$charset)."</label>
 		</div>
 		<div class='row'>
 			<input type='text' id='siret' name='siret' value='!!siret!!' class='saisie-50em' />
@@ -62,7 +64,7 @@ $coord_form2 = "
 
 	<div class='colonne_suite'>
 		<div class='row'>
-			<label class='etiquette' for='rcs'>".htmlentities($msg[acquisition_rcs],ENT_QUOTES,$charset)."</label>
+			<label class='etiquette' for='rcs'>".htmlentities($msg['acquisition_rcs'],ENT_QUOTES,$charset)."</label>
 		</div>
 		<div class='row'>
 			<input type='text' id='rcs' name='rcs' value='!!rcs!!' class='saisie-50em' />
@@ -71,7 +73,7 @@ $coord_form2 = "
 
 	<div class= 'colonne2'>
 		<div class='row'>
-			<label class='etiquette' for='naf'>".htmlentities($msg[acquisition_naf],ENT_QUOTES,$charset)."</label>
+			<label class='etiquette' for='naf'>".htmlentities($msg['acquisition_naf'],ENT_QUOTES,$charset)."</label>
 		</div>
 		<div class='row'>
 			<input type='text' id='naf' name='naf' value='!!naf!!' class='saisie-50em' />
@@ -80,14 +82,14 @@ $coord_form2 = "
 
 	<div class='colonne_suite'>
 		<div class='row'>
-			<label class='etiquette' for='tva' >".htmlentities($msg[acquisition_tva],ENT_QUOTES,$charset)."</label>
+			<label class='etiquette' for='tva' >".htmlentities($msg['acquisition_tva'],ENT_QUOTES,$charset)."</label>
 		</div>
 		<div class='row'>
 			<input type='text' id='tva' name='tva' value='!!tva!!' class='saisie-50em' />
 		</div>
 	</div>
 	<div class='row'>
-		<label class='etiquette' for='site_web'>".htmlentities($msg[acquisition_site_web],ENT_QUOTES,$charset)."</label>
+		<label class='etiquette' for='site_web'>".htmlentities($msg['acquisition_site_web'],ENT_QUOTES,$charset)."</label>
 	</div>
 	<div class='row'>
 		<input type='text' id='site_web' name='site_web' value='!!site_web!!' class='saisie-50em' />

@@ -2,25 +2,23 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesReaders.class.php,v 1.2 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: pmbesReaders.class.php,v 1.4 2017-07-12 15:15:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/external_services.class.php");
 
 class pmbesReaders extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	
@@ -30,7 +28,7 @@ class pmbesReaders extends external_services_api_class {
 	 * $empr_statut_edit => ex : (1 pour actif,..)
 	 * $sortby => nom des champs
 	 */
-	function listReadersSubscription($search='',$empr_location_id='',$empr_statut_edit='', $sortby=''){
+	public function listReadersSubscription($search='',$empr_location_id='',$empr_statut_edit='', $sortby=''){
 		global $dbh, $msg, $pmb_relance_adhesion,$pmb_lecteurs_localises;
 		global $deflt2docs_location;
 							
@@ -108,7 +106,7 @@ class pmbesReaders extends external_services_api_class {
 		return $result;
 	}
 
-	function listGroupReaders() {
+	public function listGroupReaders() {
 		global $dbh;
 		
 		$result=array();
@@ -140,7 +138,7 @@ class pmbesReaders extends external_services_api_class {
 	 * $empr_statut_edit => ex : (1 pour actif,..)
 	 * $sortby => nom des champs
 	 */
-	function relanceReadersSubscription($tresults, $empr_location_id) {
+	public function relanceReadersSubscription($tresults, $empr_location_id) {
 		global $dbh,$fpdf,$ourPDF,$pmb_pdf_font;
 		global $format_page,$marge_page_gauche, $marge_page_droite, $largeur_page, $fdp, $after_list, $limite_after_list, $before_list, $madame_monsieur, $nb_1ere_page, $nb_par_page, $taille_bloc_expl, $debut_expl_1er_page, $debut_expl_page, $before_recouvrement,$after_recouvrement,$texte;
 		global $pmb_hide_biblioinfo_letter;
@@ -151,43 +149,43 @@ class pmbesReaders extends external_services_api_class {
 					
 		// la formule de politesse du bas (le signataire)
 		$var = "pdflettreadhesion_fdp";
-		global $$var;
-		eval ("\$fdp=\"".$$var."\";");
+		global ${$var};
+		eval ("\$fdp=\"".${$var}."\";");
 		
 		// le "Madame, Monsieur," ou tout autre truc du genre "Cher adhérent,"
 		$var = "pdflettreadhesion_madame_monsieur";
-		global $$var;
-		eval ("\$madame_monsieur=\"".$$var."\";");
+		global ${$var};
+		eval ("\$madame_monsieur=\"".${$var}."\";");
 		
 		// le texte
 		$var = "pdflettreadhesion_texte";
-		global $$var;
-		eval ("\$texte=\"".$$var."\";");
+		global ${$var};
+		eval ("\$texte=\"".${$var}."\";");
 		
 		// la marge gauche des pages
 		$var = "pdflettreadhesion_marge_page_gauche";
-		global $$var;
-		$marge_page_gauche = $$var;
+		global ${$var};
+		$marge_page_gauche = ${$var};
 		
 		// la marge droite des pages
 		$var = "pdflettreadhesion_marge_page_droite";
-		global $$var;
-		$marge_page_droite = $$var;
+		global ${$var};
+		$marge_page_droite = ${$var};
 		
 		// la largeur des pages
 		$var = "pdflettreadhesion_largeur_page";
-		global $$var;
-		$largeur_page = $$var;
+		global ${$var};
+		$largeur_page = ${$var};
 		
 		// la hauteur des pages
 		$var = "pdflettreadhesion_hauteur_page";
-		global $$var;
-		$hauteur_page = $$var;
+		global ${$var};
+		$hauteur_page = ${$var};
 		
 		// le format des pages
 		$var = "pdflettreadhesion_format_page";
-		global $$var;
-		$format_page = $$var;
+		global ${$var};
+		$format_page = ${$var};
 
 		$taille_doc=array($largeur_page,$hauteur_page);
 		
@@ -227,7 +225,7 @@ class pmbesReaders extends external_services_api_class {
 //	 * $empr_statut_edit => ex : (1 pour actif,..)
 //	 * $sortby => nom des champs
 //	 */
-//	function relanceReadersSubscription($search='',$empr_location_id='',$empr_statut_edit='', $sortby='') {
+//	public function relanceReadersSubscription($search='',$empr_location_id='',$empr_statut_edit='', $sortby='') {
 //		global $dbh,$fpdf,$ourPDF,$pmb_pdf_font;
 //		global $format_page,$marge_page_gauche, $marge_page_droite, $largeur_page, $fdp, $after_list, $limite_after_list, $before_list, $madame_monsieur, $nb_1ere_page, $nb_par_page, $taille_bloc_expl, $debut_expl_1er_page, $debut_expl_page, $before_recouvrement,$after_recouvrement,$texte;
 //		global $pmb_hide_biblioinfo_letter;
@@ -235,43 +233,43 @@ class pmbesReaders extends external_services_api_class {
 //								
 //		// la formule de politesse du bas (le signataire)
 //		$var = "pdflettreadhesion_fdp";
-//		global $$var;
-//		eval ("\$fdp=\"".$$var."\";");
+//		global ${$var};
+//		eval ("\$fdp=\"".${$var}."\";");
 //		
 //		// le "Madame, Monsieur," ou tout autre truc du genre "Cher adhérent,"
 //		$var = "pdflettreadhesion_madame_monsieur";
-//		global $$var;
-//		eval ("\$madame_monsieur=\"".$$var."\";");
+//		global ${$var};
+//		eval ("\$madame_monsieur=\"".${$var}."\";");
 //		
 //		// le texte
 //		$var = "pdflettreadhesion_texte";
-//		global $$var;
-//		eval ("\$texte=\"".$$var."\";");
+//		global ${$var};
+//		eval ("\$texte=\"".${$var}."\";");
 //		
 //		// la marge gauche des pages
 //		$var = "pdflettreadhesion_marge_page_gauche";
-//		global $$var;
-//		$marge_page_gauche = $$var;
+//		global ${$var};
+//		$marge_page_gauche = ${$var};
 //		
 //		// la marge droite des pages
 //		$var = "pdflettreadhesion_marge_page_droite";
-//		global $$var;
-//		$marge_page_droite = $$var;
+//		global ${$var};
+//		$marge_page_droite = ${$var};
 //		
 //		// la largeur des pages
 //		$var = "pdflettreadhesion_largeur_page";
-//		global $$var;
-//		$largeur_page = $$var;
+//		global ${$var};
+//		$largeur_page = ${$var};
 //		
 //		// la hauteur des pages
 //		$var = "pdflettreadhesion_hauteur_page";
-//		global $$var;
-//		$hauteur_page = $$var;
+//		global ${$var};
+//		$hauteur_page = ${$var};
 //		
 //		// le format des pages
 //		$var = "pdflettreadhesion_format_page";
-//		global $$var;
-//		$format_page = $$var;
+//		global ${$var};
+//		$format_page = ${$var};
 //
 //		$taille_doc=array($largeur_page,$hauteur_page);
 //		
@@ -303,7 +301,7 @@ class pmbesReaders extends external_services_api_class {
 //		return $ourPDF;
 //	}
 	
-//	function listReadersEndSubscription(){
+//	public function listReadersEndSubscription(){
 //		global $dbh, $msg, $pmb_relance_adhesion;
 //		
 //		$restrict = " ((to_days(empr_date_expiration) - to_days(now()) ) <=  $pmb_relance_adhesion ) and empr_date_expiration >= now() ";
@@ -329,7 +327,7 @@ class pmbesReaders extends external_services_api_class {
 //		return $result;
 //	}
 		
-//	function listReadersExceedSubscription() {
+//	public function listReadersExceedSubscription() {
 //		global $dbh, $msg;
 //		
 //		$restrict = " empr_date_expiration < now() ";
@@ -355,7 +353,7 @@ class pmbesReaders extends external_services_api_class {
 //		return $result;
 //	}
 	
-	function generatePdfReaderSubscription($id_empr,$empr_location_id) {
+	public function generatePdfReaderSubscription($id_empr,$empr_location_id) {
 		global $dbh,$fpdf,$ourPDF,$pmb_pdf_font;
 		global $format_page,$marge_page_gauche, $marge_page_droite, $largeur_page, $fdp, $after_list, $limite_after_list, $before_list, $madame_monsieur, $nb_1ere_page, $nb_par_page, $taille_bloc_expl, $debut_expl_1er_page, $debut_expl_page, $before_recouvrement,$after_recouvrement,$texte;
 		global $pmb_hide_biblioinfo_letter;
@@ -364,43 +362,43 @@ class pmbesReaders extends external_services_api_class {
 		
 		// la formule de politesse du bas (le signataire)
 		$var = "pdflettreadhesion_fdp";
-		global $$var;
-		eval ("\$fdp=\"".$$var."\";");
+		global ${$var};
+		eval ("\$fdp=\"".${$var}."\";");
 		
 		// le "Madame, Monsieur," ou tout autre truc du genre "Cher adhérent,"
 		$var = "pdflettreadhesion_madame_monsieur";
-		global $$var;
-		eval ("\$madame_monsieur=\"".$$var."\";");
+		global ${$var};
+		eval ("\$madame_monsieur=\"".${$var}."\";");
 		
 		// le texte
 		$var = "pdflettreadhesion_texte";
-		global $$var;
-		eval ("\$texte=\"".$$var."\";");
+		global ${$var};
+		eval ("\$texte=\"".${$var}."\";");
 		
 		// la marge gauche des pages
 		$var = "pdflettreadhesion_marge_page_gauche";
-		global $$var;
-		$marge_page_gauche = $$var;
+		global ${$var};
+		$marge_page_gauche = ${$var};
 		
 		// la marge droite des pages
 		$var = "pdflettreadhesion_marge_page_droite";
-		global $$var;
-		$marge_page_droite = $$var;
+		global ${$var};
+		$marge_page_droite = ${$var};
 		
 		// la largeur des pages
 		$var = "pdflettreadhesion_largeur_page";
-		global $$var;
-		$largeur_page = $$var;
+		global ${$var};
+		$largeur_page = ${$var};
 		
 		// la hauteur des pages
 		$var = "pdflettreadhesion_hauteur_page";
-		global $$var;
-		$hauteur_page = $$var;
+		global ${$var};
+		$hauteur_page = ${$var};
 		
 		// le format des pages
 		$var = "pdflettreadhesion_format_page";
-		global $$var;
-		$format_page = $$var;
+		global ${$var};
+		$format_page = ${$var};
 
 		$taille_doc=array($largeur_page,$hauteur_page);
 		
@@ -429,26 +427,26 @@ class pmbesReaders extends external_services_api_class {
 		return $ourPDF;
 	}
 	
-	function generateMailReadersSubscription($id_empr,$empr_location_id) {
+	public function generateMailReadersSubscription($id_empr,$empr_location_id) {
 		global $mailrelanceadhesion_objet, $mailrelanceadhesion_fdp,$mailrelanceadhesion_madame_monsieur, $mailrelanceadhesion_texte;
 		
 		$this->infos_biblio($empr_location_id);
 		
 		// l'objet du mail
 		$var = "mailrelanceadhesion_objet";
-		eval ("\$objet=\"".$$var."\";");
+		eval ("\$objet=\"".${$var}."\";");
 		
 		// la formule de politesse du bas (le signataire)
 		$var = "mailrelanceadhesion_fdp";
-		eval ("\$fdp=\"".$$var."\";");
+		eval ("\$fdp=\"".${$var}."\";");
 		
 		// le "Madame, Monsieur," ou tout autre truc du genre "Cher adhérent,"
 		$var = "mailrelanceadhesion_madame_monsieur";
-		eval ("\$madame_monsieur=\"".$$var."\";");
+		eval ("\$madame_monsieur=\"".${$var}."\";");
 		
 		// le texte
 		$var = "mailrelanceadhesion_texte";
-		eval ("\$texte=\"".$$var."\";");
+		eval ("\$texte=\"".${$var}."\";");
 		
 		// mettre ici le texte 
 		$coords = new emprunteur($id_empr,'', FALSE, 0);
@@ -470,7 +468,7 @@ class pmbesReaders extends external_services_api_class {
 		return $res_envoi;
 	}
 	
-	function infos_biblio($empr_location_id) {
+	public function infos_biblio($empr_location_id) {
 		global $dbh,$pmb_lecteurs_localises;
 		global $biblio_name, $biblio_adr1, $biblio_adr2, $biblio_cp, $biblio_town, $biblio_state, $biblio_country, $biblio_phone, $biblio_email,$biblio_website;
 		global $biblio_logo;
@@ -500,58 +498,58 @@ class pmbesReaders extends external_services_api_class {
 			/*** Informations provenant des paramètres généraux - on ne parle donc pas de multi-localisations **/
 			// nom de la structure
 			$var = "opac_biblio_name";
-			global $$var;
-			eval ("\$biblio_name=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_name=\"".${$var}."\";");
 		
 			// logo de la structure
 			$var = "opac_logo";
-			global $$var;
-			eval ("\$biblio_logo=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_logo=\"".${$var}."\";");
 		
 			// adresse principale
 			$var = "opac_biblio_adr1";
-			global $$var;
-			eval ("\$biblio_adr1=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_adr1=\"".${$var}."\";");
 			
 			// adresse secondaire
 			$var = "opac_biblio_adr2";
-			global $$var;
-			eval ("\$biblio_adr2=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_adr2=\"".${$var}."\";");
 			
 			// code postal
 			$var = "opac_biblio_cp";
-			global $$var;
-			eval ("\$biblio_cp=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_cp=\"".${$var}."\";");
 			
 			// ville
 			$var = "opac_biblio_town";
-			global $$var;
-			eval ("\$biblio_town=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_town=\"".${$var}."\";");
 			
 			// Etat
 			$var = "opac_biblio_state";
-			global $$var;
-			eval ("\$biblio_state=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_state=\"".${$var}."\";");
 			
 			// pays
 			$var = "opac_biblio_country";
-			global $$var;
-			eval ("\$biblio_country=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_country=\"".${$var}."\";");
 			
 			// telephone
 			$var = "opac_biblio_phone";
-			global $$var;
-			eval ("\$biblio_phone=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_phone=\"".${$var}."\";");
 			
 			// adresse mail
 			$var = "opac_biblio_email";
-			global $$var;
-			eval ("\$biblio_email=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_email=\"".${$var}."\";");
 			
 			//site web
 			$var = "opac_biblio_website";
-			global $$var;
-			eval ("\$biblio_website=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_website=\"".${$var}."\";");
 		}
 	}	
 }

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sel_searcher.class.php,v 1.8 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: sel_searcher.class.php,v 1.15 2018-03-07 09:55:20 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -37,37 +37,38 @@ $tab_autorun['sug']=false;
 
 class sel_searcher {
 
-	var $etat;								//Etat de la recherche
-	var $page;								//Page courante de la recherche
-	var $nbresults;							//Nombre de résultats de la dernière recherche
-	var $nbepage;
-	var $aut_id;							//Numéro d'autorité pour la recherche
-	var $aut_type;							//Type d'autorité pour la recherche
-	var $store_form;						//Formulaire contenant les infos de navigation plus des champs pour la recherche
-	var $first_search_result;
-	var $direct = 0;
+	public $etat;								//Etat de la recherche
+	public $page;								//Page courante de la recherche
+	public $nbresults;							//Nombre de résultats de la dernière recherche
+	public $nbepage;
+	public $aut_id;							//Numéro d'autorité pour la recherche
+	public $aut_type;							//Type d'autorité pour la recherche
+	public $store_form;						//Formulaire contenant les infos de navigation plus des champs pour la recherche
+	public $first_search_result;
+	public $direct = 0;
 
 	//Elements obligatoires
-	var $base_url = '';						//url de base pour les menus, 	
-	var $tab_choice=array();				//Liste des choix a effectuer dans le menu
+	public $base_url = '';						//url de base pour les menus, 	
+	public $tab_choice=array();				//Liste des choix a effectuer dans le menu
 	
-	var $elt_f_list = '';					//Formulaire d'affichage des elements
-	var $elt_b_list = '';					//Affichage Debut de liste elements
-	var $elt_e_list = '';					//Affichage Fin de liste elements
-	var $elt_r_list = '';					//Affichage ligne element
-	var $elt_r_list_values = array();		//tableau des elements a afficher dans la liste
-	var $action = '';						//Action a transmettre pour retour des parametres
-	var $action_values = array();			//tableau des elements à modifier dans l'action
-	var $back_script = '';					//Script a executer sur selection d'un element
-	var $back_script_show_all = '';			//Script a executer sur bouton "Afficher tous les résultats"
+	public $elt_f_list = '';					//Formulaire d'affichage des elements
+	public $elt_b_list = '';					//Affichage Debut de liste elements
+	public $elt_e_list = '';					//Affichage Fin de liste elements
+	public $elt_r_list = '';					//Affichage ligne element
+	public $elt_r_list_values = array();		//tableau des elements a afficher dans la liste
+	public $action = '';						//Action a transmettre pour retour des parametres
+	public $action_values = array();			//tableau des elements à modifier dans l'action
+	public $back_script = '';					//Script a executer sur selection d'un element
+	public $back_script_show_all = '';			//Script a executer sur bouton "Afficher tous les résultats"
+	public $back_script_order = '';			//Script a executer pour trier certains elements
 	
-	var $aut_b_list = '';					//Affichage Debut de liste autorites
-	var $aut_e_list = '';					//Affichage Fin de liste autorites
-	var $aut_r_list = '';					//Affichage ligne autorite
-	var $aut_r_list_values = array();		//tableau des autorites a afficher dans la liste
+	public $aut_b_list = '';					//Affichage Debut de liste autorites
+	public $aut_e_list = '';					//Affichage Fin de liste autorites
+	public $aut_r_list = '';					//Affichage ligne autorite
+	public $aut_r_list_values = array();		//tableau des autorites a afficher dans la liste
 	
 	//Constructeur
-	function sel_searcher($base_url) {
+	public function __construct($base_url) {
 		
 		global $etat,$aut_type,$aut_id,$page;
 			
@@ -81,7 +82,7 @@ class sel_searcher {
 	}
 
 	
-	function run() {
+	public function run() {
 		
 		$this->set_menu();
 		if (!$this->etat) {
@@ -127,7 +128,7 @@ class sel_searcher {
 	}
 
 	
-	function set_menu() {
+	public function set_menu() {
 		
 		global $charset;
 		global $form_query, $nav_bar, $other_query;
@@ -150,7 +151,7 @@ class sel_searcher {
 	}	
 
 	
-	function show_form() {
+	public function show_form() {
 
 		global $charset;
 		global $form_query, $elt_query, $extended_query;
@@ -162,12 +163,13 @@ class sel_searcher {
 	}
 	
 	
-	function pager() {
+	public function pager() {
 
 		global $msg;
 
 		if (!$this->nbresults) return;
 		
+		$nav_bar = '';
 		$suivante = $this->page+1;
 		$precedente = $this->page-1;
 		if (!$this->page) $page_en_cours=0 ;
@@ -175,7 +177,7 @@ class sel_searcher {
 				
 		// affichage du lien précédent si necessaire
 		if($precedente >= 0)
-				$nav_bar .= "<a href='#' onClick=\"document.store_search.page.value=$precedente; document.store_search.submit(); return false;\"><img src='./images/left.gif' border='0'  title='$msg[48]' alt='[$msg[48]]' hspace='3' align='middle'></a>";
+				$nav_bar .= "<a href='#' onClick=\"document.store_search.page.value=$precedente; document.store_search.submit(); return false;\"><img src='".get_url_icon('left.gif')."' style='border:0px; margin:3px 3px'  title='$msg[48]' alt='[$msg[48]]' class='align_middle'></a>";
 
 		$deb = $page_en_cours - 10 ;
 		if ($deb<0) $deb=0;
@@ -186,14 +188,14 @@ class sel_searcher {
 			}
         
 		if($suivante<$this->nbepage)
-				$nav_bar .= "<a href='#' onClick=\"document.store_search.page.value=$suivante; document.store_search.submit(); return false;\"><img src='./images/right.gif' border='0' title='$msg[49]' alt='[$msg[49]]' hspace='3' align='middle'></a>";
+				$nav_bar .= "<a href='#' onClick=\"document.store_search.page.value=$suivante; document.store_search.submit(); return false;\"><img src='".get_url_icon('right.gif')."' style='border:0px; margin:3px 3px' title='$msg[49]' alt='[$msg[49]]' class='align_middle'></a>";
 
 		// affichage de la barre de navigation
-		print "<div class='row'><div align='center'>$nav_bar</div></div>";
+		print "<div class='row'><div class='center'>$nav_bar</div></div>";
 	}
 
 	
-	function make_store_form() {
+	public function make_store_form() {
 		$this->store_form="<form name='store_search' action='".$this->base_url."&typ_query=".$this->cur_typ_query."' method='post' style='display:none'>
 		<input type='hidden' name='aut_type' value='".$this->aut_type."'/>
 		<input type='hidden' name='aut_id' value='".$this->aut_id."'/>
@@ -203,11 +205,11 @@ class sel_searcher {
 		</form>";
 	}
 
-	function show_elt() {
+	public function show_elt() {
 	}
 
 	
-	function make_first_search() {
+	public function make_first_search() {
 		//A surcharger par la fonction qui fait la première recherche après la soumission du formulaire de recherche
 		//La fonction renvoie AUT_LIST (le résultat de la recherche est une liste d'autorité)
 		//ou ELT_LIST (le résultat de la recherche est une liste d'élements)
@@ -215,13 +217,13 @@ class sel_searcher {
 	}
 
 	
-	function make_aut_search() {
+	public function make_aut_search() {
 		//A surcharger par la fonction qui fait la recherche des éléments à partir d'un numéro d'autorité (stoqué dans $this->aut_id)
 		//La fonction doit mettre à jour le nombre de résultats dans $this->nbresults
 	}
 
 	
-	function store_search() {
+	public function store_search() {
 		//A surcharger par la fonction qui écrit les variables du formulaire "store_search" pour stoquer les champs de recherche
 		//En liste de résultat de la première recherche. Il faut remplacer la chaine "!!first_search_variables!!" dans $this->store_form
 		global $elt_query;
@@ -232,7 +234,7 @@ class sel_searcher {
 	}
 
 	
-	function aut_store_search() {
+	public function aut_store_search() {
 		//A surcharger par la fonction qui écrit les variables du formulaire "store_search" pour stoquer les champs de recherche
 		//En liste de résultat de la première recherche. Il faut remplacer la chaine "!!first_search_variables!!" dans $this->store_form
 		global $elt_query;
@@ -243,22 +245,22 @@ class sel_searcher {
 	}
 
 	
-	function aut_list() {
+	public function aut_list() {
 		//A surcharger par la fonction qui affiche la liste des autorités issues de la première recherche
 	}
 
 	
-	function elt_list() {
+	public function elt_list() {
 		//A surcharger par la fonction qui affiche la liste des éléments issues de la première recherche
 	}
 
 	
-	function aut_elt_list() {
+	public function aut_elt_list() {
 		//A surcharger par la fonction qui affiche la liste des éléments sous l'autorité $this->aut_id
 	}
 
 	
-	function rec_env() {
+	public function rec_env() {
 		//A surcharger par la fonction qui enregistre
 	}
 }
@@ -266,11 +268,11 @@ class sel_searcher {
 
 class sel_searcher_notice_mono extends sel_searcher {
 	
-	var $t_query;
-	var $cur_typ_query='notice';
+	public $t_query;
+	public $cur_typ_query='notice';
 	
 	
-	function make_first_search() {
+	public function make_first_search() {
 
 		global $msg,$dbh;
 		global $elt_query;		
@@ -344,7 +346,7 @@ class sel_searcher_notice_mono extends sel_searcher {
 	}
 
 	
-	function store_search() {
+	public function store_search() {
 
 		global $elt_query;
 		global $notice_statut_query, $doctype_query;
@@ -358,7 +360,7 @@ class sel_searcher_notice_mono extends sel_searcher {
 	}
 	
 	
-	function elt_list() {
+	public function elt_list() {
 
 		global $msg, $charset;
 		global $elt_query;
@@ -410,11 +412,11 @@ class sel_searcher_notice_mono extends sel_searcher {
 
 class sel_searcher_notice_article extends sel_searcher {
 	
-	var $t_query;
-	var $cur_typ_query='article';
+	public $t_query;
+	public $cur_typ_query='article';
 	
 	
-	function make_first_search() {
+	public function make_first_search() {
 
 		global $msg,$dbh;
 		global $elt_query;		
@@ -463,7 +465,7 @@ class sel_searcher_notice_article extends sel_searcher {
 	}
 
 	
-	function store_search() {
+	public function store_search() {
 
 		global $elt_query;
 		global $notice_statut_query, $doctype_query;
@@ -477,7 +479,7 @@ class sel_searcher_notice_article extends sel_searcher {
 	}
 	
 	
-	function elt_list() {
+	public function elt_list() {
 
 		global $msg, $charset;
 		global $elt_query;
@@ -529,11 +531,11 @@ class sel_searcher_notice_article extends sel_searcher {
 
 class sel_searcher_bulletin extends sel_searcher {
 	
-	var $t_query;
-	var $cur_typ_query='bulletin';
+	public $t_query;
+	public $cur_typ_query='bulletin';
 	
 	
-	function make_first_search() {
+	public function make_first_search() {
 
 		global $msg,$dbh;
 		global $elt_query;
@@ -598,7 +600,7 @@ class sel_searcher_bulletin extends sel_searcher {
 	}
 
 	
-	function make_aut_search() {
+	public function make_aut_search() {
 		
 		global $dbh;
 		global $nb_per_page, $nb_per_page_select;
@@ -631,7 +633,7 @@ class sel_searcher_bulletin extends sel_searcher {
 	}
 	
 	
-	function aut_list() {
+	public function aut_list() {
 
 		global $msg, $charset;
 		global $elt_query;
@@ -671,7 +673,7 @@ class sel_searcher_bulletin extends sel_searcher {
 	}
 
 	
-	function aut_elt_list() {
+	public function aut_elt_list() {
 			
 		global $msg, $charset;
 		global $elt_query;
@@ -726,11 +728,11 @@ class sel_searcher_bulletin extends sel_searcher {
 
 class sel_searcher_frais extends sel_searcher {
 	
-	var $t_query;
-	var $cur_typ_query='frais';
+	public $t_query;
+	public $cur_typ_query='frais';
 	
 	
-	function make_first_search() {
+	public function make_first_search() {
 
 		global $msg,$dbh;
 		global $elt_query;
@@ -768,13 +770,13 @@ class sel_searcher_frais extends sel_searcher {
 	}
 
 
-	function elt_list() {
+	public function elt_list() {
 
 		global $msg, $charset;
 		global $elt_query;
 		global $results_show_all;
 		
-		$research .= '<b>'.htmlentities($msg['selector_lib_frais'],ENT_QUOTES,$charset).'</b>&nbsp;'.htmlentities(stripslashes($elt_query),ENT_QUOTES,$charset);
+		$research = '<b>'.htmlentities($msg['selector_lib_frais'],ENT_QUOTES,$charset).'</b>&nbsp;'.htmlentities(stripslashes($elt_query),ENT_QUOTES,$charset);
 	
 		$this->show_form();
 		if ($this->nbresults) {
@@ -792,6 +794,7 @@ class sel_searcher_frais extends sel_searcher {
 					</div>";
 			print "<form name='searcher_results_check_form'>";
 			// on lance la requête
+			$list = '';
 			while(($nz=pmb_mysql_fetch_object($this->t_query))) {
 				
 				// frais annexes
@@ -821,17 +824,18 @@ class sel_searcher_frais extends sel_searcher {
 
 class sel_searcher_abt extends sel_searcher {
 	
-	var $t_query;
-	var $cur_typ_query='abt';
+	public $t_query;
+	public $cur_typ_query='abt';
 	
 	
-	function make_first_search() {
+	public function make_first_search() {
 
 		global $msg,$dbh;
 		global $elt_query;
 		global $location_query, $date_ech_query;
 		global $nb_per_page, $nb_per_page_select;
 		global $results_show_all;
+		global $specific_order;
 		
 		if (!$nb_per_page) {
 			$nb_per_page=$nb_per_page_select; 
@@ -857,7 +861,17 @@ class sel_searcher_abt extends sel_searcher {
 			$n_count = pmb_mysql_result($r_count,0,0);
 			$this->nbresults = $n_count;
 			
-			$q_list = "select tit1, abt_id, abt_name from notices, abts_abts where ".$restrict." and (0 ".$suite_rqt.") ORDER BY 1,3";
+			if ((!$specific_order) || ($specific_order==1)) {
+				$order_by = " ORDER BY 1,3";
+			} elseif($specific_order==2){
+				$order_by = " ORDER BY 1 DESC,3 DESC";
+			} elseif ($specific_order == 3) {
+				$order_by = " ORDER BY date_fin";
+			} elseif ($specific_order == 4) {
+				$order_by = " ORDER BY date_fin DESC";
+			}
+			
+			$q_list = "select tit1, abt_id, abt_name from notices, abts_abts where ".$restrict." and (0 ".$suite_rqt.")".$order_by;
 			if(!$results_show_all){
 				$q_list .= " limit ".$this->page*$nb_per_page.", ".$nb_per_page." ";
 			} 
@@ -883,15 +897,57 @@ class sel_searcher_abt extends sel_searcher {
 				$this->nbresults = $n_count;
 				
 				$q_list = "select abt_id, ".$q_members['select']." as pert from notices, abts_abts where ".$restrict." and (".$q_members["where"]." ".$suite_rqt.") ".$q_members['post'];
-				if(!$results_show_all){
-					$q_list.=" limit ".$this->page*$nb_per_page.", ".$nb_per_page." "; 
+				//Comportement d'origine
+				if (!$specific_order) {
+					//On filtre sur la pertinence
+					if(!$results_show_all){
+						$q_list.=" limit ".$this->page*$nb_per_page.", ".$nb_per_page." "; 
+					}
+					//on surcharge la requête d'origine pour ajouter trier sur titre de périodique
+					$new_q_list="
+							SELECT tit1, a.abt_id, a.abt_name, pert 
+							FROM notices n, abts_abts a, (".$q_list.") as q 
+							WHERE q.abt_id=a.abt_id AND a.num_notice=n.notice_id 
+							ORDER BY 1 ASC,3 DESC";
+				} elseif ($specific_order==1) { //Tri notice/abo croissant sans pertinence
+					$q_list = "select abt_id, ".$q_members['select']." as pert from notices, abts_abts where ".$restrict." and (".$q_members["where"]." ".$suite_rqt.") ".$q_members['post'];
+					//on surcharge la requête d'origine pour ajouter trier sur titre de périodique
+					$new_q_list="
+							SELECT tit1, a.abt_id, a.abt_name, pert 
+							FROM notices n, abts_abts a, (".$q_list.") as q 
+							WHERE q.abt_id=a.abt_id AND a.num_notice=n.notice_id 
+							ORDER BY 1 ASC,3 DESC";
+					if(!$results_show_all){
+						$new_q_list.=" LIMIT ".$this->page*$nb_per_page.", ".$nb_per_page." ";
+					}
+				} elseif ($specific_order==2) { //Tri notice/abo décroissant sans pertinence
+					$new_q_list="
+							SELECT tit1, a.abt_id, a.abt_name, pert
+							FROM notices n, abts_abts a, (".$q_list.") as q
+							WHERE q.abt_id=a.abt_id AND a.num_notice=n.notice_id
+							ORDER BY 1 DESC,3 ASC";
+					if(!$results_show_all){
+						$new_q_list.=" LIMIT ".$this->page*$nb_per_page.", ".$nb_per_page." ";
+					}
+				} elseif ($specific_order == 3) { //Date échéance croissante
+					$new_q_list="
+							SELECT tit1, a.abt_id, a.abt_name, pert 
+							FROM notices n, abts_abts a, (".$q_list.") as q 
+							WHERE q.abt_id=a.abt_id AND a.num_notice=n.notice_id 
+							ORDER BY a.date_fin";
+					if(!$results_show_all){
+						$new_q_list.=" LIMIT ".$this->page*$nb_per_page.", ".$nb_per_page." ";
+					}
+				} elseif ($specific_order == 4) { //Date échéance décroissante
+					$new_q_list="
+							SELECT tit1, a.abt_id, a.abt_name, pert 
+							FROM notices n, abts_abts a, (".$q_list.") as q 
+							WHERE q.abt_id=a.abt_id AND a.num_notice=n.notice_id 
+							ORDER BY a.date_fin DESC";
+					if(!$results_show_all){
+						$new_q_list.=" LIMIT ".$this->page*$nb_per_page.", ".$nb_per_page." ";
+					}
 				}
-				//on surcharge la requête d'origine pour ajouter trier sur titre de périodique
-				$new_q_list="
-						SELECT tit1, a.abt_id, a.abt_name, pert 
-						FROM notices n, abts_abts a, (".$q_list.") as q 
-						WHERE q.abt_id=a.abt_id AND a.num_notice=n.notice_id 
-						ORDER BY 1 ASC,3 DESC";
 				$r_list = pmb_mysql_query($new_q_list,$dbh);
 				$this->t_query=$r_list;
 				if(!$results_show_all){
@@ -905,25 +961,28 @@ class sel_searcher_abt extends sel_searcher {
 	}
 
 	
-	function store_search() {
+	public function store_search() {
 
 		global $elt_query;
 		global $location_query, $date_ech_query;
 		global $charset;
+		global $specific_order;
 		
 		$champs="<input type='hidden' name='elt_query' value='".htmlentities(stripslashes($elt_query),ENT_QUOTES,$charset)."'/>";
 		$champs.="<input type='hidden' name='location_query' value='".htmlentities(stripslashes($location_query),ENT_QUOTES,$charset)."'/>";
 		$champs.="<input type='hidden' name='date_ech_query' value='".htmlentities(stripslashes($date_ech_query),ENT_QUOTES,$charset)."'/>";
+		$champs.="<input type='hidden' name='specific_order' value='".htmlentities(stripslashes($specific_order),ENT_QUOTES,$charset)."'/>";
 		$this->store_form=str_replace("!!first_search_variables!!",$champs,$this->store_form);
 		print $this->store_form;
 	}
 	
 	
-	function elt_list() {
+	public function elt_list() {
 
 		global $msg, $charset;
 		global $elt_query;
 		global $results_show_all;
+		global $specific_order;
 
 		$research .= '<b>'.htmlentities($msg['selector_lib_abt'],ENT_QUOTES,$charset).'</b>&nbsp;'.htmlentities(stripslashes($elt_query),ENT_QUOTES,$charset);
 	
@@ -942,6 +1001,31 @@ class sel_searcher_abt extends sel_searcher {
 						<input type='button' class='bouton_small' onclick='add_selection();' id='searcher_results_add_selection' name='searcher_results_add_selection' value='".htmlentities($msg['searcher_results_add_selection'],ENT_QUOTES,$charset)."'>
 					</div>";
 			print "<form name='searcher_results_check_form'>";
+			//entete pour trier
+			print "<div class='row' style='margin-left:5px;'>";
+			if ($specific_order==1) {
+				$specific_order_new = 2;
+			} else {
+				$specific_order_new = 1;
+			}
+			print "<div class='colonne80'>
+						<div class='notice-parent'>
+							<b><a href='javascript:specific_order(".$specific_order_new.")'>".htmlentities($msg['selector_lib_abt'],ENT_QUOTES,$charset)."</a></b>
+						</div>
+				   </div>";
+			print "<div class='colonne10'>&nbsp;</div>";
+			if ($specific_order==3) {
+				$specific_order_new = 4;
+			} else {
+				$specific_order_new = 3;
+			}
+			print "<div class='colonne10'>
+						<div class='notice-parent'>
+							<b><a href='javascript:specific_order(".$specific_order_new.")'>".htmlentities($msg['acquisition_abt_ech'],ENT_QUOTES,$charset)."</a></b>
+						</div>
+					</div>";
+			print "</div>";
+			print $this->back_script_order;
 			// on lance la requête 
 			while(($nz=pmb_mysql_fetch_object($this->t_query))) {
 				// abonnement

@@ -2,22 +2,22 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: openurl_parameters.class.php,v 1.1 2011-08-02 12:35:58 arenou Exp $
+// $Id: openurl_parameters.class.php,v 1.2 2016-12-22 16:36:18 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 
 //Cette classe doit fournir le jeu de paramètres permettant le bon fonctionnement d'OpenURL 
 class openurl_parameters {
-	var $xml;		// xml de configuration
-	var $params;	// parametres 
-	var $conn_params;	//paramètres du connecteurs
+	public $xml;		// xml de configuration
+	public $params;	// parametres 
+	public $conn_params;	//paramètres du connecteurs
 	
-	function openurl_parameters($xml=""){
+	public function __construct($xml=""){
 		$this->xml = $xml;
 	}
 	
-	function setParameters($params){
+	public function setParameters($params){
 		$this->conn_params = $params;
 	    $this->params = array(
 	    	'transport' => $this->setTransportParams(),
@@ -26,7 +26,7 @@ class openurl_parameters {
 	    );
 	}
 	
-	function setTransportParams(){
+	public function setTransportParams(){
 		return array(
 			'protocole' => $this->conn_params['protocole'],
 			'method' => $this->conn_params['method'],
@@ -35,11 +35,11 @@ class openurl_parameters {
 		);
 	}
 	
-	function setSerializationParams(){
+	public function setSerializationParams(){
 		return $this->conn_params['serialization'];
 	}
 	
-	function setEntitiesParams(){
+	public function setEntitiesParams(){
 		$param = array(
 			'referent' => array(
 				'identifier' => array(
@@ -89,7 +89,7 @@ class openurl_parameters {
 		return $param;
 	}
 	
-	function getParameters(){
+	public function getParameters(){
 		return $this->params;
 	}
 }

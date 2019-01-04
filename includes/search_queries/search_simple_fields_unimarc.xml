@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- $Id: search_simple_fields_unimarc.xml,v 1.12 2015-05-07 07:36:37 jpermanne Exp $ -->
+<!-- $Id: search_simple_fields_unimarc.xml,v 1.16 2016-11-16 07:58:16 jpermanne Exp $ -->
 <pmbfields>
 
 	<!-- Zone fixedFields :
@@ -123,7 +123,7 @@
 				<id_field>recid</id_field>
 			</query>
 		</field>
-		<field title="msg:isbn_query" id="20" unimarcField="010$a">
+		<field title="msg:isbn_query" id="31" unimarcField="010$a">
 			<input type="text"/>
 			<variable name="selected_sources" type="global"/>
 			<query for="STARTWITH" isbnSearch="yes">
@@ -222,23 +222,23 @@
 	
 	<dynamicFields visible="no">
 		<field dataType="small_text" id="1">
-			<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+			<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where !!multiple_term!! order by index_serie, tnvol, index_sew]]></main>
 				<multipleTerm>notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_small_text like '%!!p!!%'</multipleTerm>
 				<multipleOperator>or</multipleOperator>
 			</query>
-			<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+			<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where !!multiple_term!! order by index_serie, tnvol, index_sew]]></main>
 				<multipleTerm>notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_small_text like '%!!p!!%'</multipleTerm>
 				<multipleOperator>and</multipleOperator>
 			</query>
-			<query for="STARTWITH" notAllowedFor="list,query_list,marclist" regDiacrit="yes">
+			<query for="STARTWITH" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="yes">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_small_text like '!!p!!%' order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="ENDWITH" notAllowedFor="list,query_list,marclist" regDiacrit="yes">
+			<query for="ENDWITH" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="yes">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_small_text like '%!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="EXACT" notAllowedFor="list,query_list,marclist" regDiacrit="yes">
+			<query for="EXACT" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="yes">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_small_text='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
 			<query for="EQ">
@@ -252,23 +252,23 @@
 			</query>
 		</field>
 		<field dataType="text" id="2">
-			<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+			<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where !!multiple_term!! order by index_serie, tnvol, index_sew]]></main>
 				<multipleTerm>notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_text like '%!!p!!%'</multipleTerm>
 				<multipleOperator>or</multipleOperator>
 			</query>
-			<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+			<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where !!multiple_term!! order by index_serie, tnvol, index_sew]]></main>
 				<multipleTerm>notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_text like '%!!p!!%'</multipleTerm>
 				<multipleOperator>and</multipleOperator>
 			</query>
-			<query for="STARTWITH" notAllowedFor="list,query_list,marclist" regDiacrit="yes">
+			<query for="STARTWITH" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="yes">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_text like '!!p!!%' order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="ENDWITH" notAllowedFor="list,query_list,marclist" regDiacrit="yes">
+			<query for="ENDWITH" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="yes">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_text like '%!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="EXACT" notAllowedFor="list,query_list,marclist" regDiacrit="yes">
+			<query for="EXACT" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="yes">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_text='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
 			<query for="EQ">
@@ -285,16 +285,16 @@
 			<query for="EQ">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_integer='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="LT" notAllowedFor="list,query_list,marclist">
+			<query for="LT" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_integer<'!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="GT" notAllowedFor="list,query_list,marclist">
+			<query for="GT" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_integer>'!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="LTEQ" notAllowedFor="list,query_list,marclist">
+			<query for="LTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_integer<='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="GTEQ" notAllowedFor="list,query_list,marclist">
+			<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_integer>='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
 			<query for="ISEMPTY">
@@ -308,16 +308,16 @@
 			<query for="EQ">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and round(notices_custom_float,LENGTH(SUBSTRING_INDEX('!!p!!','.',-1)))='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="LT" notAllowedFor="list,query_list,marclist">
+			<query for="LT" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and round(notices_custom_float,LENGTH(SUBSTRING_INDEX('!!p!!','.',-1)))<'!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="GT" notAllowedFor="list,query_list,marclist">
+			<query for="GT" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and round(notices_custom_float,LENGTH(SUBSTRING_INDEX('!!p!!','.',-1)))>'!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="LTEQ" notAllowedFor="list,query_list,marclist">
+			<query for="LTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and round(notices_custom_float,LENGTH(SUBSTRING_INDEX('!!p!!','.',-1)))<='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="GTEQ" notAllowedFor="list,query_list,marclist">
+			<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and round(notices_custom_float,LENGTH(SUBSTRING_INDEX('!!p!!','.',-1)))>='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
 			<query for="ISEMPTY">
@@ -331,16 +331,16 @@
 			<query for="EQ">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_date='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="LT" notAllowedFor="list,query_list,marclist">
+			<query for="LT" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_date<'!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="GT" notAllowedFor="list,query_list,marclist">
+			<query for="GT" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_date>'!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="LTEQ" notAllowedFor="list,query_list,marclist">
+			<query for="LTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_date<='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="GTEQ" notAllowedFor="list,query_list,marclist">
+			<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_date>='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 			</query>
 			<query for="ISEMPTY">
@@ -356,6 +356,7 @@
 		<field type="external_sources" title="msg:connecteurs_source_label" id="2" delnotallowed="yes" visible="no" separator="Autres"/>
 		<field type="serials_list" title="msg:external_serials" id="3"/>
 		<field type="remote_serials_list" title="msg:remote_external_serials" id="4"/>
+		<field type="facette" title="msg:search_facette" id="5" opacVisibility="no"/>
 	</specialFields>
 	
 	<operators>
@@ -366,11 +367,11 @@
 		<operator name="STARTWITH">msg:commence_par_query</operator>
 		<operator name="ENDWITH">msg:finit_par_query</operator>
 		<operator name="EXACT">msg:exactement_comme_query</operator>
-		<operator name="EQ">=</operator>
-		<operator name="GT">&gt;</operator>
-		<operator name="LT">&lt;</operator>
-		<operator name="GTEQ">&gt;=</operator>
-		<operator name="LTEQ">&lt;=</operator>
+		<operator name="EQ">msg:eq_query</operator>
+		<operator name="GT">msg:gt_query</operator>
+		<operator name="LT">msg:lt_query</operator>
+		<operator name="GTEQ">msg:gteq_query</operator>
+		<operator name="LTEQ">msg:lteq_query</operator>
 		<operator name="ISEMPTY" emptyAllowed="yes">msg:est_vide_query</operator>
 		<operator name="ISNOTEMPTY" emptyAllowed="yes">msg:pas_vide_query</operator>
 	</operators>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: editions_state_view_group.class.php,v 1.1 2013-03-11 10:40:09 mbertin Exp $
+// $Id: editions_state_view_group.class.php,v 1.3 2017-07-12 15:14:59 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -128,8 +128,8 @@ class editions_state_view_group extends editions_state_view {
 			if(is_array($show_fields_tabl) && count($show_fields_tabl)){
 				foreach ( $show_fields_tabl as $champ ) {
        				$function_field = "function_field_".$champ;
-					global $$function_field;
-					$option=$$function_field;
+					global ${$function_field};
+					$option=${$function_field};
 					if(!$option){
 						$option="val";
 					}
@@ -273,11 +273,7 @@ class editions_state_view_group extends editions_state_view {
 	public function render_xls_file($name="state"){
 		global $msg,$charset;
 		
-		$tmp_file = tempnam(sys_get_temp_dir(),"state_");
-		header("Content-Type: application/x-msexcel; name=\"".$name.".xls\"");
-		header("Content-Disposition: inline; filename=\"".$name.".xls\"");
-		$workbook = new writeexcel_workbook($tmp_file);
-		$worksheet = &$workbook->addworksheet();
+		$worksheet = new spreadsheet();
 		
 		$show_fields_tabl=$this->my_param["group"]["show_fields"];
 		$group_fields_tabl=$this->my_param["group"]["group_fields"];
@@ -323,9 +319,6 @@ class editions_state_view_group extends editions_state_view {
 				}
 			}
 		}
-		$workbook->close();
-		$fh=fopen($tmp_file, "rb");
-		fpassthru($fh);
-		unlink($tmp_file);		
+		$worksheet->download($name.'.xls');
 	}
 }

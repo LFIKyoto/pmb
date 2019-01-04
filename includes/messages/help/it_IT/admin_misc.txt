@@ -1,4 +1,4 @@
-<h1>Utilit&agrave;</h1>
+<h2>Utilit&agrave;</h2>
 <p>In questa pagina si trovano varie opzioni. </p>
 <p>
 <b>Pulizia dell'archivio</b> permette la gestione del database: eliminare le schede bibliografiche senza esemplari, etc.

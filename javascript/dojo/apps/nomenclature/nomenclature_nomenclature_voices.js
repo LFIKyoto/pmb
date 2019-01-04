@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_nomenclature_voices.js,v 1.4 2015-02-09 11:15:24 vtouchard Exp $
+// $Id: nomenclature_nomenclature_voices.js,v 1.7 2016-06-27 13:43:27 dgoron Exp $
 
 define(["dojo/_base/declare", "apps/nomenclature/nomenclature_voices_list", "apps/nomenclature/nomenclature_voice", "dojo/topic", "dojo/_base/lang", "dijit/registry"], function(declare, Voices_list, Voice, topic,lang, registry){
 	/*
@@ -108,10 +108,14 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_voices_list", "app
 					switch(state){
 					case "START":
 						if(!isNaN(carac)){
-							this.current_voice_effective+=parseInt(carac);
+							this.current_voice_effective = carac;
 							state = "VOICE_EFFECTIVE";
 						}else if(this.is_letter(carac)){
 							this.current_voice_code=carac;
+							this.current_voice_effective_indefinite = true;
+							this.voice_definition_in_progress = true;
+							state = "VOICE";
+						}else if(carac == this.indefinite_character){
 							this.current_voice_effective_indefinite = true;
 							this.voice_definition_in_progress = true;
 							state = "VOICE";
@@ -125,10 +129,14 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_voices_list", "app
 						break;
 					case "NEW_VOICE":
 						if(!isNaN(carac)){
-							this.current_voice_effective+=parseInt(carac);
+							this.current_voice_effective+=carac;
 							state = "VOICE_EFFECTIVE";
 						}else if(this.is_letter(carac)){
 							this.current_voice_code=carac;
+							this.current_voice_effective_indefinite = true;
+							this.voice_definition_in_progress = true;
+							state = "VOICE";
+						}else if(carac == this.indefinite_character){
 							this.current_voice_effective_indefinite = true;
 							this.voice_definition_in_progress = true;
 							state = "VOICE";
@@ -180,7 +188,7 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_voices_list", "app
 						break;
 					case "VOICE_EFFECTIVE": 
 						if(!isNaN(carac)){
-							this.current_voice_effective+=parseInt(carac);
+							this.current_voice_effective+=carac;
 						}else if(this.is_letter(carac)){
 							this.current_voice_code+=carac;
 							this.voice_definition_in_progress = true;
@@ -198,7 +206,7 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_voices_list", "app
 					case "NEW_PART":
 						if(part_in_def){
 							if(!isNaN(carac)){
-								this.current_part_effective+=parseInt(carac);
+								this.current_part_effective+=carac;
 								state = "PART_EFFECTIVE";
 							}else{
 								switch(carac){
@@ -246,7 +254,7 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_voices_list", "app
 						break;
 					case "PART_EFFECTIVE": 
 						if(!isNaN(carac)){
-							this.current_part_effective+=parseInt(carac);
+							this.current_part_effective+=carac;
 						}else{
 							switch(carac){
 							case ".":
@@ -393,7 +401,7 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_voices_list", "app
 			  	this.sub_voices_array = null;
 			},
 			is_letter: function(letter){
-				if(letter.match(/[a-z]/i)){
+				if(letter.match(/[a-z\s]/i)){
 					return true;
 				}
 				return false;

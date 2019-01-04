@@ -4,4 +4,7 @@
 	code NMTOKEN #REQUIRED
  	order NMTOKEN #IMPLIED
  	js NMTOKEN #IMPLIED
+ 	reverse_code NMTOKEN #IMPLIED
+ 	reverse_code_default_checked NMTOKEN #IMPLIED
+ 	nature NMTOKEN #IMPLIED
 >

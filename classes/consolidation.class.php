@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: consolidation.class.php,v 1.11 2015-04-16 11:16:38 jpermanne Exp $
+// $Id: consolidation.class.php,v 1.17 2018-10-24 07:15:19 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,22 +15,22 @@ if(!defined('ECHEANCE_CONSO')) define('ECHEANCE_CONSO',3);
 
 class consolidation {
 	
-	var $mode=1;
-	var $date_debut='';
-	var $date_fin='';
-	var $echeance='';
-	var $list_idview = array();
-	var $remove_data=0;
-	var $flag = false;
-	var $cols_vue=array();
+	public $mode=1;
+	public $date_debut='';
+	public $date_fin='';
+	public $echeance='';
+	public $list_idview = array();
+	public $remove_data=0;
+	public $flag = false;
+	public $cols_vue=array();
 	
-	var $nom_vue='';
-	var $date_consolidation='0000-00-00 00:00:00';
-	var $date_debut_log='0000-00-00 00:00:00';
-	var $date_fin_log='0000-00-00 00:00:00';
+	public $nom_vue='';
+	public $date_consolidation='0000-00-00 00:00:00';
+	public $date_debut_log='0000-00-00 00:00:00';
+	public $date_fin_log='0000-00-00 00:00:00';
 	
 	
-	function consolidation($mode=1,$date_debut='',$date_fin='',$echeance='',$list_ck='',$remove_data=0){
+	public function __construct($mode=1,$date_debut='',$date_fin='',$echeance='',$list_ck='',$remove_data=0){
 		global $pmb_set_time_limit;
 		$this->mode = $mode;
 		$this->date_debut = $date_debut;
@@ -54,7 +54,7 @@ class consolidation {
 	}
 
 	
-	function make_consolidation(){
+	public function make_consolidation(){
 
 		global $dbh;
 		
@@ -100,7 +100,7 @@ class consolidation {
 	/**
 	 * Fonction qui permet d'extraire un lot de log entre des dates précises
 	 */
-	function calculer_sur_periode($id_vue, $date_deb, $date_fin){
+	public function calculer_sur_periode($id_vue, $date_deb, $date_fin){
 		global $dbh;		
 		
 		$req = "create temporary table logs_filtre_$id_vue select * from statopac where date_log between '".addslashes($date_deb)."' and '".addslashes($date_fin)."'";
@@ -116,7 +116,7 @@ class consolidation {
 	/**
 	 * Fonction qui permet d'extraire un lot de log depuis le début des enregistrements jusqu'à l'échéance fixée
 	 */
-	function calculer_until($id_vue, $echeance){
+	public function calculer_until($id_vue, $echeance){
 		global $dbh;
 		if ($this->flag || $this->remove_data || $this->date_fin_log=='0000-00-00 00:00:00') {
 			$req = "create temporary table logs_filtre_$id_vue select * from statopac where date_log <='".addslashes($echeance)."'";
@@ -133,7 +133,7 @@ class consolidation {
 	/**
 	 * Fonction qui permet d'extraire un lot de log depuis la date de dernière consolidation
 	 */	
-	function calculer_since_last($id_vue){
+	public function calculer_since_last($id_vue){
 		global $dbh;
 
 		//$req_vue = "select date_consolidation from statopac_vues where id_vue='".addslashes($id_vue)."'";
@@ -154,7 +154,7 @@ class consolidation {
 	/**
 	 * Calcul des dates de debut et de fin de log 
 	 */
-	function set_dates_log($id_vue,$only_last=false) {
+	public function set_dates_log($id_vue,$only_last=false) {
 		global $dbh;
 		if (!$id_vue) return;
 		$q = 'select min(date_log) as min_date, max(date_log) as max_date from logs_filtre_'.$id_vue;
@@ -195,7 +195,7 @@ class consolidation {
 	/**
 	 * Fonction qui vérifie que la structure des tables de vues n'a pas été modifiée 
 	 */
-	function check_structure($id_vue) {
+	public function check_structure($id_vue) {
 		
 		global $dbh;
 		
@@ -225,11 +225,15 @@ class consolidation {
 		while(($col=pmb_mysql_fetch_object($res_col))){			
 			//On ajoute les champs (indicateurs)
 			$this->cols_vue[]=$col;
-			if($col->datatype == 'small_text')
-				$type_col = 'varchar(255)';
-			else $type_col = $col->datatype; 
-			$rqt_addfield = "ALTER TABLE statopac_vue_".addslashes($id_vue)." ADD ".addslashes(trim($col->nom_col))." ".addslashes($type_col)." NOT NULL";
-			pmb_mysql_query($rqt_addfield);
+			$rqt_exists = "SHOW COLUMNS FROM statopac_vue_".addslashes($id_vue)." LIKE '".addslashes(trim($col->nom_col))."'";
+			$res_exists = pmb_mysql_query($rqt_exists);
+			if(pmb_mysql_num_rows($res_exists) == 0) {
+				if($col->datatype == 'small_text')
+					$type_col = 'varchar(255)';
+				else $type_col = $col->datatype; 
+				$rqt_addfield = "ALTER TABLE statopac_vue_".addslashes($id_vue)." ADD ".addslashes(trim($col->nom_col))." ".addslashes($type_col)." NOT NULL";
+				pmb_mysql_query($rqt_addfield);
+			}
 		}
 	}
 	
@@ -237,7 +241,7 @@ class consolidation {
 	/**
 	 * Fonction qui créée les tables dynamiques consolidées
 	 */
-	function consolider($id_vue){
+	public function consolider($id_vue){
 		global $dbh, $tab_val, $liste_tabfiltre, $pmb_set_time_limit;
 		//Gestion du timeout au niveau de php pour ne pas perdre la connection
 		set_time_limit($pmb_set_time_limit);
@@ -293,11 +297,11 @@ class consolidation {
 							PRIMARY KEY ( `id_log` )
 						)";
 						pmb_mysql_query($rqt_create, $dbh);
-						$parser->cmd = $col->filtre ;
-						$parser->environnement['tempo']="logs_filtre_$id_vue";
-						$parser->environnement['num_ligne']=$ligne[0];
+						$print_format->cmd = $col->filtre ;
+						$print_format->environnement['tempo']="logs_filtre_$id_vue";
+						$print_format->environnement['num_ligne']=$ligne[0];
 						$print_format->environnement['ligne']=$ligne;
-						$val_filtre = $parser->exec_cmd_conso();
+						$val_filtre = $print_format->exec_cmd_conso();
 						$filtre_tab = $this->creer_filtre($col->filtre,$val_filtre,$id_vue,$ligne[0],"filtre_".$ligne[0]."_".$col->id_col);
 					}	
 					
@@ -341,7 +345,7 @@ class consolidation {
 	/**
 	 * Fonction qui permet de créer un filtre de résultat par rapport à une valeur 
 	 */
-	function creer_filtre($filtre,$valeur_filtre,$id_vue,$ligne_repere,$table){
+	public function creer_filtre($filtre,$valeur_filtre,$id_vue,$ligne_repere,$table){
 		global $dbh,$tab_val, $liste_tabfiltre;
 		
 		$table_filtre ="";
@@ -386,10 +390,10 @@ class consolidation {
 		return ($table_filtre ? $table_filtre : $table);
 	}
 	
-	function show_progress_bar(){
+	public function show_progress_bar(){
 		print "<div class='row' style='text-align:center; width:80%; border: 1px solid #000000; padding: 4px;'>
 			<div style='text-align:left; width:100%; height:16px;'>
-				<img id='progress' src='images/jauge.png' style='width:1px; height:16px'/>
+				<img id='progress' src='".get_url_icon('jauge.png')."' style='width:1px; height:16px'/>
 			</div>
 			<div style='text-align:center'>
 				<span id='progress_text'></span>&nbsp;
@@ -399,22 +403,49 @@ class consolidation {
 		flush();
 	}
 	
-	function init_progress_bar() {
-		print "<script>document.getElementById('progress').src='images/jauge.png'</script>";
+	public function init_progress_bar() {
+		print "<script>document.getElementById('progress').src='".get_url_icon('jauge.png')."'</script>";
 		flush();
 	}
 	
-	function set_progress_percent($percent) {
+	public function set_progress_percent($percent) {
 		print "<script>document.getElementById('progress').style.width='$percent%';
 				document.getElementById('progress_percent').innerHTML='$percent%';
 		</script>";
 		flush();
 	}
 	
-	function set_progress_text($text){
+	public function set_progress_text($text){
 		global $charset;
 		print "<script>document.getElementById('progress_text').innerHTML='".htmlentities($text,ENT_QUOTES,$charset)."';</script>";
 		flush();
+	}
+	
+	public static function curl_load_file($url, $filename) {
+		global $opac_curl_available, $msg ;
+		if (!$opac_curl_available) die("PHP Curl must be available");
+		//Calcul du subst
+		$url_subst=str_replace(".xml","_subst.xml",$url);
+		$curl = curl_init();
+		curl_setopt ($curl, CURLOPT_URL, $url_subst);
+		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+		$filename_subst=str_replace(".xml","_subst.xml",$filename);
+		$fp = fopen($filename_subst, "w+");
+		curl_setopt($curl, CURLOPT_FILE, $fp);
+	
+		if(curl_exec ($curl)) {
+			fclose($fp);
+			if (curl_getinfo($curl,CURLINFO_HTTP_CODE)=="404") {
+				unset($fp);
+				@unlink($filename_subst);
+			}
+			curl_setopt ($curl, CURLOPT_URL, $url);
+			$fp = fopen($filename, "w+");
+			curl_setopt($curl, CURLOPT_FILE, $fp);
+			if(!curl_exec ($curl)) die($msg["search_perso_error_param_opac_url"]);
+		} else die($msg["search_perso_error_param_opac_url"]);
+		curl_close ($curl);
+		fclose($fp);
 	}
 }
 ?>

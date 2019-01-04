@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: img.inc.php,v 1.1 2012-07-05 14:33:36 ngantier Exp $
+// $Id: img.inc.php,v 1.3 2018-10-03 10:47:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -12,10 +12,10 @@ $img=new files_gestion($pmb_img_folder,$pmb_img_url);
 
 switch($action) {
 	case 'upload':
-		$img->upload();		
+		$img->upload($from);
 	break;	
 	case 'delete':
-		$img->delete($filename);
+		$img->delete(stripslashes($filename));
 	break;
 	default:
 	break;

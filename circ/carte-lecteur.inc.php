@@ -2,35 +2,35 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: carte-lecteur.inc.php,v 1.10 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: carte-lecteur.inc.php,v 1.11 2017-07-12 15:15:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // la largeur de la zone pour le nom
 $var = "pdfcartelecteur_largeur_nom";
-$largeur_nom = $$var;
+$largeur_nom = ${$var};
 
 // la position en X
 $var = "pdfcartelecteur_pos_h";
-$pos_x = $$var;
+$pos_x = ${$var};
 
 // la position en Y
 $var = "pdfcartelecteur_pos_v";
-$pos_y = $$var;
+$pos_y = ${$var};
 
 // Valable du
 $var = "pdfcartelecteur_valabledu";
-$valabledu = $$var;
+$valabledu = ${$var};
 // au
 $var = "pdfcartelecteur_valableau";
-$valableau = $$var;
+$valableau = ${$var};
 // Carte N°
 $var = "pdfcartelecteur_carteno";
-$carteno = $$var;
+$carteno = ${$var};
 
 // le texte qui apparait juste au dessus du code-barre
 $var = "pdfcartelecteur_biblio_name";
-eval ("\$bibli_name=\"".$$var."\";");
+eval ("\$bibli_name=\"".${$var}."\";");
 
 // PARAMETRES
 // ----------

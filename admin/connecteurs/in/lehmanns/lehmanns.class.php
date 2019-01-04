@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lehmanns.class.php,v 1.3.4.2 2015-09-15 14:32:56 apetithomme Exp $
+// $Id: lehmanns.class.php,v 1.9 2017-07-12 15:15:02 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,8 +15,8 @@ if (version_compare(PHP_VERSION,'5','>=') && extension_loaded('xsl')) {
 }
 
 class xml_dom_lehmanns {
-	var $xml;				/*!< XML d'origine */
-	var $charset;			/*!< Charset courant (iso-8859-1 ou utf-8) */
+	public $xml;				/*!< XML d'origine */
+	public $charset;			/*!< Charset courant (iso-8859-1 ou utf-8) */
 	/**
 	 * \brief Arbre des noeuds du document
 	 * 
@@ -31,14 +31,14 @@ class xml_dom_lehmanns {
 	 )
 	 \endverbatim
 	 */
-	var $tree; 
-	var $error=false; 		/*!< Signalement d'erreur : true : erreur lors du parse, false : pas d'erreur */
-	var $error_message=""; 	/*!< Message d'erreur correspondant à l'erreur de parse */
-	var $depth=0;			/*!< \protected */
-	var $last_elt=array();	/*!< \protected */
-	var $n_elt=array();		/*!< \protected */
-	var $cur_elt=array();	/*!< \protected */
-	var $last_char=false;	/*!< \protected */
+	public $tree; 
+	public $error=false; 		/*!< Signalement d'erreur : true : erreur lors du parse, false : pas d'erreur */
+	public $error_message=""; 	/*!< Message d'erreur correspondant à l'erreur de parse */
+	public $depth=0;			/*!< \protected */
+	public $last_elt=array();	/*!< \protected */
+	public $n_elt=array();		/*!< \protected */
+	public $cur_elt=array();	/*!< \protected */
+	public $last_char=false;	/*!< \protected */
 	
 	/**
 	 * \protected
@@ -396,7 +396,7 @@ class xml_dom_lehmanns {
 
 class lehmanns extends connector {
 	//Variables internes pour la progression de la récupération des notices
-	var $themes=array(
+	public $themes=array(
 		"Humanmedizin",
 		"Psychologie",
 		"Informatik",
@@ -407,33 +407,20 @@ class lehmanns extends connector {
 		"Wirtschaft"
 	);
 	
-	//Résultat de la synchro
-	var $error;					//Y-a-t-il eu une erreur	
-	var $error_message;			//Si oui, message correspondant
-	
-    function lehmanns($connector_path="") {
-    	parent::connector($connector_path);
+    public function __construct($connector_path="") {
+    	parent::__construct($connector_path);
     }
     
-    function get_id() {
+    public function get_id() {
     	return "lehmanns";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 2;
 	}
     
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-    
-    function source_get_property_form($source_id) {
+    public function source_get_property_form($source_id) {
     	global $charset;
     	
     	$params=$this->get_source_params($source_id);
@@ -441,8 +428,8 @@ class lehmanns extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		if ($themes=="") $themes=array();
@@ -474,7 +461,7 @@ class lehmanns extends connector {
 		return $form;
     }
     
-    function make_serialized_source_properties($source_id) {
+    public function make_serialized_source_properties($source_id) {
     	global $themes,$max_return;
     	if ($themes[0]=="") $themes=array();
     	$t["themes"]=$themes;
@@ -483,39 +470,14 @@ class lehmanns extends connector {
 	}
 	
 	//Récupération  des proriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
-		$this->timeout=5;
+	public function fetch_default_global_values() {
+		parent::fetch_default_global_values();
 		$this->repository=1;
-		$this->retry=3;
-		$this->ttl=1800;
 		$this->parameters=array();
 	}
 	
-	//Formulaire des propriétés générales
-	function get_property_form() {
-		$this->fetch_global_properties();
-		return "";
-	}
-	
-	function make_serialized_properties() {
-		$this->parameters="";
-	}
-	
-	function apply_xsl_to_xml($xml, $xsl) {
-		global $charset;
-		$xh = xslt_create();
-		xslt_set_encoding($xh, $charset);
-		$arguments = array(
-	   	  '/_xml' => $xml,
-	   	  '/_xsl' => $xsl
-		);
-		$result = xslt_process($xh, 'arg:/_xml', 'arg:/_xsl', NULL, $arguments);
-		xslt_free($xh);
-		return $result;		
-	}
-	
 	//Fonction de recherche
-	function search($source_id,$query,$search_id) {
+	public function search($source_id,$query,$search_id) {
 		global $charset;
 		global $pmb_curl_proxy;	
 		global $base_path;
@@ -529,8 +491,8 @@ class lehmanns extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		
@@ -621,7 +583,7 @@ class lehmanns extends connector {
 		}
 	}
 	
-	function rec_records($noticesxml, $source_id, $search_id) {
+	public function rec_records($noticesxml, $source_id, $search_id) {
 		global $charset,$base_path;
 		if (!trim($noticesxml))
 			return;
@@ -635,7 +597,7 @@ class lehmanns extends connector {
 		}
 	}
 	
-	function rec_record($rec_uni_dom,$noticenode, $source_id, $search_id) {
+	public function rec_record($rec_uni_dom,$noticenode, $source_id, $search_id) {
 		global $charset,$base_path;
 		
 		$date_import=date("Y-m-d H:i:s",time());
@@ -661,14 +623,11 @@ class lehmanns extends connector {
 			if ($ref) {
 				//Si conservation des anciennes notices, on regarde si elle existe
 				if (!$this->del_old) {
-					$requete="select count(*) from entrepot_source_".$source_id." where ref='".addslashes($ref)."' and search_id='".addslashes($search_id)."'";
-					$rref=pmb_mysql_query($requete);
-					if ($rref) $ref_exists=pmb_mysql_result($rref,0,0);
+					$ref_exists = $this->has_ref($source_id, $ref, $search_id);
 				}
 				//Si pas de conservation des anciennes notices, on supprime
 				if ($this->del_old) {
-					$requete="delete from entrepot_source_".$source_id." where ref='".addslashes($ref)."' and search_id='".addslashes($search_id)."'";
-					pmb_mysql_query($requete);
+					$this->delete_from_entrepot($source_id, $ref, $search_id);
 					$this->delete_from_external_count($source_id, $ref);
 				}
 				//Si pas de conservation ou reférence inexistante
@@ -682,9 +641,7 @@ class lehmanns extends connector {
 					$n_header["dt"]=$rec_uni_dom->get_value("unimarc/notice/dt");
 					
 					//Récupération d'un ID
-					$requete="insert into external_count (recid,source_id) values('".addslashes($this->get_id()." ".$source_id." ".$ref)."',".$source_id.")";
-					$rid=pmb_mysql_query($requete);
-					if ($rid) $recid=pmb_mysql_insert_id();
+					$recid = $this->insert_into_external_count($source_id, $ref);
 					
 					$rqt_parallel="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid,search_id) values";
 					$first=false;
@@ -733,21 +690,10 @@ class lehmanns extends connector {
 					}
 					pmb_mysql_query($rqt_parallel);
 					//print $rqt_parallel."\n";
+					$this->rec_isbd_record($source_id, $ref, $recid);
 				}
 			}
 		}
-	}
-		
-	function cancel_maj($source_id) {
-		return false;
-	}
-	
-	function break_maj($source_id) {
-		return false;
-	}
-	
-	function maj_entrepot($source_id,$callback_progress="",$recover=false,$recover_env="") {
-		return 0;
 	}
 }
 ?>

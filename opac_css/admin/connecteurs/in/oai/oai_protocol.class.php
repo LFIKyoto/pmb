@@ -2,20 +2,23 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: oai_protocol.class.php,v 1.7.6.1 2015-09-11 08:53:13 jpermanne Exp $
+// $Id: oai_protocol.class.php,v 1.11 2018-09-06 14:54:54 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path,$base_path, $include_path;
+
+require_once($class_path."/xml_dom.class.php");
+
 //Gestion des dates
 class iso8601 {
-	var $granularity;
+	public $granularity;
 	
-	function iso8601($granularity="YYYY-MM-DD") {
+	public function __construct($granularity="YYYY-MM-DD") {
 		$this->granularity=$granularity;
 	}
 	
-	function unixtime_to_iso8601($time) {
+	public function unixtime_to_iso8601($time) {
 		$granularity=str_replace("T","\\T",$this->granularity);
 		$granularity=str_replace("Z","\\Z",$granularity);
 		$granularity=str_replace("YYYY","Y",$granularity);
@@ -28,7 +31,7 @@ class iso8601 {
 		return $date;
 	}
 	
-	function iso8601_to_unixtime($date) {
+	public function iso8601_to_unixtime($date) {
 		$parts=explode("T",$date);
 		if (count($parts)==2) {
 			$day=$parts[0]; 
@@ -48,248 +51,22 @@ class iso8601 {
 	}
 }
 
-//Un petit parser-dom élégant
-class xml_dom {
-	var $xml;
-	var $charset;
-	var $tree;
-	var $error=false;
-	var $error_message="";
-	var $depth=0;
-	var $last_elt=array();
-	var $n_elt=array();
-	var $cur_elt=array();
-	var $last_char=false;
-	
-	function close_node() {
-		$this->last_elt[$this->depth-1]["CHILDS"][]=$this->cur_elt;
-		$this->last_char=false;
-		$this->cur_elt=$this->last_elt[$this->depth-1];
-		$this->depth--;
-	}
-	
-	function startElement($parser,$name,$attribs) {
-		if ($this->last_char) $this->close_node();
-		$this->last_elt[$this->depth]=$this->cur_elt;
-		$this->cur_elt=array();
-		$this->cur_elt["NAME"]=$name;
-		$this->cur_elt["ATTRIBS"]=$attribs;
-		$this->cur_elt["TYPE"]=1;
-		$this->last_char=false;
-		$this->depth++;
-	}
-	
-	function endElement($parser,$name) {
-		if ($this->last_char) $this->close_node();
-		$this->close_node();
-	}
-	
-	function charElement($parser,$char) {
-		if ($this->last_char) $this->close_node();
-		$this->last_char=true;
-		$this->last_elt[$this->depth]=$this->cur_elt;
-		$this->cur_elt=array();
-		$this->cur_elt["DATA"].=$char;
-		$this->cur_elt["TYPE"]=2;
-		$this->depth++;
-	}
-	
-	function xml_dom($xml,$charset="iso-8859-1") {
-		$this->charset=$charset;
-		$this->cur_elt=array("NAME"=>"document","TYPE"=>"0");
-		
-		//Initialisation du parser
-		$xml_parser=xml_parser_create($this->charset);
-		xml_set_object($xml_parser,$this);
-		xml_parser_set_option( $xml_parser, XML_OPTION_CASE_FOLDING, 0 );
-		xml_parser_set_option( $xml_parser, XML_OPTION_SKIP_WHITE, 1 );
-		xml_set_element_handler($xml_parser, "startElement", "endElement");
-		xml_set_character_data_handler($xml_parser,"charElement");
-		
-		if (!xml_parse($xml_parser, $xml)) {
-       		$this->error_message=sprintf("XML error: %s at line %d",xml_error_string(xml_get_error_code($xml_parser)),xml_get_current_line_number($xml_parser));
-       		$this->error=true;
-		}
-		$this->tree=$this->last_elt[0];
-	}
-	
-	function get_node($path,$node="") {
-		if ($node=="") $node=&$this->tree;
-		$paths=explode("/",$path);
-		for ($i=0; $i<count($paths); $i++) {
-			if ($i==count($paths)-1) {
-				$pelt=explode("@",$paths[$i]);
-				if (count($pelt)==1) { 
-					$p=$pelt[0]; 
-				} else {
-					$p=$pelt[1];
-					$attr=$pelt[0];
-				}
-			} else $p=$paths[$i];
-			if (preg_match("/\[([0-9]*)\]$/",$p,$matches)) {
-				$name=substr($p,0,strlen($p)-strlen($matches[0]));
-				$n=$matches[1];
-			} else {
-				$name=$p;
-				$n=0;
-			}
-			$nc=0;
-			$found=false;
-			for ($j=0; $j<count($node["CHILDS"]); $j++) {
-				if (($node["CHILDS"][$j]["TYPE"]==1)&&($node["CHILDS"][$j]["NAME"]==$name)) {
-					//C'est celui là !!
-					if ($nc==$n) {
-						$node=&$node["CHILDS"][$j];
-						$found=true;
-						break;
-					} else $nc++;
-				}
-			}
-			if (!$found) return false;
-		}
-		return $node;
-	}
-	
-	function get_nodes($path,$node="") {
-		$n=0;
-		$nodes="";
-		while ($nod=$this->get_node($path."[$n]",$node)) {
-			$nodes[]=$nod;
-			$n++;
-		}
-		return $nodes;
-	}
-	
-	function get_datas($node,$force_entities=false) {
-		$char="";
-		if ($node["TYPE"]!=1) return false;
-		//Recherche des fils et vérification qu'il n'y a que du texte !
-		$flag_text=true;
-		for ($i=0; $i<count($node["CHILDS"]); $i++) {
-			if ($node["CHILDS"][$i]["TYPE"]!=2) $flag_text=false;
-		}
-		if ((!$flag_text)&&(!$force_entities)) {
-			$force_entities=true;
-		}
-		for ($i=0; $i<count($node["CHILDS"]); $i++) {
-			if ($node["CHILDS"][$i]["TYPE"]==2)
-				if ($force_entities) 
-					$char.=htmlspecialchars($node["CHILDS"][$i]["DATA"],ENT_NOQUOTES,$this->charset);
-				else $char.=$node["CHILDS"][$i]["DATA"];
-			else {
-				$char.="<".$node["CHILDS"][$i]["NAME"];
-				if (count($node["CHILDS"][$i]["ATTRIBS"])) {
-					foreach ($node["CHILDS"][$i]["ATTRIBS"] as $key=>$val) {
-						$char.=" ".$key."=\"".htmlspecialchars($val,ENT_NOQUOTES,$this->charset)."\"";
-					}
-				}
-				$char.=">";
-				$char.=$this->get_datas($node["CHILDS"][$i],$force_entities);
-				$char.="</".$node["CHILDS"][$i]["NAME"].">";
-			}
-		}
-		return $char;
-	}
-	
-	function get_attributes($node) {
-		if ($node["TYPE"]!=1) return false;
-		return $node["ATTRIBUTES"];
-	}
-	
-	function get_value($path,$node="") {
-		$elt=$this->get_node($path,$node);
-		if ($elt) {
-			$paths=explode("/",$path);
-			$pelt=explode("@",$paths[count($paths)-1]);
-			if (count($pelt)>1) {
-				$a=$pelt[0];
-				//Recherche de l'attribut
-				if (preg_match("/\[([0-9]*)\]$/",$a,$matches)) {
-					$attr=substr($a,0,strlen($a)-strlen($matches[0]));
-					$n=$matches[1];
-				} else {
-					$attr=$a;
-					$n=0;
-				}
-				$nc=0;
-				$found=false;
-				foreach($elt["ATTRIBS"] as $key=>$val) {
-					if ($key==$attr) {
-						//C'est celui là !!
-						if ($nc==$n) {
-							$value=$val;
-							$found=true;
-							break;
-						} else $nc++;
-					}
-				}
-				if (!$found) $value="";
-			} else {
-				$value=$this->get_datas($elt);
-			}
-		}
-		return $value;
-	}
-	
-	function get_values($path,$node="") {
-		$n=0;
-		while ($elt=$this->get_node($path."[$n]",$node)) {
-			$elts[$n]=$elt;
-			$n++;
-		}
-		if (count($elts)) {
-			for ($i=0; $i<count($elts); $i++) {
-				$elt=$elts[$i];
-				$paths=explode("/",$path);
-				$pelt=explode("@",$paths[count($paths)-1]);
-				if (count($pelt)>1) {
-					$a=$pelt[0];
-					//Recherche de l'attribut
-					if (preg_match("/\[([0-9]*)\]$/",$a,$matches)) {
-						$attr=substr($a,0,strlen($a)-strlen($matches[0]));
-						$n=$matches[1];
-					} else {
-						$attr=$a;
-						$n=0;
-					}
-					$nc=0;
-					$found=false;
-					foreach($elt["ATTRIBS"] as $key=>$val) {
-						if ($key==$attr) {
-							//C'est celui là !!
-							if ($nc==$n) {
-								$values[]=$val;
-								$found=true;
-								break;
-							} else $nc++;
-						}
-					}
-					if (!$found) $values[]="";
-				} else {
-					$values[]=$this->get_datas($elt);
-				}
-			}
-		}
-		return $values;
-	}
-}
-
-//Manipualtion des enregistrements
+//Manipulation des enregistrements
 class oai_record {
-	var $srecord;			//Enregistrement d'origine
-	var $header;			//Entête
-	var $metadata;			//Enregistrement parsé
-	var $unimarc;			//Enregistrement converti en unimarc
-	var $about;				//About
-	var $handler;			//Handler pour parser les métadatas
-	var $prefix;			//Forçage du handler demandé
-	var $base_path;			//Chemin de base pour les feuilles XSLT
-	var $xslt_transform;	//Feuille de style pour transformer l'enregistrement en unimarc	
-	var $error;
-	var $error_message;
-	var $charset;
+	public $srecord;			//Enregistrement d'origine
+	public $header;			//Entête
+	public $metadata;			//Enregistrement parsé
+	public $unimarc;			//Enregistrement converti en unimarc
+	public $about;				//About
+	public $handler;			//Handler pour parser les métadatas
+	public $prefix;			//Forçage du handler demandé
+	public $base_path;			//Chemin de base pour les feuilles XSLT
+	public $xslt_transform;	//Feuille de style pour transformer l'enregistrement en unimarc	
+	public $error;
+	public $error_message;
+	public $charset;
 	
-	function oai_record($record,$charset="iso-8859-1",$base_path="",$prefix="",$xslt_transform="",$sets_names="") {
+	public function __construct($record,$charset="iso-8859-1",$base_path="",$prefix="",$xslt_transform="",$sets_names="") {
 		$this->srecord=$record;
 		$this->charset=$charset;
 		$this->prefix=$prefix;
@@ -351,7 +128,7 @@ class oai_record {
 		}
 	}
 	
-	function to_unimarc($metatdata) {
+	public function to_unimarc($metatdata) {
 		//$xsl=file_get_contents("/home/ftetart/public_html/php_dev/admin/connecteurs/in/oai/dc2uni.xsl");
 		
 		/* Allocation du processeur XSLT */
@@ -371,18 +148,18 @@ class oai_record {
 
 //Environnement de parse & parser d'une ressource
 class oai_parser {
-	var $depth;					//Profondeur courante d'analyse
-	var $cur_elt;				//Enregistrement courant
-	var $last_elt;				//Tableau des derniers éléments parsés pour chaque niveau
-	var $verb;					//Verbe en cours (récupéré de la réponse)
-	var $tree;					//Arbre des éléments de niveau 1
-	var $error,$error_message;	//Erreurs
-	var $laction;				//Dernière action du parser : open = "un tag vient d'être ouvert mais pas fermé", close = "Un tag ouvert vient d'être fermé"
-	var $rtoken;				//Resumption Token : [expirationDate], [completeListSize], [cursor], [token]
-	var $rec_callback;			//Fonction de callback pour un enregistrement
-	var $records;				//Tableau des enregistrements récupérés
-	var $charset;				//Charset de sortie
-	var $oai_atoms=array(		//Eléments répétitifs attendus pour chaque verb
+	public $depth;					//Profondeur courante d'analyse
+	public $cur_elt;				//Enregistrement courant
+	public $last_elt;				//Tableau des derniers éléments parsés pour chaque niveau
+	public $verb;					//Verbe en cours (récupéré de la réponse)
+	public $tree;					//Arbre des éléments de niveau 1
+	public $error,$error_message;	//Erreurs
+	public $laction;				//Dernière action du parser : open = "un tag vient d'être ouvert mais pas fermé", close = "Un tag ouvert vient d'être fermé"
+	public $rtoken;				//Resumption Token : [expirationDate], [completeListSize], [cursor], [token]
+	public $rec_callback;			//Fonction de callback pour un enregistrement
+	public $records;				//Tableau des enregistrements récupérés
+	public $charset;				//Charset de sortie
+	public $oai_atoms=array(		//Eléments répétitifs attendus pour chaque verb
 		"GetRecord"=>"record",
 		"ListIdentifiers"=>"header",
 		"ListMetadataFormats"=>"metadataFormat",
@@ -391,7 +168,7 @@ class oai_parser {
 	);
 	
 	//Fonctions appelées lors du parse d'une réponse
-	function oai_startElement($parser, $name, $attrs) {
+	public function oai_startElement($parser, $name, $attrs) {
 		$this->laction="open";
 		if (!$this->error) {
 			switch ($name) {
@@ -480,7 +257,7 @@ class oai_parser {
 		$this->depth++;
 	}
 	
-	function oai_charElement($parser,$char) {
+	public function oai_charElement($parser,$char) {
 		if (($this->laction=="open")&&(!$this->error)) {
 			if ($this->depth<=2) {
 				$this->tree[$this->depth-1][count($this->tree[$this->depth-1])-1]["CHAR"].=$char;
@@ -494,7 +271,7 @@ class oai_parser {
 		}
 	}
 	
-	function oai_endElement($parser, $name) {  	  
+	public function oai_endElement($parser, $name) {  	  
 		$this->laction="close";
 		if (!$this->error) {
 			if ($this->depth<=2) {
@@ -531,7 +308,7 @@ class oai_parser {
 		$this->depth--;
 	}
 	
-	function oai_parser($rcallback="",$charset="iso-8859-1") {
+	public function __construct($rcallback="",$charset="iso-8859-1") {
 		$this->depth=0;
 		$this->rtoken="";
 		$this->rec_callback=$rcallback;
@@ -541,29 +318,29 @@ class oai_parser {
 
 //Gestion bas niveau du protocol
 class oai_protocol {
-	var $url_base;				//Url de base
-	var $clean_base_url;		//Nettoyer les urls renvoyées dans le tag request
-    var $error=false;
-    var $error_message="";
-    var $error_oai_code="";		//Code d'erreur OAI
-    var $response_date;			//Date de réponse
-    var $request;				//Requête
-    var $rtoken;    			//Paramètre du "Resumption Token"
-    var $next_request;			//Requête à rappeller si Resumption Token
-    var $records=array();		//Enregistrements lus
-    var $charset="iso-8859-1";
-    var $time_out;				//Temps maximum d'interrogation de la source
-    var $xml_parser;			//Ressource parser
-    var $retry_after;			//Délais avant rééssai
+	public $url_base;				//Url de base
+	public $clean_base_url;		//Nettoyer les urls renvoyées dans le tag request
+    public $error=false;
+    public $error_message="";
+    public $error_oai_code="";		//Code d'erreur OAI
+    public $response_date;			//Date de réponse
+    public $request;				//Requête
+    public $rtoken;    			//Paramètre du "Resumption Token"
+    public $next_request;			//Requête à rappeller si Resumption Token
+    public $records=array();		//Enregistrements lus
+    public $charset="iso-8859-1";
+    public $time_out;				//Temps maximum d'interrogation de la source
+    public $xml_parser;			//Ressource parser
+    public $retry_after;			//Délais avant rééssai
     					
-    function oai_protocol($charset="iso-8859-1",$url="",$time_out="",$clean_base_url=0) {
+    public function __construct($charset="iso-8859-1",$url="",$time_out="",$clean_base_url=0) {
     	$this->charset=$charset;
     	$this->time_out=$time_out;
     	$this->clean_base_url=$clean_base_url;
     	if ($url) $this->analyse_response($url);
     }
     
-    function parse_xml($ch,$data) {
+    public function parse_xml($ch,$data) {
     	if (!$this->retry_after) {
 	    	//Parse de la ressource
 	    	if (!xml_parse($this->xml_parser, $data)) {
@@ -579,7 +356,7 @@ class oai_protocol {
     	return strlen($data);
 	}
     
-    function verif_header($ch,$headers) {
+    public function verif_header($ch,$headers) {
     	$h=explode("\n",$headers);
     	for ($i=0; $i<count($h); $i++) {
     		$v=explode(":",$h[$i]);
@@ -589,7 +366,7 @@ class oai_protocol {
     }
     
     //Analyse d'une resource
-    function analyse_response($url,$rcallback="") {
+    public function analyse_response($url,$rcallback="") {
     	//Remise à zéro des erreurs
     	$this->error=false;
     	$this->error_message="";
@@ -702,31 +479,31 @@ class oai_protocol {
 }
 
 class oai20 {
-	var $error;
-	var $error_message;
-	var $error_oai_code;
-	var $no_connect=true;		//La connexion n'est as active avec l'entrepot
-	var $url_base;				//Url de base du service OAI
-	var $clean_base_url;		//Nettoyer les urls renvoyées dans le tag request
-	var $charset;				//Encodage désiré de sortie
-	var $prt;					//Protocol
-	var $repositoryName;		//Nom de l'entrepôt
-	var $baseURL;				//Url de base retournée
-	var $protocolVersion;		//Version du protocole
-	var $earliestDatestamp;		//Date de la notice la plus ancienne
-	var $deletedRecord;			//Gestion des enregistrements supprimés
-	var $granularity;			//Granularité
-	var $description;			//Description si trouvée
-	var $adminEmail;			//Email admin du service
-	var $compression;			//Types de compression
-	var $h_sets;				//Sets hierarchisés
-	var $sets;					//Sets bruts
-	var $metadatas;				//Formats des metadatas disponibles
-	var $unsupported_features;	//Fonctionalités non supportées (SETS)
-	var $last_query;			//Dernière requête effectué
-	var $time_out;				//Time out total avant erreur d'une commande
+	public $error;
+	public $error_message;
+	public $error_oai_code;
+	public $no_connect=true;		//La connexion n'est as active avec l'entrepot
+	public $url_base;				//Url de base du service OAI
+	public $clean_base_url;		//Nettoyer les urls renvoyées dans le tag request
+	public $charset;				//Encodage désiré de sortie
+	public $prt;					//Protocol
+	public $repositoryName;		//Nom de l'entrepôt
+	public $baseURL;				//Url de base retournée
+	public $protocolVersion;		//Version du protocole
+	public $earliestDatestamp;		//Date de la notice la plus ancienne
+	public $deletedRecord;			//Gestion des enregistrements supprimés
+	public $granularity;			//Granularité
+	public $description;			//Description si trouvée
+	public $adminEmail;			//Email admin du service
+	public $compression;			//Types de compression
+	public $h_sets;				//Sets hierarchisés
+	public $sets;					//Sets bruts
+	public $metadatas;				//Formats des metadatas disponibles
+	public $unsupported_features;	//Fonctionalités non supportées (SETS)
+	public $last_query;			//Dernière requête effectué
+	public $time_out;				//Time out total avant erreur d'une commande
 	
-	function oai20($url_base,$charset="iso-8859-1",$time_out="",$clean_base_url=0) {
+	public function __construct($url_base,$charset="iso-8859-1",$time_out="",$clean_base_url=0) {
 		//Evitons d'afficher les vilains warning qui trainent
 		ini_set('display_errors', 0);
 		//Initialisation du service
@@ -773,17 +550,17 @@ class oai20 {
 		}
 	}
 	
-	function set_clean_base_url($clean_base_url) {
+	public function set_clean_base_url($clean_base_url) {
 		$this->clean_base_url=$clean_base_url;
 	}
 	
-	function clear_error() {
+	public function clear_error() {
 		$this->error=false;
 		$this->error_message="";
 		$this->error_oai_code="";
 	}
 	
-	function send_request($url,$callback="",$callback_progress="") {
+	public function send_request($url,$callback="",$callback_progress="") {
 		$this->last_query=$url;
 		$this->prt->analyse_response($url,$callback);
 		while ((!$this->prt->error)&&($this->prt->next_request)) {
@@ -806,11 +583,11 @@ class oai20 {
 		}
 	}
 	
-	function has_feature($feature) {
+	public function has_feature($feature) {
 		return (!$this->unsupported_features[$feature]);
 	}
 	
-	function check_metadata($metadata_prefix) {
+	public function check_metadata($metadata_prefix) {
 		//Vérification du metadata
 		$found=false;
 		for ($i=0; $i<count($this->metadatas); $i++) {
@@ -822,7 +599,7 @@ class oai20 {
 		return $found;
 	}
 	
-	function list_sets($callback="",$callback_progress="") {
+	public function list_sets($callback="",$callback_progress="") {
 		$this->clear_error();
 		$this->send_request($this->url_base."?verb=ListSets",$callback,$callback_progress);
 		$this->sets=array();
@@ -834,7 +611,11 @@ class oai20 {
 					if (!$record->error) {
 						$set=$record->get_value("set/setSpec");
 						$set_name=$record->get_value("set/setName");
-						$this->sets[$set]=$set_name;
+						$set_description=$record->get_value("set/setDescription/oai_dc:dc/dc:description");
+						$this->sets[$set] = array(
+								'name' => $set_name,
+								'description' => $set_description
+						);
 						$set=explode(":",$record->get_value("set/setSpec"));
 						$path="";
 						for ($j=0; $j<count($set)-1; $j++) {
@@ -854,7 +635,7 @@ class oai20 {
 		return $this->sets;
 	}
 	
-	function list_metadata_formats($identifier="",$callback="",$callback_progress="") {
+	public function list_metadata_formats($identifier="",$callback="",$callback_progress="") {
 		$this->clear_error();
 		$url=$this->url_base."?verb=ListMetadataFormats";
 		if ($identifier) $url.="&identifier=".rawurlencode($identifier);
@@ -878,7 +659,7 @@ class oai20 {
 		return $metadatas;
 	}
 	
-	function list_records($from,$until,$set,$metadata_prefix,$callback="",$callback_progress="") {
+	public function list_records($from,$until,$set,$metadata_prefix,$callback="",$callback_progress="") {
 		$this->clear_error();
 		$records=array();
 		//Conversion des from et until en fonction de la granularité
@@ -906,7 +687,7 @@ class oai20 {
 		if (!$callback) return $records;
 	}
 	
-	function list_identifiers($from,$until,$set,$metadata_prefix,$callback="",$callback_progress="") {
+	public function list_identifiers($from,$until,$set,$metadata_prefix,$callback="",$callback_progress="") {
 		$this->clear_error();
 		$records=array();
 		//Conversion des from et until en fonction de la granularité
@@ -934,7 +715,7 @@ class oai20 {
 		if (!$callback) return $records;
 	}
 	
-	function get_record($identifier,$metadata_prefix,$callback="",$callback_progress="") {
+	public function get_record($identifier,$metadata_prefix,$callback="",$callback_progress="") {
 		$this->clear_error();
 		$record="";
 		//Vérification du préfixe

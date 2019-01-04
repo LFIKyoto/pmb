@@ -2,26 +2,26 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bookreaderPDF.class.php,v 1.21 2015-07-08 13:41:32 mbertin Exp $
+// $Id: bookreaderPDF.class.php,v 1.24 2017-07-03 09:07:10 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($visionneuse_path."/classes/mimetypes/bookreader/PDFMetadata.class.php");
 
 class bookreaderPDF {
-	var $doc;			//le document PDF à traiter
-	var $parameters;	//tableau décrivant les paramètres de la classe
-	var $PDFMetadata;
-	var $pagesSizes;
+	public $doc;			//le document PDF à traiter
+	public $parameters;	//tableau décrivant les paramètres de la classe
+	public $PDFMetadata;
+	public $pagesSizes;
 	
-	function bookreaderPDF($doc,$parameters){
+	public function __construct($doc,$parameters){
 		$this->doc = $doc;
 		$this->parameters = $parameters;
 		$this->PDFMetadata = new PDFMetadata($this->doc->driver->get_cached_filename($this->doc->id));
 		$this->getPagesSizes();
 	}
 	
-	function getPage($page){
+	public function getPage($page){
 		
 		$format = $this->parameters['format_image'];
 		
@@ -38,34 +38,55 @@ class bookreaderPDF {
 		}
 		
 		$len = strlen($this->getPageCount());
-		if (!file_exists($this->doc->driver->get_cached_filename($this->doc->id)."-".str_pad($page, $len,"0",STR_PAD_LEFT).".".$extension)) {
+		
+		$file_name=$this->doc->driver->get_cached_filename("page_".$this->doc->id)."-".str_pad($page, $len,"0",STR_PAD_LEFT).".".$extension;
+		if (!file_exists($file_name)) {
+			if (stripos($_SERVER['SERVER_SOFTWARE'], "win")!==false || stripos(PHP_OS, "win")!==false ) {
+				$extension = "png";
+				$content_type = "image/x-png";
+				$file_name=$this->doc->driver->get_cached_filename("page_".$this->doc->id)."-".str_pad($page, 6, "0", STR_PAD_LEFT).".".$extension;
+			}
+		}
+		
+		if (!file_exists($file_name)) {
 			$resolution = $this->parameters['resolution_image'];
 			if ($format == "imagick") {
 				exec("pdftoppm -f $page -l $page -r ".$resolution." ".$this->doc->driver->get_cached_filename($this->doc->id)." ".$this->doc->driver->get_cached_filename("page_".$this->doc->id));
 				$imagick = new Imagick();
 				$imagick->setResolution($resolution,$resolution);
-				$imagick->readImage($this->doc->driver->get_cached_filename("page_".$this->doc->id)."-".str_pad($page, $len, "0", STR_PAD_LEFT).".ppm");
-				$imagick->writeImage($this->doc->driver->get_cached_filename("page_".$this->doc->id)."-".str_pad($page, $len,"0",STR_PAD_LEFT).".png");
-				unlink($this->doc->driver->get_cached_filename("page_".$this->doc->id)."-".str_pad($page, $len, "0", STR_PAD_LEFT).".ppm");
+				$source_file=$this->doc->driver->get_cached_filename("page_".$this->doc->id)."-".str_pad($page, $len, "0", STR_PAD_LEFT).".ppm";
+				//selon la version, pdftoppm ne renvoie pas les mêmes noms de fichier...
+				if (!file_exists($source_file)) {
+					if (stripos($_SERVER['SERVER_SOFTWARE'], "win")!==false || stripos(PHP_OS, "win")!==false ) {
+						$source_file=$this->doc->driver->get_cached_filename("page_".$this->doc->id)."-".str_pad($page, 6, "0", STR_PAD_LEFT).".ppm";
+					}
+				}
+				$imagick->readImage($source_file);
+				$imagick->writeImage($file_name);
+				unlink($source_file);
 			} else {
-				exec("pdftoppm -f $page -l $page -r ".$resolution." -".$format." ".$this->doc->driver->get_cached_filename($this->doc->id)." ".$this->doc->driver->get_cached_filename("page_".$this->doc->id));
+				if (stripos($_SERVER['SERVER_SOFTWARE'], "win")!==false || stripos(PHP_OS, "win")!==false ) {
+					exec("pdftopng -f $page -l $page -r ".$resolution." ".$this->doc->driver->get_cached_filename($this->doc->id)." ".$this->doc->driver->get_cached_filename("page_".$this->doc->id));
+				}else{
+					exec("pdftoppm -f $page -l $page -r ".$resolution." -".$format." ".$this->doc->driver->get_cached_filename($this->doc->id)." ".$this->doc->driver->get_cached_filename("page_".$this->doc->id));
+				}	
 			}
 		}
-		if (file_exists($this->doc->driver->get_cached_filename("page_".$this->doc->id)."-".str_pad($page, $len,"0",STR_PAD_LEFT).".".$extension)) {
+		if (file_exists($file_name)) {
 			header("Content-Type: ".$content_type);
-			print file_get_contents($this->doc->driver->get_cached_filename("page_".$this->doc->id)."-".str_pad($page, $len,"0",STR_PAD_LEFT).".".$extension);
+			print file_get_contents($file_name);
 		}
 	}
 	
-	function getWidth($page){
+	public function getWidth($page){
 		return $this->PDFMetadata->pagesSizes[$page]['width']*72/$this->parameters['resolution_image'];
 	}
 	
-	function getHeight($page){
+	public function getHeight($page){
 		return $this->PDFMetadata->pagesSizes[$page]['height']*72/$this->parameters['resolution_image'];
 	}
 	
-	function getPagesSizes(){
+	public function getPagesSizes(){
 		$this->pagesSizes= array();
 		foreach($this->PDFMetadata->pagesSizes as $page => $size){
 			$this->pagesSizes[$page] = array(
@@ -75,7 +96,7 @@ class bookreaderPDF {
 		}
 	}
 	
-	function search($user_query){
+	public function search($user_query){
 		global $charset;
 		
 		$matches = array();
@@ -218,15 +239,15 @@ class bookreaderPDF {
 		return array('matches' => $matches);
 	}
 	
-	function getBookmarks(){
+	public function getBookmarks(){
 		return $this->PDFMetadata->getBookmarks();
 	}
 	
-	function getPDF(){
+	public function getPDF(){
 		
 	}
 	
-	function getPageCount(){
+	public function getPageCount(){
 		return $this->PDFMetadata->nb_pages;
 	}
 }

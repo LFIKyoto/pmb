@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lib_func_customfields.inc.php,v 1.1.2.1 2015-09-25 15:20:19 jpermanne Exp $
+// $Id: lib_func_customfields.inc.php,v 1.2 2015-09-25 15:22:11 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: acces.class.php,v 1.24 2015-06-26 13:03:18 dbellamy Exp $
+// $Id: acces.class.php,v 1.36 2017-09-06 15:33:46 tsamson Exp $
 
 
 if (stristr ($_SERVER['REQUEST_URI'], ".class.php"))
@@ -11,24 +11,25 @@ if (stristr ($_SERVER['REQUEST_URI'], ".class.php"))
 if ( !defined ('USER_PRF_TYP')) define ('USER_PRF_TYP', 0); // 0 = profil utilisateur (role)
 if ( !defined ('RES_PRF_TYP')) define ('RES_PRF_TYP', 1); // 1 = profil ressource
 
-require_once ("$class_path/marc_table.class.php");
+require_once ($class_path."/marc_table.class.php");
 
 class acces {
 	
-	var $t_cat=array(); //Table catalogue			
-	var $dom;
+	protected static $t_cat=array(); //Table catalogue			
+	public $dom;
 	
 	
 	//Constructeur.	 
-	function acces () {
-
-		//Lecture catalog
-		$this->parseCatalog();
+	public function __construct() {
+		if(!count(static::$t_cat)) {
+			//Lecture catalog
+			$this->parseCatalog();
+		}
 	}
 	
 	
 	//Lecture fichier catalog
-	function parseCatalog() {
+	public function parseCatalog() {
 
 		global $base_path;
 		global $msg;
@@ -39,11 +40,11 @@ class acces {
 		foreach ($t_cat as $v) {
 			$mt=$this->parseManifestFile ($v['path']);
 			$activation_param=$mt['activation_param'];
-			global $$activation_param;
-			if ($$activation_param =='1') {
-				$this->t_cat[$v['id']]['id']=$v['id'];
-				$this->t_cat[$v['id']]['path']=$v['path'];
-				$this->t_cat[$v['id']]['comment']=$msg[$mt['comment']];
+			global ${$activation_param};
+			if (${$activation_param} =='1') {
+				static::$t_cat[$v['id']]['id']=$v['id'];
+				static::$t_cat[$v['id']]['path']=$v['path'];
+				static::$t_cat[$v['id']]['comment']=$msg[$mt['comment']];
 			}
 		}
 		unset ($t_cat);
@@ -51,14 +52,14 @@ class acces {
 	
 	
 	//Lecture des domaines actives
-	function getCatalog () {
+	public function getCatalog () {
 
-		return $this->t_cat;
+		return static::$t_cat;
 	}
 	
 	
 	//Lecture fichier manifest
-	function parseManifestFile ($path) {
+	public function parseManifestFile ($path) {
 
 		global $base_path;
 		
@@ -68,9 +69,9 @@ class acces {
 	
 	
 	//Instanciation domaine
-	function setDomain ($dom_id) {
+	public function setDomain ($dom_id) {
 
-		$this->dom=new domain ($this->t_cat[$dom_id]['id'], $this->t_cat[$dom_id]['path']);
+		$this->dom=new domain (static::$t_cat[$dom_id]['id'], static::$t_cat[$dom_id]['path']);
 		return $this->dom;
 		
 	}
@@ -80,10 +81,12 @@ class acces {
 
 class domain {
 	
-	var $dom=array();
+	public $dom=array();
+	
+	protected static $store;
 	
 	//instanciation domaine
-	function domain($id, $path) {
+	public function __construct($id, $path) {
 
 		if ( !$id || !$path)
 			return;
@@ -98,7 +101,7 @@ class domain {
 	
 	
 	//Lecture du fichier domain
-	function parseDomainFile() {
+	public function parseDomainFile() {
 
 		global $base_path;
 		
@@ -109,7 +112,7 @@ class domain {
 	
 	
 	//lecture messages
-	function parseMsgFile() {
+	public function parseMsgFile() {
 
 		global $base_path, $lang;
 		
@@ -126,13 +129,13 @@ class domain {
 	
 	
 	//definition des droits par defaut
-	function setDefaultRights() {
+	public function setDefaultRights() {
 
 		$this->dom['default_rights']=0;
 	}
 	
 	//creation des tables necessaires
-	function checkTables() {
+	public function checkTables() {
 		
 		global $dbh;
 		
@@ -159,7 +162,7 @@ class domain {
 	}
 	
 	//Lecture message general/specifique domaine
-	function getComment($msg_code) {
+	public function getComment($msg_code) {
 		
 		global $msg;
 		if (substr($msg_code,0,4)=='msg:') {
@@ -172,7 +175,7 @@ class domain {
 	
 	//Retourne la liste des proprietes utilisateur accessibles
 	//et eventuellement celles utilisees
-	function getUserProperties() {
+	public function getUserProperties() {
 		
 		$t_acc=explode(',', $this->dom['user']['properties']);
 		$t_r=array();
@@ -187,7 +190,7 @@ class domain {
 	
 
 	//enregistrement des profils utilisateurs
-	function saveUserProfiles($prf_id, $prf_lib, $prf_rule, $prf_hrule, $prf_used=array(),$unused_prf_id=array()) {
+	public function saveUserProfiles($prf_id, $prf_lib, $prf_rule, $prf_hrule, $prf_used=array(),$unused_prf_id=array()) {
 		
 		global $dbh;
 		$t_id=array();
@@ -229,7 +232,7 @@ class domain {
 			foreach($unused_prf_id as $v) {
 				
 				//modification dans la table des droits par ressource
-				if(!$prf_used[$v]) $prf_used[$v]=0;
+				if(empty($prf_used[$v])) $prf_used[$v]=0;
 				$q = "update acces_res_".$this->dom['id']." set usr_prf_num='".$prf_used[$v]."' where usr_prf_num='".$v."' ";
 				pmb_mysql_query($q,$dbh);
 
@@ -243,7 +246,7 @@ class domain {
 	
 	
 	//lecture des profils utilisateurs
-	function loadUserProfiles() {
+	public function loadUserProfiles() {
 
 		$q = "select * from acces_profiles where ";
 		$q.= "dom_num = '".$this->dom['id']."' ";
@@ -253,7 +256,7 @@ class domain {
 	
 	
 	//Lecture des profils utilisateurs utiles pour le calcul des droits
-	function loadUsedUserProfiles($except=array()) {
+	public function loadUsedUserProfiles($except=array()) {
 
 		$q = "select * from acces_profiles where ";
 		$q.= "dom_num = '".$this->dom['id']."' ";
@@ -268,7 +271,7 @@ class domain {
 	
 	
 	//suppression des profils utilisateurs
-	function deleteUserProfiles() {
+	public function deleteUserProfiles() {
 		
 		global $dbh;
 		$q= "delete from acces_profiles where prf_type='".USER_PRF_TYP."' and dom_num='".$this->dom['id']."' ";
@@ -277,7 +280,7 @@ class domain {
 	
 	
 	//Calcul des profils utilisateurs en mode automatique (produit scalaire)
-	function calcUserProfiles($chk_prop=array()) {
+	public function calcUserProfiles($chk_prop=array()) {
 
 		global $dbh, $msg;
 		if (!count($chk_prop)) return array();
@@ -309,7 +312,7 @@ class domain {
 					}
 					break;
 				case 'marc_table' :
-					$t_m=new marc_list ('doctype');
+					$t_m = marc_list_collection::get_instance('doctype');
 					$t_kv[$k]=$t_m->table;
 					break;
 				default :
@@ -340,13 +343,16 @@ class domain {
 				$t_r[$k]['rule']['op_'.$prev_p.'_f_'.$p]='EQ';
 				$t_r[$k]['rule']['field_'.$prev_p.'_f_'.$p][]=$v[$j];
 				$prev_p=$p;
-								
+
+				if (empty($t_r[$k]['hrule'])) {
+					$t_r[$k]['hrule'] = '';
+				}
 				if ($t_r[$k]['hrule']) {
 					$t_r[$k]['hrule'].="\n".$msg['search_and']." ";
 				}
 				$t_r[$k]['hrule'].=$this->getComment($this->dom['properties'][$p]['lib'])." ".$v[$j+1];
 				
-				if ($t_r[$k]['name']=='') {
+				if (empty($t_r[$k]['name'])) {
 					$t_r[$k]['name'] = $this->dom['msg']['user_prf_calc_lib'];
 				}
 				$t_r[$k]['name'].= " / ".$v[$j+1];
@@ -378,7 +384,7 @@ class domain {
 	}
 
 	
-	function tab_scal($t_kv) {
+	public function tab_scal($t_kv) {
 		
 		$nb_val=1;
 		foreach($t_kv as $v) {
@@ -407,7 +413,7 @@ class domain {
 	}
 	
 	
-	function tab_scal_2($tr, $t2) {
+	public function tab_scal_2($tr, $t2) {
 		
 		foreach($tr as $kr=>$vr) {
 			$tr[$kr][]=key($t2);
@@ -420,7 +426,7 @@ class domain {
 	
 	//Retourne la liste des proprietes ressource accessibles
 	//et eventuellement celles utilisees
-	function getResourceProperties() {
+	public function getResourceProperties() {
 		
 		$t_acc=explode(',', $this->dom['resource']['properties']);
 		$t_r=array();
@@ -435,7 +441,7 @@ class domain {
 	
 	
 	//enregistrement des profils ressources
-	function saveResourceProfiles($prf_id, $prf_lib, $prf_rule, $prf_hrule, $prf_used=array(),$unused_prf_id=array()) {
+	public function saveResourceProfiles($prf_id, $prf_lib, $prf_rule, $prf_hrule, $prf_used=array(),$unused_prf_id=array()) {
 		
 		global $dbh;
 		$t_id=array();
@@ -481,7 +487,7 @@ class domain {
 		
 	
 	//Lecture des profils ressources
-	function loadResourceProfiles() {
+	public function loadResourceProfiles() {
 
 		$q = "select * from acces_profiles where ";
 		$q.= "dom_num = '".$this->dom['id']."' ";
@@ -491,7 +497,7 @@ class domain {
 
 	
 	//Lecture des profils ressources utiles pour le calcul des droits
-	function loadUsedResourceProfiles($except=array()) {
+	public function loadUsedResourceProfiles($except=array()) {
 
 		$q = "select * from acces_profiles where ";
 		$q.= "dom_num = '".$this->dom['id']."' ";
@@ -506,7 +512,7 @@ class domain {
 	
 	
 	//suppression des profils ressources
-	function deleteResourceProfiles() {
+	public function deleteResourceProfiles() {
 		
 		global $dbh;
 		$q= "delete from acces_profiles where prf_type='".RES_PRF_TYP."' and dom_num='".$this->dom['id']."' ";
@@ -515,8 +521,7 @@ class domain {
 	
 	
 	//Calcul des profils ressources en mode automatique (produit scalaire)
-	function calcResourceProfiles($chk_prop=array()) {
-
+	public function calcResourceProfiles($chk_prop=array()) {
 		global $dbh, $msg;
 		if (!count($chk_prop)) return array();
 		
@@ -531,6 +536,9 @@ class domain {
 				$t_p[$v]['key']=$this->dom['properties'][$v]['ref']['key'];
 				$t_p[$v]['value']=$this->dom['properties'][$v]['ref']['value'];
 				$t_p[$v]['clause']=$this->dom['properties'][$v]['ref']['clause'];
+				$t_p[$v]['class']=$this->dom['properties'][$v]['ref']['class'];
+				$t_p[$v]['class_path']=$this->dom['properties'][$v]['ref']['class_path'];
+				$t_p[$v]['method']=$this->dom['properties'][$v]['ref']['method'];
 			}
 		}
 		unset ($v);
@@ -548,8 +556,13 @@ class domain {
 					break;
 				case 'marc_table' :
 					$xf=substr($v['name'],0,strrpos($v['name'],'.'));
-					$t_m=new marc_list ($xf);
+					$t_m = marc_list_collection::get_instance($xf);
 					$t_kv[$k]=$t_m->table;
+					break;
+				case 'callable' :
+					global $class_path, $include_path;
+					require_once ($v["class_path"]);					
+					$t_kv[$k] = call_user_func_array(array($v["class"],$v["method"]), array());					
 					break;
 				default :
 					break;
@@ -580,10 +593,15 @@ class domain {
 				$t_r[$k]['rule']['field_'.$prev_p.'_f_'.$p][]=$v[$j];
 				$prev_p=$p;
 				
-				if ($t_r[$k]['hrule']) $t_r[$k]['hrule'].="\n".$msg['search_and']." ";
-				$t_r[$k]['hrule'].=$this->getComment($this->dom['properties'][$p]['lib'])." ".$v[$j+1];
+				if (empty($t_r[$k]['hrule'])) {
+					$t_r[$k]['hrule'] = '';
+				}
+				if ($t_r[$k]['hrule']) {
+					$t_r[$k]['hrule'].= "\n".$msg['search_and']." ";
+				}
+				$t_r[$k]['hrule'].= $this->getComment($this->dom['properties'][$p]['lib'])." ".$v[$j+1];
 
-				if ($t_r[$k]['name']=='') {
+				if (empty($t_r[$k]['name'])) {
 					$t_r[$k]['name'] = $this->dom['msg']['res_prf_calc_lib'];
 				}
 				$t_r[$k]['name'].= " / ".$v[$j+1];
@@ -619,7 +637,7 @@ class domain {
 	//si all=0, retourne les controles dependants de l'utilisateur
 	//si all=1, retourne les controles independants de l'utilisateur
 	//si all=2, retourne tous les controles
-	function getControls($all=2) {
+	public function getControls($all=2) {
 
 		$t_r=array();
 		foreach($this->dom['controls'] as $k=>$v) {
@@ -647,7 +665,7 @@ class domain {
 	
 
 	//enregistrement des droits du domaine
-	function saveDomainRights($t_rights=array()) {
+	public function saveDomainRights($t_rights=array()) {
 		
 		global $dbh;
 		
@@ -686,10 +704,9 @@ class domain {
 				$b_r=0;
 				if (count($t_ctl)) {
 					foreach($t_ctl as $k_ctl=>$v_ctl) {
-					
-						if ( ($this->dom['controls'][$k_ctl]['global']=='yes') && ($t_rights[0][0][$k_ctl]==1) ) {
+						if (!empty($this->dom['controls'][$k_ctl]['global']) && ($this->dom['controls'][$k_ctl]['global']=='yes') && !empty($t_rights[0][0][$k_ctl]) && ($t_rights[0][0][$k_ctl]==1) ) {
 							$b_r = $b_r + pow(2,($k_ctl-1));
-						} elseif($t_rights[$v_usr][$v_res][$k_ctl]==1) {
+						} elseif(!empty($t_rights[$v_usr][$v_res][$k_ctl]) && ($t_rights[$v_usr][$v_res][$k_ctl] == 1)) {
 								$b_r = $b_r + pow(2,($k_ctl-1));
 						}
 					}
@@ -702,13 +719,12 @@ class domain {
 	
 
 	//lecture nombre de ressources a mettre a jour
-	function getNbResourcesToUpdate () {
+	public function getNbResourcesToUpdate () {
 
 		global $dbh;
 		
 		$ret=0;
 		switch ($this->dom['resource']['ref']['type']) {
-			
 			case 'table' :
 				$q="select count(*) from ".$this->dom['resource']['ref']['name']." ";
 				$r=pmb_mysql_query($q,$dbh);
@@ -716,23 +732,31 @@ class domain {
 					$ret = pmb_mysql_result($r,0,0);
 				}
 				break;
+			case 'rdf' :
+				$this->get_store($this->dom['resource']['ref']['name']);
+				$query = self::$store->query('
+					SELECT ?uri WHERE {
+						?uri <'.$this->dom['resource']['ref']['key'].'> <'.$this->dom['resource']['ref']['value'].'>
+					}
+				');
+				if ($query) {
+					$ret = self::$store->num_rows();
+				}
+				break;
 			default:
 				break;
-
 		}
 		return $ret;		
 	}
 	
 	//generation des droits par profil utilisateur pour chacune des ressources
-	function applyDomainRights($nb_done=0,$chk_sav_spe_rights=0) {
+	public function applyDomainRights($nb_done=0,$chk_sav_spe_rights=0) {
 
 		global $dbh;
 		$nb_per_pass=500;
 		
 		switch ($this->dom['resource']['ref']['type']) {
-			
 			case 'table' :
-
 				//lecture de nb_per_pass ressources
 				$q0 = "select ".$this->dom['resource']['ref']['key']." from ".$this->dom['resource']['ref']['name']." limit ".$nb_done.",".$nb_per_pass;
 				$r0 = pmb_mysql_query($q0,$dbh);
@@ -743,10 +767,25 @@ class domain {
 					while (($row0=pmb_mysql_fetch_row($r0))) {
 						$this->applyRessourceRights($row0[0],$chk_sav_spe_rights);
 					}
-				}
-				
+				}				
 				break;
-				
+			case 'rdf' :
+				$this->get_store($this->dom['resource']['ref']['name']);
+				$query = self::$store->query('
+					SELECT ?uri WHERE {
+						?uri <'.$this->dom['resource']['ref']['key'].'> <'.$this->dom['resource']['ref']['value'].'>
+					}
+				');
+				if ($query) {
+					if(self::$store->num_rows()){
+						$result = self::$store->get_result();
+						foreach ($result as $elem){
+							$this->applyRessourceRights(onto_common_uri::get_id($elem->uri),$chk_sav_spe_rights);
+							$nb_done++;
+						}
+					}
+				}
+				break;
 			default :
 				break;
 		}
@@ -755,7 +794,7 @@ class domain {
 
 	
 	//Suppression des droits pour un domaine
-	function deleteDomainRights() {
+	public function deleteDomainRights() {
 		global $dbh;
 		if ($this->dom['id']) {
 			$qr = "delete from acces_res_".$this->dom['id']." ";
@@ -767,7 +806,7 @@ class domain {
 	
 	
 	//nettoyage 
-	function cleanResources() {
+	public function cleanResources() {
 						
 		global $dbh;
 		
@@ -781,21 +820,20 @@ class domain {
 	}
 	
 	//lecture des droits pour la ressource
-	function getResourceRights($res_id=0) {
-		
+	public function getResourceRights($res_id=0) {
 		global $dbh;
-		
+
 		if ($res_id!=0) {
-			
 			$res_prf = $this->getResourceProfile($res_id);
-			$q = $this->loadUsedUserProfiles();
-			$r = pmb_mysql_query($q, $dbh);
-			if (pmb_mysql_num_rows($r)) {
-				$t_usr=array();
-				$t_usr[0]=$res_prf;
-				while(($row=pmb_mysql_fetch_object($r))) {
-					$t_usr[$row->prf_id]=$res_prf;
-				}
+			// TS & AP - La portion commentée n'avait pas lieu d'être, elle n'est pas utilisée et bloque le cas ou seul un profil par défaut est défini
+// 			$q = $this->loadUsedUserProfiles();
+// 			$r = pmb_mysql_query($q, $dbh);
+// 			if (pmb_mysql_num_rows($r)) {
+// 				$t_usr=array();
+// 				$t_usr[0]=$res_prf;
+// 				while(($row=pmb_mysql_fetch_object($r))) {
+// 					$t_usr[$row->prf_id]=$res_prf;
+// 				}
 				$q="select usr_prf_num, (res_rights ^ res_mask) from acces_res_".$this->dom['id']." where res_num=".$res_id;
 				$r = pmb_mysql_query($q, $dbh);
 				$t_r=array();
@@ -805,7 +843,7 @@ class domain {
 					}
 					return $t_r;
 				}				
-			}
+// 			}
 		}
 		return $this->loadDomainRights();
 	}
@@ -813,7 +851,7 @@ class domain {
 	
 	// lecture de l'ensemble des droits du domaine
 	// retourne un tableau [usr_prf_num][res_prf_num]=dom_rights
-	function loadDomainRights() {
+	public function loadDomainRights() {
 		
 		global $dbh;
 		
@@ -830,7 +868,7 @@ class domain {
 	
 
 	//stocke les droits des utilisateurs a la creation/modification de la ressource
-	function storeUserRights($old_res_id=0, $res_id=0, $res_prf=array(), $chk_rights=array(), $prf_rad=array(), $r_rad=array()) {
+	public function storeUserRights($old_res_id=0, $res_id=0, $res_prf=array(), $chk_rights=array(), $prf_rad=array(), $r_rad=array()) {
 		
 		global $dbh;
 		
@@ -894,14 +932,13 @@ class domain {
 				$mask=0;
 				if ($r_rad[$this->dom['id']]=='C' && count($t_ctl)) {
 					foreach($t_ctl as $k_ctl=>$v_ctl) {
-						if($chk_rights[$this->dom['id']][$v_usr][$k_ctl]==1) {
+						if(isset($chk_rights[$this->dom['id']][$v_usr]) && isset($chk_rights[$this->dom['id']][$v_usr][$k_ctl]) && $chk_rights[$this->dom['id']][$v_usr][$k_ctl]==1) {
 								$mask = $mask + pow(2,($k_ctl-1));
 						}
 					}	
 				} else {
 					$mask=$t_r[$v_usr][$res_prf];
 				}
-						
 				$res_rights = $t_r[$v_usr][$res_prf];
 				$q = "replace into acces_res_".$this->dom['id']." set res_num=".$res_id.", res_prf_num=".$res_prf;
 				$q.= ",  usr_prf_num=".$v_usr.", res_rights=".$res_rights.", res_mask=($res_rights ^ $mask) ";
@@ -913,7 +950,7 @@ class domain {
 	
 	
 	//definit les droits d'un profil utilisateur sur une ressource a la creation
-	function defineUserRights($usr_prf_id) {
+	public function defineUserRights($usr_prf_id) {
 		
 		global $dbh;
 		$res_prf = $this->defineResourceProfile();
@@ -931,7 +968,7 @@ class domain {
 	
 	//retourne le(s) droit(s) precise(s) de l'utilisateur sur la ressource
 	//si $rights=0, retourne tous les droits
-	function getRights($usr_id, $res_id, $rights=0) {
+	public function getRights($usr_id, $res_id, $rights=0) {
 		
 		global $dbh;
 
@@ -956,13 +993,17 @@ class domain {
 		
 		$usr_prf = $this->getUserProfile($usr_id);
 		$q= "select ((res_rights ^ res_mask) ".$qr.") from acces_res_".$this->dom['id']." where res_num=".$res_id." and usr_prf_num=".$usr_prf;
-		$r = pmb_mysql_result(pmb_mysql_query($q, $dbh),0,0);
-		return $r;
+		$r = pmb_mysql_query($q, $dbh);
+		
+		if (pmb_mysql_num_rows($r)) {
+            return pmb_mysql_result($r,0,0);
+		}
+		return 0;
 	}
 
 	
 	//retourne le(s) droit(s) d'un profil utilisateur sur un profil ressource
-	function getDomainRights($usr_prf_num=0, $res_prf_num=0) {
+	public function getDomainRights($usr_prf_num=0, $res_prf_num=0) {
 		
 		global $dbh;
 		$q= "select dom_rights from acces_rights where res_prf_num=".$res_prf_num." and usr_prf_num=".$usr_prf_num." and dom_num=".$this->dom['id'] ;
@@ -977,7 +1018,7 @@ class domain {
 	
 	//retourne le(s) droit(s) d'un utilisateur
 	//retourne un tableau [usr_prf_num][res_prf_num]=rights
-	function get_user_rights($usr_id, $usr_prf=0) {
+	public function get_user_rights($usr_id, $usr_prf=0) {
 	
 		global $dbh;
 		
@@ -1007,7 +1048,7 @@ class domain {
 	
 	
 	//retourne une requete donnant la liste des ressources repondant aux criteres passes
-	function getResourceList($usr_id=0, $rights) {
+	public function getResourceList($usr_id=0, $rights) {
 		 
 		$usr_prf = $this->getUserProfile($usr_id);
 		$q="select res_num from acces_res_".$this->dom['id']." where usr_prf_num=".$usr_prf." and ((res_rights ^ res_mask) & ".$rights.") ";
@@ -1016,7 +1057,7 @@ class domain {
 	
 	
 	//retourne la jointure a utiliser pour recuperer les ressources correspondant aux criteres passes
-	function getJoin($usr_id, $rights, $join_field) {
+	public function getJoin($usr_id, $rights, $join_field) {
 		 
 		global $dbh;
 		
@@ -1039,7 +1080,7 @@ class domain {
 	}
 	
 	
-	function getFilterQuery($usr_id=0, $rights,$field ,$ids=""){
+	public function getFilterQuery($usr_id=0, $rights,$field ,$ids=""){
 		
 		global $dbh;
 		
@@ -1063,7 +1104,7 @@ class domain {
 	}
 	
 	//calcul du role utilisateur
-	function getUserProfile($usr_id=0) {
+	public function getUserProfile($usr_id=0) {
 		
 		global $dbh;
 		
@@ -1088,8 +1129,8 @@ class domain {
 				switch ($v_var['type']) {
 					case 'var' :
 						$x = $v_var['value'];
-						global $$x;
-						$t_var[$k_var]=$$x;
+						global ${$x};
+						$t_var[$k_var]=${$x};
 						break;
 					case 'session' :
 						$x = $v_var['value'];
@@ -1098,11 +1139,11 @@ class domain {
 					case 'field' :
 						$t_var[$k_var]=0;
 						if ($usr_id!==0) {
- 							$q = "select ".$v_var['value']." from ".$this->dom['user']['ref']['name']." where ".$this->dom['user']['ref']['key']."=".$usr_id.($this->dom['user']['ref']['clause'] ? " and ".$this->dom['user']['ref']['clause'] : "" );
+							$q = "select ".$v_var['value']." from ".$this->dom['user']['ref']['name']." where ".$this->dom['user']['ref']['key']."=".$usr_id.($this->dom['user']['ref']['clause'] ? " and ".$this->dom['user']['ref']['clause'] : "" );
 							$r = pmb_mysql_query($q, $dbh);
 							if (pmb_mysql_num_rows($r)) {
 								$t_var[$k_var]= pmb_mysql_result($r,0,0);
-							} 
+							}
 						}
 						break;
 					case 'sql' :
@@ -1159,7 +1200,7 @@ class domain {
 	 * sinon retourne une valeur calculee (creation)
 	 * 
 	 */
-	function getResourceProfile($res_id=0) {
+	public function getResourceProfile($res_id=0) {
 
 		global $dbh;
 		if ($res_id) {
@@ -1176,7 +1217,7 @@ class domain {
 	
 	
 	//lecture du nom du profil ressource
-	function getResourceProfileName($res_prf) {
+	public function getResourceProfileName($res_prf) {
 
 		global $dbh;
 		$q = "select prf_name from acces_profiles where prf_id='$res_prf' ";
@@ -1189,7 +1230,7 @@ class domain {
 	
 	
 	//definition du profil pour la ressource en creation 
-	function defineResourceProfile($res_id=0) {
+	public function defineResourceProfile($res_id=0) {
 		
 		global $dbh;
 		//Recuperation des regles
@@ -1215,8 +1256,8 @@ class domain {
 				switch ($v_var['type']) {
 					case 'var' :
 						$x = $v_var['value'];
-						global $$x;
-						$t_var[$k_var]=$$x;
+						global ${$x};
+						$t_var[$k_var]=${$x};
 						break;
 					case 'session' :
 						$x = $v_var['value'];
@@ -1242,8 +1283,14 @@ class domain {
 							$t_var[$k_var]=0;
 						}
 						break;
+					case 'callable' :
+						if ($res_id==0) return $prf_id;
+						global $class_path, $include_path;
+						require_once ($v_var["class_path"]);
+						$t_var[$k_var] = call_user_func_array(array($v_var["class"],$v_var["method"]), array($res_id));
+						break;
 					default:
-						break;	
+						break;
 				}
 			}
 			unset($v_var);
@@ -1280,7 +1327,7 @@ class domain {
 	}
 	
 	
-	function delRessource($res_id=0) {
+	public function delRessource($res_id=0) {
 		
 		global $dbh;
 		if (!$res_id) return;
@@ -1289,7 +1336,7 @@ class domain {
 	}
 	
 	//generation des droits par profil utilisateur pour une ressource
-	function applyRessourceRights($res_id,$chk_sav_spe_rights=0) {
+	public function applyRessourceRights($res_id,$chk_sav_spe_rights=0) {
 		global $dbh;
 		
 		$res_prf=$this->getResourceProfile($res_id);
@@ -1320,7 +1367,7 @@ class domain {
 	}
 	
 	//surcharge des droits utilisateurs
-	function override_user_rights($usr_id=0, $override_rights=0,$chk_rights=array()) {
+	public function override_user_rights($usr_id=0, $override_rights=0,$chk_rights=array()) {
 		global $dbh;
 
 		$usr_id+=0;
@@ -1357,7 +1404,7 @@ class domain {
 									
 										if ( ($this->dom['controls'][$k_ctl]['global']=='yes') && ($t_r & $this->dom['controls'][$k_ctl]) ) {
 											$b_r = $b_r + pow(2,($k_ctl-1));
-										} elseif($chk_rights[$this->dom['id']][$v_res][$k_ctl]==1) {
+										} elseif(!empty($chk_rights[$this->dom['id']][$v_res]) && !empty($chk_rights[$this->dom['id']][$v_res][$k_ctl]) && ($chk_rights[$this->dom['id']][$v_res][$k_ctl] == 1)) {
 											$b_r = $b_r + pow(2,($k_ctl-1));
 										}
 									}
@@ -1378,6 +1425,25 @@ class domain {
 			}
 		}
 	}
+	
+	protected function get_store($store_name) {
+		if (empty(self::$store)) {
+			$store_config = array(
+					/* db */
+					'db_name' => DATA_BASE,
+					'db_user' => USER_NAME,
+					'db_pwd' => USER_PASS,
+					'db_host' => SQL_SERVER,
+					/* store */
+					'store_name' => $this->dom['resource']['ref']['name'],
+					/* stop after 100 errors */
+					'max_errors' => 100,
+					'store_strip_mb_comp_str' => 0
+			);
+			self::$store = new onto_store_arc2($store_config);
+		}
+		return self::$store; 
+	}
 
 }
 
@@ -1385,18 +1451,18 @@ class domain {
 
 class accesParser {
 	
-	var $parser;
-	var $t=array();
-	var $prev_tag='';
-	var $prev_id='';
-	var $path_tag=array();
-	var $text='';
+	public $parser;
+	public $t=array();
+	public $prev_tag='';
+	public $prev_id='';
+	public $path_tag=array();
+	public $text='';
 	
-	function accesParser () {
+	public function __construct() {
 
 	}
 	
-	function run ($file) {
+	public function run ($file) {
 
 		global $charset;
 		
@@ -1428,7 +1494,7 @@ class accesParser {
 		return ($this->t);
 	}
 	
-	function tagStart ($parser, $tag, $att) {
+	public function tagStart ($parser, $tag, $att) {
 
 		global $msg;
 		
@@ -1454,24 +1520,28 @@ class accesParser {
 				$this->t['resource']['properties']=$att['properties'];
 				break;
 			case 'ref' :
-				if ($this->prev_tag =='resource') {
-					$this->t['resource']['ref']['type']=$att['type'];
-					$this->t['resource']['ref']['name']=$att['name'];
-					$this->t['resource']['ref']['key']=$att['key'];
-					$this->t['resource']['ref']['clause']=$att['clause'];
+				if ($this->prev_tag == 'resource') {
+					$this->t['resource']['ref']['type'] = $att['type'];
+					$this->t['resource']['ref']['name'] = $att['name'];
+					$this->t['resource']['ref']['key'] = $att['key'];
+					$this->t['resource']['ref']['clause'] = (isset($att['clause']) ? $att['clause'] : '');
+					$this->t['resource']['ref']['value'] = (isset($att['value']) ? $att['value'] : '');
 				}
-				if ($this->prev_tag =='user') {
-					$this->t['user']['ref']['type']=$att['type'];
-					$this->t['user']['ref']['name']=$att['name'];
-					$this->t['user']['ref']['key']=$att['key'];
-					$this->t['user']['ref']['clause']=$att['clause'];
+				if ($this->prev_tag == 'user') {
+					$this->t['user']['ref']['type'] = $att['type'];
+					$this->t['user']['ref']['name'] = $att['name'];
+					$this->t['user']['ref']['key'] = $att['key'];
+					$this->t['user']['ref']['clause'] = (isset($att['clause']) ? $att['clause'] : '');
 				}
-				if ($this->prev_tag =='property') {
-					$this->t['properties'][$this->prev_id]['ref']['type']=$att['type'];
-					$this->t['properties'][$this->prev_id]['ref']['name']=$att['name'];
-					$this->t['properties'][$this->prev_id]['ref']['key']=$att['key'];
-					$this->t['properties'][$this->prev_id]['ref']['value']=$att['value'];
-					$this->t['properties'][$this->prev_id]['ref']['clause']=$att['clause'];
+				if ($this->prev_tag == 'property') {
+					$this->t['properties'][$this->prev_id]['ref']['type'] = $att['type'];
+					$this->t['properties'][$this->prev_id]['ref']['name'] = $att['name'];
+					$this->t['properties'][$this->prev_id]['ref']['key'] = (isset($att['key']) ? $att['key'] : '');
+					$this->t['properties'][$this->prev_id]['ref']['value'] = (isset($att['value']) ? $att['value'] : '');
+					$this->t['properties'][$this->prev_id]['ref']['clause'] = (isset($att['clause']) ? $att['clause'] : '');
+					$this->t['properties'][$this->prev_id]['ref']['class'] = (isset($att['class']) ? $att['class'] : '');
+					$this->t['properties'][$this->prev_id]['ref']['class_path'] = (isset($att['class_path']) ? $att['class_path'] : '');
+					$this->t['properties'][$this->prev_id]['ref']['method'] = (isset($att['method']) ? $att['method'] : '');
 				}
 				break;
 			case 'property_link' :
@@ -1481,23 +1551,26 @@ class accesParser {
 			case 'r_query' :
 			case 'i_query' :
 				$tag_2=$this->path_tag[count($this->path_tag)-3];
-				$this->t[$tag_2][$this->prev_tag][$tag][$this->prev_id]['type']=$att['type'];
-				$this->t[$tag_2][$this->prev_tag][$tag][$this->prev_id]['value']=$att['value'];
+				$this->t[$tag_2][$this->prev_tag][$tag][$this->prev_id]['type'] = $att['type'];
+				$this->t[$tag_2][$this->prev_tag][$tag][$this->prev_id]['value'] = (isset($att['value']) ? $att['value'] : '');
+				$this->t[$tag_2][$this->prev_tag][$tag][$this->prev_id]['class'] = (isset($att['class']) ? $att['class'] : '');
+				$this->t[$tag_2][$this->prev_tag][$tag][$this->prev_id]['class_path'] = (isset($att['class_path']) ? $att['class_path'] : '');
+				$this->t[$tag_2][$this->prev_tag][$tag][$this->prev_id]['method'] = (isset($att['method']) ? $att['method'] : '');
 				break;
 			case 'properties' :
 				break;
 			case 'property' :
-				$this->t['properties'][$att['id']]['id']=$att['id'];
-				$this->t['properties'][$att['id']]['lib']=$att['lib'];
-				$this->prev_id=$att['id'];
+				$this->t['properties'][$att['id']]['id'] = $att['id'];
+				$this->t['properties'][$att['id']]['lib'] = $att['lib'];
+				$this->prev_id = $att['id'];
 				break;
 			case 'controls' :
 				break;
 			case 'control' :
-				$this->t['controls'][$att['id']]['id']=$att['id'];
-				$this->t['controls'][$att['id']]['lib']=$att['lib'];
-				$this->t['controls'][$att['id']]['global']=$att['global'];
-				$this->prev_id=$att['id'];
+				$this->t['controls'][$att['id']]['id'] = $att['id'];
+				$this->t['controls'][$att['id']]['lib'] = $att['lib'];
+				$this->t['controls'][$att['id']]['global'] = (isset($att['global']) ? $att['global'] : '');
+				$this->prev_id = $att['id'];
 				break;
 			default :
 				break;
@@ -1505,7 +1578,7 @@ class accesParser {
 		$this->text='';
 	}
 	
-	function tagEnd ($parser, $tag) {
+	public function tagEnd ($parser, $tag) {
 
 		if ( !count ($this->path_tag))
 			return;
@@ -1515,14 +1588,14 @@ class accesParser {
 		array_pop ($this->path_tag);
 	}
 	
-	function texte ($parser, $data) {
+	public function texte ($parser, $data) {
 
 		if ( !count ($this->path_tag))
 			return;
 		$this->text.=$data;
 	}
 	
-	function getMsg ($code) {
+	public function getMsg ($code) {
 
 		global $msg;
 		

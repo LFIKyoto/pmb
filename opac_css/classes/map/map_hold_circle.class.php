@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_hold_circle.class.php,v 1.1 2014-12-12 13:08:02 ngantier Exp $
+// $Id: map_hold_circle.class.php,v 1.3 2018-12-14 13:38:18 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($class_path."/map/map_hold.class.php");
@@ -134,8 +134,33 @@ class map_hold_circle extends map_hold_polygon {
    */
   protected function fill_coords() {
   } // end of member function fill_coords
-
-
-
+  
+  static public function createRegularPolygon ($origin, $radius, $sides) {
+      $angle = pi() * ((1/$sides) - (1/2));
+      $rotatedAngle = 0;
+      $points = [];
+      $lon = $radius / ((40075 * cos(($origin['y']*pi()/180))/360));
+      $lat = $radius/111.32;
+      for($i=0; $i<$sides; $i++) {
+          $rotatedAngle = $angle + ($i * 2 * pi() / $sides);
+          
+          $point=[ 'x'=>0,'y'=>0];
+          $point['x'] = $origin['x'] + ($lon * cos($rotatedAngle));
+          $point['y'] = $origin['y'] + ($lat * sin($rotatedAngle));
+          $points[] = $point;
+      }
+      return $points;
+  }
+  
+  static public function getWKT($points){
+      $wkt='';
+      foreach($points as $point){
+          if($wkt) $wkt.= ",";
+          $wkt.=$point['x']." ".$point['y'];
+      }
+      $wkt.= ','.$points[0]['x']." ".$points[0]['y'];
+      $wkt = 'POLYGON(('.$wkt.'))';
+      return $wkt;
+  }
 
 } // end of map_hold_circle

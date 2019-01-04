@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: setcb.php,v 1.12 2009-05-16 11:11:53 dbellamy Exp $
+// $Id: setcb.php,v 1.17 2018-06-19 13:00:53 dgoron Exp $
 
 // popup de saisie d'un code barre pour emprunteur
 
@@ -19,6 +19,7 @@ dans maj emprunteur : tenir compte du code-barre pour l'update !
 */
 
 $base_path="..";	
+$current_module="circ";
 
 require_once ("../includes/error_report.inc.php") ;
 require_once ("../includes/global_vars.inc.php") ;
@@ -65,12 +66,9 @@ require("$include_path/templates/common.tpl.php");
 
 header ("Content-Type: text/html; charset=".$charset);
 
-print "
-<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN'
- 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
-<html xmlns='http://www.w3.org/1999/xhtml' lang='$msg[1002]' charset='".$charset."'>
+print "<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" />
 	<meta http-equiv='Pragma' content='no-cache'>
-		<meta http-equiv='Cache-Control' content='no-cache'>";
+	<meta http-equiv='Cache-Control' content='no-cache'>";
 print link_styles($stylesheet) ;
 print "	<title>setcb</title>
 	</head>
@@ -85,8 +83,8 @@ function updateParent() {
 	self.close();
 }
 </script>
-<div align='center'>
-	<form class='form-$current_module' name='setcb' onSubmit='updateParent();'>
+<div class='center'>
+	<form class='form-circ' name='setcb' onSubmit='updateParent();'>
 		<small><?php echo $msg[4056]; ?></small><br />
 		<input type='text' name='cb' value=''>
 		<input type='hidden' name='verif' value='1'>

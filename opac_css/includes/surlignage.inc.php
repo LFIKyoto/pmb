@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: surlignage.inc.php,v 1.2 2008-11-10 13:26:06 touraine37 Exp $
+// $Id: surlignage.inc.php,v 1.7 2018-04-17 12:48:32 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -11,6 +11,7 @@ function activation_surlignage() {
 	global $surligne;
 	global $opac_surlignage;
 	global $lvl;
+	global $action;
 	global $user_query;
 	global $footer;
 	global $inclus_footer;
@@ -23,6 +24,16 @@ function activation_surlignage() {
 			break;
 		case "search_result":
 			$form_name="search_input";
+			break;
+		case "search_segment":
+			switch ($action) {
+				case "more_results":
+					$form_name="form_values";
+					break;
+				case "search_result":
+					$form_name="search_input";
+					break;
+			}
 			break;
 	}
 	
@@ -37,7 +48,7 @@ function activation_surlignage() {
 			}
 			$surligne=$_SESSION['surlignez'];
 		} else $_SESSION['surlignez']=$surligne;
-		$activation_surlignage.= "&nbsp;&nbsp;&nbsp;<img border='0' align='center' src=\"./images/text_horizontalrule.png\" onMouseOver=\"this.style.cursor='pointer'\"";
+		$activation_surlignage.= "&nbsp;&nbsp;&nbsp;<img style='border:0px' class='center' src=\"".get_url_icon('text_horizontalrule.png')."\" onMouseOver=\"this.style.cursor='pointer'\" ";
 		if ($_SESSION['surlignez']==0) {
 			$activation_surlignage.= "alt='".$msg['surligner']."' title='".$msg['surligner']."' onClick='";
 			$activation_surlignage.= "document.$form_name.surligne.value=1;";

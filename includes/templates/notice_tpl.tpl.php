@@ -2,11 +2,31 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_tpl.tpl.php,v 1.4.4.1 2015-09-10 07:58:28 jpermanne Exp $
+// $Id: notice_tpl.tpl.php,v 1.11 2018-01-24 10:54:46 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 // Affichage de la liste des templates de notices
+
+$notice_tpl_show_loc_btn = "<input value='".$msg["notice_tpl_show_loc_btn"]."' id='show_loc_btn' class='bouton' type='button' onclick='notice_tpl_load_locations();'>
+<script type='text/javascript'>
+function notice_tpl_load_locations(){
+	var show_loc_div = document.getElementById('show_loc_div');
+	if(show_loc_div){
+		show_loc_div.removeChild(document.getElementById('show_loc_btn'));
+		var req = new XMLHttpRequest();
+		req.open('GET', './ajax.php?module=ajax&categ=notice_tpl&action=get_locations&id_notice_tpl=!!id!!', true);
+		req.onreadystatechange = function (aEvt) {
+			if (req.readyState == 4) {
+				if(req.status == 200){
+					show_loc_div.innerHTML = req.responseText;
+				}
+			}
+		}
+		req.send(null);
+	}
+}
+</script>";
 
 $notice_tpl_liste = "
 <table width='100%'>
@@ -26,12 +46,15 @@ $notice_tpl_liste = "
 	<div class='left'>
 		<input class='bouton' value='".$msg["notice_tpl_ajouter"]."' onclick=\"document.location='!!link_ajouter!!'\" type='button'><input class='bouton' value='".$msg["edit_tpl_import_button"]."' onclick=\"document.location='!!link_import!!'\" type='button'>
 	</div>
+	<div class='right'>
+		<a href='".$base_path."/includes/interpreter/doc?group=notice_tpl' target='_blank'>".$msg['interpreter_doc_notice_tpl_link']."</a>
+	</div>
 </div>
 ";
 
 $notice_tpl_liste_ligne = "
 <tr <tr class='!!pair!!' onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='!!pair!!'\" style=\"cursor: pointer;\" >
-	<td onmousedown=\"document.location='!!link_edit!!';\" align='right'><b>!!id!!</b></td>
+	<td onmousedown=\"document.location='!!link_edit!!';\" class='align_right'><b>!!id!!</b></td>
 	<td onmousedown=\"document.location='!!link_edit!!';\">!!name!!</td>
 	<td onmousedown=\"document.location='!!link_edit!!';\">!!comment!!</td>
 	<td onmousedown=\"document.location='!!link_edit!!';\">!!show_opac!!</td>
@@ -52,17 +75,18 @@ $notice_tpl_form = jscript_unload_question()."
 	}
 	
 	function confirm_delete() {
-	    result = confirm(\"${msg[confirm_suppr]}\");
+	    result = confirm(\"".$msg['confirm_suppr']."\");
 	    if(result) {
 	        unload_off();
 	        document.location='!!action_delete!!';
 		} else
-	        document.forms['notice_tpl_form'].elements['titre_uniforme'].focus();
+	        document.forms['notice_tpl_form'].elements['name'].focus();
 	}
 	
 	
 </script>
 <script type='text/javascript' src='./javascript/tabform.js'></script>
+<script src='./javascript/ace/ace.js' type='text/javascript' charset='".$charset."'></script>
 <form class='form-$current_module' id='notice_tpl_form' name='notice_tpl_form' method='post' action='!!action!!' onSubmit=\"return false\" >
 	<h3>!!libelle!!</h3>
 	<div class='form-contenu'>
@@ -87,6 +111,9 @@ $notice_tpl_form = jscript_unload_question()."
 		<div class='row'>
 		!!code_part!!
 		</div>
+		<div class='row' id='show_loc_div'>
+			!!show_loc!!
+		</div>
 		<!--	id notice pour test	-->
 		<div class='row'>
 			<label class='etiquette' for='id_test'>".$msg["notice_tpl_id_test"]."</label>
@@ -103,7 +130,7 @@ $notice_tpl_form = jscript_unload_question()."
 	<!--	boutons	-->
 	<div class='row'>
 		<div class='left'>
-			<input type='button' class='bouton' value='$msg[76]' onClick=\"unload_off();history.go(-1);\" />
+			<input type='button' class='bouton' value='$msg[76]' id='btcancel' onClick=\"unload_off();history.go(-1);\" />
 			<input type='button' value='$msg[77]' class='bouton' id='btsubmit' onClick=\"if (test_form(this.form)) this.form.submit();\" />
 			!!duplicate!!
 			</div>
@@ -122,6 +149,9 @@ $notice_tpl_form_code ="
 		<div class='row'>
 			<textarea class='saisie-80em' id='code_!!loc!!_!!typenotice!!_!!typedoc!!' name='code_!!loc!!_!!typenotice!!_!!typedoc!!' cols='62' rows='30' wrap='virtual'>!!code!!</textarea>
 			<input type='hidden' name='code_list[]' value='code_!!loc!!_!!typenotice!!_!!typedoc!!' />
+			<script type='text/javascript'>
+			 	pmbDojo.aceManager.initEditor('code_!!loc!!_!!typenotice!!_!!typedoc!!');
+			</script>
 		</div>		
 ";	
 	

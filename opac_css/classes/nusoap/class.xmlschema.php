@@ -11,39 +11,39 @@
 * tutorials I refer to :)
 *
 * @author   Dietrich Ayala <dietrich@ganx4.com>
-* @version  $Id: class.xmlschema.php,v 1.2 2009-05-16 10:52:44 dbellamy Exp $
+* @version  $Id: class.xmlschema.php,v 1.4 2017-10-27 14:08:51 ngantier Exp $
 * @access   public
 */
 class XMLSchema extends nusoap_base  {
 	
 	// files
-	var $schema = '';
-	var $xml = '';
+	public $schema = '';
+	public $xml = '';
 	// namespaces
-	var $enclosingNamespaces;
+	public $enclosingNamespaces;
 	// schema info
-	var $schemaInfo = array();
-	var $schemaTargetNamespace = '';
+	public $schemaInfo = array();
+	public $schemaTargetNamespace = '';
 	// types, elements, attributes defined by the schema
-	var $attributes = array();
-	var $complexTypes = array();
-	var $complexTypeStack = array();
-	var $currentComplexType = null;
-	var $elements = array();
-	var $elementStack = array();
-	var $currentElement = null;
-	var $simpleTypes = array();
-	var $simpleTypeStack = array();
-	var $currentSimpleType = null;
+	public $attributes = array();
+	public $complexTypes = array();
+	public $complexTypeStack = array();
+	public $currentComplexType = null;
+	public $elements = array();
+	public $elementStack = array();
+	public $currentElement = null;
+	public $simpleTypes = array();
+	public $simpleTypeStack = array();
+	public $currentSimpleType = null;
 	// imports
-	var $imports = array();
+	public $imports = array();
 	// parser vars
-	var $parser;
-	var $position = 0;
-	var $depth = 0;
-	var $depth_array = array();
-	var $message = array();
-	var $defaultNamespace = array();
+	public $parser;
+	public $position = 0;
+	public $depth = 0;
+	public $depth_array = array();
+	public $message = array();
+	public $defaultNamespace = array();
     
 	/**
 	* constructor
@@ -776,7 +776,7 @@ class XMLSchema extends nusoap_base  {
 				$buffer .= '<table>';
 				foreach($typeDef['elements'] as $child => $childDef){
 					$buffer .= "
-					<tr><td align='right'>$childDef[name] (type: ".$this->getLocalPart($childDef['type'])."):</td>
+					<tr><td class='align_right'>$childDef[name] (type: ".$this->getLocalPart($childDef['type'])."):</td>
 					<td><input type='text' name='parameters[".$name."][$childDef[name]]'></td></tr>";
 				}
 				$buffer .= '</table>';
@@ -785,7 +785,7 @@ class XMLSchema extends nusoap_base  {
 				$buffer .= '<table>';
 				for($i=0;$i < 3; $i++){
 					$buffer .= "
-					<tr><td align='right'>array item (type: $typeDef[arrayType]):</td>
+					<tr><td class='align_right'>array item (type: $typeDef[arrayType]):</td>
 					<td><input type='text' name='parameters[".$name."][]'></td></tr>";
 				}
 				$buffer .= '</table>';

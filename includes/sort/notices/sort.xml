@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
-<!-- $Id: sort.xml,v 1.21 2015-03-11 14:39:41 dgoron Exp $ -->
+<!-- $Id: sort.xml,v 1.24 2018-12-12 13:01:10 dgoron Exp $ -->
 <sort reference="notices" referencekey="notice_id">
 	
 	<field name="712" type="text" typefield="select" id="1">
@@ -439,6 +439,43 @@
 		</var>
 		<table>
 			<tablefield>map_equinoxe</tablefield>
+		</table>
+	</field>
+	
+	<field name="134" type="text" typefield="select" id="33">
+		<table name="categories">
+			<tablefield nullvalue=' '>concat(index_categorie," ")</tablefield>
+			<tablekey>num_noeud</tablekey>
+			<groupby>notice_id</groupby>
+			<filter>langue = '!!lang!!'</filter>
+			<link type="nn">
+				<table>notices_categories</table>
+				<referencefield>notcateg_notice</referencefield>
+				<externalfield>num_noeud</externalfield>
+			</link>
+		</table>
+	</field>
+	<field name="notice_is_new_gestion" type="text" typefield="select" id="34">
+		<table>
+			<tablefield>notice_date_is_new</tablefield>
+		</table>
+	</field>
+	
+	<field name="external_source" type="text" typefield="select" id="35">
+		<table name="connectors_sources">
+			<tablefield>name</tablefield>
+			<tablekey>source_id</tablekey>
+			<groupby>notice_id</groupby>
+			<link type="nn">
+					<table>notices_externes</table>
+					<referencefield>num_notice</referencefield>
+					<externalfield>recid</externalfield>
+					<link type="nn">
+						<table>external_count</table>
+						<referencefield>recid</referencefield>
+						<externalfield>source_id</externalfield>
+					</link>
+				</link>
 		</table>
 	</field>
 </sort>

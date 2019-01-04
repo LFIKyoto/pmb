@@ -1,7 +1,7 @@
 //+-------------------------------------------------+
-//© 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+//ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 //+-------------------------------------------------+
-//$Id: tablist_ajax.js,v 1.7 2015-04-14 10:08:43 dgoron Exp $
+//$Id: tablist_ajax.js,v 1.10 2017-11-30 12:50:43 dgoron Exp $
 
 var expand_state=new Array();
 
@@ -16,11 +16,11 @@ function expandBase_ajax(el, unexpand,	notice_affichage_cmd){
 		whichIm.src = whichIm.src.replace('nomgif=plus','nomgif=moins');
 		changeCoverImage(whichEl);
 		if(!expand_state[el]) {
-			whichEl.innerHTML =  "<div style='width:100%; height:30px;text-align:center'><img style='padding 0 auto;' src='./images/patience.gif' id='collapseall' border='0'></div>" ;
+			whichEl.innerHTML =  "<div style='width:100%; height:30px;text-align:center'><img style='padding 0 auto;' src='"+pmb_img_patience+"' id='collapseall' border='0'></div>" ;
 			var url= "./ajax.php?module=expand_notice&categ=expand";
 			// On initialise la classe:
 			var req = new http_request();
-			// Exécution de la requette (url, post_flag ,post_param, async_flag, func_return, func_error) 
+			// Exï¿½cution de la requette (url, post_flag ,post_param, async_flag, func_return, func_error) 
 			req.request(url,1,'notice_affichage_cmd='+notice_affichage_cmd,1,expandBase_ajax_callback,expandBase_ajax_callback_error,el);
 			expand_state[el]=1;
 		}
@@ -41,16 +41,27 @@ function expandBase_ajax_callback(text,el) {
 		show_simili_search(whichEl.getAttribute("id").replace("el","").replace("Child",""));
 		show_expl_voisin_search(whichEl.getAttribute("id").replace("el","").replace("Child",""));
 	}
-	var whichAddthis = document.getElementById(el + 'addthis');
-	if (whichAddthis && !whichAddthis.getAttribute("added")){
-		creeAddthis(el);
-	}
+	
+//	var whichAddthis = document.getElementById(el + 'addthis');
+//	if (whichAddthis && !whichAddthis.getAttribute("added")){
+//		creeAddthis(el);
+//	}
 	if(document.getElementsByName('surligne')) {
 		var surligne = document.getElementsByName('surligne');
-		if (surligne[0].value == 1) rechercher(1);
+		if(surligne[0]){
+			if (surligne[0].value == 1) rechercher(1);
+		}
 	}
   	if(typeof(dojo) == "object"){
   		dojo.parser.parse(whichEl);
+  		require(['dojo/dom-construct', 'dojo/query'], function(domConstruct, query){
+			query('script', whichEl).forEach(function(node) {
+				domConstruct.create('script', {
+					innerHTML: node.innerHTML,
+					type: 'text/javascript'
+				}, node, 'replace');
+			});
+  		});
   	}
 	ReinitializeAddThis();
 }
@@ -85,7 +96,7 @@ function expandAll_ajax(mode) {
 					if(mode==1){
 						//appel par lot
 						nb_to_send++;
-						document.getElementById(el + 'Child').innerHTML = "<div style='width:100%; height:30px;text-align:center'><img style='padding 0 auto;' src='./images/patience.gif' id='collapseall' border='0'></div>";
+						document.getElementById(el + 'Child').innerHTML = "<div style='width:100%; height:30px;text-align:center'><img style='padding 0 auto;' src='"+pmb_img_patience+"' id='collapseall' border='0'></div>";
 						display_cmd_all+=display_cmd;
 						if (i<(tempColl.length -1))display_cmd_all+='|*|*|';
 						if(nb_to_send>40) {
@@ -95,11 +106,11 @@ function expandAll_ajax(mode) {
 						}
 					}else{
 						//appel par notice		    		
-						document.getElementById(el + 'Child').innerHTML = "<div style='width:100%; height:30px;text-align:center'><img style='padding 0 auto;' src='./images/patience.gif' id='collapseall' border='0'></div>";
+						document.getElementById(el + 'Child').innerHTML = "<div style='width:100%; height:30px;text-align:center'><img style='padding 0 auto;' src='"+pmb_img_patience+"' id='collapseall' border='0'></div>";
 						expandAll_ajax_block_suite('display_cmd='+display_cmd);
 					}
 				}else{
-					//les notices chargées avec la page : enrichissement et addthis
+					//les notices chargï¿½es avec la page : enrichissement et addthis
 					var whichEl = document.getElementById(el + 'Child');		
 					if(whichEl.getAttribute("enrichment")){
 						getEnrichment(el.replace("el",""));
@@ -131,7 +142,7 @@ function expandAll_ajax(mode) {
 function expandAll_ajax_block_suite(post_data){
 	// On initialise la classe:
 	var req = new http_request();
-	// Exécution de la requette (url, post_flag , post_param, async_flag, func_return, func_error) 
+	// Exï¿½cution de la requette (url, post_flag , post_param, async_flag, func_return, func_error) 
 	req.request("./ajax.php?module=expand_notice&categ=expand_block",1,post_data,1,expandAll_ajax_callback_block,expandAll_ajax_callback_block_error);
 } 
 
@@ -146,12 +157,20 @@ function expandAll_ajax_callback_block(text,el) {
 			if (whichEl.getAttribute("enrichment")){
 				getEnrichment(whichEl.getAttribute("id").replace("el","").replace("Child",""));
 			}
-			var whichAddthis = document.getElementById('el' + res_notice[0] + 'addthis');
-			if (whichAddthis && !whichAddthis.getAttribute("added")){
-				creeAddthis('el' + res_notice[0]);
-			}			
+//			var whichAddthis = document.getElementById('el' + res_notice[0] + 'addthis');
+//			if (whichAddthis && !whichAddthis.getAttribute("added")){
+//				creeAddthis('el' + res_notice[0]);
+//			}			
 		  	if(typeof(dojo) == "object"){
 		  		dojo.parser.parse(whichEl);
+		  		require(['dojo/dom-construct', 'dojo/query'], function(domConstruct, query){
+					query('script', whichEl).forEach(function(node) {
+						domConstruct.create('script', {
+							innerHTML: node.innerHTML,
+							type: 'text/javascript'
+						}, node, 'replace');
+					});
+		  		});
 		  	}
 		}
 	}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_agenda_view_eventslist.class.php,v 1.5 2014-11-17 17:00:53 arenou Exp $
+// $Id: cms_module_agenda_view_eventslist.class.php,v 1.7 2018-05-16 14:18:35 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -31,16 +31,40 @@ le {{event.event_start.format_value}}
 </div>";
 	}
 	
-	public function render($datas){
+	public function get_form(){
+		$form="
+		<div class='row'>
+			<div class='colonne3'>
+				<label for='cms_module_articleslist_view_link'>".$this->format_text($this->msg['cms_module_common_view_articleslist_build_article_link'])."</label>
+			</div>
+			<div class='colonne-suite'>";
+		$form.= $this->get_constructor_link_form("article");
+		$form.="
+			</div>
+		</div>";
+		$form.= parent::get_form();
+		return $form;
+	}
+	
+	public function save_form(){
+		$this->save_constructor_link_form("article");
+		return parent::save_form();
+	}
+	
+	protected function get_render_datas($datas) {
 		$render_datas = array();
 		$render_datas['title'] = "Liste d'évènements";
 		$render_datas['events'] = array();
+		$articles = array();
 		foreach($datas['events'] as $event){
 			$event['link'] = $this->get_constructed_link("article",$event['id']);
 			$render_datas['events'][]=$event;
+			$articles[] = $event['id'];
 		}
 		//on rappelle le tout...
-		return cms_module_common_view_django::render($render_datas);
+		$parent_render = parent::get_render_datas($articles);
+		$render_datas['articles'] = $parent_render['articles'];
+		return $render_datas;
 	}
 	
 	public function get_format_data_structure(){
@@ -54,7 +78,7 @@ le {{event.event_start.format_value}}
 			'var' => "title",
 			'desc'=> $this->msg['cms_module_agenda_view_evenslist_title_desc']
 		);
-		$format_data = array_merge($format_data,cms_module_common_view_django::get_format_data_structure());
+		$format_data = array_merge($format_data,parent::get_format_data_structure());
 		return $format_data;
 	}
 }

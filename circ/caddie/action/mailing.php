@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mailing.php,v 1.21 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: mailing.php,v 1.29 2018-04-27 12:36:47 dgoron Exp $
 
 // définition du minimum nécéssaire
 $base_path="../../..";
@@ -46,8 +46,8 @@ if($mailtpl->get_count_tpl()){
 			// objet du mail
 			document.getElementById('f_objet_mail').value=info.objet;			
 			// contenu
-			document.getElementById('f_message').innerHTML=info.tpl;	
-			if(typeof(tinyMCE)!= 'undefined')tinyMCE.updateContent('f_message');
+			document.getElementById('f_message').value=info.tpl;	
+			if(typeof(tinyMCE)!= 'undefined')tinyMCE_updateContent('f_message',info.tpl);
 		}
 	</script>
 	<div class='row'>
@@ -84,21 +84,18 @@ if($sel_img)$get_sel_img="
 $urlbase="./circ/caddie/";
 if (!$idemprcaddie) die();
 
-if ($pmb_javascript_office_editor) {
-	print $pmb_javascript_office_editor ;
+if($pmb_javascript_office_editor){
+	print $pmb_javascript_office_editor;
+	print "<script type='text/javascript' src='".$base_path."/javascript/tinyMCE_interface.js'></script>";
 }
 
-if (!$f_message && !$pmb_javascript_office_editor) {
-	$f_message="
-<html>
-<head>
-<meta http-equiv=\"Content-Type\" content=\"text/html; charset=$charset\">
-</head>
+if ((!isset($f_message) || !$f_message) && !$pmb_javascript_office_editor) {
+	$f_message="<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" /></head>
 <body>
 </body>
 </html>";
 } else $f_message=stripslashes($f_message);
-$f_objet_mail = stripslashes($f_objet_mail);
+$f_objet_mail = (isset($f_objet_mail) ? stripslashes($f_objet_mail) : '');
 
 print "<div id='contenu-frame'>" ;
 
@@ -174,6 +171,10 @@ switch ($sub) {
 							
 						}
 					</script>
+					<div class='row'>
+						<label for='associated_campaign' class='etiquette'>".$msg["associated_campaign"]."</label>
+						<input type='checkbox' name='associated_campaign' value=\"1\" />
+					</div>
 					<div class='row'></div>
 					</div>
 					<div class='row'>
@@ -193,15 +194,16 @@ switch ($sub) {
 					<label class='etiquette'>$msg[empr_mailing_form_obj_mail]</label>
 					<div class='row'>
 						".htmlentities(stripslashes($f_objet_mail),ENT_QUOTES,$charset)."
-						</div>
 					</div>
+				</div>
 				<div class='row'>
 					<label class='etiquette'>$msg[empr_mailing_form_message]</label>
 					<div class='row'>
-						<center><iframe id='visu_message' name='visu_message' frameborder='2' scrolling='yes' width='80%' height='700' src='./visu_message.php'></iframe>
-						</center>
-						</div>
+						<span class='center'>
+							<iframe id='visu_message' name='visu_message' frameborder='2' scrolling='yes' width='80%' height='700' src='./visu_message.php'></iframe>
+						</span>
 					</div>
+				</div>
 			";
 		break;
 	case "envoi" :
@@ -234,8 +236,9 @@ switch ($sub) {
 		}
 		if(!$error){
 			$mailing = new mailing_empr($idemprcaddie);
-			if ($total_envoyes) $mailing->total_envoyes = $total_envoyes;
-			if ($total) $mailing->total = $total;
+			$mailing->associated_campaign  = (isset($associated_campaign) ? $associated_campaign : 0);
+ 			if ($total_envoyes) $mailing->total_envoyes = $total_envoyes;
+ 			if ($total) $mailing->total = $total;
 			$mailing->send($f_objet_mail, $f_message, 20,$pieces_jointes);
 			
 			$sql = "select id_empr, empr_mail, empr_nom, empr_prenom from empr, empr_caddie_content where (flag='' or flag is null) and empr_caddie_id=$idemprcaddie and object_id=id_empr";
@@ -247,19 +250,19 @@ switch ($sub) {
 		
 		if ($n_envoi_restant > 0) {
 			$parametres=array();
-			$parametres[total]=$mailing->total;
-			$parametres[sub]="envoi";
-			$parametres[total_envoyes]=$mailing->total_envoyes;
-			$parametres[f_objet_mail]=htmlentities($f_objet_mail,ENT_QUOTES,$charset);
-			$parametres[f_message]=htmlentities($f_message,ENT_QUOTES,$charset);
-			$parametres[idemprcaddie]=$idemprcaddie;
-			$parametres[files_post]=urlencode(serialize($files));
-			$parametres[count_files]=count($files);
-			$msg[empr_mailing_recap_comptes_encours] = str_replace("!!total_envoyes!!", $mailing->total_envoyes, $msg[empr_mailing_recap_comptes_encours]) ;
-			$msg[empr_mailing_recap_comptes_encours] = str_replace("!!total!!", $mailing->total, $msg[empr_mailing_recap_comptes_encours]) ;
-			$msg[empr_mailing_recap_comptes_encours] = str_replace("!!n_envoi_restant!!", $n_envoi_restant, $msg[empr_mailing_recap_comptes_encours]) ;
+			$parametres['total']=$mailing->total;
+			$parametres['sub']="envoi";
+			$parametres['total_envoyes']=$mailing->total_envoyes;
+			$parametres['f_objet_mail']=htmlentities($f_objet_mail,ENT_QUOTES,$charset);
+			$parametres['f_message']=htmlentities($f_message,ENT_QUOTES,$charset);
+			$parametres['idemprcaddie']=$idemprcaddie;
+			$parametres['files_post']=urlencode(serialize($files));
+			$parametres['count_files']=count($files);
+			$msg['empr_mailing_recap_comptes_encours'] = str_replace("!!total_envoyes!!", $mailing->total_envoyes, $msg['empr_mailing_recap_comptes_encours']) ;
+			$msg['empr_mailing_recap_comptes_encours'] = str_replace("!!total!!", $mailing->total, $msg['empr_mailing_recap_comptes_encours']) ;
+			$msg['empr_mailing_recap_comptes_encours'] = str_replace("!!n_envoi_restant!!", $n_envoi_restant, $msg['empr_mailing_recap_comptes_encours']) ;
 			$message_info="<div class='row'>".
-							$msg[empr_mailing_recap_comptes_encours]."
+							$msg['empr_mailing_recap_comptes_encours']."
 							</div>";
 			print construit_formulaire_recharge (1000, "./mailing.php", "envoi_mailing", $parametres, $f_objet_mail, $message_info) ;
 		} else {
@@ -270,20 +273,20 @@ switch ($sub) {
 				}
 			}
 			print "
-			<h1>$msg[empr_mailing_titre_resultat]</h1>
+			<h1>".$msg['empr_mailing_titre_resultat']."</h1>
 				<div class='row'>
-					<strong>$msg[empr_mailing_form_obj_mail]</strong> 
+					<strong>".$msg['empr_mailing_form_obj_mail']."</strong> 
 						".htmlentities($f_objet_mail,ENT_QUOTES,$charset)."
 					</div>
 				<div class='row'>
-					<strong>$msg[empr_mailing_resultat_envoi]</strong> ";
-			$msg[empr_mailing_recap_comptes] = str_replace("!!total_envoyes!!", $mailing->total_envoyes, $msg[empr_mailing_recap_comptes]) ;
-			$msg[empr_mailing_recap_comptes] = str_replace("!!total!!", $mailing->total, $msg[empr_mailing_recap_comptes]) ;
-			print $msg[empr_mailing_recap_comptes] ;
+					<strong>".$msg['empr_mailing_resultat_envoi']."</strong> ";
+			$msg['empr_mailing_recap_comptes'] = str_replace("!!total_envoyes!!", $mailing->total_envoyes, $msg['empr_mailing_recap_comptes']) ;
+			$msg['empr_mailing_recap_comptes'] = str_replace("!!total!!", $mailing->total, $msg['empr_mailing_recap_comptes']) ;
+			print $msg['empr_mailing_recap_comptes'] ;
 			print "		</div>
 				<hr />
 				<div class='row'>
-					<a href='../../../circ.php?categ=caddie&sub=gestion&quoi=razpointage&moyen=raz&action=&idemprcaddie=$idemprcaddie&item=' target=_top>".$msg[empr_mailing_raz_pointage]."</a>
+					<a href='../../../circ.php?categ=caddie&sub=gestion&quoi=razpointage&moyen=raz&action=&idemprcaddie=$idemprcaddie&item=' target=_top>".$msg['empr_mailing_raz_pointage']."</a>
 					</div>
 				";
 			$sql = "select id_empr, empr_mail, empr_nom, empr_prenom from empr, empr_caddie_content where flag='2' and empr_caddie_id=$idemprcaddie and object_id=id_empr ";
@@ -306,7 +309,7 @@ switch ($sub) {
 	default:
 		// include("$include_path/messages/help/$lang/mailing_empr.txt") ;
 		break;
-	}
+}
 print "</div></body></html>";
 
 
@@ -325,7 +328,7 @@ function construit_formulaire_recharge ($time_out, $action, $name, $hidden_param
 		} // fin de liste
 	$formulaire.=$texte_message;
 	$formulaire.="\n</div>";
-	if ($time_out<0) $formulaire.="\n<div class='row'><input type=submit class=bouton value='".$msg[form_recharge_bt_continuer]."' /></div>";
+	if ($time_out<0) $formulaire.="\n<div class='row'><input type=submit class=bouton value='".$msg['form_recharge_bt_continuer']."' /></div>";
 	$formulaire.="\n</form>";
 	switch ($time_out) {
 		case 0:
@@ -338,4 +341,4 @@ function construit_formulaire_recharge ($time_out, $action, $name, $hidden_param
 		 	break;
 		}
 	return $formulaire;
-	} 
+} 

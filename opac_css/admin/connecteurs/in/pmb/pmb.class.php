@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmb.class.php,v 1.3 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: pmb.class.php,v 1.12 2018-10-19 09:40:16 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,8 +14,8 @@ define("JSONRPC",1);
 define("SOAP",2);
 
 class xml_dom_pmb {
-	var $xml;				/*!< XML d'origine */
-	var $charset;			/*!< Charset courant (iso-8859-1 ou utf-8) */
+	public $xml;				/*!< XML d'origine */
+	public $charset;			/*!< Charset courant (iso-8859-1 ou utf-8) */
 	/**
 	 * \brief Arbre des noeuds du document
 	 * 
@@ -30,14 +30,14 @@ class xml_dom_pmb {
 	 )
 	 \endverbatim
 	 */
-	var $tree; 
-	var $error=false; 		/*!< Signalement d'erreur : true : erreur lors du parse, false : pas d'erreur */
-	var $error_message=""; 	/*!< Message d'erreur correspondant à l'erreur de parse */
-	var $depth=0;			/*!< \protected */
-	var $last_elt=array();	/*!< \protected */
-	var $n_elt=array();		/*!< \protected */
-	var $cur_elt=array();	/*!< \protected */
-	var $last_char=false;	/*!< \protected */
+	public $tree; 
+	public $error=false; 		/*!< Signalement d'erreur : true : erreur lors du parse, false : pas d'erreur */
+	public $error_message=""; 	/*!< Message d'erreur correspondant à l'erreur de parse */
+	public $depth=0;			/*!< \protected */
+	public $last_elt=array();	/*!< \protected */
+	public $n_elt=array();		/*!< \protected */
+	public $cur_elt=array();	/*!< \protected */
+	public $last_char=false;	/*!< \protected */
 	
 	/**
 	 * \protected
@@ -79,7 +79,7 @@ class xml_dom_pmb {
 		$this->last_char=true;
 		$this->last_elt[$this->depth]=$this->cur_elt;
 		$this->cur_elt=array();
-		$this->cur_elt["DATA"].=$char;
+		$this->cur_elt["DATA"]=$char;
 		$this->cur_elt["TYPE"]=2;
 		$this->depth++;
 	}
@@ -394,41 +394,30 @@ class xml_dom_pmb {
 }
 
 class pmb extends connector {
-	var $source_id;		
-	var $search_id;
-	var $url;					//url distante 
-	var $username;				//identifiant pour la recherche distante
-	var $password;				//mot de passe pour la recherche distante
-	var $del_old;				//Supression ou non des notices dejà existantes
-	var $current_protocole;		//protocole utilisé en cours	
-	var $searchindexes;			//Liste des indexes de recherche possibles pour le site
-	var $current_searchindex;	//Numéro de l'index de recherche de la classe
-	var $match_index;			//Type de recherche (power ou simple)
+	public $search_id;
+	public $url;					//url distante 
+	public $username;				//identifiant pour la recherche distante
+	public $password;				//mot de passe pour la recherche distante
+	public $current_protocole;		//protocole utilisé en cours	
+	public $searchindexes;			//Liste des indexes de recherche possibles pour le site
+	public $current_searchindex;	//Numéro de l'index de recherche de la classe
+	public $match_index;			//Type de recherche (power ou simple)
 	
-	function pmb($connector_path="") {
-    	parent::connector($connector_path);
+	public function __construct($connector_path="") {
+    	parent::__construct($connector_path);
 
     }
     
-    function get_id() {
+    public function get_id() {
     	return "pmb";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 2;
 	}
-   
-	function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
 	
-	function source_get_property_form($source_id) {
+	public function source_get_property_form($source_id) {
     	global $charset;
     	// méthode de la classe parente
     	$params=$this->get_source_params($source_id);
@@ -436,12 +425,19 @@ class pmb extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 
-		if (!$max_return) $max_return=100;
+		if (!isset($max_return) || !$max_return) $max_return=100;
+		if(!isset($url)) $url = '';
+		if(!isset($protocole)) $protocole = '';
+		if(!isset($display_items)) $display_items = '';
+		if(!isset($authentification)) $authentification = '';
+		if(!isset($auth_login)) $auth_login = '';
+		if(!isset($auth_password)) $auth_password = '';
+		
 		$form="
 		<script type='text/javascript'>var old_search_index='search_index_".$url."'</script>
 		<div class='row'>
@@ -477,9 +473,7 @@ class pmb extends connector {
 				<label for='display_items'>".$this->msg["pmb_display_items"]."</label>
 			</div>
 			<div class='colonne_suite'>
-				<input type='checkbox' name='display_items' id='display_items' class='' value='".($display_items=="0" ? "0" : "1")."'".
-				($display_items == "1" ? " checked " : $display_items = "0").
-				"onchange='checkItems();' />
+				<input type='checkbox' name='display_items' id='display_items' value='1' ".($display_items == "1" ? " checked='checked' " : "")." />
 			</div>
 		</div>
 		<div class='row'>
@@ -490,7 +484,7 @@ class pmb extends connector {
 				<input type='checkbox' name='authentification' id='authentification' class='' value='".($authentification=="0" ? "0" : "1")."'".
 				($authentification == "1" ? " checked " : $authentification = "0").
 				//on désactive login et mot de passe en fonction du checkbox
-				"onchange='checkAuth();' />
+				" onchange='checkAuth();' />
 			</div>
 		</div>
 		<div class='row'>
@@ -498,7 +492,7 @@ class pmb extends connector {
 				<label for=''>".$this->msg["pmb_username"]."</label>
 			</div>
 			<div class='colonne_suite'>
-				<input type='text' name='auth_login' id='auth_login' class='saisie-5em' value='".htmlentities($username,ENT_QUOTES,$charset)."'".
+				<input type='text' name='auth_login' id='auth_login' class='saisie-5em' value='".htmlentities($auth_login,ENT_QUOTES,$charset)."'".
 				($authentification == "0" ? " disabled " : "")."'/>
 			</div>
 		</div>
@@ -507,7 +501,7 @@ class pmb extends connector {
 				<label for=''>".$this->msg["pmb_password"]."</label>
 			</div>
 			<div class='colonne_suite'>
-				<input type='text' name='auth_password' id='auth_password' class='saisie-5em' value='".htmlentities($password,ENT_QUOTES,$charset)."'".
+				<input type='text' name='auth_password' id='auth_password' class='saisie-5em' value='".htmlentities($auth_password,ENT_QUOTES,$charset)."'".
 				($authentification == "0" ? " disabled " : "")."'/>
 			</div>
 		</div>
@@ -516,21 +510,12 @@ class pmb extends connector {
 		<script type='text/javascript'>
 		
 		function checkAuth(){
-				if(document.getElementById('authentification').value == '1'){
-					document.getElementById('authentification').value = '0';
-					document.getElementById('auth_login').disabled = true;
-					document.getElementById('auth_password').disabled = true;
-				}else {
-					document.getElementById('authentification').value = '1';
-					document.getElementById('auth_login').disabled = false;
-					document.getElementById('auth_password').disabled = false;
-				}
-			}
-		function checkItems() {
-			if(document.getElementById('display_items').value == '1'){
-				document.getElementById('display_items').value = '0';
-			} else {
-				document.getElementById('display_items').value = '1';
+			if(document.getElementById('authentification').checked){
+				document.getElementById('auth_login').disabled = false;
+				document.getElementById('auth_password').disabled = false;
+			}else {
+				document.getElementById('auth_login').disabled = true;
+				document.getElementById('auth_password').disabled = true;
 			}
 		}
 		</script>		
@@ -539,7 +524,7 @@ class pmb extends connector {
     }
     
 //Fonction de recherche
-	function search($source_id,$query,$search_id) {
+	public function search($source_id,$query,$search_id) {
 		global $charset;
 		global $pmb_curl_proxy;	
 		global $base_path;
@@ -553,8 +538,8 @@ class pmb extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		
@@ -593,6 +578,8 @@ class pmb extends connector {
 		switch ($this->current_protocole) {
 			case JSONRPC:
 				$ws=new jsonRPCClient($url);
+				$ws->setUser($vars['auth_login']);
+				$ws->setPwd($vars['auth_password']);
 				$res = $ws->pmbesSearch_advancedSearch($query[0]->sc_type,$tab_query);
 				//Si il y a des résultats
 				if ($res["nbResults"]) {
@@ -625,7 +612,7 @@ class pmb extends connector {
 		}
 	}
 	
-	function rec_records($notice_xml_uni, $source_id, $search_id) {
+	public function rec_records($notice_xml_uni, $source_id, $search_id) {
 		global $charset,$base_path;
 	
 		if ($notice_xml_uni && $this->current_protocole) {
@@ -639,7 +626,7 @@ class pmb extends connector {
 			$add_explnum=true;//Si on a déjà les documents numériques via l'export pas la peine de les ajouter...
 			if(count($the_notice) && is_array($the_notice[0]["CHILDS"])){
 				foreach ($the_notice[0]["CHILDS"] as $value) {
-					if(($value["NAME"] == "f") && is_array($value["ATTRIBS"]) && ($value["ATTRIBS"]["c"] == "897")){
+					if((isset($value["NAME"]) && $value["NAME"] == "f") && is_array($value["ATTRIBS"]) && ($value["ATTRIBS"]["c"] == "897")){
 						$add_explnum=false;
 					}
 				}
@@ -689,126 +676,113 @@ class pmb extends connector {
 		}
 	}
 	
-	function rec_record($rec_uni_dom,$notice, $source_id, $search_id) {
+	public function rec_record($rec_uni_dom,$notice, $source_id, $search_id) {
 		global $charset,$base_path;
 		
-			$date_import=date("Y-m-d H:i:s",time());
+		$date_import=date("Y-m-d H:i:s",time());
 
-			//Initialisation
-			$ref="";
-			$ufield="";
-			$usubfield="";
-			$field_order=0;
-			$subfield_order=0;
-			$value="";
+		//Initialisation
+		$ref="";
+		$ufield="";
+		$usubfield="";
+		$field_order=0;
+		$subfield_order=0;
+		$value="";
+			
+		$fs=$rec_uni_dom->get_nodes("f", $notice);
+		//Recherche du 001
+		for ($i=0; $i<count($fs); $i++) {
+			if ($fs[$i]["ATTRIBS"]["c"]=="001") {
+				$ref=$rec_uni_dom->get_datas($fs[$i]);
+				break;
+			}
+		}
+
+		//Mise à jour 
+		if ($ref) {
+			//Si conservation des anciennes notices, on regarde si elle existe
+			if (!$this->del_old) {
+				$ref_exists = $this->has_ref($source_id, $ref, $search_id);
+			}
+			//Si pas de conservation des anciennes notices, on supprime
+			if ($this->del_old) {
+				$this->delete_from_entrepot($source_id, $ref, $search_id);
+				$this->delete_from_external_count($source_id, $ref);
+			}
+			//Si pas de conservation ou reférence inexistante
+			if (($this->del_old)||((!$this->del_old)&&(!$ref_exists))) {
+				//Insertion de l'entête
+				$n_header["rs"]=$rec_uni_dom->get_value("notice/rs");
+				$n_header["ru"]=$rec_uni_dom->get_value("notice/ru");
+				$n_header["el"]=$rec_uni_dom->get_value("notice/el");
+				$n_header["bl"]=$rec_uni_dom->get_value("notice/bl");
+				$n_header["hl"]=$rec_uni_dom->get_value("notice/hl");
+				$n_header["dt"]=$rec_uni_dom->get_value("notice/dt");
+
 				
-			$fs=$rec_uni_dom->get_nodes("f", $notice);
-			//Recherche du 001
-			for ($i=0; $i<count($fs); $i++) {
-				if ($fs[$i]["ATTRIBS"]["c"]=="001") {
-					$ref=$rec_uni_dom->get_datas($fs[$i]);
-					break;
+				//Récupération d'un ID
+				$recid = $this->is_into_external_count($source_id, $ref);
+				if(!$recid) {
+					$recid = $this->insert_into_external_count($source_id, $ref);
 				}
-			}
-
-			//Mise à jour 
-			if ($ref) {
-				//Si conservation des anciennes notices, on regarde si elle existe
-				if (!$this->del_old) {
-					$requete="select count(*) from entrepot_source_".$source_id." where ref='".addslashes($ref)."' and search_id='".addslashes($search_id)."'";
-					$rref=pmb_mysql_query($requete);
-					if ($rref) $ref_exists=pmb_mysql_result($rref,0,0);
+				
+				foreach($n_header as $hc=>$code) {
+					$this->insert_header_into_entrepot($source_id, $ref, $date_import, $hc, $code, $recid, $search_id);
 				}
-				//Si pas de conservation des anciennes notices, on supprime
-				if ($this->del_old) {
-					$requete="delete from entrepot_source_".$source_id." where ref='".addslashes($ref)."' and search_id='".addslashes($search_id)."'";
-					pmb_mysql_query($requete);
-				}
-				//Si pas de conservation ou reférence inexistante
-				if (($this->del_old)||((!$this->del_old)&&(!$ref_exists))) {
-					//Insertion de l'entête
-					$n_header["rs"]=$rec_uni_dom->get_value("notice/rs");
-					$n_header["ru"]=$rec_uni_dom->get_value("notice/ru");
-					$n_header["el"]=$rec_uni_dom->get_value("notice/el");
-					$n_header["bl"]=$rec_uni_dom->get_value("notice/bl");
-					$n_header["hl"]=$rec_uni_dom->get_value("notice/hl");
-					$n_header["dt"]=$rec_uni_dom->get_value("notice/dt");
-
+				for ($i=0; $i<count($fs); $i++) {
+					$ufield=$fs[$i]["ATTRIBS"]["c"];
+					$field_order=$i;
+					$ss=$rec_uni_dom->get_nodes("s",$fs[$i]);
 					
-					//Récupération d'un ID
-					$requete="insert into external_count (recid, source_id) values('".addslashes($this->get_id()." ".$source_id." ".$ref)."', ".$source_id.")";
-					$rid=pmb_mysql_query($requete);
-					if ($rid) $recid=pmb_mysql_insert_id();
-					
-					foreach($n_header as $hc=>$code) {
-						$requete="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid,search_id) values(
-						'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".$date_import."',
-						'".$hc."','',-1,0,'".addslashes($code)."','',$recid,'".addslashes($search_id)."')";
-						pmb_mysql_query($requete);
-					}
-					for ($i=0; $i<count($fs); $i++) {
-						$ufield=$fs[$i]["ATTRIBS"]["c"];
-						$field_order=$i;
-						$ss=$rec_uni_dom->get_nodes("s",$fs[$i]);
-						
-						if (is_array($ss)) {
-							for ($j=0; $j<count($ss); $j++) {
-								$usubfield=$ss[$j]["ATTRIBS"]["c"];
-								$value=$rec_uni_dom->get_datas($ss[$j]);
-								$subfield_order=$j;
-								$requete="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid,search_id) values(
-								'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
-								'".addslashes($ufield)."','".addslashes($usubfield)."',".$field_order.",".$subfield_order.",'".addslashes($value)."',
-								' ".addslashes(strip_empty_words($value))." ',$recid,'".addslashes($search_id)."')";
-								if ($charset != "utf-8") {
-									$requete = utf8_decode($requete);
-								}
-								pmb_mysql_query($requete);
-							}
-						} else {
-							$value=$rec_uni_dom->get_datas($fs[$i]);
-							$requete="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid,search_id) values(
-							'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
-							'".addslashes($ufield)."','".addslashes($usubfield)."',".$field_order.",".$subfield_order.",'".addslashes($value)."',
-							' ".addslashes(strip_empty_words($value))." ',$recid,'".addslashes($search_id)."')";
+					if (is_array($ss)) {
+						for ($j=0; $j<count($ss); $j++) {
+							$usubfield=$ss[$j]["ATTRIBS"]["c"];
+							$value=$rec_uni_dom->get_datas($ss[$j]);
 							if ($charset != "utf-8") {
-								$requete = utf8_decode($requete);
+								if(function_exists("mb_convert_encoding")){
+									$value = mb_convert_encoding($value,"Windows-1252","UTF-8");
+								}else{
+									$value = utf8_decode($value);
+								}
 							}
-							pmb_mysql_query($requete);
+							$subfield_order=$j;
+							$this->insert_content_into_entrepot($source_id, $ref, $date_import, $ufield, $usubfield, $field_order, $subfield_order, $value, $recid, $search_id);
 						}
+					} else {
+						$value=$rec_uni_dom->get_datas($fs[$i]);
+						if ($charset != "utf-8") {
+							if(function_exists("mb_convert_encoding")){
+								$value = mb_convert_encoding($value,"Windows-1252","UTF-8");
+							}else{
+								$value = utf8_decode($value);
+							}
+						}
+						$this->insert_content_into_entrepot($source_id, $ref, $date_import, $ufield, $usubfield, $field_order, $subfield_order, $value, $recid, $search_id);
 					}
 				}
+				$this->insert_origine_into_entrepot($source_id, $ref, $date_import, $recid, $search_id);
+				$this->rec_isbd_record($source_id, $ref, $recid);
 			}
-		}	
+		}
+	}
     
-	function make_serialized_source_properties($source_id) {
+	public function make_serialized_source_properties($source_id) {
     	global $url,$response_group,$search_index,$max_return,$protocole, $authentification,$display_items;
+    	global $auth_login, $auth_password;
     	$t["url"]=stripslashes($url);
     	$t["protocole"]=$protocole;
     	$t["response_group"]=$response_group;
   		$t["search_index"]=$search_index;
   		$t["max_return"]=$max_return;
   		$t["authentification"]=$authentification;
+  		$t["auth_login"]=$auth_login;
+  		$t["auth_password"]=$auth_password;
   		$t["display_items"]=$display_items;
 		$this->sources[$source_id]["PARAMETERS"]=serialize($t);
 	}
 	
-	function cancel_maj($source_id) {
-		return false;
-	}
-	
-	function break_maj($source_id) {
-		return false;
-	}
-	
-	function maj_entrepot($source_id,$callback_progress="",$recover=false,$recover_env="") {
-		return 0;
-	}
-
-	
-    
 	//Recupere la liste des periodiques sous forme de tableau
-	function fetch_serial_list($source_id,$opac_user_id=-1) {
+	public function fetch_serial_list($source_id,$opac_user_id=-1) {
 		
 		global $charset;
 		global $pmb_curl_proxy;	
@@ -819,8 +793,8 @@ class pmb extends connector {
 		if ($params["PARAMETERS"]) {
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 
@@ -831,6 +805,8 @@ class pmb extends connector {
 		switch ($this->current_protocole) {
 			case JSONRPC:
 				$ws=new jsonRPCClient($url);
+				$ws->setUser($vars['auth_login']);
+				$ws->setPwd($vars['auth_password']);
 				break;
 			case SOAP:				
 				$ws=new SoapClient($url."&wsdl");
@@ -852,7 +828,7 @@ class pmb extends connector {
 
     
 	//Recupere une liste de notices
-	function fetch_notice_list_full($source_id,$ids=array(), $rec_format='raw_array_assoc',$rec_charset='utf-8',$w_links=false,$record=false) {
+	public function fetch_notice_list_full($source_id,$ids=array(), $rec_format='raw_array_assoc',$rec_charset='utf-8',$w_links=false,$record=false) {
 		
 		global $charset;
 		global $pmb_curl_proxy;	
@@ -863,8 +839,8 @@ class pmb extends connector {
 		if ($params["PARAMETERS"]) {
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 
@@ -875,6 +851,8 @@ class pmb extends connector {
 		switch ($this->current_protocole) {
 			case JSONRPC:
 				$ws=new jsonRPCClient($url);
+				$ws->setUser($vars['auth_login']);
+				$ws->setPwd($vars['auth_password']);
 				break;
 			case SOAP:				
 				$ws=new SoapClient($url."&wsdl");
@@ -900,7 +878,7 @@ class pmb extends connector {
 	}
 
 	//Recupere une liste de bulletins
-	function fetch_bulletin_list_full($source_id,$ids=array(), $rec_format='raw_array_assoc',$rec_charset='utf-8') {
+	public function fetch_bulletin_list_full($source_id,$ids=array(), $rec_format='raw_array_assoc',$rec_charset='utf-8') {
 		
 		global $charset;
 		global $pmb_curl_proxy;	
@@ -911,8 +889,8 @@ class pmb extends connector {
 		if ($params["PARAMETERS"]) {
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 
@@ -923,6 +901,8 @@ class pmb extends connector {
 		switch ($this->current_protocole) {
 			case JSONRPC:
 				$ws=new jsonRPCClient($url);
+				$ws->setUser($vars['auth_login']);
+				$ws->setPwd($vars['auth_password']);
 				break;
 			case SOAP:				
 				$ws=new SoapClient($url."&wsdl");
@@ -942,7 +922,7 @@ class pmb extends connector {
 		return $ret;
 	}
 	
-	function object_to_array($obj) {
+	public function object_to_array($obj) {
 		if (is_object($obj)) {
 			$obj = (array) $obj;
 		}

@@ -2,20 +2,20 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: XMLClass.class.php,v 1.3 2013-04-04 13:22:53 mbertin Exp $
+// $Id: XMLClass.class.php,v 1.4 2017-07-03 09:07:10 dgoron Exp $
 
 class XMLClass {
-	var $defaultMimetypeFile;			//xml décrivant les classes à utilisé par défaut
-	var $defaultMimetype;				//tab résultant du xml par defaut	
-	var $mimetypeFiles = array();		//tableau associatif des manisfest par classes d'affichage 
-	var $classMimetypes = array();		//tableau associatif résultant des différents manifest, décrivant les mimetypes supportés par chaque classe
+	public $defaultMimetypeFile;			//xml décrivant les classes à utilisé par défaut
+	public $defaultMimetype;				//tab résultant du xml par defaut	
+	public $mimetypeFiles = array();		//tableau associatif des manisfest par classes d'affichage 
+	public $classMimetypes = array();		//tableau associatif résultant des différents manifest, décrivant les mimetypes supportés par chaque classe
 		
-    function XMLClass($file=""){
+    public function __construct($file=""){
     	$this->file = $file;   	
 	}
     
  	//Méthodes
- 	function defaultMimetypeParse($parser, $nom, $attributs){
+ 	public function defaultMimetypeParse($parser, $nom, $attributs){
 		global $_starttag; $_starttag=true;
 		if($nom == 'MIMETYPE' && $attributs['TYPE'] && $attributs['CLASS']){
 			$this->defaultMimetype[$attributs['TYPE']] = $attributs['CLASS'];
@@ -26,12 +26,12 @@ class XMLClass {
 	}
 
 	//on fait tout dans la méthode débutBalise....
-	function finBalise($parser, $nom){//besoin de rien
+	public function finBalise($parser, $nom){//besoin de rien
 	}   
-	function texte($parser, $data){//la non plus
+	public function texte($parser, $data){//la non plus
 	}
 	
-	function analyser($file=""){
+	public function analyser($file=""){
  		global $charset;
 		
 		if($file != "") $xmlToParse = $file;

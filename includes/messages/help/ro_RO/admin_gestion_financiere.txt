@@ -1,4 +1,4 @@
-<h1>Gestion financi&egrave;re des lecteurs</h1>
+<h2>Gestion financi&egrave;re des lecteurs</h2>
 <p>La gestion financi&egrave;re des lecteurs permet de g&eacute;rer les mouvements financiers li&eacute;s aux lecteurs :
 </p>
 <ul>

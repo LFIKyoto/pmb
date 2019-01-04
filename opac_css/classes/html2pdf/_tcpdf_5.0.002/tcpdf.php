@@ -14472,7 +14472,7 @@ if (!class_exists('TCPDF', false)) {
 							$this->rollbackTransaction(true);
 							// restore previous values
 							foreach ($this_method_vars as $vkey => $vval) {
-								$$vkey = $vval;
+								${$vkey} = $vval;
 							}
 							// add a page (or trig AcceptPageBreak() for multicolumn mode)
 							$pre_y = $this->y;
@@ -15339,7 +15339,7 @@ if (!class_exists('TCPDF', false)) {
 						$this->rollbackTransaction(true);
 						// restore previous values
 						foreach ($this_method_vars as $vkey => $vval) {
-							$$vkey = $vval;
+							${$vkey} = $vval;
 						}
 						// add a page (or trig AcceptPageBreak() for multicolumn mode)
 						$pre_y = $this->y;

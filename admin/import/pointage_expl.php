@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pointage_expl.php,v 1.19.2.1 2015-09-03 13:20:50 jpermanne Exp $
+// $Id: pointage_expl.php,v 1.22 2017-12-28 11:32:18 dgoron Exp $
 
 // définition du minimum nécéssaire 
 $base_path="../..";                            
@@ -27,7 +27,12 @@ require_once("$include_path/templates/expl.tpl.php");
 require_once("$include_path/notice_authors.inc.php");
 require_once("$include_path/notice_categories.inc.php");
 
-		
+if(!isset($book_statut_id)) $book_statut_id = '';
+if(!isset($book_section_id)) $book_section_id = '';
+if(!isset($book_location_id)) $book_location_id = '';
+if(!isset($book_doctype_id)) $book_doctype_id = '';
+if(!isset($book_lender_id)) $book_lender_id = '';
+if(!isset($book_codestat_id)) $book_codestat_id = '';
 if ($book_statut_id=="" || $book_section_id=="" || $book_location_id=="") {
 	$action="";
 } else {
@@ -86,22 +91,7 @@ switch ($action) {
 				$header ? $header .= '. ' : $header = '';
 				
 				$responsabilites = get_notice_authors($item->notice_id) ;
-				$as = array_search ("0", $responsabilites["responsabilites"]) ;
-				if ($as!== FALSE && $as!== NULL) {
-					$auteur_0 = $responsabilites["auteurs"][$as] ;
-					$auteur = new auteur($auteur_0["id"]);
-					$header_aut .= $auteur->isbd_entry;
-				} else {
-					$aut1_libelle=array();
-					$as = array_keys ($responsabilites["responsabilites"], "1" ) ;
-					for ($i = 0 ; $i < count($as) ; $i++) {
-						$indice = $as[$i] ;
-						$auteur_1 = $responsabilites["auteurs"][$indice] ;
-						$auteur = new auteur($auteur_1["id"]);
-						$aut1_libelle[]= $auteur->isbd_entry;
-					}
-					$header_aut .= implode (", ",$aut1_libelle) ;
-				}
+				$header_aut = gen_authors_header($responsabilites);
 				
 				$header_aut ? $header .= $item->tit1.' / '.$header_aut: $header .= $item->tit1;
 				

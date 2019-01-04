@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_articles_sections.class.php,v 1.9 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: cms_module_common_datasource_articles_sections.class.php,v 1.11 2016-09-21 15:38:44 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -47,7 +47,8 @@ class cms_module_common_datasource_articles_sections extends cms_module_common_d
 				$tab_values = array($tab_values);
 			}
 			if (count($tab_values) > 0) {
-				$list_values = implode(",", $tab_values);
+				array_walk($tab_values, 'static::int_caster');
+				$list_values = "'".implode("','", $tab_values)."'";
 				$query = "select id_article,if(article_start_date != '0000-00-00 00:00:00',article_start_date,article_creation_date) as publication_date  from cms_articles where num_section in (".$list_values.")";	
 				if ($this->parameters["sort_by"] != "") {
 					$query .= " order by ".$this->parameters["sort_by"];

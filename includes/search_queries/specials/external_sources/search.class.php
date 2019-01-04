@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.class.php,v 1.22 2015-04-03 13:57:45 dgoron Exp $
+// $Id: search.class.php,v 1.26 2018-05-23 08:38:27 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,13 +12,13 @@ require_once($class_path."/connecteurs.class.php");
 //Classe de gestion de la recherche spécial "combine"
 
 class external_sources {
-	var $id;
-	var $n_ligne;		//Numero de ligne du critere dans la multi-critere
-	var $params;		//
-	var $search;		//Classe d'origine de la recherche
+	public $id;
+	public $n_ligne;		//Numero de ligne du critere dans la multi-critere
+	public $params;		//
+	public $search;		//Classe d'origine de la recherche
 
 	//Constructeur
-    function external_sources($id,$n_ligne,$params,&$search) {
+    public function __construct($id,$n_ligne,$params,&$search) {
     	$this->id=$id;
     	$this->n_ligne=$n_ligne;
     	$this->params=$params;
@@ -26,22 +26,22 @@ class external_sources {
     }
     
     //fonction de recuperation des operateurs disponibles pour ce champ spécial (renvoie un tableau d'opérateurs)
-    function get_op() {
+    public function get_op() {
     	$operators = array();
     	$operators["EQ"]="=";
     	return $operators;
     }
     
-    //fonction de recuperation de l'affichage de la saisie du critï¿½re
-    function get_input_box() {
+    //fonction de recuperation de l'affichage de la saisie du critère
+    public function get_input_box() {
     	global $msg,$charset;
     	
     	//Recuperation de la valeur de saisie
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
     	
-    	if ((!$valeur)&&($_SESSION["checked_sources"])) $valeur=$_SESSION["checked_sources"];
+    	if ((!$valeur)&&(isset($_SESSION["checked_sources"]))) $valeur=$_SESSION["checked_sources"];
     	if (!is_array($valeur)) $valeur=array();
     	
     	//Recherche des sources
@@ -64,11 +64,11 @@ class external_sources {
     }
     
     //fonction de conversion de la saisie en quelque chose de compatible avec l'environnement
-    function transform_input() {
+    public function transform_input() {
     }
     
     //fonction de creation de la requete (retourne une table temporaire)
-    function make_search() {	
+    public function make_search() {	
     	global $selected_sources;
     	global $search;
     	global $msg;
@@ -77,20 +77,20 @@ class external_sources {
     	
     	//On modifie l'operateur suivant !!
     	$inter_next="inter_".($this->n_ligne+1)."_".$search[$this->n_ligne+1];
-    	global $$inter_next;
-		if ($$inter_next) $$inter_next="or";
+    	global ${$inter_next};
+		if (${$inter_next}) ${$inter_next}="or";
     	
     	//Recuperation de la valeur de saisie
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
     	global $charset, $class_path,$include_path,$base_path;
     	
     	//Override le timeout du serveur mysql, pour être sûr que le socket dure assez longtemps pour aller jusqu'aux ajouts des résultats dans la base. 
 		$sql = "set wait_timeout = 300";
 		pmb_mysql_query($sql);
-    	
     	for ($i=0; $i<count($valeur); $i++) {
+    		if(!$valeur[$i]) continue;
     		//Recherche de la source
     		$source=connecteurs::get_class_name($valeur[$i]);
     		require_once($base_path."/admin/connecteurs/in/$source/$source.class.php");
@@ -173,7 +173,7 @@ class external_sources {
     }
     
     //fonction de traduction litterale de la requete effectuee (renvoie un tableau des termes saisis)
-    function make_human_query() {
+    public function make_human_query() {
     	global $msg;
     	global $include_path;
     	
@@ -181,8 +181,8 @@ class external_sources {
     	
     	//Récupération de la valeur de saisie 
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
     	
     	if(isset($valeur) && is_array($valeur) && count($valeur)){
     		$requete="select name from connectors_sources where source_id in (".implode(",",$valeur).")";
@@ -194,12 +194,12 @@ class external_sources {
 		return $litteral;    
     }
      
-    function make_unimarc_query() {
+    public function make_unimarc_query() {
     	return array();
     }
     
 	//fonction de vérification du champ saisi ou sélectionné
-    function is_empty($valeur) {
+    public function is_empty($valeur) {
     	if (count($valeur)) return false; else return true;
     }
 }

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: author.tpl.php,v 1.13 2009-01-07 08:58:08 ngantier Exp $
+// $Id: author.tpl.php,v 1.16 2018-01-25 10:13:28 dgoron Exp $
 
 // ce fichier contient des templates indiquant comment doit s'afficher un auteur
 
@@ -25,6 +25,15 @@ if ( ! defined( 'AUTHOR_TMPL' ) ) {
 // !!allnamenc!! Nom complet et lisible non clikable (pour affichage seulement)
 // !!dates!!     date de naissance et de décès
 
+global $author_level1_display;
+global $author_level1_no_dates_info;
+global $author_level2_display;
+global $author_level2_display_congres;
+global $author_display_similar_congres;
+global $author_display_similar_congres_ligne;
+global $author_display_similar_congres_element;
+global $author_level2_no_dates_info;
+  
 // level 1 : affichage réduit
 $author_level1_display = "
 <div class=authorlevel1>
@@ -62,7 +71,7 @@ $author_display_similar_congres_ligne = "
 ";
 $author_display_similar_congres_element = "
 <div class='category'>
-	<h2><img src='./images/folder.gif'><a href=\"./index.php?lvl=author_see&id=!!congres_id!!\">!!congres_label!!</a></h2>
+	<h2><img src='".get_url_icon('folder.gif')."'><a href=\"./index.php?lvl=author_see&id=!!congres_id!!\">!!congres_label!!</a></h2>
 	<ul>
 		<li>!!congres_detail!!</li>
 	</ul>
@@ -70,7 +79,7 @@ $author_display_similar_congres_element = "
 ";
 */
 $author_display_similar_congres = "
-<table style='margin-left: 48px;' border='0' cellpadding='3'>
+<table style='margin-left: 48px; border:0px' cellpadding='3'>
 <tbody>
 !!congres_contens!!
 </tbody></table>
@@ -81,7 +90,7 @@ $author_display_similar_congres_ligne = "
 </tr>
 ";
 $author_display_similar_congres_element = "
-<td align='top'>
+<td class='align_top'>
 	!!img_folder!!<a href=\"./index.php?lvl=author_see&id=!!congres_id!!\">!!congres_label!! !!congres_detail!!</a> 
 	
 </td>

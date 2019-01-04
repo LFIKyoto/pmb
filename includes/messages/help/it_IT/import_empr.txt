@@ -6,13 +6,19 @@
 
 $content = "
   <p><b>PMB : import-mini-howto</b> </p>
-  <p><strong>Nella colonna di sinistra</strong>, ci sono i nomi dei campi del database.<br />
-    &egrave; in questi campi che vengono immesse le informazioni sugli utenti.</p>
-  <p><strong>Nella colonna centrale</strong> compare la posizione del campo nel file es:<br />
-    2003,\"3\",\"Rossi\",... <br />2003 � la prima posizione, � l'anno in cui lo studente � entrato nella scuola,
-     \"3\" � in seconda posizione, � l'anno di corso dello studente, \"Rossi\" � la terza posizione, � il Cognome dello studente.</p>
-  <p><strong>Nella colonna di destra</strong>, c'&egrave; come esempio la prima riga del file, pu&ograve; essere utile per comprendere come rimappare il file per l'importazione nell'archivio di PMB. E' necessario cliccare su Aggiorna la pagina per fare in modo che i cambiamenti siano salvati.</p>
-  <p><strong>I campi in rosso</strong>, sono dei campi non modificabili dall'operatore, si riempiono automaticamente.</p>
+  <p><strong>Dans la colonne de  gauche</strong> sont pr&eacute;sents le nom des champs de la base de donn&eacute;es pour y ins&eacute;rer les informations des lecteurs &agrave; importer.</p>
+  <p><strong>Dans la colonne du centre</strong> figure la position du champ dans
+    le fichier ex:<br />
+    &quot;12527&quot;,&quot;Archambault&quot;,&quot;rue de... <br />
+    &quot;12528&quot;,&quot;Baudin&quot;,&quot;rue de... <br />
+    12527 est la 1&egrave;re position,
+    c'est le code-barres du lecteur, la 2e position est le nom de famille du lecteur, la 3e son adresse, etc..</p>
+  <p><strong>La colonne de droite</strong> correspond au d&eacute;coupage de la premi&egrave;re
+    ligne du fichier.</p>
+  <p><strong>Les champs en rouge</strong>, sont des champ non modifiables par
+    l'utilisateur, ils 
+    vont se remplir tout seul.</p>
+  <p>Les champs marqu&eacute;s du signe * doivent &ecirc;tre imp&eacute;rativement renseign&eacute;s.</p>
 ";
 
 print $content;

@@ -1,4 +1,4 @@
-<h1>Copia de seguridad</h1>
+<h2>Copia de seguridad</h2>
 </p><p>
 <b>Directorios de las copias de seguridad</b> localizaci&oacute;n en el disco o ruta donde guardar las copias de seguridad
 </p><p>

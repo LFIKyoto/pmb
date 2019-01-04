@@ -4,11 +4,11 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.7 2015-06-22 14:38:24 pmbs Exp $ -->
+$Id: manifest.xml,v 1.14 2018-03-20 10:00:40 dgoron Exp $ -->
 
 <manifest>
-	<name lanf="fr_FR">Liste d'articles</name>
-	<name lang="en_UK">Articles list</name>
+	<name lang="fr_FR">Liste d'articles</name>
+	<name lang="en_UK">List of articles</name>
 	<author>
 		<name>Dimitri GORON</name>
 		<organisation>PMB Services</organisation>
@@ -25,10 +25,15 @@ $Id: manifest.xml,v 1.7 2015-06-22 14:38:24 pmbs Exp $ -->
 			<datasource>cms_module_common_datasource_articles_categories</datasource>
 			<datasource>cms_module_common_datasource_searcharticles</datasource>
 			<datasource>cms_module_common_datasource_articles_by_article_categories</datasource>
+			<datasource>cms_module_common_datasource_articles_by_section_categories</datasource>
+			<datasource>cms_module_common_datasource_articles_by_categories</datasource>
+			<datasource conditionParam="thesaurus_concepts_active">cms_module_common_datasource_articles_by_concepts</datasource>
 		</datasources>
 		<filters>
+			<filter>cms_module_common_filter_articles_by_all_cp</filter>
 			<filter>cms_module_common_filter_articles_by_cp</filter>
 			<filter>cms_module_common_filter_articles_by_type</filter>
+			<filter>cms_module_common_filter_articles_by_publication_state</filter>
 		</filters>
 		<views>
 			<view>cms_module_common_view_articleslist</view>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: xmltransform.php,v 1.25 2013-04-17 08:37:34 mbertin Exp $
+// $Id: xmltransform.php,v 1.31 2018-11-05 14:09:15 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "xmltransform.php")) die("no access");
 
@@ -22,13 +22,13 @@ function perform_xslt($xml, $s, $islast, $isfirst, $param_path) {
 	
 	//Si c'est la première transformation, on rajoute les entêtes
 	if ($isfirst) {
-		if($s['ENCODING']){
+		if(isset($s['ENCODING']) && $s['ENCODING']){
 			$xml1 = "<?xml version=\"1.0\" encoding=\"".$s['ENCODING']."\"?>\n<".$s['ROOTELEMENT'][0]["value"];
 		}else{
 			$xml1 = "<?xml version=\"1.0\" encoding=\"$charset\"?>\n<".$s['ROOTELEMENT'][0]["value"];
 		}
 		
-		if ($s["NAMESPACE"]) {
+		if (isset($s["NAMESPACE"]) && $s["NAMESPACE"]) {
 			$xml1.=" xmlns:".$s["NAMESPACE"][0]["ID"]."='".$s["NAMESPACE"][0]["value"]."' ";
 		}
 		$xml1.=">\n".$xml."\n</".$s['ROOTELEMENT'][0]['value'].">";
@@ -37,6 +37,7 @@ function perform_xslt($xml, $s, $islast, $isfirst, $param_path) {
 	$f = fopen($transform, "r");
 	$xsl = fread($f, filesize($transform));
 	fclose($f);
+	$xsl = str_replace('!!charset!!',$charset,$xsl);
 
 	//Création du processeur
 	$xh = xslt_create();
@@ -80,7 +81,7 @@ function perform_xslt($xml, $s, $islast, $isfirst, $param_path) {
 //Conversion XML en iso2709
 function toiso($notice, $s, $islast, $isfirst, $param_path) {
 	$x2i = new xml_unimarc();
-	$x2i -> XMLtoiso2709_notice($notice,$s['ENCODING']);
+	$x2i -> XMLtoiso2709_notice($notice,(isset($s['ENCODING']) ? $s['ENCODING'] : ''));
 	if($x2i->warning_msg[0]){
 		$r['WARNING']=$x2i->warning_msg[0];
 	}
@@ -114,7 +115,7 @@ function isotoxml($notice, $s, $islast, $isfirst, $param_path) {
 		if (!$islast) {
 			$r['DATA'] = "<".$s['TROOTELEMENT'][0]['value'].">\n".$r['DATA'];
 			$r['DATA'].= "</".$s['TROOTELEMENT'][0]['value'].">";
-			$r['DATA'] = "<?xml version=\"1.0\" encoding=\"".($i2x->is_utf8?"utf-8":$charset)."\" ?>\n".$r['DATA'];
+			$r['DATA'] = "<?xml version=\"1.0\" encoding=\"".$charset."\" ?>\n".$r['DATA'];
 		}
 	}
 	return $r;

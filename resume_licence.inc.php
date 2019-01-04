@@ -22,17 +22,17 @@ font-size: 12px;
 </style>
 <div id='resume_licence' style='border:1pt solid #000000;width:700px'>
 
-<center><b>PMB</b> <i>Copyright PMB Services (2002-<?php echo "".date("Y").")";?>, contributeurs : voir <a href="http://www.sigb.net" target="_new">www.sigb.net</a>, <a href="mailto:pmb@sigb.net">pmb@sigb.net</a></i></center>
+<span style='text-align:center'><b>PMB</b> <i>Copyright PMB Services (2002-<?php echo "".date("Y").")";?>, contributeurs : voir <a href="http://www.sigb.net" target="_new">www.sigb.net</a>, <a href="mailto:pmb@sigb.net">pmb@sigb.net</a></i></span>
 
-<center><h1>Ce logiciel est r&eacute;gi par la licence CeCILL, Licence fran&ccedil;aise de logiciel libre soumise au droit fran&ccedil;ais et
-respectant les principes de diffusion des logiciels libres.</h1><br /><i>La licence CeCILL est compatible avec la licence <a href="javascript:w=window.open('gpl.html','licence_gpl','scrollbars=yes,toolbar=no,resizable=yes,width=500,height=500'); w.focus();">GNU/GPL.</a></i></center>
+<span style='text-align:center'><h1>Ce logiciel est r&eacute;gi par la licence CeCILL, Licence fran&ccedil;aise de logiciel libre soumise au droit fran&ccedil;ais et
+respectant les principes de diffusion des logiciels libres.</h1><br /><i>La licence CeCILL est compatible avec la licence <a href="javascript:w=window.open('gpl.html','licence_gpl','scrollbars=yes,toolbar=no,resizable=yes,width=500,height=500'); w.focus();">GNU/GPL.</a></i></span>
 
 <div class='row-licence'><p align=justify>
 <h3>Cette licence vous garantit des droits dont les principaux sont :</h3>
 </p></div>
 
 <div class='row-licence'>
-<div class='colonne8' align='right'><img src='images/libre.png' align='middle'/></div><div class='colonne8_suite'>
+<div class='colonne8 align_right'><img src='images/libre.png' class='align_middle'/></div><div class='colonne8_suite'>
 <blockquote>Libert&eacute; d'utilisation de ce programme.</blockquote>
 <blockquote>Libert&eacute; de modifier ce programme.</blockquote>
 <blockquote>Libert&eacute; de redistribuer ce programme modifi&eacute; ou non.</blockquote>
@@ -47,14 +47,14 @@ sur le site <a href='http://www.cecill.info' target='_new'>http://www.cecill.inf
 <div class='row-licence'><p align='justify'><h3>Cette licence implique des obligations dont les principales sont :</h3></div>
 
 <div class='row-licence'>
-<div class='colonne8' align='center'><img src='images/recycle.png'/></div><div class='colonne8_suite'>
+<div class='colonne8 center'><img src='images/recycle.png'/></div><div class='colonne8_suite'>
 <blockquote><p align='justify'>Toute redistribution de ce programme modifi&eacute; ou non doit &ecirc;tre soumis &agrave; cette licence et doit comporter une information claire sur les restrictions de garanties.</p></blockquote>
 <blockquote><p align='justify'>Toute int&eacute;gration de tout ou partie du programme dans un autre logiciel en tant que module interne a pour effet d'appliquer cette licence &agrave; ce nouveau logiciel. Aucune autre licence ne peut &ecirc;tre utilis&eacute;e.</p></blockquote>
 </div>
 </div>
 
 <div class='row-licence'>
-<div class='colonne8' align='center'><img src='images/src.png'/></div><div class='colonne8_suite'><p align=justify>
+<div class='colonne8 center'><img src='images/src.png'/></div><div class='colonne8_suite'><p align=justify>
 <blockquote><p align='justify'>Toute redistribution de ce programme modifi&eacute; ou non doit &ecirc;tre accompagn&eacute; des codes source ou tout au moins des moyens d'acc&egrave;s &agrave; ces codes sources.</p></blockquote>
 </p>
 </div></div>
@@ -64,7 +64,7 @@ sur le site <a href='http://www.cecill.info' target='_new'>http://www.cecill.inf
 </p></div>
 
 <div class='row-licence'>
-<div class='colonne8' align='center'><img src='images/licence.png'/></div><div class='colonne8_suite'>
+<div class='colonne8 center'><img src='images/licence.png'/></div><div class='colonne8_suite'>
 <blockquote>
 <p align=justify>
 En contrepartie de l'accessibilit&eacute; au code source et des droits de copie,

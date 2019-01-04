@@ -2,11 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bul_expl_delete.inc.php,v 1.22 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: bul_expl_delete.inc.php,v 1.24 2017-08-04 07:24:04 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($class_path."/index_concept.class.php");
+require_once($class_path.'/audit.class.php');
 
 // suppression d'un exemplaire de bulletinage
 echo str_replace('!!page_title!!', $msg[4000].$msg[1003].$msg[313], $serial_header);
@@ -43,35 +44,9 @@ if ($acces_m==0) {
 		$result=@pmb_mysql_query($requete);
 		if (pmb_mysql_num_rows($result)) {
 			// gestion erreur prêt en cours
-			error_message($msg[416], $msg[impossible_expl_del_pret], 1, "./catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=$bul_id");
+			error_message($msg[416], $msg['impossible_expl_del_pret'], 1, "./catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=$bul_id");
 		} else {
-		
-			// nettoyage doc. à ranger
-			$requete_suppr = "delete from resa_ranger where resa_cb in (select expl_cb from exemplaires where expl_id='".$expl_id."') ";
-			$result_suppr = pmb_mysql_query($requete_suppr, $dbh);
-			
-			// préparation de la requête
-			$requete = "DELETE FROM exemplaires WHERE expl_id='$expl_id' AND expl_bulletin='$bul_id' LIMIT 1";
-			$myQuery = pmb_mysql_query($requete, $dbh);
-			audit::delete_audit (AUDIT_EXPL, $expl_id) ;
-		
-			$query_caddie = "select caddie_id from caddie_content, caddie where type='EXPL' and object_id in ($expl_id) and caddie_id=idcaddie ";
-			$result_caddie = @pmb_mysql_query($query_caddie, $dbh);
-			while($cad = pmb_mysql_fetch_object($result_caddie)) {
-				$req_suppr_caddie="delete from caddie_content where caddie_id = '$cad->caddie_id' and object_id in ($expl_id) " ;
-				@pmb_mysql_query($req_suppr_caddie, $dbh);
-			}
-		
-			$p_perso=new parametres_perso("expl");
-			$p_perso->delete_values($expl_id);
-	
-			// nettoyage transfert
-			$requete_suppr = "delete from transferts_demande where num_expl='$expl_id'";
-			$result_suppr = pmb_mysql_query($requete_suppr);
-			
-			// nettoyage indexation concepts
-			$index_concept = new index_concept($expl_id, TYPE_EXPL);
-			$index_concept->delete();
+			exemplaire::del_expl($expl_id);
 		
 			$retour = "./catalog.php?categ=serials&sub=view&sub=bulletinage&action=view&bul_id=$bul_id";
 			print "<form class='form-$current_module' name=\"dummy\" method=\"post\" action=\"$retour\" style=\"display:none\">

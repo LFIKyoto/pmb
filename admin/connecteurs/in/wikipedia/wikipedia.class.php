@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: wikipedia.class.php,v 1.6 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: wikipedia.class.php,v 1.12 2017-11-30 10:00:36 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,70 +12,21 @@ require_once($class_path."/curl.class.php");
 require_once($class_path."/nusoap/nusoap.php");
 
 class wikipedia extends connector {
-	//Variables internes pour la progression de la récupération des notices
-	var $del_old;				//Supression ou non des notices dejà existantes
 	
-	var $profile;				//Profil wikipedia
-	var $match;					//Tableau des critères wikipedia
-	var $current_site;			//Site courant du profile (n°)
-	var $searchindexes;			//Liste des indexes de recherche possibles pour le site
-	var $current_searchindex;	//Numéro de l'index de recherche de la classe
-	var $match_index;			//Type de recherche (power ou simple)
-	var $types;					//Types de documents pour la conversino des notices
-	
-	//Résultat de la synchro
-	var $error;					//Y-a-t-il eu une erreur	
-	var $error_message;			//Si oui, message correspondant
-	
-    function wikipedia($connector_path="") {
-    	parent::connector($connector_path);
+    public function __construct($connector_path="") {
+    	parent::__construct($connector_path);
     }
     
-    function get_id() {
+    public function get_id() {
     	return "wikipedia";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 2;
 	}
     
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-    
-    function get_libelle($message) {
-    	if (substr($message,0,4)=="msg:") return $this->msg[substr($message,4)]; else return $message;
-    }
-    
-    function source_get_property_form($source_id) {
-		return "";
-    }
-    
-    function make_serialized_source_properties($source_id) {
-    	$this->sources[$source_id]["PARAMETERS"]=serialize(array());
-	}
-	
-	//Récupération  des proriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
-		$this->timeout=5;
-		$this->repository=2;
-		$this->retry=3;
-		$this->ttl=1800;
-		$this->parameters="";
-	}
-	
-	 //Formulaire des propriétés générales
-	function get_property_form() {
-		return "";
-	}
-    
-    function make_serialized_properties() {
+    public function make_serialized_properties() {
     	global $accesskey, $secretkey;
 		//Mise en forme des paramètres à partir de variables globales (mettre le résultat dans $this->parameters)
 		$keys = array();
@@ -85,11 +36,11 @@ class wikipedia extends connector {
 		$this->parameters = serialize($keys);
 	}
 
-	function enrichment_is_allow(){
+	public function enrichment_is_allow(){
 		return true;
 	}
 	
-	function getEnrichmentHeader(){
+	public function getEnrichmentHeader(){
 		global $lang;
 		$header= array();
 		$header[]= "<!-- Script d'enrichissement pour wikipedia-->";
@@ -99,7 +50,7 @@ class wikipedia extends connector {
 				var content = document.getElementById('div_'+type+notice_id);
 				content.innerHTML = '';
 				var patience= document.createElement('img');
-				patience.setAttribute('src','images/patience.gif');
+				patience.setAttribute('src','".get_url_icon('patience.gif')."');
 				patience.setAttribute('align','middle');
 				patience.setAttribute('id','patience'+notice_id);
 				content.appendChild(patience);
@@ -109,7 +60,7 @@ class wikipedia extends connector {
 		return $header;
 	}
 	
-	function getTypeOfEnrichment($source_id){
+	public function getTypeOfEnrichment($source_id){
 		$type['type'] = array(
 			array( 
 				'code' => "wiki",
@@ -121,7 +72,7 @@ class wikipedia extends connector {
 		return $type;
 	}
 	
-	function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array()){
+	public function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array()){
 		$enrichment= array();
 		//on renvoi ce qui est demandé... si on demande rien, on renvoi tout..
 		switch ($type){
@@ -137,7 +88,7 @@ class wikipedia extends connector {
 		return $enrichment;
 	}
 	
-	function get_author_page($notice_id,$enrich_params){
+	public function get_author_page($notice_id,$enrich_params){
 		global $lang;
 		global $charset;
 		if($enrich_params['label']!=""){
@@ -149,7 +100,7 @@ class wikipedia extends connector {
 			if(pmb_mysql_num_rows($result)){
 				$author_id = pmb_mysql_result($result,0,0);
 				$author_class = new auteur($author_id);
-				$author =  $author_class->isbd_entry;
+				$author =  $author_class->get_isbd();
 			}
 		}
 		$curl = new Curl();
@@ -164,7 +115,7 @@ class wikipedia extends connector {
 			$html_to_return="";
 			foreach($response->query->pages as $page){
 				foreach($page->revisions[0] as $rev){
-					$html_to_return .= utf8_decode($rev);
+					$html_to_return .= utf8_decode(encoding_normalize::clean_cp1252($rev, 'utf-8'));
 				}
 			}
 			$html_to_return = str_replace("href=\"/","target='_blank' href=\"http://".substr($lang,0,2).".wikipedia.org/",$html_to_return);		
@@ -212,7 +163,7 @@ class wikipedia extends connector {
 		return $html_to_return; 
 	}
 	
-	function noticeInfos($notice_id){
+	public function noticeInfos($notice_id){
 		global $lang;
 		
 		$rqt = "select tit1 from notices where notice_id='$notice_id'";
@@ -231,7 +182,7 @@ class wikipedia extends connector {
 				$html_to_return="";
 				foreach($response->query->pages as $page){
 					foreach($page->revisions[0] as $rev){
-						$html_to_return .= utf8_decode($rev);
+						$html_to_return .= utf8_decode(encoding_normalize::clean_cp1252($rev, 'utf-8'));
 					}
 				}
 				$html_to_return = str_replace("href=\"/","target='_blank' href=\"http://".substr($lang,0,2).".wikipedia.org/",$html_to_return);		
@@ -252,7 +203,6 @@ class wikipedia extends connector {
 				$html_to_return = $this->msg['wikipedia_no_informations'];
 			}
 		}
-		
 		return $html_to_return; 
 	}
 }

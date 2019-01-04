@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: cms_module_common_selector_lvl.xml,v 1.9 2014-11-20 13:37:45 arenou Exp $ -->
+$Id: cms_module_common_selector_lvl.xml,v 1.12 2016-11-14 11:01:26 dgoron Exp $ -->
 
 <XMLlist>
 	<entry code="cms_module_common_selector_lvl">Type de page de l'OPAC</entry>
@@ -22,12 +22,14 @@ $Id: cms_module_common_selector_lvl.xml,v 1.9 2014-11-20 13:37:45 arenou Exp $ -
 	<entry code="cms_module_common_selector_lvl_search_result">Résultat de recherche (niveau 1)</entry>
 	<entry code="cms_module_common_selector_lvl_subcoll_see">Sous-collection</entry>
 	<entry code="cms_module_common_selector_lvl_search_history">Historique de recherches</entry>
-	<entry code="cms_module_common_selector_lvl_etagere_see">Etagères</entry>
+	<entry code="cms_module_common_selector_lvl_etagere_see">Etagère</entry>
 	<entry code="cms_module_common_selector_lvl_etageres_see">Etagères</entry>
 	<entry code="cms_module_common_selector_lvl_show_cart">Panier</entry>
 	<entry code="cms_module_common_selector_lvl_show_list">Liste de lecture</entry>
 	<entry code="cms_module_common_selector_lvl_section_see">Section</entry>
 	<entry code="cms_module_common_selector_lvl_rss_see">Flux RSS</entry>
+	<entry code="cms_module_common_selector_lvl_concept_see">Concepts</entry>
+	<entry code="cms_module_common_selector_lvl_authperso_see">Autorités personnalisées</entry>
 	<entry code="cms_module_common_selector_lvl_sort">Tri</entry>
 	<entry code="cms_module_common_selector_lvl_lastrecords">Dernières Acquisitions</entry>
 	<entry code="cms_module_common_selector_lvl_infopages">Infopages</entry>
@@ -48,4 +50,6 @@ $Id: cms_module_common_selector_lvl.xml,v 1.9 2014-11-20 13:37:45 arenou Exp $ -
 	<entry code="cms_module_common_selector_lvl_empr">Mon Compte</entry>
 	<entry code="cms_module_common_selector_lvl_askmdp">Mot de passe oublié</entry>
 	<entry code="cms_module_common_selector_lvl_subscribe">Inscription en ligne</entry>
+	<entry code="cms_module_common_selector_lvl_contact_form">Formulaire de contact</entry>
+	<entry code="cms_module_common_selector_lvl_collstate_bulletins_display">Constitution des reliures</entry>
 </XMLlist>

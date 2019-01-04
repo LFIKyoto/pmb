@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_affichage.inc.php,v 1.48.2.3 2015-09-15 09:40:10 jpermanne Exp $
+// $Id: notice_affichage.inc.php,v 1.60 2018-07-13 08:47:06 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -17,6 +17,7 @@ require_once($class_path."/record_display_modes.class.php");
 
 //afin d'inclure les fichiers contenant les fonctions particulières d'affichage
 // require_once($include_path."/func_phototheque.inc.php"); EST REMPLACE PAR LE CODE CI-DESSOUS
+global $opac_notice_groupe_fonction;
 if ($opac_notice_groupe_fonction) {
 	$couples_type_not_fonction=explode(";",$opac_notice_groupe_fonction);
 	for ($i=0; $i<count($couples_type_not_fonction); $i++) {
@@ -28,30 +29,18 @@ if ($opac_notice_groupe_fonction) {
 	}
 }
 
-global $opac_notices_display_modes;
-//on utilise le système de choix des modes d'affichage
-if($opac_notices_display_modes && $lvl != "notice_display" && $lvl != "bulletin_display" && $lvl != "show_cart"){
-	//le selecteur de mode d'affichage
-	global $recordmodes;
-	$recordmodes = new record_display_modes();
-	if($user_current_mode || $user_current_mode==='0'){
-		//Si on a dans le post la variable $user_current_mode qui determine un choix utilisateur (envoyé par les formulaires)
-		$recordmodes->set_user_current_mode($user_current_mode);
-	}
-}
-
 function get_aff_function() {
 	global $l_typdoc;
 	global $opac_notice_groupe_fonction;
 	global $aff_notice_fonction;
 	global $class_path,$include_path;
 	global $is_aff_notice_fonction;
-	global $recordmodes;
 	global $opac_notices_display_modes;
 	
 	if (!$is_aff_notice_fonction) {
 		
 		//on utilise le système de choix des modes d'affichage
+		$recordmodes = record_display_modes::get_instance();
 		if($opac_notices_display_modes && $recordmodes){
 			if($mode_id=$recordmodes->get_current_mode()){
 				$aff_notice_fonction=$recordmodes->get_aff_function($mode_id);
@@ -68,7 +57,7 @@ function get_aff_function() {
 			$c=explode(" ",trim($couples[$i]));
 			$t_typdoc_o[]=explode(",",trim($c[0]));
 			//Tri du tableau
-			$fonction[]=trim($c[1]);
+			$fonction[]=(isset($c[1]) ? trim($c[1]) : '');
 		}
 		$t_typdoc=explode(",",$l_typdoc);
 		//Pour chaque t_typdoc, recherche des éléments qui le contienne
@@ -99,7 +88,7 @@ function get_aff_function() {
 	return $aff_notice_fonction;
 }
 
-function aff_notice($id, $nocart=0, $gen_header=1, $use_cache=0, $mode_aff_notice="", $depliable="", $nodocnum=0, $enrichment=1, $recherche_ajax_mode=0, $show_map=1) {
+function aff_notice($id, $nocart=0, $gen_header=1, $use_cache=0, $mode_aff_notice="", $depliable="", $nodocnum=0, $enrichment=1, $recherche_ajax_mode=0, $show_map=1, $template_directory = "") {
 
 	global $liens_opac;
 	global $opac_notices_format;
@@ -112,8 +101,8 @@ function aff_notice($id, $nocart=0, $gen_header=1, $use_cache=0, $mode_aff_notic
 	global $opac_notices_format_onglets;
 	global $lvl,$search_type_asked;
 	global $record_css_already_included; // Pour pas inclure la css 10 fois
-	global $recordmodes;
 	
+	$retour_aff = '';
 	if ((($opac_cart_allow)&&(!$opac_cart_only_for_subscriber))||(($opac_cart_allow)&&($_SESSION["user_code"]))) {
 		$cart=1; 
 	} else {
@@ -123,6 +112,7 @@ function aff_notice($id, $nocart=0, $gen_header=1, $use_cache=0, $mode_aff_notic
 	$id+=0;	
 	//Recherche des fonctions d'affichage
 	$entete='';
+	$recordmodes = record_display_modes::get_instance();
 	if($recordmodes && $id==-1){
 		$entete.=$recordmodes->show_mode_selector();
 	}
@@ -142,7 +132,9 @@ function aff_notice($id, $nocart=0, $gen_header=1, $use_cache=0, $mode_aff_notic
 				//Si ajax, on ne charge pas tout
 				$header_only=1;
 			}
-			$current = new $opac_notice_affichage_class($id,$liens_opac,$cart,0,$header_only,!$gen_header, $show_map);
+			$class_affichage_to_call = $opac_notice_affichage_class;
+			if (!$class_affichage_to_call) $class_affichage_to_call="notice_affichage";
+			$current = new $class_affichage_to_call($id,$liens_opac,$cart,0,$header_only,!$gen_header, $show_map);
 			if($nodocnum) $current->docnum_allowed = 0;
 			
 			if ($gen_header) $current->do_header();
@@ -155,6 +147,7 @@ function aff_notice($id, $nocart=0, $gen_header=1, $use_cache=0, $mode_aff_notic
 			$current->genere_ajax($type_aff,0) ;
 			$retour_aff .= $current->result ;
 		}else{
+			$flag_no_onglet_perso = 0;
 			switch ($type_aff) {
 				case AFF_ETA_NOTICES_REDUIT :
 					$retour_aff .= $current->notice_header_with_link."<br />";
@@ -197,14 +190,14 @@ function aff_notice($id, $nocart=0, $gen_header=1, $use_cache=0, $mode_aff_notic
 						case 'notice_display' :
 						case 'bulletin_display' :
 						case 'resa' :
-							$retour_aff .= record_display::get_display_extended($id);
+							$retour_aff .= record_display::get_display_extended($id, $template_directory);
 							break;
 						case 'more_result' :
 						default :
 							if($search_type_asked=='perio_a2z'){
-								$retour_aff .= record_display::get_display_extended($id);
+								$retour_aff .= record_display::get_display_extended($id, $template_directory);
 							} else {
-								$retour_aff .= record_display::get_display_in_result($id);
+								$retour_aff .= record_display::get_display_in_result($id, $template_directory);
 							}
 							break;
 					}
@@ -261,7 +254,7 @@ function aff_notice_unimarc($id,$nocart=0, $entrepots_localisations=array()) {
 	global $opac_cart_only_for_subscriber;
 	global $msg;
 
-	
+	$retour_aff = '';
 	if ((($opac_cart_allow)&&(!$opac_cart_only_for_subscriber))||(($opac_cart_allow)&&($_SESSION["user_code"]))) $cart=1; else $cart=0;
 	if ($nocart) $cart=0;
 	
@@ -323,7 +316,7 @@ function aff_serial_unimarc($id,$nocart=0, $entrepots_localisations=array()) {
 	global $opac_cart_only_for_subscriber;
 	global $msg;
 
-
+	$retour_aff = '';
 	if ((($opac_cart_allow)&&(!$opac_cart_only_for_subscriber))||(($opac_cart_allow)&&($_SESSION["user_code"]))) $cart=1; else $cart=0;
 	if ($nocart) $cart=0;
 

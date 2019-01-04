@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: autoloader.class.php,v 1.3 2015-03-10 08:46:24 apetithomme Exp $
+// $Id: autoloader.class.php,v 1.9 2017-04-27 15:05:58 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -58,7 +58,9 @@ class autoloader{
 		global $class_path;
 		global $include_path;
 		global $javascript_path;
-		global $styles_path;		
+		global $styles_path;
+		global $msg,$charset;
+		global $current_module;
 		if(file_exists($file)){
 			require_once($file);
 			if($this->debug){
@@ -140,7 +142,7 @@ class autoloader{
 
 	private function onto_class($class_name){
 		global $class_path;
-	
+		
 		if($this->debug){
 			echo '<br>Trying to load ', $class_name, ' via ', __METHOD__, "()<br>";
 		}
@@ -152,14 +154,13 @@ class autoloader{
 				$module = $class_file = "";
 				$var = str_replace("onto_","",$class_name);
 				$module = substr($var,0,strpos($var,"_"));
-				$element = substr($element,0,strpos($element,"_"));
 				$class_file = $class_path."/onto/".$module."/".$class_name.".class.php";
 				$this->load($class_file);
 			}
 		}else if($this->debug){
 			echo "Already loaded<br>";
 		}
-	}	
+	}
 	
 	/*
 	 * Inclusion pour les classes la veille documentaire
@@ -175,6 +176,52 @@ class autoloader{
 			
 			$class_file = $class_path."/".$elements[0]."/".$elements[1]."s/".$class_name.".class.php";
 			$this->load($class_file);
+		}else if($this->debug){
+			echo "Already loaded<br>";
+		}
+	}
+	
+	/*
+	 * Inclusion pour les classes de sélecteurs
+	 */
+	private function selectors_class($class_name) {
+		global $base_path;
+		if($this->debug){
+			echo '<br>Trying to load ', $class_name, ' via ', __METHOD__, "()<br>";
+		}
+		//inclusion de la classe d'un module...
+		if(!class_exists($class_name)){
+			$class_file = $base_path."/selectors/classes/".$class_name.".class.php";
+			$this->load($class_file);
+		}else if($this->debug){
+			echo "Already loaded<br>";
+		}
+	}
+	
+	/*
+	 * Inclusion pour les classes d'entités frbr
+	 */
+	private function frbr_entities($class_name) {
+		global $class_path;
+		if($this->debug){
+			echo '<br>Trying to load ', $class_name, ' via ', __METHOD__, "()<br>";
+		}
+		//inclusion de la classe d'un module...
+		if(!class_exists($class_name)){
+			$entity = str_replace(array("frbr_entity_", "_datanode", "_cadre", "_page"),"",$class_name);
+			$class_file = $class_path."/frbr/entities/".$entity."/".$class_name.".class.php";
+			$success = $this->load($class_file);
+			if(!$success){
+				$entity = $class_file = "";
+				$var = str_replace("frbr_entity_","",$class_name);
+				$entity = substr($var,0,strpos($var,"_"));
+				$element = substr($var,strpos($var,"_")+1);
+				if(strpos($element,"_") !== false){
+					$element = substr($element,0,strpos($element,"_"));
+				}
+				$class_file = $class_path."/frbr/entities/".$entity."/".($element == 'entity' ? 'entities' : $element."s")."/".$class_name.".class.php";
+				$this->load($class_file);	
+			}
 		}else if($this->debug){
 			echo "Already loaded<br>";
 		}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: comptabilite.tpl.php,v 1.5 2014-03-10 13:23:45 dgoron Exp $
+// $Id: comptabilite.tpl.php,v 1.7 2018-05-18 12:24:50 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -27,7 +27,7 @@ $exer_form = "
 
 	<div class='row'>
 		<div class='colonne5'>
-			<label class='etiquette'>".htmlentities($msg[calendrier_date_debut],ENT_QUOTES,$charset)."</label>
+			<label class='etiquette'>".htmlentities($msg['calendrier_date_debut'],ENT_QUOTES,$charset)."</label>
 		</div>
 		<div class='colonne5'>
 			!!date_deb!!
@@ -36,7 +36,7 @@ $exer_form = "
 
 	<div class='row'>
 		<div class='colonne5'>
-			<label class='etiquette'>".htmlentities($msg[calendrier_date_fin],ENT_QUOTES,$charset)."</label>
+			<label class='etiquette'>".htmlentities($msg['calendrier_date_fin'],ENT_QUOTES,$charset)."</label>
 		</div>
 		<div class='colonne5'>
 			!!date_fin!!
@@ -46,7 +46,7 @@ $exer_form = "
 	<br />
 	<div class='row'>
 		<div class='colonne5'>
-			<label class='etiquette'>".htmlentities($msg[acquisition_statut],ENT_QUOTES,$charset)."</label>
+			<label class='etiquette'>".htmlentities($msg['acquisition_statut'],ENT_QUOTES,$charset)."</label>
 		</div>
 		<div class='colonne5'>
 			!!statut!!
@@ -81,7 +81,3 @@ $exer_form = "
 $ptab[0] = "<input class='bouton' type='button' value=' ".$msg['acquisition_compta_clot']." ' onClick=\"javascript:confirmation_cloture('!!id!!', '!!libelle_suppr!!')\" />&nbsp;&nbsp;";
 $ptab[1] = "<input class='bouton' type='button' value=' ".$msg['supprimer']." ' onClick=\"javascript:confirmation_suppression('!!id!!', '!!libelle_suppr!!')\" />";
 $ptab[2] = "&nbsp;&nbsp;<input type='checkbox' id='def' name='def' value='1' />".htmlentities($msg['acquisition_statut_ca_def'], ENT_QUOTES, $charset);
-
-$date_deb_mod = "<input type='text' id='date_deb' name='date_deb' value=\"!!date_deb!!\" class='saisie-10em' placeholder='".$msg["format_date_input_placeholder"]."' />";
-$date_fin_mod = "<input type='text' id='date_fin' name='date_fin' value=\"!!date_fin!!\" class='saisie-10em' placeholder='".$msg["format_date_input_placeholder"]."' />";
-

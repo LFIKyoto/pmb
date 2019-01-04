@@ -22,30 +22,30 @@ define("BAD_CHECKSUM"				,15);
  * \ingroup sip2_protocol
  */
 class sip2_trame {
-	var $error=false;
-	var $error_code=0;
-	var $error_message="";
-	var $message_id=0;
-	var $proto;
-	var $message_structure;
+	public $error=false;
+	public $error_code=0;
+	public $error_message="";
+	public $message_id=0;
+	public $proto;
+	public $message_structure;
 	
-	var $trame;
-	var $message_values=array();
-	var $message_name;
-	var $sequence_number=0;
-	var $from;
-	var $message_pair;
-	var $checksum;
+	public $trame;
+	public $message_values=array();
+	public $message_name;
+	public $sequence_number=0;
+	public $from;
+	public $message_pair;
+	public $checksum;
 	
-	function message_exists($message_id) {
+	public function message_exists($message_id) {
 		return $this->proto->messages[$message_id];
 	}
 	
-	function set_checksum($checksum=true) {
+	public function set_checksum($checksum=true) {
 		$this->checksum=true;
 	}
 	
-	function set_from($from) {
+	public function set_from($from) {
 		if (($from!='ACS')&&($from!='SC')) {
 			$this->error=true;
 			$this->error_code=UNKNOWN_ORIGIN;
@@ -57,7 +57,7 @@ class sip2_trame {
 		}
 	}
 	
-	function set_message_id($id) {
+	public function set_message_id($id) {
 		if ($this->message_structure=$this->message_exists($id)) {
 			$this->message_id=$id;
 			$this->message_name=$this->message_structure["NAME"];
@@ -71,7 +71,7 @@ class sip2_trame {
 		}
 	}
 	
-	function set_message($message_name) {
+	public function set_message($message_name) {
 		foreach($this->proto->messages as $id => $val) {
 			if ($val["NAME"]==$message_name) {
 				return $this->set_message_id($id);
@@ -83,7 +83,7 @@ class sip2_trame {
 		return false;
 	}
 	
-	function set_sequence_number($sqn) {
+	public function set_sequence_number($sqn) {
 		if (((string)($sqn*1)!=(string)$sqn)||(strlen($sqn)!=1)) {
 			$this->error=true;
 			$this->error_code=INVALID_SEQUENCE_NUMBER;
@@ -95,7 +95,7 @@ class sip2_trame {
 		}
 	}
 	
-	function set_message_values($values) {
+	public function set_message_values($values) {
 		if (!$this->message_id) {
 			$this->error=true;
 			$this->error_code=MESSAGE_UNDEFINED;
@@ -175,7 +175,7 @@ class sip2_trame {
 		$this->message_values=$values;
 	}
 	
-	function make_trame() {
+	public function make_trame() {
 		$trame=$this->message_id;
 		//Ajout des champs fixes
 		$fixedf=$this->message_structure["FIXEDFIELDS"];
@@ -208,7 +208,7 @@ class sip2_trame {
 		$this->trame=$trame;
 	}
 	
-    function sip2_trame($trame,$protocol) {
+    public function __construct($trame,$protocol) {
     	$this->proto=$protocol;
     	$this->trame=$trame;
     	

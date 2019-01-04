@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.14 2014-03-07 11:12:31 dgoron Exp $
+// $Id: main.inc.php,v 1.17 2017-07-18 13:48:33 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($no_rec_history)) $no_rec_history = '';
 
 // page de switch recherche éditeurs/collections
 
@@ -24,6 +26,8 @@ $link_explnum_bulletin = "./catalog.php?categ=serials&sub=bulletinage&action=exp
 $browser_url = "./catalog/notices/search/publishers/publisher_browser.php";
 
 $rec_history=true;
+
+if(!isset($page))  $page = '';
 
 if (($no_rec_history)&&((string)$page=="")) {
 	$_SESSION["CURRENT"]=count($_SESSION["session_history"]);

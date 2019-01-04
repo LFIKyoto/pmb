@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: term_browse.php,v 1.7 2012-09-06 07:52:17 ngantier Exp $
+// $Id: term_browse.php,v 1.8 2017-06-02 10:05:36 dgoron Exp $
 //
 // Frames pour naviger par terme
 
 $base_path="../../..";                            
-$base_auth = ""; 
+$base_auth = "";
+$base_title = "";
 $base_nobody=1;
 
 require_once ("$base_path/includes/init.inc.php");  

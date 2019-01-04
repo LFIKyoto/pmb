@@ -1,7 +1,7 @@
 /* +--------------------------------------------------------------------------+
 // � 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: layout.css,v 1.61 2014-03-25 10:19:21 apetithomme Exp $
+// $Id: layout.css,v 1.63 2016-09-06 13:24:05 cgil Exp $
 */
 
 /* ---------------------------------------------------------------------------*/
@@ -20,6 +20,10 @@ body {
 		height:100%;
 		color:#000;
 		font:x-small/1.5em Verdana, Georgia, sans-serif;
+}
+
+input, select{
+	font-family: Verdana, Georgia, sans-serif;
 }
 
 body.circ,
@@ -1166,7 +1170,7 @@ h3 {
 	margin-top: 1em;
 	}
 
-.bulletins-perio
+.bulletins-perio, .elts-list-tabs
 	{    	
 	padding: 1em;
 	margin-bottom: 1em;

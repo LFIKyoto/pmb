@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: receptions_relances.class.php,v 1.7 2013-04-04 13:02:43 mbertin Exp $
+// $Id: receptions_relances.class.php,v 1.8 2017-02-17 15:34:01 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,101 +13,101 @@ require_once("$class_path/types_produits.class.php");
 
 class lettreRelance_PDF {
 	
-	var $PDF;
-	var $orient_page = 'P';			//Orientation page (P=portrait, L=paysage)
-	var $largeur_page = 210;		//Largeur de page
-	var $hauteur_page = 297;		//Hauteur de page
-	var $unit = 'mm';				//Unite 
-	var $marge_haut = 10;			//Marge haut
-	var $marge_bas = 20;			//Marge bas
-	var $marge_droite = 10;			//Marge droite
-	var $marge_gauche = 10;			//Marge gauche
-	var $w = 190;					//Largeur utile page
-	var $font = 'Helvetica';		//Police
-	var $fs = 10;					//Taille police 
-	var $x_logo = 10;				//Distance du logo / bord gauche de page
-	var $y_logo = 10;				//Distance du logo / bord haut de page
-	var $l_logo = 20;				//Largeur logo
-	var $h_logo = 20;				//Hauteur logo
-	var $x_raison = 35;				//Distance raison sociale / bord gauche de page
-	var $y_raison = 10;				//Distance raison sociale / bord haut de page
-	var $l_raison = 100;			//Largeur raison sociale
-	var $h_raison = 10;				//Hauteur raison sociale
-	var $fs_raison = 16;			//Taille police raison sociale
-	var $x_date = 150;				//Distance date / bord gauche de page
-	var $y_date = 10;				//Distance date / bord haut de page
-	var $l_date = 0;				//Largeur date
-	var $h_date = 6;				//Hauteur date
-	var $fs_date = 8;				//Taille police date
-	var $sep_ville_date = '';		//Séparateur entre ville et date
-	var $x_adr_rel = 10;			//Distance adr relance / bord gauche de page
-	var $y_adr_rel = 35;			//Distance adr relance / bord haut de page
-	var $l_adr_rel = 60;			//Largeur adr relance
-	var $h_adr_rel = 5;				//Hauteur adr relance
-	var $fs_adr_rel = 10;			//Taille police adr relance
-	var $text_adr_tel = '';
-	var $text_adr_fax = '';
-	var $text_adr_email = '';
-	var $x_adr_fou = 100;			//Distance adr fournisseur / bord gauche de page
-	var $y_adr_fou = 55;			//Distance adr fournisseur / bord haut de page
-	var $l_adr_fou = 100;			//Largeur adr fournisseur
-	var $h_adr_fou = 6;				//Hauteur adr fournisseur
-	var $fs_adr_fou = 14;			//Police adr fournisseur
-	var $x_titre = 10;				//Distance titre / bord gauche de page
-	var $y_titre = 90;				//Distance titre / bord haut de page
-	var $l_titre = 100;				//Largeur titre
-	var $h_titre = 10;				//Hauteur titre
-	var $fs_titre = 16;				//Police titre
-	var $text_titre = '';
-	var $x_num = 10;				//Distance num commande/devis / bord gauche de page
-	var $l_num = 0;					//Largeur num commande
-	var $h_num = 10;				//Hauteur num commande
-	var $fs_num = 16;				//Taille police num commande/devis
-	var $text_num = '';				//Texte commande/devis
-	var $text_ech = '';				//Texte date echeance
-	var $text_num_ech = '';
-	var $x_num_cli = 10;			//Distance num client / bord gauche de page
-	var $y_num_cli = 80;			//Distance num client / bord haut de page
-	var $l_num_cli = 0;				//Largeur num commande
-	var $h_num_cli = 10;			//Hauteur num commande
-	var $fs_num_cli = 16;			//Taille police num commande/devis
-	var $text_num_cli = '';			//Texte numéro client
-	var $text_before = '';			//texte avant table relances
-	var $text_after = '';			//texte après table relances
-	var $h_tab = 5;					//Hauteur de ligne table relance
-	var $fs_tab = 10;				//Taille police table relance
-	var $x_tab = 10;				//position table relance / bord droit page 
-	var $y_tab = 10;				//position table relance / haut page sur pages 2 et + 
-	var $x_sign = 10;				//Distance signature / bord gauche de page
-	var $l_sign = 60;				//Largeur cellule signature
-	var $h_sign = 5;				//Hauteur signature
-	var $fs_sign = 10;				//Taille police signature
-	var $text_sign = '';			//Texte signature
-	var $y_footer = 15;				//Distance footer / bas de page
-	var $fs_footer = 8;				//Taille police footer
-	var $x_col1 = '';
-	var $w_col1 = '';
-	var $txt_header_col1 = '';
-	var $x_col2 = '';
-	var $w_col2 = '';
-	var $txt_header_col2 = '';
-	var $x_col3 = '';
-	var $w_col3 = '';
-	var $txt_header_col3 = '';
-	var $x_col4 = '';
-	var $w_col4 = '';
-	var $txt_header_col4 = '';
-	var $x_col5 = '';
-	var $w_col5 = '';
-	var $txt_header_col5 = '';
-	var $y = 0;
-	var $h = 0;
-	var $s = 0;
-	var $h_header = 0;
-	var $p_header = false;
-	var $filename = 'lettre_relance.pdf';
+	public $PDF;
+	public $orient_page = 'P';			//Orientation page (P=portrait, L=paysage)
+	public $largeur_page = 210;		//Largeur de page
+	public $hauteur_page = 297;		//Hauteur de page
+	public $unit = 'mm';				//Unite 
+	public $marge_haut = 10;			//Marge haut
+	public $marge_bas = 20;			//Marge bas
+	public $marge_droite = 10;			//Marge droite
+	public $marge_gauche = 10;			//Marge gauche
+	public $w = 190;					//Largeur utile page
+	public $font = 'Helvetica';		//Police
+	public $fs = 10;					//Taille police 
+	public $x_logo = 10;				//Distance du logo / bord gauche de page
+	public $y_logo = 10;				//Distance du logo / bord haut de page
+	public $l_logo = 20;				//Largeur logo
+	public $h_logo = 20;				//Hauteur logo
+	public $x_raison = 35;				//Distance raison sociale / bord gauche de page
+	public $y_raison = 10;				//Distance raison sociale / bord haut de page
+	public $l_raison = 100;			//Largeur raison sociale
+	public $h_raison = 10;				//Hauteur raison sociale
+	public $fs_raison = 16;			//Taille police raison sociale
+	public $x_date = 150;				//Distance date / bord gauche de page
+	public $y_date = 10;				//Distance date / bord haut de page
+	public $l_date = 0;				//Largeur date
+	public $h_date = 6;				//Hauteur date
+	public $fs_date = 8;				//Taille police date
+	public $sep_ville_date = '';		//Séparateur entre ville et date
+	public $x_adr_rel = 10;			//Distance adr relance / bord gauche de page
+	public $y_adr_rel = 35;			//Distance adr relance / bord haut de page
+	public $l_adr_rel = 60;			//Largeur adr relance
+	public $h_adr_rel = 5;				//Hauteur adr relance
+	public $fs_adr_rel = 10;			//Taille police adr relance
+	public $text_adr_tel = '';
+	public $text_adr_fax = '';
+	public $text_adr_email = '';
+	public $x_adr_fou = 100;			//Distance adr fournisseur / bord gauche de page
+	public $y_adr_fou = 55;			//Distance adr fournisseur / bord haut de page
+	public $l_adr_fou = 100;			//Largeur adr fournisseur
+	public $h_adr_fou = 6;				//Hauteur adr fournisseur
+	public $fs_adr_fou = 14;			//Police adr fournisseur
+	public $x_titre = 10;				//Distance titre / bord gauche de page
+	public $y_titre = 90;				//Distance titre / bord haut de page
+	public $l_titre = 100;				//Largeur titre
+	public $h_titre = 10;				//Hauteur titre
+	public $fs_titre = 16;				//Police titre
+	public $text_titre = '';
+	public $x_num = 10;				//Distance num commande/devis / bord gauche de page
+	public $l_num = 0;					//Largeur num commande
+	public $h_num = 10;				//Hauteur num commande
+	public $fs_num = 16;				//Taille police num commande/devis
+	public $text_num = '';				//Texte commande/devis
+	public $text_ech = '';				//Texte date echeance
+	public $text_num_ech = '';
+	public $x_num_cli = 10;			//Distance num client / bord gauche de page
+	public $y_num_cli = 80;			//Distance num client / bord haut de page
+	public $l_num_cli = 0;				//Largeur num commande
+	public $h_num_cli = 10;			//Hauteur num commande
+	public $fs_num_cli = 16;			//Taille police num commande/devis
+	public $text_num_cli = '';			//Texte numéro client
+	public $text_before = '';			//texte avant table relances
+	public $text_after = '';			//texte après table relances
+	public $h_tab = 5;					//Hauteur de ligne table relance
+	public $fs_tab = 10;				//Taille police table relance
+	public $x_tab = 10;				//position table relance / bord droit page 
+	public $y_tab = 10;				//position table relance / haut page sur pages 2 et + 
+	public $x_sign = 10;				//Distance signature / bord gauche de page
+	public $l_sign = 60;				//Largeur cellule signature
+	public $h_sign = 5;				//Hauteur signature
+	public $fs_sign = 10;				//Taille police signature
+	public $text_sign = '';			//Texte signature
+	public $y_footer = 15;				//Distance footer / bas de page
+	public $fs_footer = 8;				//Taille police footer
+	public $x_col1 = '';
+	public $w_col1 = '';
+	public $txt_header_col1 = '';
+	public $x_col2 = '';
+	public $w_col2 = '';
+	public $txt_header_col2 = '';
+	public $x_col3 = '';
+	public $w_col3 = '';
+	public $txt_header_col3 = '';
+	public $x_col4 = '';
+	public $w_col4 = '';
+	public $txt_header_col4 = '';
+	public $x_col5 = '';
+	public $w_col5 = '';
+	public $txt_header_col5 = '';
+	public $y = 0;
+	public $h = 0;
+	public $s = 0;
+	public $h_header = 0;
+	public $p_header = false;
+	public $filename = 'lettre_relance.pdf';
 	
-	function __construct() {
+	public function __construct() {
 		
 		global $msg, $charset, $pmb_pdf_font;
 		global $acquisition_pdfrel_orient_page, $acquisition_pdfrel_text_size, $acquisition_pdfrel_format_page, $acquisition_pdfrel_marges_page;
@@ -257,7 +257,7 @@ class lettreRelance_PDF {
 	}
 	
 	
-	function doLettre(&$bib, &$bib_coord, &$fou, &$fou_coord, &$tab_act) {
+	public function doLettre(&$bib, &$bib_coord, &$fou, &$fou_coord, &$tab_act) {
 		
 		global $msg;
 		
@@ -429,7 +429,7 @@ class lettreRelance_PDF {
 
 	}
 	
-	function getLettre($format=0,$name='lettre_relance.pdf') {
+	public function getLettre($format=0,$name='lettre_relance.pdf') {
 		if (!$format) {
 			return $this->PDF->OutPut();
 		} else {
@@ -437,12 +437,12 @@ class lettreRelance_PDF {
 		}
 	}
 	
-	function getFileName() {
+	public function getFileName() {
 		return $this->filename;
 	}
 	
 	//Entete de tableau
-	function doEntete() {
+	public function doEntete() {
 		$this->PDF->SetXY($this->x_num,$this->y);
 		$this->PDF->MultiCell($this->w_num, $this->h_num, $this->text_num_ech, 0, 'L');
 		$this->y = $this->PDF->GetY();
@@ -468,102 +468,102 @@ class lettreRelance_PDF {
 
 class lettreRelance_RTF {
 	
-	var $RTF;
-	var $sect;
-	var $orient_page = 'P';			//Orientation page (P=portrait, L=paysage)
-	var $largeur_page = 21;			//Largeur de page
-	var $hauteur_page = 29.7;		//Hauteur de page
-	var $unit = 'cm';				//Unite 
-	var $marge_haut = 1;			//Marge haut
-	var $marge_bas = 2;				//Marge bas
-	var $marge_droite = 1;			//Marge droite
-	var $marge_gauche = 1;			//Marge gauche
-	var $w = 19;					//Largeur utile page
-	var $fonts = array();			//Tableau de polices
-	var $font = 'Helvetica';		//Nom police
-	var $fs = 10;					//Taille police 
-	var $x_logo = 1;				//Distance du logo / bord gauche de page
-	var $y_logo = 1;				//Distance du logo / bord haut de page
-	var $l_logo = 2;				//Largeur logo
-	var $h_logo = 2;				//Hauteur logo
-	var $x_raison = 3.5;			//Distance raison sociale / bord gauche de page
-	var $y_raison = 1;				//Distance raison sociale / bord haut de page
-	var $l_raison = 10;				//Largeur raison sociale
-	var $h_raison = 1;				//Hauteur raison sociale
-	var $fs_raison = 16;			//Taille police raison sociale
-	var $x_date = 15;				//Distance date / bord gauche de page
-	var $y_date = 1;				//Distance date / bord haut de page
-	var $l_date = 0;				//Largeur date
-	var $h_date = 6;				//Hauteur date
-	var $fs_date = 8;				//Taille police date
-	var $sep_ville_date = '';		//Séparateur entre ville et date
-	var $x_adr_rel = 1;				//Distance adr relance / bord gauche de page
-	var $y_adr_rel = 3.5;			//Distance adr relance / bord haut de page
-	var $l_adr_rel = 6;				//Largeur adr relance
-	var $h_adr_rel = 0.5;			//Hauteur adr relance
-	var $fs_adr_rel = 10;			//Taille police adr relance
-	var $text_adr_tel = '';
-	var $text_adr_fax = '';
-	var $text_adr_email = '';
-	var $x_adr_fou = 10;			//Distance adr fournisseur / bord gauche de page
-	var $y_adr_fou = 5.5;			//Distance adr fournisseur / bord haut de page
-	var $l_adr_fou = 10;			//Largeur adr fournisseur
-	var $h_adr_fou = 0.6;			//Hauteur adr fournisseur
-	var $fs_adr_fou = 14;			//Police adr fournisseur
-	var $x_titre = 1;				//Distance titre / bord gauche de page
-	var $y_titre = 9;				//Distance titre / bord haut de page
-	var $l_titre = 10;				//Largeur titre
-	var $h_titre = 1;				//Hauteur titre
-	var $fs_titre = 16;				//Police titre
-	var $text_titre = '';
-	var $x_num = 1;					//Distance num commande/devis / bord gauche de page
-	var $l_num = 0;					//Largeur num commande
-	var $h_num = 1;					//Hauteur num commande
-	var $fs_num = 16;				//Taille police num commande/devis
-	var $text_num = '';				//Texte commande/devis
-	var $text_ech = '';				//Texte date echeance
-	var $text_num_ech = '';
-	var $x_num_cli = 1;				//Distance num client / bord gauche de page
-	var $y_num_cli = 8;				//Distance num client / bord haut de page
-	var $l_num_cli = 0;				//Largeur num commande
-	var $h_num_cli = 1;				//Hauteur num commande
-	var $fs_num_cli = 16;			//Taille police num commande/devis
-	var $text_num_cli = '';			//Texte numéro client
-	var $text_before = '';			//texte avant table relances
-	var $text_after = '';			//texte après table relances
-	var $h_tab = 0.5;				//Hauteur de ligne table relance
-	var $fs_tab = 10;				//Taille police table relance
-	var $x_tab = 1;					//position table relance / bord droit page 
-	var $y_tab = 1;					//position table relance / haut page sur pages 2 et + 
-	var $x_sign = 1;				//Distance signature / bord gauche de page
-	var $l_sign = 6;				//Largeur cellule signature
-	var $h_sign = 0.5;				//Hauteur signature
-	var $fs_sign = 10;				//Taille police signature
-	var $text_sign = '';			//Texte signature
-	var $y_footer = 1.5;			//Distance footer / bas de page
-	var $fs_footer = 8;				//Taille police footer
-	var $msg_footer = '';
-	var $x_col1 = '';
-	var $w_col1 = '';
-	var $txt_header_col1 = '';		//Hauteur entete tableau
-	var $x_col2 = '';
-	var $w_col2 = '';
-	var $txt_header_col2 = '';
-	var $x_col3 = '';
-	var $w_col3 = '';
-	var $txt_header_col3 = '';
-	var $x_col4 = '';
-	var $w_col4 = '';
-	var $txt_header_col4 = '';
-	var $x_col5 = '';
-	var $w_col5 = '';
-	var $txt_header_col5 = '';
-	var $p_header = false;
-	var $tab = null;
-	var $row = 1;
-	var $filename = 'lettre_relance.rtf';
+	public $RTF;
+	public $sect;
+	public $orient_page = 'P';			//Orientation page (P=portrait, L=paysage)
+	public $largeur_page = 21;			//Largeur de page
+	public $hauteur_page = 29.7;		//Hauteur de page
+	public $unit = 'cm';				//Unite 
+	public $marge_haut = 1;			//Marge haut
+	public $marge_bas = 2;				//Marge bas
+	public $marge_droite = 1;			//Marge droite
+	public $marge_gauche = 1;			//Marge gauche
+	public $w = 19;					//Largeur utile page
+	public $fonts = array();			//Tableau de polices
+	public $font = 'Helvetica';		//Nom police
+	public $fs = 10;					//Taille police 
+	public $x_logo = 1;				//Distance du logo / bord gauche de page
+	public $y_logo = 1;				//Distance du logo / bord haut de page
+	public $l_logo = 2;				//Largeur logo
+	public $h_logo = 2;				//Hauteur logo
+	public $x_raison = 3.5;			//Distance raison sociale / bord gauche de page
+	public $y_raison = 1;				//Distance raison sociale / bord haut de page
+	public $l_raison = 10;				//Largeur raison sociale
+	public $h_raison = 1;				//Hauteur raison sociale
+	public $fs_raison = 16;			//Taille police raison sociale
+	public $x_date = 15;				//Distance date / bord gauche de page
+	public $y_date = 1;				//Distance date / bord haut de page
+	public $l_date = 0;				//Largeur date
+	public $h_date = 6;				//Hauteur date
+	public $fs_date = 8;				//Taille police date
+	public $sep_ville_date = '';		//Séparateur entre ville et date
+	public $x_adr_rel = 1;				//Distance adr relance / bord gauche de page
+	public $y_adr_rel = 3.5;			//Distance adr relance / bord haut de page
+	public $l_adr_rel = 6;				//Largeur adr relance
+	public $h_adr_rel = 0.5;			//Hauteur adr relance
+	public $fs_adr_rel = 10;			//Taille police adr relance
+	public $text_adr_tel = '';
+	public $text_adr_fax = '';
+	public $text_adr_email = '';
+	public $x_adr_fou = 10;			//Distance adr fournisseur / bord gauche de page
+	public $y_adr_fou = 5.5;			//Distance adr fournisseur / bord haut de page
+	public $l_adr_fou = 10;			//Largeur adr fournisseur
+	public $h_adr_fou = 0.6;			//Hauteur adr fournisseur
+	public $fs_adr_fou = 14;			//Police adr fournisseur
+	public $x_titre = 1;				//Distance titre / bord gauche de page
+	public $y_titre = 9;				//Distance titre / bord haut de page
+	public $l_titre = 10;				//Largeur titre
+	public $h_titre = 1;				//Hauteur titre
+	public $fs_titre = 16;				//Police titre
+	public $text_titre = '';
+	public $x_num = 1;					//Distance num commande/devis / bord gauche de page
+	public $l_num = 0;					//Largeur num commande
+	public $h_num = 1;					//Hauteur num commande
+	public $fs_num = 16;				//Taille police num commande/devis
+	public $text_num = '';				//Texte commande/devis
+	public $text_ech = '';				//Texte date echeance
+	public $text_num_ech = '';
+	public $x_num_cli = 1;				//Distance num client / bord gauche de page
+	public $y_num_cli = 8;				//Distance num client / bord haut de page
+	public $l_num_cli = 0;				//Largeur num commande
+	public $h_num_cli = 1;				//Hauteur num commande
+	public $fs_num_cli = 16;			//Taille police num commande/devis
+	public $text_num_cli = '';			//Texte numéro client
+	public $text_before = '';			//texte avant table relances
+	public $text_after = '';			//texte après table relances
+	public $h_tab = 0.5;				//Hauteur de ligne table relance
+	public $fs_tab = 10;				//Taille police table relance
+	public $x_tab = 1;					//position table relance / bord droit page 
+	public $y_tab = 1;					//position table relance / haut page sur pages 2 et + 
+	public $x_sign = 1;				//Distance signature / bord gauche de page
+	public $l_sign = 6;				//Largeur cellule signature
+	public $h_sign = 0.5;				//Hauteur signature
+	public $fs_sign = 10;				//Taille police signature
+	public $text_sign = '';			//Texte signature
+	public $y_footer = 1.5;			//Distance footer / bas de page
+	public $fs_footer = 8;				//Taille police footer
+	public $msg_footer = '';
+	public $x_col1 = '';
+	public $w_col1 = '';
+	public $txt_header_col1 = '';		//Hauteur entete tableau
+	public $x_col2 = '';
+	public $w_col2 = '';
+	public $txt_header_col2 = '';
+	public $x_col3 = '';
+	public $w_col3 = '';
+	public $txt_header_col3 = '';
+	public $x_col4 = '';
+	public $w_col4 = '';
+	public $txt_header_col4 = '';
+	public $x_col5 = '';
+	public $w_col5 = '';
+	public $txt_header_col5 = '';
+	public $p_header = false;
+	public $tab = null;
+	public $row = 1;
+	public $filename = 'lettre_relance.rtf';
 	
-	function __construct() {
+	public function __construct() {
 		
 		global $msg, $charset, $pmb_pdf_font;
 		global $acquisition_pdfrel_orient_page, $acquisition_pdfrel_text_size, $acquisition_pdfrel_format_page, $acquisition_pdfrel_marges_page;
@@ -715,7 +715,7 @@ class lettreRelance_RTF {
 		$this->msg_footer = $this->RTF->to_utf8($msg['acquisition_act_page']);
 	}
 	
-	function doLettre(&$bib, &$bib_coord, &$fou, &$fou_coord, &$tab_act) {
+	public function doLettre(&$bib, &$bib_coord, &$fou, &$fou_coord, &$tab_act) {
 		
 		global $msg;
 		
@@ -886,16 +886,16 @@ class lettreRelance_RTF {
 	}
 	
 	
-	function getLettre($name='lettre_relance') {	
+	public function getLettre($name='lettre_relance') {	
 		
 		return $this->RTF->sendRtf($name);
 	}	
 	
-	function getFileName() {
+	public function getFileName() {
 		return $this->filename;
 	}
 	
-	function doEntete() {
+	public function doEntete() {
 
 		$text_num_ech = $this->RTF->to_utf8($this->text_num_ech);
 		$par_num_ech = new parFormat();

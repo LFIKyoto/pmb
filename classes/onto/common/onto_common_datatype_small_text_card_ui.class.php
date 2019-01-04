@@ -1,8 +1,8 @@
 <?php
 // +-------------------------------------------------+
-// © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_datatype_small_text_card_ui.class.php,v 1.8 2014-08-11 13:59:41 apetithomme Exp $
+// $Id: onto_common_datatype_small_text_card_ui.class.php,v 1.10 2017-10-17 15:26:04 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -34,7 +34,7 @@ class onto_common_datatype_small_text_card_ui extends onto_common_datatype_ui {
 	 * @access public
 	 */
 	public static function get_form($item_uri,$property, $restrictions,$datas, $instance_name,$flag) {
-		global $msg,$charset,$ontology_tpl,$lang;
+		global $msg,$charset,$ontology_tpl,$lang, $combobox_lang;
 		
 		if($lang) {
 			$current_lang = substr($lang, 0, 2);
@@ -49,7 +49,7 @@ class onto_common_datatype_small_text_card_ui extends onto_common_datatype_ui {
 		}
 		
 		$form=$ontology_tpl['form_row_card'];
-		$form=str_replace("!!onto_row_label!!",htmlentities($property->label ,ENT_QUOTES,$charset) , $form);
+		$form=str_replace("!!onto_row_label!!",htmlentities(encoding_normalize::charset_normalize($property->label, 'utf-8') ,ENT_QUOTES,$charset) , $form);
 		$form=str_replace("!!onto_input_type!!",htmlentities(self::$default_type ,ENT_QUOTES,$charset) , $form);
 		
 		$content='';
@@ -224,7 +224,7 @@ class onto_common_datatype_small_text_card_ui extends onto_common_datatype_ui {
 				for (var i=0; i<=order ; i++){
 					var label = document.getElementById("'.$instance_name.'_'.$property->pmb_name.'_"+i+"_value");
 					var lang = document.getElementById("'.$instance_name.'_'.$property->pmb_name.'_"+i+"_lang");
-					if(label.value != ""){
+					if(lang && label.value != ""){
 						if(!this.values[lang.value]){
 							this.values[lang.value] = 0;
 						}

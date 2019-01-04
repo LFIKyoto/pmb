@@ -1,15 +1,16 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax.js,v 1.33 2015-02-16 13:51:22 jpermanne Exp $
+// $Id: ajax.js,v 1.44 2018-06-14 07:36:49 dgoron Exp $
 
 requete=new Array();
 line=new Array();
 not_show=new Array();
 last_word=new Array();
 ids=new Array();
+timers=new Array();
+ajax_stat=new Array();//Permet de savoir si une requete Ajax est dï¿½jï¿½ en cours
 ajax_listener = new Array();
-
 var position_curseur;
 
 function isFirefox1() {
@@ -62,8 +63,10 @@ function ajax_resize_element(input){
 			ids[n]=input.getAttribute("id");		
 			id=ids[n];
 			w=input.clientWidth
-			d1= document.getElementById("d"+id);
-			d1.style.width=w+"px";
+			if(w) {
+				d1= document.getElementById("d"+id);
+				if(d1)d1.style.width=w+"px";
+			}
 		}
 	}
 }
@@ -88,44 +91,59 @@ function ajax_pack_element(inputs) {
 	}
 	if (inputs.getAttribute("completion")) {
 		if (((inputs.getAttribute("type")=="text")||(inputs.nodeName=="TEXTAREA"))&&(inputs.getAttribute("id"))) {
-			ids[n]=inputs.getAttribute("id");		
+			ids[n]=inputs.getAttribute("id");
 			id=ids[n];
 			//Insertion d'un div parent
 			w=inputs.clientWidth;
 			d=document.createElement("span");
-			d.style.width=w+"px";
+			if(w) {
+				d.style.width=w+"px";
+			}
 			p=inputs.parentNode;
 			var input=inputs;
 			p.replaceChild(d,inputs);
 			d.appendChild(input);
-			d1=document.createElement("div");
-			d1.setAttribute("id","d"+id);
-			d1.style.width=w+"px";
-			d1.style.border="1px #000 solid";
-			//poss=findPos(input);
-			d1.style.left="0px";
-			d1.style.top="0px";
-			d1.style.display="none";
-			d1.style.position="absolute";
-			d1.style.backgroundColor="#FFFFFF";
-			d1.style.zIndex=1000;
-			document.getElementById('att').appendChild(d1);
-			if (input.addEventListener) {	
+			if(document.getElementById('att')) {
+				d1=document.createElement("div");
+				d1.setAttribute("id","d"+id);
+				d1.style.width=w+"px";
+				d1.style.border="1px #000 solid";
+				d1.style.left="0px";
+				d1.style.top="0px";
+				d1.style.display="none";
+				d1.style.position="absolute";
+				d1.style.backgroundColor="#FFFFFF";
+				d1.style.zIndex=1000;
+				document.getElementById('att').appendChild(d1);
+			}
+			if (input.addEventListener) {
 				input.addEventListener("keyup",function(e) { ajax_update_info(e,'up',touche); },false);
 				input.addEventListener("blur",function(e) { ajax_hide_list(e); },false);
 			} else if (input.attachEvent) {
-				input.attachEvent("onkeydown",function() { ajax_update_info(window.event,'down',touche); });//Pour internet explorer il faut que je capte l'appuie sur "entrée" avant le formulaire
+				input.attachEvent("onkeydown",function() { ajax_update_info(window.event,'down',touche); });//Pour internet explorer il faut que je capte l'appuie sur "entrï¿½e" avant le formulaire
 				input.attachEvent("onkeyup",function() { ajax_update_info(window.event,'up',touche); });
 				input.attachEvent("onblur",function() { ajax_hide_list(window.event); });
 			}
 			//on retire l'autocomplete du navigateur...
 			input.setAttribute("autocomplete","off");
 		}
-	} 
+	}
 	requete[id]="";
 	line[id]=0;
 	not_show[id]=true;
 	last_word[id]="";	
+}
+
+function active_autocomplete(inputs) {
+	var inputs=document.getElementsByTagName("input");
+	for (i=0; i<inputs.length; i++) {
+		if (inputs[i].getAttribute("completion")) {
+			if (((inputs[i].getAttribute("type")=="text")||(inputs[i].nodeName=="TEXTAREA"))&&(inputs[i].getAttribute("id"))) {			
+				//on remet l'autocomplete du navigateur...
+				inputs[i].setAttribute("autocomplete","on");	
+			}
+		}
+	}
 }
 
 function ajax_parse_dom() {
@@ -222,7 +240,11 @@ function ajax_set_datas(sp_name,id,insert_between_separator) {
 }
 		
 function ajax_update_info(e,code,touche) {
-	if (e.target) var id=e.target.getAttribute("id"); else var id=e.srcElement.getAttribute("id");
+	if(e.target) {
+		var id=e.target.getAttribute("id");
+	} else {
+		var id=e.srcElement.getAttribute("id");
+	}
 	
 	if((code == "down") && (e.keyCode != 13)){
 		return;
@@ -233,11 +255,15 @@ function ajax_update_info(e,code,touche) {
 			if (document.getElementById("d"+id).style.display=="block") {
 				document.getElementById("d"+id).style.display='none';
 				not_show[id]=true;
+				if (timers[id]) {
+					clearTimeout(timers[id]);
+				}
 				e.cancelBubble = true;
 				if (e.stopPropagation) { e.stopPropagation(); }
 			}
 			break;
-		case 40:	//Flèche bas
+		case 40:	//Flï¿½che bas
+			if(document.getElementById(id).value=="")	document.getElementById(id).value="*";
 			next_line=line[id]+1;
 			if (document.getElementById("d"+id).style.display=="block") {
 				if (document.getElementById("l"+id+"_"+next_line)==null) break;
@@ -253,9 +279,28 @@ function ajax_update_info(e,code,touche) {
 				}
 				e.cancelBubble = true;
 				if (e.stopPropagation) e.stopPropagation();
+			} else {
+				if(touche.indexOf(e.keyCode) > -1){
+					if ((document.getElementById("d"+id).style.display=="none")&&(document.getElementById(id).value!="")) {
+						p=document.getElementById(id);
+						poss=findPos(p);
+						poss[1]+=p.clientHeight;
+						document.getElementById("d"+id).style.left=poss[0]+"px";
+						document.getElementById("d"+id).style.top=poss[1]+"px";
+						document.getElementById("d"+id).style.display='block';
+						
+						not_show[id]=false;
+						if (timers[id]) {
+							clearTimeout(timers[id]);
+						}
+						ajax_timer_creerRequete(id);
+						e.cancelBubble = true;
+						if (e.stopPropagation) e.stopPropagation();
+					}
+				}
 			}
 			break;
-		case 38:	//Flèche haut
+		case 38:	//Flï¿½che haut
 			if (document.getElementById("d"+id).style.display=="block") {
 				old_line=line[id];
 				if (line[id]>0) line[id]--;
@@ -272,8 +317,13 @@ function ajax_update_info(e,code,touche) {
 			}
 			break;
 		case 9:		//Tab
-			document.getElementById("d"+id).style.display='none';
-			not_show[id]=true;
+			if (document.getElementById("d"+id).style.display=="block") {
+				document.getElementById("d"+id).style.display='none';
+				not_show[id]=true;
+				if (timers[id]) {
+					clearTimeout(timers[id]);
+				}
+			}
 			break;
 		case 13:	//Enter
 			if ((line[id])&&(document.getElementById("d"+id).style.display=="block")) {
@@ -303,7 +353,6 @@ function ajax_update_info(e,code,touche) {
 					var type = sp.getAttribute("typeuri");
 					if (type && (autfield.indexOf('value', 0) != -1)) document.getElementById(autfield.replace('value','type')).value = type;
 				}
-				
 				if(div_cache){
 					if (insert_between_separator != '') {
 						if ( typeof position_curseur != 'undefined' ) {
@@ -332,53 +381,18 @@ function ajax_update_info(e,code,touche) {
 				document.getElementById("d"+id).style.display='none';
 				not_show[id]=true;
 				if(e.preventDefault){
-					e.preventDefault();//Firefox : Si je suis dans une liste je ne veux pas valider le formulaire quand je clic sur entrée 
+					e.preventDefault();//Firefox : Si je suis dans une liste je ne veux pas valider le formulaire quand je clic sur entrï¿½e 
 				}else{
-					e.returnValue = false;//IE : Si je suis dans une liste je ne veux pas valider le formulaire quand je clic sur entrée 
+					e.returnValue = false;//IE : Si je suis dans une liste je ne veux pas valider le formulaire quand je clic sur entrï¿½e 
 				}
 			}
 			e.cancelBubble = true;
 			if (e.stopPropagation) e.stopPropagation();
 			if (callback) window[callback](id);
 			break;
-			
-		default:
-			if ((last_word[id]==document.getElementById(id).value)&&(last_word[id])) break;
-			if ((document.getElementById(id).value!="")&&(!not_show[id])) {
-				ajax_creerRequete(id);
-				if (requete[id]) {
-					last_word[id]=document.getElementById(id).value;
-					ajax_get_info(id);
-				}
-			} else {
-				document.getElementById("d"+id).style.display='none';
-				if (document.getElementById(id).value=="") not_show[id]=true;
-			}
-			last_word[id]=document.getElementById(id).value;
-			break;
-	}
-
-	if(touche.indexOf(e.keyCode) > -1){
-		switch (e.keyCode){
-			case 40:	//Flèche bas
-				if ((document.getElementById("d"+id).style.display=="none")&&(document.getElementById(id).value!="")) {
-					p=document.getElementById(id);
-					poss=findPos(p);
-					poss[1]+=p.clientHeight;
-					document.getElementById("d"+id).style.left=poss[0]+"px";
-					document.getElementById("d"+id).style.top=poss[1]+"px";
-					document.getElementById("d"+id).style.display='block';
-					not_show[id]=false;
-					ajax_creerRequete(id);
-					if (requete[id]) {
-						last_word[id]=document.getElementById(id).value;
-						ajax_get_info(id);
-					}
-					e.cancelBubble = true;
-					if (e.stopPropagation) e.stopPropagation();
-				}
-				break;
-			case 113:	//F2
+		case 113:	//F2
+			if(touche.indexOf(e.keyCode) > -1){
+				if(document.getElementById(id).value=="")	document.getElementById(id).value="*";
 				position_curseur = get_pos_curseur(document.getElementById(id));
 				if ((document.getElementById("d"+id).style.display=="none")&&(document.getElementById(id).value!="")) {
 					p=document.getElementById(id);
@@ -388,22 +402,44 @@ function ajax_update_info(e,code,touche) {
 					document.getElementById("d"+id).style.top=poss[1]+"px";
 					document.getElementById("d"+id).style.display='block';
 					not_show[id]=false;
-					ajax_creerRequete(id);
-					if (requete[id]) {
-						last_word[id]=document.getElementById(id).value;
-						ajax_get_info(id);
+					if (timers[id]) {
+						clearTimeout(timers[id]);
 					}
+					ajax_timer_creerRequete(id);
 					e.cancelBubble = true;
 					if (e.stopPropagation) e.stopPropagation();
 				}
-				break;
-			default:
-				break;
-		}		
+			}
+			break;
+		default:	//Autres
+			if (document.getElementById(id).getAttribute("expand_mode") || (document.getElementById(id).value.length > 2)) {
+				if(document.getElementById(id).value=="") {
+					if (timers[id]) {
+						clearTimeout(timers[id]);
+					}
+				}
+				if (document.getElementById(id).value!=""){				
+					if (timers[id]) {
+						clearTimeout(timers[id]);
+					}
+					not_show[id]=false;
+					var timerValue = (document.getElementById(id).getAttribute("expand_mode") ? parseInt(document.getElementById(id).getAttribute("expand_mode")) : 1);
+					timeWait = timerValue * 1000;
+					timers[id]=setTimeout(function(){ajax_timer_creerRequete(id)},timeWait);
+					break;
+				}
+			}
+			if ((last_word[id]==document.getElementById(id).value)&&(last_word[id])) break;
+			if ((document.getElementById(id).value!="")&&(!not_show[id])) {
+				ajax_timer_creerRequete(id);
+			} else {
+				document.getElementById("d"+id).style.display='none';
+				if (document.getElementById(id).value=="") not_show[id]=true;
+			}
+			last_word[id]=document.getElementById(id).value;
+			break;
 	}
 }
-
-
 
 function get_pos_curseur(textArea){
 	if ( typeof textArea.selectionStart != 'undefined' )
@@ -450,7 +486,12 @@ function ajax_show_info(id) {
 				document.getElementById("d"+id).style.top=poss[1]+"px";
 				document.getElementById("d"+id).style.display='block';
 			}
-		} //else alert("Erreur : le serveur a répondu "+requete.responseText);
+		} else {
+			if(typeof console != 'undefined') {
+				console.log("Erreur : le serveur a rï¿½pondu "+requete[id].responseText);
+			}
+		}
+		ajax_requete_wait_remove(id);
 	}
 }
 
@@ -470,7 +511,7 @@ function ajax_get_info(id) {
 	requete[id].setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 	
 	if (document.getElementById(id).getAttribute("autexclude")) autexclude = document.getElementById(id).getAttribute("autexclude") ;
-	if (document.getElementById(id).getAttribute("linkfield")) linkfield = document.getElementById(document.getElementById(id).getAttribute("linkfield")).value ;
+	if (document.getElementById(id).getAttribute("linkfield") && document.getElementById(document.getElementById(id).getAttribute("linkfield"))) linkfield = document.getElementById(document.getElementById(id).getAttribute("linkfield")).value ;
 	if (document.getElementById(id).getAttribute("autfield")) autfield = document.getElementById(id).getAttribute("autfield") ;
 	if (document.getElementById(id).getAttribute("param1")) param1 = document.getElementById(id).getAttribute("param1") ;
 	if (document.getElementById(id).getAttribute("param2")) param2 = document.getElementById(id).getAttribute("param2") ;
@@ -486,6 +527,51 @@ function ajax_get_info(id) {
 	requete[id].send("datas="+encode_URL(document.getElementById(id).value)+"&id="+encode_URL(id)+"&completion="+encode_URL(document.getElementById(id).getAttribute("completion"))+"&persofield="+encode_URL(document.getElementById(id).getAttribute("persofield"))+"&autfield="+encode_URL(autfield)+"&autexclude="+encode_URL(autexclude)+"&param1="+encode_URL(param1)+"&param2="+encode_URL(param2)+"&linkfield="+encode_URL(linkfield)+"&att_id_filter="+encode_URL(att_id_filter)+"&typdoc="+encode_URL(typdoc)+"&pos_cursor="+encode_URL(get_pos_curseur(document.getElementById(id)))+listfield);
 }
 
+function ajax_requete_wait(id) {
+	//Insertion d'un ï¿½lï¿½ment pour l'attente
+	if (document.getElementById("patience_"+id)) return;
+	div=document.createElement("span");
+	div.setAttribute("id","patience_"+id);
+	div.style.width="100%";
+	div.style.height="30px";
+	img=document.createElement("img");
+	img.src=pmb_img_patience;
+	img.id="collapseall";
+	img.style.border="0px";
+	div.appendChild(img);
+	document.getElementById(id).parentNode.appendChild(div);
+}
+function ajax_requete_wait_remove(id) {
+	//Suppression de l'ï¿½lï¿½ment pour l'attente
+	try {
+		wait=document.getElementById("patience_"+id);
+		wait.parentNode.removeChild(wait);
+	} catch(err){}
+	
+	//Controle du statut des requetes ajax
+	if(ajax_stat[id] == "InProgress"){
+		ajax_stat[id] = "End";
+		ajax_timer_creerRequete(id);//Relance la requete ajax si il y a plusieurs requetes de suite
+	}
+	ajax_stat[id] = "End";
+}
+
+function ajax_timer_creerRequete(id) {
+	
+	if(ajax_stat[id] == "Start" || ajax_stat[id] == "InProgress"){
+		ajax_stat[id] = "InProgress";
+		return;//Pas d'appel ajax temps qu'il y en a une en cours
+	}else{
+		ajax_stat[id] = "Start";
+	}
+	ajax_requete_wait(id);
+	ajax_creerRequete(id);
+	if (requete[id]) {
+		last_word[id]=document.getElementById(id).value;
+		ajax_get_info(id);
+	}
+}
+
 function validation(e){
 	if (!e) var e = window.event;
 	if (e.keyCode!=undefined) key = e.keyCode;
@@ -495,8 +581,18 @@ function validation(e){
 			var id=e.target.getAttribute("id"); 
 	else var id=e.srcElement.getAttribute("id");
 	
-	if(((key == 13) && (not_show[id] == false)) || (key == 40)){
-		//On annule tous les comportements par défaut du navigateur
+	var is_nomenclature = false;
+    var element = e.target;
+    do{
+        if(element.getAttribute("id") == 'el15Child'){
+            is_nomenclature = true;
+            break;
+        }
+        element = element.parentNode;
+    }while(element.parentNode);
+	
+	if(((key == 13) && (not_show[id] == false)) || ((is_nomenclature) && (key == 40))){
+		//On annule tous les comportements par dï¿½faut du navigateur
 		if (e.stopPropagation) {
 			e.preventDefault();
 			e.stopPropagation();
@@ -510,4 +606,9 @@ function validation(e){
 
 function ajax_remove_elements(id){
 	
+}
+
+function ajax_insert_element(id){
+	var callback=document.getElementById(id).getAttribute("callback");
+	if (callback) window[callback](id, true);
 }

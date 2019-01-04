@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_categlist_datasource_categs.class.php,v 1.1.2.1 2015-09-22 10:30:07 vtouchard Exp $
+// $Id: cms_module_categlist_datasource_categs.class.php,v 1.2 2015-09-22 13:34:21 vtouchard Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
     die("no access");
 

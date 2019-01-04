@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: install_rep_inc.php,v 1.7 2012-12-12 10:29:54 ngantier Exp $
+// $Id: install_rep_inc.php,v 1.9 2016-03-30 09:04:51 mbertin Exp $
 
 // plus rien ici : reprise d'un script d'une autre install
 if(preg_match('/install_rep_inc\.php/', $_SERVER['REQUEST_URI'])) {
@@ -53,7 +53,7 @@ $msg_crea_10 = "<br /><br />Fallo al introducir el tesauro AGNEAUX";
 $msg_crea_11 = "<br /><br />Introducci&oacute;n de los 100 casos del saber realizada con &eacute;xito";
 $msg_crea_12 = "<br /><br />Fallo al introducir los 100 casos del saber";
 
-$msg_crea_13 = "<br /><br />Introducci&oacute;n de los datos esenciales para iniciar rápidamente realizada con &eacute;xito";
+$msg_crea_13 = "<br /><br />Introducci&oacute;n de los datos esenciales para iniciar r&aacute;pidamente realizada con &eacute;xito";
 $msg_crea_14 = "<br /><br />Fallo al introducir los datos esenciales para iniciar rápidamente";
 
 $msg_crea_15 = "<br /><br />Introducci&oacute;n del tesauro UNESCO";
@@ -77,9 +77,13 @@ $msg_crea_29 = "<br /><br />No se ha introducido ninguna clasificaci&oacute;n.";
 $msg_crea_30 = "<p>los scripts de instalaci&oacute;n han sido renombrados para no poder poder ser ejecutados directamente</p>";
 $msg_crea_31 = "<p><a href=\"../\">Ir a la p&aacute;gina de inicio</a></p>";
 $msg_crea_32 = "Pb de datos de creaci&oacute;n ";
-$msg_crea_33 = "<br /><br />Remplissage de la demo du portail r&eacute;ussi";
-$msg_crea_34 = "<br /><br />Echec du remplissage de la demo du portail";				
-					
+
+$msg_crea_33 = "<br /><br />Remplissage de la demo du portail Pag&eacute;o r&eacute;ussi";
+$msg_crea_34 = "<br /><br />Echec du remplissage de la demo du portail Pag&eacute;o";
+
+$msg_crea_35 = "<br /><br />Remplissage de la demo du portail Zen r&eacute;ussi";
+$msg_crea_36 = "<br /><br />Echec du remplissage de la demo du portail Zen";
+
 $msg_crea_control_version = "<h3>La versi&óacute;n de la base de datos es <font color=red>!!pmb_version!!</font>, deber&iacute;a ser <font color=red>$pmb_version_database_as_it_should_be</font></h3><br />
 			Conn&eacute;ctate a PMB de la forma normal,<br />
 			Ve a Administraci&aacute;on > Herramientas > y actualiza la base de datos antes de empezar a trabajar con PMB.<br />

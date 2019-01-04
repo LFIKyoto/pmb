@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: budgets.inc.php,v 1.40 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: budgets.inc.php,v 1.42 2017-04-19 12:37:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -32,6 +32,7 @@ function show_list_biblio() {
 	$res = pmb_mysql_query($q, $dbh);
 	$nbr = pmb_mysql_num_rows($res);
 
+	$error = false;
 	if(!$nbr) {
 		//Pas d'etablissements définis pour l'utilisateur
 		$error = true; 
@@ -80,7 +81,7 @@ function show_list_budg($id_bibli) {
 	print "<table>
 	<tr>
 		<th>".htmlentities($msg[103],ENT_QUOTES,$charset)."</th>
-		<th>".htmlentities($msg[acquisition_statut],ENT_QUOTES,$charset)."</th>
+		<th>".htmlentities($msg['acquisition_statut'],ENT_QUOTES,$charset)."</th>
 	</tr>";
 
 	//Affichage de la liste des budgets
@@ -100,19 +101,19 @@ function show_list_budg($id_bibli) {
 	        print '<td>';
 	        switch ($row->statut) {
 	        	case STA_BUD_VAL :
-	        		print htmlentities($msg[acquisition_statut_actif],ENT_QUOTES,$charset) ;
+	        		print htmlentities($msg['acquisition_statut_actif'],ENT_QUOTES,$charset) ;
 	        		break;
 	        	case  STA_BUD_CLO :
-	        		print htmlentities($msg[acquisition_statut_clot],ENT_QUOTES,$charset) ;
+	        		print htmlentities($msg['acquisition_statut_clot'],ENT_QUOTES,$charset) ;
 	        		break;
 	        	default:
-	        		print htmlentities($msg[acquisition_budg_pre],ENT_QUOTES,$charset) ;
+	        		print htmlentities($msg['acquisition_budg_pre'],ENT_QUOTES,$charset) ;
 	        		break;
 	        }
 			print "</td></tr>";
 	}
 	print "</table>
-		<input class='bouton' type='button' value=' ".$msg[acquisition_ajout_budg]." ' onClick=\"document.location='./admin.php?categ=acquisition&sub=budget&action=add&id_bibli=$id_bibli'\" />";
+		<input class='bouton' type='button' value=' ".$msg['acquisition_ajout_budg']." ' onClick=\"document.location='./admin.php?categ=acquisition&sub=budget&action=add&id_bibli=$id_bibli'\" />";
 
 }
 
@@ -127,7 +128,8 @@ function show_budg_form($id_bibli, $id_bud=0) {
 	global $mnt_form, $sel_typ_form;
 
 	//Récuperation du budget
-	if ($id_bud) $bud= new budgets($id_bud);
+	$id_bud += 0; 
+	$bud= new budgets($id_bud);
 
 	//Affichage exercices actifs
 	$q = exercices::listByEntite($id_bibli, STA_EXE_ACT, 'statut desc, date_debut desc');
@@ -184,16 +186,16 @@ function show_budg_form($id_bibli, $id_bud=0) {
 	//Affichage entete formulaire
 	if(!$id_bud) {
 
-		$budg_form = str_replace('!!form_title!!', htmlentities($msg[acquisition_ajout_budg],ENT_QUOTES,$charset), $budg_form);
+		$budg_form = str_replace('!!form_title!!', htmlentities($msg['acquisition_ajout_budg'],ENT_QUOTES,$charset), $budg_form);
 		$budg_form = str_replace('!!libelle!!', '', $budg_form);
 		$budg_form = str_replace('!!seuil!!', '100', $budg_form);
 		$budg_form = str_replace('!!comment!!', '', $budg_form);
-		$budg_form = str_replace('!!statut!!', htmlentities($msg[acquisition_budg_pre], ENT_QUOTES, $charset), $budg_form);
+		$budg_form = str_replace('!!statut!!', htmlentities($msg['acquisition_budg_pre'], ENT_QUOTES, $charset), $budg_form);
 		$budg_form = str_replace('!!val_statut!!', '0', $budg_form);
 
 	} else {
 		
-		$budg_form = str_replace('!!form_title!!', htmlentities($msg[acquisition_modif_budg],ENT_QUOTES,$charset), $budg_form);
+		$budg_form = str_replace('!!form_title!!', htmlentities($msg['acquisition_modif_budg'],ENT_QUOTES,$charset), $budg_form);
 		$budg_form = str_replace('!!libelle!!', htmlentities($bud->libelle,ENT_QUOTES,$charset), $budg_form);
 		$budg_form = str_replace('!!seuil!!', $bud->seuil_alerte, $budg_form);
 		$budg_form = str_replace('!!comment!!', htmlentities($bud->commentaires,ENT_QUOTES,$charset), $budg_form);
@@ -202,23 +204,23 @@ function show_budg_form($id_bibli, $id_bud=0) {
 		switch ($bud->statut) {
 			
 			case STA_BUD_PRE :
-				$budg_form = str_replace('!!statut!!', htmlentities($msg[acquisition_budg_pre],ENT_QUOTES,$charset), $budg_form);
+				$budg_form = str_replace('!!statut!!', htmlentities($msg['acquisition_budg_pre'],ENT_QUOTES,$charset), $budg_form);
 				//Affichage du bouton d'activation
 				$budg_form = str_replace('<!-- bouton_act -->', $ptab[2], $budg_form);
 				break;
 				
 			case STA_BUD_VAL :
-				$budg_form = str_replace('!!statut!!', htmlentities($msg[acquisition_statut_actif],ENT_QUOTES,$charset), $budg_form);
+				$budg_form = str_replace('!!statut!!', htmlentities($msg['acquisition_statut_actif'],ENT_QUOTES,$charset), $budg_form);
 				//Affichage du bouton de cloture
 				$budg_form = str_replace('<!-- bouton_clot -->', $ptab[0], $budg_form);
 				break;
 				
 			case STA_BUD_CLO :
-				$budg_form = str_replace('!!statut!!', htmlentities($msg[acquisition_statut_clot],ENT_QUOTES,$charset), $budg_form);
+				$budg_form = str_replace('!!statut!!', htmlentities($msg['acquisition_statut_clot'],ENT_QUOTES,$charset), $budg_form);
 				break;
 				
 			default :
-				$budg_form = str_replace('!!statut!!', htmlentities($msg[acquisition_budg_pre],ENT_QUOTES,$charset), $budg_form);
+				$budg_form = str_replace('!!statut!!', htmlentities($msg['acquisition_budg_pre'],ENT_QUOTES,$charset), $budg_form);
 				//Affichage du bouton d'activation
 				$budg_form = str_replace('<!-- bouton_act -->', $ptab[2], $budg_form);
 				break;	
@@ -330,10 +332,10 @@ function show_rub_form($id_bud, $id_rub=0, $id_parent=0) {
 	//Affichage entete formulaire
 	if(!$id_rub) { //création de rubrique
 
-		$rub_form = str_replace('!!form_title!!', htmlentities($msg[acquisition_ajout_rub],ENT_QUOTES,$charset), $rub_form);
+		$rub_form = str_replace('!!form_title!!', htmlentities($msg['acquisition_ajout_rub'],ENT_QUOTES,$charset), $rub_form);
 
 		//Affichage barre de navigation
-		$nav_form.= "<a href=\"./admin.php?categ=acquisition&sub=budget&action=modif&id_bibli=".$id_bibli."&id_bud=".$id_bud."\" >".$bud->libelle."</a>";
+		$nav_form = "<a href=\"./admin.php?categ=acquisition&sub=budget&action=modif&id_bibli=".$id_bibli."&id_bud=".$id_bud."\" >".$bud->libelle."</a>";
 		if ($id_parent) {
 			$list_bar = rubriques::listAncetres($id_parent, TRUE); 			
 			foreach ($list_bar as $value) {
@@ -352,7 +354,7 @@ function show_rub_form($id_bud, $id_rub=0, $id_parent=0) {
 			$rub_form = str_replace('!!lib_mnt!!', '&nbsp;', $rub_form);
 		}			
 		
-		$label_ncp ="<label class='etiquette' for='ncp'>".htmlentities($msg[acquisition_num_cp_compta],ENT_QUOTES,$charset)."</label>";
+		$label_ncp ="<label class='etiquette' for='ncp'>".htmlentities($msg['acquisition_num_cp_compta'],ENT_QUOTES,$charset)."</label>";
 		$rub_form = str_replace('<!-- label_ncp -->', $label_ncp, $rub_form);
 		
 		$ncp = "<input type='text' id='ncp' name='ncp' class='saisie-30em' style='text-align:right' value='' />";
@@ -379,13 +381,13 @@ function show_rub_form($id_bud, $id_rub=0, $id_parent=0) {
 	} else { //modification de rubrique
 
 
-		$rub_form = str_replace('!!form_title!!', htmlentities($msg[acquisition_modif_rub],ENT_QUOTES,$charset), $rub_form);
+		$rub_form = str_replace('!!form_title!!', htmlentities($msg['acquisition_modif_rub'],ENT_QUOTES,$charset), $rub_form);
 
 		//Récupération rubrique
 		if ($id_rub) $rub = new rubriques($id_rub);				
 
 		//Affichage barre de navigation
-		$nav_form.= "<a href=\"./admin.php?categ=acquisition&sub=budget&action=modif&id_bibli=".$id_bibli."&id_bud=".$id_bud."\" >".$bud->libelle."</a>";
+		$nav_form = "<a href=\"./admin.php?categ=acquisition&sub=budget&action=modif&id_bibli=".$id_bibli."&id_bud=".$id_bud."\" >".$bud->libelle."</a>";
 		$list_bar = rubriques::listAncetres($id_rub, FALSE); 			
 		foreach ($list_bar as $value) {
 			$nav_form.= "&nbsp;&gt;&nbsp;<a href=\"./admin.php?categ=acquisition&sub=budget&action=modif_rub&id_bud=".$id_bud."&id_rub=".$value[0]."&id_parent=".$value[2]."\" >".htmlentities($value[1], ENT_QUOTES, $charset)."</a>";
@@ -406,7 +408,7 @@ function show_rub_form($id_bud, $id_rub=0, $id_parent=0) {
 				$rub_form = str_replace('<!-- lib_mnt -->', $mnt_rub_form[0], $rub_form);
 				$mnt_rub = str_replace('!!mnt_rub!!', $rub->montant, $mnt_rub_form[1]);
 				$rub_form = str_replace('<!-- montant -->', $mnt_rub, $rub_form);
-				$label_ncp ="<label class='etiquette' for='ncp'>".htmlentities($msg[acquisition_num_cp_compta],ENT_QUOTES,$charset)."</label>";
+				$label_ncp ="<label class='etiquette' for='ncp'>".htmlentities($msg['acquisition_num_cp_compta'],ENT_QUOTES,$charset)."</label>";
 				$ncp = "<input type='text' id='ncp' name='ncp' class='saisie-30em' style='text-align:right' value='".$rub->num_cp_compta."' />";
 				$aut = TRUE;
 			}
@@ -419,7 +421,7 @@ function show_rub_form($id_bud, $id_rub=0, $id_parent=0) {
 				$ncp = '&nbsp;';
 				$aut = FALSE;
 			} else {
-				$label_ncp ="<label class='etiquette' for='ncp'>".htmlentities($msg[acquisition_num_cp_compta],ENT_QUOTES,$charset)."</label>";
+				$label_ncp ="<label class='etiquette' for='ncp'>".htmlentities($msg['acquisition_num_cp_compta'],ENT_QUOTES,$charset)."</label>";
 				$ncp = "<input type='text' id='ncp' name='ncp' class='saisie-30em' style='text-align:right' value='".$rub->num_cp_compta."' />";
 				$aut = TRUE;
 			}
@@ -669,8 +671,8 @@ switch($action) {
 		}	
 		//Montant du budget compris entre 0.00 et 999999.99 si global
 		if ( (!$id_bud && $sel_typ==1) || $id_bud ) {  
-			if ( $mnt_bud && (!is_numeric($mnt_bud) || $mnt_bud < 0.00 || $mnt_bud > 999999.99 )) {
-				error_form_message($libelle.$msg["acquisition_bud_mnt_error"]);
+			if ( isset($mnt_bud) && $mnt_bud && (!is_numeric($mnt_bud) || $mnt_bud < 0.00 || $mnt_bud > 9999999999.99 )) {
+				error_form_message($libelle." ".$msg["acquisition_bud_mnt_error"]);
 				break;
 			}
 		}
@@ -708,9 +710,9 @@ switch($action) {
 				budgets::delete($id_bud);
 				show_list_budg($id_bibli);
 			} else {
-				$msg_suppr_err = $msg[acquisition_budg_used] ;
-				if ($total1) $msg_suppr_err .= "<br />- ".$msg[acquisition_budg_used_lg] ;
-				if ($total2) $msg_suppr_err .= "<br />- ".$msg[acquisition_budg_used_rubr] ;
+				$msg_suppr_err = $msg['acquisition_budg_used'] ;
+				if ($total1) $msg_suppr_err .= "<br />- ".$msg['acquisition_budg_used_lg'] ;
+				if ($total2) $msg_suppr_err .= "<br />- ".$msg['acquisition_budg_used_rubr'] ;
 				error_message($msg[321], $msg_suppr_err, 1, 'admin.php?categ=acquisition&sub=budget&action=list&id_bibli='.$id_bibli);
 			}
 		
@@ -736,8 +738,8 @@ switch($action) {
 
 	case 'update_rub' :
 		//vérification des éléments saisis
-		if ($mnt && (!is_numeric($mnt) || $mnt < 0.00 || $mnt > 999999.99 )) {
-			error_form_message($libelle.$msg["acquisition_rub_mnt_error"]);
+		if ($mnt && (!is_numeric($mnt) || $mnt < 0.00 || $mnt > 9999999999.99 )) {
+			error_form_message($libelle." ".$msg["acquisition_rub_mnt_error"]);
 			break;
 		}
 
@@ -800,9 +802,9 @@ switch($action) {
 				else show_budg_form($id_bibli, $id_bud);		
 			
 			} else {
-				$msg_suppr_err = $msg[acquisition_rub_used] ;
-				if ($total1) $msg_suppr_err .= "<br />- ".$msg[acquisition_rub_used_lg] ;
-				if ($total2) $msg_suppr_err .= "<br />- ".$msg[acquisition_rub_used_childs] ;
+				$msg_suppr_err = $msg['acquisition_rub_used'] ;
+				if ($total1) $msg_suppr_err .= "<br />- ".$msg['acquisition_rub_used_lg'] ;
+				if ($total2) $msg_suppr_err .= "<br />- ".$msg['acquisition_rub_used_childs'] ;
 				error_message($msg[321],$msg_suppr_err, 1, 'admin.php?categ=acquisition&sub=budget&action=modif_rub&id_bud='.$id_bud.'&id_rub='.$id_rub.'&id_parent='.$rub->num_parent);
 			}
 		

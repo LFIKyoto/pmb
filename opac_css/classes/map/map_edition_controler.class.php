@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_edition_controler.class.php,v 1.3 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: map_edition_controler.class.php,v 1.7 2016-11-05 14:49:08 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($class_path."/map/map_model.class.php");
@@ -50,6 +50,18 @@ class map_edition_controler {
   					'ids' => array($this->id)
   				);
   				break;
+  			case TYPE_LOCATION :
+  				$objects[]= array(
+  					'layer' => "location",
+  					'ids' => array($this->id)
+  				);
+  				break;
+  			case TYPE_SUR_LOCATION :
+  				$objects[]= array(
+  					'layer' => "sur_location",
+  					'ids' => array($this->id)
+  				);
+  				break;
   			case AUT_TABLE_CATEG :
   				$objects[]= array(
   					'type' => $this->type,
@@ -65,22 +77,18 @@ class map_edition_controler {
   
 	
 	public function get_json_informations(){
-		global $pmb_url_base;
+		global $opac_url_base;
 		global $dbh;
 	
 		$map_hold = $this->get_bounding_box();
-		$coords = $map_hold->get_coords();
-		if(!count($coords))return "";
-		$lats = $longs = array();
-		for($i=0 ; $i<count($coords) ; $i++){
-			$lats[] = $coords[$i]->get_decimal_lat();
-			$longs[] = $coords[$i]->get_decimal_long();
+		if (!$map_hold) {
+			return "";
 		}
-		$lats = array_unique($lats);
-		$longs = array_unique($longs);
-		sort($lats);
-		sort($longs);
-		return "initialFit: [ ".$longs[0]." , ".$lats[0]." , ".$longs[1]." , ".$lats[1]."], layers : ".json_encode($this->model->get_json_informations(false, $pmb_url_base,$this->editable));
+		$coords = $map_hold->get_coords();
+		if (!count($coords)) {
+			return "";
+		}
+		return "initialFit: [ ".map_objects_controler::get_coord_initialFit($coords)."], layers : ".json_encode($this->model->get_json_informations(false, $opac_url_base,$this->editable));
 	}
 	
 	public function get_bounding_box(){
@@ -93,6 +101,7 @@ class map_edition_controler {
 		global $opac_map_base_layer_type;
 		global $oapc_map_base_layer_params;
 		global $opac_map_size_notice_edition;
+		global $opac_map_size_location_edition;
 		
 		$layer_params = json_decode($opac_map_base_layer_params,true);
 		$baselayer =  "baseLayerType: dojox.geo.openlayers.BaseLayerType.".$oapc_map_base_layer_type;
@@ -103,6 +112,8 @@ class map_edition_controler {
 		}		
 				
 		$ids[]=$this->id;
+			$size=explode("*",$opac_map_size_notice_edition); 
+		
 		switch($this->type){
 			case TYPE_RECORD :
 				$objects[]= array(
@@ -110,6 +121,20 @@ class map_edition_controler {
 					'ids' => $ids
 				);
 				break;	
+			case TYPE_LOCATION :
+				$objects[]= array(
+					'layer' => "location",
+					'ids' => $ids
+				);
+				$size=explode("*",$opac_map_size_location_edition); 
+				break;	
+			case TYPE_SUR_LOCATION :
+				$objects[]= array(
+					'layer' => "sur_location",
+					'ids' => $ids
+				);
+				$size=explode("*",$opac_map_size_location_edition); 
+				break;
   			case AUT_TABLE_CATEG :
 				$objects[]= array(
 					'type' => $this->type,
@@ -120,9 +145,17 @@ class map_edition_controler {
 		}
 		$map_hold = null;
 		
-		$size=explode("*",$opac_map_size_notice_edition); 
-		if(count($size)!=2)$map_size="width:800px; height:480px;";
-		$map_size= "width:".$size[0]."px; height:".$size[1]."px;";
+		if(count($size)!=2){
+			$map_size="width:800px; height:480px;";
+		} else {
+                    if (is_numeric($size[0])) {
+                        $size[0] = $size[0] . "px";
+                    }
+                    if (is_numeric($size[1])) {
+                        $size[1] = $size[1] . "px";
+                    }
+                    $map_size= "width:".$size[0]."; height:".$size[1].";";
+		}
 		
 		$map = "
 		<div class='row'>
@@ -149,7 +182,21 @@ class map_edition_controler {
 						".$this->get_map()."
 					</div>
 				";				
-				break;	
+				break;
+			case TYPE_LOCATION :
+				$form_map="
+					<div class='row'>
+						".$this->get_map()."
+					</div>
+				";
+				break;
+			case TYPE_SUR_LOCATION :
+				$form_map="
+					<div class='row'>
+						".$this->get_map()."
+					</div>
+				";
+				break;
   			case AUT_TABLE_CATEG :
   				$form_map="
 	  				<div class='row'>
@@ -178,6 +225,14 @@ class map_edition_controler {
 				map_emprise_obj_num=".$this->id.",
 				map_emprise_order = ".$i;
   				pmb_mysql_query($query,$dbh);
+  				$id_emprise = pmb_mysql_insert_id($dbh);
+  				$query_area = "insert into map_hold_areas set
+  				id_obj=".$id_emprise.",
+  				type_obj=".$this->type.",
+  				area=Area(GeomFromText('".$map_wkt[$i]."')),
+  				bbox_area=Area(envelope(GeomFromText('".$map_wkt[$i]."'))),
+  				center=AsText(Centroid(envelope(GeomFromText('".$map_wkt[$i]."'))))";
+  				pmb_mysql_query($query_area,$dbh);
   			}
   		}
 	}
@@ -185,8 +240,17 @@ class map_edition_controler {
 	public function delete() {
 		global $dbh;
 		
-		$req="DELETE FROM map_emprises where map_emprise_type=".$this->type." and map_emprise_obj_num=".$this->id;	
-		pmb_mysql_query($req,$dbh);	
+		$req = "select map_emprise_id from map_emprises where map_emprise_type=".$this->type." and map_emprise_obj_num=".$this->id;
+		$result = pmb_mysql_query($req, $dbh);
+		if (pmb_mysql_num_rows($result)) {
+			$row = pmb_mysql_fetch_object($result);
+			$req="DELETE FROM map_emprises where map_emprise_type=".$this->type." and map_emprise_obj_num=".$this->id;
+			pmb_mysql_query($req,$dbh);
+			//Partie map_hold_areas
+			$req_areas="DELETE FROM map_hold_areas where type_obj=".$this->type." and id_obj=".$row->map_emprise_id;
+			pmb_mysql_query($req_areas,$dbh);
+		}
+
 	}
 
 

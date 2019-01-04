@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_instruments_list_ui.js,v 1.21 2015-02-09 14:45:18 dgoron Exp $
+// $Id: nomenclature_instruments_list_ui.js,v 1.28 2016-11-29 13:00:29 vtouchard Exp $
 
 define(["dojo/_base/declare", "apps/nomenclature/nomenclature_instrument_ui","apps/nomenclature/nomenclature_instrument", "dojo/on", "dojo/dom-construct","dojo/dom", "dojo/_base/lang", "dojo/topic", "dijit/registry", "dijit/_WidgetBase"], function(declare, Instrument_ui, Instrument, on, domConstruct, dom, lang, topic, registry, _WidgetBase){
 	/*
@@ -18,6 +18,9 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_instrument_ui","ap
 		  	instruments_list:null,
 		    inputs_array:null,
 		    instruments:null,
+		    workshop_ui:null,
+		    textarea_note:null,
+		    hidden_note:null,
 		    
 		    constructor: function(params){
 		        this.inputs_array = new Array();
@@ -97,6 +100,26 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_instrument_ui","ap
 				    	var header_line_2 = domConstruct.create('tr', null, this.get_instruments_node());
 				    	var th_main_instr = domConstruct.create('th', {innerHTML:registry.byId('nomenclature_datastore').get_message('nomenclature_js_instruments_header_main'), style:{textAlign:'center'}}, header_line_2);
 				    	var th_annexe_instr = domConstruct.create('th', {innerHTML:registry.byId('nomenclature_datastore').get_message('nomenclature_js_instruments_header_other'), style:{textAlign:'center'}}, header_line_2);
+				    	
+				    	var lib_note = domConstruct.create('div', {class:'row'}, this.get_dom_node());
+				    	domConstruct.create('label', {
+				    		class:'etiquette',
+				    		for:this.get_dom_node().id+'_note',
+				    		innerHTML:registry.byId('nomenclature_datastore').get_message('nomenclature_js_exotic_instruments_note')
+				    	}, lib_note);
+				    	
+				    	var content_note = domConstruct.create('div', {class:'row'}, this.get_dom_node());
+				    	this.textarea_note = domConstruct.create('textarea', {
+				    		id:this.get_dom_node().id+'_note',
+				    		name:this.get_dom_node().id+'_note',
+				    		class:'saisie-80em',
+				    		wrap:'virtual',
+				    		rows:'3',
+				    		innerHTML:this.instruments_list.nomenclature.record_formation.get_exotic_instruments_note()
+				    	}, content_note);
+				    	this.own(on(this.textarea_note, 'keyup', lang.hitch(this, this.update_exotic_instruments_note)));
+				    	/** Création de l'input hidden de la note en vue de la sauvegarde **/
+				    	this.hidden_note = domConstruct.create('input', {type:'hidden', name:this.instruments_list.nomenclature.record_formation.get_hidden_field_name('exotic_instruments_note'), value:this.instruments_list.nomenclature.record_formation.get_exotic_instruments_note()}, content_note);
 				    	break;
 		    		case "workshop":
 		    			var th_order = domConstruct.create('th', {innerHTML:registry.byId('nomenclature_datastore').get_message('nomenclature_js_instruments_header_order'), style:{textAlign:'center'}}, header_line);
@@ -108,10 +131,14 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_instrument_ui","ap
 		    },
 		    init_instruments_ui: function(){
 		    	this.total_instruments = 0;
-		    	for(var i=0; i<this.instruments_list.instruments.length ; i++){
-		    		this.init_display = true;
-		    		var new_instru_ui = new Instrument_ui({id:this.get_dom_node().id+'_'+this.instruments_list.instruments[i].get_code()+'_'+this.get_total_instruments()}, this.get_total_instruments(), this.get_instruments_node(), this.instruments_list.instruments[i], this.mode);
-		    		this.instruments.push(new_instru_ui);
+		    	if (this.instruments_list.instruments.length) {
+			    	for(var i=0; i<this.instruments_list.instruments.length ; i++){
+			    		this.init_display = true;
+			    		var new_instru_ui = new Instrument_ui({id:this.get_dom_node().id+'_'+this.instruments_list.instruments[i].get_code()+'_'+this.get_total_instruments(), indice: this.get_total_instruments(), dom_node: this.get_instruments_node(), instrument: this.instruments_list.instruments[i], mode: this.mode});
+			    		this.instruments.push(new_instru_ui);
+			    	}
+		    	} else {
+		    		topic.publish("instruments_list_ui",'instruments_list_ui_ready', {hash:this.instruments_list.get_hash()});
 		    	}
 		    },
 		    add_instrument: function(){
@@ -128,8 +155,9 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_instrument_ui","ap
 		    	new_inst.set_order(this.instruments_list.get_max_order()+1);
 		    	
 		    	this.instruments_list.add_instrument(new_inst);
-		    	var new_inst_ui = new Instrument_ui({id:this.get_dom_node().id+'_'+this.get_total_instruments()}, this.total_instruments, this.get_instruments_node(), new_inst, this.mode);
+		    	var new_inst_ui = new Instrument_ui({id:this.get_dom_node().id+'_'+this.get_total_instruments(), indice: this.total_instruments, dom_node: this.get_instruments_node(), instrument: new_inst, mode: this.mode});
 		    	this.instruments.push(new_inst_ui);
+		    	new_inst_ui.init_actions();
 
 		    },
 		    delete_instrument: function(instrument){
@@ -146,10 +174,8 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_instrument_ui","ap
 		    			index_instru_ui = i; 
 		    		}
 		    	}
-		    	
 		    	this.instruments[index_instru_ui].destroy();
 		    	this.instruments.splice(index_instru_ui, 1);
-		    	
 		    	this.instruments_list.delete_instrument(order, true);
 		    	
 		    	var array_nodes = new Array();
@@ -244,18 +270,25 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_instrument_ui","ap
 					obj.name = actual_instruments[i].get_name();
 					obj.order = actual_instruments[i].get_order();
 					obj.effective = actual_instruments[i].get_effective();
-					obj.other = new Array();
-					if(actual_instruments[i].others_instruments){
-						for(var j=0 ; j<actual_instruments[i].others_instruments.length ; j++){
-							var obj_other = {};
-							obj_other.code = actual_instruments[i].others_instruments[j].get_code();
-							obj_other.order = actual_instruments[i].others_instruments[j].get_order();
-							obj_other.id = actual_instruments[i].others_instruments[j].get_id();
-							obj_other.name = actual_instruments[i].others_instruments[j].get_name();
-							obj_other.effective = actual_instruments[i].others_instruments[j].get_effective();
-							obj.other.push(obj_other);
-						}
+					if(this.mode == "exotic_instruments"){
+						obj.id_exotic_instrument = actual_instruments[i].get_id_exotic_instrument();
+						obj.other = new Array();
+						if(actual_instruments[i].others_instruments){
+							for(var j=0 ; j<actual_instruments[i].others_instruments.length ; j++){
+								var obj_other = {};
+								obj_other.code = actual_instruments[i].others_instruments[j].get_code();
+								obj_other.order = actual_instruments[i].others_instruments[j].get_order();
+								obj_other.id = actual_instruments[i].others_instruments[j].get_id();
+								obj_other.name = actual_instruments[i].others_instruments[j].get_name();
+								obj_other.effective = actual_instruments[i].others_instruments[j].get_effective();
+								obj_other.id_exotic_instrument = actual_instruments[i].others_instruments[j].get_id_exotic_instrument();
+								obj.other.push(obj_other);
+							}
+						}	
+					}else if(this.mode == "workshop"){
+						obj.id_workshop_instrument = actual_instruments[i].get_id_workshop_instrument();	
 					}
+					
 					array_instru.push(obj);
 				}
 				return array_instru;
@@ -264,32 +297,66 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_instrument_ui","ap
 				for(var i=0 ; i<this.inputs_array.length ; i++){
 					domConstruct.destroy(this.inputs_array[i]);
 				}
+				this.inputs_array = new Array();
+				var json_data = this.generate_json_data();
+				for(var i=0 ; i<json_data.length ; i++){
+					var json_params = {
+							type:'hidden', 
+							name:json_data[i].name, 
+							value:json_data[i].value,
+						};
+					if(json_data[i].id){
+						json_params.id = json_data[i].id;
+					}
+					this.inputs_array.push(domConstruct.create('input',json_params, this.dom_node));
+				}
+			},
+			generate_json_data: function(){
+				var json_data = new Array();
 				if(this.mode == "exotic_instruments"){
 					var instruments_non_standards = this.get_object_instrument();
 					for(var i=0 ; i<instruments_non_standards.length ; i++){
-						this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][code]', value:instruments_non_standards[i].code}, this.dom_node));
-						this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][name]', value:instruments_non_standards[i].name},this.dom_node) );
-						this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][id]', value:instruments_non_standards[i].id},this.dom_node));
-						this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][order]', value:instruments_non_standards[i].order},this.dom_node));
-						this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][effective]', value:instruments_non_standards[i].effective},this.dom_node));
+						json_data.push({name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][code]', value:instruments_non_standards[i].code});
+						json_data.push({name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][name]', value:instruments_non_standards[i].name});
+						json_data.push({name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][id]', value:instruments_non_standards[i].id});
+						json_data.push({name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][order]', value:instruments_non_standards[i].order});
+						json_data.push({name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][effective]', value:instruments_non_standards[i].effective});
+						json_data.push({id:this.instruments_list.get_hidden_field_name()+'_instruments_'+instruments_non_standards[i].order+'_id_exotic_instrument', name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][id_exotic_instrument]', value:instruments_non_standards[i].id_exotic_instrument});
+						
 						for(var j=0; j<instruments_non_standards[i].other.length ; j++){
-							this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][other]['+j+'][code]', value:instruments_non_standards[i].other[j].code},this.dom_node));
-							this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][other]['+j+'][name]', value:instruments_non_standards[i].other[j].name},this.dom_node));
-							this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][other]['+j+'][order]', value:instruments_non_standards[i].other[j].order},this.dom_node));
-							this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][other]['+j+'][id]', value:instruments_non_standards[i].other[j].id},this.dom_node));
+							json_data.push({name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][other]['+j+'][code]', value:instruments_non_standards[i].other[j].code});
+							json_data.push({name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][other]['+j+'][name]', value:instruments_non_standards[i].other[j].name});
+							json_data.push({name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][other]['+j+'][order]', value:instruments_non_standards[i].other[j].order});
+							json_data.push({name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][other]['+j+'][id]', value:instruments_non_standards[i].other[j].id});
+							json_data.push({id:this.instruments_list.get_hidden_field_name()+'_instruments_'+instruments_non_standards[i].order+'_other_'+instruments_non_standards[i].other[j].order+'_id_exotic_instrument', name:this.instruments_list.get_hidden_field_name()+'[instruments]['+i+'][other]['+j+'][id_exotic_instrument]', value:instruments_non_standards[i].other[j].id_exotic_instrument});
 						}
 					}
 				}
 				if(this.mode == "workshop"){
 					var instruments = this.get_object_instrument();
 					for(var i=0 ; i<instruments.length ; i++){
-						this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.instruments_list.get_hidden_field_name()+'[workshops]['+this.instruments_list.workshop.get_order()+'][instruments]['+i+'][code]', value:instruments[i].code}, this.dom_node));
-						this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.instruments_list.get_hidden_field_name()+'[workshops]['+this.instruments_list.workshop.get_order()+'][instruments]['+i+'][name]', value:instruments[i].name},this.dom_node) );
-						this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.instruments_list.get_hidden_field_name()+'[workshops]['+this.instruments_list.workshop.get_order()+'][instruments]['+i+'][id]', value:instruments[i].id},this.dom_node));
-						this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.instruments_list.get_hidden_field_name()+'[workshops]['+this.instruments_list.workshop.get_order()+'][instruments]['+i+'][order]', value:instruments[i].order},this.dom_node));
-						this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.instruments_list.get_hidden_field_name()+'[workshops]['+this.instruments_list.workshop.get_order()+'][instruments]['+i+'][effective]', value:instruments[i].effective},this.dom_node));
+						json_data.push({name:this.instruments_list.get_hidden_field_name()+'[workshops]['+this.workshop_ui.get_indice()+'][instruments]['+i+'][code]', value:instruments[i].code});
+						json_data.push({name:this.instruments_list.get_hidden_field_name()+'[workshops]['+this.workshop_ui.get_indice()+'][instruments]['+i+'][name]', value:instruments[i].name});
+						json_data.push({name:this.instruments_list.get_hidden_field_name()+'[workshops]['+this.workshop_ui.get_indice()+'][instruments]['+i+'][id]', value:instruments[i].id});
+						json_data.push({name:this.instruments_list.get_hidden_field_name()+'[workshops]['+this.workshop_ui.get_indice()+'][instruments]['+i+'][order]', value:instruments[i].order});
+						json_data.push({name:this.instruments_list.get_hidden_field_name()+'[workshops]['+this.workshop_ui.get_indice()+'][instruments]['+i+'][effective]', value:instruments[i].effective});
+						json_data.push({id:this.instruments_list.get_hidden_field_name()+'_workshops_'+this.workshop_ui.workshop.get_order()+'_instruments_'+instruments[i].order+'_id_workshop_instrument', name:this.instruments_list.get_hidden_field_name()+'[workshops]['+this.workshop_ui.get_indice()+'][instruments]['+i+'][id_workshop_instrument]', value:instruments[i].id_workshop_instrument});
 					}
 				}
+				return json_data;
+			},
+			init_instruments_action: function(){
+				for(var i=0 ; i<this.instruments.length ; i++){
+					this.instruments[i].init_actions();
+				}
+			},
+			update_exotic_instruments_note: function() {
+		    	var exotic_instruments_note = this.textarea_note.value;
+		    	this.instruments_list.nomenclature.record_formation.set_exotic_instruments_note(exotic_instruments_note);
+		    	this.update_hidden_fields();
+		    },
+		    update_hidden_fields:function (){
+				this.hidden_note.value = this.instruments_list.nomenclature.record_formation.get_exotic_instruments_note();
 			},
 	    });
 	});

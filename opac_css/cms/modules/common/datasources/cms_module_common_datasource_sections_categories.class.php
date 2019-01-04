@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_sections_categories.class.php,v 1.4 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: cms_module_common_datasource_sections_categories.class.php,v 1.6 2018-12-06 09:34:14 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -31,32 +31,29 @@ class cms_module_common_datasource_sections_categories extends cms_module_common
 			"publication_date",
 			"id_section",
 			"section_title",
-			"section_order"
+			"section_order",
+			"pert"
 		);
+	}
+	
+	protected function get_query_base() {
+		$selector = $this->get_selected_selector();
+		if ($selector) {
+			$query = "select distinct id_section,if(section_start_date != '0000-00-00 00:00:00',section_start_date,section_creation_date) as publication_date, notices_categories.num_noeud from cms_sections join cms_sections_descriptors on id_section=num_section join notices_categories on cms_sections_descriptors.num_noeud=notices_categories.num_noeud and notcateg_notice = '".($selector->get_value()*1)."'";
+			return $query;
+		}
+		return false;
 	}
 	
 	/*
 	 * Récupération des données de la source...
 	 */
 	public function get_datas(){
-		$selector = $this->get_selected_selector();
-		if ($selector) {
-			$query = "select distinct id_section,if(section_start_date != '0000-00-00 00:00:00',section_start_date,section_creation_date) as publication_date from cms_sections join cms_sections_descriptors on id_section=num_section join notices_categories on cms_sections_descriptors.num_noeud=notices_categories.num_noeud and notcateg_notice = ".$selector->get_value();
-			if ($this->parameters["sort_by"] != "") {
-				$query .= " order by ".$this->parameters["sort_by"];
-				if ($this->parameters["sort_order"] != "") $query .= " ".$this->parameters["sort_order"];
-			}
-			$result = pmb_mysql_query($query);
-			$return = array();
-			if(pmb_mysql_num_rows($result) > 0){
-				while($row = pmb_mysql_fetch_object($result)){
-					$return[] = $row->id_section;
-				}
-			}
+		$return = $this->get_sorted_datas('id_section', 'num_noeud');
+		if($return) {
 			$return = $this->filter_datas("sections",$return);
 			if ($this->parameters["nb_max_elements"] > 0) $return = array_slice($return, 0, $this->parameters["nb_max_elements"]);
-			return $return;
 		}
-		return false;
+		return $return;
 	}
 }

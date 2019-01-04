@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: import_lecteurs_localises_ouche.inc.php,v 1.10 2015-06-02 13:24:51 dgoron Exp $
+// $Id: import_lecteurs_localises_ouche.inc.php,v 1.11 2018-11-22 15:34:57 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -27,6 +27,7 @@ if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 //Supprimez la première ligne du fichier excel si elle contient la liste des champs
 
 require_once("$class_path/emprunteur.class.php");
+require_once($class_path."/import/import_empr.class.php");
 
 echo $location;
 echo $user;
@@ -81,29 +82,6 @@ print "		</select>
 	</form>";
 }
 
-
-
-function cre_login($nom, $prenom, $dbh) {
-    $empr_login = substr($prenom,0,1).$nom ;
-    $empr_login = strtolower($empr_login);
-    $empr_login = clean_string($empr_login) ;
-    $empr_login = convert_diacrit(strtolower($empr_login)) ;
-    $empr_login = preg_replace('/[^a-z0-9\.]/', '', $empr_login);
-    $pb = 1 ;
-    $num_login=1 ;
-    while ($pb==1) {
-        $requete = "SELECT empr_login FROM empr WHERE empr_login='$empr_login' AND empr_nom <> '$nom' AND empr_prenom <> '$prenom' LIMIT 1 ";
-        $res = pmb_mysql_query($requete, $dbh);
-        $nbr_lignes = pmb_mysql_num_rows($res);
-        if ($nbr_lignes) {
-            $empr_login .= $num_login ;
-            $num_login++;
-        } 
-        else $pb = 0 ;
-    }
-    return $empr_login;
-}
-
 function import_eleves($separateur, $dbh, $type_import,$commune){
 	
 	global $code_categorie;
@@ -146,6 +124,7 @@ function import_eleves($separateur, $dbh, $type_import,$commune){
         
         while (!feof($fichier)) {
             $buffer = fgets($fichier, 4096);
+            $buffer = import_empr::get_encoded_buffer($buffer);
             $buffer = pmb_mysql_escape_string($buffer);
             $tab = explode($separateur, $buffer);
 
@@ -176,7 +155,7 @@ function import_eleves($separateur, $dbh, $type_import,$commune){
                 $nb_enreg = 2;
             }
             
-            $login = cre_login($tab[1],$tab[2], $dbh);
+            $login = import_empr::cre_login($tab[1],$tab[2]);
 			
             switch ($nb_enreg) {
                 case 0:
@@ -206,7 +185,7 @@ function import_eleves($separateur, $dbh, $type_import,$commune){
                     	emprunteur::hash_password($login,$tab[8]);
                         $cpt_insert ++;
                     }
-                    gestion_groupe($tab[9], $tab[0], $dbh);
+                    import_empr::gestion_groupe($tab[9], $tab[0]);
                     $j++;
                     break;
 
@@ -237,7 +216,7 @@ function import_eleves($separateur, $dbh, $type_import,$commune){
                     	emprunteur::hash_password($login,$tab[8]);
                         $cpt_maj ++;
                     }
-                    gestion_groupe($tab[9], $tab[0], $dbh);
+                    import_empr::gestion_groupe($tab[9], $tab[0]);
                     $j++;
                     break;
                 case 2:
@@ -265,27 +244,6 @@ echo $user;
     }
     
 }
-
-function gestion_groupe($lib_groupe, $empr_cb, $dbh) {
-    
-    $sel = pmb_mysql_query("SELECT id_groupe from groupe WHERE libelle_groupe = \"".$lib_groupe."\"",$dbh);
-    $nb_enreg_grpe = pmb_mysql_num_rows($sel);
-    
-    if (!$nb_enreg_grpe) {
-		//insertion dans la table groupe
-		pmb_mysql_query("INSERT INTO groupe(libelle_groupe) VALUES(\"".$lib_groupe."\")");
-		$groupe=pmb_mysql_insert_id();
-    } else {
-   		$grpobj = pmb_mysql_fetch_object($sel) ;
-   		$groupe = $grpobj->id_groupe ; 
-    }
-
-	//insertion dans la table empr_groupe
-    $sel_empr = pmb_mysql_query("SELECT id_empr FROM empr WHERE empr_cb = \"".$empr_cb."\"",$dbh);
-    $empr = pmb_mysql_fetch_array($sel_empr);
-    @pmb_mysql_query("INSERT INTO empr_groupe(empr_id, groupe_id) VALUES ('$empr[id_empr]','$groupe')");
-}
-
 
 switch($action) {
     case 1:

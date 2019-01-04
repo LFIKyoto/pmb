@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher.class.php,v 1.161.2.2 2015-12-01 09:39:14 jpermanne Exp $
+// $Id: searcher.class.php,v 1.207 2018-12-17 13:57:57 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,10 +13,15 @@ require_once("$class_path/thesaurus.class.php");
 require_once("$class_path/sort.class.php");
 require_once("$include_path/templates/searcher_templates.tpl.php");
 require_once($class_path."/searcher/searcher_records_title.class.php");
-if($pmb_map_activate){
+require_once($class_path."/searcher/searcher_authorities_authors.class.php");
+require_once($class_path."/authority.class.php");
+if(isset($pmb_map_activate) && $pmb_map_activate){
 	require_once($class_path."/map/map_search_controler.class.php");
 }
 
+require_once($class_path."/searcher/searcher_factory.class.php");
+require_once($class_path.'/elements_list/elements_records_list_ui.class.php');
+require_once($class_path.'/record_display.class.php');
 
 //droits d'acces lecture notice
 $acces_j='';
@@ -24,6 +29,7 @@ if ($gestion_acces_active==1 && $gestion_acces_user_notice==1) {
 	require_once("$class_path/acces.class.php");
 	$ac= new acces();
 	$dom_1= $ac->setDomain(1);
+	if(!isset($aut_type)) $aut_type = '';
 	switch ($aut_type) {
 		case "concept" :
 			$acces_j = $dom_1->getJoin($PMBuserid,4,'num_object');
@@ -43,29 +49,29 @@ define("AUT_SEARCH",3);
 
 class searcher {
 
-	var $type;                    //Type de recherche
-	var $etat;                    //Etat de la recherche
-	var $page;                    //Page courante de la recherche
-	var $nbresults;               //Nombre de résultats de la dernière recherche
-	var $nbepage;
-	var $nb_per_page;
-	var $id;                    	//Numéro d'autorité pour la recherche
-	var $store_form;            	//Formulaire contenant les infos de navigation plus des champs pour la recherche
-	var $base_url;
-	var $first_search_result;
-	var $text_query;
-	var $text_query_tri; 			//pour les tris texte de la requête d'origine modifié par la classe tri
-	var $human_query;
-	var $human_notice_query;
-	var $human_aut_query;
-	var $docnum;
-	var $direct=0;
-	var $rec_history=false;
-	var $sort;
-	var $current_search;
+	public $type;                    //Type de recherche
+	public $etat;                    //Etat de la recherche
+	public $page;                    //Page courante de la recherche
+	public $nbresults;               //Nombre de résultats de la dernière recherche
+	public $nbepage;
+	public $nb_per_page;
+	public $id;                    	//Numéro d'autorité pour la recherche
+	public $store_form;            	//Formulaire contenant les infos de navigation plus des champs pour la recherche
+	public $base_url;
+	public $first_search_result;
+	public $text_query;
+	public $text_query_tri; 			//pour les tris texte de la requête d'origine modifié par la classe tri
+	public $human_query;
+	public $human_notice_query;
+	public $human_aut_query;
+	public $docnum;
+	public $direct=0;
+	public $rec_history=false;
+	public $sort;
+	public $current_search;
 
 	//Constructeur
-	function searcher($base_url,$rec_history=false) {
+	public function __construct($base_url,$rec_history=false) {
 		global $type,$etat,$aut_id,$page, $docnum_query,$auto_postage_query;
 
 		$this->sort = new sort('notices','base');
@@ -80,7 +86,7 @@ class searcher {
 		$this->run();
 	}
 
-	function make_store_form() {
+	public function make_store_form() {
 		$this->store_form="<form name='store_search' action='".$this->base_url."' method='post' style='display:none'>
 		<input type='hidden' name='type' value='".$this->type."'/>
 		<input type='hidden' name='etat' value='".$this->etat."'/>
@@ -89,7 +95,7 @@ class searcher {
 		$this->store_form.="</form>";
 	}
 
-	function pager() {
+	public function pager() {
 		global $msg;
 
 		if (!$this->nbresults) return;
@@ -101,12 +107,13 @@ class searcher {
 			else $page_en_cours=$this->page ;
 
 		//Première
+		$nav_bar = '';
 		if(($page_en_cours+1)-$etendue > 1) {
-			$nav_bar .= "<a href='#' onClick=\"document.store_search.page.value=0; document.store_search.submit(); return false;\"><img src='./images/first.gif' border='0' alt='".$msg['first_page']."' hspace='6' align='middle' title='".$msg['first_page']."' /></a>";
+			$nav_bar .= "<a href='#' onClick=\"document.store_search.page.value=0; document.store_search.submit(); return false;\"><img src='".get_url_icon('first.gif')."' style='border:0px; margin:6px 6px' alt='".$msg['first_page']."' class='align_middle' title='".$msg['first_page']."' /></a>";
 		}
 		// affichage du lien précédent si nécéssaire
 		if($precedente >= 0)
-				$nav_bar .= "<a href='#' onClick=\"document.store_search.page.value=$precedente; document.store_search.submit(); return false;\"><img src='./images/left.gif' border='0'  title='$msg[48]' alt='[$msg[48]]' hspace='3' align='middle'></a>";
+				$nav_bar .= "<a href='#' onClick=\"document.store_search.page.value=$precedente; document.store_search.submit(); return false;\"><img src='".get_url_icon('left.gif')."' style='border:0px'  title='$msg[48]' alt='[$msg[48]]' class='align_middle'></a>";
 
 		$deb = $page_en_cours - 10 ;
 		if ($deb<0) $deb=0;
@@ -117,22 +124,22 @@ class searcher {
 			}
 
 		if($suivante<$this->nbepage)
-				$nav_bar .= "<a href='#' onClick=\"document.store_search.page.value=$suivante; document.store_search.submit(); return false;\"><img src='./images/right.gif' border='0' title='$msg[49]' alt='[$msg[49]]' hspace='3' align='middle'></a>";
+				$nav_bar .= "<a href='#' onClick=\"document.store_search.page.value=$suivante; document.store_search.submit(); return false;\"><img src='".get_url_icon('right.gif')."' style='border:0px' title='$msg[49]' alt='[$msg[49]]' class='align_middle'></a>";
 		
 		//Dernière
 		if((($page_en_cours+1)+$etendue)<$this->nbepage){
-			$nav_bar .= "<a href='#' onClick=\"document.store_search.page.value=".($this->nbepage-1)."; document.store_search.submit(); return false;\"><img src='./images/last.gif' border='0' alt='".$msg['last_page']."' hspace='6' align='middle' title='".$msg['last_page']."' /></a>";
+			$nav_bar .= "<a href='#' onClick=\"document.store_search.page.value=".($this->nbepage-1)."; document.store_search.submit(); return false;\"><img src='".get_url_icon('last.gif')."' style='border:0px; margin:6px 6px' alt='".$msg['last_page']."' class='align_middle' title='".$msg['last_page']."' /></a>";
 		}
 
 		// affichage de la barre de navigation
-		print "<div align='center'>$nav_bar</div>";
+		print "<div class='center'>$nav_bar</div>";
 	}
 
-	function show_notice() {
+	public function show_notice() {
 	}
 
 
-	function run() {
+	public function run() {
 		global $pmb_map_activate;
 		if (!$this->etat) {
 				$this->show_form();
@@ -188,60 +195,112 @@ class searcher {
 								$this->check_emprises();
 							}
 						}
-								
-												break;
+						break;
 				}
 		}
 	}
 
 
-	function show_form() {
+	public function show_form() {
 		//A surcharger par la fonction qui affiche le formulaire de recherche
 	}
 
-	function make_first_search() {
+	public function make_first_search() {
 		//A surcharger par la fonction qui fait la première recherche après la soumission du formulaire de recherche
 		//La fonction renvoie AUT_LIST (le résultat de la recherche est une liste d'autorité)
 		//ou NOTICE_LIST (le résultat de la recherche est une liste de notices)
 		//La fonction doit mettre à jour le nombre de résultats dans $this->nbresults
 	}
 
-	function make_aut_search() {
+	public function make_aut_search() {
 		//A surcharger par la fonction qui fait la recherche des notices à partir d'un numéro d'autorité (stoqué dans $this->id)
 		//La fonction doit mettre à jour le nombre de résultats dans $this->nbresults
 	}
 
-	function store_search() {
+	public function store_search() {
 		//A surcharger par la fonction qui écrit les variables du formulaire "store_search" pour stoquer les champs de recherche
 		//En liste de résultat de la première recherche. Il faut remplacer la chaine "!!first_search_variables!!" dans $this->store_form
 	}
 
-	function aut_store_search() {
+	public function aut_store_search() {
 		//A surcharger par la fonction qui écrit les variables du formulaire "store_search" pour stoquer les champs de recherche
 		//En liste de résultat de la première recherche. Il faut remplacer la chaine "!!first_search_variables!!" dans $this->store_form
 	}
 
-	function aut_list() {
+	public function aut_list() {
 		//A surcharger par la fonction qui affiche la liste des autorités issues de la première recherche
 	}
 
-	function notice_list() {
+	protected function get_display_icon_sort() {
+		global $msg;
+		global $pmb_nb_max_tri;
+		
+		$display = '';
+		// on affiche l'icone de tri seulement si on a atteint un nb maxi de résultats
+		if ($this->nbresults<=$pmb_nb_max_tri) {
+			//affichage de l'icone de tri
+			$display .= "<a href=# onClick=\"document.getElementById('history').src='./sort.php?type_tri=notices'; document.getElementById('history').style.display='';return false;\" ";
+			$display .= "alt=\"".$msg['tris_dispos']."\" title=\"".$msg['tris_dispos']."\">";
+			$display .= "<img src='".get_url_icon('orderby_az.gif')."' class='align_middle' hspace=3></a>";
+			//si on a un tri actif on affiche sa description
+			if ($_SESSION["tri"]) {
+				$display .= $msg['tri_par']." ".$this->sort->descriptionTriParId($_SESSION["tri"]);
+			}
+		}
+		return $display;
+	}
+	
+	protected function get_display_icons($current, $from_mode=0) {
+		global $msg;
+		global $pmb_allow_external_search;
+		
+		$display = '';
+		$display .= "<a href='#' onClick=\"openPopUp('./print_cart.php?current_print=$current&action=print_prepare','print',600,700,-2,-2,'scrollbars=yes,menubar=0,resizable=yes'); return false;\">";
+		$display .= "<img src='".get_url_icon('basket_small_20x20.gif')."' style='border:0px' class='center' alt=\"".$msg["histo_add_to_cart"]."\" title=\"".$msg["histo_add_to_cart"]."\"></a>";
+		$tri_id_info = $_SESSION["tri"] ? "&sort_id=".$_SESSION["tri"] : "";
+		$display .= "<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&action_print=print_prepare".$tri_id_info."','print'); return false;\">";
+		$display .= "<img src='".get_url_icon('print.gif')."' style='border:0px' class='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"/></a>";
+		$display .= "<a href='#' onClick=\"openPopUp('./download.php?current_download=$current&action_download=download_prepare".$tri_id_info."','download'); return false;\">";
+		$display .= "<img src='".get_url_icon('upload_docnum.gif')."' style='border:0px' class='center' alt=\"".$msg["docnum_download"]."\" title=\"".$msg["docnum_download"]."\"/></a>";
+		if ($pmb_allow_external_search) {
+			$display .= "<a href='catalog.php?categ=search&mode=7&from_mode=".$from_mode."&external_type=simple' title='".$msg["connecteurs_external_search_sources"]."'>";
+			$display .= "<img src='".get_url_icon('external_search.png')."' style='border:0px' class='center' alt=\"".$msg["connecteurs_external_search_sources"]."\"/></a>";
+		}
+		$display .= $this->get_display_icon_sort();
+		return $display;
+	}
+	
+	protected function get_display_records_list() {
+		$records = array();
+		while(($nz = pmb_mysql_fetch_object($this->t_query))) {
+			$records[] = $nz->notice_id;
+		}
+		$elements_records_list_ui = new elements_records_list_ui($records, count($records), false);
+		$elements_records_list_ui->add_context_parameter('in_search', '1');
+		return $elements_records_list_ui->get_elements_list();
+	}
+	
+	public function notice_list_common($title) {
+		
+	}
+	
+	public function notice_list() {
 		//A surcharger par la fonction qui affiche la liste des notices issues de la première recherche
 	}
 
-	function aut_notice_list() {
+	public function aut_notice_list() {
 		//A surcharger par la fonction qui affiche la liste des notice sous l'autorité $this->id
 	}
 
-	function rec_env() {
+	public function rec_env() {
 		//A surcharger pa la fonction qui enregistre
 	}
 
-	static function convert_simple_multi($id_champ) {
+	public static function convert_simple_multi($id_champ) {
 		//A surcharger par la fonction qui convertit des recherches simples en multi-critères
 	}
 
-	function sort_notices() {
+	public function sort_notices() {
 		global $msg;
 		global $pmb_nb_max_tri;
 
@@ -293,7 +352,7 @@ class searcher {
 		}
 	}
 
-	function get_current_search_map($mode_search=0){
+	public function get_current_search_map($mode_search=0){
 		global $pmb_map_activate;
 		global $page;
 		global $aut_id;
@@ -327,7 +386,7 @@ class searcher {
 		$map = "";
 		$size=explode("*",$pmb_map_size_search_result);
 		if(count($size)!=2)$map_size="width:800px; height:480px;";
-		$map_size= "width:".$size[0]."px; height:".$size[1]."px;";
+		else $map_size= "width:".$size[0]."; height:".$size[1].";";
 
 		$map_search_controler = new map_search_controler(null, $this->current_search, $pmb_map_max_holds,false);
 		$json = $map_search_controler->get_json_informations();
@@ -355,37 +414,54 @@ class searcher {
 		}
 		print $map;
 	}
+	
+	public function show_error($car,$input,$error_message) {
+		global $browser_url;
+		global $browser,$search_form_editeur;
+		global $msg;
+		$search_form_editeur=str_replace("!!base_url!!",$this->base_url,$search_form_editeur);
+		print $search_form_editeur;
+		error_message($msg["searcher_syntax_error"],sprintf($msg["searcher_syntax_error_desc"],$car,$input,$error_message));
+		$browser=str_replace("!!browser_url!!",$browser_url,$browser);
+		print $browser;
+	}
 }
 
 
 class searcher_title extends searcher {
-	var $t_query;
+	public $t_query;
+	public $sorted_result;
 
-	function show_form() {
+	public function show_form() {
 		global $msg;
 		global $dbh;
 		global $charset,$lang;
 		global $NOTICE_author_query;
-		global $title_query,$all_query, $author_query,$ex_query,$typdoc_query, $statut_query, $docnum_query, $pmb_indexation_docnum_allfields, $pmb_indexation_docnum;
-		global $categ_query,$thesaurus_auto_postage_search,$auto_postage_query;
-		global $thesaurus_concepts_active,$concept_query;
+		global $all_query, $docnum_query, $pmb_indexation_docnum_allfields, $pmb_indexation_docnum;
+		global $title_query;
+		global $author_query, $author_query_id;
+		global $categ_query, $categ_query_id, $thesaurus_auto_postage_search, $auto_postage_query;
+		global $thesaurus_concepts_active, $concept_query, $concept_query_id;
+		global $ex_query,$typdoc_query, $statut_query;
+		global $date_parution_start_query, $date_parution_end_query, $date_parution_exact_query;
+		global $thesaurus_concepts_autopostage, $concepts_autopostage_query;
 
 		// on commence par créer le champ de sélection de document
 		// récupération des types de documents utilisés.
 		$query = "SELECT count(typdoc), typdoc ";
 		$query .= "FROM notices where typdoc!='' GROUP BY typdoc";
 		$result = @pmb_mysql_query($query, $dbh);
-		$toprint_typdocfield .= "  <option value=''>$msg[tous_types_docs]</option>\n";
+		$toprint_typdocfield = "  <option value=''>$msg[tous_types_docs]</option>\n";
 		$doctype = new marc_list('doctype');
 		while (($rt = pmb_mysql_fetch_row($result))) {
 			$obj[$rt[1]]=1;
 			$qte[$rt[1]]=$rt[0];
 		}
 		foreach ($doctype->table as $key=>$libelle){
-			if ($obj[$key]==1){
+			if (isset($obj[$key]) && ($obj[$key]==1)){
 				$toprint_typdocfield .= "  <option ";
 				$toprint_typdocfield .= " value='$key'";
-				if ($typdoc == $key) $toprint_typdocfield .=" selected='selected' ";
+				if ($typdoc_query == $key) $toprint_typdocfield .=" selected='selected' ";
 				$toprint_typdocfield .= ">".htmlentities($libelle." (".$qte[$key].")",ENT_QUOTES, $charset)."</option>\n";
 			}
 		}
@@ -394,7 +470,7 @@ class searcher_title extends searcher {
 		$query = "SELECT count(statut), id_notice_statut, gestion_libelle ";
 		$query .= "FROM notices, notice_statut where id_notice_statut=statut GROUP BY id_notice_statut order by gestion_libelle";
 		$result = pmb_mysql_query($query, $dbh);
-		$toprint_statutfield .= "  <option value=''>$msg[tous_statuts_notice]</option>\n";
+		$toprint_statutfield = "  <option value=''>$msg[tous_statuts_notice]</option>\n";
 		while ($obj = @pmb_mysql_fetch_row($result)) {
 				$toprint_statutfield .= "  <option value='$obj[1]'";
 				if ($statut_query==$obj[1]) $toprint_statutfield.=" selected";
@@ -406,10 +482,23 @@ class searcher_title extends searcher {
 		$NOTICE_author_query = str_replace("!!title_query!!",  htmlentities(stripslashes($title_query ),ENT_QUOTES, $charset),  $NOTICE_author_query);
 		$NOTICE_author_query = str_replace("!!all_query!!", htmlentities(stripslashes($all_query),ENT_QUOTES, $charset),  $NOTICE_author_query);
 		$NOTICE_author_query = str_replace("!!author_query!!", htmlentities(stripslashes($author_query),ENT_QUOTES, $charset),  $NOTICE_author_query);
+		$NOTICE_author_query = str_replace("!!author_query_id!!", htmlentities(stripslashes($author_query_id),ENT_QUOTES, $charset),  $NOTICE_author_query);
 		$NOTICE_author_query = str_replace("!!categ_query!!", htmlentities(stripslashes($categ_query),ENT_QUOTES, $charset),  $NOTICE_author_query);
-
+		$NOTICE_author_query = str_replace("!!categ_query_id!!", htmlentities(stripslashes($categ_query_id),ENT_QUOTES, $charset),  $NOTICE_author_query);
+		$NOTICE_author_query = str_replace("!!date_parution_start!!", $date_parution_start_query, $NOTICE_author_query);
+		$NOTICE_author_query = str_replace("!!date_parution_end!!", $date_parution_end_query, $NOTICE_author_query);
+		if($date_parution_exact_query) {
+			$NOTICE_author_query = str_replace("!!date_parution_exact_checked!!", 'checked', $NOTICE_author_query);
+			$NOTICE_author_query = str_replace("!!date_parution_no_exact_checked!!", '', $NOTICE_author_query);
+			$NOTICE_author_query = str_replace("!!date_parution_end_disabled!!", 'disabled', $NOTICE_author_query);
+		}else {
+			$NOTICE_author_query = str_replace("!!date_parution_exact_checked!!", '', $NOTICE_author_query);	
+			$NOTICE_author_query = str_replace("!!date_parution_no_exact_checked!!", 'checked', $NOTICE_author_query);		
+			$NOTICE_author_query = str_replace("!!date_parution_end_disabled!!", '', $NOTICE_author_query);
+		}
 		if($thesaurus_concepts_active){
 			$NOTICE_author_query = str_replace("!!concept_query!!", htmlentities(stripslashes($concept_query),ENT_QUOTES, $charset),  $NOTICE_author_query);
+			$NOTICE_author_query = str_replace("!!concept_query_id!!", htmlentities(stripslashes($concept_query_id),ENT_QUOTES, $charset),  $NOTICE_author_query);
 		}
 
 		$checkbox="";
@@ -423,6 +512,18 @@ class searcher_title extends searcher {
 			$checkbox = str_replace("!!auto_postage_checked!!",   (($auto_postage_query) ? 'checked' : ''),  $checkbox);
 		}
 		$NOTICE_author_query = str_replace("!!auto_postage!!",   $checkbox,  $NOTICE_author_query);
+
+		$checkbox_concepts_autopostage = "";
+		if($thesaurus_concepts_autopostage){
+			$checkbox_concepts_autopostage = "
+			<div class='colonne'>
+				<div class='row'>
+					<input type='checkbox' !!concepts_autopostage_checked!! id='concepts_autopostage_query' name='concepts_autopostage_query'/><label for='concepts_autopostage_query'>".$msg["search_concepts_autopostage_check"]."</label>
+				</div>
+			</div>";
+			$checkbox_concepts_autopostage = str_replace("!!concepts_autopostage_checked!!",   (($concepts_autopostage_query) ? 'checked' : ''),  $checkbox_concepts_autopostage);
+		}
+		$NOTICE_author_query = str_replace("!!concepts_autopostage!!", $checkbox_concepts_autopostage, $NOTICE_author_query);
 
 		$NOTICE_author_query = str_replace("!!ex_query!!",     htmlentities(stripslashes($ex_query    ),ENT_QUOTES, $charset),  $NOTICE_author_query);
 		if($pmb_indexation_docnum){
@@ -438,140 +539,88 @@ class searcher_title extends searcher {
 		print pmb_bidi($NOTICE_author_query);
 	}
 
-	function make_first_search() {
+	public function make_first_search() {
 
 		global $msg,$charset,$lang,$dbh;
-		global $title_query,$all_query, $author_query,$ex_query,$typdoc_query, $statut_query, $etat, $docnum_query;
-		global $categ_query,$thesaurus_auto_postage_search, $auto_postage_query;
+		global $all_query, $docnum_query, $title_query;
+		global $author_query, $author_query_id;
+		global $categ_query, $categ_query_id, $thesaurus_auto_postage_search, $auto_postage_query;
+		global $thesaurus_concepts_active, $concept_query, $concept_query_id, $thesaurus_concepts_autopostage, $concepts_autopostage_query;
+		global $ex_query,$typdoc_query, $statut_query, $etat ;
 		global $nb_per_page_a_search;
 		global $class_path;
 		global $pmb_default_operator;
 		global $acces_j;
-		global $thesaurus_concepts_active,$concept_query;
-		global $dbh;
-
-
+		global $date_parution_exact_query, $date_parution_start_query, $date_parution_end_query, $title_sql_query;
+		
 		if ($nb_per_page_a_search) $this->nb_per_page=$nb_per_page_a_search; else $this->nb_per_page=3;
 		$author_per_page=10;
-
+		
 		$restrict='';
+		$queries = array();
 		if ($typdoc_query) $restrict = "and typdoc='".$typdoc_query."' ";
 		if ($statut_query) $restrict.= "and statut='".$statut_query."' ";
 
-		//traitons les cas particuliers...
-		if($author_query && !$all_query && !$title_query && !$categ_query && !$concept_query){
-			// Recherche sur l'auteur uniquement :
-			$aq=new analyse_query(stripslashes($author_query),0,0,1,1);
-			if (!$aq->error) {
-				if ($typdoc_query || $statut_query || $acces_j) {
-
-					$restrict ="and responsability_author=author_id and responsability_notice=notice_id ".$restrict." ";
-					$members=$aq->get_query_members("authors","concat(author_name,', ',author_rejete)","index_author","author_id");
-
-					$requete_count = "select count(distinct author_id) from authors, responsability, notices ";
-					$requete_count.= $acces_j;
-					$requete_count.= "where ".$members["where"]." ";
-					$requete_count.= $restrict;
-
-					$requete = "select author_id,".$members["select"]." as pert from authors, responsability, notices ";
-					$requete.= $acces_j;
-					$requete.= "where ".$members["where"]." ";
-					$requete.= $restrict." group by author_id order by pert desc,author_name, author_rejete,author_numero , author_subdivision limit ".($this->page*$author_per_page).",".$author_per_page;
-
-				} else {
-					$requete_count=$aq->get_query_count("authors","concat(author_name,', ',author_rejete)","index_author","author_id");
-					$t_query=$aq->get_query_members("authors","concat(author_name,', ',author_rejete)","index_author","author_id");
-					$requete="select author_id,".$t_query["select"]." as pert from authors where ".$t_query["where"]." group by author_id order by pert desc,author_name, author_rejete, author_numero , author_subdivision limit ".($this->page*$author_per_page).",".$author_per_page;
-				}
-
-				$this->nbresults=@pmb_mysql_result(@pmb_mysql_query($requete_count),0,0);
-				$this->t_query=@pmb_mysql_query($requete,$dbh);
-				$this->nbepage=ceil($this->nbresults/$author_per_page);
-				return AUT_LIST;
+		if($date_parution_start_query) {
+			$date_parution_start = detectFormatDate($date_parution_start_query);
+		} else {
+			$date_parution_start = '';
+		}
+		if($date_parution_end_query) {
+			$date_parution_end = detectFormatDate($date_parution_end_query);
+		} else {
+			$date_parution_end = '';
+		}
+		if($date_parution_start && $date_parution_exact_query) {
+			$restrict.= " and date_parution = '".$date_parution_start."' ";
+		} else {
+			if($date_parution_start) {			
+				$restrict.= " and date_parution >= '".$date_parution_start."' ";				
 			}
+			if($date_parution_end) {
+				$restrict.= " and date_parution <='".$date_parution_end."' ";
+			}
+		}
+		
+		//traitons les cas particuliers...
+		if($author_query && !$author_query_id*1 && !$all_query && !$title_query && !$categ_query && !$concept_query){
+			// Recherche sur l'auteur uniquement :
+			$searcher_authorities_authors = searcher_factory::get_searcher("authors", "",stripslashes($author_query));
+// 			$searcher_authorities_authors = new searcher_authorities_authors(stripslashes($author_query));
+			$this->nbresults=$searcher_authorities_authors->get_nb_results();
+			$this->sorted_result = $searcher_authorities_authors->get_sorted_result('default', $this->page*$author_per_page, $author_per_page);
+			$this->nbepage=ceil($this->nbresults/$author_per_page);
+			return AUT_LIST;
 		}else{
 			//sinon, on liste des notices, c'est assez simple...
 			$no_results = false;
 			//tous les champs
 			if($all_query){
-				//TODO Searcher all_fields, pas le temps de le faire là...
-				// Recherche sur tous les champs (index global) uniquement :
-				$aq=new analyse_query(stripslashes($all_query),0,0,1,1);
-				$aq2=new analyse_query(stripslashes($all_query));
-				if (!$aq->error) {
-					$aq1=new analyse_query(stripslashes($all_query),0,0,1,1);
-					$members1=$aq1->get_query_members("notices","index_wew","index_sew","notice_id",$restrict);
-					global $pmb_title_ponderation;
-					$pert1="+".$members1["select"]."*".$pmb_title_ponderation;
-					$members=$aq->get_query_members("notices_global_index","infos_global","index_infos_global","num_notice");
-					$members2=$aq2->get_query_members("notices_global_index","infos_global","index_infos_global","num_notice");
-					if (($members2["where"]!="()")&&($pmb_default_operator)) {
-						$where_term="(".$members["where"]." or ".$members2["where"].")";
-					} else {
-						$where_term=$members["where"];
-					}
-					if($docnum_query && $all_query!='*'){
-						//Si on a activé la recherche dans les docs num
-						//On traite les notices
-						$members_num_noti = $aq2->get_query_members("explnum","explnum_index_wew","explnum_index_sew","explnum_notice","",0,0,true);
-						$members_num_bull = $aq2->get_query_members("explnum","explnum_index_wew","explnum_index_sew","explnum_bulletin","",0,0,true);
-
-						$join = "(
-						select tc.notice_id, sum(tc.pert) as pert, tc.typdoc from (
-						(
-						select notice_id, ".$members["select"]."+".$members1["select"]." as pert,typdoc
-						from notices join notices_global_index on num_notice=notice_id $acces_j
-						where ".$members["where"]." $restrict
-						)
-						union
-						(
-						select notice_id, ".$members_num_noti["select"]." as pert,typdoc
-						from notices join explnum on explnum_notice=notice_id $acces_j
-						where  ".$members_num_noti["where"]." $restrict
-						)
-						union
-						(
-						select if(num_notice,num_notice,bulletin_notice) as notice_id, ".$members_num_bull["select"]." as pert,typdoc
-						from explnum join bulletins on explnum_bulletin=bulletin_id ,notices $acces_j
-						where bulletin_notice=notice_id and ".$members_num_bull["where"]." $restrict
-						)
-						)as tc group by notice_id
-						)";
-						$requete_count = "select count(distinct notice_id) from ($join) as union_table";
-						$requete="select uni.notice_id, sum(pert) as pert  from ($join) as uni join notices n on n.notice_id=uni.notice_id group by uni.notice_id order by pert desc, index_serie, tnvol, index_sew ";
-
-					} else {
-						$restrict.= " and num_notice = notice_id ";
-						$requete_count = "select count(1) from notices ";
-						$requete_count.= $acces_j;
-						$requete_count.= ", notices_global_index ";
-						$requete_count.= "where ".$where_term." ";
-						$requete_count.= $restrict;
-
-						$requete = "select notice_id,".$members["select"]."$pert1 as pert from notices ";
-						$requete.= $acces_j;
-						$requete.= ", notices_global_index ";
-						$requete.= "where $where_term ";
-						$requete.= $restrict." order by pert desc, index_serie, tnvol, index_sew ";
-					}
-					$queries[]=$requete;
-				}
+				$searcher = searcher_factory::get_searcher("records", "all_fields",stripslashes($all_query));
+//   				$searcher = new searcher_records_all_fields(stripslashes($all_query));
+  				$queries[]=$searcher->get_full_query()." ";
 			}
 
 			//pour la suite, avant de déclencher les recherches, on vérifie si la recherche est différente de celle tous les champs (on s'économise quelques requetes qui ne serviront à rien)
 
 			//les concepts
 			if($thesaurus_concepts_active && $concept_query && $concept_query != $all_query){
-				$concept_searcher = new searcher_records_concepts(stripslashes($concept_query));
-				if($concept_searcher->get_nb_results()){
-					$queries[]=$concept_searcher->get_full_query()." ";
-				}else{
-					$no_results =true;
+				if($concept_query_id*1) {
+					$queries[] = searcher_records_concepts::get_full_query_from_authority($concept_query_id);
+				} else {
+					$concept_searcher = searcher_factory::get_searcher("records", "concepts",stripslashes($concept_query));
+// 					$concept_searcher = new searcher_records_concepts(stripslashes($concept_query));
+					if($concept_searcher->get_nb_results()){
+						$queries[]=$concept_searcher->get_full_query()." ";
+					}else{
+						$no_results =true;
+					}
 				}
 			}
 			//le titre
 			if($title_query && $title_query != $all_query){
-				$title_searcher = new searcher_records_title(stripslashes($title_query));
+				$title_searcher = searcher_factory::get_searcher("records", "title",stripslashes($title_query));
+// 				$title_searcher = new searcher_records_title(stripslashes($title_query));
 				if($title_searcher->get_nb_results()){
 					//hack, un petit espace à la fin de la requete nous évite une régression avec le tri...
 					$queries[]=$title_searcher->get_full_query()." ";
@@ -582,71 +631,88 @@ class searcher_title extends searcher {
 			}
 			//auteur
 			if($author_query && $author_query != $all_query){
-				$author_searcher = new searcher_records_authors(stripslashes($author_query));
-				if($author_searcher->get_nb_results()){
-					$queries[]=$author_searcher->get_full_query()." ";
-				}else{
-					$no_results =true;
+				if($author_query_id*1) {
+					$queries[] = searcher_records_authors::get_full_query_from_authority($author_query_id);
+				} else {
+					$author_searcher = searcher_factory::get_searcher("records", "authors",stripslashes($author_query));
+// 					$author_searcher = new searcher_records_authors(stripslashes($author_query));
+					if($author_searcher->get_nb_results()){
+						$queries[]=$author_searcher->get_full_query()." ";
+					}else{
+						$no_results =true;
+					}
 				}
 			}
 			//catégorie
 			if($categ_query && $categ_query != $all_query){
-				if($thesaurus_auto_postage_search && $auto_postage_query){
-					$aq_auth=new analyse_query(stripslashes($categ_query),0,0,0,0);
-					if (!$aq_auth->error) {
-						$members_auth=$aq_auth->get_query_members("categories","path_word_categ","index_path_word_categ","num_noeud");
-						$requete_count = "select count(distinct notice_id) from notices ";
-						$requete_count.= $acces_j;
-						$requete_count.= ", categories, noeuds, notices_categories ";
-						$requete_count.= "where (".$members_auth["where"].")  ";
-						$requete_count.= "and id_noeud= categories.num_noeud and notices_categories.num_noeud=categories.num_noeud and notcateg_notice = notice_id ";
-						$requete_count.= $restrict;
-
-						$requete = "select notice_id, ".$members_auth["select"]." as pert from notices ";
-						$requete.= $acces_j;
-						$requete.= ", categories, noeuds, notices_categories ";
-						$requete.= "where (".$members_auth["where"].") ";
-						$requete.= "and id_noeud= categories.num_noeud and notices_categories.num_noeud=categories.num_noeud and notcateg_notice = notice_id ";
-						$requete.= $restrict." group by notice_id ";
-						$requete.= "order by pert desc ";
-
-						$nbresults=@pmb_mysql_result(@pmb_mysql_query($requete_count),0,0);
-						if($nbresults){
-							$queries[]=$requete;
+				if($categ_query_id*1) {
+					$queries[] = searcher_records_categories::get_full_query_from_authority($categ_query_id);
+				} else {
+					if($thesaurus_auto_postage_search && $auto_postage_query){
+						$aq_auth=new analyse_query(stripslashes($categ_query),0,0,0,0);
+						if (!$aq_auth->error) {
+							$members_auth=$aq_auth->get_query_members("categories","path_word_categ","index_path_word_categ","num_noeud");
+							$requete_count = "select count(distinct notice_id) from notices ";
+							$requete_count.= $acces_j;
+							$requete_count.= ", categories, noeuds, notices_categories ";
+							$requete_count.= "where (".$members_auth["where"].")  ";
+							$requete_count.= "and id_noeud= categories.num_noeud and notices_categories.num_noeud=categories.num_noeud and notcateg_notice = notice_id ";
+							$requete_count.= $restrict;
+					
+							$requete = "select notice_id, ".$members_auth["select"]." as pert from notices ";
+							$requete.= $acces_j;
+							$requete.= ", categories, noeuds, notices_categories ";
+							$requete.= "where (".$members_auth["where"].") ";
+							$requete.= "and id_noeud= categories.num_noeud and notices_categories.num_noeud=categories.num_noeud and notcateg_notice = notice_id ";
+							$requete.= $restrict." group by notice_id ";
+							$requete.= "order by pert desc ";
+					
+							$nbresults=@pmb_mysql_result(@pmb_mysql_query($requete_count),0,0);
+							if($nbresults){
+								$queries[]=$requete;
+							}else{
+								$no_results = true;
+							}
+						}
+					}else{
+						$categ_searcher = searcher_factory::get_searcher('records','categories',stripslashes($categ_query));
+// 						$categ_searcher = new searcher_records_categories(stripslashes($categ_query));
+						if($categ_searcher->get_nb_results()){
+							$queries[]=$categ_searcher->get_full_query()." ";
 						}else{
 							$no_results = true;
 						}
 					}
-				}else{
-					$categ_searcher = new searcher_records_categories(stripslashes($categ_query));
-					if($categ_searcher->get_nb_results()){
-						$queries[]=$categ_searcher->get_full_query()." ";
-					}else{
-						$no_results = true;
-					}
 				}
 			}
-
+			
 			//on fait un et donc si un élément ne renvoi rien ,on s'embete pas avec les jointures...
 			if($no_results){
 				$this->nbresults = 0;
-				$this->text_query = "select notice_id from notices where notice_id = 0 ";
+				$this->text_query = "select notice_id from notices where notice_id = 0 ";//l'espace à la fin est important
 			}else{
 				//TODO le tri sur la pertinance desc, titre devrait être automatique...
-					$from = "";
-					$select_pert = "";
-					for($i=0 ; $i<count($queries) ; $i++){
-						if($i==0){
-							$from = "(".$queries[$i].") as t".$i;
-							$select_pert = "t".$i.".pert";
-						}else {
-							$from.= " inner join (".$queries[$i].") as t".$i." on t".$i.".notice_id = t".($i-1).".notice_id";
-							$select_pert.= " + t".$i.".pert";
-						}
+				$from = "";
+				$select_pert = "";
+				for($i=0 ; $i<count($queries) ; $i++){
+					if($i==0){
+						$from = "(".$queries[$i].") as t".$i;
+						$select_pert = "t".$i.".pert";
+					}else {
+						$from.= " inner join (".$queries[$i].") as t".$i." on t".$i.".notice_id = t".($i-1).".notice_id";
+						$select_pert.= " + t".$i.".pert";
 					}
-					$this->text_query = "select t0.notice_id, (".$select_pert.") as pert from ".$from." join notices on t0.notice_id = notices.notice_id group by t0.notice_id  order by pert desc, notices.index_sew ";
+				}
+				
+				//Vu avec AR (à reprendre plus tard)
+				$this->text_query = "select t0.notice_id, (".$select_pert.") as pert from ".$from." join notices on t0.notice_id = notices.notice_id ".str_replace("notice_id",'t0.notice_id',$acces_j)." group by t0.notice_id  order by pert desc, notices.index_sew ";
 				$result = pmb_mysql_query($this->text_query,$dbh);
-				$this->nbresults = pmb_mysql_num_rows($result);
+				
+				if($result) {
+					$this->nbresults = pmb_mysql_num_rows($result);
+				} else {
+					$this->nbresults = 0;
+				}
 			}
 			$this->nbepage=ceil($this->nbresults/$this->nb_per_page);
 			return NOTICE_LIST;
@@ -654,7 +720,7 @@ class searcher_title extends searcher {
 	}
 
 
-	function make_aut_search() {
+	public function make_aut_search() {
 		global $msg;
 		global $charset;
 		global $nb_per_page_a_search;
@@ -701,18 +767,34 @@ class searcher_title extends searcher {
 		$this->text_query=$requete;
 	}
 
-	function store_search() {
-		global $title_query,$all_query, $author_query,$typdoc_query, $statut_query,$categ_query,$docnum_query,$pmb_indexation_docnum;
-		global $thesaurus_concepts_active,$concept_query;
+	public function store_search() {
+		global $title_query,$all_query, $author_query,$typdoc_query, $statut_query,$categ_query,$docnum_query,$pmb_indexation_docnum, $author_query_id, $categ_query_id;
+		global $thesaurus_concepts_active,$concept_query, $concept_query_id, $thesaurus_concepts_autopostage, $concepts_autopostage_query;
+		global $date_parution_start_query, $date_parution_end_query, $date_parution_exact_query;
 		global $charset;
+		
+		if(!empty($author_query_id)) $author_query_id += 0; else $author_query_id = 0;
+		if(!empty($categ_query_id)) $categ_query_id += 0; else $categ_query_id = 0;
+		if(!empty($concept_query_id)) $concept_query_id += 0; else $concept_query_id = 0;
+		
 		$champs="<input type='hidden' name='title_query' value='".htmlentities(stripslashes($title_query),ENT_QUOTES,$charset)."'/>";
 		$champs.="<input type='hidden' name='all_query' value='".htmlentities(stripslashes($all_query),ENT_QUOTES,$charset)."'/>";
 		$champs.="<input type='hidden' name='author_query' value='".htmlentities(stripslashes($author_query),ENT_QUOTES,$charset)."'/>";
+		$champs.="<input type='hidden' name='author_query_id' value='".$author_query_id."'/>";
 		$champs.="<input type='hidden' name='typdoc_query' value='".htmlentities(stripslashes($typdoc_query),ENT_QUOTES,$charset)."'/>";
 		$champs.="<input type='hidden' name='statut_query' value='".htmlentities(stripslashes($statut_query),ENT_QUOTES,$charset)."'/>";
 		$champs.="<input type='hidden' name='categ_query' value='".htmlentities(stripslashes($categ_query),ENT_QUOTES,$charset)."'/>";
+		$champs.="<input type='hidden' name='categ_query_id' value='".$categ_query_id."'/>";
+		$champs.="<input type='hidden' name='date_parution_start_query' value='".htmlentities(stripslashes($date_parution_start_query),ENT_QUOTES,$charset)."'/>";
+		$champs.="<input type='hidden' name='date_parution_end_query' value='".htmlentities(stripslashes($date_parution_end_query),ENT_QUOTES,$charset)."'/>";
+		$champs.="<input type='hidden' name='date_parution_exact_query' value='".htmlentities(stripslashes($date_parution_exact_query),ENT_QUOTES,$charset)."'/>";
+		
 		if($thesaurus_concepts_active){
 			$champs.="<input type='hidden' name='concept_query' value='".htmlentities(stripslashes($concept_query),ENT_QUOTES,$charset)."'/>";
+			$champs.="<input type='hidden' name='concept_query_id' value='".$concept_query_id."'/>";
+			if ($thesaurus_concepts_autopostage) {
+				$champs.="<input type='hidden' name='concepts_autopostage_query' value='".$concepts_autopostage_query."'/>";
+			}
 		}
 		if ($pmb_indexation_docnum) {
 			$champs.="<input type='hidden' name='docnum_query' value='".htmlentities(stripslashes($docnum_query),ENT_QUOTES,$charset)."'/>";
@@ -721,7 +803,7 @@ class searcher_title extends searcher {
 		print $this->store_form;
 	}
 
-	function aut_store_search() {
+	public function aut_store_search() {
 		global $typdoc_query, $statut_query, $aut_type;
 		global $charset;
 		$champs="<input type='hidden' name='aut_id' value='".htmlentities(stripslashes($this->id),ENT_QUOTES,$charset)."'/>";
@@ -732,14 +814,14 @@ class searcher_title extends searcher {
 		print $this->store_form;
 	}
 
-	function aut_list() {
+	public function aut_list() {
 		global $msg;
 		global $charset;
 		global $author_query;
 		global $typdoc_query, $statut_query;
 		global $pmb_allow_external_search;
 
-		$research.="<b>${msg[234]}</b>&nbsp;".htmlentities(stripslashes($author_query),ENT_QUOTES,$charset);
+		$research="<b>${msg[234]}</b>&nbsp;".htmlentities(stripslashes($author_query),ENT_QUOTES,$charset);
 		$this->human_query=$research;
 		$this->human_aut_query=$research;
 
@@ -748,30 +830,35 @@ class searcher_title extends searcher {
 				print pmb_bidi("<div class='othersearchinfo'>$research</div>");
 				$author_list="<table>\n";
 				$parity = 0 ;
-				while ($author=@pmb_mysql_fetch_object($this->t_query)) {
-					if ($parity % 2) {
-						$pair_impair = "even";
-					} else {
-						$pair_impair = "odd";
+				if(isset($this->sorted_result) && is_array($this->sorted_result)) {
+					foreach ($this->sorted_result as $id_authority) {
+						if ($parity % 2) {
+							$pair_impair = "even";
+						} else {
+							$pair_impair = "odd";
+						}
+						$parity += 1;
+						$authority = new authority($id_authority);
+						$auteur = new auteur($authority->get_num_object());
+	
+						$notice_count_sql = "SELECT count(DISTINCT responsability_notice) FROM responsability WHERE responsability_author = ".$authority->get_num_object();
+						$notice_count = pmb_mysql_result(pmb_mysql_query($notice_count_sql), 0, 0);
+	
+						if($auteur->see) {
+							$notice_auteur_see_count_sql = "SELECT count(DISTINCT responsability_notice) FROM responsability WHERE responsability_author = ".$auteur->see;
+							$notice_auteur_see_count = pmb_mysql_result(pmb_mysql_query($notice_auteur_see_count_sql), 0, 0);
+							
+							$link = $this->base_url."&aut_id=".$auteur->id."&etat=aut_search&typdoc_query=".$typdoc_query."&statut_query=".$statut_query;
+							$link_see = $this->base_url."&aut_id=".$auteur->see."&etat=aut_search&typdoc_query=".$typdoc_query."&statut_query=".$statut_query;
+							$forme = $auteur->display.".&nbsp;- ".$msg["see"]."&nbsp;: <a href='$link_see' class='lien_gestion'>$auteur->see_libelle</a> (".$notice_auteur_see_count.") ";
+						} else {
+							$link = $this->base_url."&aut_id=".$auteur->id."&etat=aut_search&typdoc_query=".$typdoc_query."&statut_query=".$statut_query;
+							$forme = $auteur->display;
+						}
+	
+						$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='$link';\" ";
+						$author_list .= "<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td>$forme</td><td>".$notice_count."</td></tr>";
 					}
-					$parity += 1;
-
-					$auteur = new auteur($author->author_id);
-
-					$notice_count_sql = "SELECT count(*) FROM responsability WHERE responsability_author = ".$author->author_id;
-					$notice_count = pmb_mysql_result(pmb_mysql_query($notice_count_sql), 0, 0);
-
-					if($auteur->see) {
-						$link = $this->base_url."&aut_id=".$auteur->id."&etat=aut_search&typdoc_query=".$typdoc_query."&statut_query=".$statut_query;
-						$link_see = $this->base_url."&aut_id=".$auteur->see."&etat=aut_search&typdoc_query=".$typdoc_query."&statut_query=".$statut_query;
-						$forme = $auteur->display.".&nbsp;- ".$msg["see"]."&nbsp;: <a href='$link_see' class='lien_gestion'>$auteur->see_libelle</a> ";
-					} else {
-						$link = $this->base_url."&aut_id=".$auteur->id."&etat=aut_search&typdoc_query=".$typdoc_query."&statut_query=".$statut_query;
-						$forme = $auteur->display;
-					}
-
-					$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='$link';\" ";
-					$author_list .= "<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td>$forme</td><td>".$notice_count."</td></tr>";
 				}
 				$author_list.="</table>\n";
 				print pmb_bidi($author_list);
@@ -785,14 +872,13 @@ class searcher_title extends searcher {
 	}
 
 
-	function notice_list_common($title) {
+	public function notice_list_common($title) {
 		global $begin_result_liste;
 		global $end_result_liste;
 		global $msg;
 		global $charset;
 		global $pmb_nb_max_tri;
 		global $title_query,$author_query, $all_query,$categ_query;
-		global $link,$link_expl,$link_explnum,$link_serial,$link_analysis,$link_bulletin,$link_explnum_serial,$link_explnum_analysis,$link_explnum_bulletin,$link_notice_bulletin;
 		global $pmb_allow_external_search;
 		global $load_tablist_js;
 
@@ -807,84 +893,16 @@ class searcher_title extends searcher {
 				if ($this->rec_history) {
 
 					if (($this->etat=='first_search')&&((string)$this->page=="")) {
-						$current=count($_SESSION["session_history"]);
+						$current=(isset($_SESSION["session_history"]) ? count($_SESSION["session_history"]) : 0);
 					} else {
 						$current=$_SESSION["CURRENT"];
 					}
 					if ($current!==false) {
-						echo "&nbsp;<a href='#' onClick=\"openPopUp('./print_cart.php?current_print=$current&action=print_prepare','print',600,700,-2,-2,'scrollbars=yes,menubar=0,resizable=yes'); return false;\">";
-						echo "<img src='./images/basket_small_20x20.gif' border='0' align='center' alt=\"".$msg["histo_add_to_cart"]."\" title=\"".$msg["histo_add_to_cart"]."\"></a>&nbsp;";
-						$tri_id_info = $_SESSION["tri"] ? "&sort_id=".$_SESSION["tri"] : "";
-						echo "<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&action_print=print_prepare".$tri_id_info."','print',500,600,-2,-2,'scrollbars=yes,menubar=0'); return false;\">";
-						echo "<img src='./images/print.gif' border='0' align='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"/></a>&nbsp;";
-						echo "<a href='#' onClick=\"openPopUp('./download.php?current_download=$current&action_download=download_prepare".$tri_id_info."','download',500,600,-2,-2,'scrollbars=yes,menubar=0'); return false;\">";
-						echo "<img src='./images/upload_docnum.gif' border='0' align='center' alt=\"".$msg["docnum_download"]."\" title=\"".$msg["docnum_download"]."\"/></a>";
-						if ($pmb_allow_external_search) {
-							echo "&nbsp;<a href='catalog.php?categ=search&mode=7&from_mode=0&external_type=simple' title='".$msg["connecteurs_external_search_sources"]."'>";
-							echo "<img src='./images/external_search.png' border='0' align='center' alt=\"".$msg["connecteurs_external_search_sources"]."\"/></a>";
-						}
-
-						// on affiche l'icone de tri seulement si on a atteint un nb maxi de résultats
-						if ($this->nbresults<=$pmb_nb_max_tri) {
-
-							//affichage de l'icone de tri
-							echo "<a href=# onClick=\"document.getElementById('history').src='./sort.php?type_tri=notices'; document.getElementById('history').style.display='';return false;\" ";
-							echo "alt=\"".$msg['tris_dispos']."\" title=\"".$msg['tris_dispos']."\">";
-							echo "<img src=./images/orderby_az.gif align=middle hspace=3></a>";
-
-							//si on a un tri actif on affiche sa description
-							if ($_SESSION["tri"]) {
-								echo $msg['tri_par']." ".$this->sort->descriptionTriParId($_SESSION["tri"]);
-							}
-						}
+						print $this->get_display_icons($current);
 					}
 				}
-
-				// on lance la requête
-				$recherche_ajax_mode=0;
-				$nb=0;
-				while(($nz=@pmb_mysql_fetch_object($this->t_query))) {
-					if($nb++>5) $recherche_ajax_mode=1;
-					$n=@pmb_mysql_fetch_object(@pmb_mysql_query("SELECT * FROM notices WHERE notice_id=".$nz->notice_id));
-
-					switch ($n->niveau_biblio) {
-						case 's' :
-							// on a affaire à un périodique
-							$serial = new serial_display($n, 6, $link_serial, $link_analysis, $link_bulletin, "", $link_explnum_serial, 0, 0, 1, 1, true, 1 ,$recherche_ajax_mode);
-							print $serial->result;
-							break;
-						case 'a' :
-							// on a affaire à un article
-							$serial = new serial_display($n, 6, $link_serial, $link_analysis, $link_bulletin, "", $link_explnum_analysis, 0, 0, 1, 1, true, 1 ,$recherche_ajax_mode);
-							print $serial->result;
-							break;
-						case 'b' :
-							// on a affaire à un bulletin
-							$rqt_bull_info = "SELECT s.notice_id as id_notice_mere, bulletin_id as id_du_bulletin, b.notice_id as id_notice_bulletin FROM notices as s, notices as b, bulletins WHERE b.notice_id=$n->notice_id and s.notice_id=bulletin_notice and num_notice=b.notice_id";
-							$bull_ids=@pmb_mysql_fetch_object(pmb_mysql_query($rqt_bull_info));
-							//si on a les droits
-							if(SESSrights & CATALOGAGE_AUTH){
-								//on teste la validité du lien
-								if(!$link_notice_bulletin){
-									$real_link_notice_bulletin = './catalog.php?categ=serials&sub=bulletinage&action=view&bul_id='.$bull_ids->id_du_bulletin;
-								} else {
-									$real_link_notice_bulletin = str_replace("!!id!!",$bull_ids->id_du_bulletin,$link_notice_bulletin);
-								}
-							} elseif($link_notice_bulletin) {
-								$real_link_notice_bulletin = str_replace("!!id!!",$bull_ids->id_du_bulletin,$link_notice_bulletin);
-							}
-							$link_explnum_bulletin = str_replace("!!bul_id!!",$bull_ids->id_du_bulletin,$link_explnum_bulletin);
-							$display = new mono_display($n, 6, $real_link_notice_bulletin, 1, $link_expl, '', $link_explnum_bulletin,1, 0, 1, 1, "", 1  , false,true,$recherche_ajax_mode);
-							print $display->result;
-							break;
-						default:
-						case 'm' :
-							// notice de monographie
-							$display = new mono_display($n, 6, $link, 1, $link_expl, '', $link_explnum,1, 0, 1, 1, "", 1   , false,true,$recherche_ajax_mode,1);
-							print $display->result;
-							break ;
-					}
-				}
+				print $this->get_display_records_list();
+				
 				// fin de liste
 				print $end_result_liste;
 		} else {
@@ -896,23 +914,25 @@ class searcher_title extends searcher {
 	}
 
 
-	function notice_list() {
+	public function notice_list() {
 		global $msg;
 		global $charset;
 		global $title_query,$author_query,$all_query,$categ_query;
 		global $thesaurus_concepts_active,$concept_query;
 		global $typdoc_query, $statut_query,$dbh;
+		global $date_parution_start_query, $date_parution_end_query, $date_parution_exact_query;
 
+		$research = '';
 		if($this->docnum){
-			$libelle = " [".$msg[docnum_search_with]."]";
+			$libelle = " [".$msg['docnum_search_with']."]";
 		} else $libelle ='';
 		if ($title_query) {
 			$research .= "<b>${msg[233]}</b>&nbsp;".htmlentities(stripslashes($title_query),ENT_QUOTES,$charset);
 		}
 		if ($all_query && !$title_query) {
-			$research.="<b>${msg[global_search]}$libelle</b>&nbsp;".htmlentities(stripslashes($all_query),ENT_QUOTES,$charset);
+			$research.="<b>".$msg['global_search'].$libelle."</b>&nbsp;".htmlentities(stripslashes($all_query),ENT_QUOTES,$charset);
 		} else if (($all_query && $title_query)) {
-			$research.= ", <b>${msg[global_search]}$libelle</b>&nbsp;".htmlentities(stripslashes($all_query),ENT_QUOTES,$charset);
+			$research.= ", <b>".$msg['global_search'].$libelle."</b>&nbsp;".htmlentities(stripslashes($all_query),ENT_QUOTES,$charset);
 		}
 		if ($categ_query) {
 			if ($research != "") $research .= ", ";
@@ -944,7 +964,20 @@ class searcher_title extends searcher {
 			}
 			$research.= "<b>".$msg["noti_statut_noti"].$msg["1901"]."</b>&nbsp;".htmlentities(stripslashes($statut_libelle),ENT_QUOTES,$charset);
 		}
-
+		if ($date_parution_start_query || $date_parution_end_query){
+			if ($research != "") $research .= ", ";			
+			if ($date_parution_start_query && $date_parution_end_query && !$date_parution_exact_query){
+				$research.= '<b>'.$msg['search_date_parution'].':&nbsp;'.$msg['search_date_parution_start'].'</b>&nbsp;'.$date_parution_start_query
+						.'<b>,&nbsp;'.$msg['search_date_parution_end'].'</b>&nbsp;'.$date_parution_end_query;
+			}elseif ($date_parution_start_query && $date_parution_exact_query){
+				$research.= '<b>'.$msg['search_date_parution'].':</b>&nbsp;'.$date_parution_start_query;
+			}elseif ($date_parution_start_query ){
+				$research.= '<b>'.$msg['search_date_parution'].':&nbsp;'.$msg['search_date_parution_start'].'</b>&nbsp;'.$date_parution_start_query;
+			}elseif ($date_parution_end_query ){
+				$research.= '<b>'.$msg['search_date_parution'].':&nbsp;'.$msg['search_date_parution_end'].'</b>&nbsp;'.$date_parution_end_query;
+			}
+		}
+		
 		$this->human_query=$research;
 		$this->human_notice_query=$research;
 
@@ -952,11 +985,12 @@ class searcher_title extends searcher {
 	}
 
 
-	function aut_notice_list() {
+	public function aut_notice_list() {
 		global $msg;
 		global $charset;
 		global $aut_type;
 
+		$research = "";
 		switch ($aut_type) {
 			case 'concept' :
 				$concept = new concept($this->id);
@@ -973,12 +1007,15 @@ class searcher_title extends searcher {
 	}
 
 
-	function rec_env() {
+	public function rec_env() {
 		global $msg;
+		global $memo_tempo_table_to_rebuild;
+					
 		switch ($this->etat) {
 				case 'first_search':
 					if ((string)$this->page=="") {
-						$_SESSION["CURRENT"]=count($_SESSION["session_history"]);
+						if(isset($_SESSION["session_history"])) $_SESSION["CURRENT"] = count($_SESSION["session_history"]);
+						else $_SESSION["CURRENT"] = 0;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["URI"]=$this->base_url;
 						$_POST["etat"]="";
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]['POST']=$_POST;
@@ -1004,6 +1041,7 @@ class searcher_title extends searcher {
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['URI']=$this->base_url;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['POST']=$_POST;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['GET']=$_GET;
+						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_LIST_QUERY']=$memo_tempo_table_to_rebuild;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_QUERY']=$this->text_query;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['PAGE']=$this->page+1;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]["HUMAN_QUERY"]=$this->human_notice_query;
@@ -1012,11 +1050,16 @@ class searcher_title extends searcher {
 					}
 					break;
 				case 'aut_search':
-					if ($_SESSION["CURRENT"]!==false) {
+					if(!isset($_SESSION["session_history"])) $_SESSION["session_history"] = array();
+					if(!is_int($_SESSION["CURRENT"])) {
+						$_SESSION["CURRENT"]=count($_SESSION["session_history"]);
+					}
+					if (($_SESSION["CURRENT"]!==false) && (is_int($_SESSION["CURRENT"]))) {
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['URI']=$this->base_url;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['POST']=$_POST;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['GET']=$_GET;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['PAGE']=$this->page+1;
+						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_LIST_QUERY']=$memo_tempo_table_to_rebuild;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_QUERY']=$this->text_query;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['HUMAN_QUERY']=$this->human_notice_query;
 					}
@@ -1025,7 +1068,7 @@ class searcher_title extends searcher {
 		$_SESSION["last_required"]=false;
 	}
 
-	static function convert_simple_multi($id_champ) {
+	public static function convert_simple_multi($id_champ) {
 		global $search;
 
 		$x=0;
@@ -1037,26 +1080,26 @@ class searcher_title extends searcher {
 			$search[$x]="f_6";
 			//opérateur
     		$op="op_".$x."_".$search[$x];
-    		global $$op;
-    		$$op=$op_;
+    		global ${$op};
+    		${$op}=$op_;
 
     		//contenu de la recherche
     		$field="field_".$x."_".$search[$x];
     		$field_=array();
     		$field_[0]=$valeur_champ;
-    		global $$field;
-    		$$field=$field_;
+    		global ${$field};
+    		${$field}=$field_;
 
     		//opérateur inter-champ
     		$inter="inter_".$x."_".$search[$x];
-    		global $$inter;
-    		$$inter="";
+    		global ${$inter};
+    		${$inter}="";
 
     		//variables auxiliaires
     		$fieldvar_="fieldvar_".$x."_".$search[$x];
-    		global $$fieldvar_;
-    		$$fieldvar_="";
-    		$fieldvar=$$fieldvar_;
+    		global ${$fieldvar_};
+    		${$fieldvar_}="";
+    		$fieldvar=${$fieldvar_};
 			$x++;
 		}
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["all_query"]) {
@@ -1066,28 +1109,28 @@ class searcher_title extends searcher {
 			$search[$x]="f_7";
 			//opérateur
     		$op="op_".$x."_".$search[$x];
-    		global $$op;
-    		$$op=$op_;
+    		global ${$op};
+    		${$op}=$op_;
 
     		//contenu de la recherche
     		$field="field_".$x."_".$search[$x];
     		$field_=array();
     		$field_[0]=$valeur_champ;
-    		global $$field;
-    		$$field=$field_;
+    		global ${$field};
+    		${$field}=$field_;
 
     		//opérateur inter-champ
     		$inter="inter_".$x."_".$search[$x];
-    		global $$inter;
-    		$$inter="";
+    		global ${$inter};
+    		${$inter}="";
 
     		//variables auxiliaires
     		$fieldvar_="fieldvar_".$x."_".$search[$x];
-    		global $$fieldvar_;
+    		global ${$fieldvar_};
     		$t["is_num"][0]=$_SESSION["session_history"][$id_champ]["NOTI"]["DOCNUM_QUERY"];
     		$t["ck_affiche"][0]=$_SESSION["session_history"][$id_champ]["NOTI"]["DOCNUM_QUERY"];
-    		$$fieldvar_=$t;
-    		$fieldvar=$$fieldvar_;
+    		${$fieldvar_}=$t;
+    		$fieldvar=${$fieldvar_};
 			$x++;
 		}
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["author_query"]) {
@@ -1098,29 +1141,29 @@ class searcher_title extends searcher {
 
 			//opérateur
     		$op="op_".$x."_".$search[$x];
-    		global $$op;
-    		$$op=$op_;
+    		global ${$op};
+    		${$op}=$op_;
 
     		//contenu de la recherche
     		$field="field_".$x."_".$search[$x];
     		$field_=array();
     		$field_[0]=$valeur_champ;
-    		global $$field;
-    		$$field=$field_;
+    		global ${$field};
+    		${$field}=$field_;
 
     		//opérateur inter-champ
     		$inter="inter_".$x."_".$search[$x];
-    		global $$inter;
+    		global ${$inter};
     		if ($x>0) {
-    			$$inter="and";
+    			${$inter}="and";
     		} else {
-    			$$inter="";
+    			${$inter}="";
     		}
     		//variables auxiliaires
     		$fieldvar_="fieldvar_".$x."_".$search[$x];
-    		global $$fieldvar_;
-    		$$fieldvar_="";
-    		$fieldvar=$$fieldvar_;
+    		global ${$fieldvar_};
+    		${$fieldvar_}="";
+    		$fieldvar=${$fieldvar_};
 			$x++;
 		} else {
 			if ($_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_id"]) {
@@ -1130,30 +1173,30 @@ class searcher_title extends searcher {
 				$search[$x]="f_8";
 				//opérateur
     			$op="op_".$x."_".$search[$x];
-    			global $$op;
-    			$$op=$op_;
+    			global ${$op};
+    			${$op}=$op_;
 
     			//contenu de la recherche
     			$field="field_".$x."_".$search[$x];
     			$field_=array();
     			$field_[0]=$valeur_champ;
-    			global $$field;
-    			$$field=$field_;
+    			global ${$field};
+    			${$field}=$field_;
 
     			//opérateur inter-champ
     			$inter="inter_".$x."_".$search[$x];
-    			global $$inter;
+    			global ${$inter};
     			if ($x>0) {
-    				$$inter="and";
+    				${$inter}="and";
     			} else {
-    				$$inter="";
+    				${$inter}="";
     			}
 
     			//variables auxiliaires
     			$fieldvar_="fieldvar_".$x."_".$search[$x];
-    			global $$fieldvar_;
-    			$$fieldvar_="";
-    			$fieldvar=$$fieldvar_;
+    			global ${$fieldvar_};
+    			${$fieldvar_}="";
+    			$fieldvar=${$fieldvar_};
 				$x++;
 			}
 		}
@@ -1163,29 +1206,29 @@ class searcher_title extends searcher {
 			$search[$x]="f_9";
 			//opérateur
     		$op="op_".$x."_".$search[$x];
-    		global $$op;
-    		$$op=$op_;
+    		global ${$op};
+    		${$op}=$op_;
 
     		//contenu de la recherche
     		$field="field_".$x."_".$search[$x];
     		$field_=array();
     		$field_[0]=$valeur_champ;
-    		global $$field;
-    		$$field=$field_;
+    		global ${$field};
+    		${$field}=$field_;
 
     		//opérateur inter-champ
     		$inter="inter_".$x."_".$search[$x];
-    		global $$inter;
+    		global ${$inter};
     		if ($x>0) {
-    			$$inter="and";
+    			${$inter}="and";
     		} else {
-    			$$inter="";
+    			${$inter}="";
     		}
     		//variables auxiliaires
     		$fieldvar_="fieldvar_".$x."_".$search[$x];
-    		global $$fieldvar_;
-    		$$fieldvar_="";
-    		$fieldvar=$$fieldvar_;
+    		global ${$fieldvar_};
+    		${$fieldvar_}="";
+    		$fieldvar=${$fieldvar_};
 			$x++;
 		}
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["statut_query"]) {
@@ -1194,33 +1237,33 @@ class searcher_title extends searcher {
 			$search[$x]="f_10";
 			//opérateur
     		$op="op_".$x."_".$search[$x];
-    		global $$op;
-    		$$op=$op_;
+    		global ${$op};
+    		${$op}=$op_;
 
     		//contenu de la recherche
     		$field="field_".$x."_".$search[$x];
     		$field_=array();
     		$field_[0]=$valeur_champ;
-    		global $$field;
-    		$$field=$field_;
+    		global ${$field};
+    		${$field}=$field_;
 
     		//opérateur inter-champ
     		$inter="inter_".$x."_".$search[$x];
-    		global $$inter;
+    		global ${$inter};
     		if ($x>0) {
-    			$$inter="and";
+    			${$inter}="and";
     		} else {
-    			$$inter="";
+    			${$inter}="";
     		}
     		//variables auxiliaires
     		$fieldvar_="fieldvar_".$x."_".$search[$x];
-    		global $$fieldvar_;
-    		$$fieldvar_="";
-    		$fieldvar=$$fieldvar_;
+    		global ${$fieldvar_};
+    		${$fieldvar_}="";
+    		$fieldvar=${$fieldvar_};
 		}
 	}
 
-	static function convert_simple_multi_unimarc($id_champ) {
+	public static function convert_simple_multi_unimarc($id_champ) {
 		global $search;
 
 		$x=0;
@@ -1232,26 +1275,26 @@ class searcher_title extends searcher {
 			$search[$x]="f_6";
 			//opérateur
     		$op="op_".$x."_".$search[$x];
-    		global $$op;
-    		$$op=$op_;
+    		global ${$op};
+    		${$op}=$op_;
 
     		//contenu de la recherche
     		$field="field_".$x."_".$search[$x];
     		$field_=array();
     		$field_[0]=$valeur_champ;
-    		global $$field;
-    		$$field=$field_;
+    		global ${$field};
+    		${$field}=$field_;
 
     		//opérateur inter-champ
     		$inter="inter_".$x."_".$search[$x];
-    		global $$inter;
-    		$$inter="";
+    		global ${$inter};
+    		${$inter}="";
 
     		//variables auxiliaires
     		$fieldvar_="fieldvar_".$x."_".$search[$x];
-    		global $$fieldvar_;
-    		$$fieldvar_="";
-    		$fieldvar=$$fieldvar_;
+    		global ${$fieldvar_};
+    		${$fieldvar_}="";
+    		$fieldvar=${$fieldvar_};
 			$x++;
 		}
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["all_query"]) {
@@ -1261,26 +1304,26 @@ class searcher_title extends searcher {
 			$search[$x]="f_7";
 			//opérateur
     		$op="op_".$x."_".$search[$x];
-    		global $$op;
-    		$$op=$op_;
+    		global ${$op};
+    		${$op}=$op_;
 
     		//contenu de la recherche
     		$field="field_".$x."_".$search[$x];
     		$field_=array();
     		$field_[0]=$valeur_champ;
-    		global $$field;
-    		$$field=$field_;
+    		global ${$field};
+    		${$field}=$field_;
 
     		//opérateur inter-champ
     		$inter="inter_".$x."_".$search[$x];
-    		global $$inter;
-    		$$inter="";
+    		global ${$inter};
+    		${$inter}="";
 
     		//variables auxiliaires
     		$fieldvar_="fieldvar_".$x."_".$search[$x];
-    		global $$fieldvar_;
-    		$$fieldvar_="";
-    		$fieldvar=$$fieldvar_;
+    		global ${$fieldvar_};
+    		${$fieldvar_}="";
+    		$fieldvar=${$fieldvar_};
 			$x++;
 		}
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["author_query"]) {
@@ -1291,29 +1334,29 @@ class searcher_title extends searcher {
 
 			//opérateur
     		$op="op_".$x."_".$search[$x];
-    		global $$op;
-    		$$op=$op_;
+    		global ${$op};
+    		${$op}=$op_;
 
     		//contenu de la recherche
     		$field="field_".$x."_".$search[$x];
     		$field_=array();
     		$field_[0]=$valeur_champ;
-    		global $$field;
-    		$$field=$field_;
+    		global ${$field};
+    		${$field}=$field_;
 
     		//opérateur inter-champ
     		$inter="inter_".$x."_".$search[$x];
-    		global $$inter;
+    		global ${$inter};
     		if ($x>0) {
-    			$$inter="and";
+    			${$inter}="and";
     		} else {
-    			$$inter="";
+    			${$inter}="";
     		}
     		//variables auxiliaires
     		$fieldvar_="fieldvar_".$x."_".$search[$x];
-    		global $$fieldvar_;
-    		$$fieldvar_="";
-    		$fieldvar=$$fieldvar_;
+    		global ${$fieldvar_};
+    		${$fieldvar_}="";
+    		$fieldvar=${$fieldvar_};
 			$x++;
 		} else {
 			if ($_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_id"]) {
@@ -1327,30 +1370,30 @@ class searcher_title extends searcher {
 				$search[$x]="f_8";
 				//opérateur
     			$op="op_".$x."_".$search[$x];
-    			global $$op;
-    			$$op=$op_;
+    			global ${$op};
+    			${$op}=$op_;
 
     			//contenu de la recherche
     			$field="field_".$x."_".$search[$x];
     			$field_=array();
     			$field_[0]=$valeur_champ;
-    			global $$field;
-    			$$field=$field_;
+    			global ${$field};
+    			${$field}=$field_;
 
     			//opérateur inter-champ
     			$inter="inter_".$x."_".$search[$x];
-    			global $$inter;
+    			global ${$inter};
     			if ($x>0) {
-    				$$inter="and";
+    				${$inter}="and";
     			} else {
-    				$$inter="";
+    				${$inter}="";
     			}
 
     			//variables auxiliaires
     			$fieldvar_="fieldvar_".$x."_".$search[$x];
-    			global $$fieldvar_;
-    			$$fieldvar_="";
-    			$fieldvar=$$fieldvar_;
+    			global ${$fieldvar_};
+    			${$fieldvar_}="";
+    			$fieldvar=${$fieldvar_};
 				$x++;
 			}
 		}
@@ -1360,29 +1403,29 @@ class searcher_title extends searcher {
 			$search[$x]="f_9";
 			//opérateur
     		$op="op_".$x."_".$search[$x];
-    		global $$op;
-    		$$op=$op_;
+    		global ${$op};
+    		${$op}=$op_;
 
     		//contenu de la recherche
     		$field="field_".$x."_".$search[$x];
     		$field_=array();
     		$field_[0]=$valeur_champ;
-    		global $$field;
-    		$$field=$field_;
+    		global ${$field};
+    		${$field}=$field_;
 
     		//opérateur inter-champ
     		$inter="inter_".$x."_".$search[$x];
-    		global $$inter;
+    		global ${$inter};
     		if ($x>0) {
-    			$$inter="and";
+    			${$inter}="and";
     		} else {
-    			$$inter="";
+    			${$inter}="";
     		}
     		//variables auxiliaires
     		$fieldvar_="fieldvar_".$x."_".$search[$x];
-    		global $$fieldvar_;
-    		$$fieldvar_="";
-    		$fieldvar=$$fieldvar_;
+    		global ${$fieldvar_};
+    		${$fieldvar_}="";
+    		$fieldvar=${$fieldvar_};
 			$x++;
 		}
 		//Pas de statut !
@@ -1390,47 +1433,27 @@ class searcher_title extends searcher {
 }
 
 class searcher_subject extends searcher {
-	var $s_query="";
-	var $i_query="";
-	var $id_query="";
-	var $nb_s;
-	var $nb_i;
-	var $nb_id;
-	var $t_query;
+	public $s_query="";
+	public $i_query="";
+	public $id_query="";
+	public $nb_s;
+	public $nb_i;
+	public $nb_id;
+	public $t_query;
 
 
-	function show_form() {
+	public function show_form() {
 		global $search_subject;
 		global $search_indexint,$search_indexint_id;
 		global $msg;
 		global $charset;
 		global $current_module;
-		global $select3_prop,$search_form_categ,$browser;
+		global $search_form_categ,$browser;
 		global $browser_url;
-		global $thesaurus_mode_pmb;
 		global $id_thes;
 
 		//affichage du selectionneur de thesaurus et du lien vers les thésaurus
-		$liste_thesaurus = thesaurus::getThesaurusList();
-		$sel_thesaurus = '';
-		$lien_thesaurus = '';
-
-		if ($thesaurus_mode_pmb != 0) {	 //la liste des thesaurus n'est pas affichée en mode monothesaurus
-			$sel_thesaurus = "<select class='saisie-30em' id='id_thes' name='id_thes' ";
-			$sel_thesaurus.= "onchange = \"document.location = '".$this->base_url."&id_thes='+document.getElementById('id_thes').value; \">" ;
-			foreach($liste_thesaurus as $id_thesaurus=>$libelle_thesaurus) {
-				$sel_thesaurus.= "<option value='".$id_thesaurus."' "; ;
-				if ($id_thesaurus == $id_thes) $sel_thesaurus.= " selected";
-				$sel_thesaurus.= ">".htmlentities($libelle_thesaurus,ENT_QUOTES,$charset)."</option>";
-			}
-			$sel_thesaurus.= "<option value=-1 ";
-			if ($id_thes == -1) $sel_thesaurus.= "selected ";
-			$sel_thesaurus.= ">".htmlentities($msg['thes_all'],ENT_QUOTES,$charset)."</option>";
-			$sel_thesaurus.= "</select>&nbsp;";
-
-		}
-		$search_form_categ=str_replace("<!-- sel_thesaurus -->",$sel_thesaurus,$search_form_categ);
-
+		$search_form_categ=str_replace("<!-- sel_thesaurus -->", thesaurus::getSelector($id_thes, $this->base_url), $search_form_categ);
 
 		//affichage du choix de langue pour la recherche
 		//		$sel_langue = '';
@@ -1446,7 +1469,7 @@ class searcher_subject extends searcher {
 	}
 
 
-	function show_error($car,$input,$error_message) {
+	public function show_error($car,$input,$error_message) {
 		global $browser_url;
 		global $browser,$search_form_categ;
 		global $msg;
@@ -1459,7 +1482,7 @@ class searcher_subject extends searcher {
 		print pmb_bidi($browser);
 	}
 
-	function make_first_search() {
+	public function make_first_search() {
 
 		global $search_subject;
 		global $search_indexint,$search_indexint_id,$aut_type;
@@ -1469,7 +1492,6 @@ class searcher_subject extends searcher {
 		global $lang;
 		global $dbh;
 		global $id_thes;
-		global $thesaurus_mode_pmb;
 
 		if ($search_indexint_id) {
 				$this->id=$search_indexint_id;
@@ -1558,26 +1580,7 @@ class searcher_subject extends searcher {
 
 
 			//affichage du selectionneur de thesaurus et du lien vers les thésaurus
-			$liste_thesaurus = thesaurus::getThesaurusList();
-			$sel_thesaurus = '';
-			$lien_thesaurus = '';
-
-			if ($thesaurus_mode_pmb != 0) {	 //la liste des thesaurus n'est pas affichée en mode monothesaurus
-				$sel_thesaurus = "<select class='saisie-30em' id='id_thes' name='id_thes' ";
-				$sel_thesaurus.= "onchange = \"document.location = '".$this->base_url."&id_thes='+document.getElementById('id_thes').value; \">" ;
-				foreach($liste_thesaurus as $id_thesaurus=>$libelle_thesaurus) {
-					$sel_thesaurus.= "<option value='".$id_thesaurus."' "; ;
-					if ($id_thesaurus == $id_thes) $sel_thesaurus.= " selected";
-					$sel_thesaurus.= ">".htmlentities($libelle_thesaurus,ENT_QUOTES,$charset)."</option>";
-				}
-				$sel_thesaurus.= "<option value=-1 ";
-				if ($id_thes == -1) $sel_thesaurus.= "selected ";
-				$sel_thesaurus.= ">".htmlentities($msg['thes_all'],ENT_QUOTES,$charset)."</option>";
-				$sel_thesaurus.= "</select>&nbsp;";
-
-			}
-			$search_form_categ=str_replace("<!-- sel_thesaurus -->",$sel_thesaurus,$search_form_categ);
-
+			$search_form_categ=str_replace("<!-- sel_thesaurus -->", thesaurus::getSelector($id_thes, $this->base_url), $search_form_categ);
 
 			//affichage du choix de langue pour la recherche
 			//		$sel_langue = '';
@@ -1600,7 +1603,7 @@ class searcher_subject extends searcher {
 		return AUT_LIST;
 	}
 
-	function make_aut_search() {
+	public function make_aut_search() {
 		global $dbh;
 		global $aut_type,$nb_per_page_a_search;
 		global $thesaurus_auto_postage_montant,$thesaurus_auto_postage_descendant,$thesaurus_auto_postage_nb_montant,$thesaurus_auto_postage_nb_descendant;
@@ -1714,7 +1717,7 @@ class searcher_subject extends searcher {
 		$this->text_query=$requete;
 	}
 
-	function store_search() {
+	public function store_search() {
 		global $search_subject;
 		global $search_indexint,$search_indexint_id,$show_empty;
 		global $charset;
@@ -1726,7 +1729,7 @@ class searcher_subject extends searcher {
 		print pmb_bidi($this->store_form);
 	}
 
-	function aut_store_search() {
+	public function aut_store_search() {
 		global $charset,$aut_type;
 		$champs="<input type='hidden' name='aut_id' value='".htmlentities(stripslashes($this->id),ENT_QUOTES,$charset)."'/>";
 		$champs.="<input type='hidden' name='aut_type' value='".htmlentities(stripslashes($aut_type),ENT_QUOTES,$charset)."'/>";
@@ -1734,7 +1737,7 @@ class searcher_subject extends searcher {
 		print pmb_bidi($this->store_form);
 	}
 
-	function aut_list() {
+	public function aut_list() {
 		global $search_subject;
 		global $search_indexint,$search_indexint_id;
 		global $msg;
@@ -1777,7 +1780,7 @@ class searcher_subject extends searcher {
 		}
 		if (($this->nb_i)||($this->nb_id)) {
 				if ($this->nb_id) {
-					print "<br /><strong>${msg[indexint_catal_title]} ".$msg["searcher_exact_indexint"].": ".sprintf($msg["searcher_results"],$this->nb_id)."</strong><hr /><table>";
+					print "<br /><strong>".$msg['indexint_catal_title']." ".$msg["searcher_exact_indexint"].": ".sprintf($msg["searcher_results"],$this->nb_id)."</strong><hr /><table>";
 					$id_=array();
 					$empty=false;
 					while($indexint=@pmb_mysql_fetch_object($this->id_query)) {
@@ -1826,7 +1829,7 @@ class searcher_subject extends searcher {
 								}
 						} else $this->nb_i--;
 					}
-					$i_="<br /><strong>${msg[indexint_catal_title]} ".$msg["searcher_descr_indexint"]." : ".sprintf($msg["searcher_results"],$this->nb_i)."</strong><hr /><table>".$i_;
+					$i_="<br /><strong>".$msg['indexint_catal_title']." ".$msg["searcher_descr_indexint"]." : ".sprintf($msg["searcher_results"],$this->nb_i)."</strong><hr /><table>".$i_;
 					$i_.="</table>";
 					if (($empty)&&(!$show_empty)) $i_.="<a href='#' onClick=\"document.store_search.show_empty.value=1; document.store_search.page.value=0; document.store_search.submit(); return false;\">".$msg["searcher_indexint_empty_results"]."</a>";
 					print $i_;
@@ -1834,13 +1837,12 @@ class searcher_subject extends searcher {
 		}
 	}
 
-	function notice_list_common($title) {
+	public function notice_list_common($title) {
 		global $begin_result_liste;
 		global $end_result_liste;
 		global $msg;
 		global $charset;
 		global $pmb_nb_max_tri;
-		global $link,$link_expl,$link_explnum,$link_serial,$link_analysis,$link_bulletin,$link_explnum_serial,$link_explnum_analysis,$link_explnum_bulletin,$link_notice_bulletin;
 		global $pmb_allow_external_search;
 		global $load_tablist_js;
 		$research=$title;
@@ -1857,79 +1859,19 @@ class searcher_subject extends searcher {
 				$current=$_SESSION["CURRENT"];
 
 			if ($current!==false) {
-				echo "&nbsp;<a href='#' onClick=\"openPopUp('./print_cart.php?current_print=$current&action=print_prepare','print',600,700,-2,-2,'scrollbars=yes,menubar=0,resizable=yes'); w.focus(); return false;\">";
-				echo "<img src='./images/basket_small_20x20.gif' border='0' align='center' alt=\"".$msg["histo_add_to_cart"]."\" title=\"".$msg["histo_add_to_cart"]."\"></a>&nbsp;";
-				$tri_id_info = $_SESSION["tri"] ? "&sort_id=".$_SESSION["tri"] : "";
-				echo "<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&action_print=print_prepare".$tri_id_info."','print',500,600,-2,-2,'scrollbars=yes,menubar=0'); return false;\">";
-				echo "<img src='./images/print.gif' border='0' align='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"></a>&nbsp;";
-				echo "<a href='#' onClick=\"openPopUp('./download.php?current_download=$current&action_download=download_prepare".$tri_id_info."','download',500,600,-2,-2,'scrollbars=yes,menubar=0'); return false;\">";
-				echo "<img src='./images/upload_docnum.gif' border='0' align='center' alt=\"".$msg["docnum_download"]."\" title=\"".$msg["docnum_download"]."\"/></a>";
-				if ($pmb_allow_external_search) {
-					print "&nbsp;<a href='catalog.php?categ=search&mode=7&from_mode=1&external_type=simple' title='".$msg["connecteurs_external_search_sources"]."'>";
-					echo "<img src='./images/external_search.png' border='0' align='center' alt=\"".$msg["connecteurs_external_search_sources"]."\"/></a>";
-				}
-				// on affiche l'icone de tri seulement si on a atteint un nb maxi de résultats
-				if ($this->nbresults<=$pmb_nb_max_tri) {
-
-					//affichage de l'icone de tri
-					echo "<a href=# onClick=\"document.getElementById('history').src='./sort.php?type_tri=notices'; document.getElementById('history').style.display='';return false;\" ";
-					echo "alt=\"".$msg['tris_dispos']."\" title=\"".$msg['tris_dispos']."\">";
-					echo "<img src=./images/orderby_az.gif align=middle hspace=3></a>";
-
-					//si on a un tri actif on affiche sa description
-					if ($_SESSION["tri"]) {
-						echo $msg['tri_par']." ".$this->sort->descriptionTriParId($_SESSION["tri"]);
-					}
-				}
+				print $this->get_display_icons($current, 1);
 			}
 		}
 
 		print $this->get_current_search_map(1);
-		// on lance la requête
-		$recherche_ajax_mode=0;
-		$nb=0;
-		while(($nz=@pmb_mysql_fetch_object($this->t_query))) {
-				$n=@pmb_mysql_fetch_object(@pmb_mysql_query("SELECT * FROM notices WHERE notice_id=".$nz->notice_id));
-				if($nb++>5)$recherche_ajax_mode=1;
-				switch($n->niveau_biblio) {
-					case 'm' :
-						// notice de monographie
-						$display = new mono_display($n, 6, $link, 1, $link_expl, '', $link_explnum,1, 0, 1, 1, "", 1  , false,true,$recherche_ajax_mode,1);
-						print $display->result;
-						break ;
-					case 's' :
-						// on a affaire à un périodique
-						// function serial_display ($id, $level='1', $action_serial='', $action_analysis='', $action_bulletin='', $lien_suppr_cart="", $lien_explnum="", $bouton_explnum=1,$print=0,$show_explnum=1, $show_statut=0, $show_opac_hidden_fields=true, $draggable=0 ) {
-						$serial = new serial_display($n, 6, $link_serial, $link_analysis, $link_bulletin, "", $link_explnum_serial, 0, 0, 1, 1, true, 1,$recherche_ajax_mode );
-						print $serial->result;
-						break;
-					case 'a' :
-						// on a affaire à un article
-						// function serial_display ($id, $level='1', $action_serial='', $action_analysis='', $action_bulletin='', $lien_suppr_cart="", $lien_explnum="", $bouton_explnum=1,$print=0,$show_explnum=1, $show_statut=0, $show_opac_hidden_fields=true, $draggable=0 ) {
-						$serial = new serial_display($n, 6, $link_serial, $link_analysis, $link_bulletin, "", $link_explnum_analysis, 0, 0, 1, 1, true, 1,$recherche_ajax_mode );
-						print $serial->result;
-						break;
-					case 'b' :
-						// on a affaire à un bulletin
-						$rqt_bull_info = "SELECT s.notice_id as id_notice_mere, bulletin_id as id_du_bulletin, b.notice_id as id_notice_bulletin FROM notices as s, notices as b, bulletins WHERE b.notice_id=$n->notice_id and s.notice_id=bulletin_notice and num_notice=b.notice_id";
-						$bull_ids=@pmb_mysql_fetch_object(pmb_mysql_query($rqt_bull_info));
-						if(!$link_notice_bulletin){
-							$link_notice_bulletin = './catalog.php?categ=serials&sub=bulletinage&action=view&bul_id='.$bull_ids->id_du_bulletin;
-						} else {
-							$link_notice_bulletin = str_replace("!!id!!",$bull_ids->id_du_bulletin,$link_notice_bulletin);
-						}
-						$link_explnum_bulletin = str_replace("!!bul_id!!",$bull_ids->id_du_bulletin,$link_explnum_bulletin);
-						$display = new mono_display($n, 6, $link_notice_bulletin, 1, $link_expl, '', $link_explnum_bulletin,1, 0, 1, 1, "", 1  , false,true,$recherche_ajax_mode);
-						$link_notice_bulletin = '';
-						print $display->result;
-						break;
-				}
-		}
+		
+		print $this->get_display_records_list();
+		
 		// fin de liste
 		print $end_result_liste;
 	}
 
-	function aut_notice_list() {
+	public function aut_notice_list() {
 		global $msg;
 		global $charset;
 		global $aut_type;
@@ -1963,7 +1905,7 @@ class searcher_subject extends searcher {
 		$this->notice_list_common($display);
 	}
 
-	function rec_env() {
+	public function rec_env() {
 		global $msg;
 		switch ($this->etat) {
 				case 'first_search':
@@ -1998,6 +1940,10 @@ class searcher_subject extends searcher {
 					}
 					break;
 				case 'aut_search':
+					if(!isset($_SESSION["session_history"])) $_SESSION["session_history"] = array();
+					if(!is_int($_SESSION["CURRENT"])) {
+						$_SESSION["CURRENT"]=count($_SESSION["session_history"]);
+					}
 					if ($this->direct) {
 						$_SESSION["CURRENT"]=count($_SESSION["session_history"]);
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["URI"]=$this->base_url;
@@ -2010,7 +1956,7 @@ class searcher_subject extends searcher {
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["HUMAN_TITLE"]=$msg["335"];
 					}
 					if ((string)$this->page=="") { $_POST["page"]=0; $page=0; }
-					if ($_SESSION["CURRENT"]!==false) {
+					if (($_SESSION["CURRENT"]!==false) && (is_int($_SESSION["CURRENT"]))) {
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['URI']=$this->base_url;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['POST']=$_POST;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['GET']=$_GET;
@@ -2024,7 +1970,7 @@ class searcher_subject extends searcher {
 		$_SESSION["last_required"]=false;
 	}
 
-	static function convert_simple_multi($id_champ) {
+	public static function convert_simple_multi($id_champ) {
 		global $search;
 
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["search_indexint_id"]) {
@@ -2054,29 +2000,29 @@ class searcher_subject extends searcher {
 
 		//opérateur
     	$op="op_0_".$search[0];
-    	global $$op;
-    	$$op=$op_;
+    	global ${$op};
+    	${$op}=$op_;
 
     	//contenu de la recherche
     	$field="field_0_".$search[0];
     	$field_=array();
     	$field_[0]=$valeur_champ;
-    	global $$field;
-    	$$field=$field_;
+    	global ${$field};
+    	${$field}=$field_;
 
     	//opérateur inter-champ
     	$inter="inter_0_".$search[0];
-    	global $$inter;
-    	$$inter="";
+    	global ${$inter};
+    	${$inter}="";
 
     	//variables auxiliaires
     	$fieldvar_="fieldvar_0_".$search[0];
-    	global $$fieldvar_;
-    	$$fieldvar_="";
-    	$fieldvar=$$fieldvar_;
+    	global ${$fieldvar_};
+    	${$fieldvar_}="";
+    	$fieldvar=${$fieldvar_};
 	}
 
-	static function convert_simple_multi_unimarc($id_champ) {
+	public static function convert_simple_multi_unimarc($id_champ) {
 		global $search;
 
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["search_indexint_id"]) {
@@ -2125,58 +2071,47 @@ class searcher_subject extends searcher {
 
 		//opérateur
     	$op="op_0_".$search[0];
-    	global $$op;
-    	$$op=$op_;
+    	global ${$op};
+    	${$op}=$op_;
 
     	//contenu de la recherche
     	$field="field_0_".$search[0];
     	$field_=array();
     	$field_[0]=$valeur_champ;
-    	global $$field;
-    	$$field=$field_;
+    	global ${$field};
+    	${$field}=$field_;
 
     	//opérateur inter-champ
     	$inter="inter_0_".$search[0];
-    	global $$inter;
-    	$$inter="";
+    	global ${$inter};
+    	${$inter}="";
 
     	//variables auxiliaires
     	$fieldvar_="fieldvar_0_".$search[0];
-    	global $$fieldvar_;
-    	$$fieldvar_="";
-    	$fieldvar=$$fieldvar_;
+    	global ${$fieldvar_};
+    	${$fieldvar_}="";
+    	$fieldvar=${$fieldvar_};
 	}
 }
 
 class searcher_publisher extends searcher {
-	var $p_query;
-	var $c_query;
-	var $s_query;
-	var $nb_p;
-	var $nb_c;
-	var $nb_s;
-	var $t_query;
+	public $p_query;
+	public $c_query;
+	public $s_query;
+	public $nb_p;
+	public $nb_c;
+	public $nb_s;
+	public $t_query;
 
-	function show_form() {
+	public function show_form() {
 		global $search_form_editeur,$browser_editeur,$browser_url;
 
 		$search_form_editeur=str_replace("!!base_url!!",$this->base_url,$search_form_editeur);
 		$browser_editeur=str_replace("!!browser_url!!",$browser_url,$browser_editeur);
 		print $search_form_editeur.$browser_editeur;
 	}
-
-	function show_error($car,$input,$error_message) {
-		global $browser_url;
-		global $browser,$search_form_editeur;
-		global $msg;
-		$search_form_editeur=str_replace("!!base_url!!",$this->base_url,$search_form_editeur);
-		print $search_form_editeur;
-		error_message($msg["searcher_syntax_error"],sprintf($msg["searcher_syntax_error_desc"],$car,$input,$error_message));
-		$browser=str_replace("!!browser_url!!",$browser_url,$browser);
-		print $browser;
-	}
-
-	function make_first_search() {
+	
+	public function make_first_search() {
 		global $search_ed;
 		global $msg,$charset;
 		global $browser,$browser_url,$search_form_editeur;
@@ -2219,7 +2154,7 @@ class searcher_publisher extends searcher {
 		}
 	}
 
-	function make_aut_search() {
+	public function make_aut_search() {
 		global $aut_type,$mag,$charset,$nb_per_page_a_search;
 		global $acces_j;
 
@@ -2266,7 +2201,7 @@ class searcher_publisher extends searcher {
 		$this->text_query=$requete;
 	}
 
-	function store_search() {
+	public function store_search() {
 		global $search_ed;
 		global $show_empty;
 		global $charset;
@@ -2276,7 +2211,7 @@ class searcher_publisher extends searcher {
 		print $this->store_form;
 	}
 
-	function aut_store_search() {
+	public function aut_store_search() {
 		global $charset,$aut_type;
 		$champs="<input type='hidden' name='aut_id' value='".htmlentities(stripslashes($this->id),ENT_QUOTES,$charset)."'/>";
 		$champs.="<input type='hidden' name='aut_type' value='".htmlentities(stripslashes($aut_type),ENT_QUOTES,$charset)."'/>";
@@ -2284,7 +2219,7 @@ class searcher_publisher extends searcher {
 		print $this->store_form;
 	}
 
-	function aut_list() {
+	public function aut_list() {
 		global $msg,$charset;
 		global $search_ed;
 
@@ -2303,7 +2238,7 @@ class searcher_publisher extends searcher {
 					print "<tr class=\"".$pair_impair."\"><td><a href='".$this->base_url."&etat=aut_search&aut_type=publisher&aut_id=".$p->ed_id."'>".htmlentities($temp->display,ENT_QUOTES,$charset)."</a>";
 					if($temp->web) {
 						print "&nbsp;<a href=\"".$temp->web."\" target=\"_web\">";
-						print "<img src=\"./images/globe.gif\" border=\"0\" align=\"top\"></a>";
+						print "<img src='".get_url_icon('globe.gif')."' border=\"0\" class='align_top'></a>";
 					}
 					print "</td><td>$notice_count</td></tr>\n";
 					$parity++;
@@ -2336,13 +2271,12 @@ class searcher_publisher extends searcher {
 		}
 	}
 
-	function notice_list_common($title) {
+	public function notice_list_common($title) {
 		global $begin_result_liste;
 		global $end_result_liste;
 		global $msg;
 		global $charset;
 		global $pmb_nb_max_tri;
-		global $link,$link_expl,$link_explnum,$link_serial,$link_analysis,$link_bulletin,$link_explnum_serial,$link_explnum_analysis,$link_explnum_bulletin,$link_notice_bulletin;
 		global $pmb_allow_external_search;
 		global $load_tablist_js;
 		$research=$title;
@@ -2355,71 +2289,23 @@ class searcher_publisher extends searcher {
 			$current=$_SESSION["CURRENT"];
 			if ($current!==false) {
 				$tri_id_info = $_SESSION["tri"] ? "&sort_id=".$_SESSION["tri"] : "";
-				print "&nbsp;<a href='#' onClick=\"openPopUp('./print_cart.php?current_print=$current&action=print_prepare".$tri_id_info."','print',500, 600, -2, -2, 'scrollbars=yes,menubar=0,resizable=yes'); w.focus(); return false;\"><img src='./images/basket_small_20x20.gif' border='0' align='center' alt=\"".$msg["histo_add_to_cart"]."\" title=\"".$msg["histo_add_to_cart"]."\"></a>&nbsp;<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&action_print=print_prepare','print', 500, 600, -2, -2, 'scrollbars=yes,menubar=0'); return false;\"><img src='./images/print.gif' border='0' align='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"/></a>";
-				print "&nbsp;<a href='#' onClick=\"openPopUp('./download.php?current_download=$current&action_download=download_prepare".$tri_id_info."','download',500,600,-2,-2,'scrollbars=yes,menubar=0'); return false;\"><img src='./images/upload_docnum.gif' border='0' align='center' alt=\"".$msg["docnum_download"]."\" title=\"".$msg["docnum_download"]."\"/></a>";
-				if ($pmb_allow_external_search) print "&nbsp;<a href='catalog.php?categ=search&mode=7&from_mode=3&external_type=simple' title='".$msg["connecteurs_external_search_sources"]."'><img src='./images/external_search.png' border='0' align='center' alt=\"".$msg["connecteurs_external_search_sources"]."\"/></a>";
-				// on affiche l'icone de tri seulement si on a atteint un nb maxi de résultats
-				if ($this->nbresults<=$pmb_nb_max_tri) {
-
-					//affichage de l'icone de tri
-					echo "<a href=# onClick=\"document.getElementById('history').src='./sort.php?type_tri=notices'; document.getElementById('history').style.display='';return false;\" ";
-					echo "alt=\"".$msg['tris_dispos']."\" title=\"".$msg['tris_dispos']."\">";
-					echo "<img src=./images/orderby_az.gif align=middle hspace=3></a>";
-
-					//si on a un tri actif on affiche sa description
-					if ($_SESSION["tri"]) {
-						echo $msg['tri_par']." ".$this->sort->descriptionTriParId($_SESSION["tri"]);
-					}
-				}
+				print "&nbsp;<a href='#' onClick=\"openPopUp('./print_cart.php?current_print=$current&action=print_prepare".$tri_id_info."','print',500, 600, -2, -2, 'scrollbars=yes,menubar=0,resizable=yes'); w.focus(); return false;\"><img src='".get_url_icon('basket_small_20x20.gif')."' style='border:0px' class='center' alt=\"".$msg["histo_add_to_cart"]."\" title=\"".$msg["histo_add_to_cart"]."\"></a>&nbsp;<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&action_print=print_prepare','print', 500, 600, -2, -2, 'scrollbars=yes,menubar=0'); return false;\"><img src='".get_url_icon('print.gif')."' style='border:0px' class='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"/></a>";
+				print "&nbsp;<a href='#' onClick=\"openPopUp('./download.php?current_download=$current&action_download=download_prepare".$tri_id_info."','download'); return false;\"><img src='".get_url_icon('upload_docnum.gif')."' style='border:0px' class='center' alt=\"".$msg["docnum_download"]."\" title=\"".$msg["docnum_download"]."\"/></a>";
+				if ($pmb_allow_external_search) print "&nbsp;<a href='catalog.php?categ=search&mode=7&from_mode=3&external_type=simple' title='".$msg["connecteurs_external_search_sources"]."'><img src='".get_url_icon('external_search.png')."' style='border:0px' class='center' alt=\"".$msg["connecteurs_external_search_sources"]."\"/></a>";
+				
+				print $this->get_display_icon_sort();
 			}
 		}
 
 		print $this->get_current_search_map(2);
-		// on lance la requête
-		$recherche_ajax_mode=0;
-		$nb=0;
-		while(($nz=@pmb_mysql_fetch_object($this->t_query))) {
-				$n=@pmb_mysql_fetch_object(@pmb_mysql_query("SELECT * FROM notices WHERE notice_id=".$nz->notice_id));
-				if($nb++>5)$recherche_ajax_mode=1;
-				switch($n->niveau_biblio) {
-					case 'm' :
-						// notice de monographie
-						$display = new mono_display($n, 6, $link, 1, $link_expl, '', $link_explnum,1, 0, 1, 1, "", 1  , false,true,$recherche_ajax_mode,1);
-						print $display->result;
-						break ;
-					case 's' :
-						// on a affaire à un périodique
-						// function serial_display ($id, $level='1', $action_serial='', $action_analysis='', $action_bulletin='', $lien_suppr_cart="", $lien_explnum="", $bouton_explnum=1,$print=0,$show_explnum=1, $show_statut=0, $show_opac_hidden_fields=true, $draggable=0 ) {
-						$serial = new serial_display($n, 6, $link_serial, $link_analysis, $link_bulletin, "", $link_explnum_serial, 0, 0, 1, 1, true, 1,$recherche_ajax_mode );
-						print $serial->result;
-						break;
-					case 'a' :
-						// on a affaire à un article
-						// function serial_display ($id, $level='1', $action_serial='', $action_analysis='', $action_bulletin='', $lien_suppr_cart="", $lien_explnum="", $bouton_explnum=1,$print=0,$show_explnum=1, $show_statut=0, $show_opac_hidden_fields=true, $draggable=0 ) {
-						$serial = new serial_display($n, 6, $link_serial, $link_analysis, $link_bulletin, "", $link_explnum_analysis, 0, 0, 1, 1, true, 1,$recherche_ajax_mode );
-						print $serial->result;
-						break;
-					case 'b' :
-						// on a affaire à un bulletin
-						$rqt_bull_info = "SELECT s.notice_id as id_notice_mere, bulletin_id as id_du_bulletin, b.notice_id as id_notice_bulletin FROM notices as s, notices as b, bulletins WHERE b.notice_id=$n->notice_id and s.notice_id=bulletin_notice and num_notice=b.notice_id";
-						$bull_ids=@pmb_mysql_fetch_object(pmb_mysql_query($rqt_bull_info));
-						if(!$link_notice_bulletin){
-							$link_notice_bulletin = './catalog.php?categ=serials&sub=bulletinage&action=view&bul_id='.$bull_ids->id_du_bulletin;
-						} else {
-							$link_notice_bulletin = str_replace("!!id!!",$bull_ids->id_du_bulletin,$link_notice_bulletin);
-						}
-						$link_explnum_bulletin = str_replace("!!bul_id!!",$bull_ids->id_du_bulletin,$link_explnum_bulletin);
-						$display = new mono_display($n, 6, $link_notice_bulletin, 1, $link_expl, '', $link_explnum_bulletin,1, 0, 1, 1, "", 1  , false,true,$recherche_ajax_mode);
-						$link_notice_bulletin = '';
-						print $display->result;
-						break;
-				}
-		}
+		
+		print $this->get_display_records_list();
+		
 		// fin de liste
 		print $end_result_liste;
 	}
 
-	function aut_notice_list() {
+	public function aut_notice_list() {
 		global $msg;
 		global $charset;
 		global $aut_type;
@@ -2446,7 +2332,7 @@ class searcher_publisher extends searcher {
 		$this->notice_list_common($display);
 	}
 
-	function rec_env() {
+	public function rec_env() {
 		global $msg;
 		switch ($this->etat) {
 				case 'first_search':
@@ -2481,7 +2367,11 @@ class searcher_publisher extends searcher {
 					}
 					break;
 				case 'aut_search':
-					if ($_SESSION["CURRENT"]!==false) {
+					if(!isset($_SESSION["session_history"])) $_SESSION["session_history"] = array();
+					if(!is_int($_SESSION["CURRENT"])) {
+						$_SESSION["CURRENT"]=count($_SESSION["session_history"]);
+					}
+					if (($_SESSION["CURRENT"]!==false) && (is_int($_SESSION["CURRENT"]))) {
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['URI']=$this->base_url;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['POST']=$_POST;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['GET']=$_GET;
@@ -2494,7 +2384,7 @@ class searcher_publisher extends searcher {
 		$_SESSION["last_required"]=false;
 	}
 
-	static function convert_simple_multi($id_champ) {
+	public static function convert_simple_multi($id_champ) {
 		global $search;
 
 		$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_id"];
@@ -2514,29 +2404,29 @@ class searcher_publisher extends searcher {
 
 		//opérateur
     	$op="op_0_".$search[0];
-    	global $$op;
-    	$$op=$op_;
+    	global ${$op};
+    	${$op}=$op_;
 
     	//contenu de la recherche
     	$field="field_0_".$search[0];
     	$field_=array();
     	$field_[0]=$valeur_champ;
-    	global $$field;
-    	$$field=$field_;
+    	global ${$field};
+    	${$field}=$field_;
 
     	//opérateur inter-champ
     	$inter="inter_0_".$search[0];
-    	global $$inter;
-    	$$inter="";
+    	global ${$inter};
+    	${$inter}="";
 
     	//variables auxiliaires
     	$fieldvar_="fieldvar_0_".$search[0];
-    	global $$fieldvar_;
-    	$$fieldvar_="";
-    	$fieldvar=$$fieldvar_;
+    	global ${$fieldvar_};
+    	${$fieldvar_}="";
+    	$fieldvar=${$fieldvar_};
 	}
 
-	static function convert_simple_multi_unimarc($id_champ) {
+	public static function convert_simple_multi_unimarc($id_champ) {
 		global $search;
 
 		$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_id"];
@@ -2577,39 +2467,39 @@ class searcher_publisher extends searcher {
 
 		//opérateur
     	$op="op_0_".$search[0];
-    	global $$op;
-    	$$op=$op_;
+    	global ${$op};
+    	${$op}=$op_;
 
     	//contenu de la recherche
     	$field="field_0_".$search[0];
     	$field_=array();
     	$field_[0]=$valeur_champ;
-    	global $$field;
-    	$$field=$field_;
+    	global ${$field};
+    	${$field}=$field_;
 
     	//opérateur inter-champ
     	$inter="inter_0_".$search[0];
-    	global $$inter;
-    	$$inter="";
+    	global ${$inter};
+    	${$inter}="";
 
     	//variables auxiliaires
     	$fieldvar_="fieldvar_0_".$search[0];
-    	global $$fieldvar_;
-    	$$fieldvar_="";
-    	$fieldvar=$$fieldvar_;
+    	global ${$fieldvar_};
+    	${$fieldvar_}="";
+    	$fieldvar=${$fieldvar_};
 	}
 }
 
 class searcher_titre_uniforme extends searcher {
-	var $p_query;
-	var $c_query;
-	var $s_query;
-	var $nb_p;
-	var $nb_c;
-	var $nb_s;
-	var $t_query;
+	public $p_query;
+	public $c_query;
+	public $s_query;
+	public $nb_p;
+	public $nb_c;
+	public $nb_s;
+	public $t_query;
 
-	function show_form() {
+	public function show_form() {
 		global $search_form_titre_uniforme,$browser_titre_uniforme,$browser_url;
 
 		$search_form_titre_uniforme=str_replace("!!base_url!!",$this->base_url,$search_form_titre_uniforme);
@@ -2617,34 +2507,23 @@ class searcher_titre_uniforme extends searcher {
 		print $search_form_titre_uniforme.$browser_titre_uniforme;
 	}
 
-	function show_error($car,$input,$error_message) {
-		global $browser_url;
-		global $browser,$search_form_editeur;
-		global $msg;
-		$search_form_editeur=str_replace("!!base_url!!",$this->base_url,$search_form_editeur);
-		print $search_form_editeur;
-		error_message($msg["searcher_syntax_error"],sprintf($msg["searcher_syntax_error_desc"],$car,$input,$error_message));
-		$browser=str_replace("!!browser_url!!",$browser_url,$browser);
-		print $browser;
-	}
-
-	function make_first_search() {
+	public function make_first_search() {
 		global $search_tu;
 		global $msg,$charset;
 		global $browser,$browser_url,$search_form_titre_uniforme;
 
+		//Recherche dans les titres uniformes
+		$searcher_authorities_titres_uniformes = searcher_factory::get_searcher("titres_uniformes", "",stripslashes($search_tu));
+		// 			$searcher_authorities_authors = new searcher_authorities_authors(stripslashes($author_query));
 		$aq=new analyse_query(stripslashes($search_tu),0,0,1,1);
 		if (!$aq->error) {
 			$this->nbresults=0;
 
-			//Recherche dans les titres uniformes
-			$rq_tu_count=$aq->get_query_count("titres_uniformes","tu_name","index_tu","tu_id");
-			$this->nb_tu=@pmb_mysql_result(@pmb_mysql_query($rq_tu_count),0,0);
+			$this->nb_tu=$searcher_authorities_titres_uniformes->get_nb_results();
 			if ($this->nb_tu) {
-				$rq_tu=$aq->get_query("titres_uniformes","tu_name","index_tu","tu_id");
-				$this->tu_query=@pmb_mysql_query($rq_tu);
+				$this->tu_query=pmb_mysql_query('select num_object as tu_id from authorities where id_authority in (select id_authority from ('.$searcher_authorities_titres_uniformes->get_full_query().')as uni) and type_object = 7');
 				return AUT_LIST;
-			}else {
+			} else {
 				$search_form_titre_uniforme=str_replace("!!base_url!!",$this->base_url,$search_form_titre_uniforme);
 				print $search_form_titre_uniforme;
 				error_message($msg["searcher_no_result"],$msg["searcher_no_result_desc"]);
@@ -2657,12 +2536,11 @@ class searcher_titre_uniforme extends searcher {
 		}
 	}
 
-	function make_aut_search() {
+	public function make_aut_search() {
 		global $aut_type,$mag,$charset,$nb_per_page_a_search;
 		global $acces_j;
 
 		if ($nb_per_page_a_search) $this->nb_per_page=$nb_per_page_a_search; else $this->nb_per_page=3;
-
 		switch ($aut_type) {
 			case "titre_uniforme":
 				$requete_count = "select count(distinct ntu_num_notice) from notices_titres_uniformes, notices ";
@@ -2672,7 +2550,7 @@ class searcher_titre_uniforme extends searcher {
 				$requete = "select distinct notice_id from notices_titres_uniformes, notices ";
 				$requete.= $acces_j;
 				$requete.= "where ntu_num_notice=notice_id and ntu_num_tu='".$this->id."' ";
-//				$requete.= "order by index_serie,tnvol,index_sew limit ".($this->page*$this->nb_per_page).",".$this->nb_per_page;
+				$requete.= "order by index_serie,tnvol,index_sew limit ".($this->page*$this->nb_per_page).",".$this->nb_per_page;
 			break;
 		}
 		$this->nbresults=@pmb_mysql_result(@pmb_mysql_query($requete_count),0,0);
@@ -2681,7 +2559,7 @@ class searcher_titre_uniforme extends searcher {
 		$this->text_query=$requete;
 	}
 
-	function store_search() {
+	public function store_search() {
 		global $search_ed;
 		global $show_empty;
 		global $charset;
@@ -2691,7 +2569,7 @@ class searcher_titre_uniforme extends searcher {
 		print $this->store_form;
 	}
 
-	function aut_store_search() {
+	public function aut_store_search() {
 		global $charset,$aut_type;
 		$champs="<input type='hidden' name='aut_id' value='".htmlentities(stripslashes($this->id),ENT_QUOTES,$charset)."'/>";
 		$champs.="<input type='hidden' name='aut_type' value='".htmlentities(stripslashes($aut_type),ENT_QUOTES,$charset)."'/>";
@@ -2699,7 +2577,7 @@ class searcher_titre_uniforme extends searcher {
 		print $this->store_form;
 	}
 
-	function aut_list() {
+	public function aut_list() {
 		global $msg,$charset;
 		global $search_tu;
 		$this->human_query="<b>".$msg["356"]." </b> ".htmlentities(stripslashes($search_tu),ENT_QUOTES,$charset);
@@ -2714,7 +2592,7 @@ class searcher_titre_uniforme extends searcher {
 				$temp=new titre_uniforme($p->tu_id);
 				$notice_count_sql = "SELECT count(*) FROM notices_titres_uniformes WHERE ntu_num_tu = ".$p->tu_id ;
 				$notice_count = pmb_mysql_result(pmb_mysql_query($notice_count_sql), 0, 0);
-				print "<tr class=\"".$pair_impair."\"><td><a href='".$this->base_url."&etat=aut_search&aut_type=titre_uniforme&aut_id=".$p->tu_id."'>".htmlentities($temp->display,ENT_QUOTES,$charset)."</a>";
+				print "<tr class=\"".$pair_impair."\"><td><a href='".$this->base_url."&etat=aut_search&aut_type=titre_uniforme&aut_id=".$p->tu_id."'>".htmlentities($temp->get_isbd(),ENT_QUOTES,$charset)."</a>";
 
 				print "</td><td>$notice_count</td></tr>\n";
 				$parity++;
@@ -2723,13 +2601,12 @@ class searcher_titre_uniforme extends searcher {
 		}
 	}
 
-	function notice_list_common($title) {
+	public function notice_list_common($title) {
 		global $begin_result_liste;
 		global $end_result_liste;
 		global $msg;
 		global $charset;
 		global $pmb_nb_max_tri;
-		global $link,$link_expl,$link_explnum,$link_serial,$link_analysis,$link_bulletin,$link_explnum_serial,$link_explnum_analysis,$link_explnum_bulletin;
 		global $pmb_allow_external_search;
 		global $load_tablist_js;
 		$research=$title;
@@ -2742,65 +2619,21 @@ class searcher_titre_uniforme extends searcher {
 			$current=$_SESSION["CURRENT"];
 			if ($current!==false) {
 				$tri_id_info = $_SESSION["tri"] ? "&sort_id=".$_SESSION["tri"] : "";
-				print "&nbsp;<a href='#' onClick=\"openPopUp('./print_cart.php?current_print=$current&action=print_prepare".$tri_id_info."','print',500, 600, -2, -2, 'scrollbars=yes,menubar=0,resizable=yes'); w.focus(); return false;\"><img src='./images/basket_small_20x20.gif' border='0' align='center' alt=\"".$msg["histo_add_to_cart"]."\" title=\"".$msg["histo_add_to_cart"]."\"></a>&nbsp;<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&action_print=print_prepare','print', 500, 600, -2, -2, 'scrollbars=yes,menubar=0'); return false;\"><img src='./images/print.gif' border='0' align='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"/></a>";
-				print "&nbsp;<a href='#' onClick=\"openPopUp('./download.php?current_download=$current&action_download=download_prepare".$tri_id_info."','download',500,600,-2,-2,'scrollbars=yes,menubar=0'); return false;\"><img src='./images/upload_docnum.gif' border='0' align='center' alt=\"".$msg["docnum_download"]."\" title=\"".$msg["docnum_download"]."\"/></a>";
-				if ($pmb_allow_external_search) print "&nbsp;<a href='catalog.php?categ=search&mode=7&from_mode=3&external_type=simple' title='".$msg["connecteurs_external_search_sources"]."'><img src='./images/external_search.png' border='0' align='center' alt=\"".$msg["connecteurs_external_search_sources"]."\"/></a>";
-				// on affiche l'icone de tri seulement si on a atteint un nb maxi de résultats
-				if ($this->nbresults<=$pmb_nb_max_tri) {
-
-					//affichage de l'icone de tri
-					echo "<a href=# onClick=\"document.getElementById('history').src='./sort.php?type_tri=notices'; document.getElementById('history').style.display='';return false;\" ";
-					echo "alt=\"".$msg['tris_dispos']."\" title=\"".$msg['tris_dispos']."\">";
-					echo "<img src=./images/orderby_az.gif align=middle hspace=3></a>";
-
-					//si on a un tri actif on affiche sa description
-					if ($_SESSION["tri"]) {
-						echo $msg['tri_par']." ".$this->sort->descriptionTriParId($_SESSION["tri"]);
-					}
-				}
+				print "&nbsp;<a href='#' onClick=\"openPopUp('./print_cart.php?current_print=$current&action=print_prepare".$tri_id_info."','print',500, 600, -2, -2, 'scrollbars=yes,menubar=0,resizable=yes'); w.focus(); return false;\"><img src='".get_url_icon('basket_small_20x20.gif')."' style='border:0px' class='center' alt=\"".$msg["histo_add_to_cart"]."\" title=\"".$msg["histo_add_to_cart"]."\"></a>&nbsp;<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&action_print=print_prepare','print', 500, 600, -2, -2, 'scrollbars=yes,menubar=0'); return false;\"><img src='".get_url_icon('print.gif')."' style='border:0px' class='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"/></a>";
+				print "&nbsp;<a href='#' onClick=\"openPopUp('./download.php?current_download=$current&action_download=download_prepare".$tri_id_info."','download'); return false;\"><img src='".get_url_icon('upload_docnum.gif')."' style='border:0px' class='center' alt=\"".$msg["docnum_download"]."\" title=\"".$msg["docnum_download"]."\"/></a>";
+				if ($pmb_allow_external_search) print "&nbsp;<a href='catalog.php?categ=search&mode=7&from_mode=3&external_type=simple' title='".$msg["connecteurs_external_search_sources"]."'><img src='".get_url_icon('external_search.png')."' style='border:0px' class='center' alt=\"".$msg["connecteurs_external_search_sources"]."\"/></a>";
+				print $this->get_display_icon_sort();
 			}
 		}
  		print $this->get_current_search_map(9);
-		// on lance la requête
-		$recherche_ajax_mode=0;
-		$nb=0;
-		while(($nz=@pmb_mysql_fetch_object($this->t_query))) {
-			$n=@pmb_mysql_fetch_object(@pmb_mysql_query("SELECT * FROM notices WHERE notice_id=".$nz->notice_id));
-			if($nb++>5)$recherche_ajax_mode=1;
-			switch($n->niveau_biblio) {
-				case 'm' :
-					// notice de monographie
-					$display = new mono_display($n, 6, $link, 1, $link_expl, '', $link_explnum,1, 0, 1, 1, "", 1  , false,true,$recherche_ajax_mode,1);
-					print $display->result;
-					break ;
-				case 's' :
-					// on a affaire à un périodique
-					// function serial_display ($id, $level='1', $action_serial='', $action_analysis='', $action_bulletin='', $lien_suppr_cart="", $lien_explnum="", $bouton_explnum=1,$print=0,$show_explnum=1, $show_statut=0, $show_opac_hidden_fields=true, $draggable=0 ) {
-					$serial = new serial_display($n, 6, $link_serial, $link_analysis, $link_bulletin, "", $link_explnum_serial, 0, 0, 1, 1, true, 1,$recherche_ajax_mode );
-					print $serial->result;
-					break;
-				case 'a' :
-					// on a affaire à un article
-					// function serial_display ($id, $level='1', $action_serial='', $action_analysis='', $action_bulletin='', $lien_suppr_cart="", $lien_explnum="", $bouton_explnum=1,$print=0,$show_explnum=1, $show_statut=0, $show_opac_hidden_fields=true, $draggable=0 ) {
-					$serial = new serial_display($n, 6, $link_serial, $link_analysis, $link_bulletin, "", $link_explnum_analysis, 0, 0, 1, 1, true, 1,$recherche_ajax_mode );
-					print $serial->result;
-					break;
-				case 'b' :
-					// on a affaire à un bulletin
-					$rqt_bull_info = "SELECT s.notice_id as id_notice_mere, bulletin_id as id_du_bulletin, b.notice_id as id_notice_bulletin FROM notices as s, notices as b, bulletins WHERE b.notice_id=$n->notice_id and s.notice_id=bulletin_notice and num_notice=b.notice_id";
-					$bull_ids=@pmb_mysql_fetch_object(pmb_mysql_query($rqt_bull_info));
-					$link_notice_bulletin = './catalog.php?categ=serials&sub=bulletinage&action=view&bul_id='.$bull_ids->id_du_bulletin;
-					$link_explnum_bulletin = str_replace("!!bul_id!!",$bull_ids->id_du_bulletin,$link_explnum_bulletin);
-					$display = new mono_display($n, 6, $link_notice_bulletin, 1, $link_expl, '', $link_explnum_bulletin,1, 0, 1, 1, "", 1  , false,true,$recherche_ajax_mode);
-					print $display->result;
-					break;
-			}
-		}
+ 		
+ 		print $this->get_display_records_list();
+ 		
 		// fin de liste
 		print $end_result_liste;
 	}
 
-	function aut_notice_list() {
+	public function aut_notice_list() {
 		global $msg;
 		global $charset;
 		global $aut_type;
@@ -2815,8 +2648,10 @@ class searcher_titre_uniforme extends searcher {
 		$this->notice_list_common($display);
 	}
 
-	function rec_env() {
+	public function rec_env() {
 		global $msg;
+		global $memo_tempo_table_to_rebuild;
+		
 		switch ($this->etat) {
 			case 'first_search':
 				if ((string)$this->page=="") {
@@ -2844,18 +2679,24 @@ class searcher_titre_uniforme extends searcher {
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['URI']=$this->base_url;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['POST']=$_POST;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['GET']=$_GET;
+					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_LIST_QUERY']=$memo_tempo_table_to_rebuild;					
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_QUERY']=$this->text_query;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['PAGE']=$this->page+1;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]["HUMAN_QUERY"]=$this->human_notice_query;
 				}
 			break;
 			case 'aut_search':
-				if ($_SESSION["CURRENT"]!==false) {
+				if(!isset($_SESSION["session_history"])) $_SESSION["session_history"] = array();
+				if(!is_int($_SESSION["CURRENT"])) {
+					$_SESSION["CURRENT"]=count($_SESSION["session_history"]);
+				}
+				if (($_SESSION["CURRENT"]!==false) && (is_int($_SESSION["CURRENT"]))) {
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['URI']=$this->base_url;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['POST']=$_POST;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['GET']=$_GET;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['PAGE']=$this->page+1;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_QUERY']=$this->text_query;
+					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_LIST_QUERY']=$memo_tempo_table_to_rebuild;	
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['HUMAN_QUERY']=$this->human_notice_query;
 				}
 			break;
@@ -2863,7 +2704,7 @@ class searcher_titre_uniforme extends searcher {
 		$_SESSION["last_required"]=false;
 	}
 
-	static function convert_simple_multi($id_champ) {
+	public static function convert_simple_multi($id_champ) {
 		global $search;
 
 		$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_id"];
@@ -2876,29 +2717,29 @@ class searcher_titre_uniforme extends searcher {
 		}
 		//opérateur
     	$op="op_0_".$search[0];
-    	global $$op;
-    	$$op=$op_;
+    	global ${$op};
+    	${$op}=$op_;
 
     	//contenu de la recherche
     	$field="field_0_".$search[0];
     	$field_=array();
     	$field_[0]=$valeur_champ;
-    	global $$field;
-    	$$field=$field_;
+    	global ${$field};
+    	${$field}=$field_;
 
     	//opérateur inter-champ
     	$inter="inter_0_".$search[0];
-    	global $$inter;
-    	$$inter="";
+    	global ${$inter};
+    	${$inter}="";
 
     	//variables auxiliaires
     	$fieldvar_="fieldvar_0_".$search[0];
-    	global $$fieldvar_;
-    	$$fieldvar_="";
-    	$fieldvar=$$fieldvar_;
+    	global ${$fieldvar_};
+    	${$fieldvar_}="";
+    	$fieldvar=${$fieldvar_};
 	}
 
-	static function convert_simple_multi_unimarc($id_champ) {
+	public static function convert_simple_multi_unimarc($id_champ) {
 		global $search;
 
 		$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_id"];
@@ -2919,46 +2760,46 @@ class searcher_titre_uniforme extends searcher {
 
 		//opérateur
     	$op="op_0_".$search[0];
-    	global $$op;
-    	$$op=$op_;
+    	global ${$op};
+    	${$op}=$op_;
 
     	//contenu de la recherche
     	$field="field_0_".$search[0];
     	$field_=array();
     	$field_[0]=$valeur_champ;
-    	global $$field;
-    	$$field=$field_;
+    	global ${$field};
+    	${$field}=$field_;
 
     	//opérateur inter-champ
     	$inter="inter_0_".$search[0];
-    	global $$inter;
-    	$$inter="";
+    	global ${$inter};
+    	${$inter}="";
 
     	//variables auxiliaires
     	$fieldvar_="fieldvar_0_".$search[0];
-    	global $$fieldvar_;
-    	$$fieldvar_="";
-    	$fieldvar=$$fieldvar_;
+    	global ${$fieldvar_};
+    	${$fieldvar_}="";
+    	$fieldvar=${$fieldvar_};
 	}
 }
 
 
 class searcher_serie extends searcher {
-	var $p_query;
-	var $c_query;
-	var $s_query;
-	var $nb_p;
-	var $nb_c;
-	var $nb_s;
-	var $t_query;
+	public $p_query;
+	public $c_query;
+	public $s_query;
+	public $nb_p;
+	public $nb_c;
+	public $nb_s;
+	public $t_query;
 
-	function show_form() {}
+	public function show_form() {}
 
-	function show_error($car,$input,$error_message) {}
+	public function show_error($car,$input,$error_message) {}
 
-	function make_first_search() {}
+	public function make_first_search() {}
 
-	function make_aut_search() {
+	public function make_aut_search() {
 		global $aut_type,$mag,$charset,$nb_per_page_a_search;
 		global $acces_j;
 
@@ -2981,7 +2822,7 @@ class searcher_serie extends searcher {
 		$this->text_query=$requete;
 	}
 
-	function store_search() {
+	public function store_search() {
 		global $search_ed;
 		global $show_empty;
 		global $charset;
@@ -2991,7 +2832,7 @@ class searcher_serie extends searcher {
 		print $this->store_form;
 	}
 
-	function aut_store_search() {
+	public function aut_store_search() {
 		global $charset,$aut_type;
 		$champs="<input type='hidden' name='aut_id' value='".htmlentities(stripslashes($this->id),ENT_QUOTES,$charset)."'/>";
 		$champs.="<input type='hidden' name='aut_type' value='".htmlentities(stripslashes($aut_type),ENT_QUOTES,$charset)."'/>";
@@ -2999,15 +2840,14 @@ class searcher_serie extends searcher {
 		print $this->store_form;
 	}
 
-	function aut_list() {}
+	public function aut_list() {}
 
-	function notice_list_common($title) {
+	public function notice_list_common($title) {
 		global $begin_result_liste;
 		global $end_result_liste;
 		global $msg;
 		global $charset;
 		global $pmb_nb_max_tri;
-		global $link,$link_expl,$link_explnum,$link_serial,$link_analysis,$link_bulletin,$link_explnum_serial,$link_explnum_analysis,$link_explnum_bulletin,$link_notice_bulletin;
 		global $pmb_allow_external_search;
 		global $load_tablist_js;
 		$research=$title;
@@ -3020,74 +2860,28 @@ class searcher_serie extends searcher {
 			$current=$_SESSION["CURRENT"];
 			if ($current!==false) {
 				$tri_id_info = $_SESSION["tri"] ? "&sort_id=".$_SESSION["tri"] : "";
-				print "&nbsp;<a href='#' onClick=\"openPopUp('./print_cart.php?current_print=$current&action=print_prepare".$tri_id_info."','print',500, 600, -2, -2, 'scrollbars=yes,menubar=0,resizable=yes'); w.focus(); return false;\"><img src='./images/basket_small_20x20.gif' border='0' align='center' alt=\"".$msg["histo_add_to_cart"]."\" title=\"".$msg["histo_add_to_cart"]."\"></a>&nbsp;<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&action_print=print_prepare','print', 500, 600, -2, -2, 'scrollbars=yes,menubar=0'); return false;\"><img src='./images/print.gif' border='0' align='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"/></a>";
-				print "&nbsp;<a href='#' onClick=\"openPopUp('./download.php?current_download=$current&action_download=download_prepare".$tri_id_info."','download',500,600,-2,-2,'scrollbars=yes,menubar=0'); return false;\"><img src='./images/upload_docnum.gif' border='0' align='center' alt=\"".$msg["docnum_download"]."\" title=\"".$msg["docnum_download"]."\"/></a>";
-				if ($pmb_allow_external_search) print "&nbsp;<a href='catalog.php?categ=search&mode=7&from_mode=3&external_type=simple' title='".$msg["connecteurs_external_search_sources"]."'><img src='./images/external_search.png' border='0' align='center' alt=\"".$msg["connecteurs_external_search_sources"]."\"/></a>";
-				// on affiche l'icone de tri seulement si on a atteint un nb maxi de résultats
-				if ($this->nbresults<=$pmb_nb_max_tri) {
-
-					//affichage de l'icone de tri
-					echo "<a href=# onClick=\"document.getElementById('history').src='./sort.php?type_tri=notices'; document.getElementById('history').style.display='';return false;\" ";
-					echo "alt=\"".$msg['tris_dispos']."\" title=\"".$msg['tris_dispos']."\">";
-					echo "<img src=./images/orderby_az.gif align=middle hspace=3></a>";
-
-					//si on a un tri actif on affiche sa description
-					if ($_SESSION["tri"]) {
-						echo $msg['tri_par']." ".$this->sort->descriptionTriParId($_SESSION["tri"]);
-					}
-				}
+				print "&nbsp;<a href='#' onClick=\"openPopUp('./print_cart.php?current_print=$current&action=print_prepare".$tri_id_info."','print',500, 600, -2, -2, 'scrollbars=yes,menubar=0,resizable=yes'); w.focus(); return false;\"><img src='".get_url_icon('basket_small_20x20.gif')."' style='border:0px' class='center' alt=\"".$msg["histo_add_to_cart"]."\" title=\"".$msg["histo_add_to_cart"]."\"></a>&nbsp;<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&action_print=print_prepare','print', 500, 600, -2, -2, 'scrollbars=yes,menubar=0'); return false;\"><img src='".get_url_icon('print.gif')."' style='border:0px' class='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"/></a>";
+				print "&nbsp;<a href='#' onClick=\"openPopUp('./download.php?current_download=$current&action_download=download_prepare".$tri_id_info."','download'); return false;\"><img src='".get_url_icon('upload_docnum.gif')."' style='border:0px' class='center' alt=\"".$msg["docnum_download"]."\" title=\"".$msg["docnum_download"]."\"/></a>";
+				if ($pmb_allow_external_search) print "&nbsp;<a href='catalog.php?categ=search&mode=7&from_mode=3&external_type=simple' title='".$msg["connecteurs_external_search_sources"]."'><img src='".get_url_icon('external_search.png')."' style='border:0px' class='center' alt=\"".$msg["connecteurs_external_search_sources"]."\"/></a>";
+				print $this->get_display_icon_sort();
 			}
 		}
  		print $this->get_current_search_map(3);
-		// on lance la requête
-		$recherche_ajax_mode=0;
-		$nb=0;
-		while(($nz=@pmb_mysql_fetch_object($this->t_query))) {
-				$n=@pmb_mysql_fetch_object(@pmb_mysql_query("SELECT * FROM notices WHERE notice_id=".$nz->notice_id));
-				if($nb++>5)$recherche_ajax_mode=1;
-				switch($n->niveau_biblio) {
-					case 'm' :
-						// notice de monographie
-						$display = new mono_display($n, 6, $link, 1, $link_expl, '', $link_explnum,1, 0, 1, 1, "", 1  , false,true,$recherche_ajax_mode,1);
-						print $display->result;
-						break ;
-					case 's' :
-						// on a affaire à un périodique
-						// function serial_display ($id, $level='1', $action_serial='', $action_analysis='', $action_bulletin='', $lien_suppr_cart="", $lien_explnum="", $bouton_explnum=1,$print=0,$show_explnum=1, $show_statut=0, $show_opac_hidden_fields=true, $draggable=0 ) {
-						$serial = new serial_display($n, 6, $link_serial, $link_analysis, $link_bulletin, "", $link_explnum_serial, 0, 0, 1, 1, true, 1,$recherche_ajax_mode );
-						print $serial->result;
-						break;
-					case 'a' :
-						// on a affaire à un article
-						// function serial_display ($id, $level='1', $action_serial='', $action_analysis='', $action_bulletin='', $lien_suppr_cart="", $lien_explnum="", $bouton_explnum=1,$print=0,$show_explnum=1, $show_statut=0, $show_opac_hidden_fields=true, $draggable=0 ) {
-						$serial = new serial_display($n, 6, $link_serial, $link_analysis, $link_bulletin, "", $link_explnum_analysis, 0, 0, 1, 1, true, 1,$recherche_ajax_mode );
-						print $serial->result;
-						break;
-					case 'b' :
-						// on a affaire à un bulletin
-						$rqt_bull_info = "SELECT s.notice_id as id_notice_mere, bulletin_id as id_du_bulletin, b.notice_id as id_notice_bulletin FROM notices as s, notices as b, bulletins WHERE b.notice_id=$n->notice_id and s.notice_id=bulletin_notice and num_notice=b.notice_id";
-						$bull_ids=@pmb_mysql_fetch_object(pmb_mysql_query($rqt_bull_info));
-						if(!$link_notice_bulletin){
-							$link_notice_bulletin = './catalog.php?categ=serials&sub=bulletinage&action=view&bul_id='.$bull_ids->id_du_bulletin;
-						} else {
-							$link_notice_bulletin = str_replace("!!id!!",$bull_ids->id_du_bulletin,$link_notice_bulletin);
-						}
-						$display = new mono_display($n, 6, $link_notice_bulletin, 1, $link_expl, '', $link_explnum,1, 0, 1, 1, "", 1  , false,true,$recherche_ajax_mode);
-						$link_notice_bulletin='';
-						print $display->result;
-						break;
-				}
-		}
+ 		
+ 		print $this->get_display_records_list();
+ 		
 		// fin de liste
 		print $end_result_liste;
 	}
 
-	function aut_notice_list() {
+	public function aut_notice_list() {
 		$this->notice_list_common($display);
 	}
 
-	function rec_env() {
+	public function rec_env() {
 		global $msg;
+		global $memo_tempo_table_to_rebuild;
+		
 		switch ($this->etat) {
 				case 'first_search':
 					if ((string)$this->page=="") {
@@ -3115,17 +2909,23 @@ class searcher_serie extends searcher {
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['URI']=$this->base_url;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['POST']=$_POST;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['GET']=$_GET;
+						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_LIST_QUERY']=$memo_tempo_table_to_rebuild;	
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_QUERY']=$this->text_query;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['PAGE']=$this->page+1;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]["HUMAN_QUERY"]=$this->human_notice_query;
 					}
 					break;
 				case 'aut_search':
-					if ($_SESSION["CURRENT"]!==false) {
+					if(!isset($_SESSION["session_history"])) $_SESSION["session_history"] = array();
+					if(!is_int($_SESSION["CURRENT"])) {
+						$_SESSION["CURRENT"]=count($_SESSION["session_history"]);
+					}
+					if (($_SESSION["CURRENT"]!==false) && (is_int($_SESSION["CURRENT"]))) {
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['URI']=$this->base_url;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['POST']=$_POST;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['GET']=$_GET;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['PAGE']=$this->page+1;
+						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_LIST_QUERY']=$memo_tempo_table_to_rebuild;	
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_QUERY']=$this->text_query;
 						$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['HUMAN_QUERY']=$this->human_notice_query;
 					}
@@ -3134,47 +2934,37 @@ class searcher_serie extends searcher {
 		$_SESSION["last_required"]=false;
 	}
 
-	static function convert_simple_multi($id_champ) {}
+	public static function convert_simple_multi($id_champ) {}
 
-	static function convert_simple_multi_unimarc($id_champ) {}
+	public static function convert_simple_multi_unimarc($id_champ) {}
 }
 
 class searcher_authperso extends searcher {
-	var $p_query;
-	var $c_query;
-	var $s_query;
-	var $nb_p;
-	var $nb_c;
-	var $nb_s;
-	var $t_query;
+	public $p_query;
+	public $c_query;
+	public $s_query;
+	public $nb_p;
+	public $nb_c;
+	public $nb_s;
+	public $t_query;
 
-	function show_form() {
+	public function show_form() {
 		global $search_form_authperso,$browser_authperso,$browser_url;
 		global $msg;
 		global $info_authpersos,$id_authperso;
 
 		$authperso_seach_title=str_replace("!!name!!",$info_authpersos[$id_authperso]['name'],$msg["search_by_authperso"]);
-		$search_form_authperso=str_replace("!!authperso_seach_title!!",$authperso_seach_title,$search_form_authperso);
+		$search_form_authperso=str_replace("!!authperso_search_title!!",$authperso_seach_title,$search_form_authperso);
 		$search_form_authperso=str_replace("!!base_url!!",$this->base_url,$search_form_authperso);
 		$browser_authperso=str_replace("!!browser_url!!",$browser_url,$browser_authperso);
 		print $search_form_authperso.$browser_authperso;
 	}
 
-	function show_error($car,$input,$error_message) {
-		global $browser_url;
-		global $browser,$search_form_editeur;
-		global $msg;
-		$search_form_editeur=str_replace("!!base_url!!",$this->base_url,$search_form_editeur);
-		print $search_form_editeur;
-		error_message($msg["searcher_syntax_error"],sprintf($msg["searcher_syntax_error_desc"],$car,$input,$error_message));
-		$browser=str_replace("!!browser_url!!",$browser_url,$browser);
-		print $browser;
-	}
-
-	function make_first_search() {
+	public function make_first_search() {
 		global $search_authperso;
 		global $msg,$charset;
 		global $browser,$browser_url,$search_form_authperso;
+		global $info_authpersos,$id_authperso;
 		global $mode;
 
 		$aq=new analyse_query(stripslashes($search_authperso),0,0,1,1);
@@ -3192,6 +2982,8 @@ class searcher_authperso extends searcher {
 				$this->authperso_query=@pmb_mysql_query($rq_authperso);
 				return AUT_LIST;
 			}else {
+				$authperso_seach_title=str_replace("!!name!!",$info_authpersos[$id_authperso]['name'],$msg["search_by_authperso"]);
+				$search_form_authperso=str_replace("!!authperso_search_title!!",$authperso_seach_title,$search_form_authperso);
 				$search_form_authperso=str_replace("!!base_url!!",$this->base_url,$search_form_authperso);
 				print $search_form_authperso;
 				error_message($msg["searcher_no_result"],$msg["searcher_no_result_desc"]);
@@ -3204,7 +2996,7 @@ class searcher_authperso extends searcher {
 		}
 	}
 
-	function make_aut_search() {
+	public function make_aut_search() {
 		global $aut_type,$mag,$charset,$nb_per_page_a_search;
 		global $acces_j;
 		global $mode,$aut_id;
@@ -3229,7 +3021,7 @@ class searcher_authperso extends searcher {
 		$this->text_query=$requete;
 	}
 
-	function store_search() {
+	public function store_search() {
 		global $search_ed;
 		global $show_empty;
 		global $charset;
@@ -3239,7 +3031,7 @@ class searcher_authperso extends searcher {
 		print $this->store_form;
 	}
 
-	function aut_store_search() {
+	public function aut_store_search() {
 		global $charset,$aut_type;
 		$champs="<input type='hidden' name='aut_id' value='".htmlentities(stripslashes($this->id),ENT_QUOTES,$charset)."'/>";
 		$champs.="<input type='hidden' name='aut_type' value='".htmlentities(stripslashes($aut_type),ENT_QUOTES,$charset)."'/>";
@@ -3247,7 +3039,7 @@ class searcher_authperso extends searcher {
 		print $this->store_form;
 	}
 
-	function aut_list() {
+	public function aut_list() {
 		global $msg,$charset;
 		global $search_authperso,$mode;
 
@@ -3267,7 +3059,7 @@ class searcher_authperso extends searcher {
 				$notice_count = pmb_mysql_result(pmb_mysql_query($notice_count_sql), 0, 0);
 
 
-				$isbd=$authperso->get_isbd($p->id_authperso_authority);
+				$isbd = authperso::get_isbd($p->id_authperso_authority);
 				print "<tr class=\"".$pair_impair."\"><td><a href='".$this->base_url."&etat=aut_search&aut_type=authperso&aut_id=".$p->id_authperso_authority."'>".htmlentities($isbd,ENT_QUOTES,$charset)."</a>";
 				print "</td><td>$notice_count</td></tr>\n";
 				$parity++;
@@ -3276,13 +3068,12 @@ class searcher_authperso extends searcher {
 		}
 	}
 
-	function notice_list_common($title) {
+	public function notice_list_common($title) {
 		global $begin_result_liste;
 		global $end_result_liste;
 		global $msg;
 		global $charset;
 		global $pmb_nb_max_tri;
-		global $link,$link_expl,$link_explnum,$link_serial,$link_analysis,$link_bulletin,$link_explnum_serial,$link_explnum_analysis,$link_explnum_bulletin;
 		global $pmb_allow_external_search;
 		global $load_tablist_js,$mode;
 
@@ -3296,65 +3087,21 @@ class searcher_authperso extends searcher {
 			$current=$_SESSION["CURRENT"];
 			if ($current!==false) {
 				$tri_id_info = $_SESSION["tri"] ? "&sort_id=".$_SESSION["tri"] : "";
-				print "&nbsp;<a href='#' onClick=\"openPopUp('./print_cart.php?current_print=$current&action=print_prepare".$tri_id_info."','print',500, 600, -2, -2, 'scrollbars=yes,menubar=0,resizable=yes'); w.focus(); return false;\"><img src='./images/basket_small_20x20.gif' border='0' align='center' alt=\"".$msg["histo_add_to_cart"]."\" title=\"".$msg["histo_add_to_cart"]."\"></a>&nbsp;<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&action_print=print_prepare','print', 500, 600, -2, -2, 'scrollbars=yes,menubar=0'); return false;\"><img src='./images/print.gif' border='0' align='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"/></a>";
-				print "&nbsp;<a href='#' onClick=\"openPopUp('./download.php?current_download=$current&action_download=download_prepare".$tri_id_info."','download',500,600,-2,-2,'scrollbars=yes,menubar=0'); return false;\"><img src='./images/upload_docnum.gif' border='0' align='center' alt=\"".$msg["docnum_download"]."\" title=\"".$msg["docnum_download"]."\"/></a>";
-				if ($pmb_allow_external_search) print "&nbsp;<a href='catalog.php?categ=search&mode=$mode&from_mode=3&external_type=simple' title='".$msg["connecteurs_external_search_sources"]."'><img src='./images/external_search.png' border='0' align='center' alt=\"".$msg["connecteurs_external_search_sources"]."\"/></a>";
-				// on affiche l'icone de tri seulement si on a atteint un nb maxi de résultats
-				if ($this->nbresults<=$pmb_nb_max_tri) {
-
-					//affichage de l'icone de tri
-					echo "<a href=# onClick=\"document.getElementById('history').src='./sort.php?type_tri=notices'; document.getElementById('history').style.display='';return false;\" ";
-					echo "alt=\"".$msg['tris_dispos']."\" title=\"".$msg['tris_dispos']."\">";
-					echo "<img src=./images/orderby_az.gif align=middle hspace=3></a>";
-
-					//si on a un tri actif on affiche sa description
-					if ($_SESSION["tri"]) {
-						echo $msg['tri_par']." ".$this->sort->descriptionTriParId($_SESSION["tri"]);
-					}
-				}
+				print "&nbsp;<a href='#' onClick=\"openPopUp('./print_cart.php?current_print=$current&action=print_prepare".$tri_id_info."','print',500, 600, -2, -2, 'scrollbars=yes,menubar=0,resizable=yes'); w.focus(); return false;\"><img src='".get_url_icon('basket_small_20x20.gif')."' style='border:0px' class='center' alt=\"".$msg["histo_add_to_cart"]."\" title=\"".$msg["histo_add_to_cart"]."\"></a>&nbsp;<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&action_print=print_prepare','print', 500, 600, -2, -2, 'scrollbars=yes,menubar=0'); return false;\"><img src='".get_url_icon('print.gif')."' style='border:0px' class='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"/></a>";
+				print "&nbsp;<a href='#' onClick=\"openPopUp('./download.php?current_download=$current&action_download=download_prepare".$tri_id_info."','download'); return false;\"><img src='".get_url_icon('upload_docnum.gif')."' style='border:0px' class='center' alt=\"".$msg["docnum_download"]."\" title=\"".$msg["docnum_download"]."\"/></a>";
+				if ($pmb_allow_external_search) print "&nbsp;<a href='catalog.php?categ=search&mode=$mode&from_mode=3&external_type=simple' title='".$msg["connecteurs_external_search_sources"]."'><img src='".get_url_icon('external_search.png')."' style='border:0px' class='center' alt=\"".$msg["connecteurs_external_search_sources"]."\"/></a>";
+				print $this->get_display_icon_sort();
 			}
 		}
  		print $this->get_current_search_map(1000);
-		// on lance la requête
-		$recherche_ajax_mode=0;
-		$nb=0;
-		while(($nz=@pmb_mysql_fetch_object($this->t_query))) {
-			$n=@pmb_mysql_fetch_object(@pmb_mysql_query("SELECT * FROM notices WHERE notice_id=".$nz->notice_id));
-			if($nb++>5)$recherche_ajax_mode=1;
-			switch($n->niveau_biblio) {
-				case 'm' :
-					// notice de monographie
-					$display = new mono_display($n, 6, $link, 1, $link_expl, '', $link_explnum,1, 0, 1, 1, "", 1  , false,true,$recherche_ajax_mode,1);
-					print $display->result;
-					break ;
-				case 's' :
-					// on a affaire à un périodique
-					// function serial_display ($id, $level='1', $action_serial='', $action_analysis='', $action_bulletin='', $lien_suppr_cart="", $lien_explnum="", $bouton_explnum=1,$print=0,$show_explnum=1, $show_statut=0, $show_opac_hidden_fields=true, $draggable=0 ) {
-					$serial = new serial_display($n, 6, $link_serial, $link_analysis, $link_bulletin, "", $link_explnum_serial, 0, 0, 1, 1, true, 1,$recherche_ajax_mode );
-					print $serial->result;
-					break;
-				case 'a' :
-					// on a affaire à un article
-					// function serial_display ($id, $level='1', $action_serial='', $action_analysis='', $action_bulletin='', $lien_suppr_cart="", $lien_explnum="", $bouton_explnum=1,$print=0,$show_explnum=1, $show_statut=0, $show_opac_hidden_fields=true, $draggable=0 ) {
-					$serial = new serial_display($n, 6, $link_serial, $link_analysis, $link_bulletin, "", $link_explnum_analysis, 0, 0, 1, 1, true, 1,$recherche_ajax_mode );
-					print $serial->result;
-					break;
-				case 'b' :
-					// on a affaire à un bulletin
-					$rqt_bull_info = "SELECT s.notice_id as id_notice_mere, bulletin_id as id_du_bulletin, b.notice_id as id_notice_bulletin FROM notices as s, notices as b, bulletins WHERE b.notice_id=$n->notice_id and s.notice_id=bulletin_notice and num_notice=b.notice_id";
-					$bull_ids=@pmb_mysql_fetch_object(pmb_mysql_query($rqt_bull_info));
-					$link_notice_bulletin = './catalog.php?categ=serials&sub=bulletinage&action=view&bul_id='.$bull_ids->id_du_bulletin;
-					$link_explnum_bulletin = str_replace("!!bul_id!!",$bull_ids->id_du_bulletin,$link_explnum_bulletin);
-					$display = new mono_display($n, 6, $link_notice_bulletin, 1, $link_expl, '', $link_explnum_bulletin,1, 0, 1, 1, "", 1  , false,true,$recherche_ajax_mode);
-					print $display->result;
-					break;
-			}
-		}
+ 		
+ 		print $this->get_display_records_list();
+ 		
 		// fin de liste
 		print $end_result_liste;
 	}
 
-	function aut_notice_list() {
+	public function aut_notice_list() {
 		global $msg;
 		global $charset;
 		global $aut_type,$mode,$aut_id;
@@ -3363,7 +3110,7 @@ class searcher_authperso extends searcher {
 			case "authperso":
 				$authperso=new authperso($mode-1000);
 				$info=$authperso->get_data();
-				$isbd=$authperso->get_isbd($aut_id);
+				$isbd = authperso::get_isbd($aut_id);
 				$display = "<b>".$info['name']."</b>&nbsp;".htmlentities($isbd,ENT_QUOTES,$charset);
 				$this->human_notice_query=$display;
 				break;
@@ -3371,9 +3118,10 @@ class searcher_authperso extends searcher {
 		$this->notice_list_common($display);
 	}
 
-	function rec_env() {
+	public function rec_env() {
 		global $msg;
 		global $info_authpersos,$id_authperso;
+		global $memo_tempo_table_to_rebuild;
 
 		switch ($this->etat) {
 			case 'first_search':
@@ -3404,17 +3152,23 @@ class searcher_authperso extends searcher {
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['URI']=$this->base_url;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['POST']=$_POST;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['GET']=$_GET;
+					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_LIST_QUERY']=$memo_tempo_table_to_rebuild;	
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_QUERY']=$this->text_query;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['PAGE']=$this->page+1;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]["HUMAN_QUERY"]=$this->human_notice_query;
 				}
 				break;
 			case 'aut_search':
-				if ($_SESSION["CURRENT"]!==false) {
+				if(!isset($_SESSION["session_history"])) $_SESSION["session_history"] = array();
+				if(!is_int($_SESSION["CURRENT"])) {
+					$_SESSION["CURRENT"]=count($_SESSION["session_history"]);
+				}
+				if (($_SESSION["CURRENT"]!==false) && (is_int($_SESSION["CURRENT"]))) {
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['URI']=$this->base_url;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['POST']=$_POST;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['GET']=$_GET;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['PAGE']=$this->page+1;
+					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_LIST_QUERY']=$memo_tempo_table_to_rebuild;	
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_QUERY']=$this->text_query;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['HUMAN_QUERY']=$this->human_notice_query;
 				}
@@ -3423,7 +3177,7 @@ class searcher_authperso extends searcher {
 		$_SESSION["last_required"]=false;
 	}
 
-	static function convert_simple_multi($id_champ) {
+	public static function convert_simple_multi($id_champ) {
 		global $search;
 
 		$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_id"];
@@ -3436,29 +3190,29 @@ class searcher_authperso extends searcher {
 		}
 		//opérateur
 		$op="op_0_".$search[0];
-		global $$op;
-		$$op=$op_;
+		global ${$op};
+		${$op}=$op_;
 
 		//contenu de la recherche
 		$field="field_0_".$search[0];
 		$field_=array();
 		$field_[0]=$valeur_champ;
-		global $$field;
-		$$field=$field_;
+		global ${$field};
+		${$field}=$field_;
 
 		//opérateur inter-champ
 		$inter="inter_0_".$search[0];
-		global $$inter;
-		$$inter="";
+		global ${$inter};
+		${$inter}="";
 
 		//variables auxiliaires
 		$fieldvar_="fieldvar_0_".$search[0];
-		global $$fieldvar_;
-		$$fieldvar_="";
-		$fieldvar=$$fieldvar_;
+		global ${$fieldvar_};
+		${$fieldvar_}="";
+		$fieldvar=${$fieldvar_};
 	}
 
-	static function convert_simple_multi_unimarc($id_champ) {
+	public static function convert_simple_multi_unimarc($id_champ) {
 		global $search;
 
 		$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_id"];
@@ -3479,61 +3233,62 @@ class searcher_authperso extends searcher {
 
 		//opérateur
 		$op="op_0_".$search[0];
-		global $$op;
-		$$op=$op_;
+		global ${$op};
+		${$op}=$op_;
 
 		//contenu de la recherche
 		$field="field_0_".$search[0];
 		$field_=array();
 		$field_[0]=$valeur_champ;
-		global $$field;
-		$$field=$field_;
+		global ${$field};
+		${$field}=$field_;
 
 		//opérateur inter-champ
 		$inter="inter_0_".$search[0];
-		global $$inter;
-		$$inter="";
+		global ${$inter};
+		${$inter}="";
 
 		//variables auxiliaires
 		$fieldvar_="fieldvar_0_".$search[0];
-		global $$fieldvar_;
-		$$fieldvar_="";
-		$fieldvar=$$fieldvar_;
+		global ${$fieldvar_};
+		${$fieldvar_}="";
+		$fieldvar=${$fieldvar_};
 	}
 }
 
 
 class searcher_map extends searcher {
-	var $t_query;
+	public $t_query;
 
 
-	function show_form() {
+	public function show_form() {
 		global $msg;
 		global $dbh;
 		global $charset,$lang;
 		global $search_form_map;
 		global $all_query,$typdoc_query, $statut_query, $docnum_query, $pmb_indexation_docnum_allfields, $pmb_indexation_docnum;
 		global $categ_query,$thesaurus_auto_postage_search,$auto_postage_query;
-		global $thesaurus_concepts_active,$concept_query;
+		global $thesaurus_concepts_active,$concept_query, $thesaurus_concepts_autopostage, $concepts_autopostage_query;
 		global $map_echelle_query,$map_projection_query,$map_ref_query,$map_equinoxe_query;
 		global $pmb_map_size_search_edition;
 		global $pmb_map_base_layer_type;
 		global $pmb_map_base_layer_params;
-		global $map_emprises_query;
+		global $map_emprises_query, $pmb_map_bounding_box;
 
+		if(!isset($typdoc))$typdoc='';
 		// on commence par créer le champ de sélection de document
 		// récupération des types de documents utilisés.
 		$query = "SELECT count(typdoc), typdoc ";
 		$query .= "FROM notices where typdoc!='' GROUP BY typdoc";
 		$result = @pmb_mysql_query($query, $dbh);
-		$toprint_typdocfield .= "  <option value=''>$msg[tous_types_docs]</option>\n";
+		$toprint_typdocfield = "  <option value=''>$msg[tous_types_docs]</option>\n";
 		$doctype = new marc_list('doctype');
 		while (($rt = pmb_mysql_fetch_row($result))) {
 			$obj[$rt[1]]=1;
 			$qte[$rt[1]]=$rt[0];
 		}
 		foreach ($doctype->table as $key=>$libelle){
-			if ($obj[$key]==1){
+			if (isset($obj[$key]) && ($obj[$key]==1)){
 				$toprint_typdocfield .= "  <option ";
 				$toprint_typdocfield .= " value='$key'";
 				if ($typdoc == $key) $toprint_typdocfield .=" selected='selected' ";
@@ -3545,7 +3300,7 @@ class searcher_map extends searcher {
 		$query = "SELECT count(statut), id_notice_statut, gestion_libelle ";
 		$query .= "FROM notices, notice_statut where id_notice_statut=statut GROUP BY id_notice_statut order by gestion_libelle";
 		$result = pmb_mysql_query($query, $dbh);
-		$toprint_statutfield .= "  <option value=''>$msg[tous_statuts_notice]</option>\n";
+		$toprint_statutfield = "  <option value=''>$msg[tous_statuts_notice]</option>\n";
 		while ($obj = @pmb_mysql_fetch_row($result)) {
 			$toprint_statutfield .= "  <option value='$obj[1]'";
 			if ($statut_query==$obj[1]) $toprint_statutfield.=" selected";
@@ -3571,9 +3326,24 @@ class searcher_map extends searcher {
 
 		$size=explode("*",$pmb_map_size_search_edition);
 		if(count($size)!=2)$map_size="width:800px; height:480px;";
-		$map_size= "width:".$size[0]."px; height:".$size[1]."px;";
-
-		if(!$map_emprises_query)$map_emprises_query = array();
+		else $map_size= "width:".$size[0]."; height:".$size[1].";";
+		
+		$initialFit = '';
+		if(!$map_emprises_query){
+			$map_emprises_query = array();
+			if( $pmb_map_bounding_box) {
+            	$map_bounding_box = $pmb_map_bounding_box;
+            } else {
+            	$map_bounding_box = '-5 50,9 50,9 40,-5 40,-5 50';            		
+            }
+            $map_hold = new map_hold_polygon("bounding", 0, "polygon((".$map_bounding_box."))");
+            if ($map_hold) {
+            	$coords = $map_hold->get_coords();
+            	$initialFit = explode(',', map_objects_controler::get_coord_initialFit($coords));
+            } else{
+            	$initialFit = array(0, 0, 0, 0);
+            }
+		}
 		$map_holds=array();
 		foreach($map_emprises_query as $map_hold){
 			$map_holds[] = array(
@@ -3583,7 +3353,7 @@ class searcher_map extends searcher {
 					"objects"=> array()
 			);
 		}
-		$r="<div id='map_search' data-dojo-type='apps/map/map_controler' style='$map_size' data-dojo-props='".$baselayer.",mode:\"search_criteria\",hiddenField:\"map_emprises_query\",searchHolds:".json_encode($map_holds,true)."'></div>";
+		$r="<div id='map_search' data-dojo-type='apps/map/map_controler' style='$map_size' data-dojo-props='".$baselayer.",mode:\"search_criteria\",hiddenField:\"map_emprises_query\",initialFit:".json_encode($initialFit,true).",searchHolds:".json_encode($map_holds,true)."'></div>";
 
 		$search_form_map = str_replace("!!map!!", $r,  $search_form_map);
 
@@ -3613,6 +3383,18 @@ class searcher_map extends searcher {
 			$checkbox = str_replace("!!auto_postage_checked!!",   (($auto_postage_query) ? 'checked' : ''),  $checkbox);
 		}
 		$search_form_map = str_replace("!!auto_postage!!",   $checkbox,  $search_form_map);
+		
+		$checkbox_concepts_autopostage = "";
+		if($thesaurus_concepts_autopostage){
+			$checkbox_concepts_autopostage = "
+			<div class='colonne'>
+				<div class='row'>
+					<input type='checkbox' !!concepts_autopostage_checked!! id='concepts_autopostage_query' name='concepts_autopostage_query'/><label for='concepts_autopostage_query'>".$msg["search_concepts_autopostage_check"]."</label>
+				</div>
+			</div>";
+			$checkbox_concepts_autopostage = str_replace("!!concepts_autopostage_checked!!",   (($concepts_autopostage_query) ? 'checked' : ''),  $checkbox_concepts_autopostage);
+		}
+		$search_form_map = str_replace("!!concepts_autopostage!!", $checkbox_concepts_autopostage, $search_form_map);
 
 		if($pmb_indexation_docnum){
 			$checkbox = "<div class='colonne'>
@@ -3627,7 +3409,7 @@ class searcher_map extends searcher {
 		print pmb_bidi($search_form_map);
 	}
 
-	function make_first_search() {
+	public function make_first_search() {
 		global $msg,$charset,$lang,$dbh;
 		global $all_query,$typdoc_query, $statut_query, $etat, $docnum_query;
 		global $categ_query,$thesaurus_auto_postage_search, $auto_postage_query;
@@ -3645,7 +3427,7 @@ class searcher_map extends searcher {
 		$restrict='';
 
 		//Ou les notices qui ont une catégories qui a une emprise
-		$restriction_emprise.= "and (notices.notice_id IN (select distinct map_emprise_obj_num FROM map_emprises where map_emprise_type=11) or (notices.notice_id IN (select distinct notcateg_notice from notices_categories join map_emprises on map_emprises.map_emprise_obj_num = notices_categories.num_noeud where map_emprises.map_emprise_type=2)))";
+		$restriction_emprise = "and (notices.notice_id IN (select distinct map_emprise_obj_num FROM map_emprises where map_emprise_type=11) or (notices.notice_id IN (select distinct notcateg_notice from notices_categories join map_emprises on map_emprises.map_emprise_obj_num = notices_categories.num_noeud where map_emprises.map_emprise_type=2)))";
 		//$restrict.= "and notice_id IN (select distinct map_emprise_obj_num FROM map_emprises)";
 		$no_results = false;
 
@@ -3733,7 +3515,8 @@ class searcher_map extends searcher {
 
 		//les concepts
 		if($thesaurus_concepts_active && $concept_query && $concept_query != $all_query){
-			$concept_searcher = new searcher_records_concepts(stripslashes($concept_query));
+			$concept_searcher = searcher_factory::get_searcher("records", "concepts",stripslashes($concept_query));
+// 			$concept_searcher = new searcher_records_concepts(stripslashes($concept_query));
 			if($concept_searcher->get_nb_results()){
 				$queries[]=$concept_searcher->get_full_query()." ";
 			}else{
@@ -3743,7 +3526,8 @@ class searcher_map extends searcher {
 
 		//catégorie
 		if($categ_query && $categ_query != $all_query){
-			$categ_searcher = new searcher_records_categories(stripslashes($categ_query));
+			$categ_searcher = searcher_factory::get_searcher("records", "categories",stripslashes($categ_query));
+// 			$categ_searcher = new searcher_records_categories(stripslashes($categ_query));
 			if($categ_searcher->get_nb_results()){
 				$queries[]=$categ_searcher->get_full_query()." ";
 			}else{
@@ -3833,9 +3617,9 @@ class searcher_map extends searcher {
 		return NOTICE_LIST;
 	}
 
-	function store_search() {
+	public function store_search() {
 		global $all_query,$typdoc_query, $statut_query,$categ_query,$docnum_query,$pmb_indexation_docnum;
-		global $thesaurus_concepts_active,$concept_query;
+		global $thesaurus_concepts_active,$concept_query, $thesaurus_concepts_autopostage, $concepts_autopostage_query;
 		global $map_echelle_query,$map_projection_query,$map_ref_query,$map_equinoxe_query,$map_emprises_query;
 		global $charset;
 		$champs="<input type='hidden' name='all_query' value='".htmlentities(stripslashes($all_query),ENT_QUOTES,$charset)."'/>";
@@ -3844,6 +3628,9 @@ class searcher_map extends searcher {
 		$champs.="<input type='hidden' name='categ_query' value='".htmlentities(stripslashes($categ_query),ENT_QUOTES,$charset)."'/>";
 		if($thesaurus_concepts_active){
 			$champs.="<input type='hidden' name='concept_query' value='".htmlentities(stripslashes($concept_query),ENT_QUOTES,$charset)."'/>";
+			if ($thesaurus_concepts_autopostage) {
+				$champs.="<input type='hidden' name='concepts_autopostage_query' value='".$concepts_autopostage_query."'/>";
+			}
 		}
 		$champs.="<input type='hidden' name='map_echelle_query' value='".$map_echelle_query."'/>";
 		$champs.="<input type='hidden' name='map_projection_query' value='".$map_projection_query."'/>";
@@ -3860,14 +3647,13 @@ class searcher_map extends searcher {
 		print $this->store_form;
 	}
 
-	function notice_list_common($title) {
+	public function notice_list_common($title) {
 		global $begin_result_liste;
 		global $end_result_liste;
 		global $msg;
 		global $charset;
 		global $pmb_nb_max_tri;
 		global $all_query,$categ_query;
-		global $link,$link_expl,$link_explnum,$link_serial,$link_analysis,$link_bulletin,$link_explnum_serial,$link_explnum_analysis,$link_explnum_bulletin,$link_notice_bulletin;
 		global $pmb_allow_external_search;
 		global $load_tablist_js;
 
@@ -3886,80 +3672,14 @@ class searcher_map extends searcher {
 					$current=$_SESSION["CURRENT"];
 				}
 				if ($current!==false) {
-					echo "&nbsp;<a href='#' onClick=\"openPopUp('./print_cart.php?current_print=$current&action=print_prepare','print',600,700,-2,-2,'scrollbars=yes,menubar=0,resizable=yes'); return false;\">";
-					echo "<img src='./images/basket_small_20x20.gif' border='0' align='center' alt=\"".$msg["histo_add_to_cart"]."\" title=\"".$msg["histo_add_to_cart"]."\"></a>&nbsp;";
-					$tri_id_info = $_SESSION["tri"] ? "&sort_id=".$_SESSION["tri"] : "";
-					echo "<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&action_print=print_prepare".$tri_id_info."','print',500,600,-2,-2,'scrollbars=yes,menubar=0'); return false;\">";
-					echo "<img src='./images/print.gif' border='0' align='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"/></a>&nbsp;";
-					echo "<a href='#' onClick=\"openPopUp('./download.php?current_download=$current&action_download=download_prepare".$tri_id_info."','download',500,600,-2,-2,'scrollbars=yes,menubar=0'); return false;\">";
-					echo "<img src='./images/upload_docnum.gif' border='0' align='center' alt=\"".$msg["docnum_download"]."\" title=\"".$msg["docnum_download"]."\"/></a>";
-					if ($pmb_allow_external_search) {
-						echo "&nbsp;<a href='catalog.php?categ=search&mode=7&from_mode=0&external_type=simple' title='".$msg["connecteurs_external_search_sources"]."'>";
-						echo "<img src='./images/external_search.png' border='0' align='center' alt=\"".$msg["connecteurs_external_search_sources"]."\"/></a>";
-					}
-
-					// on affiche l'icone de tri seulement si on a atteint un nb maxi de résultats
-					if ($this->nbresults<=$pmb_nb_max_tri) {
-
-						//affichage de l'icone de tri
-						echo "<a href=# onClick=\"document.getElementById('history').src='./sort.php?type_tri=notices'; document.getElementById('history').style.display='';return false;\" ";
-						echo "alt=\"".$msg['tris_dispos']."\" title=\"".$msg['tris_dispos']."\">";
-						echo "<img src=./images/orderby_az.gif align=middle hspace=3></a>";
-
-						//si on a un tri actif on affiche sa description
-						if ($_SESSION["tri"]) {
-							echo $msg['tri_par']." ".$this->sort->descriptionTriParId($_SESSION["tri"]);
-						}
-					}
+					print $this->get_display_icons($current);
 				}
 			}
 
 			print $this->get_current_search_map(11);
-			// on lance la requête
-			$recherche_ajax_mode=0;
-			$nb=0;
-			while(($nz=@pmb_mysql_fetch_object($this->t_query))) {
-				if($nb++>5) $recherche_ajax_mode=1;
-				$n=@pmb_mysql_fetch_object(@pmb_mysql_query("SELECT * FROM notices WHERE notice_id=".$nz->notice_id));
-
-				switch ($n->niveau_biblio) {
-					case 's' :
-						// on a affaire à un périodique
-						$serial = new serial_display($n, 6, $link_serial, $link_analysis, $link_bulletin, "", $link_explnum_serial, 0, 0, 1, 1, true, 1 ,$recherche_ajax_mode);
-						print $serial->result;
-					break;
-					case 'a' :
-						// on a affaire à un article
-						$serial = new serial_display($n, 6, $link_serial, $link_analysis, $link_bulletin, "", $link_explnum_analysis, 0, 0, 1, 1, true, 1 ,$recherche_ajax_mode);
-						print $serial->result;
-					break;
-					case 'b' :
-						// on a affaire à un bulletin
-						$rqt_bull_info = "SELECT s.notice_id as id_notice_mere, bulletin_id as id_du_bulletin, b.notice_id as id_notice_bulletin FROM notices as s, notices as b, bulletins WHERE b.notice_id=$n->notice_id and s.notice_id=bulletin_notice and num_notice=b.notice_id";
-						$bull_ids=@pmb_mysql_fetch_object(pmb_mysql_query($rqt_bull_info));
-						//si on a les droits
-						if(SESSrights & CATALOGAGE_AUTH){
-							//on teste la validité du lien
-							if(!$link_notice_bulletin){
-								$link_notice_bulletin = './catalog.php?categ=serials&sub=bulletinage&action=view&bul_id='.$bull_ids->id_du_bulletin;
-							} else {
-								$link_notice_bulletin = str_replace("!!id!!",$bull_ids->id_du_bulletin,$link_notice_bulletin);
-							}
-						}
-						elseif($link_notice_bulletin) $link_notice_bulletin = str_replace("!!id!!",$bull_ids->id_du_bulletin,$link_notice_bulletin);
-							$link_explnum_bulletin = str_replace("!!bul_id!!",$bull_ids->id_du_bulletin,$link_explnum_bulletin);
-							$display = new mono_display($n, 6, $link_notice_bulletin, 1, $link_expl, '', $link_explnum_bulletin,1, 0, 1, 1, "", 1  , false,true,$recherche_ajax_mode);
-							$link_notice_bulletin='';
-							print $display->result;
-					break;
-					default:
-					case 'm' :
-						// notice de monographie
-						$display = new mono_display($n, 6, $link, 1, $link_expl, '', $link_explnum,1, 0, 1, 1, "", 1   , false,true,$recherche_ajax_mode,1);
-						print $display->result;
-						break ;
-				}
-			}
+			
+			print $this->get_display_records_list();
+			
 			// fin de liste
 			print $end_result_liste;
 		} else {
@@ -3970,18 +3690,19 @@ class searcher_map extends searcher {
 		}
 	}
 
-	function notice_list() {
+	public function notice_list() {
 		global $msg,$dbh;
 		global $charset;
 		global $all_query,$categ_query;
 		global $thesaurus_concepts_active,$concept_query;
 		global $map_echelle_query,$map_projection_query,$map_ref_query,$map_equinoxe_query,$map_emprises_query;
-
+		
+		$research = '';
 		if($this->docnum){
-			$libelle = " [".$msg[docnum_search_with]."]";
+			$libelle = " [".$msg['docnum_search_with']."]";
 		} else $libelle ='';
 		if ($all_query) {
-			$research.="<b>${msg[global_search]}$libelle</b>&nbsp;".htmlentities(stripslashes($all_query),ENT_QUOTES,$charset);
+			$research.="<b>".$msg['global_search'].$libelle."</b>&nbsp;".htmlentities(stripslashes($all_query),ENT_QUOTES,$charset);
 		}
 		if ($categ_query) {
 			if ($research != "") $research .= ", ";
@@ -4034,8 +3755,10 @@ class searcher_map extends searcher {
 		$this->notice_list_common($research);
 	}
 
-	function rec_env() {
+	public function rec_env() {
 		global $msg;
+		global $memo_tempo_table_to_rebuild;
+		
 		switch ($this->etat) {
 			case 'first_search':
 				if ((string)$this->page=="") {
@@ -4058,6 +3781,7 @@ class searcher_map extends searcher {
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['URI']=$this->base_url;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['POST']=$_POST;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['GET']=$_GET;
+					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_LIST_QUERY']=$memo_tempo_table_to_rebuild;	
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_QUERY']=$this->text_query;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['PAGE']=$this->page+1;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]["HUMAN_QUERY"]=$this->human_notice_query;
@@ -4069,7 +3793,7 @@ class searcher_map extends searcher {
 		$_SESSION["last_required"]=false;
 	}
 
-	static function convert_simple_multi($id_champ) {
+	public static function convert_simple_multi($id_champ) {
 		global $search;
 
 		$x=0;
@@ -4080,26 +3804,26 @@ class searcher_map extends searcher {
 			$search[$x]="f_6";
 			//opérateur
 			$op="op_".$x."_".$search[$x];
-			global $$op;
-			$$op=$op_;
+			global ${$op};
+			${$op}=$op_;
 
 			//contenu de la recherche
 			$field="field_".$x."_".$search[$x];
 			$field_=array();
 			$field_[0]=$valeur_champ;
-			global $$field;
-			$$field=$field_;
+			global ${$field};
+			${$field}=$field_;
 
 			//opérateur inter-champ
 			$inter="inter_".$x."_".$search[$x];
-			global $$inter;
-			$$inter="";
+			global ${$inter};
+			${$inter}="";
 
 			//variables auxiliaires
 			$fieldvar_="fieldvar_".$x."_".$search[$x];
-			global $$fieldvar_;
-			$$fieldvar_="";
-			$fieldvar=$$fieldvar_;
+			global ${$fieldvar_};
+			${$fieldvar_}="";
+			$fieldvar=${$fieldvar_};
 			$x++;
 		}
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["all_query"]) {
@@ -4109,28 +3833,28 @@ class searcher_map extends searcher {
 			$search[$x]="f_7";
 			//opérateur
 			$op="op_".$x."_".$search[$x];
-			global $$op;
-			$$op=$op_;
+			global ${$op};
+			${$op}=$op_;
 
 			//contenu de la recherche
 			$field="field_".$x."_".$search[$x];
 			$field_=array();
 			$field_[0]=$valeur_champ;
-			global $$field;
-			$$field=$field_;
+			global ${$field};
+			${$field}=$field_;
 
 			//opérateur inter-champ
 			$inter="inter_".$x."_".$search[$x];
-			global $$inter;
-			$$inter="";
+			global ${$inter};
+			${$inter}="";
 
 			//variables auxiliaires
 			$fieldvar_="fieldvar_".$x."_".$search[$x];
-			global $$fieldvar_;
+			global ${$fieldvar_};
 			$t["is_num"][0]=$_SESSION["session_history"][$id_champ]["NOTI"]["DOCNUM_QUERY"];
 			$t["ck_affiche"][0]=$_SESSION["session_history"][$id_champ]["NOTI"]["DOCNUM_QUERY"];
-			$$fieldvar_=$t;
-			$fieldvar=$$fieldvar_;
+			${$fieldvar_}=$t;
+			$fieldvar=${$fieldvar_};
 			$x++;
 		}
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["author_query"]) {
@@ -4141,29 +3865,29 @@ class searcher_map extends searcher {
 
 			//opérateur
 			$op="op_".$x."_".$search[$x];
-			global $$op;
-			$$op=$op_;
+			global ${$op};
+			${$op}=$op_;
 
 			//contenu de la recherche
 			$field="field_".$x."_".$search[$x];
 			$field_=array();
 			$field_[0]=$valeur_champ;
-			global $$field;
-			$$field=$field_;
+			global ${$field};
+			${$field}=$field_;
 
 			//opérateur inter-champ
 			$inter="inter_".$x."_".$search[$x];
-			global $$inter;
+			global ${$inter};
 			if ($x>0) {
-				$$inter="and";
+				${$inter}="and";
 			} else {
-				$$inter="";
+				${$inter}="";
 			}
 			//variables auxiliaires
 			$fieldvar_="fieldvar_".$x."_".$search[$x];
-			global $$fieldvar_;
-			$$fieldvar_="";
-			$fieldvar=$$fieldvar_;
+			global ${$fieldvar_};
+			${$fieldvar_}="";
+			$fieldvar=${$fieldvar_};
 			$x++;
 		} else {
 			if ($_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_id"]) {
@@ -4173,30 +3897,30 @@ class searcher_map extends searcher {
 				$search[$x]="f_8";
 				//opérateur
 				$op="op_".$x."_".$search[$x];
-				global $$op;
-				$$op=$op_;
+				global ${$op};
+				${$op}=$op_;
 
 				//contenu de la recherche
 				$field="field_".$x."_".$search[$x];
 				$field_=array();
 				$field_[0]=$valeur_champ;
-				global $$field;
-				$$field=$field_;
+				global ${$field};
+				${$field}=$field_;
 
 				//opérateur inter-champ
 				$inter="inter_".$x."_".$search[$x];
-				global $$inter;
+				global ${$inter};
 				if ($x>0) {
-					$$inter="and";
+					${$inter}="and";
 				} else {
-					$$inter="";
+					${$inter}="";
 				}
 
 				//variables auxiliaires
 				$fieldvar_="fieldvar_".$x."_".$search[$x];
-				global $$fieldvar_;
-				$$fieldvar_="";
-				$fieldvar=$$fieldvar_;
+				global ${$fieldvar_};
+				${$fieldvar_}="";
+				$fieldvar=${$fieldvar_};
 				$x++;
 			}
 		}
@@ -4206,29 +3930,29 @@ class searcher_map extends searcher {
 			$search[$x]="f_9";
 			//opérateur
 			$op="op_".$x."_".$search[$x];
-			global $$op;
-			$$op=$op_;
+			global ${$op};
+			${$op}=$op_;
 
 			//contenu de la recherche
 			$field="field_".$x."_".$search[$x];
 			$field_=array();
 			$field_[0]=$valeur_champ;
-			global $$field;
-			$$field=$field_;
+			global ${$field};
+			${$field}=$field_;
 
 			//opérateur inter-champ
 			$inter="inter_".$x."_".$search[$x];
-			global $$inter;
+			global ${$inter};
 			if ($x>0) {
-				$$inter="and";
+				${$inter}="and";
 			} else {
-				$$inter="";
+				${$inter}="";
 			}
 			//variables auxiliaires
 			$fieldvar_="fieldvar_".$x."_".$search[$x];
-			global $$fieldvar_;
-			$$fieldvar_="";
-			$fieldvar=$$fieldvar_;
+			global ${$fieldvar_};
+			${$fieldvar_}="";
+			$fieldvar=${$fieldvar_};
 			$x++;
 		}
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["statut_query"]) {
@@ -4237,29 +3961,29 @@ class searcher_map extends searcher {
 			$search[$x]="f_10";
 			//opérateur
 			$op="op_".$x."_".$search[$x];
-			global $$op;
-			$$op=$op_;
+			global ${$op};
+			${$op}=$op_;
 
 			//contenu de la recherche
 			$field="field_".$x."_".$search[$x];
 			$field_=array();
 			$field_[0]=$valeur_champ;
-			global $$field;
-			$$field=$field_;
+			global ${$field};
+			${$field}=$field_;
 
 			//opérateur inter-champ
 			$inter="inter_".$x."_".$search[$x];
-			global $$inter;
+			global ${$inter};
 			if ($x>0) {
-				$$inter="and";
+				${$inter}="and";
 			} else {
-				$$inter="";
+				${$inter}="";
 			}
 			//variables auxiliaires
 			$fieldvar_="fieldvar_".$x."_".$search[$x];
-			global $$fieldvar_;
-			$$fieldvar_="";
-			$fieldvar=$$fieldvar_;
+			global ${$fieldvar_};
+			${$fieldvar_}="";
+			$fieldvar=${$fieldvar_};
 		}
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["map_emprises_query"]) {
 			$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["map_emprises_query"];
@@ -4267,23 +3991,23 @@ class searcher_map extends searcher {
 			$search[$x]="f_78";
 			//opérateur
 			$op="op_".$x."_".$search[$x];
-			global $$op;
-			$$op=$op_;
+			global ${$op};
+			${$op}=$op_;
 
 			//contenu de la recherche
 			$field="field_".$x."_".$search[$x];
 			$field_=array();
 			$field_=$valeur_champ;
-			global $$field;
-			$$field=$field_;
+			global ${$field};
+			${$field}=$field_;
 
 			//opérateur inter-champ
 			$inter="inter_".$x."_".$search[$x];
-			global $$inter;
+			global ${$inter};
 			if ($x>0) {
-				$$inter="and";
+				${$inter}="and";
 			} else {
-				$$inter="";
+				${$inter}="";
 			}
 		}
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["map_echelle_query"]) {
@@ -4292,23 +4016,23 @@ class searcher_map extends searcher {
 			$search[$x]="f_74";
 			//opérateur
 			$op="op_".$x."_".$search[$x];
-			global $$op;
-			$$op=$op_;
+			global ${$op};
+			${$op}=$op_;
 
 			//contenu de la recherche
 			$field="field_".$x."_".$search[$x];
 			$field_=array();
 			$field_=$valeur_champ;
-			global $$field;
-			$$field=$field_;
+			global ${$field};
+			${$field}=$field_;
 
 			//opérateur inter-champ
 			$inter="inter_".$x."_".$search[$x];
-			global $$inter;
+			global ${$inter};
 			if ($x>0) {
-				$$inter="and";
+				${$inter}="and";
 			} else {
-				$$inter="";
+				${$inter}="";
 			}
 		}
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["map_projection_query"]) {
@@ -4317,23 +4041,23 @@ class searcher_map extends searcher {
 			$search[$x]="f_75";
 			//opérateur
 			$op="op_".$x."_".$search[$x];
-			global $$op;
-			$$op=$op_;
+			global ${$op};
+			${$op}=$op_;
 
 			//contenu de la recherche
 			$field="field_".$x."_".$search[$x];
 			$field_=array();
 			$field_=$valeur_champ;
-			global $$field;
-			$$field=$field_;
+			global ${$field};
+			${$field}=$field_;
 
 			//opérateur inter-champ
 			$inter="inter_".$x."_".$search[$x];
-			global $$inter;
+			global ${$inter};
 			if ($x>0) {
-				$$inter="and";
+				${$inter}="and";
 			} else {
-				$$inter="";
+				${$inter}="";
 			}
 		}
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["map_ref_query"]) {
@@ -4342,23 +4066,23 @@ class searcher_map extends searcher {
 			$search[$x]="f_76";
 			//opérateur
 			$op="op_".$x."_".$search[$x];
-			global $$op;
-			$$op=$op_;
+			global ${$op};
+			${$op}=$op_;
 
 			//contenu de la recherche
 			$field="field_".$x."_".$search[$x];
 			$field_=array();
 			$field_=$valeur_champ;
-			global $$field;
-			$$field=$field_;
+			global ${$field};
+			${$field}=$field_;
 
 			//opérateur inter-champ
 			$inter="inter_".$x."_".$search[$x];
-			global $$inter;
+			global ${$inter};
 			if ($x>0) {
-				$$inter="and";
+				${$inter}="and";
 			} else {
-				$$inter="";
+				${$inter}="";
 			}
 		}
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["map_equinoxe_query"]) {
@@ -4367,23 +4091,23 @@ class searcher_map extends searcher {
 			$search[$x]="f_77";
 			//opérateur
 			$op="op_".$x."_".$search[$x];
-			global $$op;
-			$$op=$op_;
+			global ${$op};
+			${$op}=$op_;
 
 			//contenu de la recherche
 			$field="field_".$x."_".$search[$x];
 			$field_=array();
 			$field_=$valeur_champ;
-			global $$field;
-			$$field=$field_;
+			global ${$field};
+			${$field}=$field_;
 
 			//opérateur inter-champ
 			$inter="inter_".$x."_".$search[$x];
-			global $$inter;
+			global ${$inter};
 			if ($x>0) {
-				$$inter="and";
+				${$inter}="and";
 			} else {
-				$$inter="";
+				${$inter}="";
 			}
 		}
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["categ_query"]) {
@@ -4392,23 +4116,23 @@ class searcher_map extends searcher {
 			$search[$x]="f_1";
 			//opérateur
 			$op="op_".$x."_".$search[$x];
-			global $$op;
-			$$op=$op_;
+			global ${$op};
+			${$op}=$op_;
 
 			//contenu de la recherche
 			$field="field_".$x."_".$search[$x];
 			$field_=array();
 			$field_=$valeur_champ;
-			global $$field;
-			$$field=$field_;
+			global ${$field};
+			${$field}=$field_;
 
 			//opérateur inter-champ
 			$inter="inter_".$x."_".$search[$x];
-			global $$inter;
+			global ${$inter};
 			if ($x>0) {
-				$$inter="and";
+				${$inter}="and";
 			} else {
-				$$inter="";
+				${$inter}="";
 			}
 		}
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["concept_query"]) {
@@ -4417,23 +4141,23 @@ class searcher_map extends searcher {
 			$search[$x]="f_1000";
 			//opérateur
 			$op="op_".$x."_".$search[$x];
-			global $$op;
-			$$op=$op_;
+			global ${$op};
+			${$op}=$op_;
 
 			//contenu de la recherche
 			$field="field_".$x."_".$search[$x];
 			$field_=array();
 			$field_=$valeur_champ;
-			global $$field;
-			$$field=$field_;
+			global ${$field};
+			${$field}=$field_;
 
 			//opérateur inter-champ
 			$inter="inter_".$x."_".$search[$x];
-			global $$inter;
+			global ${$inter};
 			if ($x>0) {
-				$$inter="and";
+				${$inter}="and";
 			} else {
-				$$inter="";
+				${$inter}="";
 			}
 		}
 	}

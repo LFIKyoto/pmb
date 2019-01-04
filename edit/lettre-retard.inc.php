@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lettre-retard.inc.php,v 1.40 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: lettre-retard.inc.php,v 1.41 2017-07-12 15:15:00 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 require_once($include_path."/sms.inc.php");
@@ -14,89 +14,89 @@ function get_texts($relance) {
 	global $biblio_name, $biblio_phone, $biblio_email;
 
 	$var = "pdflettreretard_".$relance."fdp";
-	global $$var;
-	eval ("\$fdp=\"".$$var."\";");
+	global ${$var};
+	eval ("\$fdp=\"".${$var}."\";");
 
 	// le texte après la liste des ouvrages en retard
 	$var = "pdflettreretard_".$relance."after_list";
-	global $$var;
-	eval ("\$after_list=\"".$$var."\";");
+	global ${$var};
+	eval ("\$after_list=\"".${$var}."\";");
 	
 	// Le texte avant la liste des ouvrages qui passeront en recouvrement
 	$var = "pdflettreretard_".$relance."before_recouvrement";
-	global $$var;
-	eval ("\$before_recouvrement=\"".$$var."\";");
+	global ${$var};
+	eval ("\$before_recouvrement=\"".${$var}."\";");
 	
 	// Le texte après la liste des ouvrages qui passeront en recouvrement
 	$var = "pdflettreretard_".$relance."after_recouvrement";
-	global $$var;
-	eval ("\$after_recouvrement=\"".$$var."\";");
+	global ${$var};
+	eval ("\$after_recouvrement=\"".${$var}."\";");
 		
 	
 	// la position verticale limite du texte after_liste (si >, saut de page et impression)
 	$var = "pdflettreretard_".$relance."limite_after_list";
-	global $$var;
-	$limite_after_list = $$var;
+	global ${$var};
+	$limite_after_list = ${$var};
 			
 	// le texte avant la liste des ouvrges en retard
 	$var = "pdflettreretard_".$relance."before_list";
-	global $$var;
-	eval ("\$before_list=\"".$$var."\";");
+	global ${$var};
+	eval ("\$before_list=\"".${$var}."\";");
 	
 	// le "Madame, Monsieur," ou tout autre truc du genre "Cher adhérent,"
 	$var = "pdflettreretard_".$relance."madame_monsieur";
-	global $$var;
-	eval ("\$madame_monsieur=\"".$$var."\";");
+	global ${$var};
+	eval ("\$madame_monsieur=\"".${$var}."\";");
 	
 	// le nombre de blocs expl à imprimer sur la première page
 	$var = "pdflettreretard_".$relance."nb_1ere_page";
-	global $$var;
-	$nb_1ere_page = $$var;
+	global ${$var};
+	$nb_1ere_page = ${$var};
 	
 	// le nombre de blocs expl à imprimer sur les pages suivantes
 	$var = "pdflettreretard_".$relance."nb_par_page";
-	global $$var;
-	$nb_par_page = $$var;
+	global ${$var};
+	$nb_par_page = ${$var};
 	
 	// la taille d'un bloc expl en retard affiché
 	$var = "pdflettreretard_".$relance."taille_bloc_expl";
-	global $$var;
-	$taille_bloc_expl = $$var;
+	global ${$var};
+	$taille_bloc_expl = ${$var};
 	
 	// la position verticale du premier bloc expl sur la première page
 	$var = "pdflettreretard_".$relance."debut_expl_1er_page";
-	global $$var;
-	$debut_expl_1er_page = $$var;
+	global ${$var};
+	$debut_expl_1er_page = ${$var};
 	
 	// la position verticale du premier bloc expl sur les pages suivantes
 	$var = "pdflettreretard_".$relance."debut_expl_page";
-	global $$var;
-	$debut_expl_page = $$var;
+	global ${$var};
+	$debut_expl_page = ${$var};
 	
 	// la marge gauche des pages
 	$var = "pdflettreretard_".$relance."marge_page_gauche";
-	global $$var;
-	$marge_page_gauche = $$var;
+	global ${$var};
+	$marge_page_gauche = ${$var};
 	
 	// la marge droite des pages
 	$var = "pdflettreretard_".$relance."marge_page_droite";
-	global $$var;
-	$marge_page_droite = $$var;
+	global ${$var};
+	$marge_page_droite = ${$var};
 	
 	// la largeur des pages
 	$var = "pdflettreretard_1largeur_page";
-	global $$var;
-	$largeur_page = $$var;
+	global ${$var};
+	$largeur_page = ${$var};
 	
 	// la hauteur des pages
 	$var = "pdflettreretard_1hauteur_page";
-	global $$var;
-	$hauteur_page = $$var;
+	global ${$var};
+	$hauteur_page = ${$var};
 	
 	// le format des pages
 	$var = "pdflettreretard_1format_page";
-	global $$var;
-	$format_page = $$var;
+	global ${$var};
+	$format_page = ${$var};
 } // fin function get_texts
 
 function get_texts_group($relance) {
@@ -104,78 +104,78 @@ function get_texts_group($relance) {
 	global $biblio_name, $biblio_phone, $biblio_email;
 
 	$var = "pdflettreretard_".$relance."fdp_group";
-	global $$var;
-	eval ("\$fdp_group=\"".$$var."\";");
+	global ${$var};
+	eval ("\$fdp_group=\"".${$var}."\";");
 
 	// le texte après la liste des ouvrages en retard
 	$var = "pdflettreretard_".$relance."after_list_group";
-	global $$var;
-	eval ("\$after_list_group=\"".$$var."\";");		
+	global ${$var};
+	eval ("\$after_list_group=\"".${$var}."\";");		
 	
 	// la position verticale limite du texte after_liste (si >, saut de page et impression)
 	$var = "pdflettreretard_".$relance."limite_after_list";
-	global $$var;
-	$limite_after_list = $$var;
+	global ${$var};
+	$limite_after_list = ${$var};
 			
 	// le texte avant la liste des ouvrges en retard
 	$var = "pdflettreretard_".$relance."before_list_group";
-	global $$var;
-	eval ("\$before_list_group=\"".$$var."\";");
+	global ${$var};
+	eval ("\$before_list_group=\"".${$var}."\";");
 	
 	// le "Madame, Monsieur," ou tout autre truc du genre "Cher adhérent,"
 	$var = "pdflettreretard_".$relance."madame_monsieur_group";
-	global $$var;
-	eval ("\$madame_monsieur_group=\"".$$var."\";");
+	global ${$var};
+	eval ("\$madame_monsieur_group=\"".${$var}."\";");
 	
 	// le nombre de blocs expl à imprimer sur la première page
 	$var = "pdflettreretard_".$relance."nb_1ere_page";
-	global $$var;
-	$nb_1ere_page = $$var;
+	global ${$var};
+	$nb_1ere_page = ${$var};
 	
 	// le nombre de blocs expl à imprimer sur les pages suivantes
 	$var = "pdflettreretard_".$relance."nb_par_page";
-	global $$var;
-	$nb_par_page = $$var;
+	global ${$var};
+	$nb_par_page = ${$var};
 	
 	// la taille d'un bloc expl en retard affiché
 	$var = "pdflettreretard_".$relance."taille_bloc_expl";
-	global $$var;
-	$taille_bloc_expl = $$var;
+	global ${$var};
+	$taille_bloc_expl = ${$var};
 	
 	// la position verticale du premier bloc expl sur la première page
 	$var = "pdflettreretard_".$relance."debut_expl_1er_page";
-	global $$var;
-	$debut_expl_1er_page = $$var;
+	global ${$var};
+	$debut_expl_1er_page = ${$var};
 	
 	// la position verticale du premier bloc expl sur les pages suivantes
 	$var = "pdflettreretard_".$relance."debut_expl_page";
-	global $$var;
-	$debut_expl_page = $$var;
+	global ${$var};
+	$debut_expl_page = ${$var};
 	
 	// la marge gauche des pages
 	$var = "pdflettreretard_".$relance."marge_page_gauche";
-	global $$var;
-	$marge_page_gauche = $$var;
+	global ${$var};
+	$marge_page_gauche = ${$var};
 	
 	// la marge droite des pages
 	$var = "pdflettreretard_".$relance."marge_page_droite";
-	global $$var;
-	$marge_page_droite = $$var;
+	global ${$var};
+	$marge_page_droite = ${$var};
 	
 	// la largeur des pages
 	$var = "pdflettreretard_1largeur_page";
-	global $$var;
-	$largeur_page = $$var;
+	global ${$var};
+	$largeur_page = ${$var};
 	
 	// la hauteur des pages
 	$var = "pdflettreretard_1hauteur_page";
-	global $$var;
-	$hauteur_page = $$var;
+	global ${$var};
+	$hauteur_page = ${$var};
 	
 	// le format des pages
 	$var = "pdflettreretard_1format_page";
-	global $$var;
-	$format_page = $$var;
+	global ${$var};
+	$format_page = ${$var};
 } // fin function get_texts_group
 
 $largeur_page=$pdflettreretard_1largeur_page;

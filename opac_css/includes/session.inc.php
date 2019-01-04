@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: session.inc.php,v 1.32.2.1 2015-10-07 12:46:15 arenou Exp $
+// $Id: session.inc.php,v 1.47 2018-11-29 07:50:19 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -18,17 +18,31 @@ session_cache_limiter('must-revalidate');
 
 session_start();
 
+$result=pmb_mysql_query("SELECT CURRENT_DATE()");
+$today = pmb_mysql_result($result, 0, 0);
+
 $check_empr = checkEmpr("PmbOpac");
 if (!$check_empr) {
 	unset($_SESSION["user_code"]);
 }
 
-$logout = $_GET["logout"];
-
+if(isset($_GET["logout"])) {
+	$logout = $_GET["logout"];
+}
 if (!isset($logout)) $logout=0;
 
 //Sauvegarde de l'environnement
-if ($_SESSION["user_code"]) {
+if (isset($_SESSION["user_code"]) && $_SESSION["user_code"]) {
+	if(isset($_SESSION['cart_anonymous'])){
+		unset($_SESSION['cart_anonymous']);
+	}
+	$requete="select count(*) from opac_sessions where empr_id='".$_SESSION["id_empr_session"]."'";
+	if(!pmb_mysql_result(pmb_mysql_query($requete), 0, 0)) {
+		//Première connexion à l'OPAC
+		$_SESSION['empr_first_authentication'] = 1;
+	} else {
+		$_SESSION['empr_first_authentication'] = 0;
+	}
 	$requete="replace into opac_sessions (empr_id,session) values(".$_SESSION["id_empr_session"].",'".addslashes(serialize($_SESSION))."')";
 	pmb_mysql_query($requete);
 }
@@ -54,9 +68,9 @@ if ($logout) {
 }
 
 //Si session en cours, récupération des préférences utilisateur
-if ($_SESSION["user_code"]) {
+if (isset($_SESSION["user_code"]) && $_SESSION["user_code"]) {
 	
-	if($_SESSION["user_expired"] ){
+	if(isset($_SESSION["user_expired"]) && $_SESSION["user_expired"]){
 		$req_param = "select valeur_param from parametres where sstype_param='adhesion_expired_status' and type_param='opac'";
 		$res_param = pmb_mysql_query($req_param,$dbh);
 		if($res_param && pmb_mysql_result($res_param,0,0)){
@@ -76,6 +90,11 @@ if ($_SESSION["user_code"]) {
 			$droit_tag= $data_expired['allow_tag'];
 			$droit_pwd= $data_expired['allow_pwd'];
 			$droit_liste_lecture = $data_expired['allow_liste_lecture'];
+			$droit_self_checkout = $data_expired['allow_self_checkout'];
+			$droit_self_checkin = $data_expired['allow_self_checkin'];
+			$droit_serialcirc = $data_expired['allow_serialcirc'];
+			$droit_scan_request = $data_expired['allow_scan_request'];
+			$droit_contribution = $data_expired['allow_contribution'];
 		}	else {
 			$droit_loan= 1;
 			$droit_loan_hist=1;
@@ -90,6 +109,11 @@ if ($_SESSION["user_code"]) {
 			$droit_tag= 1;
 			$droit_pwd= 1;
 			$droit_liste_lecture = 1;
+			$droit_self_checkout=1;
+			$droit_self_checkin=1;
+			$droit_serialcirc=1;
+			$droit_scan_request = 1;
+			$droit_contribution = 1;
 		}		
 	} else {
 		$droit_loan= 1;
@@ -105,6 +129,11 @@ if ($_SESSION["user_code"]) {
 		$droit_tag= 1;
 		$droit_pwd= 1;
 		$droit_liste_lecture = 1;
+		$droit_self_checkout=1;
+		$droit_self_checkin=1;
+		$droit_serialcirc=1;
+		$droit_scan_request = 1;
+		$droit_contribution = 1;
 	}
 	//Préférences utilisateur
 	$query0 = "select * from empr, empr_statut where empr_login='".$_SESSION['user_code']."' and idstatut=empr_statut limit 1";
@@ -129,6 +158,9 @@ if ($_SESSION["user_code"]) {
 	$empr_login= $data['empr_login'];
 	$empr_password= $data['empr_password'];
 	$empr_location= $data['empr_location'];
+	$empr_date_adhesion= $data['empr_date_adhesion'];
+	$empr_date_expiration= $data['empr_date_expiration'];
+	$empr_statut= $data['empr_statut'];
 	
 	// droits de l'utilisateur
 	$allow_loan= $data['allow_loan'] & $droit_loan;
@@ -144,12 +176,38 @@ if ($_SESSION["user_code"]) {
 	$allow_tag= $data['allow_tag'] & $droit_tag;
 	$allow_pwd= $data['allow_pwd'] & $droit_pwd;
 	$allow_liste_lecture = $data['allow_liste_lecture'] & $droit_liste_lecture;
+	$allow_self_checkout= $data['allow_self_checkout'] & $droit_self_checkout;
+	$allow_self_checkin= $data['allow_self_checkin'] & $droit_self_checkin;
+	$allow_serialcirc= $data['allow_serialcirc'] & $droit_serialcirc;
+	$allow_scan_request = $data['allow_scan_request'] & $droit_scan_request;
+	$allow_contribution = $data['allow_contribution'] & $droit_contribution;
 }else{
 	//pas de session authentifiée... AR veut une trace quand même
 	check_anonymous_session('PmbOpac');
+	$allow_loan= 0;
+	$allow_loan_hist= 0;
+	$allow_book= 0;
+	$allow_opac= 0;
+	$allow_dsi= 0;
+	$allow_dsi_priv= 0;
+	$allow_sugg= 0;
+	$allow_dema= 0;
+	$allow_prol= 0;
+	$allow_avis= 0;
+	$allow_tag= 0;
+	$allow_pwd= 0;
+	$allow_liste_lecture = 0;
+	$allow_self_checkout= 0;
+	$allow_self_checkin= 0;
+	$allow_serialcirc= 0;
+	$allow_scan_request = 0;
+	$allow_contribution = 0;
 }
 
 // message de debug messages ?
 if ($check_messages==-1) $_SESSION["CHECK-MESSAGES"] = 0;
 if ($check_messages==1) $_SESSION["CHECK-MESSAGES"] = 1;
+
+if(!isset($_SESSION["id_empr_session"])) $_SESSION["id_empr_session"] = '';
+if(!isset($_SESSION["user_code"])) $_SESSION["user_code"] = '';
 	

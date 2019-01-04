@@ -1,13 +1,25 @@
 // gestion des listes "collapsibles" en Javascript
-// $Id: tablist.js,v 1.21 2015-01-20 15:35:18 vtouchard Exp $
+// $Id: tablist.js,v 1.38 2018-10-29 16:01:03 ngantier Exp $
 
 if(!base_path) var base_path = '.';
 var imgOpened = new Image();
-imgOpened.src = base_path+'/images/minus.gif';
+if(typeof pmb_img_minus != 'undefined') {
+	imgOpened.src = pmb_img_minus;
+} else {
+	imgOpened.src = base_path+'/images/minus.gif';
+}
 var imgClosed = new Image();
-imgClosed.src = base_path+'/images/plus.gif';
+if(typeof pmb_img_plus != 'undefined') {
+	imgClosed.src = pmb_img_plus;
+} else {
+	imgOpened.src = base_path+'/images/plus.gif';
+}
 var imgPatience =new Image();
-imgPatience.src = base_path+'/images/patience.gif';
+if(typeof pmb_img_patience != 'undefined') {
+	imgPatience.src = pmb_img_patience;
+} else {
+	imgOpened.src = base_path+'/images/patience.gif';
+}
 var expandedDb = '';
 
 
@@ -46,10 +58,20 @@ function expandAll_ajax_callback(text,el) {
 	var whichEl = document.getElementById(el + 'Child');
   	whichEl.innerHTML = text ;
   	if(typeof(dojo) == "object"){
+  		
   		dojo.parser.parse(whichEl);
+  		require(['dojo/dom-construct', 'dojo/query'], function(domConstruct, query){
+			query('script', whichEl).forEach(function(node) {
+				domConstruct.create('script', {
+					innerHTML: node.innerHTML,
+					type: 'text/javascript'
+				}, node, 'replace');
+			});
+  		});
   	}
+  	publishDojoResize();
  }
- 
+
 function expandAll_ajax_callback_error(status,text,el) {
  }
  
@@ -59,52 +81,66 @@ function expandAll_ajax_callback_block(text,el) {
 	for(var i = 0; i < res.length; i++){
 		var res_notice=res[i].split("|*|");
 		if(res_notice[0] &&  res_notice[1]) {
-			var whichEl = document.getElementById('el' + res_notice[0] + 'Child');
+			if (res_notice[2]) {
+				var whichEl = document.getElementById(res_notice[2] + 'Child');
+			} else {
+				var whichEl = document.getElementById('el' + res_notice[0] + 'Child');
+			}
 	  		whichEl.innerHTML = res_notice[1] ;	
 	  		if(typeof(dojo) == "object"){
 	  	  		dojo.parser.parse(whichEl);
+	  	  		require(['dojo/dom-construct', 'dojo/query'], function(domConstruct, query){
+	  				query('script', whichEl).forEach(function(node) {
+	  					domConstruct.create('script', {
+	  						innerHTML: node.innerHTML,
+	  						type: 'text/javascript'
+	  					}, node, 'replace');
+	  				});
+	  	  		});
 	  	  	}
   		}
 	}
+	publishDojoResize();
  }
  
 function expandAll_ajax_callback_block_error(status,text,el) {
  }
  
-function expandAll_ajax(start) {
-	var tempColl_img    = document.getElementsByTagName('IMG');
-	var tempColl    = document.getElementsByTagName('DIV');
+function expandAll_ajax(start, context) {
+	if ((context == undefined) || !context) context = document;
+	var tempColl_img = context.querySelectorAll('img[name="imEx"]');	
+	var tempCollNoticeChild = context.querySelectorAll('div[class~="notice-child"]');
+	var tempCollChild = context.querySelectorAll('div[class~="child"]');
+	var tempColl = Array.prototype.slice.call(tempCollNoticeChild).concat(Array.prototype.slice.call(tempCollChild));
+	
 	var liste_id='';
 	var display_cmd='';
 	var nb_to_send=0;
 	var nb=0;
 	if (!start)start=0;
 	for (var i =start; i < tempColl.length; i++) {
- 		if ((tempColl[i].className == 'notice-child') || (tempColl[i].className == 'child')) {
-     		tempColl[i].style.display = 'block';
-     		nb++;
-     		if(nb >5){
-     			setTimeout('expandAll_ajax('+i+')',0);
-     			return;
-     		}	
-     		var callback = tempColl[i].getAttribute("callback");
-	 	    if(callback){
-	 	   	  window[callback]();
-	 	    }
-	 	    if(typeof ajax_resize_elements == "function"){
-	 	   	  ajax_resize_elements();
-	 	    }
-     	}
+ 		tempColl[i].style.display = 'block';
+ 		nb++;     
+ 		if(nb >5){
+ 			setTimeout(function() {expandAll_ajax(i, context);},0);
+ 			return;
+ 		}
+ 		var callback = tempColl[i].getAttribute("callback");
+ 	    if(callback){
+ 	   	  window[callback]();
+ 	    }
+ 	    if(typeof ajax_resize_elements == "function"){
+ 	   	  ajax_resize_elements();
+ 	    }
 	    changeCoverImage(tempColl[i]);	    
-  	} 	
+  	}
+	
 	for (var i = 0; i < tempColl_img.length; i++) {
-    	if(tempColl_img[i].name == 'imEx') {
+		if(Array.prototype.slice.call(tempColl_img[i].parentElement.classList).indexOf('notice-parent')!= -1 || Array.prototype.slice.call(tempColl_img[i].parentElement.classList).indexOf('parent')!= -1){
 			tempColl_img[i].src = imgOpened.src;
-		}  		
-		if(tempColl_img[i].name == 'imEx') {
+			
 			var obj_id=tempColl_img[i].getAttribute('id');
 	 		var el=obj_id.replace(/Img/,'');
-	 	
 	 		if(!expand_state[el]) {
 	    		var mono_display_cmd= tempColl_img[i].getAttribute('param');
 	    		expand_state[el]=1;
@@ -112,7 +148,7 @@ function expandAll_ajax(start) {
 	    		if(mono_display_cmd) {
 	    			nb_to_send++;
 	    			document.getElementById(el + 'Child').innerHTML = "<div style='width:100%; height:30px;text-align:center'><img style='padding 0 auto;' src='"+imgPatience.src+"' id='collapseall' border='0'></div>";
-	    			display_cmd+=mono_display_cmd;
+	    			display_cmd+=mono_display_cmd+'|*|'+el;
 	    			if (i<(tempColl_img.length -1))display_cmd+='|*|*|';
 	    			if(nb_to_send>40) {
 	    				setTimeout('expandAll_ajax_block_suite(\'display_cmd='+display_cmd+'\')',0);
@@ -123,6 +159,7 @@ function expandAll_ajax(start) {
 			}    
     	}
 	} 
+	publishDojoResize();
 	if(nb_to_send)setTimeout('expandAll_ajax_block_suite(\'display_cmd='+display_cmd+'\')',0);
 }
 
@@ -130,23 +167,27 @@ function expandAll_ajax_block_suite(post_data ) {
 	// On initialise la classe:
 	var req = new http_request();
 	//	alert( post_data);
-	// Exécution de la requette (url, post_flag ,post_param, async_flag, func_return, func_error) 
+	// Exï¿½cution de la requette (url, post_flag ,post_param, async_flag, func_return, func_error) 
 	req.request(base_path+"/ajax.php?module=ajax&categ=expand_block",1,post_data,1,expandAll_ajax_callback_block,expandAll_ajax_callback_block_error);
 } 
 
 function expandAll_ajax_suite(post_data,el ) {
 	// On initialise la classe:
 	var req = new http_request();
-	// Exécution de la requette (url, post_flag ,post_param, async_flag, func_return, func_error) 
+	// Exï¿½cution de la requette (url, post_flag ,post_param, async_flag, func_return, func_error) 
 	req.request(base_path+"/ajax.php?module=ajax&categ=expand",1,post_data,1,expandAll_ajax_callback,expandAll_ajax_callback_error,el);
 }
 
-function expandAll() {
-  var tempColl    = document.getElementsByTagName('DIV');
+function expandAll(context) {
+  if ((context == undefined) || !context) context = document;
+  var tempCollNoticeChild = context.querySelectorAll('div[class~="notice-child"]');
+  var tempCollChild = context.querySelectorAll('div[class~="child"]');
+  var tempColl = Array.prototype.slice.call(tempCollNoticeChild).concat(Array.prototype.slice.call(tempCollChild));
+  
   var tempCollCnt = tempColl.length;
   for (var i = 0; i < tempCollCnt; i++) {
-     if ((tempColl[i].className == 'notice-child') || (tempColl[i].className == 'child'))
-     tempColl[i].style.display = 'block';
+     if (tempColl[i].previousElementSibling.style.display != 'none')
+    	 tempColl[i].style.display = 'block';
      var callback = tempColl[i].getAttribute("callback");
      if(callback){
    	  window[callback]();
@@ -156,29 +197,33 @@ function expandAll() {
      }
      changeCoverImage(tempColl[i]);
   }
-  tempColl    = document.getElementsByTagName('IMG');
+  publishDojoResize();
+  tempColl    = context.querySelectorAll('img[name="imEx"]');
   tempCollCnt = tempColl.length;
   for (var i = 0; i < tempCollCnt; i++) {
-     if(tempColl[i].name == 'imEx') {
-       tempColl[i].src = imgOpened.src;
-     }
+	  tempColl[i].src = imgOpened.src;
   }
 }
 
-function collapseAll() {
-  var tempColl    = document.getElementsByTagName('DIV');
+function collapseAll(context) {
+  if ((context == undefined) || !context) context = document;
+  var tempCollNoticeChild = context.querySelectorAll('div[class~="notice-child"]');
+  var tempCollChild = context.querySelectorAll('div[class~="child"]');
+  var tempColl = Array.prototype.slice.call(tempCollNoticeChild).concat(Array.prototype.slice.call(tempCollChild));
+  
   var tempCollCnt = tempColl.length;
   for (var i = 0; i < tempCollCnt; i++) {
-     if ((tempColl[i].className == 'notice-child') || (tempColl[i].className == 'child'))
      tempColl[i].style.display = 'none';
   }
-  tempColl    = document.getElementsByTagName('IMG');
+  tempColl    = context.querySelectorAll('img[name="imEx"]');
   tempCollCnt = tempColl.length;
   for (var i = 0; i < tempCollCnt; i++) {
-     if(tempColl[i].name == 'imEx') {
-       tempColl[i].src = imgClosed.src;
+	  //on teste sur 2 niveaux
+     if(Array.prototype.slice.call(tempColl[i].parentElement.classList).indexOf('notice-parent') != -1 || Array.prototype.slice.call(tempColl[i].parentElement.classList).indexOf('parent')!= -1 || Array.prototype.slice.call(tempColl[i].parentElement.parentElement.classList).indexOf('notice-parent') != -1 || Array.prototype.slice.call(tempColl[i].parentElement.parentElement.classList).indexOf('parent') != -1) {
+    	 tempColl[i].src = imgClosed.src;
      }
   }
+  publishDojoResize();
 }
 
 function initIt() {
@@ -186,14 +231,18 @@ function initIt() {
 //    alert("ce navigateur n'est pas compatible avec le DOM.");
     return;
   }
-  var tempColl    = document.getElementsByTagName('DIV');
+  var tempCollNoticeChild = document.querySelectorAll('div[class~="notice-child"]');
+  var tempCollChild = document.querySelectorAll('div[class~="child"]');
+  var tempColl = Array.prototype.slice.call(tempCollNoticeChild).concat(Array.prototype.slice.call(tempCollChild));
   var tempCollCnt = tempColl.length;
   for (var i = 0; i < tempCollCnt; i++) {
-     if ((tempColl[i].className == 'notice-child') || (tempColl[i].className == 'child')) {
-     	if (tempColl[i].getAttribute('startOpen') == 'Yes' ) {
-     		expandBase (tempColl[i].id.substring(0,tempColl[i].id.indexOf('Child')), true);
-     	   } else tempColl[i].style.display = 'none';
-       }
+ 	if(tempColl[i].hasAttribute('startOpen')){
+		if (tempColl[i].getAttribute('startOpen') == 'Yes' ) {
+	 		expandBase (tempColl[i].id.substring(0,tempColl[i].id.indexOf('Child')), true);
+	 	} else {
+	 		tempColl[i].style.display = 'none';
+	 	}
+	  }
   }
 } // end of the 'initIt()' function
 
@@ -218,7 +267,7 @@ function expandBase_ajax(el, unexpand,	mono_display_cmd) {
 			    var url= base_path+"/ajax.php?module=ajax&categ=expand";	 
 				// On initialise la classe:
 				var req = new http_request();
-				// Exécution de la requette (url, post_flag ,post_param, async_flag, func_return, func_error) 
+				// Exï¿½cution de la requette (url, post_flag ,post_param, async_flag, func_return, func_error) 
 				req.request(url,1,'mono_display_cmd='+mono_display_cmd,1,expandAll_ajax_callback,expandAll_ajax_callback_error,el);
 			expand_state[el]=1;
 		
@@ -236,19 +285,18 @@ function expandBase_ajax(el, unexpand,	mono_display_cmd) {
   if(typeof ajax_resize_elements == "function"){
 	  ajax_resize_elements();
   }
-
+  publishDojoResize();
 } // end of the 'expandBase()' function
 
 function expandBase(el, unexpand) {
   if (!isDOM)
     return;
-
   var whichEl = document.getElementById(el + 'Child');
   var whichIm = document.getElementById(el + 'Img');
   var callback = whichEl.getAttribute("callback");
   if (whichEl.style.display == 'none') {
     whichEl.style.display  = 'block';
-    if (whichIm)whichIm.src            = imgOpened.src;
+    if (whichIm)whichIm.src = imgOpened.src;
     changeCoverImage(whichEl);
   }
   else if (unexpand) {
@@ -261,6 +309,19 @@ function expandBase(el, unexpand) {
   if(typeof ajax_resize_elements == "function"){
 	  ajax_resize_elements();
   }
+  publishDojoResize();
 } // end of the 'expandBase()' function
 
-onload = initIt;
+function publishDojoResize(){
+	if(typeof require == "function"){
+		  require(['dojo/topic'], function(topic){
+			  topic.publish('tablist', 'tablist', 'expand');
+		  });  
+	  }
+}
+
+//on prï¿½vient les doubles inclusions du fichier selon le contexte...
+if (typeof addLoadEventTablistJs == "undefined" && typeof addLoadEvent != "undefined") {
+	addLoadEvent(initIt);
+	addLoadEventTablistJs = true;
+}

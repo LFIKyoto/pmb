@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: z3950.class.php,v 1.18.4.1 2015-09-15 14:32:56 apetithomme Exp $
+// $Id: z3950.class.php,v 1.24 2018-11-05 14:09:15 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -30,39 +30,24 @@ function _item_z3950_($param) {
 }
 
 class z3950 extends connector {
-	//Variables internes pour la progression de la récupération des notices
-	var $del_old;				//Supression ou non des notices dejà existantes
-	var $profiles;				//Profils par défaut
+	public $profiles;				//Profils par défaut
 	
-	//Résultat de la synchro
-	var $error;					//Y-a-t-il eu une erreur	
-	var $error_message;			//Si oui, message correspondant
+	public $convert_path_order=array();	//Table de correspondance entre le chemin d'une conversion et son suméro d'ordre
 	
-	var $convert_path_order=array();	//Table de correspondance entre le chemin d'une conversion et son suméro d'ordre
-	
-    function z3950($connector_path="") {
-    	parent::connector($connector_path);
+    public function __construct($connector_path="") {
+    	parent::__construct($connector_path);
     }
     
-    function get_id() {
+    public function get_id() {
     	return "z3950";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 2;
 	}
     
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-    
-    function get_profiles() {
+    public function get_profiles() {
     	$xml_profile=file_get_contents($this->connector_path."/profil.xml");
     	$param=_parser_text_no_function_($xml_profile,"PROFILES");
     	for ($i=0; $i<count($param["PROFILE"]); $i++) {
@@ -84,7 +69,7 @@ class z3950 extends connector {
     	}
     }
     
-    function parse_convert_catalog() {
+    public function parse_convert_catalog() {
     	global $catalog,$base_path;
     	//Liste des transformations possibles avant import
 		$catalog=array();
@@ -98,7 +83,7 @@ class z3950 extends connector {
     	$this->convert_path_order=$catalog;
     }
     
-    function source_get_property_form($source_id) {
+    public function source_get_property_form($source_id) {
     	global $charset,$base_path,$catalog,$reload;
     	
     	if (!$reload) {    	
@@ -107,8 +92,8 @@ class z3950 extends connector {
 				//Affichage du formulaire avec $params["PARAMETERS"]
 				$vars=unserialize($params["PARAMETERS"]);
 				foreach ($vars as $key=>$val) {
-					global $$key;
-					$$key=$val;
+					global ${$key};
+					${$key}=$val;
 				}	
 			}
     	} else {
@@ -259,8 +244,8 @@ class z3950 extends connector {
 				if ($reload) {
 					foreach ($values["OPERATORS"] as $op=>$top) {
 						$bibli="bib1_".str_replace("\$","",$ufield)."_".$op."_0";
-						global $$bibli;
-						$$bibli=$profil["ufields"][$ufield];
+						global ${$bibli};
+						${$bibli}=$profil["ufields"][$ufield];
 						if ($profil["operators"][$op]) {
 							$ops=explode(",",$profil["operators"][$op]);
 							for ($i=0; $i<count($ops); $i++) {
@@ -269,32 +254,32 @@ class z3950 extends connector {
 							}
 							for ($i=1; $i<6; $i++) {
 								$bibli="bib1_".str_replace("\$","",$ufield)."_".$op."_".$i;
-								global $$bibli;
-								$$bibli="";
+								global ${$bibli};
+								${$bibli}="";
 								if ($opst[$i+1]) {
-									$$bibli=$opst[$i+1];
+									${$bibli}=$opst[$i+1];
 								}
 							}
 						} else {
 							for ($i=1; $i<6; $i++) {
 								$bibli="bib1_".str_replace("\$","",$ufield)."_".$op."_".$i;
-								global $$bibli;
-								$$bibli="";
+								global ${$bibli};
+								${$bibli}="";
 							}
 						}
 					} 						
 				} else if (count($z3950_bib1)) {
 					foreach ($z3950_bib1 as $bib1=>$bib1_value) {
-						global $$bib1;
-						$$bib1=$bib1_value;
+						global ${$bib1};
+						${$bib1}=$bib1_value;
 					}
 				}
 				foreach ($values["OPERATORS"] as $op=>$top) {
 					$form_bib1.="<tr><td>".htmlentities(($top?$top:$op),ENT_QUOTES,$charset)."</td>";
 					for ($i=0; $i<6; $i++) {
 						$bibli="bib1_".str_replace("\$","",$ufield)."_".$op."_".$i;
-						global $$bibli;
-						$form_bib1.="<td class='quadrille_sub'><input type='text' name='bib1_".str_replace("\$","",$ufield)."_".$op."_".$i."' value='".htmlentities($$bibli,ENT_QUOTES,$charset)."' style='width:4em'/></td>";
+						global ${$bibli};
+						$form_bib1.="<td class='quadrille_sub'><input type='text' name='bib1_".str_replace("\$","",$ufield)."_".$op."_".$i."' value='".htmlentities(${$bibli},ENT_QUOTES,$charset)."' style='width:4em'/></td>";
 					}
 					$form_bib1.="</tr>";
 				}
@@ -311,7 +296,7 @@ class z3950 extends connector {
 		return $form;
     }
     
-    function make_serialized_source_properties($source_id) {
+    public function make_serialized_source_properties($source_id) {
     	global $url,$z3950_base,$z3950_login,$z3950_password,$z3950_max_notices,$z3950_format,$z3950_port,$z3950_convert,$z3950_profil, $action_xsl_expl;
     	$t["url"]=stripslashes($url);
     	$t["z3950_base"]=stripslashes($z3950_base);
@@ -330,8 +315,8 @@ class z3950 extends connector {
   			foreach ($values["OPERATORS"] as $op=>$top) {
   				for ($i=0; $i<6; $i++) {
   					$bib1="bib1_".str_replace("\$","",$ufield)."_".$op."_".$i;
-  					global $$bib1;
-  					$t["z3950_bib1"][$bib1]=$$bib1;
+  					global ${$bib1};
+  					$t["z3950_bib1"][$bib1]=${$bib1};
   				}
   			}
   		}
@@ -354,27 +339,7 @@ class z3950 extends connector {
 	
 	}
 	
-	//Récupération  des proriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
-		$this->timeout=5;
-		$this->repository=2;
-		$this->retry=3;
-		$this->ttl=1800;
-		$this->parameters="";
-	}
-	
-	 //Formulaire des propriétés générales
-	function get_property_form() {
-		global $charset;
-		$this->fetch_global_properties();
-		//Affichage du formulaire en fonction de $this->parameters
-	}
-    
-    function make_serialized_properties() {
-		//Mise en forme des paramètres à partir de variables globales (mettre le résultat dans $this->parameters)
-	}
-	
-	function rec_record($record,$source_id,$search_id) {
+	public function rec_record($record,$source_id,$search_id) {
 		global $charset,$base_path;
 		$date_import=date("Y-m-d H:i:s",time());
 		$r=array();
@@ -420,14 +385,11 @@ class z3950 extends connector {
 		if ($ref) {
 			//Si conservation des anciennes notices, on regarde si elle existe
 			if (!$this->del_old) {
-				$requete="select count(*) from entrepot_source_$source_id where ref='".addslashes($ref)."'";
-				$rref=pmb_mysql_query($requete);
-				if ($rref) $ref_exists=pmb_mysql_result($rref,0,0);
+				$ref_exists = $this->has_ref($source_id, $ref);
 			}
 			//Si pas de conservation des anciennes notices, on supprime
 			if ($this->del_old) {
-				$requete="delete from entrepot_source_$source_id where ref='".addslashes($ref)."'";
-				pmb_mysql_query($requete);
+				$this->delete_from_entrepot($source_id, $ref);
 				$this->delete_from_external_count($source_id, $ref);
 			}
 			//Si pas de conservation ou reférence inexistante
@@ -441,64 +403,42 @@ class z3950 extends connector {
 				$n_header["dt"]=$record["dt"];
 				
 				//Récupération d'un ID
-				$requete="insert into external_count (recid, source_id) values('".addslashes($this->get_id()." ".$source_id." ".$ref)."', $source_id)";
-				$rid=pmb_mysql_query($requete);
-				if ($rid) $recid=pmb_mysql_insert_id();
+				$recid = $this->insert_into_external_count($source_id, $ref);
 				
 				foreach($n_header as $hc=>$code) {
-					$requete="insert into entrepot_source_$source_id (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid,search_id) values(
-					'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".$date_import."',
-					'".$hc."','',-1,0,'".addslashes($code)."','',$recid,'".addslashes($search_id)."')";
-					pmb_mysql_query($requete);
+					$this->insert_header_into_entrepot($source_id, $ref, $date_import, $hc, $code, $recid, $search_id);
 				}
 				$field_order=0;
 				foreach($exemplaires as $exemplaire) {
 					$sub_field_order = 0;
 					foreach($exemplaire as $exkey => $exvalue) {
-						$requete="insert into entrepot_source_$source_id (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid,search_id) values(
-						'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".$date_import."',
-						'996','".addslashes($exkey)."',".$field_order.",".$sub_field_order.",'".addslashes($exvalue)."',
-						' ".addslashes(strip_empty_words($exvalue))." ',$recid,'".addslashes($search_id)."')";
-						pmb_mysql_query($requete);
+						$this->insert_content_into_entrepot($source_id, $ref, $date_import, '996', $exkey, $field_order, $sub_field_order, $exvalue, $recid, $search_id);
 						$sub_field_order++;						
 					}					
 					$field_order++;					
 				}
 				foreach ($record as $field=>$val) {
-					for ($i=0; $i<count($val); $i++) {
-						if (is_array($val[$i])) {
-							foreach ($val[$i] as $sfield=>$vals) {
-								for ($j=0; $j<count($vals); $j++) {
-									$requete="insert into entrepot_source_$source_id (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid,search_id) values(
-									'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".$date_import."',
-									'".addslashes($field)."','".addslashes($sfield)."',".$field_order.",".$j.",'".addslashes($vals[$j])."',
-									' ".addslashes(strip_empty_words($vals[$j]))." ',$recid,'".addslashes($search_id)."')";
-									pmb_mysql_query($requete);
+					if(is_array($val)){//On ne remet pas les champs rs, el, ...
+						for ($i=0; $i<count($val); $i++) {
+							if (is_array($val[$i])) {
+								foreach ($val[$i] as $sfield=>$vals) {
+									for ($j=0; $j<count($vals); $j++) {
+										$this->insert_content_into_entrepot($source_id, $ref, $date_import, $field, $sfield, $field_order, $j, $vals[$j], $recid, $search_id);
+									}
 								}
+							} else {
+								$this->insert_content_into_entrepot($source_id, $ref, $date_import, $field, '', $field_order, 0, $val[$i], $recid, $search_id);
 							}
-						} else {
-							$requete="insert into entrepot_source_$source_id (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid) values(
-							'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".$date_import."',
-							'".addslashes($field)."','',".$field_order.",0,'".addslashes($val[$i])."',
-							' ".addslashes(strip_empty_words($val[$i]))." ',$recid,'".addslashes($search_id)."')";
-							pmb_mysql_query($requete);
+							$field_order++;//Un champ peut-être répété pour une même notice
 						}
 					}
-					$field_order++;
 				}
+				$this->rec_isbd_record($source_id, $ref, $recid);
 			}
 		}
 	}
-		
-	function cancel_maj($source_id) {
-		return false;
-	}
 	
-	function break_maj($source_id) {
-		return false;
-	}
-	
-	function parse_query($query) {
+	public function parse_query($query) {
 		global $z3950_bib1;
 		$r="";
 		
@@ -543,20 +483,7 @@ class z3950 extends connector {
 		return $r;
 	}
 	
-	function apply_xsl_to_xml($xml, $xsl) {
-		global $charset;
-		$xh = xslt_create();
-		xslt_set_encoding($xh, $charset);
-		$arguments = array(
-	   	  '/_xml' => $xml,
-	   	  '/_xsl' => $xsl
-		);
-		$result = xslt_process($xh, 'arg:/_xml', 'arg:/_xsl', NULL, $arguments);
-		xslt_free($xh);
-		return $result;		
-	}
-	
-	function get_convert_order($path) {
+	public function get_convert_order($path) {
 		if (count($this->convert_path_order)==0) {
 			$this->parse_convert_catalog();
 		}
@@ -567,7 +494,7 @@ class z3950 extends connector {
 	}
 	
 	//Fonction de recherche
-	function search($source_id,$query,$search_id) {
+	public function search($source_id,$query,$search_id) {
 		global $base_path, $charset, $include_path;
 		
 		//global $url,$z3950_base,$z3950_login,$z3950_password,$z3950_max_notices,$z3950_format,$z3950_port,$z3950_convert,$z3950_profil;
@@ -579,8 +506,8 @@ class z3950 extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		
@@ -618,8 +545,7 @@ class z3950 extends connector {
 					//Conversion de la notice en XML
 					$xmlunimarc=new xml_unimarc();
 					$nxml=$xmlunimarc->iso2709toXML_notice($cnotice);
-					if ($xmlunimarc->is_utf8) $rcharset="utf-8"; else $rcharset=$charset;
-					$xmlunimarc->notices_xml_[0] = '<?xml version="1.0" encoding="'.$rcharset.'"?>'.$xmlunimarc->notices_xml_[0];
+					$xmlunimarc->notices_xml_[0] = '<?xml version="1.0" encoding="'.$charset.'"?>'.$xmlunimarc->notices_xml_[0];
 					if ($xslt_exemplaire) {
 						$xmlunimarc->notices_xml_[0] = $this->apply_xsl_to_xml($xmlunimarc->notices_xml_[0], $xslt_exemplaire["content"]);
 					}
@@ -631,10 +557,6 @@ class z3950 extends connector {
 				}
 			}
 		}
-	}
-	
-	function maj_entrepot($source_id,$callback_progress="",$recover=false,$recover_env="") {
-		return 0;
 	}
 }
 ?>

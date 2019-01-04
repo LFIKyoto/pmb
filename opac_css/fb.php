@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fb.php,v 1.11 2013-09-09 07:28:06 apetithomme Exp $
+// $Id: fb.php,v 1.13 2017-07-12 15:15:02 tsamson Exp $
 $base_path=".";
 require_once($base_path."/includes/global_vars.inc.php");
 require_once($base_path.'/includes/opac_config.inc.php');
@@ -12,7 +12,7 @@ $args = explode("&", $url);
 $url_location = $args[0]; 
 for($i=1; $i<count($args);$i++) {
 	$key_value = explode("=",$args[$i]);
-	$$key_value[0] = $key_value[1];
+	${$key_value[0]} = $key_value[1];
 }
 
 print "
@@ -25,7 +25,7 @@ print "
 		<title>".htmlentities(stripslashes($title),ENT_QUOTES,$charset)."</title>
 		
 		<script type='text/javascript'>
-			document.location='".htmlentities($url_location,ENT_QUOTES,$charset).($id ? "&id=$id" : "")."'
+			document.location='".htmlentities($url_location,ENT_QUOTES,$charset).($id ? "&id=$id" : "").($opac_view ? "&opac_view=$opac_view" : "")."'
 		</script>
 	</head>
 </html>";

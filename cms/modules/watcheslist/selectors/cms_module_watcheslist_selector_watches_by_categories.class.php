@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_watcheslist_selector_watches_by_categories.class.php,v 1.2 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: cms_module_watcheslist_selector_watches_by_categories.class.php,v 1.3 2016-09-20 10:25:42 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -41,17 +41,24 @@ class cms_module_watcheslist_selector_watches_by_categories extends cms_module_w
 			if($this->parameters['sub_selector']){
 				$sub_selector = $this->get_selected_sub_selector();
 				$sub_value = $sub_selector->get_value();
-				if(!is_array($sub_value)){
-					$sub_value = array($sub_value);
+				if(!is_array($sub_value) && $sub_value){
+					$sub_value = array($sub_value*1);
 				}
 				if($this->parameters['get_children_categories']){
 					$sub_value =$this->get_children_categories($sub_value);
 				}
-				$query = "select id_watch from docwatch_watches where watch_num_category in (".implode(",",$sub_value).")";
-				$result = pmb_mysql_query($query,$dbh);
-				if(pmb_mysql_num_rows($result)){
-					while($row = pmb_mysql_fetch_object($result)){
-						$this->value[] = $row->id_watch;
+				if(count($sub_value)){
+					$temp = array();
+					foreach ($sub_value as $value) {
+						$temp[] = $value*1;
+					}
+					$sub_value = $temp;
+					$query = "select id_watch from docwatch_watches where watch_num_category in ('".implode("','",$sub_value)."')";
+					$result = pmb_mysql_query($query,$dbh);
+					if(pmb_mysql_num_rows($result)){
+						while($row = pmb_mysql_fetch_object($result)){
+							$this->value[] = $row->id_watch;
+						}
 					}
 				}
 			}

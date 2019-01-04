@@ -2,39 +2,16 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: includes_etagere.inc.php,v 1.21 2015-04-03 11:16:16 jpermanne Exp $
+// $Id: includes_etagere.inc.php,v 1.23 2018-02-08 15:18:05 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($base_path."/includes/init.inc.php");
-include_once($base_path."/includes/error_report.inc.php") ;
-include_once($base_path."/includes/global_vars.inc.php");
-require_once($base_path."/includes/opac_config.inc.php");
-	
-// récupération paramètres MySQL et connection á la base
-require_once($base_path."/includes/opac_db_param.inc.php");
-require_once($base_path."/includes/opac_mysql_connect.inc.php");
-$dbh = connection_mysql();
 
-include_once($base_path."/includes/misc.inc.php");
-
-//Sessions !! Attention, ce doit être impérativement le premier include (à cause des cookies)
-require_once($base_path."/includes/session.inc.php");
-
-require_once($base_path."/includes/start.inc.php");
-require_once($base_path."/includes/check_session_time.inc.php");
-
-// récupération localisation
-require_once($base_path."/includes/localisation.inc.php");
-
-// version actuelle de l'opac
-require_once($base_path."/includes/opac_version.inc.php");
-
-// fonctions de gestion de formulaire
-require_once($base_path."/includes/javascript/form.inc.php");
+//fichiers nécessaires au bon fonctionnement de l'environnement
+require_once($base_path."/includes/common_includes.inc.php");
 
 require_once($base_path."/includes/templates/common.tpl.php");
-require_once($base_path."/includes/divers.inc.php");
 
 // classe de gestion des catégories
 require_once($base_path."/classes/categorie.class.php");
@@ -47,14 +24,10 @@ require_once($base_path."/classes/indexint.class.php");
 // classe d'affichage des tags
 require_once($base_path.'/classes/tags.class.php');
 
-require_once($base_path."/includes/marc_tables/".$pmb_indexation_lang."/empty_words");
-
 // pour l'affichage correct des notices
 require_once($base_path."/includes/templates/common.tpl.php");
 require_once($base_path."/includes/templates/notice.tpl.php");
 require_once($base_path."/includes/navbar.inc.php");
-require_once($base_path."/includes/notice_authors.inc.php");
-require_once($base_path."/includes/notice_categories.inc.php");
 
 require_once($base_path."/includes/notice_affichage.inc.php");
 

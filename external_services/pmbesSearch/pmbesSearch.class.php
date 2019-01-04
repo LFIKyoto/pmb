@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesSearch.class.php,v 1.23 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: pmbesSearch.class.php,v 1.32 2018-11-26 14:32:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -19,40 +19,38 @@ define("ERROR_SEARCH_UNKNOWN_FIELD",1);
 
 
 class pmbesSearch extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
 
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	
-	function update_session_date($session_id) {
+	public function update_session_date($session_id) {
 		global $dbh;
 		$sql = "UPDATE es_searchsessions SET es_searchsession_lastseendate = NOW() WHERE es_searchsession_id = '".addslashes($session_id)."'";
 		pmb_mysql_query($sql, $dbh);
 	}
 	
-	function noticeids_to_recordformats($noticesids, $record_format, $recordcharset='iso-8859-1', $includeLinks=true, $includeItems=false) {
+	public function noticeids_to_recordformats($noticesids, $record_format, $recordcharset='iso-8859-1', $includeLinks=true, $includeItems=false) {
 		$converter = new external_services_converter_notices(1, 600);
 		$converter->set_params(array("include_links" => $includeLinks, "include_items" => $includeItems, "include_authorite_ids" => true));
 		return $converter->convert_batch($noticesids, $record_format, $recordcharset);
 	}
 
-	function external_noticeids_to_recordformats($noticesids, $record_format, $recordcharset='iso-8859-1') {
+	public function external_noticeids_to_recordformats($noticesids, $record_format, $recordcharset='iso-8859-1') {
 		$converter = new external_services_converter_external_notices(4, 600);
 		$converter->set_params(array());
 		return $converter->convert_batch($noticesids, $record_format, $recordcharset);
 	}
 	
-	function make_search($search_realm, $PMBUserId, $OPACEmprId) {
+	public function make_search($search_realm, $PMBUserId, $OPACEmprId) {
 		global $dbh;
 		global $pmb_external_service_session_duration;
 		$pmb_external_service_session_duration+=0;
@@ -82,7 +80,7 @@ class pmbesSearch extends external_services_api_class {
 	}
 	
 
-	function simpleSearch($searchType=0,$searchTerm="",$PMBUserId=-1, $OPACEmprId=-1) {
+	public function simpleSearch($searchType=0,$searchTerm="",$PMBUserId=-1, $OPACEmprId=-1) {
 		
 		global $charset;
 		if ($this->proxy_parent->input_charset!='utf-8' && $charset == 'utf-8') {
@@ -121,11 +119,11 @@ class pmbesSearch extends external_services_api_class {
 			global $search;
 			$search[0]="f_".$searchId;
 			$field="field_0_".$search[0];
-			global $$field;
-			$$field=array($searchTerm);
+			global ${$field};
+			${$field}=array($searchTerm);
 			$op="op_0_".$search[0];
-			global $$op;
-			$$op="BOOLEAN";
+			global ${$op};
+			${$op}="BOOLEAN";
 			
 			return $this->make_search('search_simple_fields', $PMBUserId, $OPACEmprId);
 			
@@ -133,7 +131,7 @@ class pmbesSearch extends external_services_api_class {
 
 	}
 	
-	function simpleSearchLocalise($searchType=0,$searchTerm="",$PMBUserId=-1, $OPACEmprId=-1,$location,$section=0) {
+	public function simpleSearchLocalise($searchType=0,$searchTerm="",$PMBUserId=-1, $OPACEmprId=-1,$location,$section=0) {
 		global $dbh;
 		
 		global $charset;
@@ -181,13 +179,13 @@ class pmbesSearch extends external_services_api_class {
 			global $search;
 			$search[0]="f_".$searchId;
 			$field="field_0_".$search[0];
-			global $$field;
-			$$field=array($searchTerm);
+			global ${$field};
+			${$field}=array($searchTerm);
 			$op="op_0_".$search[0];
-			global $$op;
-			$$op="BOOLEAN";
+			global ${$op};
+			${$op}="BOOLEAN";
 			$fieldvar="fieldvar_0_".$search[0];
-			global $$fieldvar;
+			global ${$fieldvar};
 			${$fieldvar}["location"][0] = $location;
 			if($section){
 				${$fieldvar}["section"][0] = $section;
@@ -200,7 +198,7 @@ class pmbesSearch extends external_services_api_class {
 
 	}
 	
-	function getAdvancedSearchFields($search_realm, $vlang, $fetch_values) {
+	public function getAdvancedSearchFields($search_realm, $vlang, $fetch_values) {
 		global $dbh, $msg, $lang, $include_path, $class_path;
 
 		//Allons chercher les infos dans le cache si elles existent
@@ -258,8 +256,9 @@ class pmbesSearch extends external_services_api_class {
 		foreach ($s->dynamicfields as $prefix => $content) {
 			$pp = new parametres_perso($content['TYPE']);
 			foreach($pp->t_fields as $id=>$field){
-				if($field['OPAC_SHOW'] && $field['SEARCH'])
+				if((!$opac_realm || ($opac_realm && $field['OPAC_SHOW'])) && $field['SEARCH']) {
 					$results[] = $this->getAdvancedSearchField($prefix.$id, $search_realm, $vlang, $fetch_values, $s, true);
+				}
 			}
 		}
 		
@@ -270,7 +269,7 @@ class pmbesSearch extends external_services_api_class {
 		return $results;
 	}
 	
-	function getAdvancedSearchField($field_id, $search_realm, $vlang, $fetch_values, $search_object=NULL, $nocache=false) {
+	public function getAdvancedSearchField($field_id, $search_realm, $vlang, $fetch_values, $search_object=NULL, $nocache=false) {
 		global $dbh, $msg, $lang, $include_path, $class_path;
 		if (!$nocache) {
 			//Allons chercher les infos dans le cache si elles existent
@@ -305,8 +304,7 @@ class pmbesSearch extends external_services_api_class {
 					global $msg;
 					$msg = $messages->table;
 				}
-			}
-			else {
+			} else {
 				if ($vlang != $lang && file_exists("$include_path/messages/$vlang.xml")) {
 					//Allons chercher les messages
 					include_once("$class_path/XMLlist.class.php");
@@ -443,12 +441,11 @@ class pmbesSearch extends external_services_api_class {
 				$pp = new parametres_perso($content['TYPE']);
 				foreach($pp->t_fields as $id=>$field){
 					if($field_id == $prefix.$id){
-						if ($field['OPAC_SHOW'] && $field['SEARCH']){
+						if ((!$opac_realm || ($opac_realm && $field['OPAC_SHOW'])) && $field['SEARCH']){
 							$field['ident']=$field_id;
 							$field['ID']=$id;
 							$field['PREFIX']="notices";
-							$aresult= aff_empr_search($field);	
-							$aresult['label'] = utf8_normalize($aresult['label']);
+							$aresult= utf8_normalize(aff_empr_search($field));	
 							$aresult['id']=$prefix."_".$id;
 							foreach($content['FIELD'] as $field_spec){
 								if($field_spec['DATATYPE'] == $field['DATATYPE'])
@@ -458,17 +455,18 @@ class pmbesSearch extends external_services_api_class {
 								$aresult['operators'][]= array("id" => $aquery["OPERATOR"], "label" => utf8_normalize($search_object->operators[$aquery["OPERATOR"]]));
 							}
 						}
+						break;
 					}
 				}
 			}
-			$aresult['values'] = array();
-			$aresult['fieldvar'] = array();
 		}
 		
-//		if(sizeof($aresult)==0){
-//			throw new Exception("id not found");	
-//		}
-//		
+		if(!isset($aresult['values'])) {
+		    $aresult['values'] = array();
+		}
+	   if(!isset($aresult['fieldvar'])) {
+	       $aresult['fieldvar'] = array();
+	   }
 		if (!$nocache) {
 			//Mettons le resultat dans le cache
 			$es_cache = new external_services_cache('es_cache_blob', 86400);
@@ -479,7 +477,7 @@ class pmbesSearch extends external_services_api_class {
 
 	}
 	
-	function advancedSearch($search_realm, $search_description, $PMBUserId=-1, $OPACEmprId=-1) {
+	public function advancedSearch($search_realm, $search_description, $PMBUserId=-1, $OPACEmprId=-1) {
 		global $search;
 
 		object_to_array($search_description);
@@ -517,23 +515,23 @@ class pmbesSearch extends external_services_api_class {
 			}
 			$field="field_".$count."_".$search[$count];
 			$var[]=$field;
-			global $$field;
+			global ${$field};
 			if (is_array($afield_s["value"])) {
-				$$field=$afield_s["value"];
+				${$field}=$afield_s["value"];
 			} else {
-				$$field=array($afield_s["value"]);
+				${$field}=array($afield_s["value"]);
 			}
 			$op="op_".$count."_".$search[$count];
-			global $$op;
-			$$op=$afield_s["operator"];
+			global ${$op};
+			${$op}=$afield_s["operator"];
 			if ($count) {
 				$inter="inter_".$count."_".$search[$count];
-				global $$inter;
-				$$inter = $afield_s["inter"];
+				global ${$inter};
+				${$inter} = $afield_s["inter"];
 			}
 			$fieldvar ="fieldvar_".$count."_".$search[$count];
-			global $$fieldvar;
-			$$fieldvar=$afield_s["fieldvar"];
+			global ${$fieldvar};
+			${$fieldvar}=$afield_s["fieldvar"];
 			
 			global $explicit_search;
 			$explicit_search=1;
@@ -542,7 +540,7 @@ class pmbesSearch extends external_services_api_class {
 		return $this->make_search($search_realm, $PMBUserId, $OPACEmprId);
 	}
 	
-	function get_sort_types() {
+	public function get_sort_types() {
 		$result = array();
 		
 		global $include_path, $msg;
@@ -558,7 +556,7 @@ class pmbesSearch extends external_services_api_class {
 			//on le ferme
 			fclose($fp);
 			//on le parse pour le transformer en tableau
-			$params = _parser_text_no_function_($xml, "SORT");
+			$params = _parser_text_no_function_($xml, "SORT",$nomfichier);
 			
 			foreach ($params["FIELD"] as $aparam) {
 				$result[] = array(
@@ -570,12 +568,12 @@ class pmbesSearch extends external_services_api_class {
 		return $result;
 	}
 	
-	function fetchSearchRecords($searchId, $firstRecord, $recordCount, $recordFormat, $recordCharset='iso-8859-1', $includeLinks=true, $includeItems=false) {
+	public function fetchSearchRecords($searchId, $firstRecord, $recordCount, $recordFormat, $recordCharset='iso-8859-1', $includeLinks=true, $includeItems=false) {
 		//On tri par défaut selon la pertinence des résultats
 		return $this->proxy_parent->pmbesSearch_fetchSearchRecordsSorted($searchId, $firstRecord, $recordCount, $recordFormat, $recordCharset, $includeLinks, $includeItems, "d_num_6");
 	}
 
-	function fetchSearchRecordsSorted($searchId, $firstRecord, $recordCount, $recordFormat, $recordCharset='iso-8859-1', $includeLinks=true, $includeItems=false, $sort_type="") {
+	public function fetchSearchRecordsSorted($searchId, $firstRecord, $recordCount, $recordFormat, $recordCharset='iso-8859-1', $includeLinks=true, $includeItems=false, $sort_type="") {
 		global $dbh;
 		$firstRecord+=0;
 		$recordCount+=0;
@@ -619,12 +617,12 @@ class pmbesSearch extends external_services_api_class {
 		return $results;
 	}
 	
-	function fetchSearchRecordsArray($searchId, $firstRecord, $recordCount, $recordCharset='iso-8859-1', $includeLinks=true, $includeItems=false) {
+	public function fetchSearchRecordsArray($searchId, $firstRecord, $recordCount, $recordCharset='iso-8859-1', $includeLinks=true, $includeItems=false) {
 		//On tri par défaut selon la pertinence des résultats
 		return $this->proxy_parent->pmbesSearch_fetchSearchRecordsArraySorted($searchId, $firstRecord, $recordCount, $recordCharset, $includeLinks, $includeItems, "d_num_6");
 	}
 	
-	function fetchSearchRecordsArraySorted($searchId, $firstRecord, $recordCount, $recordCharset='iso-8859-1', $includeLinks=true, $includeItems=false, $sort_type="") {
+	public function fetchSearchRecordsArraySorted($searchId, $firstRecord, $recordCount, $recordCharset='iso-8859-1', $includeLinks=true, $includeItems=false, $sort_type="") {
 		global $dbh;
 		$firstRecord+=0;
 		$recordCount+=0;
@@ -656,7 +654,7 @@ class pmbesSearch extends external_services_api_class {
 		return $array_results;
 	}
 	
-	function listExternalSources($OPACUserId=-1) {
+	public function listExternalSources($OPACUserId=-1) {
 		global $dbh, $msg;
 		$sql = 'SELECT connectors_sources.source_id, connectors_sources.name, connectors_sources.comment, connectors_categ.connectors_categ_name FROM connectors_sources LEFT JOIN connectors_categ_sources ON (connectors_categ_sources.num_source = connectors_sources.source_id) LEFT JOIN connectors_categ ON (connectors_categ.connectors_categ_id = connectors_categ_sources.num_categ) WHERE 1 '.($OPACUserId != -1 ? 'AND connectors_sources.opac_allowed = 1' : '').' ORDER BY connectors_categ.connectors_categ_name, connectors_sources.name';
 		$res = pmb_mysql_query($sql, $dbh);
@@ -678,12 +676,12 @@ class pmbesSearch extends external_services_api_class {
 		return $results;
 	}
 	
-	function fetchSearchRecordsFull($searchId, $firstRecord, $recordCount, $recordCharset='iso-8859-1', $includeLinks=true, $includeItems=false) {
+	public function fetchSearchRecordsFull($searchId, $firstRecord, $recordCount, $recordCharset='iso-8859-1', $includeLinks=true, $includeItems=false) {
 		//On tri par défaut selon la pertinence des résultats
 		return $this->proxy_parent->pmbesSearch_fetchSearchRecordsFullSorted($searchId, $firstRecord, $recordCount, $recordCharset, $includeLinks, $includeItems, "d_num_6");
 	}
 	
-	function fetchSearchRecordsFullSorted($searchId, $firstRecord, $recordCount, $recordCharset='iso-8859-1', $includeLinks=true, $includeItems=false,$sort_type='') {
+	public function fetchSearchRecordsFullSorted($searchId, $firstRecord, $recordCount, $recordCharset='iso-8859-1', $includeLinks=true, $includeItems=false,$sort_type='') {
 		global $dbh;
 		$firstRecord+=0;
 		$recordCount+=0;
@@ -717,12 +715,12 @@ class pmbesSearch extends external_services_api_class {
 		return $array_results;
 	}
 	
-	function fetchSearchRecordsFullWithBullId($searchId, $firstRecord, $recordCount, $recordCharset='iso-8859-1', $includeLinks=true, $includeItems=false) {
+	public function fetchSearchRecordsFullWithBullId($searchId, $firstRecord, $recordCount, $recordCharset='iso-8859-1', $includeLinks=true, $includeItems=false) {
 		//On tri par défaut selon la pertinence des résultats
 		return $this->proxy_parent->pmbesSearch_fetchSearchRecordsFullWithBullIdSorted($searchId, $firstRecord, $recordCount, $recordCharset, $includeLinks, $includeItems, "d_num_6");
 	}
 	
-	function fetchSearchRecordsFullWithBullIdSorted($searchId, $firstRecord, $recordCount, $recordCharset='iso-8859-1', $includeLinks=true, $includeItems=false,$sort_type='') {
+	public function fetchSearchRecordsFullWithBullIdSorted($searchId, $firstRecord, $recordCount, $recordCharset='iso-8859-1', $includeLinks=true, $includeItems=false,$sort_type='') {
 		global $dbh;
 		$firstRecord+=0;
 		$recordCount+=0;
@@ -754,7 +752,107 @@ class pmbesSearch extends external_services_api_class {
 		$array_results = array_values($records);
 		
 		return $array_results;
-	}	
+	}
+	
+	public function listFacets($searchId, $fields = array(), $filters = array()) {
+		object_to_array($fields);
+ 		object_to_array($filters);
+		$facets = array();
+		if(is_array($fields) && count($fields)) {
+			if(is_array($filters) && count($filters)) {
+				$notice_ids = $this->listRecordsFromFacets($searchId, $filters);
+			} else {
+				//Cherchons la session
+				$sql = "SELECT * FROM es_searchsessions WHERE es_searchsession_id = '".addslashes($searchId)."'";
+				$res = pmb_mysql_query($sql);
+				if (!pmb_mysql_num_rows($res)) {
+					return array();
+				}
+				$row = pmb_mysql_fetch_assoc($res);
+				$this->update_session_date($searchId);
+				
+				$search_unique_id = $row["es_searchsession_searchnum"];
+				$search_realm = $row["es_searchsession_searchrealm"];
+				$pmbuserid = $row["es_searchsession_pmbuserid"];
+				$opacemprid = $row["es_searchsession_opacemprid"];
+					
+				if (!$search_unique_id) {
+					return array();
+				}
+				
+				$search_cache = new external_services_searchcache($search_realm, $search_unique_id, $pmbuserid, $opacemprid);
+				$notice_ids = $search_cache->get_results();
+			}
+			if(is_array($notice_ids) && count($notice_ids)) {
+				foreach ($fields as $field) {
+					$code_champ = $field['code_champ']+0;
+					$code_ss_champ = $field['code_ss_champ']+0;
+					if($code_champ) {
+						$query = "select count(distinct id_notice) as nb_records, value from notices_fields_global_index where code_champ = '".$code_champ."'";
+						if($code_ss_champ) {
+							$query .= " and code_ss_champ = '".$code_ss_champ."'";
+						}
+						$query .= " and id_notice in (".implode(',', $notice_ids).") group by value";
+						$result = pmb_mysql_query($query);
+						while($row = pmb_mysql_fetch_object($result)) {
+							$facets[] = array(
+									'code_champ' => $code_champ,
+									'code_ss_champ' => $code_ss_champ,
+									'value' => utf8_normalize($row->value),
+									'count' => $row->nb_records
+							);
+						}
+					}
+				}
+			}
+		}
+		return $facets;
+	}
+	
+	public function listRecordsFromFacets($searchId, $filters = array()) {
+		object_to_array($filters);
+		$notice_ids = array();
+		//Cherchons la session
+		$sql = "SELECT * FROM es_searchsessions WHERE es_searchsession_id = '".addslashes($searchId)."'";
+		$res = pmb_mysql_query($sql);
+		if (!pmb_mysql_num_rows($res)) {
+			return array();
+		}
+		$row = pmb_mysql_fetch_assoc($res);
+		$this->update_session_date($searchId);
+			
+		$search_unique_id = $row["es_searchsession_searchnum"];
+		$search_realm = $row["es_searchsession_searchrealm"];
+		$pmbuserid = $row["es_searchsession_pmbuserid"];
+		$opacemprid = $row["es_searchsession_opacemprid"];
+		
+		if (!$search_unique_id) {
+			return array();
+		}
+		$search_cache = new external_services_searchcache($search_realm, $search_unique_id, $pmbuserid, $opacemprid);
+		$notice_ids = $search_cache->get_results();
+		if(count($notice_ids) && is_array($filters) && count($filters)) {
+			foreach ($filters as $filter) {
+				$code_champ = $filter['code_champ']+0;
+				$code_ss_champ = $filter['code_ss_champ']+0;
+				if($code_champ) {
+					$query = "select distinct id_notice from notices_fields_global_index where code_champ = '".$code_champ."'";
+					if($code_ss_champ) {
+						$query .= " and code_ss_champ = '".$code_ss_champ."'";
+					}
+					$query .= " and value = '".addslashes($filter['value'])."'";
+					$query .= " and id_notice in (".implode(',', $notice_ids).")";
+					$result = pmb_mysql_query($query);
+					
+					$notice_ids = array();
+					while($row = pmb_mysql_fetch_object($result)) {
+						$notice_ids[] = $row->id_notice;
+					}
+				}
+			}
+		}
+		return $notice_ids;
+	}
 }
 
 

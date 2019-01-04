@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sauvegardes_form.tpl.php,v 1.6 2007-03-14 16:51:33 gueluneau Exp $
+// $Id: sauvegardes_form.tpl.php,v 1.7 2017-10-19 07:59:09 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -32,7 +32,7 @@ function checkForm()
 <input type="hidden" name="sauv_sauvegarde_id" value="!!sauv_sauvegarde_id!!">
 <input type="hidden" name="first" value="1">
 <table >
-<th class="brd" colspan=2><center>!!quel_proc!!: '.$msg["sauv_sauvegardes_form_prop_general"].'</center></th>
+<th class="brd" colspan=2>!!quel_proc!!: '.$msg["sauv_sauvegardes_form_prop_general"].'</th>
 
 <!--
 	<tr><td colspan=2><b>'.$msg["sauv_sauvegardes_form_prop_general"].'</b></td></tr>

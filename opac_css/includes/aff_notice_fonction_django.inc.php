@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: aff_notice_fonction_django.inc.php,v 1.1.2.2 2015-09-17 14:43:22 apetithomme Exp $
+// $Id: aff_notice_fonction_django.inc.php,v 1.1 2015-09-17 14:43:22 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 

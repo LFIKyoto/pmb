@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: receptions.inc.php,v 1.11 2015-04-13 13:29:38 jpermanne Exp $
+// $Id: receptions.inc.php,v 1.16 2018-03-30 07:37:46 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -23,10 +23,8 @@ require_once("$include_path/mail.inc.php");
 require_once("$class_path/z3950_notice.class.php");
 require_once($class_path."/notice_doublon.class.php");
 
-
 //Affiche la liste des receptions pour une bibliotheque
 function show_list_recept() {
-	
 	global $msg, $charset,$dbh,$tab_bib;
 	global $recept_search_form,$recept_list_form,$recept_search_form_suite, $recept_hrow_form,$recept_row_form,$sel_fou_form,$sel_dem_form,$sel_rub_form,$sel_date_form;
 	global $bt_app,$bt_rel,$bt_chk, $link_not, $link_bull, $link_art, $link_sug, $bt_cat;
@@ -40,7 +38,6 @@ function show_list_recept() {
 	global $page,$nb_per_page,$nbr_lignes,$last_param;
 	global $date_inf, $date_sup;
 
-	
 	//verifications
 	if(!$id_bibli) {
 		$id_bibli=entites::getSessionBibliID();
@@ -68,7 +65,6 @@ function show_list_recept() {
 									'lgstat_filter'=>	$lgstat_filter
 				)));
 	$recept_form = str_replace('!!serialized_search!!', $serialized_search, $recept_form);				
-	
 	
 	//Affichage selecteur etablissement
 	$sel_bibli=entites::getBibliHtmlSelect(SESSuserid, $id_bibli, FALSE, array('class'=>'saisie-50em','id'=>'id_bibli','name'=>'id_bibli','onChange'=>'submit();'));
@@ -181,7 +177,6 @@ function show_list_recept() {
 
 	$recept_form=str_replace('!!cde_query!!',htmlentities(stripslashes($cde_query),ENT_QUOTES,$charset),$recept_form);
 
-	
 	//Affichage selecteur dates
 	$sel_date_form[0] = str_replace('!!msg!!', htmlentities($msg['acquisition_recept_date'],ENT_QUOTES,$charset), $sel_date_form[0]);
 	if($date_inf) {
@@ -211,7 +206,6 @@ function show_list_recept() {
 	//Affichage zone tous les champs 
 	$recept_form=str_replace('!!all_query!!',htmlentities(stripslashes($all_query),ENT_QUOTES,$charset),$recept_form);
 	
-	
 	//Prise en compte du formulaire de recherche
 	// nombre de références par pages
 	if (!$nb_per_page) $nb_per_page = 10;
@@ -230,7 +224,6 @@ function show_list_recept() {
 
 	// liste
 	if($nbr_lignes) {
-	
 		$t_list = $recept->getLignes();
 		
 		//Affichage des lignes
@@ -239,18 +232,17 @@ function show_list_recept() {
 		//Affichage zone de reception
 		$recept_form=str_replace('!!recept_query!!',htmlentities(stripslashes($recept_query),ENT_QUOTES,$charset),$recept_form);
 		
-		
 		$tab_aff=array();
 		$lgstat_form=lgstat::getHtmlSelect(array(0=>0), FALSE, array('id'=>'sel_lgstat_!!id_lig!!', 'onchange'=>'recept_upd_lgstat(this.getAttribute("id"));'));
 		$act_form='';
 		$i=1;
 		foreach($t_list as $id_acte=>$t_row) {
 			//Affichage lignes à recevoir
-			
 			foreach ($t_row as $id_ligne=>$row) { 
 				if(!in_array($id_acte,$tab_aff)) {
 					array_push($tab_aff,$id_acte);
 					$recept_form=str_replace('<!-- actes -->',$act_form.'<!-- actes -->',$recept_form);
+					if(!isset($row['type_acte'])) $row['type_acte'] = '';
 					$act_form=str_replace('!!lib_acte!!',
 						htmlentities($msg['acquisition_recept_fou'], ENT_QUOTES, $charset)
 						."&nbsp;<a href=\"./acquisition.php?categ=ach&sub=fourn&action=modif&id_bibli=".$id_bibli.'&id='.$row['num_fournisseur']."\">".htmlentities($row['raison_sociale'],ENT_QUOTES,$charset)."</a>"
@@ -311,7 +303,6 @@ function show_list_recept() {
 				$act_form=str_replace('<!-- lignes -->',$row_form.'<!-- lignes -->',$act_form);
 				$i++;
 			}
-			
 		}	
 		$recept_form=str_replace('<!-- actes -->',$act_form.'<!-- actes -->',$recept_form);
 		$recept_form=str_replace('!!max_no!!', $i*1-1, $recept_form);
@@ -326,16 +317,6 @@ function show_list_recept() {
 		$recept_form = str_replace('<!-- bt_app -->', $bt_app, $recept_form);
 		$recept_form = str_replace('<!-- bt_rel -->', $bt_rel, $recept_form);
 		$recept_form = str_replace('<!-- bt_chk -->', $bt_chk, $recept_form);
-		
-		//Barre de navigation
-		/*
-		if (!$last_param) {
-			$nav_bar = aff_pagination ($url_base, $nbr_lignes, $nb_per_page, $page, 10, true, true) ;
-	    } else {
-	    	$nav_bar = "";
-	    }
-	    $recept_form=str_replace('<!-- nav_bar -->', $nav_bar,$recept_form);
-		*/
 		
 		$recept_form.=$recept_search_form_suite;
 		print $recept_form;
@@ -354,13 +335,10 @@ function show_list_recept() {
 		if ($all_query) $cle[]=htmlentities($msg['acquisition_recept_global_search'].' '.stripslashes($all_query),ENT_QUOTES,$charset);
 		error_message($msg['acquisition_recept_rech'], str_replace('!!cle!!', implode(',',$cle), $msg['acquisition_recept_rech_error']), 0);
 	}
-	
 }
-
 
 //Effectue les modifications en masse
 function apply_changes() {
-	
 	global $chk, $id_lig;
 	global $sel_lgstat_all, $comment_lg_all, $comment_lo_all;
 	global $lgstat_filter;
@@ -386,13 +364,10 @@ function apply_changes() {
 		}
 		if (count($t_id)) lignes_actes::updateFields($t_id,$t_f);
 	}
-	
 }
-
 
 //Effectue l'envoi de relances
 function do_relances() {
-
 	global $dbh, $charset;
 	global $id_bibli, $chk, $id_lig;
 	global $acquisition_pdfrel_obj_mail, $acquisition_pdfrel_text_mail;
@@ -409,13 +384,9 @@ function do_relances() {
 	$tab_fou=array();
 	$q = lignes_actes::getLines($tab_lig, true);
 	if ($q) {
-
 		$r=pmb_mysql_query($q, $dbh);
-		
 		if (pmb_mysql_num_rows($r)) {
-
 			while($row=pmb_mysql_fetch_object($r)) {
-
 				if (!array_key_exists($row->num_fournisseur,$tab_fou)) {
 					$tab_fou[$row->num_fournisseur]=array();
 				}
@@ -434,10 +405,8 @@ function do_relances() {
 	if ( !($acquisition_pdfrel_by_mail && strpos($bib_coord->email,'@')) ) {
 		$tab_no_mail=$tab_fou;
 	} else {	
-	
 		if (count($tab_fou)){
 			foreach($tab_fou as $id_fou=>$tab_act) {
-				
 				$fou = new entites($id_fou);
 				$fou_coord = pmb_mysql_fetch_object(entites::get_coordonnees($id_fou,1));
 				
@@ -463,7 +432,6 @@ function do_relances() {
 					$piece_jointe[0]['contenu']=$lettre->getLettre('S');
 					$piece_jointe[0]['nomfichier']=$lettre->getFileName();
 					
-					
 					//         mailpmb($to_nom="", $to_mail,   $obj="",   $corps="",  $from_name="", $from_mail, $headers, $copie_CC="", $copie_BCC="", $faire_nl2br=0, $pieces_jointes=array())
 					$res_envoi=mailpmb($dest_name, $dest_mail, $obj_mail, $text_mail ,$bib_name, $bib_mail, "Content-Type: text/plain; charset=\"$charset\"", '', $PMBuseremailbcc, 1, $piece_jointe);
 					if (!$res_envoi) {
@@ -482,18 +450,15 @@ function do_relances() {
 			<input type='hidden' name='id_bibli' value='".$id_bibli."'/>
 			<input type='hidden' name='tab_no_mail' value='".rawurlencode(serialize($tab_no_mail))."'/>
 			<script type='text/javascript'>
-				openPopUp('','lettre', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes');
+				openPopUp('','lettre');
 				document.print_liste_relances.submit();
 			</script>
 		</form>";
 	}
-	
 	lignes_actes::setRelances($tab_lig);
-	
 }
 
 function show_from_cde() {
-	
 	global $id_cde;
 	global $id_bibli, $id_exer, $f_fou_code, $f_dem_code, $f_rub_code;
 	global $chk_dev, $chk_cde, $cde_query, $all_query, $recept_query, $lgstat_filter;
@@ -510,12 +475,9 @@ function show_from_cde() {
 	$all_query = '';
 	$lgstat_filter = lgstat::getList('ARRAY_VALUES');
 	$recept_query = '';
-	
 }
 
-
 function catalog() {
-
 	global $msg, $charset;
 	global $id_lig, $serialized_search;
 	
@@ -595,12 +557,9 @@ function catalog() {
 	$form=str_replace("<!--form_suite-->","<input type='hidden' name='id_lig' value='".$id_lig."' /><!--form_suite-->", $form);
 	$form=str_replace("<!--form_suite-->","<input type='hidden' name='serialized_search' value='".stripslashes($serialized_search)."' /><!--form_suite-->", $form);
 	print $form;
-
 }
 
-
 function record() {
-	
 	global $pmb_notice_controle_doublons;
 	global $recept_cat_error_form;
 	global $integre, $serialized_post, $existant_notice_id, $existant_b_level, $existant_h_level, $signature, $id_lig, $serialized_search;
@@ -608,7 +567,6 @@ function record() {
 	$recorded = false;
 	
 	switch ($integre) { 
-		
 		case 'new' :
 			$unserialized_post = unserialize(rawurldecode(stripslashes($serialized_post)));
 			foreach($unserialized_post as $key => $val){
@@ -618,7 +576,7 @@ function record() {
 					add_sl($val);
 					$GLOBALS[$key] = $val;
 				}
-				global $$key;
+				global ${$key};
 			}
 			$z=new z3950_notice("form");
 			$z->signature = $signature;
@@ -626,19 +584,16 @@ function record() {
 			$notice_id = $ret[1];
 			$recorded = true;
 			break;
-			
 		case 'existant' :
 			$notice_id = $existant_notice_id;
 			$b_level = $existant_b_level;
 			$h_level = $existant_h_level;
 			$recorded = true;
 			break;
-			
 		default :
-		
 			$duplicate = array();
 			$signature = '';
-			$r=object;
+			$r = new stdClass();
 	
 			if($pmb_notice_controle_doublons != 0){
 				$sign = new notice_doublon(true);
@@ -723,7 +678,6 @@ function record() {
 	}	
 	
 	if ($recorded) {
-		
 		global $id_bibli, $id_exer, $f_fou_code, $f_dem_code, $t_dem, $f_rub_code, $cde_query, $all_query, $chk_dev, $lgstat_filter;
 		
 		$unserialized_search = unserialize(rawurldecode(stripslashes($serialized_search)));
@@ -743,18 +697,14 @@ function record() {
 			if ($b_level=='a' && $h_level==2) $typ_lig = 5;
 			lignes_actes::updateFields(array(0=>$id_lig), array('num_produit'=>$notice_id, 'type_ligne'=>$typ_lig));
 		}	
-		
 	}
 	return $recorded;
 }
 
-
 //Traitement des actions
 print "<h1>".htmlentities($msg['acquisition_ach_ges'],ENT_QUOTES, $charset)."&nbsp;:&nbsp;".htmlentities($msg['acquisition_menu_ach_recept'],ENT_QUOTES, $charset)."</h1>";
 
-
 switch($action) {
-
 	case 'apply_changes' :
 		apply_changes();
 		show_list_recept();
@@ -783,6 +733,5 @@ switch($action) {
 	default:
 		show_list_recept();
 		break;
-		
 }
 ?>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: external_services_rights.class.php,v 1.3 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: external_services_rights.class.php,v 1.4 2017-05-19 10:06:11 dgoron Exp $
 
 //Gestion des droits des services externes
 
@@ -19,24 +19,24 @@ define("ES_RIGHTS_BAD_PMB_RIGHTS_FOR_THIS_USER",6);
 define("ES_RIGHTS_GROUP_OR_METHOD_FORBIDDEN",7);
 
 class es_rights {
-	var $group;
-	var $method;
-	var $available=true;
-	var $anonymous_user;
-	var $users=array();
+	public $group;
+	public $method;
+	public $available=true;
+	public $anonymous_user;
+	public $users=array();
 	
-	function es_rights($group,$method) {
+	public function __construct($group,$method) {
 		$this->group=$group;
 		$this->method=$method;
 	}
 }
 
 class external_services_rights extends es_base {
-	var $es;			//Services externes
-	var $users=array();	//Tableau des users
-	var $all_rights;	//Tous les droits !
+	public $es;			//Services externes
+	public $users=array();	//Tableau des users
+	public $all_rights;	//Tous les droits !
 	
-	function external_services_rights($external_services) {
+	public function __construct($external_services) {
 		//Instantiation de la classe external_services
 		$this->es=$external_services;
 		
@@ -54,12 +54,12 @@ class external_services_rights extends es_base {
 		}
 	}
 	
-	function user_rights($user) {
+	public function user_rights($user) {
 		return $this->users[$user]->rights;
 	}
 	
 	//Récupère les droits d'une méthode
-	function get_rights($group,$method) {
+	public function get_rights($group,$method) {
 		global $msg;
 		$this->clear_error();
 		//Vérification que le groupe / méthode existe
@@ -84,7 +84,7 @@ class external_services_rights extends es_base {
 		}
 	}
 	
-	function has_basic_rights($user,$group,$method) {
+	public function has_basic_rights($user,$group,$method) {
 		global $msg;
 		$this->clear_error();
 		//Compilation de tous les droits
@@ -116,7 +116,7 @@ class external_services_rights extends es_base {
 		return false;
 	}
 	
-	function has_rights($user,$group,$method) {
+	public function has_rights($user,$group,$method) {
 		global $msg;
 		$user += 0;
 		$this->clear_error();
@@ -177,7 +177,7 @@ class external_services_rights extends es_base {
 		return false;
 	}
 	
-	function set_rights($es_r) {
+	public function set_rights($es_r) {
 		global $msg;
 		$this->clear_error();
 		//Vérification des droits 
@@ -229,7 +229,7 @@ class external_services_rights extends es_base {
 	}
 	
 	//Utilisateurs possibles en fonction des droits d'un groupe ou d'une méthode
-	function possible_users($group,$method) {
+	public function possible_users($group,$method) {
 		$this->clear_error();
 		//Si pas de méthode, consolidation au niveau du groupe
 		if ($this->es->group_exists($group)) {

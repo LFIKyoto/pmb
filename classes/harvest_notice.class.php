@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: harvest_notice.class.php,v 1.4 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: harvest_notice.class.php,v 1.5 2017-06-30 14:32:20 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -20,18 +20,18 @@ require_once ("$include_path/isbn.inc.php");
 //require_once($base_path."/admin/import/func_customfields.inc.php");
 
 class harvest_notice {
-	var $id=0; 
-	var $id_profil=0; 
-	var $info=array();
+	public $id=0; 
+	public $id_profil=0; 
+	public $info=array();
 	
-	function harvest_notice($notice_id=0, $harvest_id=0, $profil_id=0) {
+	public function __construct($notice_id=0, $harvest_id=0, $profil_id=0) {
 		$this->id=$notice_id+0;		
 		$this->id_harvest=$harvest_id+0;
 		$this->id_profil=$profil_id+0;
 		$this->fetch_data();
 	}
 	
-	function fetch_data() {
+	public function fetch_data() {
 		$this->info=array();
 		$this->info['notice_base']=array();
 		$this->info['harvest']=array();
@@ -52,7 +52,7 @@ class harvest_notice {
 	
 	}    
  	
-    function get_notice_unimarc($notice_id){
+    public function get_notice_unimarc($notice_id){
     	//récupère les param d'exports
 		$export_param = new export_param();
 		$param = $export_param->get_parametres($export_param->context);
@@ -67,7 +67,7 @@ class harvest_notice {
     }
 
     
-    function get_notice_externe($notice_id) {
+    public function get_notice_externe($notice_id) {
     	global $charset,$msg;
     	
 		$memo=array();
@@ -181,7 +181,7 @@ class harvest_notice {
 		print $form;
 	}
 	
-    function record_notice($notice_id){
+    public function record_notice($notice_id){
     	$z=new z3950_notice("form");
     	$ret=$z->update_in_database($notice_id);
     	print "
@@ -191,7 +191,7 @@ class harvest_notice {
     	printr($ret);
     }
     
-	function get_form_sel(){
+	public function get_form_sel(){
 		global $harvest_notice_tpl,$harvest_notice_tpl_error;
 		
 		//Je regarde si la notice à un isbn

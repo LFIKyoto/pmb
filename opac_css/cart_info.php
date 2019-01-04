@@ -2,33 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cart_info.php,v 1.64.2.6 2015-11-03 12:36:27 jpermanne Exp $
+// $Id: cart_info.php,v 1.94 2018-05-04 10:12:25 dgoron Exp $
 
 //Actions et affichage du résultat pour un panier de l'opac
 $base_path=".";
 require_once($base_path."/includes/init.inc.php");
-require_once($base_path."/includes/error_report.inc.php") ;
-require_once($base_path."/includes/global_vars.inc.php");
-require_once($base_path.'/includes/opac_config.inc.php');
-	
-// récupération paramètres MySQL et connection á la base
-require_once($base_path.'/includes/opac_db_param.inc.php');
-require_once($base_path.'/includes/opac_mysql_connect.inc.php');
-$dbh = connection_mysql();
 
-require_once($base_path."/includes/misc.inc.php");
-
-//Sessions !! Attention, ce doit être impérativement le premier include (à cause des cookies)
-require_once($base_path."/includes/session.inc.php");
-
-require_once($base_path.'/includes/start.inc.php');
-require_once($base_path."/includes/check_session_time.inc.php");
-
-// récupération localisation
-require_once($base_path.'/includes/localisation.inc.php');
-
-// version actuelle de l'opac
-require_once($base_path.'/includes/opac_version.inc.php');
+//fichiers nécessaires au bon fonctionnement de l'environnement
+require_once($base_path."/includes/common_includes.inc.php");
 
 require_once($base_path."/classes/search.class.php");
 require_once($class_path."/searcher.class.php");
@@ -37,31 +18,7 @@ require_once($class_path."/filter_results.class.php");
 // si paramétrage authentification particulière et pour le re-authentification ntlm
 if (file_exists($base_path.'/includes/ext_auth.inc.php')) require_once($base_path.'/includes/ext_auth.inc.php');
 
-//si les vues sont activées (à laisser après le calcul des mots vides)
-if($opac_opac_view_activate){
-	$current_opac_view=$_SESSION["opac_view"];
-	if($opac_view==-1){
-		$_SESSION["opac_view"]="default_opac";
-	}else if($opac_view)	{
-		$_SESSION["opac_view"]=$opac_view*1;
-	}
-	$_SESSION['opac_view_query']=0;
-	if(!$pmb_opac_view_class) $pmb_opac_view_class= "opac_view";
-	require_once($base_path."/classes/".$pmb_opac_view_class.".class.php");
-
-	$opac_view_class= new $pmb_opac_view_class($_SESSION["opac_view"],$_SESSION["id_empr_session"]);
- 	if($opac_view_class->id){
- 		$opac_view_class->set_parameters();
- 		$opac_view_filter_class=$opac_view_class->opac_filters;
- 		$_SESSION["opac_view"]=$opac_view_class->id;
- 		if(!$opac_view_class->opac_view_wo_query) {
- 			$_SESSION['opac_view_query']=1;
- 		}
- 	} else {
- 		$_SESSION["opac_view"]=0;
- 	}
-	$css=$_SESSION["css"]=$opac_default_style;
-}
+require_once($include_path."/templates/cart.tpl.php");
 
 if($opac_search_other_function){
 	require_once($include_path."/".$opac_search_other_function);
@@ -69,8 +26,11 @@ if($opac_search_other_function){
 
 ?>
 <html>
-<body class="cart_info_body">
-<span id='cart_info_iframe_content'>
+<head>
+<meta name="robots" content="noindex, nofollow">
+</head>
+<body id='cart_info_body' class="cart_info_body">
+<span id='cart_info_iframe_content' class='basket_is_not_empty'>
 <?php
 
 function add_query($requete) {
@@ -78,6 +38,7 @@ function add_query($requete) {
 	global $opac_max_cart_items;
 	global $msg;
 	global $charset;
+	global $opac_simplified_cart;
 	
 	$resultat=pmb_mysql_query($requete);
 	$nbtotal=@pmb_mysql_num_rows($resultat);
@@ -93,18 +54,37 @@ function add_query($requete) {
 	}
 	$message=sprintf($msg["cart_add_notices"],$n,$nbtotal);
 	if ($na) $message.=", ".sprintf($msg["cart_already_in"],$na);
-	if (count($cart_)==$opac_max_cart_items) $message.=", ".$msg["cart_full"];
+	if ($opac_simplified_cart) {
+		$message="";
+	}
+	if (count($cart_)==$opac_max_cart_items){
+		if ($opac_simplified_cart) {
+			$message=$msg["cart_full_simplified"];
+		} else {
+			$message.=", ".$msg["cart_full"];
+		}
+	}
+	
 	return $message;
 }
 
-function change_basket_image($id_notice){
-	print "<script>changeBasketImage(".$id_notice.")</script>";
+function change_basket_image($id_notice, $action=''){
+	global $header;
+	
+	print "<script>
+			var pmb_img_basket_small_20x20 = '".get_url_icon('basket_small_20x20.png')."';
+			var pmb_img_basket_exist = '".get_url_icon('basket_exist.png')."';
+			var pmb_img_white_basket = '".get_url_icon('white_basket.png')."';
+			var pmb_img_record_in_basket = '".get_url_icon('record_in_basket.png')."';
+			changeBasketImage(".$id_notice.", '".$action."', \"".rawurlencode($header)."\")
+		</script>";
 }
 
 function add_notices_to_cart($notices){
 	global $cart_;
 	global $opac_max_cart_items;
 	global $msg;
+	global $opac_simplified_cart;
 
 	$n=0; $na=0;
 	$tab_notices = explode(",",$notices);
@@ -119,39 +99,91 @@ function add_notices_to_cart($notices){
 			} else $na++;
 		}	
 	}
-	$message=sprintf($msg["cart_add_notices"],$n,$nbtotal);
-	if ($na) $message.=", ".sprintf($msg["cart_already_in"],$na);
-	if (count($cart_)==$opac_max_cart_items) $message.=", ".$msg["cart_full"];
+	$message = "";
+	if (count($cart_)==$opac_max_cart_items){
+		$message=$msg["cart_full".($opac_simplified_cart?'_simplified':'')];
+	}
+	
 	return $message;	
 }
 
+function integrate_anonymous_cart(){
+	global $opac_integrate_anonymous_cart;
+	global $cart_integrate_anonymous_on_confirm;
+	global $cart_integrate_anonymous_auto;
+	global $opac_max_cart_items;
+	global $cart_script;
+	global $charset;
+	global $msg;
+	if(isset($_SESSION['cart_anonymous']) && count($_SESSION['cart_anonymous'])){ //Un panier anonyme est présent pour ce lecteur
+		$cart_script = $cart_integrate_anonymous_on_confirm;
+		$nb_record = count(array_unique(array_merge($_SESSION['cart_anonymous'], $_SESSION['cart'])));
+		if($nb_record > $opac_max_cart_items){
+			//Proposer de choisir un des deux paniers
+			$cart_script = str_replace('!!cart_confirm_message!!', $msg['cart_anonymous_alert_replace'], $cart_script);
+			$cart_script = str_replace('!!cart_ajax_action!!', 'keep_anonymous_cart', $cart_script);
+		}else{
+			//Proposer l'injection du panier anonyme dans le panier du lecteur
+			$cart_script = str_replace('!!cart_confirm_message!!', $msg['cart_anonymous_alert_merge'], $cart_script);
+			$cart_script = str_replace('!!cart_ajax_action!!', 'merge_cart', $cart_script);
+		}
+		print $cart_script;
+	}
+}
+
 print "<script type='text/javascript'>
-			var msg_notice_title_basket_exist = '".addslashes($msg["notice_title_basket_exist"])."';
+		var msg_notice_title_basket = '".addslashes($msg["notice_title_basket"])."';
+		var msg_record_display_add_to_cart = '".addslashes($msg["record_display_add_to_cart"])."';
+		var msg_notice_title_basket_exist = '".addslashes($msg["notice_title_basket_exist"])."';
+		var msg_notice_basket_remove = '".addslashes($msg["notice_basket_remove"])."';
 		</script>";
 print "<script type='text/javascript' src='".$include_path."/javascript/cart.js'></script>";
+
+$cart_css = '';
+if (file_exists($base_path.'/styles/'.$opac_default_style.'/cart.css')) {
+	$cart_css = '<link rel="stylesheet" type="text/css" href="'.$base_path.'/styles/'.$opac_default_style.'/cart.css" />';
+}
 $vide_cache=filemtime("./styles/".$css."/".$css.".css");
-print "<link rel=\"stylesheet\" href=\"./styles/".$css."/".$css.".css?".$vide_cache."\" />
-<span class='img_basket'><img src='".get_url_icon("basket_small_20x20.png")."' border='0' valign='center'/></span>&nbsp;";
-$cart_=$_SESSION["cart"];
+print "<link rel=\"stylesheet\" href=\"./styles/".$css."/".$css.".css?".$vide_cache."\" />".$cart_css."
+<span class='img_basket'><img src='".get_url_icon("basket_small_20x20.png")."' style='vertical-align:center; border:0px'/></span>&nbsp;";
+$cart_=(isset($_SESSION["cart"]) ? $_SESSION["cart"] : array());
 if (!count($cart_)) $cart_=array();
 
-$id=stripslashes($id);// attention id peut etre du type es123 (recherche externe)
-$location+=0;
-
+//$id doit être addslasher car il est utilisé dans des requetes
+//$id=stripslashes($id);// attention id peut etre du type es123 (recherche externe)
+if(isset($location)) $location += 0;
+else $location = 0;
+if(!isset($id)) $id = 0; // A ne pas caster pour les notices externes
+$message="";
 if (($id)&&(!$lvl)) {
-	if (count($cart_)<$opac_max_cart_items) {
-		$as=array_search($id,$cart_);
-		$notice_header=htmlentities(substr(strip_tags(stripslashes(html_entity_decode($header,ENT_QUOTES))),0,45),ENT_QUOTES,$charset);
-		if ($notice_header!=$header) $notice_header.="...";
-		if (($as!==null)&&($as!==false)) {
-			$message=sprintf($msg["cart_notice_exists"],$notice_header);
-		} else {
-			$cart_[]=$id;
-			$message=sprintf($msg["cart_notice_add"],$notice_header);
-			change_basket_image($id);
-		}
-	} else {
-		$message=$msg["cart_full"];
+	if(!isset($action)) $action ='';
+	switch($action) {
+		case 'remove':
+			$as=array_search($id,$cart_);
+			if (($as!==null)&&($as!==false)) {
+				unset($cart_[$as]);
+				change_basket_image($id, 'remove');
+			}
+			break;
+		default:
+			if (count($cart_)<$opac_max_cart_items) {
+				$as=array_search($id,$cart_);
+				$notice_header=htmlentities(substr(strip_tags(stripslashes(html_entity_decode($header,ENT_QUOTES))),0,45),ENT_QUOTES,$charset);
+				if ($notice_header!=$header) $notice_header.="...";
+				if (($as!==null)&&($as!==false)) {
+					$message=sprintf($msg["cart_notice_exists"],$notice_header);
+				} else {
+					$cart_[]=$id;
+					$message=sprintf($msg["cart_notice_add"],$notice_header);
+					change_basket_image($id);
+				}
+				if ($opac_simplified_cart) {
+					$message="";
+				}
+			} else {
+				$message=$msg["cart_full".($opac_simplified_cart?'_simplified':'')];
+			}
+			break;
 	}
 } else if ($lvl) {
 	switch ($lvl) {
@@ -169,7 +201,7 @@ if (($id)&&(!$lvl)) {
 					if(count($notices)){
 						$notices = implode(",",$notices);
 					}
-					add_notices_to_cart($notices);
+					$message = add_notices_to_cart($notices);
 					break;
 				case "title":	
 				case "titre":
@@ -183,7 +215,7 @@ if (($id)&&(!$lvl)) {
 					if(count($notices)){
 						$notices = implode(",",$notices);
 					}
-					add_notices_to_cart($notices);
+					$message = add_notices_to_cart($notices);
 					break;
 				case "keyword":
 					$searcher = new searcher_keywords(stripslashes($user_query));
@@ -196,7 +228,7 @@ if (($id)&&(!$lvl)) {
 					if(count($notices)){
 						$notices = implode(",",$notices);
 					}
-					add_notices_to_cart($notices);
+					$message = add_notices_to_cart($notices);
 					break;
 				case "abstract":
 					$searcher = new searcher_abstract(stripslashes($user_query));
@@ -209,7 +241,7 @@ if (($id)&&(!$lvl)) {
 					if(count($notices)){
 						$notices = implode(",",$notices);
 					}
-					add_notices_to_cart($notices);
+					$message = add_notices_to_cart($notices);
 					break;
 				case "extended":
 					$searcher = new searcher_extended(stripslashes($user_query));
@@ -222,10 +254,10 @@ if (($id)&&(!$lvl)) {
 					if(count($notices)){
 						$notices = implode(",",$notices);
 					}
-					add_notices_to_cart($notices);
+					$message = add_notices_to_cart($notices);
 					break;
 				case "external":
-					if ($_SESSION["external_type"]=="multi") $es=new search("search_fields_unimarc"); else $es=new search("search_simple_fields_unimarc");
+					if ($_SESSION["ext_type"]=="multi") $es=new search("search_fields_unimarc"); else $es=new search("search_simple_fields_unimarc");
 					$table=$es->make_search();
 					$requete="select concat('es', notice_id) as notice_id from $table where 1;";
 					$message=add_query($requete);
@@ -256,7 +288,7 @@ if (($id)&&(!$lvl)) {
 							$notices.= $row->notice_id;
 						}						
 					}
-					add_notices_to_cart($notices);
+					$message = add_notices_to_cart($notices);
 					break;
 			}
 			break;
@@ -280,7 +312,7 @@ if (($id)&&(!$lvl)) {
 				$fr = new filter_results($notices);
 				$notices = $fr->get_results();
 			}
-			add_notices_to_cart($notices);
+			$message = add_notices_to_cart($notices);
 			break;
 		case "categ_see":
 			$notices = '';
@@ -294,7 +326,7 @@ if (($id)&&(!$lvl)) {
 				$fr = new filter_results($notices);
 				$notices = $fr->get_results();				
 			}
-			add_notices_to_cart($notices);
+			$message = add_notices_to_cart($notices);
 			break;
 		case "indexint_see":
 			$notices = '';
@@ -308,7 +340,7 @@ if (($id)&&(!$lvl)) {
 				$fr = new filter_results($notices);
 				$notices = $fr->get_results();		
 			}
-			add_notices_to_cart($notices);
+			$message = add_notices_to_cart($notices);
 			break;
 		case "coll_see":
 			$notices = '';
@@ -322,7 +354,7 @@ if (($id)&&(!$lvl)) {
 				$fr = new filter_results($notices);
 				$notices = $fr->get_results();		
 			}
-			add_notices_to_cart($notices);
+			$message = add_notices_to_cart($notices);
 			break;
 		case "publisher_see":
 			$notices = '';
@@ -337,7 +369,7 @@ if (($id)&&(!$lvl)) {
 				$fr = new filter_results($notices);
 				$notices = $fr->get_results();
 			}
-			add_notices_to_cart($notices);
+			$message = add_notices_to_cart($notices);
 			break;
 		case "serie_see":
 			$notices = '';
@@ -351,7 +383,7 @@ if (($id)&&(!$lvl)) {
 				$fr = new filter_results($notices);
 				$notices = $fr->get_results();		
 			}
-			add_notices_to_cart($notices);
+			$message = add_notices_to_cart($notices);
 			break;
 		case "subcoll_see":
 			$notices = '';
@@ -365,7 +397,7 @@ if (($id)&&(!$lvl)) {
 				$fr = new filter_results($notices);
 				$notices = $fr->get_results();		
 			}
-			add_notices_to_cart($notices);
+			$message = add_notices_to_cart($notices);
 			break;
 		case "etagere_see":
 			$notices = '';
@@ -379,7 +411,7 @@ if (($id)&&(!$lvl)) {
 				$fr = new filter_results($notices);
 				$notices = $fr->get_results();		
 			}
-			add_notices_to_cart($notices);
+			$message = add_notices_to_cart($notices);
 			break;
 		case "dsi":
 			$notices = '';
@@ -393,7 +425,7 @@ if (($id)&&(!$lvl)) {
 				$fr = new filter_results($notices);
 				$notices = $fr->get_results();		
 			}
-			add_notices_to_cart($notices);
+			$message = add_notices_to_cart($notices);
 			break;
 		case "analysis":
 			$notices='';
@@ -407,7 +439,7 @@ if (($id)&&(!$lvl)) {
 				$fr = new filter_results($notices);
 				$notices = $fr->get_results();		
 			}
-			add_notices_to_cart($notices);
+			$message = add_notices_to_cart($notices);
 			break;	
 		case "listlecture":
 			$notices='';
@@ -421,12 +453,12 @@ if (($id)&&(!$lvl)) {
 				$fr = new filter_results($notices);
 				$notices = $fr->get_results();		
 			}
-			add_notices_to_cart($notices);
+			$message = add_notices_to_cart($notices);
 			
 			if($sub == "consult")
-				print "<script>top.document.liste_lecture.action=\"index.php?lvl=show_list&sub=consultation&id_liste=$id\";top.document.liste_lecture.target=\"\"</script>";
+				print "<script>top.document.liste_lecture.action=\"index.php?lvl=show_list&sub=consultation&id_liste=".stripslashes($id)."\";top.document.liste_lecture.target=\"\"</script>";
 			else
-				print "<script>top.document.liste_lecture.action=\"index.php?lvl=show_list&sub=view&id_liste=$id\";top.document.liste_lecture.target=\"\"</script>";
+				print "<script>top.document.liste_lecture.action=\"index.php?lvl=show_list&sub=view&id_liste=".stripslashes($id)."\";top.document.liste_lecture.target=\"\"</script>";
 			break;		
 		case "section_see":
 			//On regarde dans quelle type de navigation on se trouve
@@ -494,9 +526,9 @@ if (($id)&&(!$lvl)) {
 				@pmb_mysql_query("alter table temp_n_id add index(notice_id)");
 				
 				//Calcul du classement
-				$rq1_index="create temporary table union1 ENGINE=MyISAM (select distinct expl_cote from exemplaires, temp_n_id where expl_location=$location and expl_section=$id and expl_notice=temp_n_id.notice_id) ";
+				$rq1_index="create temporary table union1 ENGINE=MyISAM (select distinct expl_cote from exemplaires, temp_n_id where expl_location='".$location."' and expl_section='".$id."' and expl_notice=temp_n_id.notice_id) ";
 				$res1_index=pmb_mysql_query($rq1_index);
-				$rq2_index="create temporary table union2 ENGINE=MyISAM (select distinct expl_cote from exemplaires, temp_n_id, bulletins where expl_location=$location and expl_section=$id and bulletin_notice=temp_n_id.notice_id and expl_bulletin=bulletin_id) ";
+				$rq2_index="create temporary table union2 ENGINE=MyISAM (select distinct expl_cote from exemplaires join (select distinct bulletin_id from bulletins join temp_n_id where bulletin_notice=notice_id) as sub on (bulletin_id=expl_bulletin) where expl_location='".$location."' and expl_section='".$id."') ";
 				$res2_index=pmb_mysql_query($rq2_index);			
 				$req_index="select distinct expl_cote from union1 union select distinct expl_cote from union2";
 				$res_index=pmb_mysql_query($req_index);
@@ -539,7 +571,7 @@ if (($id)&&(!$lvl)) {
 				$fr = new filter_results($notices);
 				$notices = $fr->get_results();
 			}
-			add_notices_to_cart($notices);
+			$message = add_notices_to_cart($notices);
 			break;
 		case "concept_see":
 			require_once($class_path."/skos/skos_concept.class.php");
@@ -549,13 +581,77 @@ if (($id)&&(!$lvl)) {
 			$notices = implode(",", $concept->get_indexed_notices());
 			$fr = new filter_results($notices);
 			$notices = $fr->get_results();		
-			add_notices_to_cart($notices);
+			$message = add_notices_to_cart($notices);
+			break;
+		case "loans_all":
+			$sql = "SELECT if(notices_m.notice_id, notices_m.notice_id, notices_s.notice_id) as notice_id ";
+			$sql.= "FROM (((exemplaires LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) ";
+			$sql.= "LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) ";
+			$sql.= "LEFT JOIN notices AS notices_s ON num_notice = notices_s.notice_id), pret ";
+			$sql.= "WHERE pret_idexpl = expl_id AND pret_idempr='$id_empr' ";
+			$sql.= "AND (notices_m.notice_id<>0 OR notices_s.notice_id<>0)";
+			
+			$notices = '';
+			$r =pmb_mysql_query($sql,$dbh);
+			if (pmb_mysql_num_rows($r)) {
+				$tab_notices=array();
+				while($row=pmb_mysql_fetch_object($r)) {
+					$tab_notices[]=$row->notice_id;
+				}
+				$notices=implode(',',$tab_notices);
+			}
+			$message = add_notices_to_cart($notices);
+			break;
+		case "loans_old":
+			$limit = '';
+			$restrict_date = '';
+			if ($opac_empr_hist_nb_max) {
+				$limit=" LIMIT 0, $opac_empr_hist_nb_max ";
+			}
+			if ($opac_empr_hist_nb_jour_max) {
+				$restrict_date=" date_add(pret_archive.arc_fin, INTERVAL $opac_empr_hist_nb_jour_max day)>=sysdate() AND ";
+			}
+			$sql = "SELECT if(notices_m.notice_id, notices_m.notice_id, notices_s.notice_id) as notice_id ";
+			$sql.= "FROM (((pret_archive LEFT JOIN notices AS notices_m ON arc_expl_notice = notices_m.notice_id ) ";
+			$sql.= "LEFT JOIN bulletins ON arc_expl_bulletin = bulletins.bulletin_id) ";
+			$sql.= "LEFT JOIN notices AS notices_s ON num_notice = notices_s.notice_id), empr ";
+			$sql.= "WHERE $restrict_date empr.id_empr = arc_id_empr and arc_id_empr='$id_empr' ";
+			$sql.= " and arc_fin < '".date("Y-m-d H:i:s")."'";
+			$sql.= " group by notice_id ";
+			$sql.= " having notice_id<>0";
+			$sql.= $limit;
+
+			$notices = '';
+			$r =pmb_mysql_query($sql,$dbh);
+			if (pmb_mysql_num_rows($r)) {
+				$tab_notices=array();
+				while($row=pmb_mysql_fetch_object($r)) {
+					$tab_notices[]=$row->notice_id;
+				}
+				$notices=implode(',',$tab_notices);
+			}
+			$message = add_notices_to_cart($notices);
 			break;
 	}
-} else $message="";
-if(!count($cart_)) echo $msg["cart_empty"]; else echo $message." <a href='#' onClick=\"parent.document.location='index.php?lvl=show_cart'; return false;\">".sprintf($msg["cart_contents"],count($cart_))."</a>";
+}else if(!$lvl && isset($notices) && $notices){
+	add_notices_to_cart($notices);
+}
+if(!count($cart_)) echo $msg["cart_empty".($opac_simplified_cart?'_simplified':'')]; else echo $message." <a href='#' onClick=\"parent.document.location='index.php?lvl=show_cart'; return false;\">".sprintf($msg["cart_contents".($opac_simplified_cart?'_simplified':'')],count($cart_))."</a>";
 $_SESSION["cart"]=$cart_;
 ?>
 </span>
+<?php
+if (!count($cart_)) {
+	print "<script>document.getElementById('cart_info_iframe_content').setAttribute('class', 'basket_is_empty');</script>";
+}
+if ($opac_accessibility && isset($_SESSION["pmbopac_fontSize"])) {
+	print "
+		<script type='text/javascript' src='".$include_path."/javascript/misc.js'></script>
+		<script type='text/javascript'>get_ref('cart_info_body').style['fontSize'] = '".$_SESSION["pmbopac_fontSize"]."';</script>";
+}
+if($opac_integrate_anonymous_cart && isset($_SESSION['cart_anonymous'])){
+	integrate_anonymous_cart();
+}
+?>
 </body>
 </html>

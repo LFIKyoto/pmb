@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_diff.class.php,v 1.3 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: serialcirc_diff.class.php,v 1.4 2017-04-26 10:20:06 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,9 +12,9 @@ require_once($class_path."/serialcirc_empr.class.php");
 require_once($include_path."/serialcirc.inc.php");
 
 class serialcirc_diff {
-	var $num_serialcirc;		// identifiant de la circulation
-	var $serialcirc;			// instance de serialcirc
-	var $list;					// tableau d'instance de serialcirc_diff_dest
+	public $num_serialcirc;		// identifiant de la circulation
+	public $serialcirc;			// instance de serialcirc
+	public $list;					// tableau d'instance de serialcirc_diff_dest
 	
 	public function __construct($id_serialcirc){
 		$this->num_serialcirc = $id_serialcirc*1;
@@ -93,15 +93,15 @@ class serialcirc_diff {
 }
 
 class serialcirc_diff_dest {
-	var $id_serialcirc_diff;	// identifiant unique
-	var $type;					// booléen définissant si le dest est un groupe ou non...
-	var $type_diff;				// booléen définissant si la circulation dans le cas d'un groupe est en marguerite ou non
-	var $num_empr;				// identifiant de l'emprunteur
-	var $group_name;			// nom du groupe
-	var $duration;				// durée en nombre de jours de disponibilité pour le destinataire
-	var $order;					// ordre dans la liste de diffusion
-	var $group;					// instance de serialcirc_group
-	var $num_serialcirc;		// identifiant de serialcirc
+	public $id_serialcirc_diff;	// identifiant unique
+	public $type;					// booléen définissant si le dest est un groupe ou non...
+	public $type_diff;				// booléen définissant si la circulation dans le cas d'un groupe est en marguerite ou non
+	public $num_empr;				// identifiant de l'emprunteur
+	public $group_name;			// nom du groupe
+	public $duration;				// durée en nombre de jours de disponibilité pour le destinataire
+	public $order;					// ordre dans la liste de diffusion
+	public $group;					// instance de serialcirc_group
+	public $num_serialcirc;		// identifiant de serialcirc
 	
 	public function __construct($id_serialcirc_diff){
 		$this->id_serialcirc_diff = $id_serialcirc_diff*1;

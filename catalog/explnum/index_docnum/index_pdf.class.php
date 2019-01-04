@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: index_pdf.class.php,v 1.4 2012-03-23 14:10:19 dbellamy Exp $
+// $Id: index_pdf.class.php,v 1.6 2017-08-10 09:19:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,18 +11,19 @@ if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
  */
 class index_pdf{
 	
-	var $fichier='';
+	public $fichier='';
 	
-	function index_pdf($filename, $mimetype='', $extension=''){
+	public function __construct($filename, $mimetype='', $extension=''){
 		$this->fichier = $filename;
 	}
 	
 	/**
 	 * Méthode qui retourne le texte à indexer des pdf
 	 */
-	function get_text($filename){
+	public function get_text($filename){
 		global $charset;
 		
+		$texte = '';
 		$fp = popen("pdftotext -enc UTF-8 ".$filename." -", "r");
 		while(!feof($fp)){
 			$line = fgets($fp,4096); 

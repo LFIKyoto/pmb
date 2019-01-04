@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: restore.inc.php,v 1.9 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: restore.inc.php,v 1.11 2017-11-21 12:01:00 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -45,7 +45,7 @@ if($file)
 			if($valeur) {
 				$result = pmb_mysql_query($valeur, $dbh);
 				if(!$result) {
-					print "<font color=#ff0000><strong>".$msg[540]."</strong></font> ".$msg['admin_misc_requete']." $cle&nbsp;: $valeur<hr />";
+					print "<span style='color:#ff0000'><strong>".$msg[540]."</strong></span> ".$msg['admin_misc_requete']." $cle&nbsp;: $valeur<hr />";
 					$error_flag = TRUE;
 				}
 			}
@@ -74,7 +74,7 @@ if($file)
 		while($file = readdir($handle)) {
 			$sav = $sav_path.$file;
 			if (is_file("$sav") && preg_match("/sql$/si", $sav)) {
-				$symbol = "<img src='./images/texte_ico.gif'>";
+				$symbol = "<img src='".get_url_icon('texte_ico.gif')."'>";
 				$fdate = date("d/m/Y", filemtime($sav));
 				$fheure = date("H:i:s", filemtime($sav));
 

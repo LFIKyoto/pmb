@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_type_section.class.php,v 1.2 2012-11-09 14:12:45 arenou Exp $
+// $Id: cms_module_common_selector_type_section.class.php,v 1.3 2017-09-14 10:09:49 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,6 +15,7 @@ class cms_module_common_selector_type_section extends cms_module_common_selector
 	
 	protected function get_sub_selectors(){
 		$sub_selectors= parent::get_sub_selectors();
+		$sub_selectors[]='cms_module_common_selector_global_var';
 		$sub_selectors[]='cms_module_common_selector_section';
 		return $sub_selectors;
 	}	

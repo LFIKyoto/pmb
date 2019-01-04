@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesItems.class.php,v 1.17 2015-06-08 09:49:39 ngantier Exp $
+// $Id: pmbesItems.class.php,v 1.20 2017-12-11 13:39:07 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,24 +11,20 @@ require_once("$class_path/mono_display.class.php");
 
 
 class pmbesItems extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
-	var $es;				//Classe mère qui implémente celle-ci !
-	var $msg;
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	
-	function fetch_notice_items($notice_id, $OPACUserId=-1) {
+	public function fetch_notice_items($notice_id, $OPACUserId=-1) {
 		global $dbh;
 		global $msg;
 		$result = array();
@@ -44,7 +40,7 @@ class pmbesItems extends external_services_api_class {
 			return array();
 		}
 
-		$requete = "SELECT exemplaires.*, pret.*, docs_location.*, docs_section.*, docs_statut.*, tdoc_libelle, ";
+		$requete = "SELECT exemplaires.*, pret.*, docs_location.*, docs_section.*, docs_statut.*, tdoc_libelle, codestat_libelle, ";
 		$requete .= " date_format(pret_date, '".$msg["format_date"]."') as aff_pret_date, ";
 		$requete .= " date_format(pret_retour, '".$msg["format_date"]."') as aff_pret_retour, ";
 		$requete .= " IF(pret_retour>sysdate(),0,1) as retard " ;
@@ -53,6 +49,7 @@ class pmbesItems extends external_services_api_class {
 		$requete .= " left join docs_section on exemplaires.expl_section=docs_section.idsection ";
 		$requete .= " left join docs_statut on exemplaires.expl_statut=docs_statut.idstatut ";
 		$requete .= " left join docs_type on exemplaires.expl_typdoc=docs_type.idtyp_doc  ";
+		$requete .= " left join docs_codestat on (expl_codestat = idcode)  ";
 		$requete .= " WHERE expl_notice=$notice_id ";
 		$requete .= " order by location_libelle, section_libelle, expl_cote, expl_cb ";
 
@@ -88,6 +85,7 @@ class pmbesItems extends external_services_api_class {
 				$expl_return["support"] = utf8_normalize($row["tdoc_libelle"]);
 				$expl_return["statut"] = utf8_normalize($row["statut_libelle"]);
 				$expl_return["situation"] = utf8_normalize(strip_tags($situation));
+				$expl_return["codestat"] = utf8_normalize($row["codestat_libelle"]);
 			}
 			
 			$result[] = $expl_return;
@@ -96,7 +94,7 @@ class pmbesItems extends external_services_api_class {
 		return $result;
 	}
 	
-		function fetch_notices_items($notice_ids, $OPACUserId=-1) {
+	public function fetch_notices_items($notice_ids, $OPACUserId=-1) {
 		global $dbh;
 		global $msg;
 		$result = array();
@@ -113,7 +111,7 @@ class pmbesItems extends external_services_api_class {
 			return array();
 		}
 
-		$requete = "SELECT exemplaires.*, pret.*, docs_location.*, docs_section.*, docs_statut.*, tdoc_libelle, ";
+		$requete = "SELECT exemplaires.*, pret.*, docs_location.*, docs_section.*, docs_statut.*, tdoc_libelle, codestat_libelle, ";
 		$requete .= " date_format(pret_date, '".$msg["format_date"]."') as aff_pret_date, ";
 		$requete .= " date_format(pret_retour, '".$msg["format_date"]."') as aff_pret_retour, ";
 		$requete .= " IF(pret_retour>sysdate(),0,1) as retard " ;
@@ -122,6 +120,7 @@ class pmbesItems extends external_services_api_class {
 		$requete .= " left join docs_section on exemplaires.expl_section=docs_section.idsection ";
 		$requete .= " left join docs_statut on exemplaires.expl_statut=docs_statut.idstatut ";
 		$requete .= " left join docs_type on exemplaires.expl_typdoc=docs_type.idtyp_doc  ";
+		$requete .= " left join docs_codestat on (expl_codestat = idcode)  ";
 		$requete .= " WHERE expl_notice IN (".(implode(',', $notice_ids)).") ";
 		$requete .= " order by expl_notice, location_libelle, section_libelle, expl_cote, expl_cb ";
 
@@ -169,6 +168,7 @@ class pmbesItems extends external_services_api_class {
 				$expl_return["support"] = utf8_normalize($row["tdoc_libelle"]);
 				$expl_return["statut"] = utf8_normalize($row["statut_libelle"]);
 				$expl_return["situation"] = utf8_normalize(strip_tags($situation));
+				$expl_return["codestat"] = utf8_normalize($row["codestat_libelle"]);
 			}
 			
 			$current_items[] = $expl_return;
@@ -184,7 +184,7 @@ class pmbesItems extends external_services_api_class {
 		return $result;
 	}
 	
-	function fetch_bulletins_items($bulletin_ids, $OPACUserId=-1) {
+	public function fetch_bulletins_items($bulletin_ids, $OPACUserId=-1) {
 		global $dbh;
 		global $msg;
 		$result = array();
@@ -201,7 +201,7 @@ class pmbesItems extends external_services_api_class {
 			return array();
 		}
 
-		$requete = "SELECT exemplaires.*, pret.*, docs_location.*, docs_section.*, docs_statut.*, tdoc_libelle, ";
+		$requete = "SELECT exemplaires.*, pret.*, docs_location.*, docs_section.*, docs_statut.*, tdoc_libelle, codestat_libelle, ";
 		$requete .= " date_format(pret_date, '".$msg["format_date"]."') as aff_pret_date, ";
 		$requete .= " date_format(pret_retour, '".$msg["format_date"]."') as aff_pret_retour, ";
 		$requete .= " IF(pret_retour>sysdate(),0,1) as retard " ;
@@ -210,6 +210,7 @@ class pmbesItems extends external_services_api_class {
 		$requete .= " left join docs_section on exemplaires.expl_section=docs_section.idsection ";
 		$requete .= " left join docs_statut on exemplaires.expl_statut=docs_statut.idstatut ";
 		$requete .= " left join docs_type on exemplaires.expl_typdoc=docs_type.idtyp_doc  ";
+		$requete .= " left join docs_codestat on (expl_codestat = idcode)  ";
 		$requete .= " WHERE expl_bulletin IN (".(implode(',', $bulletin_ids)).") ";
 		$requete .= " order by expl_bulletin, location_libelle, section_libelle, expl_cote, expl_cb ";
 
@@ -259,6 +260,7 @@ class pmbesItems extends external_services_api_class {
 				$expl_return["support"] = utf8_normalize($row["tdoc_libelle"]);
 				$expl_return["statut"] = utf8_normalize($row["statut_libelle"]);
 				$expl_return["situation"] = utf8_normalize(strip_tags($situation));
+				$expl_return["codestat"] = utf8_normalize($row["codestat_libelle"]);
 			}else{
 				// L'exemplaire n'est pas dans une sur_localisation / localisation / section visible à l'OPAC
 			}
@@ -276,7 +278,7 @@ class pmbesItems extends external_services_api_class {
 		return $result;
 	}	
 	
-	function fetch_item($item_cb='', $item_id='', $OPACUserId=-1) {
+	public function fetch_item($item_cb='', $item_id='', $OPACUserId=-1) {
 		global $dbh;
 		global $msg;
 		
@@ -309,7 +311,7 @@ class pmbesItems extends external_services_api_class {
 			$wheres[] = "expl_id = ".$item_id."";
 		}
 		
-		$requete = "SELECT exemplaires.*, pret.*, docs_location.*, docs_section.*, docs_statut.*, tdoc_libelle, ";
+		$requete = "SELECT exemplaires.*, pret.*, docs_location.*, docs_section.*, docs_statut.*, tdoc_libelle, codestat_libelle, ";
 		$requete .= " date_format(pret_date, '".$msg["format_date"]."') as aff_pret_date, ";
 		$requete .= " date_format(pret_retour, '".$msg["format_date"]."') as aff_pret_retour, ";
 		$requete .= " IF(pret_retour>sysdate(),0,1) as retard " ;
@@ -318,6 +320,7 @@ class pmbesItems extends external_services_api_class {
 		$requete .= " left join docs_section on exemplaires.expl_section=docs_section.idsection ";
 		$requete .= " left join docs_statut on exemplaires.expl_statut=docs_statut.idstatut ";
 		$requete .= " left join docs_type on exemplaires.expl_typdoc=docs_type.idtyp_doc  ";
+		$requete .= " left join docs_codestat on (expl_codestat = idcode)  ";
 		$requete .= " WHERE 1 and ".implode(' and ', $wheres);
 		
 		$res = pmb_mysql_query($requete, $dbh);
@@ -377,12 +380,13 @@ class pmbesItems extends external_services_api_class {
 			$expl_return["support"] = utf8_normalize($row["tdoc_libelle"]);
 			$expl_return["statut"] = utf8_normalize($row["statut_libelle"]);
 			$expl_return["situation"] = utf8_normalize($situation);
+			$expl_return["codestat"] = utf8_normalize($row["codestat_libelle"]);
 		}
 		
 		return $expl_return;
 	}
 
-	function fetch_item_info($item_cb='', $item_id='', $OPACUserId=-1) {
+	public function fetch_item_info($item_cb='', $item_id='', $OPACUserId=-1) {
 		global $dbh;
 		global $msg;
 	
@@ -414,7 +418,7 @@ class pmbesItems extends external_services_api_class {
 			$wheres[] = "expl_id = ".$item_id."";
 		}
 	
-		$requete = "SELECT exemplaires.*, docs_location.*, docs_section.*, docs_statut.*, tdoc_libelle, ";
+		$requete = "SELECT exemplaires.*, docs_location.*, docs_section.*, docs_statut.*, tdoc_libelle, codestat_libelle, ";
 		$requete .= " date_format(pret_date, '".$msg["format_date"]."') as aff_pret_date, ";
 		$requete .= " date_format(pret_retour, '".$msg["format_date"]."') as aff_pret_retour, ";
 		$requete .= " IF(pret_retour>sysdate(),0,1) as retard " ;
@@ -423,6 +427,7 @@ class pmbesItems extends external_services_api_class {
 		$requete .= " left join docs_section on exemplaires.expl_section=docs_section.idsection ";
 		$requete .= " left join docs_statut on exemplaires.expl_statut=docs_statut.idstatut ";
 		$requete .= " left join docs_type on exemplaires.expl_typdoc=docs_type.idtyp_doc  ";
+		$requete .= " left join docs_codestat on (expl_codestat = idcode)  ";
 		$requete .= " WHERE 1 and ".implode(' and ', $wheres);
 		
 	
@@ -489,6 +494,7 @@ class pmbesItems extends external_services_api_class {
 			$expl_return["support"] = utf8_normalize($row["tdoc_libelle"]);
 			$expl_return["statut_libelle"] = utf8_normalize($row["statut_libelle"]);
 			$expl_return["situation"] = utf8_normalize($situation);
+			$expl_return["codestat"] = utf8_normalize($row["codestat_libelle"]);
 		}	
 		return $expl_return;
 	}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fiche_catalographique.inc.php,v 1.12 2014-12-10 11:33:21 jpermanne Exp $
+// $Id: fiche_catalographique.inc.php,v 1.15 2018-09-05 10:03:35 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -10,11 +10,12 @@ if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 /* reçoit : un cb ou id d'exemplaire */
 
 // modules propres à pdf.php ou à ses sous-modules
-require_once("$class_path/notice.class.php");
-require_once("$class_path/expl.class.php");
-require_once("$class_path/indexint.class.php");
-require_once("$include_path/notice_authors.inc.php");
-require_once("$include_path/notice_categories.inc.php");
+require_once($class_path."/fpdf.class.php");
+require_once($class_path."/notice.class.php");
+require_once($class_path."/expl.class.php");
+require_once($class_path."/indexint.class.php");
+require_once($include_path."/notice_authors.inc.php");
+require_once($include_path."/notice_categories.inc.php");
 
 $exemplaire=new exemplaire($expl_cb, $expl_id);
 $notice=new notice($exemplaire->id_notice);
@@ -24,16 +25,21 @@ $width=76;          // width of catalographic card
 $height=5;          // heigth of a line in a catalographic card
 $header="";         // header of the catalographic card
 
-class FPDF_Catalog extends FPDF
-{
-    function create() {
-   // Create the catalographic card
+class FPDF_Catalog extends FPDF {
+	
+	public function __construct($orientation='P', $unit='mm', $format='A4') {
+		global $length,$width ;
+		
+		//Appel au constructeur parent
+		parent::__construct("P", "mm", array($length,$width));
+	}
+	
+    public function create() {
+   		// Create the catalographic card
+		global $width, $height ;
+		global $length;
+		global $expl_cb;
 
-	global $width, $height ;
-	global $length;
-	global $expl_cb;
-
-        $this->FPDF("P", "mm", array($length,$width));
         $this->Open();
         $this->setMargins(5,5,5);
         $this->setAutoPageBreak(true,$height);
@@ -43,18 +49,18 @@ class FPDF_Catalog extends FPDF
         $this->setCreator("PMB");
     }
 
-    function Header() {
-/*---------------------------------------------------------*
- ! Create the header of the catalographic card             !
- *---------------------------------------------------------*/
+    public function Header() {
+		/*---------------------------------------------------------*
+		 ! Create the header of the catalographic card             !
+		 *---------------------------------------------------------*/
 
-	global $header;
-	global $width;
-	global $length;
-	global $height;
-	global $exemplaire;
-	global $index;
-	global $pmb_pdf_font;
+		global $header;
+		global $width;
+		global $length;
+		global $height;
+		global $exemplaire;
+		global $index;
+		global $pmb_pdf_font;
 
         $this->setFont($pmb_pdf_font,"B",10);
         $this->Cell($length,$height,$header);
@@ -65,18 +71,18 @@ class FPDF_Catalog extends FPDF
     }
 
 
-    function Body() {
-    /*---------------------------------------------------------*
-     ! Create the body of the catalographic card               !
-     *---------------------------------------------------------*/
-
-	global $width;
-	global $length;
-	global $height;
-	global $exemplaire;
-	global $notice;
-	global $auteur;
-	global $pmb_pdf_font;
+    public function Body() {
+	    /*---------------------------------------------------------*
+	     ! Create the body of the catalographic card               !
+	     *---------------------------------------------------------*/
+	
+		global $width;
+		global $length;
+		global $height;
+		global $exemplaire;
+		global $notice;
+		global $auteur;
+		global $pmb_pdf_font;
 
         $body="";
         $body=$body.$notice->tit1." : ";
@@ -147,16 +153,16 @@ class FPDF_Catalog extends FPDF
         $this->Cell($length,$height,"ISBN : ".$notice->code);
     }
 
-    function Footer() {
-    /*---------------------------------------------------------*
-     ! Create the footer of the catalographic card             !
-     *---------------------------------------------------------*/
-
-	global $width;
-	global $length;
-	global $height;
-	global $exemplaire;
-	global $pmb_pdf_fontfixed;
+    public function Footer() {
+	    /*---------------------------------------------------------*
+	     ! Create the footer of the catalographic card             !
+	     *---------------------------------------------------------*/
+	
+		global $width;
+		global $length;
+		global $height;
+		global $exemplaire;
+		global $pmb_pdf_fontfixed;
 
         $this->setFont($pmb_pdf_fontfixed,"",10);
         $this->setXY(5,$width-$height*2);
@@ -170,18 +176,24 @@ class FPDF_Catalog extends FPDF
 
 }
 
-class UFPDF_Catalog extends UFPDF
-{
-    function create() {
-   /*---------------------------------------------------------*
-    ! Create the catalographic card                           !
-    *---------------------------------------------------------*/
+class UFPDF_Catalog extends UFPDF {
+	
+	public function __construct($orientation='P', $unit='mm', $format='A4') {
+		global $length, $width ;
+		
+		//Appel au constructeur parent
+		parent::__construct("P", "mm", array($length,$width));
+	}
+	
+    public function create() {
+	   /*---------------------------------------------------------*
+	    ! Create the catalographic card                           !
+	    *---------------------------------------------------------*/
+	
+		global $width, $height ;
+		global $length;
+		global $expl_cb;
 
-	global $width, $height ;
-	global $length;
-	global $expl_cb;
-
-        $this->FPDF("P", "mm", array($length,$width));
         $this->Open();
         $this->setMargins(5,5,5);
         $this->setAutoPageBreak(true,$height);
@@ -191,18 +203,18 @@ class UFPDF_Catalog extends UFPDF
         $this->setCreator("PMB");
     }
 
-    function Header() {
-/*---------------------------------------------------------*
- ! Create the header of the catalographic card             !
- *---------------------------------------------------------*/
-
-	global $header;
-	global $width;
-	global $length;
-	global $height;
-	global $exemplaire;
-	global $index;
-	global $pmb_pdf_font;
+    public function Header() {
+		/*---------------------------------------------------------*
+		 ! Create the header of the catalographic card             !
+		 *---------------------------------------------------------*/
+	
+		global $header;
+		global $width;
+		global $length;
+		global $height;
+		global $exemplaire;
+		global $index;
+		global $pmb_pdf_font;
 
         $this->setFont($pmb_pdf_font,"B",10);
         $this->Cell($length,$height,$header);
@@ -213,18 +225,18 @@ class UFPDF_Catalog extends UFPDF
     }
 
 
-    function Body() {
-    /*---------------------------------------------------------*
-     ! Create the body of the catalographic card               !
-     *---------------------------------------------------------*/
-
-	global $width;
-	global $length;
-	global $height;
-	global $exemplaire;
-	global $notice;
-	global $auteur;
-	global $pmb_pdf_font;
+    public function Body() {
+	    /*---------------------------------------------------------*
+	     ! Create the body of the catalographic card               !
+	     *---------------------------------------------------------*/
+	
+		global $width;
+		global $length;
+		global $height;
+		global $exemplaire;
+		global $notice;
+		global $auteur;
+		global $pmb_pdf_font;
 
         $body="";
         $body=$body.$notice->tit1." : ";
@@ -293,16 +305,16 @@ class UFPDF_Catalog extends UFPDF
         $this->Cell($length,$height,"ISBN : ".$notice->code);
     }
 
-    function Footer() {
-    /*---------------------------------------------------------*
-     ! Create the footer of the catalographic card             !
-     *---------------------------------------------------------*/
-
-	global $width;
-	global $length;
-	global $height;
-	global $exemplaire;
-	global $pmb_pdf_font;
+    public function Footer() {
+	    /*---------------------------------------------------------*
+	     ! Create the footer of the catalographic card             !
+	     *---------------------------------------------------------*/
+	
+		global $width;
+		global $length;
+		global $height;
+		global $exemplaire;
+		global $pmb_pdf_font;
 
         $this->setFont($pmb_pdf_font,"",10);
         $this->setXY(5,$width-$height*2);

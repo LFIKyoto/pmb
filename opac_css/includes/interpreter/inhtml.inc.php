@@ -2,17 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: inhtml.inc.php,v 1.8 2013-04-18 08:22:38 arenou Exp $
+// $Id: inhtml.inc.php,v 1.10 2017-07-12 15:15:01 tsamson Exp $
 
 require_once ($include_path . "/misc.inc.php");
 
-$func_format['if_logged']= aff_if_logged;
-$func_format['if_logged_lang']= aff_if_logged_lang;
-$func_format['message_lang']= aff_message_lang;
-$func_format['if_param']= aff_if_param;
-$func_format['eval_php']= aff_eval_php;
-$func_format['perio_a2z']= aff_perio_a2z;
-$func_format['if_session_param']= aff_if_session_param;
+$func_format['if_logged']= 'aff_if_logged';
+$func_format['if_logged_lang']= 'aff_if_logged_lang';
+$func_format['message_lang']= 'aff_message_lang';
+$func_format['if_param']= 'aff_if_param';
+$func_format['eval_php']= 'aff_eval_php';
+$func_format['perio_a2z']= 'aff_perio_a2z';
+$func_format['if_session_param']= 'aff_if_session_param';
 
 
 
@@ -26,8 +26,8 @@ function aff_eval_php($param) {
 function aff_if_param($param) {
 	//Nom de la variable a tester, valeur, si =, si <>
 	$varname=$param[0];
-	global $$varname;
-	if ($$varname==$param[1]) $ret=$param[2]; else $ret=$param[3];
+	global ${$varname};
+	if (${$varname}==$param[1]) $ret=$param[2]; else $ret=$param[3];
 	return $ret;
 }
 

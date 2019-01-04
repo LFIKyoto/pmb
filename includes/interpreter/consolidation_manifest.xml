@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: consolidation_manifest.xml,v 1.1.2.1 2015-09-22 08:31:55 jpermanne Exp $ -->
+$Id: consolidation_manifest.xml,v 1.5 2018-08-06 11:59:02 plmrozowski Exp $ -->
 <manifest>
 	<name>Consolidation</name>
 	<description>msg:Notice_tpl_functions_description</description>
@@ -57,12 +57,28 @@ $Id: consolidation_manifest.xml,v 1.1.2.1 2015-09-22 08:31:55 jpermanne Exp $ --
 				<description>msg:adresse_ip_output_description</description>
 			</outputs>
 		</method>
+		<method name="#adresse_ip_forward($param, $parser);" rights="" version="1.0" comment="msg:adresse_ip_forward_description" language_independant="true">
+			<inputs>
+				<description>msg:adresse_ip_forward_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:adresse_ip_forward_output_description</description>
+			</outputs>
+		</method>
 		<method name="#user_agent($param, $parser);" rights="" version="1.0" comment="msg:user_agent_description" language_independant="true">
 			<inputs>
 				<description>msg:user_agent_input_description</description>
 			</inputs>
 			<outputs>
 				<description>msg:user_agent_output_description</description>
+			</outputs>
+		</method>
+		<method name="#top_level_domain($param, $parser);" rights="" version="1.0" comment="msg:top_level_domain_description" language_independant="true">
+			<inputs>
+				<description>msg:top_level_domain_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:top_level_domain_output_description</description>
 			</outputs>
 		</method>
 		<method name="#var_post($param, $parser);" rights="" version="1.0" comment="msg:var_post_description" language_independant="true">
@@ -602,6 +618,25 @@ $Id: consolidation_manifest.xml,v 1.1.2.1 2015-09-22 08:31:55 jpermanne Exp $ --
 			</inputs>
 			<outputs>
 				<description>msg:bulletin_id_output_description</description>
+			</outputs>
+		</method>
+	</methods>
+	<methods comment="msg:classbannettes">
+	
+		<method name="#abo_bannette($param, $parser);" rights="" version="1.0" comment="msg:abo_bannette_description" language_independant="true">
+			<inputs>
+				<description>msg:abo_bannette_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:abo_bannette_output_description</description>
+			</outputs>
+		</method>
+		<method name="#desabo_bannette($param, $parser);" rights="" version="1.0" comment="msg:desabo_bannette_description" language_independant="true">
+			<inputs>
+				<description>msg:desabo_bannette_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:desabo_bannette_output_description</description>
 			</outputs>
 		</method>
 	</methods>

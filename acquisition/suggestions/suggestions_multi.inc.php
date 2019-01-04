@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions_multi.inc.php,v 1.2 2009-11-04 14:37:54 kantin Exp $
+// $Id: suggestions_multi.inc.php,v 1.3 2017-04-19 12:37:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($act)) $act = '';
 
 require_once($class_path.'/suggestion_multi.class.php');
 require_once($class_path.'/suggestions_map.class.php');

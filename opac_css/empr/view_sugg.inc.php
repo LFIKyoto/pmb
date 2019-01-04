@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: view_sugg.inc.php,v 1.12.4.1 2015-09-24 15:48:16 dgoron Exp $
+// $Id: view_sugg.inc.php,v 1.20 2018-08-24 08:44:59 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -15,12 +15,12 @@ require_once($base_path.'/classes/suggestion_source.class.php');
 
 $sug_map = new suggestions_map();
 
-$sug_form.= "
+$sug_form = "
 <div id='view_sugg'>
-	<h3><span>".htmlentities($msg['empr_view_sugg'], ENT_QUOTES, $charset)."<span></h3>
+	<h3><span>".htmlentities($msg['empr_view_sugg'], ENT_QUOTES, $charset)."</span></h3>
 	<div id='empr_view-container'>
 	<!-- affichage liste des suggestions -->
-	<table width='100%'><tr>
+	<table style='width:100%'><tr>
 		<th>".htmlentities($msg['acquisition_sug_dat_cre'], ENT_QUOTES, $charset)."</th>
 		<th>".htmlentities($msg['acquisition_sug_tit'], ENT_QUOTES, $charset)."</th>
 		<th>".htmlentities($msg['acquisition_sug_edi'], ENT_QUOTES, $charset)."</th>
@@ -34,7 +34,7 @@ if ($opac_sugg_categ=='1') {
 }
 
 $sug_form .= "<th>".htmlentities($msg['empr_sugg_piece_jointe'], ENT_QUOTES, $charset)."</th>";
-$sug_form.= "<th>&nbsp;</th></tr>";
+$sug_form.= "</tr>";
 	
 $q = suggestions::listSuggestionsByOrigine($id_empr, '1');
 $res = pmb_mysql_query($q, $dbh);
@@ -73,7 +73,7 @@ if($nbr){
 		
 		$sug = new suggestions($row->id_suggestion);
 		if($sug->get_explnum('id')){
-			$sug_form .="<td align='center'><i>".($sug->get_explnum('id') ? "<a href=\"$base_path/explnum_doc.php?explnumdoc_id=".$sug->get_explnum('id')."\" target=\"_LINK_\"><img src='".get_url_icon("globe_orange.png")."' border='0' /></a>" : '' )."</i></td>";
+			$sug_form .="<td class='center'><i>".($sug->get_explnum('id') ? "<a href=\"$base_path/explnum_doc.php?explnumdoc_id=".$sug->get_explnum('id')."\" target=\"_blank\"><img src='".get_url_icon("globe_orange.png")."' alt='' style='border:0px'/></a>" : '' )."</i></td>";
 		} else {
 			$sug_form .="<td></td>";
 		}
@@ -87,7 +87,7 @@ if($nbr){
 } else {
 	
 	print "
-		<h3>".htmlentities($msg['empr_view_sugg'], ENT_QUOTES, $charset)."</h3>
+		<h3><span>".htmlentities($msg['empr_view_sugg'], ENT_QUOTES, $charset)."</span></h3>
 		<div class='row'>".htmlentities($msg['empr_view_no_sugg'], ENT_QUOTES, $charset)."
 		</div>";
 }

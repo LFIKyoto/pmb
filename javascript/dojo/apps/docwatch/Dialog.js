@@ -1,10 +1,10 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: Dialog.js,v 1.5 2015-02-20 16:13:37 vtouchard Exp $
+// $Id: Dialog.js,v 1.6 2017-09-05 08:37:29 vtouchard Exp $
 
 
-define(["dojo/_base/declare", "dojo/topic", "dojo/_base/lang", "dijit/Dialog", "apps/docwatch/form/Category", "apps/docwatch/form/Watch"], function(declare, topic, lang, Dialog, CategoryForm, WatchForm){
+define(["dojo/_base/declare", "dojo/topic", "dojo/_base/lang", "apps/pmb/PMBDialog", "apps/docwatch/form/Category", "apps/docwatch/form/Watch"], function(declare, topic, lang, Dialog, CategoryForm, WatchForm){
 	return declare([Dialog], {
 		postCreate: function(){
 			this.inherited(arguments);

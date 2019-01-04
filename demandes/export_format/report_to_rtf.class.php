@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: report_to_rtf.class.php,v 1.5 2010-02-23 16:27:22 kantin Exp $
+// $Id: report_to_rtf.class.php,v 1.7 2017-12-20 08:15:20 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,13 +12,13 @@ require_once($include_path.'/parser.inc.php');
 
 class report_to_rtf{
 	
-	var $intro = array();
-	var $notes = array();
+	public $intro = array();
+	public $notes = array();
 	
 	/*
 	 * Constructeur
 	 */
-	function report_to_rtf($xml=""){
+	public function __construct($xml=""){
 		//Parse le fichier dans un tableau	
 		$param=_parser_text_no_function_($xml,"REPORT");
 		
@@ -29,7 +29,7 @@ class report_to_rtf{
 	}
 	
 	
-	function generate_RTF(){
+	public function generate_RTF(){
 		
 		global  $pmb_gestion_devise, $base_path, $msg, $biblio_logo;
 		
@@ -135,14 +135,14 @@ class report_to_rtf{
 	/*
 	 * Conversion en UTF-8
 	 */
-	function to_utf8($string){
+	public function to_utf8($string){
 		global $charset;
 		
 		if($charset != 'utf-8'){
 			return utf8_encode($string);
 		}
 		
-		return utf8_decode($string);
+		return $string;
 	}
 }
 
@@ -153,9 +153,9 @@ class report_to_rtf{
 class report_to_rtf_pmi extends report_to_rtf {
 	
 	
-	function report_to_pdf_pmi(){}
+	public function __construct(){}
 	
-	function generate_RTF(){
+	public function generate_RTF(){
 		global $msg, $base_path, $pmb_gestion_devise, $charset;
 		
 		//Format de la police

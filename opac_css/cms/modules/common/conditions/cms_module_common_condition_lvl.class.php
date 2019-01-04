@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_condition_lvl.class.php,v 1.8 2015-01-21 16:36:58 arenou Exp $
+// $Id: cms_module_common_condition_lvl.class.php,v 1.10 2017-04-11 13:11:01 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -45,15 +45,17 @@ class cms_module_common_condition_lvl extends cms_module_common_condition{
 		$selector = $this->get_selected_selector();
 		$values = $selector->get_value();
 		$test = array("empr","askmdp","subscribe");
+		
 		//on regarde si on est sur la bonne page...
 		if(in_array(basename($_SERVER['SCRIPT_FILENAME'],".php"),$test) && in_array(basename($_SERVER['SCRIPT_FILENAME'],".php"),$values)){
 			return true;
 		}else if($search_type_asked && is_array($values) && in_array($search_type_asked,$values)){
 			return true;
-		}else if(is_array($values) && in_array($lvl,$values)){
+		// Dans le cas qui suit, on veut seulement s'assurer que la variable n'est pas en POST mais bien GET
+		}else if(!isset($_GET['search_type_asked']) && is_array($values) && in_array($lvl,$values)){
 			//sur la page
 			if($lvl == "index" || $lvl == ""){
-				if(!$search_type_asked){
+				if (!$search_type_asked){
 					return true;
 				}
 			}else{

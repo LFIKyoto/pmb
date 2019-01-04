@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_element.class.php,v 1.2 2015-03-11 16:18:59 apetithomme Exp $
+// $Id: vedette_element.class.php,v 1.3 2018-05-16 14:18:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -123,6 +123,9 @@ abstract class vedette_element {
 	
 	public function get_lien_opac() {
 		global $liens_opac;
+		global $use_opac_url_base, $opac_url_base;
+		
+		if($use_opac_url_base) return $opac_url_base.str_replace('./', '', $liens_opac[$this->key_lien_opac]);
 		return $liens_opac[$this->key_lien_opac];
 	}
 }

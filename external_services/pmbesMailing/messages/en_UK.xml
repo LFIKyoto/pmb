@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: en_UK.xml,v 1.1 2015-06-15 12:55:34 pmbs Exp $ -->
+$Id: en_UK.xml,v 1.2 2017-08-18 15:29:02 jpermanne Exp $ -->
 
 <!DOCTYPE XMLlist SYSTEM "../../../includes/XMLlist.dtd" >
 <XMLlist>
@@ -21,4 +21,5 @@ sendMailingCaddie
   <entry code="sendMailingCaddie_id_tpl">Identifier of the e-mail template</entry>   
   <entry code="sendMailingCaddie_output_description"></entry>
   <entry code="sendMailingCaddie_result"></entry>
+  <entry code="sendMailingCaddie_email_cc">Destinataire supplémentaire en copie cachée</entry>
 </XMLlist>

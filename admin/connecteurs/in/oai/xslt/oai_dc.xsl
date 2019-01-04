@@ -4,6 +4,9 @@
 	
 	<xsl:output method="xml" indent="yes"/>
 	
+	<xsl:variable name="lowercase" select="'abcdefghijklmnopqrstuvwxyz'" />
+	<xsl:variable name="uppercase" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'" />
+	
 	<xsl:template match="/record">
 		<unimarc>
 			<notice>
@@ -81,7 +84,7 @@
 	<xsl:template name="language">
 		<xsl:for-each select="dc:language">
 			<f c="101">
-				<s c="a"><xsl:value-of select="."/></s>
+				<s c="a"><xsl:value-of select="translate(.,$uppercase,$lowercase)"/></s>
 			</f>
 		</xsl:for-each>
 	</xsl:template>

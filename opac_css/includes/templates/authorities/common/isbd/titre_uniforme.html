@@ -1,0 +1,9 @@
+<!-- $Id: titre_uniforme.html,v 1.3 2018-04-27 07:46:38 ccraig Exp $ -->
+{{ authority.name }} [{{ authority.oeuvre_nature_name }} {{ authority.oeuvre_type_name }}]
+{% for auteur in authority.sorted_responsabilities.authors %}
+	 / {{ auteur.objet.display }}
+{% endfor %}
+{% for performer in authority.sorted_responsabilities.performers %}
+	 / {{ performer.objet.display }}
+{% endfor %}
+{% if authority.date %}({{ authority.date }}){% endif %}

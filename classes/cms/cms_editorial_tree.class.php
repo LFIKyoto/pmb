@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_editorial_tree.class.php,v 1.5.4.1 2015-10-08 14:32:53 jpermanne Exp $
+// $Id: cms_editorial_tree.class.php,v 1.13 2018-05-25 07:49:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -20,14 +20,16 @@ class cms_editorial_tree {
 	protected function fetch_data(){
 		global $dbh,$charset;
 		
-		$rqt = "select id_section, section_title, section_num_parent, if(section_logo!='',1,0) as logo_exist  from cms_sections order by section_order";
+		$rqt = "select id_section, section_title, section_num_parent, if(section_logo!='',1,0) as logo_exist, editorial_publication_state_label, editorial_publication_state_class_html  from cms_sections left join cms_editorial_publications_states on id_publication_state=section_publication_state order by section_order";
 		$res = pmb_mysql_query($rqt,$dbh);
 		if(pmb_mysql_num_rows($res)){
 			while($row = pmb_mysql_fetch_object($res)){
 				$infos = array(
 					'id' => $row->id_section,
-					'title' => ($charset!= "utf-8" ? utf8_encode($row->section_title) : $row->section_title),
-					'type' => ($row->section_num_parent == 0 ? "root_section": 'section')
+					'title' => htmlentities($row->section_title, ENT_QUOTES,$charset),
+					'type' => ($row->section_num_parent == 0 ? "root_section": 'section'),
+					'state_label' => htmlentities($row->editorial_publication_state_label,ENT_QUOTES,$charset),	
+					'class_html' => $row->editorial_publication_state_class_html
 				);
 				if($row->logo_exist == 1){
 					$infos['icon'] =  "./cms_vign.php?type=section&id=".$row->id_section."&mode=small_vign";
@@ -40,7 +42,7 @@ class cms_editorial_tree {
 					}
 				}
 				if($this->inc_articles){
-					$art_rqt = "select id_article, article_title, if(article_logo!='',1,0) as logo_exist from cms_articles where num_section ='".$row->id_section."' ORDER BY article_order ASC";
+					$art_rqt = "select id_article, article_title, if(article_logo!='',1,0) as logo_exist, editorial_publication_state_label, editorial_publication_state_class_html from cms_articles left join cms_editorial_publications_states on id_publication_state=article_publication_state where num_section ='".$row->id_section."' ORDER BY article_order ASC";
 					$art_res = pmb_mysql_query($art_rqt,$dbh);
 					if(pmb_mysql_num_rows($art_res)){
 						//on ajout un éléments Articles qui contiendra la liste des articles
@@ -54,8 +56,10 @@ class cms_editorial_tree {
 							$art_content_infos['children'][]['_reference']= "article_".$art_row->id_article;
 							$art_infos = array(
 								'id' => "article_".$art_row->id_article,
-								'title' => $charset!= "utf-8" ? utf8_encode($art_row->article_title) : $art_row->article_title,
-								'type' => 'article'			
+								'title' => htmlentities($art_row->article_title, ENT_QUOTES,$charset),
+								'type' => 'article',
+								'state_label' => htmlentities($art_row->editorial_publication_state_label, ENT_QUOTES,$charset),
+								'class_html' => $art_row->editorial_publication_state_class_html
 							);
 							if($art_row->logo_exist == 1){
 								$art_infos['icon'] =  "./cms_vign.php?type=article&id=".$art_row->id_article."&mode=small_vign";
@@ -79,7 +83,7 @@ class cms_editorial_tree {
 			'label' => 'title',
 			'items' => $this->tree
 		);
-		return json_encode($json);
+		return encoding_normalize::json_encode($json);
 	}
 	
 	public static function get_listing(){
@@ -88,18 +92,20 @@ class cms_editorial_tree {
 	}
 	
 	public static function get_tree(){
-		global $cms_editorial_tree_content,$dbh,$msg,$base_path;
+		global $cms_editorial_tree_content,$dbh,$msg,$base_path,$cms_active_image_cache;
 		
 		//Un article ou une rubrique plus récent que le cache ?
-		$rqt = "SELECT cache_cadre_create_date FROM cms_cache_cadres 
-				WHERE cache_cadre_create_date<(SELECT MAX(article_update_timestamp) FROM cms_articles) 
-				OR cache_cadre_create_date<(SELECT MAX(section_update_timestamp) FROM cms_sections) 
-				LIMIT 1";
+		$rqt = "SELECT count(*) FROM cms_cache_cadres";
 		$res = pmb_mysql_query($rqt,$dbh);
-		if(pmb_mysql_num_rows($res)){
-			$cms_editorial_tree_content = str_replace('!!cms_editorial_clean_cache_button!!', '<div data-dojo-type=\'dijit/form/Button\' data-dojo-props=\'id:"clean_cache_button",onclick:"if(confirm(\"'.$msg['cms_clean_cache_confirm'].'\")){document.location=\"'.$base_path.'/cms.php?categ=editorial&sub=list&action=clean_cache\";}"\'>'.$msg['cms_clean_cache'].'</div>', $cms_editorial_tree_content);
+		if(pmb_mysql_result($res, 0)){
+			$cms_editorial_tree_content = str_replace('!!cms_editorial_clean_cache_button!!', '<div data-dojo-type=\'dijit/form/Button\' data-dojo-props=\'id:"clean_cache_button",title:"'.cms_cache::get_cache_formatted_last_date().'",onclick:"if(confirm(\"'.$msg['cms_clean_cache_confirm'].'\")){document.location=\"'.$base_path.'/cms.php?categ=editorial&sub=list&action=clean_cache\";}"\'>'.$msg['cms_clean_cache'].'</div>', $cms_editorial_tree_content);
 		}else{
 			$cms_editorial_tree_content = str_replace("!!cms_editorial_clean_cache_button!!", "", $cms_editorial_tree_content);
+		}
+		if($cms_active_image_cache == 1){
+			$cms_editorial_tree_content = str_replace("!!cms_editorial_clean_cache_img!!", '<div data-dojo-type=\'dijit/form/Button\' data-dojo-props=\'id:"clean_cache_button_img",onclick:"if(confirm(\"'.$msg['cms_clean_cache_confirm_img'].'\")){document.location=\"'.$base_path.'/cms.php?categ=editorial&sub=list&action=clean_cache_img\";}"\'>'.$msg['cms_clean_cache_img'].'</div>', $cms_editorial_tree_content);
+		}else{
+			$cms_editorial_tree_content = str_replace("!!cms_editorial_clean_cache_img!!", "", $cms_editorial_tree_content);
 		}
 		
 		return $cms_editorial_tree_content;

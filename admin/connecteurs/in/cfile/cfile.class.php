@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cfile.class.php,v 1.10.4.1 2015-09-15 14:32:56 apetithomme Exp $
+// $Id: cfile.class.php,v 1.15 2017-07-12 15:15:02 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -32,46 +32,30 @@ function cfile_file_item_($param) {
 
 class cfile extends connector {
 	//Variables internes pour la progression de la récupération des notices
-	var $callback_progress;		//Nom de la fonction de callback progression passée par l'appellant
-	var $current_set;			//Set en cours de synchronisation
-	var $total_sets;			//Nombre total de sets sélectionnés
-	var $metadata_prefix;		//Préfixe du format de données courant
-	var $source_id;				//Numéro de la source en cours de synchro
-	var $search_id;
-	var $xslt_transform;		//Feuille xslt transmise
-	var $sets_names;			//Nom des sets pour faire plus joli !!
-	var $del_old;				//Supression ou non des notices dejà existantes
-	var $url;
-	var $username;
-	var $password;
+	public $current_set;			//Set en cours de synchronisation
+	public $total_sets;			//Nombre total de sets sélectionnés
+	public $metadata_prefix;		//Préfixe du format de données courant
+	public $search_id;
+	public $xslt_transform;		//Feuille xslt transmise
+	public $sets_names;			//Nom des sets pour faire plus joli !!
+	public $url;
+	public $username;
+	public $password;
 	
-	//Résultat de la synchro
-	var $error;					//Y-a-t-il eu une erreur	
-	var $error_message;			//Si oui, message correspondant
-	
-    function cfile($connector_path="") {
-    	parent::connector($connector_path);
+    public function __construct($connector_path="") {
+    	parent::__construct($connector_path);
     }
     
-    function get_id() {
+    public function get_id() {
     	return "cfile";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 1;
 	}
     
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-    
-    function source_get_property_form($source_id) {
+    public function source_get_property_form($source_id) {
     	global $charset, $basepath;
     	
     	$params=$this->get_source_params($source_id);
@@ -79,8 +63,8 @@ class cfile extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		if (!isset($convert_type))
@@ -142,7 +126,7 @@ class cfile extends connector {
 		return $form;
     }
     
-    function make_serialized_source_properties($source_id) {
+    public function make_serialized_source_properties($source_id) {
     	global $convert_type, $action_xsl_expl;
 		$t = array();
 		$t["convert_type"] = $convert_type;
@@ -166,25 +150,12 @@ class cfile extends connector {
 	}
 	
 	//Récupération  des proriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
-		$this->timeout=5;
+	public function fetch_default_global_values() {
+		parent::fetch_default_global_values();
 		$this->repository=1;
-		$this->retry=3;
-		$this->ttl=1800;
-		$this->parameters="";
 	}
 	
-	//Formulaire des propriétés générales
-	function get_property_form() {
-		$this->fetch_global_properties();
-		return "";
-	}
-	
-	function make_serialized_properties() {
-		$this->parameters="";
-	}
-	
-	function rec_record($record,$source_id,$search_id) {
+	public function rec_record($record,$source_id,$search_id) {
 		global $charset,$base_path;
 		$date_import=date("Y-m-d H:i:s",time());
 		$r=array();
@@ -230,14 +201,11 @@ class cfile extends connector {
 		if ($ref) {
 			//Si conservation des anciennes notices, on regarde si elle existe
 			if (!$this->del_old) {
-				$requete="select count(*) from entrepot_source_$source_id where ref='".addslashes($ref)."'";
-				$rref=pmb_mysql_query($requete);
-				if ($rref) $ref_exists=pmb_mysql_result($rref,0,0);
+				$ref_exists = $this->has_ref($source_id, $ref);
 			}
 			//Si pas de conservation des anciennes notices, on supprime
 			if ($this->del_old) {
-				$requete="delete from entrepot_source_$source_id where ref='".addslashes($ref)."'";
-				pmb_mysql_query($requete);
+				$this->delete_from_entrepot($source_id, $ref);
 				$this->delete_from_external_count($source_id, $ref);
 			}
 			//Si pas de conservation ou reférence inexistante
@@ -251,25 +219,16 @@ class cfile extends connector {
 				$n_header["dt"]=$record["dt"];
 				
 				//Récupération d'un ID
-				$requete="insert into external_count (recid, source_id) values('".addslashes($this->get_id()." ".$source_id." ".$ref)."', $source_id)";
-				$rid=pmb_mysql_query($requete);
-				if ($rid) $recid=pmb_mysql_insert_id();
+				$recid = $this->insert_into_external_count($source_id, $ref);
 				
 				foreach($n_header as $hc=>$code) {
-					$requete="insert into entrepot_source_$source_id (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid,search_id) values(
-					'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".$date_import."',
-					'".$hc."','',-1,0,'".addslashes($code)."','',$recid,'".addslashes($search_id)."')";
-					pmb_mysql_query($requete);
+					$this->insert_header_into_entrepot($source_id, $ref, $date_import, $hc, $code, $recid, $search_id);
 				}
 				$field_order=0;
 				foreach($exemplaires as $exemplaire) {
 					$sub_field_order = 0;
 					foreach($exemplaire as $exkey => $exvalue) {
-						$requete="insert into entrepot_source_$source_id (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid,search_id) values(
-						'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".$date_import."',
-						'996','".addslashes($exkey)."',".$field_order.",".$sub_field_order.",'".addslashes($exvalue)."',
-						' ".addslashes(strip_empty_words($exvalue))." ',$recid,'".addslashes($search_id)."')";
-						pmb_mysql_query($requete);
+						$this->insert_content_into_entrepot($source_id, $ref, $date_import, '996', $exkey, $field_order, $sub_field_order, $exvalue, $recid, $search_id);
 						$sub_field_order++;						
 					}					
 					$field_order++;					
@@ -279,36 +238,21 @@ class cfile extends connector {
 						if (is_array($val[$i])) {
 							foreach ($val[$i] as $sfield=>$vals) {
 								for ($j=0; $j<count($vals); $j++) {
-									$requete="insert into entrepot_source_$source_id (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid,search_id) values(
-									'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".$date_import."',
-									'".addslashes($field)."','".addslashes($sfield)."',".$field_order.",".$j.",'".addslashes($vals[$j])."',
-									' ".addslashes(strip_empty_words($vals[$j]))." ',$recid,'".addslashes($search_id)."')";
-									pmb_mysql_query($requete);
+									$this->insert_content_into_entrepot($source_id, $ref, $date_import, $field, $sfield, $field_order, $j, $vals[$j], $recid, $search_id);
 								}
 							}
 						} else {
-							$requete="insert into entrepot_source_$source_id (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid,search_id) values(
-							'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".$date_import."',
-							'".addslashes($field)."','',".$field_order.",0,'".addslashes($val[$i])."',
-							' ".addslashes(strip_empty_words($val[$i]))." ',$recid,'".addslashes($search_id)."')";
-							pmb_mysql_query($requete);
+							$this->insert_content_into_entrepot($source_id, $ref, $date_import, $field, '', $field_order, 0, $val[$i], $recid, $search_id);
 						}
 						$field_order++;
 					}
 				}
+				$this->rec_isbd_record($source_id, $ref, $recid);
 			}
 		}
 	}
-		
-	function cancel_maj($source_id) {
-		return false;
-	}
 	
-	function break_maj($source_id) {
-		return false;
-	}
-	
-	function form_pour_maj_entrepot($source_id,$sync_form="sync_form") {
+	public function form_pour_maj_entrepot($source_id,$sync_form="sync_form") {
 		global $base_path, $id, $file_in;
 		//Allons chercher plein d'informations utiles et amusantes
 		$params=$this->get_source_params($source_id);
@@ -316,8 +260,8 @@ class cfile extends connector {
 		if ($params["PARAMETERS"]) {
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		if (!isset($convert_type))
@@ -356,7 +300,7 @@ class cfile extends connector {
 	}
 	
 	//Nécessaire pour passer les valeurs obtenues dans form_pour_maj_entrepot au javascript asynchrone
-	function get_maj_environnement($source_id) {
+	public function get_maj_environnement($source_id) {
 		global $outputtype, $import_type, $import_file;
 		global $base_path, $charset;
 		$envt=array();
@@ -379,7 +323,7 @@ class cfile extends connector {
 		return $envt;
 	}
 		
-	function sync_custom_page($source_id) {
+	public function sync_custom_page($source_id) {
 		global $base_path, $id, $file_in, $origine;
 		//Allons chercher plein d'informations utiles et amusantes
 		$params=$this->get_source_params($source_id);
@@ -387,8 +331,8 @@ class cfile extends connector {
 		if ($params["PARAMETERS"]) {
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		if (!isset($convert_type))
@@ -409,7 +353,7 @@ class cfile extends connector {
 		return $content;
 	}
 	
-	function maj_entrepot($source_id,$callback_progress="",$recover=false,$recover_env="") {
+	public function maj_entrepot($source_id,$callback_progress="",$recover=false,$recover_env="") {
 		global $dbh, $base_path, $file_in, $suffix, $converted, $origine, $charset, $outputtype;
 		//Allons chercher plein d'informations utiles et amusantes
 		$params=$this->get_source_params($source_id);
@@ -418,8 +362,8 @@ class cfile extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		if (!isset($xslt_exemplaire))
@@ -561,7 +505,7 @@ class cfile extends connector {
 		return $count_lu;
 	}
 	
-	function loadfile_in_table_unimarc ($filename, $origine) {
+	public function loadfile_in_table_unimarc ($filename, $origine) {
 		global $msg, $dbh ;
 		global $sub, $book_lender_name ;
 		global $noticenumber, $pb_fini, $recharge ;
@@ -621,7 +565,7 @@ class cfile extends connector {
 		}
 	} // fin fonction de load
 	
-	function loadfile_in_table_xml ($filename, $origine) {
+	public function loadfile_in_table_xml ($filename, $origine) {
 		$index=array();
 		$i=false;
 		$n=1;
@@ -655,7 +599,7 @@ class cfile extends connector {
 		unlink ($filename);
 	}
 	
-	function apply_xsl_to_xml($xml, $xsl) {
+	public function apply_xsl_to_xml($xml, $xsl) {
 		global $charset;
 		$xh = xslt_create();
 		xslt_set_encoding($xh, $charset);

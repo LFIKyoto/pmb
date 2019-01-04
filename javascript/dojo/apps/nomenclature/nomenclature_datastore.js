@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_datastore.js,v 1.14 2015-02-10 14:13:08 arenou Exp $
+// $Id: nomenclature_datastore.js,v 1.15 2016-02-26 14:52:26 dgoron Exp $
 
 
 define(["dojo/_base/declare", "dijit/_WidgetBase"], function(declare, _WidgetBase){
@@ -45,6 +45,10 @@ define(["dojo/_base/declare", "dijit/_WidgetBase"], function(declare, _WidgetBas
 			
 			set_instruments_datastore: function(instruments_datastore) {
 				this.instruments_datastore = instruments_datastore;
+			},
+			
+			add_instrument_datastore: function(instrument) {
+				this.instruments_datastore.push(instrument);
 			},
 			
 			get_messages_datastore: function() {

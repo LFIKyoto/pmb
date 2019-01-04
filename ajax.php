@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax.php,v 1.22 2014-01-07 10:16:16 arenou Exp $
+// $Id: ajax.php,v 1.29 2018-12-04 08:53:31 ngantier Exp $
 /*
 Mode d'emploi des transactions client - serveur utilisant les requettes Ajax.
 Cette technique permet d'interroger le serveur dynamiquement sans recharger toute la page.
@@ -66,6 +66,7 @@ $base_noheader = 1;
 $base_nobody = 1;  
 $base_nodojo = 1;  
 $clean_pret_tmp=1;
+$base_is_http_request=1;
 
 //avant l'inclusion faudrait peut-être s'occuper de la gestion des droits dans les différentes requetes...
 switch($_GET['module']){
@@ -77,25 +78,34 @@ switch($_GET['module']){
 		break;
 	case 'catalog':
 		$base_auth = "CATALOGAGE_AUTH";
-	break;
+		break;
 	case 'circ':
 		$base_auth = "CIRCULATION_AUTH";
-	break;		
+		break;		
 	case 'admin':
 		$base_auth = "ADMINISTRATION_AUTH";
-	break;
+		break;
 	case 'demandes':
 		$base_auth = "DEMANDES_AUTH";
-	break;	
+		break;	
 	case 'acquisition':
 		$base_auth = "ACQUISITION_AUTH";
-	break;
+		break;
 	case 'fichier':
 		$base_auth = "FICHES_AUTH";
-	break;
+		break;
 	case "edit" :
 		$base_auth = "EDIT_AUTH";
-	break;
+		break;
+	case "modelling" :
+		$base_auth = "MODELLING_AUTH";
+		break;
+	case "frbr" :
+		$base_auth = "FRBR_AUTH";
+		break;
+	case "selectors" :
+		$base_auth = "";
+		break;
 }
 
 require_once ($base_path . "/includes/init.inc.php");
@@ -104,7 +114,6 @@ if(!SESSrights) exit;
 
 // inclusion des fonctions utiles pour renvoyer la réponse à la requette recu 
 require_once ($base_path . "/includes/ajax.inc.php");
-
 /*	
  * Parse la commande Ajax du client vers 
  * $module est passé dans l'url,envoyé par http_send_request, in http_request.js script file
@@ -132,16 +141,19 @@ function array_uft8_decode($tab){
 	}
 	return $tab;
 }
-if (strtoupper($charset)!="UTF-8") {
+
+if(!isset($is_iframe)) $is_iframe = 0;
+
+if (strtoupper($charset)!="UTF-8" && !$is_iframe) {
 	$t=array_keys($_POST);	
 	foreach($t as $v) {
-		global $$v;
-		utf8_decode_pmb($$v);
+		global ${$v};
+		utf8_decode_pmb(${$v});
 	}
 	$t=array_keys($_GET);	
 	foreach($t as $v) {
-		global $$v;	
-		utf8_decode_pmb($$v);
+		global ${$v};	
+		utf8_decode_pmb(${$v});
 	}
 	//On décode aussi les POST et les GET en plus de les mettre en global 
 	$_POST = array_uft8_decode($_POST);
@@ -152,31 +164,31 @@ $main_file="./$module/ajax_main.inc.php";
 switch($module) {
 	case 'ajax':
 		include($main_file);
-	break;
+		break;
 	case 'autorites':		
 		include($main_file);
-	break;		
+		break;		
 	case 'catalog':
 		include($main_file);
-	break;
+		break;
 	case 'circ':
 		include($main_file);
-	break;		
+		break;		
 	case 'admin':
 		include($main_file);
-	break;
+		break;
 	case 'demandes':
 		include($main_file);
-	break;	
+		break;	
 	case 'acquisition':
 		include($main_file);
-	break;
+		break;
 	case 'fichier':
 		include($main_file);
-	break;
+		break;
 	case 'cms':
 		include($main_file);
-	break;
+		break;
 	case "edit" :
 		include($main_file);
 		break;
@@ -184,6 +196,26 @@ switch($module) {
 		include($main_file);
 		break;
 	case "dashboard" :
+		include($main_file);
+		break;
+	case "selectors":
+		
+		// classes pour la gestion des sélecteurs
+		if(!isset($autoloader) || !is_object($autoloader)){
+			require_once($class_path."/autoloader.class.php");
+			$autoloader = new autoloader();
+		}
+		$autoloader->add_register("selectors_class",true);
+		
+		require_once($base_path.'/selectors/classes/selector_controller.class.php');
+		$selector_controller = new selector_controller();
+		$selector_controller->proceed();
+		
+		break;
+	case "modelling" :
+		include($main_file);
+		break;
+	case "frbr" :
 		include($main_file);
 		break;
 	default:

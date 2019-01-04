@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_condition.class.php,v 1.16 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: cms_module_common_condition.class.php,v 1.22 2018-01-08 14:52:37 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -19,7 +19,7 @@ class cms_module_common_condition extends cms_module_root{
 		global $dbh;
 		if($this->id){
 			//on commence par aller chercher ses infos
-			$query = " select id_cadre_content, cadre_content_hash, cadre_content_num_cadre, cadre_content_data from cms_cadre_content where id_cadre_content = ".$this->id;
+			$query = " select id_cadre_content, cadre_content_hash, cadre_content_num_cadre, cadre_content_data from cms_cadre_content where id_cadre_content = '".$this->id."'";
 			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				$row = pmb_mysql_fetch_object($result);
@@ -29,7 +29,7 @@ class cms_module_common_condition extends cms_module_root{
 				$this->unserialize($row->cadre_content_data);
 			}
 			//on va chercher les infos des sélecteurs...
-			$query = "select id_cadre_content, cadre_content_object from cms_cadre_content where cadre_content_type='selector' and cadre_content_num_cadre_content = ".$this->id;
+			$query = "select id_cadre_content, cadre_content_object from cms_cadre_content where cadre_content_type='selector' and cadre_content_num_cadre_content = '".$this->id."'";
 			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				while($row=pmb_mysql_fetch_object($result)){
@@ -66,9 +66,9 @@ class cms_module_common_condition extends cms_module_root{
 			<input type='hidden' name='cms_module_common_module_conditions[]' value='".$this->class_name."'/>
 			<div class='row'>";
 		$form.= $this->get_selectors_list_form();
-		if($this->parameters['selector']!= "" || count($selectors)==1){
+		if((isset($this->parameters['selector']) && $this->parameters['selector']!= "") || count($selectors)==1){
 			$selector_id = 0;
-			if($this->parameters['selector']!= ""){
+			if(isset($this->parameters['selector']) && $this->parameters['selector']!= ""){
 				for($i=0 ; $i<count($this->selectors) ; $i++){
 					if($this->selectors[$i]['name'] == $this->parameters['selector']){
 						$selector_id = $this->selectors[$i]['id'];
@@ -141,16 +141,24 @@ class cms_module_common_condition extends cms_module_root{
 		}
 		$form.="
 				<div class='colonne-suite'>
-					<input type='button' class='bouton' value='X' onclick='destroy_condition(this);'/>
+					<input type='button' class='bouton' value='X' onclick=\"destroy_condition(this, ".$this->id.", '".$this->class_name."');\"/>
 				</div>
-				<script type='text/javascript'> 
-					function destroy_condition(node){
-						dojo.xhrGet({
-							url : './ajax.php?module=cms&categ=module&elem=".$this->class_name."&action=delete&id=".$this->id."'
-						});
-						var content = dijit.byId(node.parentNode.parentNode.parentNode.id);
-						if(content){
-							content.destroyRecursive(false);
+				<script type='text/javascript'>
+					if(typeof destroy_condition != 'function') {
+						function destroy_condition(node, id, class_name){
+							dojo.xhrGet({
+								url : './ajax.php?module=cms&categ=module&elem='+class_name+'&action=delete&id='+id
+							});
+							var content = dijit.byId(node.parentNode.parentNode.parentNode.id);
+							if(content){
+								content.destroyRecursive(false);
+							}
+										
+							var divConditions = document.getElementById('cms_module_common_module_conditions_form');
+							var checkboxFixed = document.getElementById('cms_module_common_module_fixed');														
+							if(divConditions.children.length == 0){
+								checkboxFixed.disabled = false;
+							}
 						}
 					}
 				</script>";
@@ -160,9 +168,9 @@ class cms_module_common_condition extends cms_module_root{
 	public function save_form(){
 		global $dbh;
 		$selector_choice = $this->class_name."_selector_choice";
-		global $$selector_choice;
+		global ${$selector_choice};
 
-		$this->parameters['selector'] = $$selector_choice;
+		$this->parameters['selector'] = ${$selector_choice};
 		
 		$this->get_hash();
 		if($this->id){
@@ -176,7 +184,7 @@ class cms_module_common_condition extends cms_module_root{
 			cadre_content_hash = '".$this->hash."',
 			cadre_content_type = 'condition',
 			cadre_content_object = '".$this->class_name."',".
-			($this->cadre_parent ? "cadre_content_num_cadre = ".$this->cadre_parent."," : "")."		
+			($this->cadre_parent ? "cadre_content_num_cadre = '".$this->cadre_parent."'," : "")."		
 			cadre_content_data = '".addslashes($this->serialize())."'
 			".$clause;
 		$result = pmb_mysql_query($query,$dbh);
@@ -187,13 +195,15 @@ class cms_module_common_condition extends cms_module_root{
 			} 
 			//sélecteur
 			$selector_id = 0;
-			for($i=0 ; $i<count($this->selectors) ; $i++){
-				if($$selector_choice == $this->selectors[$i]['name']){
-					$selector_id = $this->selectors[$i]['id'];
-					break;
+			if (!empty($this->selectors)) {
+				for($i=0 ; $i<count($this->selectors) ; $i++){
+					if(${$selector_choice} == $this->selectors[$i]['name']){
+						$selector_id = $this->selectors[$i]['id'];
+						break;
+					}
 				}
 			}
-			$selector = new $$selector_choice($selector_id);
+			$selector = new ${$selector_choice}($selector_id);
 			$selector->set_parent($this->id);
 			$selector->set_cadre_parent($this->cadre_parent);
 			$result = $selector->save_form();
@@ -201,7 +211,7 @@ class cms_module_common_condition extends cms_module_root{
 				if($selector_id==0){
 					$this->selectors[] = array(
 						'id' => $selector->id,
-						'name' => $$selector_choice
+						'name' => ${$selector_choice}
 					);
 				}
 				return true;	
@@ -235,7 +245,7 @@ class cms_module_common_condition extends cms_module_root{
 		global $dbh;
 		if($this->id){
 			//on commence par éliminer le sélecteur associé...
-			$query = "select id_cadre_content,cadre_content_object from cms_cadre_content where cadre_content_num_cadre_content = ".$this->id;
+			$query = "select id_cadre_content,cadre_content_object from cms_cadre_content where cadre_content_num_cadre_content = '".$this->id."'";
 			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				//la logique voudrait qu'il n'y ai qu'un seul sélecteur (enfin sous-élément, la conception peut évoluer...), mais sauvons les brebis égarées...
@@ -249,7 +259,7 @@ class cms_module_common_condition extends cms_module_root{
 				}
 			}
 			//on est tout seul, éliminons-nous !
-			$query = "delete from cms_cadre_content where id_cadre_content = ".$this->id;
+			$query = "delete from cms_cadre_content where id_cadre_content = '".$this->id."'";
 			$result = pmb_mysql_query($query,$dbh);
 			if($result){
 				$this->delete_hash();
@@ -259,7 +269,7 @@ class cms_module_common_condition extends cms_module_root{
 			}
 		}
 		//on est tout seul, éliminons-nous !
-		$query = "delete from cms_cadre_content where id_cadre_content = ".$this->id;
+		$query = "delete from cms_cadre_content where id_cadre_content = '".$this->id."'";
 		$result = pmb_mysql_query($query,$dbh);
 		if($result){
 			$this->delete_hash();

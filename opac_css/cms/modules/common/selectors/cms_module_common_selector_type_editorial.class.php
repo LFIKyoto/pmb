@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_type_editorial.class.php,v 1.8 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: cms_module_common_selector_type_editorial.class.php,v 1.11 2017-06-06 15:26:36 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -51,7 +51,10 @@ class cms_module_common_selector_type_editorial extends cms_module_common_select
 	protected function gen_select(){
 		//si on est en création de cadre
 		if(!$this->id){
-			$this->parameters = array();
+			$this->parameters = array(
+					'type_editorial' => '',
+					'type_editorial_field' => ''
+			);
 		}
 		$select = "<select name='".$this->get_form_value_name($this->cms_module_common_selector_type_editorial_type)."' 
 			onchange=\"cms_type_fields(this.value);\" >
@@ -92,12 +95,15 @@ class cms_module_common_selector_type_editorial extends cms_module_common_select
 				if(isset($fields->values[$this->parameters['type_editorial_field']])){
 					$this->value = $fields->values[$this->parameters['type_editorial_field']];
 				}else{
+					$this->value = '';
 					$query = "select id_editorial_type from cms_editorial_types where editorial_type_element = '".$this->cms_module_common_selector_type_editorial_type."_generic'";
 					$result = pmb_mysql_query($query);
 					if(pmb_mysql_num_rows($result)){
 						$fields_type = new cms_editorial_parametres_perso(pmb_mysql_result($result,0,0));
-						$fields_type->get_values($sub->get_value());
-						$this->value = $fields_type->values[$this->parameters['type_editorial_field']];
+						$fields_type->get_values($sub->get_value()*1);
+						if(isset($fields_type->values[$this->parameters['type_editorial_field']])) {
+							$this->value = $fields_type->values[$this->parameters['type_editorial_field']];
+						}
 					}
 				}
 			}else{

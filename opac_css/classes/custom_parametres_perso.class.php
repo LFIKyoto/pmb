@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: custom_parametres_perso.class.php,v 1.3 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: custom_parametres_perso.class.php,v 1.12 2018-08-08 09:49:44 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -46,6 +46,7 @@ class custom_parametres_perso extends parametres_perso {
 			$this->no_special_fields=1;
 		else {
 			while ($r=pmb_mysql_fetch_object($resultat)) {
+				$this->t_fields[$r->idchamp]["idchamp"] = $r->idchamp;
 				$this->t_fields[$r->idchamp]["DATATYPE"]=$r->datatype;
 				$this->t_fields[$r->idchamp]["NAME"]=$r->name;
 				$this->t_fields[$r->idchamp]["TITRE"]=$r->titre;
@@ -156,7 +157,7 @@ class custom_parametres_perso extends parametres_perso {
 	}
 	
 	//Affichage de l'écran de gestion des paramètres perso (la liste de tous les champs définis)
-	function show_field_list() {
+	public function show_field_list() {
 		global $type_list_empr;
 		global $datatype_list;
 		global $form_list;
@@ -178,7 +179,7 @@ class custom_parametres_perso extends parametres_perso {
 			$form_list=str_replace("!!liste_champs_perso!!",$res,$form_list);
 			$form_list=str_replace("!!base_url!!",$this->base_url,$form_list);
 		} else {
-			$res.="<table width=100%>\n";
+			$res.="<table style='width:100%'>\n";
 			$res.="<tr><th></th><th>".$msg["parperso_field_name"]."</th><th>".$msg["parperso_field_title"]."</th><th>".$msg["parperso_input_type"]."</th><th>".$msg["parperso_data_type"]."</th>";
 			if($this->option_visibilite["multiple"] == "block") $res.= "<th>".((strpos($this->prefix,"gestfic")!==false) ? $msg["parperso_fiche_visibility"] : $msg["parperso_opac_visibility"])."</th>" ;
 			if($this->option_visibilite["opac_sort"] == "block") $res.= "<th>".$msg["parperso_opac_sort"]."</th>" ;
@@ -248,11 +249,11 @@ class custom_parametres_perso extends parametres_perso {
 	}
 	
 	//Récupération des valeurs stockées dans les base pour un emprunteur ou autre
-	function get_out_values($id) {
+	public function get_out_values($id) {
 		//Récupération des valeurs stockées 
 		if ((!$this->no_special_fields)&&($id)) {
 			$this->values = array() ;
-			$requete="select ".$this->prefix."_custom_champ,".$this->prefix."_custom_origine,".$this->prefix."_custom_small_text, ".$this->prefix."_custom_text, ".$this->prefix."_custom_integer, ".$this->prefix."_custom_date, ".$this->prefix."_custom_float from ".$this->prefix."_custom_values join ".$this->prefix."_custom on idchamp=".$this->prefix."_custom_champ and custom_prefixe = '".$this->custom_prefixe."' and num_type = ".$this->num_type."  where ".$this->prefix."_custom_origine=".$id;
+			$requete="select ".$this->prefix."_custom_champ,".$this->prefix."_custom_origine,".$this->prefix."_custom_small_text, ".$this->prefix."_custom_text, ".$this->prefix."_custom_integer, ".$this->prefix."_custom_date, ".$this->prefix."_custom_float, ".$this->prefix."_custom_order from ".$this->prefix."_custom_values join ".$this->prefix."_custom on idchamp=".$this->prefix."_custom_champ and custom_prefixe = '".$this->custom_prefixe."' and num_type = ".$this->num_type."  where ".$this->prefix."_custom_origine=".$id;
 			$resultat=pmb_mysql_query($requete);
 			while ($r=pmb_mysql_fetch_array($resultat)) {
 				$this->values[$this->t_fields[$r[$this->prefix."_custom_champ"]]["NAME"]]['label'] = $this->t_fields[$r[$this->prefix."_custom_champ"]]["TITRE"];
@@ -260,10 +261,15 @@ class custom_parametres_perso extends parametres_perso {
 				$format_value=$this->get_formatted_output(array($r[$this->prefix."_custom_".$this->t_fields[$r[$this->prefix."_custom_champ"]]["DATATYPE"]]),$r[$this->prefix."_custom_champ"],true);
 				$this->values[$this->t_fields[$r[$this->prefix."_custom_champ"]]["NAME"]]['values'][] = array(
 					'value' => $r[$this->prefix."_custom_".$this->t_fields[$r[$this->prefix."_custom_champ"]]["DATATYPE"]],
-					'format_value' => 	$format_value
+					'format_value' => 	$format_value,
+					'order' => $r[$this->prefix."_custom_order"]
 				);
+				if(!isset($this->values[$this->t_fields[$r[$this->prefix."_custom_champ"]]["NAME"]]['all_format_values'])) {
+					$this->values[$this->t_fields[$r[$this->prefix."_custom_champ"]]["NAME"]]['all_format_values'] = '';
+				}
 				$this->values[$this->t_fields[$r[$this->prefix."_custom_champ"]]["NAME"]]['all_format_values'].=$format_value.' ';
 			}
+			$this->sort_out_values();
 		} else $this->values=array();
 		return $this->values;
 	}
@@ -284,7 +290,7 @@ class custom_parametres_perso extends parametres_perso {
 	}
 	
 	//Suppression de la base des valeurs d'un emprunteur ou autre...
-	function delete_values($id) {
+	public function delete_values($id) {
 //		on récupère la liste des champs associés...
 		$query = "select idchamp from ".$this->prefix."_custom where custom_prefixe = '".$this->custom_prefixe."' and num_type = ".$this->num_type;
 		$result = pmb_mysql_query($query);
@@ -302,22 +308,29 @@ class custom_parametres_perso extends parametres_perso {
 	}
 	
 	//Récupération des valeurs stockées dans les base pour un emprunteur ou autre
-	function get_values($id) {
+	public function get_values($id) {
 		//Récupération des valeurs stockées pour l'emprunteur
+		$this->values=$this->list_values=array();
+		
 		if ((!$this->no_special_fields)&&($id)) {
-			$this->values=$this->list_values=array();
-			
-			$requete="select ".$this->prefix."_custom_champ,".$this->prefix."_custom_origine,".$this->prefix."_custom_small_text, ".$this->prefix."_custom_text, ".$this->prefix."_custom_integer, ".$this->prefix."_custom_date, ".$this->prefix."_custom_float from ".$this->prefix."_custom_values join ".$this->prefix."_custom on idchamp=".$this->prefix."_custom_champ and custom_prefixe = '".$this->custom_prefixe."' and num_type = ".$this->num_type." where ".$this->prefix."_custom_origine=".$id;
+			$requete="select ".$this->prefix."_custom_champ,".$this->prefix."_custom_origine,".$this->prefix."_custom_small_text, ".$this->prefix."_custom_text, ".$this->prefix."_custom_integer, ".$this->prefix."_custom_date, ".$this->prefix."_custom_float, ".$this->prefix."_custom_order from ".$this->prefix."_custom_values join ".$this->prefix."_custom on idchamp=".$this->prefix."_custom_champ and custom_prefixe = '".$this->custom_prefixe."' and num_type = ".$this->num_type." where ".$this->prefix."_custom_origine=".$id;
 			$resultat=pmb_mysql_query($requete);
-			while ($r=pmb_mysql_fetch_array($resultat)) {
-				$this->values[$r[$this->prefix."_custom_champ"]][]=$r[$this->prefix."_custom_".$this->t_fields[$r[$this->prefix."_custom_champ"]]["DATATYPE"]];
-				$this->list_values[]=$r[$this->prefix."_custom_".$this->t_fields[$r[$this->prefix."_custom_champ"]]["DATATYPE"]];
+			if(pmb_mysql_num_rows($resultat)) {
+				while ($r=pmb_mysql_fetch_array($resultat)) {
+					$values[$r[$this->prefix."_custom_champ"]][]=array(
+						'value' => $r[$this->prefix."_custom_".$this->t_fields[$r[$this->prefix."_custom_champ"]]["DATATYPE"]],
+						'format_value' => $this->get_formatted_output(array($r[$this->prefix."_custom_".$this->t_fields[$r[$this->prefix."_custom_champ"]]["DATATYPE"]]),$r[$this->prefix."_custom_champ"],true),
+						'order' => $r[$this->prefix."_custom_order"]
+					);
+					$this->list_values[]=$r[$this->prefix."_custom_".$this->t_fields[$r[$this->prefix."_custom_champ"]]["DATATYPE"]];
+				}
+				$this->values = $this->sort_values($values);
 			}
-		} else $this->values=$this->list_values=array();
+		}
 	}
 	
 	//Affichage des champs à saisir dans le formulaire de modification/création d'un emprunteur ou autre
-	function show_editable_fields($id,$type="") {
+	public function show_editable_fields($id,$type="") {
 		global $aff_list_empr,$charset;
 		$perso=array();
 		//on va chercher les champs génériques
@@ -350,6 +363,7 @@ class custom_parametres_perso extends parametres_perso {
 				$field["OPTIONS"][0]=_parser_text_no_function_("<?xml version='1.0' encoding='".$charset."'?>\n".$this->t_fields[$key]["OPTIONS"], "OPTIONS");
 				$field["VALUES"]=$this->values[$key];
 				$field["PREFIX"]=$this->prefix;
+				$field["ID_ORIGINE"]=$id;
 				eval("\$aff=".$aff_list_empr[$this->t_fields[$key][TYPE]]."(\$field,\$check_scripts);");
 				$t["AFF"]=$aff;
 				$t["NAME"]=$field["NAME"];
@@ -374,11 +388,11 @@ class custom_parametres_perso extends parametres_perso {
 		reset($this->t_fields);
 		while (list($key,$val)=each($this->t_fields)) {
 			$name=$val["NAME"];
-			global $$name;
-			$value=$$name;
+			global ${$name};
+			$value=${$name};
 			for ($i=0; $i<count($value); $i++) {
 				if ($value[$i]!=="") {
-					$requete="insert into ".$this->prefix."_custom_values (".$this->prefix."_custom_champ,".$this->prefix."_custom_origine,".$this->prefix."_custom_".$val["DATATYPE"].") values($key,$id,'".$value[$i]."')";
+					$requete="insert into ".$this->prefix."_custom_values (".$this->prefix."_custom_champ,".$this->prefix."_custom_origine,".$this->prefix."_custom_".$val["DATATYPE"].",".$this->prefix."_custom_order) values($key,$id,'".$value[$i]."',$i)";
 					pmb_mysql_query($requete);
 				}
 			}
@@ -401,17 +415,21 @@ class custom_parametres_perso extends parametres_perso {
 	public function get_formatted_output($values, $field_id, $keep_html=false){
 		global $val_list_empr, $charset;
 		
-		$field=array();
-		$field["ID"]=$field_id;
-		$field["NAME"]=$this->t_fields[$field_id]["NAME"];
-		$field["MANDATORY"]=$this->t_fields[$field_id]["MANDATORY"];
-		$field["OPAC_SORT"]=$this->t_fields[$field_id]["OPAC_SORT"];
-		$field["ALIAS"]=$this->t_fields[$field_id]["TITRE"];
-		$field["DATATYPE"]=$this->t_fields[$field_id]["DATATYPE"];
-		$field["OPTIONS"][0]=_parser_text_no_function_("<?xml version='1.0' encoding='".$charset."'?>\n".$this->t_fields[$field_id]["OPTIONS"], "OPTIONS");
-		$field["VALUES"]=$values;
-		$field["PREFIX"]=$this->prefix;
-		$aff=$val_list_empr[$this->t_fields[$field_id]["TYPE"]]($field,$values);
+		if(!empty($this->t_fields[$field_id])){
+    		$field=array();
+    		$field["ID"]=$field_id;
+    		$field["NAME"]=$this->t_fields[$field_id]["NAME"];
+    		$field["MANDATORY"]=$this->t_fields[$field_id]["MANDATORY"];
+    		$field["OPAC_SORT"]=$this->t_fields[$field_id]["OPAC_SORT"];
+    		$field["ALIAS"]=$this->t_fields[$field_id]["TITRE"];
+    		$field["DATATYPE"]=$this->t_fields[$field_id]["DATATYPE"];
+    		$field["OPTIONS"][0]=_parser_text_no_function_("<?xml version='1.0' encoding='".$charset."'?>\n".$this->t_fields[$field_id]["OPTIONS"], "OPTIONS");
+    		$field["VALUES"]=$values;
+    		$field["PREFIX"]=$this->prefix;
+    		$aff=$val_list_empr[$this->t_fields[$field_id]["TYPE"]]($field,$values);
+		}else{
+		    $aff='';
+		}
 		if(is_array($aff)){
 			if($keep_html){
 				return $aff['value'];

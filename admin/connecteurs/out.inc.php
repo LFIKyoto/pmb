@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: out.inc.php,v 1.7 2013-04-19 10:19:12 mbertin Exp $
+// $Id: out.inc.php,v 1.9 2017-11-30 10:00:36 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -41,7 +41,7 @@ function list_connectors_out() {
 		$sign.=formatdate($aconn->date);
 		$n_sources=count($aconn->sources);
 	    $tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" ";
-	    print "<tr class='$pair_impair' $tr_javascript style='cursor: pointer' title='".htmlentities($sign,ENT_QUOTES,$charset)."' alter='".htmlentities($sign,ENT_QUOTES,$charset)."' id='tr".$aconn->id."'><td>".($n_sources?"<img src='images/plus.gif' class='img_plus' onClick='if (event) e=event; else e=window.event; e.cancelBubble=true; if (e.stopPropagation) e.stopPropagation(); show_sources(\"".addslashes($aconn->path)."\"); '/>":"&nbsp;")."</td><td onmousedown=\"if (event) e=event; else e=window.event; if (e.srcElement) target=e.srcElement; else target=e.target; if (target.nodeName!='IMG') document.location='./admin.php?categ=connecteurs&sub=out&action=edit&id=".$aconn->id."';return false;\">".htmlentities($aconn->comment,ENT_QUOTES,$charset)."</td>
+	    print "<tr class='$pair_impair' $tr_javascript style='cursor: pointer' title='".htmlentities($sign,ENT_QUOTES,$charset)."' alter='".htmlentities($sign,ENT_QUOTES,$charset)."' id='tr".$aconn->id."'><td>".($n_sources?"<img src='".get_url_icon('plus.gif')."' class='img_plus' onClick='if (event) e=event; else e=window.event; e.cancelBubble=true; if (e.stopPropagation) e.stopPropagation(); show_sources(\"".addslashes($aconn->path)."\"); '/>":"&nbsp;")."</td><td onmousedown=\"if (event) e=event; else e=window.event; if (e.srcElement) target=e.srcElement; else target=e.target; if (target.nodeName!='IMG') document.location='./admin.php?categ=connecteurs&sub=out&action=edit&id=".$aconn->id."';return false;\">".htmlentities($aconn->comment,ENT_QUOTES,$charset)."</td>
 		<td onmousedown=\"if (event) e=event; else e=window.event; if (e.srcElement) target=e.srcElement; else target=e.target; if (target.nodeName!='IMG') document.location='./admin.php?categ=connecteurs&sub=out&action=edit&id=".$aconn->id."';return false;\">".sprintf($msg["connecteurs_count_sources"],$n_sources)."</td><td style='text-align:right'><input type='button' value='".$msg["connector_out_sourceadd"]."' class='bouton_small' onClick='document.location=\"admin.php?categ=connecteurs&sub=out&action=source_add&connector_id=".$aconn->id."\"'/></td></tr>\n";
 	    
 	    print "<tr class='$pair_impair' style='display:none' id='".$aconn->path."'><td>&nbsp;</td><td colspan='3'><table style='border:1px solid'>";
@@ -79,7 +79,7 @@ function show_connector_out_form($connector_id) {
 	//buttons
 	print "</div><div class='row'>
 	<div class='left'>";
-	print "<input class='bouton' type='button' value=' $msg[76] ' onClick=\"document.location='./admin.php?categ=connecteurs&sub=out'\" />&nbsp";
+	print "<input class='bouton' type='button' value=' $msg[76] ' onClick=\"document.location='./admin.php?categ=connecteurs&sub=out'\" />&nbsp;";
 	print '<input class="bouton" type="submit" value="'.$msg[77].'" />';	
 	print "</div></div>&nbsp;";
 	print '</form>';
@@ -107,16 +107,16 @@ function show_sourceout_form($source_id=0, $connector_id, $name="", $comment="",
 	}
 	
 	//buttons
-	print "</div><div class='row'>";
+	print "<div class='row'>";
 	print '<div class="left">';
-	print "<input class='bouton' type='button' value=' $msg[76] ' onClick=\"document.location='./admin.php?categ=connecteurs&sub=out'\" />&nbsp";
+	print "<input class='bouton' type='button' value=' $msg[76] ' onClick=\"document.location='./admin.php?categ=connecteurs&sub=out'\" />&nbsp;";
 	print '<input class="bouton" type="submit" value="'.$msg[77].'" />';
 	print "</div><div class='right'>";
 	if ($source_id) {
 		print confirmation_delete("./admin.php?categ=connecteurs&sub=out&action=source_del&id=");
 		print "<input class='bouton' type='button' value=' $msg[supprimer] ' onClick=\"javascript:confirmation_delete('".$source_id."','".addslashes($name)."')\" />";		
 	} 		
-	
+	print "</div></div><div class='row'></div></div>";
 	print '</form>';
 }
 

@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: inhtml.inc.php,v 1.1 2011-04-04 16:06:49 arenou Exp $
+// $Id: inhtml.inc.php,v 1.2 2017-02-07 12:00:24 dgoron Exp $
 
 require_once ($include_path . "/misc.inc.php");
 
-$func_format['if_logged']= aff_if_logged;
+$func_format['if_logged']= 'aff_if_logged';
 
 function aff_if_logged($param) {
 	if ($_SESSION['id_empr_session']) {

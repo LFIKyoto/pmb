@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bul_view.inc.php,v 1.11 2015-04-18 12:41:35 dgoron Exp $
+// $Id: bul_view.inc.php,v 1.12 2017-02-17 15:34:01 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+if(!isset($art_to_show)) $art_to_show = '';
 // page de switch gestion du bulletinage périodiques
 
 // mise à jour de l'entête de page

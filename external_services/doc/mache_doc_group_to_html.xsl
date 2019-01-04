@@ -3,7 +3,7 @@
 ****************************************************************************************
 © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: mache_doc_group_to_html.xsl,v 1.3 2015-01-07 09:11:34 pmbs Exp $ 
+$Id: mache_doc_group_to_html.xsl,v 1.5 2016-09-21 14:42:11 cgil Exp $ 
 Conception: Erwan Martin:
 Design copié de la feuille de style wsdl-viewer.xsl, voir http://tomi.vanek.sk
 -->
@@ -29,33 +29,66 @@ extension-element-prefixes="func" xmlns:pmb="http://sigb.net/es/misc/" xmlns:exs
 	Body
 =========================================
 */
+html, body{
+	height:100%;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size:15px;
+}
+
 html {
-	background-color: teal;
+	background-image:url("./images/books.jpg");
+	background-repeat:no-repeat;
+	background-position:center 0 ;
+	background-attachment: fixed;
 }
 
 body {
 	margin: 0;
 	padding: 0;
-	height: auto;
 	color: white;
-	background-color: teal;
-	font: normal 80%/120% Arial, Helvetica, sans-serif;
 }
 
 #outer_box {
-	padding: 3px 3px 3px 194px;
+	padding: 0;
+	position:relative;
+	min-height:100%;
+	
 }
 
 #inner_box {
 	width: auto;
-	background-color: white;
 	color: black;
-	border: 1px solid navy;
 }
 
 table {
 	color: black;
 }
+
+.target {
+	margin-top:15px;
+}
+
+.target + ul {
+    margin-left: 6%;
+}
+
+.target+ul li{
+	list-style-type:circle;
+	width: 30%;
+	float: left;
+	margin-bottom: 10px;
+	padding-left: 5px;
+	min-width:200px;
+}
+
+.target+ul li a{
+	text-decoration:none;
+}
+
+.target+ul li a:hover{
+	text-decoration:underline;
+}
+
 
 /**
 =========================================
@@ -225,28 +258,28 @@ table {
 	Content
 =========================================
 */
-#header {
-	margin: 0;
-	padding: .5em 4em;
-	color: white;
-	background-color: red;
-	border: 1px solid darkred;
-}
 
+#header {
+    background-image: url("./images/navbar.jpg");
+    color: white;
+    margin: 0;
+    padding: 7px 0 5px;
+}
 #content {
 	margin: 0;
 	padding: 0 2em .5em;
 }
 
+
 #footer {
-	clear: both;
-	margin: 0;
-	padding: .5em 2em;
-	color: gray;
-	background-color: gainsboro;
-	font-size: 80%;
-	border-top: 1px dotted gray;
-	text-align: right
+    background-color: #f8f8f8;
+    bottom: 0;
+    clear: both;
+    color: gray;
+    padding: 10px 0;
+    position: absolute;
+    text-align: right;
+    width: 100%;
 }
 
 .single_column {
@@ -374,6 +407,7 @@ a.target:hover
 	color: black;
 	background-color: gainsboro;
 	border: 1px solid gray;
+    clear: both;
 }
 
 .shadow {
@@ -387,6 +421,12 @@ a.target:hover
 	position: relative;
 	top: -5px;
 	left: -4px;
+}
+
+#operations .page > ul > .value:last-of-type > ol:after {
+    content: "";
+    clear: both;
+    display: block;
 }
 
 /**
@@ -489,28 +529,25 @@ html .floatcontainer {
 =========================================
 */
 h1, h2, h3 {
-	margin: 10px 10px 2px;
-	font-family: Georgia, Times New Roman, Times, Serif;
-	font-weight: normal;
+    font-weight: normal;
+    margin: 1px 20px 2px;
 	}
 
 h1 {
-	font-weight: bold;
-	letter-spacing: 3px;
-	font-size: 220%;
-	line-height: 100%;
+    font-size: 24px;
+    line-height: 100%;
 }
 
 h2 {
-	font-weight: bold;
-	font-size: 175%;
-	line-height: 200%;
+    font-size: 18px;
+    line-height: 200%;
+    padding-left: 20px;
 }
 
 h3 {
-	font-size: 150%;
-	line-height: 150%;
-	font-style: italic;
+    font-size: 16px;
+    font-style: italic;
+    margin: 15px 20px 5px;
 }
 
 /**
@@ -543,9 +580,6 @@ h3 {
 	}
 */
 
-	#outer_box {
-		padding: 3px;
-	}
 /* END print media definition
 }
 */

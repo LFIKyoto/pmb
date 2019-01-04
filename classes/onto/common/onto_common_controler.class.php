@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_controler.class.php,v 1.11 2014-09-17 10:41:18 arenou Exp $
+// $Id: onto_common_controler.class.php,v 1.42 2018-12-04 10:26:44 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -25,6 +25,8 @@ class onto_common_controler {
 	/** variables d'aiguillage **/
 	protected $params;
 	
+	protected $nb_results;
+	
 	function __construct($handler,$params){
 		$this->handler=$handler;
 		$this->params=$params;
@@ -34,6 +36,8 @@ class onto_common_controler {
 	 * Aiguilleur principal
 	 */
 	public function proceed(){
+		global $pmb_allow_authorities_first_page;
+		
 		//on affecte la proprité item par une instance si nécessaire...
 		$this->init_item();
 		switch($this->params->action){		
@@ -53,7 +57,12 @@ class onto_common_controler {
 				break;
 			case "search" :
 				print $this->get_menu();
-				$this->proceed_search();
+				//si on peut on s'évite le processus de recherche... il est moins fluide !
+				if($this->params->user_input == "*" ){
+					$this->proceed_list();
+				}else{
+					$this->proceed_search();
+				}
 				break;
 			case "delete" :
 				print $this->get_menu();
@@ -62,50 +71,76 @@ class onto_common_controler {
 			case "confirm_delete" :
 				$this->proceed_delete(false);
 				break;
+			case "delete_from_cart" :
+				//voir plus tard si on veut forcer la suppression
+				return $this->proceed_delete_from_cart(false);
+				break;
+			case "add": //Cas ajouté pour être en conformité avec le cas des selecteurs autorité (voir ./selectors/classes/selector_ontology.class.php)
+				return $this->proceed_selector_add();
+				break;
+			case "update": //Cas ajouté pour être en conformité avec le cas des selecteurs autorité (voir ./selectors/classes/selector_ontology.class.php)
+				return $this->proceed_save(false);
+				break;
 			case "list" :
 			default :
-				print $this->get_menu();
-				$this->proceed_list();
+				print $this->get_menu();				
+				if(!$pmb_allow_authorities_first_page && $this->params->user_input == "" && $this->params->sub == 'concept') {
+					$ui_class_name = self::resolve_ui_class_name($this->params->sub,$this->handler->get_onto_name());
+					print $ui_class_name::get_search_form($this,$this->params);
+				}else {
+					$this->proceed_list();
+				}
 				break;
 		}
 	}
 	
 	protected function init_item(){
 		//dans le framework
-		if(!$this->item && $this->params->sub && ($this->params->id || $this->params->action=='edit' || $this->params->action=='save')){
-			if($this->params->action == "save"){
+		if(!$this->item && $this->params->sub && ((isset($this->params->id) && $this->params->id) || in_array($this->params->action, array('edit', 'save', 'add', 'push', 'save_push', 'update')))){
+			if(in_array($this->params->action, array('save', 'save_push', 'update'))){
 				//lors d'une sauvegarde d'un item, on a posté l'uri
 				$this->item = $this->handler->get_item($this->handler->get_class_uri($this->params->sub), $this->params->item_uri);
 			}else{
 				$this->item = $this->handler->get_item($this->handler->get_class_uri($this->params->sub), onto_common_uri::get_uri($this->params->id));
 			}
+			$this->item->set_framework_params($this->params);
 		}
 	}
 	
 	protected function proceed_edit(){
-		print $this->item->get_form("./autorites.php?categ=".$this->params->categ."&sub=".$this->params->sub."&id=".$this->params->id);
+		print $this->item->get_form("./".$this->get_base_resource()."categ=".$this->params->categ."&sub=".$this->params->sub."&id=".$this->params->id);
 	}
 
 	protected function proceed_save($list = true){
 		$this->item->get_values_from_form();
+
 		$result = $this->handler->save($this->item);
 		if($result !== true){
 			$ui_class_name=self::resolve_ui_class_name($this->params->sub,$this->handler->get_onto_name());
 			$ui_class_name::display_errors($this,$result);
-		}else if ($list) {
-			$this->proceed_list();
+		}else {
+			vedette_composee::update_vedettes_built_with_element(onto_common_uri::get_id($this->item->get_uri()), TYPE_ONTOLOGY);
+			if ($list){
+				$this->proceed_list();
+			}else{ //Cas ajouté pour les selecteurs
+				return onto_common_uri::get_id($this->item->get_uri());
+			}
 		}
 	}
 
-	protected function proceed_delete($force_delete = false){
+	protected function proceed_delete($force_delete = false, $print = true){
+		$this->delete_onto_files();
 		$result = $this->handler->delete($this->item,$force_delete);
+		if (!$print) {
+			return $result;
+		}
 		if ($force_delete || !count($result)) {
 			$this->proceed_list();
 		} else {
 			$this->proceed_confirm_delete($result);
 		}
 	}
-
+	
 	protected function proceed_list(){
 		$ui_class_name=self::resolve_ui_class_name($this->params->sub,$this->handler->get_onto_name());
 		print $ui_class_name::get_search_form($this,$this->params);
@@ -141,7 +176,16 @@ class onto_common_controler {
 		print $ui_class_name::get_search_form($this,$this->params);
 		print $ui_class_name::get_list($this,$this->params);		
 	}
-
+	
+	protected function proceed_selector_add(){
+		//on en aura besoin à la sauvegarde...
+		$_SESSION['onto_skos_concept_selector_last_parent_id'] = $this->params->parent_id;
+		//réglons rapidement ce problème... cf. dette technique
+		print "<div id='att'></div>";
+		$type = $this->get_item_type_to_list($this->params,true);
+		print $this->item->get_form($this->params->base_url, '', 'update');
+	}
+	
 	protected function proceed_confirm_delete($result){
 		$ui_class_name=self::resolve_ui_class_name($this->params->sub,$this->handler->get_onto_name());
 		print $ui_class_name::get_list_assertions($this, $this->params, $result);
@@ -161,12 +205,20 @@ class onto_common_controler {
 		foreach($classes as $class){
 			$menu.="
 			<span ".($class->pmb_name == $this->params->sub ? "class='selected'" : "").">
-			<a href='".$base_path."/autorites.php?categ=".$this->params->categ."&sub=".$class->pmb_name."&action=list'>".$this->get_label($class->pmb_name)."</a>
+			<a href='".$base_path."/".$this->get_base_resource()."categ=".$this->params->categ."&sub=".$class->pmb_name."&action=list'>".$this->get_label($class->pmb_name)."</a>
 			</span>";
 		}
 		$menu.= "
 		</div>";
 		return $menu;
+	}
+	
+	public function get_base_resource($with_params=true){
+		$end = "?";
+		if(strpos($this->params->base_resource,"?")){
+			$end = "&";
+		}
+		return $this->params->base_resource.($with_params? $end : "");
 	}
 
 	/**
@@ -205,34 +257,35 @@ class onto_common_controler {
 	public function get_list($class_uri,$params){
 		global $lang;
 	
-		$page=$params->page-1;
-		$displayLabel=$this->handler->get_display_label($class_uri);
-		$nb_elements=$this->handler->get_nb_elements($class_uri);
+		$page = $params->page-1;
+		$displayLabel = $this->handler->get_display_label($class_uri);
+		$this->nb_results = $this->handler->get_nb_elements($class_uri);
 		$query = "select * where {
 			?elem rdf:type <".$class_uri."> .
 			?elem <".$displayLabel."> ?label
 		} order by ?label";
 		if($params->nb_per_page>0){
-			$query.=" limit ".$params->nb_per_page;
+			$query.= " limit ".$params->nb_per_page;
 		}
 		if($page>0){
 			$query.= " offset ".($page*$params->nb_per_page);
 		}
+		
 		$this->handler->data_query($query);
 		$results = $this->handler->data_result();
 		$list = array(
-				'nb_total_elements' => 	$nb_elements,
+				'nb_total_elements' => 	$this->nb_results,
 				'nb_onto_element_per_page' => $params->nb_per_page,
 				'page' => $page
 		);
-		$list['elements']=array();
+		$list['elements'] = array();
 		if($results && count($results)){
 			foreach($results as $result){
-				if(!$list['elements'][$result->elem]['default']){
+				if(!isset($list['elements'][$result->elem]['default']) || !$list['elements'][$result->elem]['default']){
 					$list['elements'][$result->elem]['default'] = $result->label;
 				}
-				if(substr($lang,0,2) == $result->label_lang){
-					$list['elements'][$result->elem][$result->label_lang] = $result->label;
+				if(isset($result->label_lang) && substr($lang,0,2) == $result->label_lang){
+					$list['elements'][$result->elem][$lang] = $result->label;
 				}
 			}
 		}
@@ -331,9 +384,9 @@ class onto_common_controler {
 	 * @param string $ontology_name
 	 * @return string 
 	 */
-	public static function search_ui_class_name($class_name,$ontology_name=''){
+	public static function search_ui_class_name($class_name,$ontology_name = ''){
 		$suffixe = "_ui";
-		$prefix="onto_";
+		$prefix = "onto_";
 		
 		if(class_exists($prefix.$ontology_name.'_'.$class_name.$suffixe)){
 			//La classe ui a le même nom que la classe
@@ -385,40 +438,76 @@ class onto_common_controler {
 	}
 	
 	
-	public function get_searched_list($class_uri,$params,$user_query_var="user_input"){
+	public function get_searched_list($class_uri, $params, $user_query_var="user_input"){
 		global $dbh;
+
 		if(!$params->{$user_query_var}){
 			return $this->get_list($class_uri, $params);
 		}else{
 			$search_class_name = $this->get_searcher_class_name($class_uri);
-			$searcher = new $search_class_name($params->{$user_query_var});
-			if($searcher->get_nb_results()){
+			if(strpos($search_class_name,'searcher_ontologies') === 0 && isset($params->ontology_id)){
+				$searcher = new $search_class_name(stripslashes($params->{$user_query_var}),$params->ontology_id);
+			}else{
+				$searcher = new $search_class_name(stripslashes($params->{$user_query_var}));
+			}
+			$this->nb_results = $searcher->get_nb_results();
+			if($this->nb_results){
 				$results = $searcher->get_sorted_result("default",(($params->page-1)*$params->nb_per_page),$params->nb_per_page);
 			}else{
 				$results = array();
 			}
 			$list = array(
-				'nb_total_elements' => 	$searcher->get_nb_results(),
-				'nb_onto_element_per_page' => $params->nb_per_page,
-				'page' => $params->page-1
+					'nb_total_elements' => 	$this->nb_results,
+					'nb_onto_element_per_page' => $params->nb_per_page,
+					'page' => $params->page-1
 			);
 			$list['elements'] = array();
-			foreach($results as $item){
-				$list['elements'][onto_common_uri::get_uri($item)]['default'] = $this->get_data_label(onto_common_uri::get_uri($item));
+			if(is_array($results)) {
+				foreach($results as $item){
+					$list['elements'][onto_common_uri::get_uri($item)]['default'] = $this->get_data_label(onto_common_uri::get_uri($item));
+				}
 			}
 		}
 		return $list;
 	}
 
 	public function get_searcher_class_name($class_uri){
+		global $sphinx_active;
 		$classes= $this->handler->get_classes();
-		$search_class_name = "searcher_autorities_".$this->handler->get_onto_name()."_".$classes[$class_uri]->pmb_name;
-		if(!class_exists($search_class_name)){
-			$search_class_name.="s";
-			if(!class_exists($search_class_name)){
-				return false;
+		if ($sphinx_active) {
+			$search_class_name = 'searcher_sphinx_'.$this->handler->get_onto_name().'_'.$classes[$class_uri]->pmb_name;
+			if (class_exists($search_class_name)) {
+				return $search_class_name;
+			}
+			$search_class_name.= 's';
+			if (class_exists($search_class_name)) {
+				return $search_class_name;
+			}
+			$search_class_name = 'searcher_sphinx_'.$classes[$class_uri]->pmb_name;
+			if (class_exists($search_class_name)) {
+				return $search_class_name;
+			}
+			$search_class_name.= 's';
+			if (class_exists($search_class_name)) {
+				return $search_class_name;
 			}
 		}
+		$search_class_name = "searcher_autorities_".$this->handler->get_onto_name()."_".$classes[$class_uri]->pmb_name;
+		if(class_exists($search_class_name)){
+			return $search_class_name;
+		}
+		$search_class_name.= "s";
+		if(class_exists($search_class_name)){
+			return $search_class_name;
+		}
+		$search_class_name = 'searcher_ontologies_'.$classes[$class_uri]->pmb_name;
+		if(!class_exists($search_class_name)){
+			$search_class_name.= 's';
+			if (class_exists($search_class_name)) {
+				return $search_class_name;
+			}
+		}
+		$search_class_name = 'searcher_ontologies';
 		return $search_class_name;
 	}
 	
@@ -435,14 +524,14 @@ class onto_common_controler {
 			'elements' => array()
 		);
 		if($this->params->datas && $search_class_name){
-			$searcher = new $search_class_name($this->params->datas."*");
+		    $searcher = new $search_class_name(($this->params->datas == "*" ? '*' : $this->params->datas.'*'));
 			if($searcher->get_nb_results()){
 				$results = $searcher->get_sorted_result("default",0,10);
 			}else{
 				$results = array();
 			}
-			foreach($results as $item){
-				$elements['elements'][onto_common_uri::get_uri($item)] = $this->get_data_label(onto_common_uri::get_uri($item));
+			foreach($results as $id){
+				$elements['elements'][onto_common_uri::get_uri($id)] = $this->get_data_label(onto_common_uri::get_uri($id));
 			}
 		}
 		return $elements;
@@ -458,20 +547,26 @@ class onto_common_controler {
 		$class_uri = $this->get_item_type_to_list($params);
 		switch($params->action){
 			case "search" :
-				if($this->get_searcher_class_name($class_uri)!= false){
+				if($params->user_input == "*"){
+					return $this->get_list($class_uri, $params);
+				}
+				if($this->get_searcher_class_name($class_uri) != false){
 					return $this->get_searched_list($class_uri, $params);
 				}
 				break;
-			case "list_selector" :
-				if($this->get_searcher_class_name($class_uri)!= false){
-					return $this->get_searched_list($class_uri, $params,"deb_rech");
+			case "list_selector" :				
+				if($params->deb_rech == "*"){
+					return $this->get_list($class_uri, $params);
+				}
+				if($this->get_searcher_class_name($class_uri) != false){
+					return $this->get_searched_list($class_uri, $params, "deb_rech");
 				}
 				break;
 		}
-		return $this->get_list($class_uri,$params);
+		return $this->get_list($class_uri, $params);
 	}
 	
-	protected function get_item_type_to_list($params,$pmb_name=false){
+	protected function get_item_type_to_list($params, $pmb_name = false){
 		//on commence par récupérer l'URI de la classe de l'ontologie des éléments que l'on veut lister...
 		switch($params->action){
 			case "list_selector":
@@ -483,9 +578,9 @@ class onto_common_controler {
 					$class_uri = $this->get_class_uri($params->sub);
 				}else{
 					//2ème cas : on a objs, on est dans le framework et objs contient le nom PMB de la propriété
-					if($this->params->objs!= ""){
+					if($this->params->objs != ""){
 						//on récupère la propriété
-						$property=$this->get_onto_property_from_pmb_name($params->objs);
+						$property = $this->get_onto_property_from_pmb_name($params->objs);
 						//à partir de la propriété, on a le range
 						$class_uri = $property->range[$params->range];
 					}else {
@@ -503,5 +598,133 @@ class onto_common_controler {
 			return $this->get_class_pmb_name($class_uri);
 		}
 		return $class_uri;
+	}
+	
+	public function get_ontology_display_name_from_uri($uri){
+		global $opac_url_base;
+		$display_name = "";
+		if(strpos($uri, "skos") !== false) {
+			$display_name = "http://www.w3.org/2004/02/skos/core#prefLabel";
+		}
+		if(strpos($uri, $opac_url_base."ontologies/") !== false) {
+			$ontology_id = substr(str_replace($opac_url_base."ontologies/", "", $uri), 0, strpos(str_replace($opac_url_base."ontologies/", "", $uri), "#"));
+			$ontology = new ontology($ontology_id);
+			$display_name = $ontology->get_display_label_property($uri);
+		}
+		return $display_name;
+	}
+	
+	public function get_skos_datastore(){
+		$data_store_config = array(
+				/* db */
+				'db_name' => DATA_BASE,
+				'db_user' => USER_NAME,
+				'db_pwd' => USER_PASS,
+				'db_host' => SQL_SERVER,
+				/* store */
+				'store_name' => 'rdfstore',
+				/* stop after 100 errors */
+				'max_errors' => 100,
+				'store_strip_mb_comp_str' => 0
+		);
+		return new onto_store_arc2($data_store_config);
+	}
+	
+	public function get_skos_controler(){
+		global $deflt_concept_scheme;
+		$params = new onto_param(array(
+				'categ'=>'concepts',
+				'sub'=> 'concept',
+				'action'=>'list',
+				'page'=>'1',
+				'nb_per_page'=>'20',
+				'id'=>'',
+				'parent_id'=>'',
+				'user_input'=>'',
+				'concept_scheme' => ((isset($_SESSION['onto_skos_concept_last_concept_scheme']) && ($_SESSION['onto_skos_concept_last_concept_scheme'] !== "")) ? $_SESSION['onto_skos_concept_last_concept_scheme'] : $deflt_concept_scheme),
+				'item_uri' => "",
+				'only_top_concepts' => ((!$skos_concept_search_form_submitted && isset($_SESSION['onto_skos_concept_only_top_concepts'])) ? $_SESSION['onto_skos_concept_only_top_concepts'] : 0),
+				'base_resource'=> "autorites.php"
+		));
+		return new onto_skos_controler($this->get_skos_handler(), $params);
+	}
+	
+	public function get_skos_handler(){
+		global $class_path;
+	
+		$onto_store_config = array(
+				/* db */
+				'db_name' => DATA_BASE,
+				'db_user' => USER_NAME,
+				'db_pwd' => USER_PASS,
+				'db_host' => SQL_SERVER,
+				/* store */
+				'store_name' => 'ontology',
+				/* stop after 100 errors */
+				'max_errors' => 100,
+				'store_strip_mb_comp_str' => 0
+		);
+		$data_store_config = array(
+				/* db */
+				'db_name' => DATA_BASE,
+				'db_user' => USER_NAME,
+				'db_pwd' => USER_PASS,
+				'db_host' => SQL_SERVER,
+				/* store */
+				'store_name' => 'rdfstore',
+				/* stop after 100 errors */
+				'max_errors' => 100,
+				'store_strip_mb_comp_str' => 0
+		);
+		$handler = new onto_handler($class_path."/rdf/skos_pmb.rdf", "arc2", $onto_store_config, "arc2", $data_store_config, $this->get_skos_namespaces(), 'http://www.w3.org/2004/02/skos/core#prefLabel');
+		$handler->get_ontology();
+		return $handler;
+	}
+	
+	public function get_skos_namespaces(){
+		return array(
+				"skos"	=> "http://www.w3.org/2004/02/skos/core#",
+				"dc"	=> "http://purl.org/dc/elements/1.1",
+				"dct"	=> "http://purl.org/dc/terms/",
+				"owl"	=> "http://www.w3.org/2002/07/owl#",
+				"rdf"	=> "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+				"rdfs"	=> "http://www.w3.org/2000/01/rdf-schema#",
+				"xsd"	=> "http://www.w3.org/2001/XMLSchema#",
+				"pmb"	=> "http://www.pmbservices.fr/ontology#"
+		);
+	}
+	
+	/**
+	 * Retourne vrai si la classe est une sous classe d'une indexation, faux sinon
+	 * @param string $pmb_name Nom machine PMB d'une classe
+	 */
+	public function class_is_indexed($pmb_name){
+		$class_uri = $this->get_class_uri($pmb_name);
+		if($class_uri){
+			return $this->handler->class_is_indexed($class_uri);
+		}
+		return false;
+	}
+	
+	protected function proceed_delete_from_cart($force_delete = false){
+		$result = $this->proceed_delete(false, false);
+		return $result;
+	}
+	
+	protected function delete_onto_files() {
+		if($this->params) {
+			$existing_documents = onto_files::get_existing_documents_from_object($this->handler->get_onto_name(), $this->item->get_id());
+			if (count($existing_documents)) {
+				// On supprime les documents qui ne sont plus dans le formulaire
+				foreach ($existing_documents as $document_id) {
+					$onto_file = new onto_files($document_id);
+					$onto_file->delete();
+				}
+			}
+		}
+	}
+	
+	public function get_nb_results() {
+		return $this->nb_results;
 	}
 }

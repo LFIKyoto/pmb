@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_sparql_datasource_sparql.class.php,v 1.3 2014-03-11 14:28:25 touraine37 Exp $
+// $Id: cms_module_sparql_datasource_sparql.class.php,v 1.5 2018-08-23 15:09:39 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -48,6 +48,7 @@ class cms_module_sparql_datasource_sparql extends cms_module_common_datasource{
 	}
 	
 	public function get_datas(){
+	    global $base_path;
 		$datas = array();
 		$selector = $this->get_selected_selector();
 		$this->set_module_class_name("cms_module_sparql");
@@ -70,7 +71,13 @@ class cms_module_sparql_datasource_sparql extends cms_module_common_datasource{
 					'post_vars' => $_POST,
 				);
 				try{
-					$query = H2o::parseString($this->parameters['query'])->render($querydatas); 
+					$template_path = $base_path.'/temp/'.LOCATION.'_sparql_datasource_sparql_'.$this->id;
+					if(!file_exists($template_path) || (md5($this->parameters['query']) != md5_file($template_path))){
+					    file_put_contents($template_path, $this->parameters['query']);
+					}
+					$H2o = H2o_collection::get_instance($template_path);
+					$query = $H2o->render($querydatas);
+					
 					$rows = $store->query($query, 'rows');
 					if(!$rows){
 						$this->debug("Execution failed : ".$query);
@@ -110,7 +117,7 @@ class cms_module_sparql_datasource_sparql extends cms_module_common_datasource{
 						<a href='".$base_path."/cms.php?categ=manage&sub=".str_replace("cms_module_","",$this->module_class_name)."&quoi=datasources&elem=".$this->class_name."&cms_store=".$key."&action=get_form'>".$this->format_text($infos['name'])."</a>
 						&nbsp;
 						<a href='".$base_path."/cms.php?categ=manage&sub=".str_replace("cms_module_","",$this->module_class_name)."&quoi=datasources&elem=".$this->class_name."&cms_store_delete=".$key."&action=save_form' onclick='return confirm(\"".$this->format_text($this->msg['cms_module_common_view_django_delete_store'])."\")'>
-							<img src='".$base_path."/images/trash.png' alt='".$this->format_text($this->msg['cms_module_root_delete'])."' title='".$this->format_text($this->msg['cms_module_root_delete'])."'/>
+							<img src='".get_url_icon('trash.png')."' alt='".$this->format_text($this->msg['cms_module_root_delete'])."' title='".$this->format_text($this->msg['cms_module_root_delete'])."'/>
 						</a>
 					</p>";
 			}

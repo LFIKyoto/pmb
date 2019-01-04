@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: oai.class.php,v 1.14 2015-06-19 14:03:50 apetithomme Exp $
+// $Id: oai.class.php,v 1.18 2018-02-14 15:46:29 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,20 +13,20 @@ require_once ($class_path."/external_services_converters.class.php");
 
 class oai extends connecteur_out {
 	
-	function get_config_form() {
+	public function get_config_form() {
 		//Rien
 		return '';
 	}
 	
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		return;
 	}
 	
-	function instantiate_source_class($source_id) {
+	public function instantiate_source_class($source_id) {
 		return new oai_source($this, $source_id, $this->msg);
 	}
 	
-	function process($source_id, $pmb_user_id) {
+	public function process($source_id, $pmb_user_id) {
 		global $base_path;
 		require_once ($base_path."/admin/connecteurs/out/oai/oai_out_protocol.class.php");
 		
@@ -41,30 +41,32 @@ class oai extends connecteur_out {
 }
 
 class oai_source extends connecteur_out_source {
-	var $repository_name="";
-	var $admin_email="";
-	var $included_sets=array();
-	var $repositoryIdentifier="";
-	var $chunk_size=100; //Nombre de résultats par requête
-	var $token_lifeduration=600; //Durée de vie en seconde des tokens
-	var $cache_complete_records=true;
-	var $cache_complete_records_seconds=86400; //Une journée
-	var $link_status_to_deletion=false;
-	var $linked_status_to_deletion=0;
-	var $allow_gzip_compression=true;
-	var $allowed_set_types=array(
+	public $repository_name="";
+	public $admin_email="";
+	public $included_sets=array();
+	public $repositoryIdentifier="";
+	public $chunk_size=100; //Nombre de résultats par requête
+	public $token_lifeduration=600; //Durée de vie en seconde des tokens
+	public $cache_complete_records=true;
+	public $cache_complete_records_seconds=86400; //Une journée
+	public $link_status_to_deletion=false;
+	public $linked_status_to_deletion=0;
+	public $allow_gzip_compression=true;
+	public $allowed_set_types=array(
 		1, //Set de paniers de notices
 		2  //Set multicritère de notices
 	);
-	var $allowed_admin_convert_paths=array();
-	var $baseURL="";
-	var $include_items=false; //Inclure les exemplaires
-	var $include_links = array('genere_lien'=>0);
-	var $deletion_management = 0;
-	var $deletion_management_transient_duration = 0;
+	public $allowed_admin_convert_paths=array();
+	public $baseURL="";
+	public $include_items=false; //Inclure les exemplaires
+	public $include_links = array('genere_lien'=>0);
+	public $deletion_management = 0;
+	public $deletion_management_transient_duration = 0;
+	public $use_items_update_date = 0;
+	public $oai_pmh_valid=false;
 	
-	function oai_source($connector, $id, $msg) {
-		parent::connecteur_out_source($connector, $id, $msg);
+	public function __construct($connector, $id, $msg) {
+		parent::__construct($connector, $id, $msg);
 		$this->repository_name = isset($this->config["repo_name"]) ? $this->config["repo_name"] : '';
 		$this->admin_email = isset($this->config["admin_email"]) ? $this->config["admin_email"] : '';
 		$this->included_sets = isset($this->config["included_sets"]) ? $this->config["included_sets"] : array();
@@ -84,9 +86,11 @@ class oai_source extends connecteur_out_source {
 		}
 		$this->deletion_management = $this->config['deletion_management'];
 		$this->deletion_management_transient_duration = $this->config['deletion_management_transient_duration'];
+		$this->use_items_update_date = $this->config['use_items_update_date'];
+		$this->oai_pmh_valid = isset($this->config["oai_pmh_valid"]) ? $this->config["oai_pmh_valid"] : false;
 	}
 	
-	function get_config_form() {
+	public function get_config_form() {
 		
 		global $charset, $dbh;
 		
@@ -157,10 +161,14 @@ class oai_source extends connecteur_out_source {
 		$result .= $admin_convert_select;
 		$result .=	'</div>';
 		
+		//Validité OAI-PMH
+		$result .=	'<div class=row><input id="oai_pmh_valid" '.($this->oai_pmh_valid ? 'checked' : '').' name="oai_pmh_valid" type="checkbox" />'.'<label class="etiquette" for="oai_pmh_valid">'.$this->msg["oai_pmh_valid"].'</label><br />';
+		$result .=	'</div>';
+		
 		//feuille XSLT personnalisée
 		$result .= "<div class='row'><label for='feuille_xslt'>".$this->msg['feuille_xslt']."</label><br />";
 		$result .= "<input type='file' name='feuille_xslt'/>";
-		if($this->config['feuille_xslt']){
+		if(!empty($this->config['feuille_xslt'])){
 			$result .= "<div class='row'><br />&nbsp;<i>".htmlentities($this->config['feuille_xslt_name'],ENT_QUOTES, $charset)."</i>&nbsp;<input type='checkbox' name='suppr_feuille_xslt' value='1' />&nbsp;".$this->msg['suppr_feuille_xslt']."</div>";
 		}
 		$result .= "</div><div class='row'>&nbsp;</div>";
@@ -204,6 +212,10 @@ class oai_source extends connecteur_out_source {
 		$result .= '<input type="radio" id="deletion_management_persistent" value="2" name="deletion_management" onChange="document.getElementById(\'deletion_management_transient_duration\').disabled = !document.getElementById(\'deletion_management_transient\').checked" '.(($this->deletion_management == 2) ? 'checked' : '').'/>&nbsp;<label class="etiquette" for="deletion_management_persistent">'.$this->msg['deletion_management_persistent'].'</label>&nbsp;';
 		$result .= '<div><br/>';
 		
+		// Update date
+		$result .=	'<div class="row"><input id="use_items_update_date" '.($this->use_items_update_date ? 'checked' : '').' name="use_items_update_date" type="checkbox" />'.'<label class="etiquette" for="use_items_update_date">'.$this->msg["use_items_update_date"].'</label>';
+		$result .=	'</div>';
+		
 		//Include items
 		$result .=	'<div class="row"><input id="include_items" '.($this->include_items ? 'checked=checked' : '').' name="include_items" type="checkbox" />'.'<label class="etiquette" for="include_items">'.$this->msg["include_items"].'</label><br />';
 		$result .=	'</div>';
@@ -219,11 +231,11 @@ class oai_source extends connecteur_out_source {
 		return $result;
 	}
 	
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		global $dbh;
 		parent::update_config_from_form();
 		global $repo_name, $admin_email, $included_sets, $repositoryIdentifier, $chunksize, $token_lifeduration, $cache_complete_records, $cache_complete_records_seconds, $link_status_to_deletion, $linked_status_to_deletion, $allow_gzip_compression, $baseURL, $include_items,$suppr_feuille_xslt;
-		global $deletion_management, $deletion_management_transient_duration;
+		global $deletion_management, $deletion_management_transient_duration, $use_items_update_date, $oai_pmh_valid;
 		//les trucs faciles
 		$this->config["repo_name"] = stripslashes($repo_name);
 		$this->config["admin_email"] = stripslashes($admin_email);
@@ -239,6 +251,8 @@ class oai_source extends connecteur_out_source {
 		$this->config["include_items"] = isset($include_items);
 		$this->config["deletion_management"] = $deletion_management;
 		$this->config["deletion_management_transient_duration"] = $deletion_management_transient_duration*1;
+		$this->config["use_items_update_date"] = isset($use_items_update_date);
+		$this->config["oai_pmh_valid"] = isset($oai_pmh_valid);
 		
 		if(!$_FILES['feuille_xslt']['error']){
 			$this->config['feuille_xslt'] = file_get_contents($_FILES['feuille_xslt']['tmp_name']);

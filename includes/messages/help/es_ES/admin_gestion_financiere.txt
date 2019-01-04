@@ -1,4 +1,4 @@
-<h1>Gesti&oacute;n financiera de los usuarios</h1>
+<h2>Gesti&oacute;n financiera de los usuarios</h2>
 <p>La gesti&oacute;n financiera de los usuarios permite generar los movimientos financieros asociados a cada usuario :
 </p>
 <ul>

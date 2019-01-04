@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: openurl_entities.class.php,v 1.1 2011-08-02 12:36:01 arenou Exp $
+// $Id: openurl_entities.class.php,v 1.4 2018-11-14 11:36:17 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,19 +11,19 @@ require_once($class_path."/openurl/transport/protocole/openurl_transport_http.cl
 
 
 class openurl_entity extends openurl_root {
-	var $descriptors = array();	//	descripteurs de l'entité
+	public $descriptors = array();	//	descripteurs de l'entité
 	
-    function openurl_entity() {}
+    public function __construct() {}
 
- 	function addDescriptor($desc){
+ 	public function addDescriptor($desc){
 		$desc->setEntityType($this->type);
 		$this->descriptors[] = $desc;
 	}
 
-	function serialize($debug=false){
+	public function serialize_infos($debug=false){
 		$serialized_entity ="";
 		foreach($this->descriptors as $descriptor){
-			$descriptor_serialized = $descriptor->serialize($debug);
+			$descriptor_serialized = $descriptor->serialize_infos($debug);
 			if($descriptor_serialized != ""){
 				if($serialized_entity!= "") $serialized_entity.="&";
 				$serialized_entity.=$descriptor_serialized;
@@ -39,11 +39,11 @@ class openurl_entity extends openurl_root {
  */
 class openurl_entity_referent extends openurl_entity {
 	
-	function openurl_entity_referent(){
+	public function __construct(){
 		$this->type = "referent";	
 	}
 	
-	function unserialize($infos,$mode){
+	public function unserialize($infos,$mode){
 		global $openurl_map;
 		global $class_path;
 		
@@ -108,11 +108,11 @@ class openurl_entity_referent extends openurl_entity {
  */
 class openurl_entity_referring_entity extends openurl_entity {
 
-	function openurl_entity_referring_entity(){
+	public function __construct(){
 		$this->type = "referring_entity";
 	}
 
-	function unserialize($infos,$mode){
+	public function unserialize($infos,$mode){
 		global $openurl_map;
 		global $class_path;
 
@@ -161,11 +161,11 @@ class openurl_entity_referring_entity extends openurl_entity {
  */
 class openurl_entity_requester extends openurl_entity {
 
-	function openurl_entity_requester(){
+	public function __construct(){
 		$this->type = "requester";	
 	}
 	
-	function unserialize($infos,$mode){
+	public function unserialize($infos,$mode){
 			foreach($infos as $key => $values){
 			switch($key){
 				case "req_id" :
@@ -185,11 +185,11 @@ class openurl_entity_requester extends openurl_entity {
  */
 class openurl_entity_service_type extends openurl_entity {
 	
-	function openurl_entity_service_type(){
+	public function __construct(){
 		$this->type = "service_type";
 	}
 	
-	function unserialize($infos,$mode){
+	public function unserialize($infos,$mode){
 		global $openurl_map;
 		global $class_path;
 		
@@ -226,11 +226,11 @@ class openurl_entity_service_type extends openurl_entity {
  */
 class openurl_entity_resolver extends openurl_entity {
 	
-	function openurl_entity_resolver(){
+	public function __construct(){
 		$this->type = "resolver";	
 	}
 
-	function unserialize($infos,$mode){
+	public function unserialize($infos,$mode){
 		foreach($infos as $key => $values){
 			switch($key){
 				case "res_id" :
@@ -250,11 +250,11 @@ class openurl_entity_resolver extends openurl_entity {
  */
 class openurl_entity_referrer extends openurl_entity {
 	
-	function openurl_entity_referrer(){
+	public function __construct(){
 		$this->type = "referrer";	
 	}
 	
-	function unserialize($infos,$mode){
+	public function unserialize($infos,$mode){
 			foreach($infos as $key => $values){
 			switch($key){
 				case "rfr_id" :

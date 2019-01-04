@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc.class.php,v 1.3 2015-04-03 11:16:18 jpermanne Exp $
+// $Id: serialcirc.class.php,v 1.4 2017-05-05 09:12:15 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,18 +10,18 @@ require_once($class_path."/serialcirc_diff.class.php") ;
 require_once($include_path."/serialcirc.inc.php");
 
 class serialcirc {
-	var $id_serialcirc;			// identifiant unique
-	var $num_abt;				// identifiant de l'abonnement associé
-	var $type;					// type de circulation
-	var $virtual;				// booléen définissant si la circulation est virtuelle ou non
-	var $check;					// booléen définissant si le pointage est demandée!
-	var $allow_resa;			// booléen définissant si la demande de résa est permise
-	var $allow_copy;			// booléen définissant si la demande de copie est permise
-	var $duration_before_send;	// nombre de jours avant le démarrage de la circulation depuis la date de bulletinnage
-	var $allow_subscription;	// booléen définissant si l'inscription est permise
-	var $serial_title;			// titre du périodique
-	var $state;					// état de la circulation
-	var $late_mode;				// mode de retard
+	public $id_serialcirc;			// identifiant unique
+	public $num_abt;				// identifiant de l'abonnement associé
+	public $type;					// type de circulation
+	public $virtual;				// booléen définissant si la circulation est virtuelle ou non
+	public $check;					// booléen définissant si le pointage est demandée!
+	public $allow_resa;			// booléen définissant si la demande de résa est permise
+	public $allow_copy;			// booléen définissant si la demande de copie est permise
+	public $duration_before_send;	// nombre de jours avant le démarrage de la circulation depuis la date de bulletinnage
+	public $allow_subscription;	// booléen définissant si l'inscription est permise
+	public $serial_title;			// titre du périodique
+	public $state;					// état de la circulation
+	public $late_mode;				// mode de retard
 	
 	public function __construct($id){
 		$this->id_serialcirc = $id*1;

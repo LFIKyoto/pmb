@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: opac_searcher_generic.class.php,v 1.3 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: opac_searcher_generic.class.php,v 1.15 2018-11-29 09:04:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,6 +10,7 @@ require_once($class_path."/analyse_query.class.php");
 require_once($class_path."/search.class.php");
 require_once($class_path."/filter_results.class.php");
 require_once($class_path."/sort.class.php");
+global $opac_search_other_function;
 if($opac_search_other_function){
 	require_once($include_path."/".$opac_search_other_function);
 }
@@ -40,7 +41,7 @@ class opac_searcher_generic {
 	public function __construct($user_query=''){
 		global $opac_search_noise_limit_type;
 		global $opac_search_cache_duration;
-		global $opac_search_stemming_active;
+		global $opac_stemming_active;
 		$this->searched=false;
 		$this->user_query = $user_query;
 		$this->search_noise_limit_type = $opac_search_noise_limit_type;
@@ -68,8 +69,8 @@ class opac_searcher_generic {
 			$query = $this->get_full_results_query();
 		}
 		
-		if(method_exists($this, _get_typdoc_filter)){
-			if($this->user_query == "*"){
+		if(method_exists($this, "_get_typdoc_filter")){
+			if($this->user_query === "*"){
 				$query.= static::_get_typdoc_filter(true);
 			}else {
 				$query.= static::_get_typdoc_filter();
@@ -85,20 +86,25 @@ class opac_searcher_generic {
 	
 	
 	protected function _get_pert($query=false){
-		if($query){
+	    if($query){
 			return $this->aq->get_objects_pert($this->objects_ids,$this->object_index_key,$this->object_words_table,$this->object_words_value,$this->object_fields_table,$this->object_fields_value,$this->object_key,$this->field_restrict,false,false,$query);
 		}else{
 			$this->table_tempo = $this->aq->get_objects_pert($this->objects_ids,$this->object_index_key,$this->object_words_table,$this->object_words_value,$this->object_fields_table,$this->object_fields_value,$this->object_key,$this->field_restrict,false,false,$query);
 		}
 	}
-
+	
+	public function get_objects_ids() {
+	    return $this->objects_ids;
+	}
+	
 	protected function _get_objects_ids(){
 		global $dbh;
 		if(!$this->searched){
 			$query = $this->_get_search_query();
 			$this->objects_ids="";
-			$res = pmb_mysql_query($query,$dbh);
+			$res = pmb_mysql_query($query,$dbh);			
 			if($res){
+			
 				if(pmb_mysql_num_rows($res)){
 					while ($row = pmb_mysql_fetch_object($res)){
 						if($this->objects_ids!="") $this->objects_ids.=",";
@@ -123,16 +129,21 @@ class opac_searcher_generic {
 	}
 
 	protected function _get_sign($sorted=false){
-//TODO A revoir
+		$str_to_hash = $this->_get_sign_elements($sorted);
+		return md5($str_to_hash);
+	}
+	
+	protected function _get_sign_elements($sorted=false){
 		global $opac_search_other_function;
 		global $typdoc;
 		global $page;
 		global $lang;
 		global $dont_check_opac_indexation_docnum_allfields;
 		global $mutli_crit_indexation_docnum_allfields;
-
+		global $nb_per_page;
+		
 		$str_to_hash = session_id();
-		$str_to_hash.= "&opac_view=".$_SESSION['opac_view'];
+		$str_to_hash.= "&opac_view=".(isset($_SESSION['opac_view']) ? $_SESSION['opac_view'] : '');
 		$str_to_hash.= $_SESSION['user_code'];
 		$str_to_hash.= "&lang=".$lang;
 		$str_to_hash.= "&type_search=".$this->_get_search_type();
@@ -141,41 +152,52 @@ class opac_searcher_generic {
 		$str_to_hash.= "&dont_check_opac_indexation_docnum_allfields=".$dont_check_opac_indexation_docnum_allfields;
 		$str_to_hash.= "&mutli_crit_indexation_docnum_allfields=".$mutli_crit_indexation_docnum_allfields;
 		if($opac_search_other_function){
-			$str_to_hash.= "&perso=".search_other_function_get_values();
+			$str_to_hash.= "&perso=".serialize(search_other_function_get_values());
 		}
 		if($sorted){
 			$str_to_hash.= "&tri=".$this->tri;
 			$str_to_hash.= "&page=$page";
 		}
-		return md5($str_to_hash);
+		if($nb_per_page) {
+			$str_to_hash.= "&nb_per_page=".$nb_per_page;
+		}
+		return $str_to_hash;
 	}
 
 	protected function _get_in_cache($sorted=false){
 		global $dbh;
-		$read = "select value from search_cache where object_id='".$this->_get_sign($sorted)."'";
-		$res = pmb_mysql_query($read,$dbh);
-		if(pmb_mysql_num_rows($res)>0){
-			$row = pmb_mysql_fetch_object($res);
-			if(!$sorted){
-				$cache = $row->value;
-			}else{
-				$cache = unserialize($row->value);
-			}
-			return $cache;
-		}else {
-			return false;
+		global $opac_search_cache_duration;
+		//return false;
+		
+		if($opac_search_cache_duration){
+		    $read = "select value from search_cache where object_id='".$this->_get_sign($sorted)."'";
+		    $res = pmb_mysql_query($read,$dbh);
+		    if(pmb_mysql_num_rows($res)>0){
+		        $row = pmb_mysql_fetch_object($res);
+		        if(!$sorted){
+		            $cache = $row->value;
+		        }else{
+		            $cache = unserialize($row->value);
+		        }
+		        return $cache;
+		    }
 		}
+		return false;
 	}
 
 	protected function _set_in_cache($sorted=false){
 		global $dbh;
-		if($sorted == false){
-			$str_to_cache = $this->objects_ids;
-		}else{
-			$str_to_cache = serialize($this->result);
+		global $opac_search_cache_duration;
+		
+		if($opac_search_cache_duration){
+    		if($sorted == false){
+    			$str_to_cache = $this->objects_ids;
+    		}else{
+    			$str_to_cache = serialize($this->result);
+    		}
+    		$insert = "insert into search_cache set object_id ='".addslashes($this->_get_sign($sorted))."', value ='".addslashes($str_to_cache)."', delete_on_date = now() + interval ".$this->search_cache_duration." second";
+    		pmb_mysql_query($insert,$dbh);
 		}
-		$insert = "insert into search_cache set object_id ='".addslashes($this->_get_sign($sorted))."', value ='".addslashes($str_to_cache)."', delete_on_date = now() + interval ".$this->search_cache_duration." second";
-		pmb_mysql_query($insert,$dbh);
 	}
 
 	public function get_nb_results(){
@@ -191,8 +213,8 @@ class opac_searcher_generic {
 	protected function _sort($start,$number){
 		global $dbh;
 		if($this->table_tempo != ""){
-			$query = "select * from ".$this->table_tempo." order by pert desc limit ".$start.",".$number;			
-			$res = pmb_mysql_query($query,$dbh) or die (pmb_mysql_error());
+			$query = "select * from ".$this->table_tempo." order by pert desc limit ".$start.",".$number;
+			$res = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($res)){
 				$this->result=array();
 				while($row = pmb_mysql_fetch_object($res)){
@@ -211,7 +233,7 @@ class opac_searcher_generic {
 			$this->_get_objects_ids();
 			$this->_filter_results();
 			//Ecretage
-			if($this->search_noise_limit_type && $this->user_query != "*"){
+			if($this->search_noise_limit_type && $this->user_query !== "*"){
 				$limit = 0;
 				//calcul pertinence
 				$this->_get_pert();
@@ -259,6 +281,7 @@ class opac_searcher_generic {
 	}
 
 	public function get_sorted_result($tri = "default",$start=0,$number=20){
+	    $this->result = array();
 		$this->tri = $tri;
 		$this->_delete_old_objects();
 		$this->_analyse();
@@ -292,5 +315,20 @@ class opac_searcher_generic {
 		return $query;
 	}
 
+	/**
+	 * Ajoute des restriction au tableau $field_restrict
+	 * @param array $fields_restrict Tableau des restrictions à ajouter
+	 */
+	public function add_fields_restrict($fields_restrict = array()) {
+		$this->field_restrict = array_merge($this->field_restrict, $fields_restrict);
+	}
+	
+	public function init_fields_restrict($mode) {
+		return false;
+	}
+	
+	public function get_temporary_table_name($suffix='') {
+		return get_called_class().substr(md5(microtime(true)), 0, 16).$suffix;
+	}
 
 }

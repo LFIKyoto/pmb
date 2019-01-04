@@ -2,17 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: resa_planning_func.inc.php,v 1.26.2.3 2015-12-03 15:22:35 dbellamy Exp $
+// $Id: resa_planning_func.inc.php,v 1.38 2018-10-22 12:47:47 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($include_path."/mail.inc.php") ;
 
 // defines pour flag affichage info de gestion
-define ('NO_INFO_GESTION', 0); // 0 >> aucune info de gestion : liste simple
-define ('GESTION_INFO_GESTION', 1); // pour traitement des prévisions
-define ('LECTEUR_INFO_GESTION', 2); // pour affichage en fiche lecteur
-define ('EDIT_INFO_GESTION', 3); // pour affichage en édition
+if (!defined('NO_INFO_GESTION')) define ('NO_INFO_GESTION', 0); // 0 >> aucune info de gestion : liste simple
+if (!defined('GESTION_INFO_GESTION')) define ('GESTION_INFO_GESTION', 1); // pour traitement des prévisions
+if (!defined('LECTEUR_INFO_GESTION')) define ('LECTEUR_INFO_GESTION', 2); // pour affichage en fiche lecteur
+if (!defined('EDIT_INFO_GESTION')) define ('EDIT_INFO_GESTION', 3); // pour affichage en édition
 
 function planning_list($idnotice=0, $idbulletin=0, $idempr=0, $order='', $where='', $info_gestion=NO_INFO_GESTION, $url_gestion='', $ancre='') {
 
@@ -101,6 +101,7 @@ function planning_list($idnotice=0, $idbulletin=0, $idempr=0, $order='', $where=
 			break;
 	}
 
+	$clause = '';
 	switch ($info_gestion) {
 
 		case GESTION_INFO_GESTION :
@@ -117,35 +118,35 @@ function planning_list($idnotice=0, $idbulletin=0, $idempr=0, $order='', $where=
 			$aff_final .= "<span class='usercheckbox'><input type='radio' name='montrerquoi' value='all' id='all' onclick='this.form.submit();' ";
 			if ($montrerquoi=='all') {
 				$aff_final .= "checked='checked'" ;
-				$clause = "and resa_remaining_qty!=0 ";
+				$clause = "and resa_planning.resa_remaining_qty!=0 ";
 			}
 			$aff_final .= " /><label for='all'>".htmlentities($msg['resa_planning_show_all'], ENT_QUOTES, $charset)."</label></span>&nbsp;";
 
 			$aff_final .= "<span class='usercheckbox'><input type='radio' name='montrerquoi' value='validees' id='validees' onclick='this.form.submit();' ";
 			if ($montrerquoi=='validees') {
 				$aff_final .= "checked='checked'" ;
-				$clause = "and resa_validee='1' ";
+				$clause = "and resa_planning.resa_validee='1' and resa_planning.resa_remaining_qty!=0 ";
 			}
 			$aff_final .= " /><label for='validees'>".htmlentities($msg['resa_planning_show_validees'], ENT_QUOTES, $charset)."</label></span>&nbsp;";
 
 			$aff_final .= "<span class='usercheckbox'><input type='radio' name='montrerquoi' value='invalidees' id='invalidees' onclick='this.form.submit();' ";
 			if ($montrerquoi=='invalidees') {
 				$aff_final .= "checked='checked'" ;
-				$clause = "and resa_validee='0' ";
+				$clause = "and resa_planning.resa_validee='0' and resa_planning.resa_remaining_qty!=0 ";
 			}
 			$aff_final.= " /><label for='invalidees'>".htmlentities($msg['resa_planning_show_invalidees'], ENT_QUOTES, $charset)."</label></span>&nbsp;";
 
 			$aff_final.= "<span class='usercheckbox'><input type='radio' name='montrerquoi' value='valid_noconf' id='valid_noconf' onclick='this.form.submit();' ";
 			if ($montrerquoi=='valid_noconf') {
 				$aff_final .= "checked='checked'" ;
-				$clause = "and resa_validee='1' and resa_confirmee='0' ";
+				$clause = "and resa_planning.resa_validee='1' and resa_planning.resa_confirmee='0' and resa_planning.resa_remaining_qty!=0 ";
 			}
 			$aff_final .= " /><label for='valid_noconf'>".htmlentities($msg['resa_planning_show_non_confirmees'], ENT_QUOTES, $charset)."</label></span>&nbsp;";
 
 			$aff_final.= "<span class='usercheckbox'><input type='radio' name='montrerquoi' value='toresa' id='toresa' onclick='this.form.submit();' ";
 			if ($montrerquoi=='toresa') {
 				$aff_final .= "checked='checked'" ;
-				$clause = "and resa_remaining_qty=0 ";
+				$clause = "and resa_planning.resa_remaining_qty=0 ";
 			}
 			$aff_final.= " /><label for='toresa'>".htmlentities($msg['resa_planning_show_toresa'], ENT_QUOTES, $charset)."</label></span></div>";
 
@@ -165,7 +166,7 @@ function planning_list($idnotice=0, $idbulletin=0, $idempr=0, $order='', $where=
 				$aff_final .= '<div class="row"><div class="colonne10">'.$msg['resa_planning_loc_retrait'].'</div>';
 				$aff_final .= '<div class="colonne_suite">'.$sel_loc_ret.'</div></div><div class="row">&nbsp;</div>' ;
 				if ($f_loc_ret) {
-					$clause .= " AND resa_loc_retrait='".$f_loc_ret."' ";
+					$clause .= " AND resa_planning.resa_loc_retrait='".$f_loc_ret."' ";
 				}
 			}
 
@@ -174,13 +175,13 @@ function planning_list($idnotice=0, $idbulletin=0, $idempr=0, $order='', $where=
 
 		case LECTEUR_INFO_GESTION:
 			$aff_final .= "<form class='form-".$current_module."' name='check_resa_planning' action='' method='post' >" ;
-			$clause .= " AND resa_remaining_qty!=0 ";
+			$clause .= " AND resa_planning.resa_remaining_qty!=0 ";
 			break;
 
 
 		case NO_INFO_GESTION:
 		default:
-			$clause .= " AND resa_remaining_qty!=0 ";
+			$clause .= " AND resa_planning.resa_remaining_qty!=0 ";
 			break;
 	}
 
@@ -188,36 +189,48 @@ function planning_list($idnotice=0, $idbulletin=0, $idempr=0, $order='', $where=
 		$order="empr_nom, empr_prenom, tit, resa_idnotice, resa_date " ;
 	}
 	$nb_prev=0;
-	$q = "select id_resa, resa_idnotice, resa_idbulletin, resa_date, resa_date_debut, resa_date_fin, resa_validee, resa_confirmee, resa_idempr, resa_qty, resa_loc_retrait, ";
+	$q = "select resa_planning.id_resa, resa_planning.resa_idnotice, resa_planning.resa_idbulletin, resa_planning.resa_date, resa_planning.resa_date_debut, resa_planning.resa_date_fin, resa_planning.resa_validee, resa_planning.resa_confirmee, resa_planning.resa_idempr, resa_planning.resa_qty, resa_planning.resa_remaining_qty, resa_planning.resa_loc_retrait, ";
 	$q.= "trim(concat(if(series_m.serie_name <>'', if(notices_m.tnvol <>'', concat(series_m.serie_name,', ',notices_m.tnvol,'. '), concat(series_m.serie_name,'. ')), if(notices_m.tnvol <>'', concat(notices_m.tnvol,'. '),'')), if(series_s.serie_name <>'', if(notices_s.tnvol <>'', concat(series_s.serie_name,', ',notices_s.tnvol,'. '), series_s.serie_name), if(notices_s.tnvol <>'', concat(notices_s.tnvol,'. '),'')), ifnull(notices_m.tit1,''),ifnull(notices_s.tit1,''),' ',ifnull(bulletin_numero,''), if (mention_date, concat(' (',mention_date,')') ,''))) as tit, ";
 	$q.= "concat(empr_nom,', ',empr_prenom) as empr_nom_prenom, id_empr, empr_cb, empr_location, ";
-	$q.= "if(resa_date_fin>=sysdate() or resa_date_fin='0000-00-00',0,1) as perimee, ";
-	$q.= "date_format(resa_date_debut, '".$msg['format_date']."') as aff_resa_date_debut, ";
-	$q.= "if(resa_date_fin='0000-00-00', '', date_format(resa_date_fin, '".$msg['format_date']."')) as aff_resa_date_fin, ";
-	$q.= "date_format(resa_date, '".$msg['format_date']."') as aff_resa_date, " ;
+	$q.= "if(resa_planning.resa_date_fin>=sysdate() or resa_planning.resa_date_fin='0000-00-00',0,1) as perimee, ";
+	$q.= "date_format(resa_planning.resa_date_debut, '".$msg['format_date']."') as aff_resa_date_debut, ";
+	$q.= "if(resa_planning.resa_date_fin='0000-00-00', '', date_format(resa_planning.resa_date_fin, '".$msg['format_date']."')) as aff_resa_date_fin, ";
+	$q.= "date_format(resa_planning.resa_date, '".$msg['format_date']."') as aff_resa_date, " ;
 	$q.= "ifnull(notices_m.typdoc,notices_s.typdoc) as typdoc ";
 	$q.= "FROM resa_planning ";
 	$q.= "LEFT JOIN notices as notices_m on resa_idnotice = notices_m.notice_id ";
 	$q.= "LEFT JOIN series as series_m on notices_m.tparent_id = series_m.serie_id ";
 	$q.= "LEFT JOIN bulletins on resa_idbulletin = bulletins.bulletin_id ";
 	$q.= "LEFT JOIN notices as notices_s on bulletin_notice = notices_s.notice_id ";
-	$q.= "LEFT JOIN series as series_s on notices_s.tparent_id = series_s.serie_id, ";
+	if ($montrerquoi!='toresa') {
+		$q.= "LEFT JOIN series as series_s on notices_s.tparent_id = series_s.serie_id, ";
+	} else {
+		$q.= "LEFT JOIN series as series_s on notices_s.tparent_id = series_s.serie_id ";
+		$q.= "JOIN resa on resa.resa_planning_id_resa = resa_planning.id_resa, ";
+	}
 	$q.= "empr ";
-	$q.= "WHERE resa_idempr = id_empr ";
+	$q.= "WHERE resa_planning.resa_idempr = id_empr ";
 	if ($clause) $q.= $clause;
 
 	if ($idnotice) $q.= "and notices_m.notice_id = '".$idnotice."' ";
 	if ($idbulletin) $q.= "and bulletin_id = '".$idbulletin."' ";
 	if ($idempr) $q.= "and id_empr = '".$idempr."' ";
 	$q.= "order by ".$order;
+
 	$r = pmb_mysql_query($q,$dbh) or die("Erreur SQL !=$q");
 	$nb_prev = pmb_mysql_num_rows($r);
 
 	if (!$nb_prev) {
 		switch ($info_gestion) {
-			case GESTION_INFO_GESTION:
+			case GESTION_INFO_GESTION :
+			case EDIT_INFO_GESTION :
 				$aff_final .= "</form>" ;
 				break;
+			case LECTEUR_INFO_GESTION :
+				return '';
+			case NO_INFO_GESTION:
+			default:
+				return '';
 		}
 		return $aff_final ;
 	}
@@ -379,23 +392,31 @@ function planning_list($idnotice=0, $idbulletin=0, $idempr=0, $order='', $where=
 				if($data->resa_validee) {
 					$aff_final.= "<td class='sorttable_mmdd' style='text-align:center;'>".$data->aff_resa_date_debut.'</td>';
 					$aff_final.= "<td class='sorttable_mmdd' style='text-align:center;'>".$data->aff_resa_date_fin." </td>";
-					$aff_final.= "<td style='text-align:center;'>".$data->resa_qty.'</td>';
+					$aff_final.= "<td style='text-align:center;'>";
+					if ($montrerquoi!='toresa') {
+						$aff_final.= $data->resa_remaining_qty."/";
+					}
+					$aff_final.= $data->resa_qty."</td>";
 					$aff_final.= "<td style='text-align:center;'><strong>X</strong></td>";
 				} else {
 					$aff_final .= "<td style='text-align:center;'>";
 					$aff_final .= "<input type='hidden' id='resa_date_debut[".$data->id_resa."]' name='resa_date_debut[".$data->id_resa."]' value='".$data->aff_resa_date_debut."' />";
 					$resa_date_debut = str_replace("-", "", $data->resa_date_debut);
 					$aff_final .= "<input type='hidden' id='form_resa_date_debut_".$data->id_resa."' name='form_resa_date_debut_".$data->id_resa."' value='".$resa_date_debut."' />";
-					$aff_final .= "<input type='button' class='bouton' sorttable_customkey='".$data->aff_resa_date_debut."' onclick=\"openPopUp('./select.php?what=calendrier&caller=check_resa_planning&date_caller=".$resa_date_debut."&param1=form_resa_date_debut_".$data->id_resa."&param2=form_resa_date_debut_lib_".$data->id_resa."&auto_submit=NO&date_anterieure=YES&func_to_call=func_callback&id=".$data->id_resa."&sub_param1=1', 'resa_date_debut', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes'); \" value='".$data->aff_resa_date_debut."' name='form_resa_date_debut_lib_".$data->id_resa."'>";
+					$aff_final .= "<input type='button' class='bouton' sorttable_customkey='".$data->aff_resa_date_debut."' onclick=\"openPopUp('./select.php?what=calendrier&caller=check_resa_planning&date_caller=".$resa_date_debut."&param1=form_resa_date_debut_".$data->id_resa."&param2=form_resa_date_debut_lib_".$data->id_resa."&auto_submit=NO&date_anterieure=YES&func_to_call=func_callback&id=".$data->id_resa."&sub_param1=1', 'calendar'); \" value='".$data->aff_resa_date_debut."' name='form_resa_date_debut_lib_".$data->id_resa."'>";
 					$aff_final .= '</td>';
 
 					$aff_final .= "<td style='text-align:center;'>";
 					$aff_final .= "<input type='hidden' id='resa_date_fin[".$data->id_resa."]' name='resa_date_fin[".$data->id_resa."]' value='".$data->aff_resa_date_fin."' />";
 					$resa_date_fin = str_replace("-", "", $data->resa_date_fin);
 					$aff_final .= "<input type='hidden' id='form_resa_date_fin_".$data->id_resa."' name='form_resa_date_fin_".$data->id_resa."' value='".$resa_date_fin."' />";
-					$aff_final .= "<input type='button' class='bouton' sorttable_customkey='".$data->aff_resa_date_fin."' onclick=\"openPopUp('./select.php?what=calendrier&caller=check_resa_planning&date_caller=".$resa_date_fin."&param1=form_resa_date_fin_".$data->id_resa."&param2=form_resa_date_fin_lib_".$data->id_resa."&auto_submit=NO&date_anterieure=YES&func_to_call=func_callback&id=".$data->id_resa."&sub_param1=2', 'resa_date_fin', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\" value='".$data->aff_resa_date_fin."' name='form_resa_date_fin_lib_".$data->id_resa."'>";
+					$aff_final .= "<input type='button' class='bouton' sorttable_customkey='".$data->aff_resa_date_fin."' onclick=\"openPopUp('./select.php?what=calendrier&caller=check_resa_planning&date_caller=".$resa_date_fin."&param1=form_resa_date_fin_".$data->id_resa."&param2=form_resa_date_fin_lib_".$data->id_resa."&auto_submit=NO&date_anterieure=YES&func_to_call=func_callback&id=".$data->id_resa."&sub_param1=2', 'calendar')\" value='".$data->aff_resa_date_fin."' name='form_resa_date_fin_lib_".$data->id_resa."'>";
 					$aff_final .= '</td>';
-					$aff_final.= "<td style='text-align:center;'>".$data->resa_qty.'</td>';
+					$aff_final.= "<td style='text-align:center;'>";
+					if ($montrerquoi!='toresa') {
+						$aff_final.= $data->resa_remaining_qty."/";
+					}
+					$aff_final.= $data->resa_qty."</td>";
 					$aff_final.= '<td></td>';
 				}
 				//Resa confirmee
@@ -414,7 +435,11 @@ function planning_list($idnotice=0, $idbulletin=0, $idempr=0, $order='', $where=
 			case EDIT_INFO_GESTION:
 				$aff_final.= "<td class='sorttable_mmdd' style='text-align:center;'>".$data->aff_resa_date_debut.'</td>';
 				$aff_final.= "<td class='sorttable_mmdd' style='text-align:center;'>".$data->aff_resa_date_fin." </td>";
-				$aff_final.= "<td style='text-align:center;'>".$data->resa_qty.'</td>';
+				$aff_final.= "<td style='text-align:center;'>";
+				if ($montrerquoi!='toresa') {
+					$aff_final.= $data->resa_remaining_qty."/";
+				}
+				$aff_final.= $data->resa_qty."</td>";
 				if($data->resa_validee) {
 					$aff_final.= "<td style='text-align:center;'><strong>X</strong></td>";
 				} else {
@@ -478,7 +503,7 @@ function planning_list($idnotice=0, $idbulletin=0, $idempr=0, $order='', $where=
 					</div>
 
 					<div class='right' >
-						<input type='button' class='bouton' value='".$msg['resa_valider_suppression']."'  onclick=\"this.form.resa_action.value='suppr_resa'; this.form.submit();\" />
+						<input type='button' class='bouton' value='".$msg['resa_valider_suppression']."'  onclick=\"if(confirm('".$msg['resa_valider_suppression_confirm']."')){this.form.resa_action.value='suppr_resa'; this.form.submit();}\" />
 					</div>
 					<div class='row'></div>
 				</form>" ;
@@ -514,7 +539,6 @@ function planning_list($idnotice=0, $idbulletin=0, $idempr=0, $order='', $where=
 				</script>";
 			break;
 		case LECTEUR_INFO_GESTION:
-			break;
 		case EDIT_INFO_GESTION:
 			$aff_final.= '</form>' ;
 			break;
@@ -667,24 +691,24 @@ function alert_empr_resa_planning($id_resa=0, $id_empr_concerne=0) {
 		$headers .= "Content-type: text/html; charset=".$charset."\n";
 
 		$var = "pdflettreresa_fdp";
-		eval ("\$pdflettreresa_fdp=\"".$$var."\";");
+		eval ("\$pdflettreresa_fdp=\"".${$var}."\";");
 
 		// le texte après la liste des ouvrages en résa
 		$var = "pdflettreresa_after_list";
-		eval ("\$pdflettreresa_after_list=\"".$$var."\";");
+		eval ("\$pdflettreresa_after_list=\"".${$var}."\";");
 
 		// le texte avant la liste des ouvrages en réservation
 		$var = "pdflettreresa_before_list";
-		eval ("\$pdflettreresa_before_list=\"".$$var."\";");
+		eval ("\$pdflettreresa_before_list=\"".${$var}."\";");
 
 		// le "Madame, Monsieur," ou tout autre truc du genre "Cher adhérent,"
 		$var = "pdflettreresa_madame_monsieur";
-		eval ("\$pdflettreresa_madame_monsieur=\"".$$var."\";");
+		eval ("\$pdflettreresa_madame_monsieur=\"".${$var}."\";");
 
 		while ($o=pmb_mysql_fetch_object($result)) {
 			if (($pdflettreresa_priorite_email_manuel==1 || $pdflettreresa_priorite_email_manuel==2) && $o->empr_mail) {
 				$to = $o->empr_prenom." ".$o->empr_nom." <".$o->empr_mail.">";
-				$output_final = "<html><body>" ;
+				$output_final = "<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" /></head><body>" ;
 				$texte_madame_monsieur=str_replace("!!empr_name!!", $o->empr_nom,$pdflettreresa_madame_monsieur);
 				$texte_madame_monsieur=str_replace("!!empr_first_name!!", $o->empr_prenom,$texte_madame_monsieur);
 				$output_final .= $texte_madame_monsieur.' <br />'.$pdflettreresa_before_list ;
@@ -694,7 +718,7 @@ function alert_empr_resa_planning($id_resa=0, $id_empr_concerne=0) {
 
 				$output_final .= '<hr />'.$pdflettreresa_after_list.' <br />'.$pdflettreresa_fdp."<br /><br />".mail_bloc_adresse() ;
 				$output_final .= '</body></html>';
-				$res_envoi=mailpmb($o->empr_prenom.' '.$o->empr_nom, $o->empr_mail,$msg['mail_obj_resa_validee'],$output_final,$biblio_name, $biblio_email, $headers, "", $PMBuseremailbcc);
+				$res_envoi=mailpmb($o->empr_prenom.' '.$o->empr_nom, $o->empr_mail, sprintf($msg['mail_obj_resa_validee'], ''),$output_final,$biblio_name, $biblio_email, $headers, "", $PMBuseremailbcc);
 				if (!$res_envoi || $pdflettreresa_priorite_email_manuel==2) {
 					print "<script type='text/javascript'>openPopUp('./pdf.php?pdfdoc=lettre_resa_planning&id_resa=$tmp_id_resa', 'lettre_confirm_resa".$tmp_id_resa."', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes, scrollbars=yes');</script>";
 				}

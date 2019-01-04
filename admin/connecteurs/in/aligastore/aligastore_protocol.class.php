@@ -2,11 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: aligastore_protocol.class.php,v 1.4.18.1 2015-09-11 08:53:13 jpermanne Exp $
+// $Id: aligastore_protocol.class.php,v 1.6 2017-07-12 09:07:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path,$base_path, $include_path;
+
 /**
  * \brief Petit parser dom autonome et élégant
  * 
@@ -20,8 +21,8 @@ global $class_path,$base_path, $include_path;
  * @author Florent TETART
  */
 class xml_dom_aligastore {
-	var $xml;				/*!< XML d'origine */
-	var $charset;			/*!< Charset courant (iso-8859-1 ou utf-8) */
+	public $xml;				/*!< XML d'origine */
+	public $charset;			/*!< Charset courant (iso-8859-1 ou utf-8) */
 	/**
 	 * \brief Arbre des noeuds du document
 	 * 
@@ -36,19 +37,19 @@ class xml_dom_aligastore {
 	 )
 	 \endverbatim
 	 */
-	var $tree; 
-	var $error=false; 		/*!< Signalement d'erreur : true : erreur lors du parse, false : pas d'erreur */
-	var $error_message=""; 	/*!< Message d'erreur correspondant à l'erreur de parse */
-	var $depth=0;			/*!< \protected */
-	var $last_elt=array();	/*!< \protected */
-	var $n_elt=array();		/*!< \protected */
-	var $cur_elt=array();	/*!< \protected */
-	var $last_char=false;	/*!< \protected */
+	public $tree; 
+	public $error=false; 		/*!< Signalement d'erreur : true : erreur lors du parse, false : pas d'erreur */
+	public $error_message=""; 	/*!< Message d'erreur correspondant à l'erreur de parse */
+	public $depth=0;			/*!< \protected */
+	public $last_elt=array();	/*!< \protected */
+	public $n_elt=array();		/*!< \protected */
+	public $cur_elt=array();	/*!< \protected */
+	public $last_char=false;	/*!< \protected */
 	
 	/**
 	 * \protected
 	 */
-	function close_node() {
+	public function close_node() {
 		$this->last_elt[$this->depth-1]["CHILDS"][]=$this->cur_elt;
 		$this->last_char=false;
 		$this->cur_elt=$this->last_elt[$this->depth-1];
@@ -58,7 +59,7 @@ class xml_dom_aligastore {
 	/**
 	 * \protected
 	 */
-	function startElement($parser,$name,$attribs) {
+	public function startElement($parser,$name,$attribs) {
 		if ($this->last_char) $this->close_node();
 		$this->last_elt[$this->depth]=$this->cur_elt;
 		$this->cur_elt=array();
@@ -72,7 +73,7 @@ class xml_dom_aligastore {
 	/**
 	 * \protected
 	 */
-	function endElement($parser,$name) {
+	public function endElement($parser,$name) {
 		if ($this->last_char) $this->close_node();
 		$this->close_node();
 	}
@@ -80,7 +81,7 @@ class xml_dom_aligastore {
 	/**
 	 * \protected
 	 */
-	function charElement($parser,$char) {
+	public function charElement($parser,$char) {
 		if ($this->last_char) $this->close_node();
 		$this->last_char=true;
 		$this->last_elt[$this->depth]=$this->cur_elt;
@@ -97,7 +98,7 @@ class xml_dom_aligastore {
 	 * @param string $xml XML a manipuler
 	 * @param string $charset Charset du document XML
 	 */
-	function xml_dom_aligastore($xml,$charset="iso-8859-1") {
+	public function __construct($xml,$charset="iso-8859-1") {
 		$this->charset=$charset;
 		$this->cur_elt=array("NAME"=>"document","TYPE"=>"0");
 		
@@ -145,7 +146,7 @@ class xml_dom_aligastore {
 	 Les attributs ne peuvent être cités que sur le noeud final.
 	 \endverbatim
 	 */
-	function get_node($path,$node="") {
+	public function get_node($path,$node="") {
 		if ($node=="") $node=&$this->tree;
 		$paths=explode("/",$path);
 		for ($i=0; $i<count($paths); $i++) {
@@ -207,7 +208,7 @@ class xml_dom_aligastore {
 	 a/b/id@c	Tous les noeuds éléments c fils de a/b. L'attribut est ignoré
 	 \endverbatim
 	 */
-	function get_nodes($path,$node="") {
+	public function get_nodes($path,$node="") {
 		$n=0;
 		$nodes="";
 		while ($nod=$this->get_node($path."[$n]",$node)) {
@@ -227,7 +228,7 @@ class xml_dom_aligastore {
 	 * @param bool $force_entities true : les données sont renvoyées avec les entités xml, false : les données sont renvoyées sans entités
 	 * @return string données sérialisées du noeud élément
 	 */
-	function get_datas($node,$force_entities=false) {
+	public function get_datas($node,$force_entities=false) {
 		$char="";
 		if ($node["TYPE"]!=1) return false;
 		//Recherche des fils et vérification qu'il n'y a que du texte !
@@ -265,7 +266,7 @@ class xml_dom_aligastore {
 	 * @param noeud $node Noeud élément duquel on veut les attributs
 	 * @return mixed Tableau des attributs Nom => Valeur ou false si ce n'est pas un noeud de type 1
 	 */
-	function get_attributes($node) {
+	public function get_attributes($node) {
 		if ($node["TYPE"]!=1) return false;
 		return $node["ATTRIBUTES"];
 	}
@@ -297,7 +298,7 @@ class xml_dom_aligastore {
 	 a/b/id@c[3]	Renvoie : "2"
 	 \endverbatim
 	 */
-	function get_value($path,$node="") {
+	public function get_value($path,$node="") {
 		$elt=$this->get_node($path,$node);
 		if ($elt) {
 			$paths=explode("/",$path);
@@ -356,7 +357,7 @@ class xml_dom_aligastore {
 	 a/b/id@c	Renvoie : [0]=>"0",[1]=>"1",[2]=>"2"
 	 \endverbatim
 	 */
-	function get_values($path,$node="") {
+	public function get_values($path,$node="") {
 		$n=0;
 		while ($elt=$this->get_node($path."[$n]",$node)) {
 			$elts[$n]=$elt;
@@ -401,22 +402,22 @@ class xml_dom_aligastore {
 
 
 class aligastore_get_data {
-    var $error=false;
-    var $error_message="";
-    var $response_date;			
-    var $charset="iso-8859-1";
-    var $time_out;				
-    var $xml_parser;			
-    var $retry_after;			
-    var $data = '';
+    public $error=false;
+    public $error_message="";
+    public $response_date;			
+    public $charset="iso-8859-1";
+    public $time_out;				
+    public $xml_parser;			
+    public $retry_after;			
+    public $data = '';
     					
-    function aligastore_get_data($url="", $charset="iso-8859-1", $time_out="") {
+    public function __construct($url="", $charset="iso-8859-1", $time_out="") {
     	$this->charset=$charset;
     	$this->time_out=$time_out;
     	if ($url) $this->get_data($url);
     }
     
-    function parse_xml($ch,$data) {
+    public function parse_xml($ch,$data) {
     	if (!$this->retry_after) {
 	    	//Parse de la ressource
 	    	if (!xml_parse($this->xml_parser, $data)) {
@@ -428,7 +429,7 @@ class aligastore_get_data {
     	return strlen($data);
 	}
     
-    function verif_header($ch,$headers) {
+    public function verif_header($ch,$headers) {
     	$h=explode("\n",$headers);
     	for ($i=0; $i<count($h); $i++) {
     		$v=explode(":",$h[$i]);
@@ -437,7 +438,7 @@ class aligastore_get_data {
     	return strlen($headers);
     }
     
-    function get_data($url) {
+    public function get_data($url) {
     	//Remise à zéro des erreurs
     	$this->error=false;
     	$this->error_message="";
@@ -471,7 +472,7 @@ class aligastore_get_data {
 		
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 		
-		configurer_proxy_curl($ch,$url);	
+		configurer_proxy_curl($ch,$url);
 
 		$n_try=0;
 		$data =  $cexec=curl_exec($ch);
@@ -497,20 +498,20 @@ class aligastore_get_data {
 }
 
 class aligastore_request {
-	var $base_url;
-	var $operation;
-	var $parameters;
-	var $error = false;
-	var $error_message = '';
-	var $data = '';
+	public $base_url;
+	public $operation;
+	public $parameters;
+	public $error = false;
+	public $error_message = '';
+	public $data = '';
 	
-	function aligastore_request($base_url, $parameters=array()) {
+	public function __construct($base_url, $parameters=array()) {
 		
 		$this->base_url = $base_url;		
 		$this->parameters = $parameters;
 	}
 	
-	function aligastore_response($charset='ISO-8859-1') {
+	public function aligastore_response($charset='ISO-8859-1') {
 		$parameters = '';
 		foreach ($this->parameters as $name => $value)
 			$parameters[] .= $name.'='.urlencode($value);

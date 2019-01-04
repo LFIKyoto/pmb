@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: transfertdata.php,v 1.2 2009-05-16 11:12:02 dbellamy Exp $
+// $Id: transfertdata.php,v 1.5 2017-10-23 10:13:34 ngantier Exp $
 
 //Restauration d'urgence
 ?>
@@ -15,12 +15,12 @@
 <table>
 <tr><td>Upload archive file</td><td><input type="file" name="archive_file"></td></tr>
 <tr><td>&nbsp;</td></tr>
-<tr><td><center><b>Connection information</b></center></td></tr>
+<tr><td class='center'><b>Connection information</b></td></tr>
 <tr><td>host</td><td><input name="host" type="text"></td></tr>
 <tr><td>username</td><td><input name="db_user" type="text"></td></tr>
 <tr><td>password</td><td><input name="db_password" type="password"></td></tr>
 <tr><td>Database</td><td><input name="db" type="text"></td></tr>
-<tr><td colspan=2 align=center><input type="submit" value="Click here to start restoring datas"></td></tr>
+<tr><td colspan=2 class='center'><input type="submit" value="Click here to start restoring datas"></td></tr>
 </table>
 
 

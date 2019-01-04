@@ -1,7 +1,7 @@
 /* +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rapport_dnd.js,v 1.3 2010-02-08 11:28:09 kantin Exp $ */
+// $Id: rapport_dnd.js,v 1.4 2016-09-29 13:44:41 dgoron Exp $ */
 
 /****************************************
  * 	Fonctions pour le D&D du rapport	*	
@@ -83,14 +83,14 @@ function rapport_rapport(dragged,target){
 	rap_downlight(target);
 	recalc_recept();
 		
-	update_order(dragged,target);
+	rapport_update_order(dragged,target);
 }
 
 
 /*
  * Mis à jour de l'ordre
  */
-function update_order(source,cible){
+function rapport_update_order(source,cible){
 	
 	var src_order = source.getAttribute("order");
 	var target_order = cible.getAttribute("order");

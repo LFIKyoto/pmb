@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: opac_mysql_connect.inc.php,v 1.13 2015-04-07 09:01:07 arenou Exp $
+// $Id: opac_mysql_connect.inc.php,v 1.14 2017-07-31 13:21:40 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -39,7 +39,7 @@ if ( ! defined( 'DB_CONNECT' ) ) {
 		global $charset, $SQL_MOTOR_TYPE, $time_zone, $time_zone_mysql;
 		if(isset($time_zone) && trim($time_zone)) date_default_timezone_set($time_zone);//Pour l'heure PHP
 		$my_connec = @pmb_mysql_connect(SQL_SERVER, USER_NAME, USER_PASS);
-		if($my_connec==0 && $er_connec==1) die(my_error(0));
+		if($my_connec===0 && $er_connec==1) die(my_error(0));
 		if($bd) {
 			$my_bd == '' ? $my_bd=DATA_BASE : $my_bd;
 			if( pmb_mysql_select_db($my_bd, $my_connec)==0 && $er_bd==1 ) die(my_error(0));

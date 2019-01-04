@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: external_authorities.inc.php,v 1.3 2012-09-12 15:17:39 ngantier Exp $
+// $Id: external_authorities.inc.php,v 1.5 2017-12-22 10:04:52 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -12,7 +12,9 @@ if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 	// récupération paramètres MySQL et connection à la base
 	require_once($base_path."/includes/opac_db_param.inc.php");
 	require_once($base_path."/includes/opac_mysql_connect.inc.php");
-	$dbh = connection_mysql();
+	if(!$dbh){
+	   $dbh = connection_mysql();
+	}
 	
 	require_once($base_path."/includes/start.inc.php");
 
@@ -111,8 +113,8 @@ switch ($search_type) {
 		$form .= "<input type=\"hidden\" name=\"l_typdoc\" value=\"".htmlentities($l_typdoc,ENT_QUOTES,$charset)."\">\n";
 		$form .= "<input type=\"hidden\" id=author_type name=\"author_type\" value=\"$author_type\">\n";		
 		$form .= "<input type=\"hidden\" id=\"id_thes\" name=\"id_thes\" value=\"".$id_thes."\">\n";
-		$form .= "<input type=\"hidden\" name=\"surligne\" value=\"".$surligne."\">\n";
-		$form .= "<input type=\"hidden\" name=\"tags\" value=\"".$tags."\">\n";
+		$form .= "<input type=\"hidden\" name=\"surligne\" value=\"".(isset($surligne) ? $surligne : '')."\">\n";
+		$form .= "<input type=\"hidden\" name=\"tags\" value=\"".(isset($tags) ? $tags : '')."\">\n";
 		$f_values=$form;
 		$form = "<form name=\"form_values\" action=\"./index.php?lvl=more_results\" method=\"post\">\n";
 		$form .= $f_values;

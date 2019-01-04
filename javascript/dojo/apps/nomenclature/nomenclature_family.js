@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_family.js,v 1.10 2015-01-29 17:19:53 dgoron Exp $
+// $Id: nomenclature_family.js,v 1.12 2016-03-16 15:16:58 vtouchard Exp $
 
 define(["dojo/_base/declare", "apps/nomenclature/nomenclature_musicstand", "dijit/registry"], function(declare, Musicstand, registry){
 	/*
@@ -15,6 +15,7 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_musicstand", "diji
 		    valid:false,
 		    abbreviation: "",
 		    hash:null,
+		    note:"",
 		    
 		    constructor: function(name){
 		    	this.set_name(name);
@@ -86,6 +87,7 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_musicstand", "diji
 			calc_abbreviation: function(){
 				var abbreviation= "";
 				for(var i=0 ; i<this.musicstands.length ; i++){
+					this.musicstands[i].calc_effective();
 					this.musicstands[i].calc_abbreviation();
 					abbreviation += this.musicstands[i].get_abbreviation();
 					if(i<this.musicstands.length-1)
@@ -106,6 +108,20 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_musicstand", "diji
 				return this.valid;
 			},
 			
+			set_note: function(note){
+				this.note = note;
+			},
+			
+			get_note: function(){
+				return this.note;
+			},
+			
+			get_hidden_field_name:function (name){
+				if(name)
+					return this.nomenclature.get_hidden_field_name()+'['+name+']['+this.id+']';
+				else
+					return this.nomenclature.get_hidden_field_name();
+			},
 			get_error_message : function(){
 				return this.error_message;
 			}

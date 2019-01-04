@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bbcode.inc.php,v 1.1.12.1 2015-09-22 10:38:03 jpermanne Exp $
+// $Id: bbcode.inc.php,v 1.2 2015-09-22 10:38:30 jpermanne Exp $
 
 require_once ($include_path . "/misc.inc.php");
 	

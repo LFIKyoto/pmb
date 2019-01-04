@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: alert.inc.php,v 1.6 2014-12-09 13:45:26 jpermanne Exp $
+// $Id: alert.inc.php,v 1.11 2018-09-10 13:21:36 dgoron Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // définition du minimum nécéssaire                         
@@ -10,6 +10,7 @@ $base_auth = "CIRCULATION_AUTH|CATALOGAGE_AUTH|AUTORITES_AUTH|ADMINISTRATION_AUT
 $base_title = "\$msg[5]";
 require_once ("$base_path/includes/init.inc.php");  
 
+$aff_alerte = '';
 require_once("$base_path/alert/message.inc.php");
 if ($current_alert=="circ") {
 	require_once("$base_path/alert/resa.inc.php");
@@ -22,6 +23,11 @@ if ($current_alert=="circ") {
 if ($current_alert=="catalog") {
 	require_once("$base_path/alert/tag.inc.php");
 	require_once("$base_path/alert/sugg.inc.php");
+	require_once("$base_path/alert/serialcirc.inc.php");
+	require_once("$base_path/alert/bulletinage.inc.php");
+	if($pmb_pnb_param_login) {
+	   require_once($base_path . "/alert/pnb.inc.php");
+	}
 }
 
 if ($current_alert=="acquisition") {

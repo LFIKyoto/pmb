@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: html_editor.inc.php,v 1.3 2014-12-16 16:39:34 dbellamy Exp $
+// $Id: html_editor.inc.php,v 1.4 2016-04-22 09:43:53 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 if ($pmb_javascript_office_editor) {
 	print $pmb_javascript_office_editor ;
+	print "<script type='text/javascript' src='".$base_path."/javascript/tinyMCE_interface.js'></script>";
 }
 
 print $admin_layout;

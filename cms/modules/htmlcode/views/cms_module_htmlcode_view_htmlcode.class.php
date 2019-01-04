@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_htmlcode_view_htmlcode.class.php,v 1.4 2012-10-17 14:13:36 arenou Exp $
+// $Id: cms_module_htmlcode_view_htmlcode.class.php,v 1.6 2018-01-29 15:15:00 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -22,7 +22,8 @@ class cms_module_htmlcode_view_htmlcode extends cms_module_common_view{
 				<div class='colonne-suite'>
 					<textarea id='cms_module_common_view_htmlcode' name='cms_module_common_view_htmlcode'>".$this->format_text(stripslashes($this->parameters['htmlcode']))."</textarea>		
 				</div>
-			</div>";
+			</div>".$this->get_ace_editor_script('cms_module_common_view_htmlcode');
+		
 		return $form;
 	}
 	

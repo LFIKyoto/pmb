@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl.inc.php,v 1.32.2.1 2015-08-14 10:30:03 dbellamy Exp $
+// $Id: expl.inc.php,v 1.38 2017-11-21 12:01:00 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -216,17 +216,25 @@ if ($rqt_bulletin!=1) {
 	// C'est un pério !
 	$res = @pmb_mysql_query($requete, $dbh);
 	if (pmb_mysql_num_rows($res)) {
-		print $begin_result_liste;
-		while(($n=pmb_mysql_fetch_object($res))) {
-			$link_serial = "./catalog.php?categ=serials&sub=view&serial_id=!!id!!";
-			$link_analysis = "";
-			$link_bulletin = "";
-			require_once ("$include_path/bull_info.inc.php") ;
-			require_once ("$class_path/serials.class.php") ;
-			$n->isbd = show_bulletinage_info($n->bulletin_id);
-			print pmb_bidi($n->isbd) ;
-		}	
-		print $end_result_liste;
+		if (pmb_mysql_num_rows($res) ==1) {
+			$row = pmb_mysql_fetch_object($res);
+			print "<div class=\"row\"><div class=\"msg-perio\">".$msg['recherche_encours']."</div></div>";
+			print "<script type=\"text/javascript\">";
+			print "document.location = \"./catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=".$row->bulletin_id."\"";
+			print "</script>";
+		}else{
+			print $begin_result_liste;
+			while(($n=pmb_mysql_fetch_object($res))) {
+				$link_serial = "./catalog.php?categ=serials&sub=view&serial_id=!!id!!";
+				$link_analysis = "";
+				$link_bulletin = "";
+				require_once ("$include_path/bull_info.inc.php") ;
+				require_once ("$class_path/serials.class.php") ;
+				$n->isbd = show_bulletinage_info($n->bulletin_id);
+				print pmb_bidi($n->isbd) ;
+			}	
+			print $end_result_liste;
+		}
 	} else {
 		error_message($msg[235], $msg[307]." $ex_query".($pmb_allow_external_search?"<br /><a href='./catalog.php?categ=search&mode=7&external_type=simple&from_mode=0&code=".rawurlencode($ex_query)."' title='".$msg["connecteurs_external_search_sources"]."'>".$msg["connecteurs_external_search_sources"]."</a>":""), 1, "./catalog.php?categ=search&mode=0");   
 	}
@@ -253,7 +261,7 @@ if ($nb_results) {
     if ($page>0) {
     	$nav_bar .= "<a href='#' onClick='document.search_form.page.value-=1; ";
     	$nav_bar .= "document.search_form.submit(); return false;'>";
-    	$nav_bar .= "<img src='./images/left.gif' border='0'  title='".$msg[48]."' alt='[".$msg[48]."]' hspace='3' align='middle'/>";
+    	$nav_bar .= "<img src='".get_url_icon('left.gif')."' style='border:0px; margin:3px 3px'  title='".$msg[48]."' alt='[".$msg[48]."]' class='align_middle'/>";
 	    $nav_bar .= "</a>";
 	}
         
@@ -273,10 +281,10 @@ if ($nb_results) {
 	if(($page+1)<$n_max_page) {
     	$nav_bar .= "<a href='#' onClick=\"if ((isNaN(document.search_form.page.value))||(document.search_form.page.value=='')) document.search_form.page.value=1; else document.search_form.page.value=parseInt(document.search_form.page.value)+parseInt(1); ";
     	$nav_bar .= "document.search_form.submit(); return false;\">";
-    	$nav_bar .= "<img src='./images/right.gif' border='0' title='".$msg[49]."' alt='[".$msg[49]."]' hspace='3' align='middle'>";
+    	$nav_bar .= "<img src='".get_url_icon('right.gif')."' style='border:0px; margin:3px 3px' title='".$msg[49]."' alt='[".$msg[49]."]' class='align_middle'>";
     	$nav_bar .= "</a>";
     } else 	$nav_bar .= "";
-	$nav_bar = "<div align='center'>$nav_bar</div>";
+	$nav_bar = "<div class='center'>$nav_bar</div>";
    	echo $nav_bar ;
     	
 }  

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes_types.class.php,v 1.5 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: demandes_types.class.php,v 1.8 2018-02-09 15:55:44 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/templates/demandes_type.tpl.php");
@@ -15,7 +15,7 @@ class demandes_types extends liste_simple{
 	public $id = 0;
 	public $allowed_actions = array();
 	
-	function demandes_types($table,$col_id_name,$col_lib_name,$id_liste=0){
+	public function __construct($table,$col_id_name,$col_lib_name,$id_liste=0){
 		global $dbh;
 		$this->table = $table;
 		$this->colonne_id_nom = $col_id_name;
@@ -42,12 +42,12 @@ class demandes_types extends liste_simple{
 	}
 	
 	
-	function setParametres(){
+	public function setParametres(){
 		$this->setMessages('demandes_ajout_type','demandes_modif_type','demandes_del_type','demandes_add_type','demandes_no_type_available','demandes_used_type');
 		$this->setActions('admin.php?categ=demandes&sub=type','admin.php?categ=demandes&sub=type');
 	}	
 	
-	function hasElements(){
+	public function hasElements(){
 		
 		global $dbh;
 		
@@ -56,7 +56,7 @@ class demandes_types extends liste_simple{
 		return pmb_mysql_result($r, 0, 0);
 	}
 	
-	static function get_qty() {
+	public static function get_qty() {
 		
 		global $dbh;
 		$q = "select count(1) from demandes_type";
@@ -67,7 +67,7 @@ class demandes_types extends liste_simple{
 	/*
 	 * Formulaire d'ajout/modification
 	*/
-	function show_edit_form(){
+	public function show_edit_form(){
 		global $demandes_type_form, $msg, $charset;
 	
 		if(!$this->id_liste){
@@ -76,7 +76,7 @@ class demandes_types extends liste_simple{
 			$form = str_replace('!!bouton_sup!!','',$form);
 			$form = str_replace('!!id_liste!!','',$form);
 		} else {
-			$liste_simple_form .= "<script type='text/javascript'>
+			$demandes_type_form .= "<script type='text/javascript'>
 				function confirm_del(){
 					result = confirm(\"".$msg[$this->messages['confirm_del']]."\");
         			return result;
@@ -94,7 +94,7 @@ class demandes_types extends liste_simple{
 		print $form;
 	}
 		
-	function get_actions_form(){
+	public function get_actions_form(){
 		global $msg,$charset;
 		
 		$form = "
@@ -121,14 +121,14 @@ class demandes_types extends liste_simple{
 	/*
 	 * Création/Modification
 	*/
-	function save(){
+	public function save(){
 	
 		global $dbh, $libelle, $default_action;
 		$allowed_actions = array();
 		foreach($this->allowed_actions as $allowed_action_form){
 			$val = "action_".$allowed_action_form['id'];
-			global $$val;
-			$allowed_action_form['active'] = $$val;
+			global ${$val};
+			$allowed_action_form['active'] = ${$val};
 			if($allowed_action_form['id'] == $default_action){
 				$allowed_action_form['default'] = 1;
 			}else{
@@ -150,7 +150,7 @@ class demandes_types extends liste_simple{
 	/*
 	 * Formulaire de présentation
 	*/
-	function show_form(){
+	public function show_form(){
 		global $dbh;
 		global $msg;
 		global $charset;
@@ -201,11 +201,11 @@ class demandes_types extends liste_simple{
 			<tr class='$pair_impair' $tr_javascript style='cursor: pointer'>
 				<td><i>".htmlentities($val['name'], ENT_QUOTES, $charset)."</i></td>";
 			foreach($this->allowed_actions as $action){
-				if($val['allowed_actions']){
+				if(isset($val['allowed_actions']) && is_array($val['allowed_actions'])){
 					foreach($val['allowed_actions'] as $allowed_action){
 						if($action['id'] == $allowed_action['id']){
 							$display .= "
-					<td style='text-align:center;".($allowed_action['default'] ? "font-weight:bold;" : "")."'>".($allowed_action['active'] ? "X" : "")."</td>";
+							<td style='text-align:center;".($allowed_action['default'] ? "font-weight:bold;" : "")."'>".($allowed_action['active'] ? "X" : "")."</td>";
 							break;
 						}else{
 							continue;

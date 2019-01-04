@@ -2,15 +2,20 @@
 // +-------------------------------------------------+
 // ï¿? 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dico_synonymes.inc.php,v 1.6 2015-04-03 11:16:28 jpermanne Exp $action $mot
+// $Id: dico_synonymes.inc.php,v 1.11 2018-09-21 09:48:14 dgoron Exp $action $mot
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if (!isset($word_search)) $word_search = "";
+if (!isset($word_selected)) $word_selected = "";
+if (!isset($clause)) $clause = "";
+if (!isset($limit)) $limit = "";
 
 require_once("$include_path/templates/dico_synonymes.tpl.php");
 require_once("$class_path/semantique.class.php");
 
 $baseurl="./autorites.php?categ=semantique&sub=synonyms";
-if (!$page) $page=1;
+if (!isset($page) || !$page) $page=1;
 
 //si on recherche une clé spécifique, on remplace !!cle!! par la clé sinon par rien
 if ($word_search) $aff_liste_mots=str_replace("!!cle!!","'".stripslashes($word_search)."'",$aff_liste_mots);
@@ -89,18 +94,18 @@ switch ($action) {
 			//récupération des synonymes affectés au mot
 			for ($i=$max_word-1;$i>=0 ; $i--) {
 				$var_word = "f_word$i" ;
-				global $$var_word;
-				if ($$var_word && ($$var_word!=$word_selected)) {
+				global ${$var_word};
+				if (${$var_word} && (${$var_word}!=$word_selected)) {
 					$var_word_code="f_word_code$i";
-					global $$var_word_code;
-					if ($$var_word_code) $f_words[]=$$var_word_code;
+					global ${$var_word_code};
+					if (${$var_word_code}) $f_words[]=${$var_word_code};
 					else {
 						//vérification de l'existence du mot
-						$rqt_exist="select id_mot, mot from mots left join linked_mots on (num_mot=id_mot) where mot='".$$var_word."' and id_mot not in (select num_mot from linked_mots where linked_mots.num_linked_mot=0) group by id_mot";
+						$rqt_exist="select id_mot, mot from mots left join linked_mots on (num_mot=id_mot) where mot='".${$var_word}."' and id_mot not in (select num_mot from linked_mots where linked_mots.num_linked_mot=0) group by id_mot";
 						$query_exist=pmb_mysql_query($rqt_exist);
 						if (!pmb_mysql_num_rows($query_exist)) {
 							//insertion d'un nouveau mot
-							$rqt_ins="insert into mots (mot) values ('".$$var_word."')";
+							$rqt_ins="insert into mots (mot) values ('".${$var_word}."')";
 							
 							@pmb_mysql_query($rqt_ins);
 							//recherche de l'id du mot inséré
@@ -167,6 +172,8 @@ if ($action!='view') {
 	$nb_result=pmb_mysql_num_rows($execute_query1);
 	pmb_mysql_free_result($execute_query1);
 	//recherche des mots
+	$affichage_mots="";
+	$affichage_lettres="";
 	$rqt="select id_mot, mot from mots left join linked_mots on (num_mot=id_mot) where id_mot not in (select num_mot from linked_mots where linked_mots.num_linked_mot=0)$clause group by id_mot $tri $limit";
 	$execute_query=pmb_mysql_query($rqt);
 	if ($execute_query&&$nb_result) {
@@ -208,6 +215,7 @@ if ($action!='view') {
 				}
 
 				$bool=false;
+				$alphabet_num = array();
 				foreach($words_for_syn as $val) {
 					if ($val!="") {
 						$carac=convert_diacrit(pmb_strtolower(pmb_substr($val,0,1)));
@@ -232,7 +240,7 @@ if ($action!='view') {
 				$affichage_lettres="<div class='row'>";
 				
 				if (count($alphabet_num)) {
-					if ($letter=='My') $affichage_lettres.="<font size='+1'><strong><u>#</u></strong></font> ";
+					if ($letter=='My') $affichage_lettres.="<strong><u>#</u></strong> ";
 						else $affichage_lettres.="<a href='$baseurl&letter=My'>#</a> ";
 				}
 				foreach($alphabet as $char) {
@@ -240,7 +248,7 @@ if ($action!='view') {
 					if(sizeof($present) && strcasecmp($letter, $char))
 						$affichage_lettres.="<a href='$baseurl&letter=$char'>$char</a> ";
 					else if(!strcasecmp($letter, $char))
-						$affichage_lettres.="<font size='+1'><strong><u>$char</u></strong></font> ";
+						$affichage_lettres.="<strong><u>$char</u></strong> ";
 					else $affichage_lettres.="<span class='gris'>".$char."</span> ";
 				}
 				$affichage_lettres.="</div>";
@@ -288,7 +296,7 @@ if ($action!='view') {
 		$affichage_mots.="</div>";
 		$affichage_mots.="<div class='row'>&nbsp;</div>\n";
 		//affichage de la pagination
-		$affichage_mots.=aff_pagination ($baseurl, $compt, $nb_per_page, $page) ;
+		$affichage_mots.=aff_pagination ($baseurl.($letter ? "&letter=".$letter : ''), $compt, $nb_per_page, $page) ;
 		$affichage_mots.="<div class='row'>&nbsp;</div>\n";
 		$aff_liste_mots=str_replace("!!see_last_words!!","<div class='right'><a href='./autorites.php?categ=semantique&sub=synonyms&action=last_words'>".$msg["see_last_words_created"]."</a></div>",$aff_liste_mots);
 	} else $aff_liste_mots=str_replace("!!see_last_words!!","",$aff_liste_mots);

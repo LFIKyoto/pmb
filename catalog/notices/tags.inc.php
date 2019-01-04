@@ -4,12 +4,15 @@
 // © 2006 mental works / www.mental-works.com contact@mental-works.com
 // 	complètement repris et corrigé par PMB Services 
 // +-------------------------------------------------+
-// $Id: tags.inc.php,v 1.14 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: tags.inc.php,v 1.18 2018-10-29 08:33:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+if(!isset($quoifaire)) $quoifaire = '';
+if(!isset($page)) $page = 0;
+
 // gestion des tags laisses par les lecteurs sur les notices
-echo "<h1>".$msg[titre_tag]."</h1>";
+echo "<h1>".$msg['titre_tag']."</h1>";
 
 if (!$nb_per_page) $nb_per_page=10;
 
@@ -53,8 +56,7 @@ switch ($quoifaire) {
 					$requete="update notices set index_l='".$index_l."',index_matieres='$index_matieres' where notice_id='".$loc->num_notice."'";
 					pmb_mysql_query($requete, $dbh) or die(pmb_mysql_error()." <br />".$requete);
 					
-					notice::majNoticesGlobalIndex($loc->num_notice);
-					notice::majNoticesMotsGlobalIndex($loc->num_notice);
+					indexation_stack::push($loc->num_notice, TYPE_NOTICE);
 					
 					$requete="delete from tags where id_tag='".$valid_id_tags[$i]."'";
 					pmb_mysql_query($requete, $dbh) or die(pmb_mysql_error()." <br />".$requete);
@@ -83,7 +85,7 @@ switch ($quoifaire) {
 }
 
 echo "<form class='form-catalog' method='post' id='validation_tags' name='validation_tags' >
-		<h3>".$msg[tag_titre_form]."</h3>
+		<h3>".$msg['tag_titre_form']."</h3>
 		<div class='form-contenu'>";
 
 //variables
@@ -96,7 +98,7 @@ $requete="select 1 from tags ";
 $r = pmb_mysql_query($requete, $dbh) or die (pmb_mysql_error()." <br /><br />".$requete);
 $nbr_lignes = pmb_mysql_num_rows($r);
 
-$requete="select id_tag,libelle,num_notice,user_code,dateajout,index_l,DATE_FORMAT(dateajout,'".$msg[format_date]."') as ladate, 
+$requete="select id_tag,libelle,num_notice,user_code,dateajout,index_l,DATE_FORMAT(dateajout,'".$msg['format_date']."') as ladate, 
 			empr_login, empr_nom, empr_prenom,
 			niveau_biblio, niveau_biblio, notice_id
 			from tags left join empr on empr_login=user_code 
@@ -108,6 +110,15 @@ $r = pmb_mysql_query($requete, $dbh) or die (pmb_mysql_error()." <br /><br />".$
 
 if (pmb_mysql_num_rows($r)) {
 
+	$link = './catalog.php?categ=isbd&id=!!id!!';
+	$link_expl = './catalog.php?categ=edit_expl&id=!!notice_id!!&cb=!!expl_cb!!&expl_id=!!expl_id!!';
+	$link_explnum = './catalog.php?categ=edit_explnum&id=!!notice_id!!&explnum_id=!!explnum_id!!';
+	
+	$link_serial = './catalog.php?categ=serials&sub=view&serial_id=!!id!!';
+	$link_analysis = './catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=!!bul_id!!&art_to_show=!!id!!';
+	$link_bulletin = './catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=!!id!!';
+	$link_explnum_serial = "./catalog.php?categ=serials&sub=explnum_form&serial_id=!!serial_id!!&explnum_id=!!explnum_id!!";
+	
 	//affichage des notices
 	print $begin_result_liste;
 	$res_final = "";
@@ -129,12 +140,13 @@ if (pmb_mysql_num_rows($r)) {
 			$res_final .=  "<ul>" ;
 		} else $deb = 0 ;
 		
-		$res_final .=  "<li><b>$loc->libelle</b><div class='left'>" ;
-		$res_final .=  $loc->ladate."  $loc->empr_prenom $loc->empr_nom </div>
-			    <div class='right'>
-			    	<input type='checkbox' name='valid_id_tags[]' id='valid_id_tags[]' value='$loc->id_tag' />
-			    	</div>";
-		if ($loc->index_l) $res_final .=  "<div class='row'>$msg[tag_deja_tags] <b>$loc->index_l</b></div>";
+		$res_final .=  "
+			<li>
+			<div class='row'>
+				<input type='checkbox' name='valid_id_tags[]' id='valid_id_tags[]' value='$loc->id_tag' />
+				<span style='color:#00BB00'>$loc->libelle</span>, ".$loc->ladate." ".$loc->empr_prenom." ".$loc->empr_nom."
+			</div>";
+		if ($loc->index_l) $res_final .=  "<div class='row'>".$msg['tag_deja_tags']." <b>".$loc->index_l."</b></div>";
 		$res_final .=  "</li>";
 	}
 	$res_final .=  "</ul><br />" ;
@@ -147,15 +159,15 @@ echo "
 		<div class='row'>
 			<div class='left'>
 				<input type='hidden' name='quoifaire' value='' />
-				<input type='button' class='bouton' name='valider' value='".$msg[tag_bt_valider]."' onclick='this.form.quoifaire.value=\"valider\"; this.form.submit()' />&nbsp;
-				<input type='button' class='bouton' name='supprimer' value='".$msg[tag_bt_supprimer]."' onclick='this.form.quoifaire.value=\"supprimer\"; this.form.submit()' />&nbsp;
-				</div>
-			<div class='right'>
-				<input type='button' class='bouton' name='selectionner' value='".$msg[tag_bt_selectionner]."' onClick=\"setCheckboxes('validation_tags', 'valid_id_tags', true); return false;\" />&nbsp;
-				</div>
+				<input type='button' class='bouton' name='selectionner' value='".$msg['tag_bt_selectionner']."' onClick=\"setCheckboxes('validation_tags', 'valid_id_tags', true); return false;\" />&nbsp;
+				<input type='button' class='bouton' name='valider' value='".$msg['tag_bt_valider']."' onclick='this.form.quoifaire.value=\"valider\"; this.form.submit()' />
 			</div>
-<div class='row'></div>
-			</form>";
+			<div class='right'>
+				<input type='button' class='bouton' name='supprimer' value='".$msg['tag_bt_supprimer']."' onclick='this.form.quoifaire.value=\"supprimer\"; this.form.submit()' />
+			</div>
+		</div>
+		<div class='row'></div>
+	</form>";
 jscript_checkbox() ;
 
 

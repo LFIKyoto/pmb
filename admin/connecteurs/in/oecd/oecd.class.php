@@ -2,84 +2,38 @@
 // +-------------------------------------------------+
 // ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: oecd.class.php,v 1.5.4.2 2015-09-15 14:32:56 apetithomme Exp $
+// $Id: oecd.class.php,v 1.11 2017-07-12 15:15:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path,$base_path, $include_path;
 require_once($class_path."/connecteurs.class.php");
 require_once($class_path."/search.class.php");
-//
-// Scandir for PHP4
-//
-if(!function_exists('scandir'))
-{
-    function scandir($dir, $sortorder = 0)
-    {
-        if(is_dir($dir))
-        {
-            $dirlist = opendir($dir);
-           
-            while( ($file = readdir($dirlist)) !== false)
-            {
-                if(!is_dir($file))
-                {
-                    $files[] = $file;
-                }
-            }
-           
-            ($sortorder == 0) ? asort($files) : arsort($files);
-           
-            return $files;
-        }
-        else
-        {
-        return FALSE;
-        break;
-        }
-    }
-}
 
 class oecd extends connector {
 	//Variables internes pour la progression de la rï¿½cupï¿½ration des notices
-	var $callback_progress;		//Nom de la fonction de callback progression passï¿½e par l'appellant
-	var $current_set;			//Set en cours de synchronisation
-	var $total_sets;			//Nombre total de sets sï¿½lectionnï¿½s
-	var $metadata_prefix;		//Prï¿½fixe du format de donnï¿½es courant
-	var $source_id;				//Numï¿½ro de la source en cours de synchro
-	var $n_recu;				//Nombre de notices reï¿½ues
-	var $xslt_transform;		//Feuille xslt transmise
-	var $sets_names;			//Nom des sets pour faire plus joli !!
-	var $del_old;				//Supression ou non des notices dejï¿½ existantes
-	var $schema_config;
+	public $current_set;			//Set en cours de synchronisation
+	public $total_sets;			//Nombre total de sets sï¿½lectionnï¿½s
+	public $metadata_prefix;		//Prï¿½fixe du format de donnï¿½es courant
+	public $n_recu;				//Nombre de notices reï¿½ues
+	public $xslt_transform;		//Feuille xslt transmise
+	public $sets_names;			//Nom des sets pour faire plus joli !!
+	public $schema_config;
 	
-	//Rï¿½sultat de la synchro
-	var $error;					//Y-a-t-il eu une erreur	
-	var $error_message;			//Si oui, message correspondant
-	
-    function oecd($connector_path="") {
-    	parent::connector($connector_path);
+    public function __construct($connector_path="") {
+    	parent::__construct($connector_path);
     }
     
-    function get_id() {
+    public function get_id() {
     	return "oecd";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 1;
 	}
     
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-    
-   function source_get_property_form($source_id) {
+   	public function source_get_property_form($source_id) {
     	global $charset;
     	
     	$params=$this->get_source_params($source_id);
@@ -87,8 +41,8 @@ class oecd extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		//URL
@@ -108,7 +62,7 @@ class oecd extends connector {
 		return $form;
     }
     
-    function make_serialized_source_properties($source_id) {
+    public function make_serialized_source_properties($source_id) {
     	global $url;
     	$t = array();
     	$t["url"]=stripslashes($url);
@@ -116,25 +70,14 @@ class oecd extends connector {
 	}
 	
 	//Récupération  des proriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
+	public function fetch_default_global_values() {
+		parent::fetch_default_global_values();
 		$this->timeout=40;
 		$this->repository=1;
-		$this->retry=3;
 		$this->ttl=60000;
-		$this->parameters="";
 	}
 	
-	//Formulaire des propriétés générales
-	function get_property_form() {
-		$this->fetch_global_properties();
-		return "";
-	}
-	
-	function make_serialized_properties() {
-		$this->parameters="";
-	}
-	
-	function progress($query,$token) {
+	public function progress($query,$token) {
 		$callback_progress=$this->callback_progress;
 		if ($token["completeListSize"]) {
 			$percent=($this->current_set/$this->total_sets)+(($token["cursor"]/$token["completeListSize"])/$this->total_sets);
@@ -150,28 +93,15 @@ class oecd extends connector {
 		call_user_func($callback_progress,$percent,$nlu,$ntotal);
 	}
 		
-	function cancel_maj($source_id) {
+	public function cancel_maj($source_id) {
 		return true;
 	}
 	
-	function break_maj($source_id) {
+	public function break_maj($source_id) {
 		return true;
 	}
 	
-	function form_pour_maj_entrepot($source_id) {
-		return false;
-	}
-	
-	//Nécessaire pour passer les valeurs obtenues dans form_pour_maj_entrepot au javascript asynchrone
-	function get_maj_environnement($source_id) {		
-		return array();
-	}
-	
-	function sync_custom_page($source_id) {
-		return '';
-	}
-	
-	function maj_entrepot($source_id,$callback_progress="",$recover=false,$recover_env="") {
+	public function maj_entrepot($source_id,$callback_progress="",$recover=false,$recover_env="") {
 		global $base_path,$charset;
 			
 		$this->n_recu=0;
@@ -182,8 +112,8 @@ class oecd extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		if (!isset($url)) {
@@ -287,17 +217,13 @@ class oecd extends connector {
 		return $this->n_recu;
 	}
 	
-    function parse_xml($ch,$data) {
+    public function parse_xml($ch,$data) {
 		$notices=explode("6",$data);
 		print $notices[1];  
     	return strlen($data);
-	}
-	
-	function search($source_id,$query,$search_id) {
-		
 	}	
 	
-	function notice_2_uni($nt) {
+	public function notice_2_uni($nt) {
 
 		$unimarc=array();
 		$unimarc["001"][0]=$nt["id"];
@@ -362,7 +288,7 @@ class oecd extends connector {
 		return $unimarc;
 	}	
 	
-	function rec_record($record,$source_id) {
+	public function rec_record($record,$source_id) {
 		global $charset,$base_path,$url,$search_index;
 		
 		$date_import=date("Y-m-d H:i:s",time());
@@ -373,17 +299,12 @@ class oecd extends connector {
 		if ($ref) {
 			//Si conservation des anciennes notices, on regarde si elle existe
 			if (!$this->del_old) {
-				$requete="select count(*) from entrepot_source_".$source_id." where ref='".addslashes($ref)."' ";
-				$rref=pmb_mysql_query($requete);
-				if ($rref) {
-					$ref_exists=pmb_mysql_result($rref,0,0);
-					if($ref_exists) return 1;
-				}
+				$ref_exists = $this->has_ref($source_id, $ref);
+				if($ref_exists) return 1;
 			}
 			//Si pas de conservation des anciennes notices, on supprime
 			if ($this->del_old) {
-				$requete="delete from entrepot_source_".$source_id." where ref='".addslashes($ref)."' ";
-				pmb_mysql_query($requete);
+				$this->delete_from_entrepot($source_id, $ref);
 				$this->delete_from_external_count($source_id, $ref);
 			}
 			//Si pas de conservation ou reférence inexistante
@@ -399,15 +320,10 @@ class oecd extends connector {
 				
 				$n_header["001"]=$record["001"][0];
 				//Récupération d'un ID
-				$requete="insert into external_count (recid, source_id) values('".addslashes($this->get_id()." ".$source_id." ".$ref)."', ".$source_id.")";
-				$rid=pmb_mysql_query($requete);
-				if ($rid) $recid=pmb_mysql_insert_id();
+				$recid = $this->insert_into_external_count($source_id, $ref);
 				
 				foreach($n_header as $hc=>$code) {
-					$requete="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid) values(
-					'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".$date_import."',
-					'".$hc."','',-1,0,'".addslashes($code)."','',$recid)";
-					pmb_mysql_query($requete);
+					$this->insert_header_into_entrepot($source_id, $ref, $date_import, $hc, $code, $recid);
 				}
 				
 				$field_order=0;
@@ -417,20 +333,12 @@ class oecd extends connector {
 							foreach ($val[$i] as $sfield=>$vals) {
 								for ($j=0; $j<count($vals); $j++) {
 									//if ($charset!="utf-8")  $vals[$j]=utf8_decode($vals[$j]);
-									$requete="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid) values(
-									'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".$date_import."',
-									'".addslashes($field)."','".addslashes($sfield)."',".$field_order.",".$j.",'".addslashes($vals[$j])."',
-									' ".addslashes(strip_empty_words($vals[$j]))." ',$recid)";
-									pmb_mysql_query($requete);
+									$this->insert_content_into_entrepot($source_id, $ref, $date_import, $field, $sfield, $field_order, $j, $vals[$j], $recid);
 								}
 							}
 						} else {
 							//if ($charset!="utf-8")  $vals[$i]=utf8_decode($vals[$i]);
-							$requete="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid) values(
-							'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".$date_import."',
-							'".addslashes($field)."','',".$field_order.",0,'".addslashes($val[$i])."',
-							' ".addslashes(strip_empty_words($val[$i]))." ',$recid)";
-							pmb_mysql_query($requete);
+							$this->insert_content_into_entrepot($source_id, $ref, $date_import, $field, '', $field_order, 0, $val[$i], $recid);
 						}
 						$field_order++;
 					}
@@ -440,32 +348,32 @@ class oecd extends connector {
 		}
 	}
 	
-
-function get_field_from_sep($chaine, $deb,$html_decode=0,$keep_tags=""){
-	global $charset;
-	$i_deb=strpos($chaine,$deb);
-	if ($i_deb === false) return "";
-	$i_deb+=strlen($deb);
-	if($html_decode){
-		//return html_entity_decode(substr($chaine,$i_deb),ENT_QUOTES,$charset);	
-		return html_entity_decode(strip_tags(substr($chaine,$i_deb),$keep_tags),ENT_QUOTES,$charset); 
-	}else
-		return substr($chaine,$i_deb);	
-}
-function get_field_betwen_2sep($chaine, $deb,$end,$html_decode=0,$keep_tags=""){
-	global $charset;
-	$i_deb=strpos($chaine,$deb);
-	if ($i_deb === false) return "";
-	$i_deb+=strlen($deb);
-	$chaine_deb=substr($chaine,$i_deb);
-	$i_end=strpos($chaine_deb,$end);
-	if ($i_end === false) return "";
-	if($html_decode){
-		// return html_entity_decode(substr($chaine_deb,0,$i_end),ENT_QUOTES,$charset);
-		return html_entity_decode(strip_tags(substr($chaine_deb,0,$i_end),$keep_tags),ENT_QUOTES,$charset); 
-	}else
-		return substr($chaine_deb,0,$i_end);	
-}
+	public function get_field_from_sep($chaine, $deb,$html_decode=0,$keep_tags=""){
+		global $charset;
+		$i_deb=strpos($chaine,$deb);
+		if ($i_deb === false) return "";
+		$i_deb+=strlen($deb);
+		if($html_decode){
+			//return html_entity_decode(substr($chaine,$i_deb),ENT_QUOTES,$charset);	
+			return html_entity_decode(strip_tags(substr($chaine,$i_deb),$keep_tags),ENT_QUOTES,$charset); 
+		}else
+			return substr($chaine,$i_deb);	
+	}
+	
+	public function get_field_betwen_2sep($chaine, $deb,$end,$html_decode=0,$keep_tags=""){
+		global $charset;
+		$i_deb=strpos($chaine,$deb);
+		if ($i_deb === false) return "";
+		$i_deb+=strlen($deb);
+		$chaine_deb=substr($chaine,$i_deb);
+		$i_end=strpos($chaine_deb,$end);
+		if ($i_end === false) return "";
+		if($html_decode){
+			// return html_entity_decode(substr($chaine_deb,0,$i_end),ENT_QUOTES,$charset);
+			return html_entity_decode(strip_tags(substr($chaine_deb,0,$i_end),$keep_tags),ENT_QUOTES,$charset); 
+		}else
+			return substr($chaine_deb,0,$i_end);	
+	}
 }// class end
 
 

@@ -1,4 +1,4 @@
-<h1>Administration de l'OPAC</h1>
+<h2>Administration de l'OPAC</h2>
 
 <p>
 La section <b>Administration de l'OPAC</b> permet de configurer les diff&eacute;rents modules de l'OPAC .

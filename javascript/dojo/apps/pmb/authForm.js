@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authForm.js,v 1.4 2015-03-09 15:52:12 dgoron Exp $
+// $Id: authForm.js,v 1.5 2017-09-28 09:23:37 dgoron Exp $
 
 
 define(["dojo/_base/declare", "dojo/dom", "dojo/on", "dojo/topic", "dojo/_base/lang","dijit/form/TextBox", "dijit/form/Button", "dojo/dom-construct"], function(declare, dom, on, topic, lang, TextBox, Button, domConstruct){
@@ -58,7 +58,7 @@ define(["dojo/_base/declare", "dojo/dom", "dojo/on", "dojo/topic", "dojo/_base/l
 			var name_id="xx";
 			var name="xx";
 			var select_prop= 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes';
-			openPopUp(this.selectUrl+'&caller=form_'+this.id+'&'+this.inputIdUrl+'='+name_id+'&'+this.inputNameUrl+'='+name+'&callback='+this.callback, this.what_sel, 400, 400, -2, -2, select_prop);		 
+			openPopUp(this.selectUrl+'&caller=form_'+this.id+'&'+this.inputIdUrl+'='+name_id+'&'+this.inputNameUrl+'='+name+'&callback='+this.callback, 'selector');		 
 		},
 		
 		raz: function (index) {			

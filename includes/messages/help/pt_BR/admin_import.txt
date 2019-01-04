@@ -1,4 +1,4 @@
-<h1>Gerenciamento de importações</h1>
+<h2>Gerenciamento de importações</h2>
 <p>Esta página explica como importar registros e cópias anexadas aos mesmos.</p>
 
 <p>Os processos são efetuados em fases : 

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: liste_simple.class.php,v 1.8 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: liste_simple.class.php,v 1.9 2017-04-20 16:25:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/templates/liste_simple.tpl.php");
@@ -12,21 +12,21 @@ require_once($include_path."/templates/liste_simple.tpl.php");
  */
 class liste_simple{
 	
-	var $table ='';
-	var $colonne_id_nom = '';
-	var $colonne_lib_nom = ''; 
-	var $id_liste = 0;
-	var $lib_liste = '';
-	var $messages = array();
-	var $actions = array();
+	public $table ='';
+	public $colonne_id_nom = '';
+	public $colonne_lib_nom = ''; 
+	public $id_liste = 0;
+	public $lib_liste = '';
+	public $messages = array();
+	public $actions = array();
 	
-	function liste_simple($table,$col_id_name,$col_lib_name,$id_liste=0){
+	public function __construct($table,$col_id_name,$col_lib_name,$id_liste=0){
 		global $dbh; 
 		$this->table = $table;
 		$this->colonne_id_nom = $col_id_name;
 		$this->colonne_lib_nom = $col_lib_name;
 		
-		$this->id_liste = $id_liste;
+		$this->id_liste = $id_liste+0;
 		
 		if(!$this->id_liste){
 			$this->lib_liste ='';
@@ -43,7 +43,7 @@ class liste_simple{
 	/*
  	 * Gestion des actions
 	 */
-	function proceed($action){
+	public function proceed($action){
 		
 		switch($action){
 			
@@ -68,7 +68,7 @@ class liste_simple{
 	/*
 	 * Fonction qui affecte tous les paramètres de la classe
 	 */
-	function setParametres(){
+	public function setParametres(){
 		$this->setMessages();
 		$this->setActions();
 	}
@@ -76,7 +76,7 @@ class liste_simple{
 	/*
 	 * Affectation des messages
 	 */
-	function setMessages($ajout_titre="",$modif_titre="",$confirm_del="",$add_btn="", $no_list="", $used="", $selector_all=""){
+	public function setMessages($ajout_titre="",$modif_titre="",$confirm_del="",$add_btn="", $no_list="", $used="", $selector_all=""){
 		global $msg;
 		
 		$ajout_titre ? $this->messages['ajout_titre'] = $ajout_titre : $this->messages['ajout_titre'] = 'list_simple_ajout';
@@ -91,7 +91,7 @@ class liste_simple{
 	/*
 	 * Définition des actions
 	 */
-	function setActions($base='',$form_act=''){
+	public function setActions($base='',$form_act=''){
 		
 		$this->actions['base'] = $base;
 		$this->actions['form'] = $form_act;
@@ -100,7 +100,7 @@ class liste_simple{
 	/*
 	 * Formulaire d'ajout/modification
 	 */
-	function show_edit_form(){
+	public function show_edit_form(){
 		global $liste_simple_form, $msg, $charset;
 		
 		if(!$this->id_liste){
@@ -130,7 +130,7 @@ class liste_simple{
 	/*
 	 * Formulaire de présentation
 	 */
-	function show_form(){
+	public function show_form(){
 		global $dbh;
 		global $msg;
 		global $charset;
@@ -173,7 +173,7 @@ class liste_simple{
 	/*
 	 * Création/Modification
 	 */
-	function save(){
+	public function save(){
 		
 		global $dbh, $libelle;
 		
@@ -191,7 +191,7 @@ class liste_simple{
 	/*
 	 * Suppression
 	 */
-	function delete(){
+	public function delete(){
 		global $dbh,$msg;		
 		
 		$error = false;
@@ -206,7 +206,7 @@ class liste_simple{
 		return $error;
 	}
 	
-	function getLabel($id){
+	public function getLabel($id){
 		global $dbh;
 		
 		$query='SELECT '.$this->colonne_lib_nom.' FROM '.$this->table.' WHERE '.$this->colonne_id_nom.'='.$id;
@@ -219,7 +219,7 @@ class liste_simple{
 	/*
 	 * Retourne un sélecteur correspondant à la liste
 	 */
-	function getListSelector($idliste=0,$action='',$default=false){
+	public function getListSelector($idliste=0,$action='',$default=false){
 		global $dbh,$charset,$msg;
 		
 		$req = "select * from $this->table order by $this->colonne_lib_nom";
@@ -242,7 +242,7 @@ class liste_simple{
 	
 
 	//Vérifie si le thème de demande est utilisé dans les demandes	
-	function hasElements(){		
+	public function hasElements(){		
 	}
 }
 
@@ -254,14 +254,14 @@ class demandes_themes extends liste_simple {
 	/*
 	 * Définition des paramètres
 	 */
-	function setParametres(){
+	public function setParametres(){
 		$this->setMessages('demandes_ajout_theme','demandes_modif_theme','demandes_del_theme','demandes_add_theme','demandes_no_theme_available','demandes_used_theme');
 		$this->setActions('admin.php?categ=demandes&sub=theme','admin.php?categ=demandes&sub=theme');
 	}
 	/*
 	 * Vérifie si le thème de demande est utilisé dans les demandes
 	 */	
-	function hasElements(){
+	public function hasElements(){
 		
 		global $dbh;
 		
@@ -270,7 +270,7 @@ class demandes_themes extends liste_simple {
 		return pmb_mysql_result($r, 0, 0);
 	}
 	
-	static function get_qty() {
+	public static function get_qty() {
 		
 		global $dbh;
 		$q = "select count(1) from demandes_theme";

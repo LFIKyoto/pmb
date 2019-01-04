@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: artevod.class.php,v 1.4.2.1 2015-09-15 14:32:56 apetithomme Exp $
+// $Id: artevod.class.php,v 1.19 2018-10-10 10:03:50 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,57 +16,36 @@ if (version_compare(PHP_VERSION,'5','>=') && extension_loaded('xsl')) {
 
 class artevod extends connector {
 	//Variables internes pour la progression de la récupération des notices
-	var $callback_progress;		//Nom de la fonction de callback progression passée par l'appellant
-	var $source_id;				//Numéro de la source en cours de synchro
-	var $n_recu;				//Nombre de notices reçues
-	var $xslt_transform;		//Feuille xslt transmise
-	var $del_old;				//Supression ou non des notices dejà existantes
-	
-	//Résultat de la synchro
-	var $error;					//Y-a-t-il eu une erreur
-	var $error_message;			//Si oui, message correspondant
+	public $profile;			//Profil ArteVOD
+	public $n_recu;				//Nombre de notices reçues
 	
 	protected $default_enrichment_template; // Template par défaut de l'enrichissement
 	
-	function artevod($connector_path="") {
-		parent::connector($connector_path);
+	public function __construct($connector_path="") {
+		parent::__construct($connector_path);
 		$xml=file_get_contents($connector_path."/profil.xml");
 		$this->profile=_parser_text_no_function_($xml,"ARTEVODCONFIG");
 		$this->set_default_enrichment_template();
 	}
     
-    function get_id() {
+    public function get_id() {
     	return "artevod";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 1;
 	}
     
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-
-    function get_libelle($message) {
-    	if (substr($message,0,4)=="msg:") return $this->msg[substr($message,4)]; else return $message;
-    }
-    
-   	function source_get_property_form($source_id) {
-    	global $charset, $dbh;
-    	
+   	public function source_get_property_form($source_id) {
+   		global $charset;
     	$params=$this->get_source_params($source_id);
 		if ($params["PARAMETERS"]) {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		$searchindexes=$this->profile["SEARCHINDEXES"][0]["SEARCHINDEX"];
@@ -92,15 +71,6 @@ class artevod extends connector {
 			<input type='hidden' id='url' name='url' value='".$searchindexes[0]["URL"]."' />
 			";
 		}
-		$form .= "<div class='row'>
-			<div class='colonne3'>
-				<label for='xslt_file'>".$this->msg["artevod_xslt_file"]."</label>
-			</div>
-			<div class='colonne_suite'>
-				<input name='xslt_file' type='file'/>";
-		if ($xsl_transform) $form.="<br /><i>".sprintf($this->msg["artevod_xslt_file_linked"],$xsl_transform["name"])."</i> : ".$this->msg["artevod_del_xslt_file"]." <input type='checkbox' name='del_xsl_transform' value='1'/>";
-		$form.="</div>
-		</div>";
 		
 		// Champ perso de notice à utiliser
 		$form .= "<div class='row'>
@@ -108,7 +78,7 @@ class artevod extends connector {
 				<div class='colonne-suite'>
 					<select name='cp_field'>";
     	$query = "select idchamp, titre from notices_custom where datatype='integer'";
-    	$result = pmb_mysql_query($query, $dbh);
+    	$result = pmb_mysql_query($query);
     	if($result && pmb_mysql_num_rows($result)){
     		while($row = pmb_mysql_fetch_object($result)){
     			$form.="
@@ -122,80 +92,53 @@ class artevod extends connector {
     				</select>
 				</div>
 			</div>";
-		
+    	
     	// Template de l'enrichissement
 		$form .= "<div class='row'>
 				<div class='colonne3'><label for='source_name'>".$this->msg["artevod_enrichment_template"]."</label></div>
 				<div class='colonne-suite'>
-					<textarea name='enrichment_template'>".($enrichment_template ? stripslashes($enrichment_template) : stripslashes($this->default_enrichment_template))."</textarea>
+					<textarea id='enrichment_template' name='enrichment_template'>".($enrichment_template ? stripslashes($enrichment_template) : stripslashes($this->default_enrichment_template))."</textarea>
 				</div>
-			</div>";
+			</div>
+			<script src='./javascript/ace/ace.js' type='text/javascript' charset='utf-8'></script>
+			<script type='text/javascript'>
+			 	pmbDojo.aceManager.initEditor('enrichment_template');
+			</script>
+		";
     	
 		$form .= "<div class='row'></div>";
 		return $form;
     }
     
-    function make_serialized_source_properties($source_id) {
+    public function make_serialized_source_properties($source_id) {
     	global $url, $cp_field, $enrichment_template;
     	global $del_xsl_transform;
     	
     	$t["url"]=$url;
-    	
-    	//Vérification du fichier
-    	if (($_FILES["xslt_file"])&&(!$_FILES["xslt_file"]["error"])) {
-    		$xslt_file_content=array();
-    		$xslt_file_content["name"]=$_FILES["xslt_file"]["name"];
-    		$xslt_file_content["code"]=file_get_contents($_FILES["xslt_file"]["tmp_name"]);
-    		$t["xsl_transform"]=$xslt_file_content;
-    	} else if ($del_xsl_transform) {
-    		$t["xsl_transform"]="";
-    	} else {
-    		$oldparams=$this->get_source_params($source_id);
-    		if ($oldparams["PARAMETERS"]) {
-    			//Anciens paramètres
-    			$oldvars=unserialize($oldparams["PARAMETERS"]);
-    		}
-    		$t["xsl_transform"] = $oldvars["xsl_transform"];
-    	}
     	$t["cp_field"] = $cp_field;
     	$t['enrichment_template'] = ($enrichment_template ? $enrichment_template : addslashes($this->default_enrichment_template));
     	
     	$this->sources[$source_id]["PARAMETERS"]=serialize($t);
     }
-    
-    //Récupération  des proriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-    function fetch_default_global_values() {
-    	$this->timeout=5;
-    	$this->repository=2;
-    	$this->retry=3;
-    	$this->ttl=1800;
-    	$this->parameters="";
-    }
-    
+
     /**
      * Formulaire des propriétés générales
      */
-    function get_property_form() {
+	public function get_property_form() {
     	global $charset;
     	$this->fetch_global_properties();
     	//Affichage du formulaire en fonction de $this->parameters
     	if ($this->parameters) {
     		$keys = unserialize($this->parameters);
-    		$accesskey= $keys['accesskey'];
-    		$secretkey=$keys['secretkey'];
+    		$url_referer= $keys['url_referer'];
     		$privatekey=$keys['privatekey'];
     	} else {
-    		$accesskey="";
-    		$secretkey="";
+    		$url_referer="";
     		$privatekey="";
     	}
     	$r="<div class='row'>
-				<div class='colonne3'><label for='accesskey'>".$this->msg["artevod_key"]."</label></div>
-				<div class='colonne-suite'><input type='text' id='accesskey' name='accesskey' value='".htmlentities($accesskey,ENT_QUOTES,$charset)."'/></div>
-			</div>
-			<div class='row'>
-				<div class='colonne3'><label for='secretkey'>".$this->msg["artevod_secret_key"]."</label></div>
-				<div class='colonne-suite'><input type='password' class='saisie-50em' id='secretkey' name='secretkey' value='".htmlentities($secretkey,ENT_QUOTES,$charset)."'/></div>
+				<div class='colonne3'><label for='url_referer'>".$this->msg["artevod_url_referer"]."</label></div>
+				<div class='colonne-suite'><input type='text' class='saisie-30em' id='url_referer' name='url_referer' value='".htmlentities($url_referer,ENT_QUOTES,$charset)."'/></div>
 			</div>
 			<div class='row'>
 				<div class='colonne3'><label for='privatekey'>".$this->msg["artevod_private_key"]."</label></div>
@@ -204,233 +147,386 @@ class artevod extends connector {
     	return $r;
     }
     
-    function make_serialized_properties() {
-    	global $accesskey, $secretkey, $privatekey;
+    public function make_serialized_properties() {
+    	global $url_referer, $privatekey;
     	//Mise en forme des paramètres à partir de variables globales (mettre le résultat dans $this->parameters)
     	$keys = array();
-    	 
-    	$keys['accesskey']=$accesskey;
-    	$keys['secretkey']=$secretkey;
+    
+    	$keys['url_referer']=$url_referer;
     	$keys['privatekey']=$privatekey;
     	$this->parameters = serialize($keys);
     }
-    
-    function apply_xsl_to_xml($xml, $xsl, $parameters = array()) {
-    	global $charset;
-    	
-    	$xh = xslt_create();
-    	xslt_set_encoding($xh, $charset);
-    	$arguments = array(
-    			'/_xml' => $xml,
-    			'/_xsl' => $xsl
-    	);
-    	$result = xslt_process($xh, 'arg:/_xml', 'arg:/_xsl', NULL, $arguments, $parameters);
-    	xslt_free($xh);
-    	return $result;
-    }
-    
-    function maj_entrepot($source_id,$callback_progress="",$recover=false,$recover_env="") {
-    	global $charset,$base_path, $dbh;
+        
+    public function maj_entrepot($source_id, $callback_progress="", $recover=false, $recover_env="") {
+    	global $charset, $base_path;
     	
     	$this->fetch_global_properties();
     	$keys = unserialize($this->parameters);
 
-		$this->callback_progress=$callback_progress;
-		$params=$this->unserialize_source_params($source_id);
-		$p=$params["PARAMETERS"];
-		$this->source_id=$source_id;
-		$this->n_recu=0;
+		$this->callback_progress = $callback_progress;
+		$params = $this->unserialize_source_params($source_id);
+		$p = $params["PARAMETERS"];
+		$this->source_id = $source_id;
+		$this->n_recu = 0;
+		$this->n_total = 0;
 		
-		//Récupération du fichier XML distant en cURL
-		$xml="";
-		if(strpos($p["url"],"?")) {
-			$url = substr($p["url"],0,strpos($p["url"],"?"));
-		} else {
-			$url = $p["url"];
-		}
+		$url = $p["url"];
 			
-		$aCurl = new Curl();
-		$aCurl->timeout=60;
+		$curl = new Curl();
+		$curl->timeout = 60;
+		$curl->set_option('CURLOPT_SSL_VERIFYPEER',false);
 		@mysql_set_wait_timeout();
 		
-		//Authentification Basic
-		if (substr($url,0,7) == "http://") {
-			$auth_basic = "http://".$keys["accesskey"].":".$keys["secretkey"]."@".substr($url,7);
-		} elseif (substr($url,0,8) == "https://") {
-			$auth_basic = "https://".$keys["accesskey"].":".$keys["secretkey"]."@".substr($url,8);
-		} else {
-			$auth_basic = $keys["accesskey"].":".$keys["secretkey"]."@".$url;
-		}
-			
-		//On fait un premier appel pour récupérer le nombre total de documents
- 		$url_temp_auth_basic = $auth_basic."?partial=0&page_size=0";
-		$content = $aCurl->get($url_temp_auth_basic);
- 		$xml_content=$content->body;
+ 		$nb_per_pass = 50;
+ 		$page_nb = 1;
+ 		
+		$response = $curl->get($url."?page_size=".$nb_per_pass."&page_nb=".$page_nb);
+ 		$json_content = json_decode($response->body);
+ 		
+ 		if(count($json_content) && $response->headers['Status-Code'] == 200){
+ 			$this->n_total = $response->headers['X-Total-Count'];
  			
- 		if($xml_content && $content->headers['Status-Code'] == 200){
- 			$xsl_transform=$p["xsl_transform"]["code"];
- 			if($xsl_transform){
- 				if($xsl_transform['code'])
- 					$xsl_transform_content = $xsl_transform['code'];
- 				else $xsl_transform_content = "";
+ 			$query = "select name from notices_custom where idchamp = ".$p['cp_field'];
+ 			$result = pmb_mysql_query($query);
+ 			if ($row = pmb_mysql_fetch_object($result)) {
+ 				$cp_artevod = array('cp_artevod' => $row->name);
+ 			} else {
+ 				$cp_artevod = array();
  			}
- 			if($xsl_transform_content == "") {
-//  				$xsl_transform_content = file_get_contents($base_path."/admin/connecteurs/in/artevod/xslt/artevod_to_pmbxmlunimarc.xsl");
- 					$xsl_transform_content = file_get_contents($base_path."/admin/connecteurs/in/artevod/xslt/artevod2uni.xsl");
- 			}
- 			$params = _parser_text_no_function_($xml_content,"WSOBJECTLISTQUERY");
- 			if($params["TOTAL_COUNT"]) {
- 				$this->n_total = $params["TOTAL_COUNT"]; 
- 				$nb = 0;
- 				$nb_per_pass = 50;
- 				$page_nb = 1;
- 				
- 				$query = "select name from notices_custom where idchamp = ".$p['cp_field'];
- 				$result = pmb_mysql_query($query, $dbh);
- 				if ($row = pmb_mysql_fetch_object($result)) {
- 					$cp_artevod = array('cp_artevod' => $row->name);
- 				} else {
- 					$cp_artevod = array();
+ 			$sortir = false;
+ 			while (!$sortir) {
+ 				foreach ($json_content as $record) {
+ 					$statut = $this->rec_record($this->artevod_2_uni($record, $cp_artevod), $source_id, '');
+		    		$this->n_recu++;
+		    		$this->progress();
+ 					if(!$statut) {
+ 						$sortir = true;
+ 						break;
+ 					}
  				}
- 				
- 				while ($nb <= $params["TOTAL_COUNT"]) {
- 				 	$url_temp_auth_basic = $auth_basic."?partial=0&page_size=".$nb_per_pass."&page_nb=".$page_nb;
- 				 	$content = $aCurl->get($url_temp_auth_basic);
- 				 	$xml_content=$content->body;
- 				 	if($xml_content && $content->headers['Status-Code'] == 200){
- 				 		$pmbxmlunimarc = $this->apply_xsl_to_xml($xml_content, $xsl_transform_content, $cp_artevod);
- 				 		$this->rec_records($pmbxmlunimarc, $this->source_id,'');
- 				 	}
- 				 	$page_nb++;
- 				 	$nb = $nb + $nb_per_pass;
+ 				$page_nb++; 	
+ 				if(!$sortir) {
+					$response = $curl->get($url."?page_size=".$nb_per_pass."&page_nb=".$page_nb);	
+	 				$json_content = json_decode($response->body);
  				}
- 			}
+ 				if (!count($json_content)) {
+ 					break;
+ 				}
+ 			} 			
  		} else {
- 			$this->error=true;
- 			$this->error_message=$this->msg["artevod_error_auth"];
+ 			$this->error = true;
+ 			$this->error_message = $this->msg["artevod_error_auth"];
  		}
 		
 		return $this->n_recu;
     }
     
-    function progress() {
-    	$callback_progress=$this->callback_progress;
+    public function progress() {
+    	$callback_progress = $this->callback_progress;
 		if ($this->n_total) {
-			$percent =($this->n_recu / $this->n_total);
+			$percent = ($this->n_recu / $this->n_total);
 			$nlu = $this->n_recu;
 			$ntotal = $this->n_total;
 		} else {
-			$percent=0;
+			$percent = 0;
 			$nlu = $this->n_recu;
 			$ntotal = "inconnu";
 		}
-		call_user_func($callback_progress,$percent,$nlu,$ntotal);
+		call_user_func($callback_progress, $percent, $nlu, $ntotal);
     }
-    
-    function rec_records($noticesxml, $source_id, $search_id) {
-    	global $charset,$base_path;
-    	if (!trim($noticesxml))
-    		return;
-    
-    	$rec_uni_dom=new xml_dom($noticesxml,$charset);
-    	$notices=$rec_uni_dom->get_nodes("unimarc/notice");
-    	foreach ($notices as $anotice) {
-    		$this->rec_record($rec_uni_dom, $anotice, $source_id, $search_id);
-    	}
-    }
-    
-    function rec_record($rec_uni_dom, $noticenode, $source_id, $search_id) {
-    	global $charset,$base_path,$dbh;
+       	
+	public function artevod_2_uni($nt, $cp) {
+
+		$unimarc = array();
+		$auttotal = array();
+		$naut = 0;
+		
+		// Construction du 001
+		$unimarc["001"][0] = $this->get_id().':'.$nt->id;
+
+		// title
+		$unimarc["200"][0]["a"][0] = html_entity_decode($nt->title,ENT_QUOTES,'UTF-8');
+
+		// description (html) -> Notes
+		if($nt->description) {
+			$unimarc["330"][0]["a"][0] = html_entity_decode(strip_tags($nt->description),ENT_QUOTES,'UTF-8');
+		}
+
+		// productionYear (2014)
+		if ($nt->productionYear) {
+			//$unimarc[""][0][""][0] = $nt->productionYear;
+		}		
+		
+		// posterUrl (http://prod-mednum.universcine.com/media/58/da/58da559ff0fa3.jpeg)
+		if ($nt->posterUrl) {
+			$unimarc["896"][0]["a"][0] = $nt->posterUrl;
+		}		
+		
+		// url (http://prod-mednum.universcine.com/une-saison-a-la-juilliard-school)
+		if ($nt->url) {
+			$unimarc["856"][0]["u"][0] = $nt->url;
+		}
+
+		// trailerUrl (http://media.universcine.com/0f/a3/0fa3f154-c07a-11e3-bfdd-e59cda21687c.mp4)
+		if ($nt->trailerUrl) {
+			$unimarc["897"][0]["a"][0] = $nt->trailerUrl;
+			$unimarc["897"][0]["b"][0] = 'TRAILER_'.basename($nt->trailerUrl);
+		}
+		
+		// duration (6240)
+		if($nt->duration) {
+			$unimarc["215"][0]["a"][0] = floor($nt->duration/60).':'.str_pad($nt->duration%60, 2, '0', STR_PAD_LEFT);
+		}
+		
+		/* audioLanguages (array)
+                (
+                    [0] => stdClass Object
+                        (
+                            [type] => Language
+                            [code] => eng
+                        )
+                )
+		*/
+		$audioLanguages = $nt->audioLanguages;
+		if (count($audioLanguages)) {
+			for ($i=0; $i<count($audioLanguages); $i++) {
+				$autt = array();
+				$autt["a"][0] = $audioLanguages[$i]->code;
+				$unimarc['101'][] = $autt;
+			}
+		}
+
+		/* directors (array)
+                (
+                    [0] => stdClass Object
+                        (
+                            [type] => Person
+                            [fullName] => Max Nichols
+                            [familyName] => Nichols
+                            [givenName] => Max
+                        )
+                )
+		*/		    
+		$authors = $nt->directors;
+		if (count($authors)) {
+			if (($naut + count($authors)) > 1) {
+				$autf = "701";
+			}else {
+				$autf = "700";
+			}
+			for ($i=0; $i<count($authors); $i++) {
+				$autt = array();
+				$autt["a"][0] = $authors[$i]->familyName;
+				$autt["b"][0] = $authors[$i]->givenName;
+				$autt["4"][0] = "300";
+				$unimarc[$autf][] = $autt;
+				$auttotal[] = $authors[$i];
+			}
+			$naut+= count($authors);
+		}
+
+		/* actors (array)
+                (
+                    [0] => stdClass Object
+                        (
+                            [type] => Person
+                            [fullName] => Analeigh Tipton
+                            [familyName] => Tipton
+                            [givenName] => Analeigh
+                        )
+                )
+		*/
+		$authors = $nt->actors;
+		if (count($authors)) {
+			$autf = "702";
+			for ($i=0; $i<count($authors); $i++) {
+				$autt = array();
+				$autt["a"][0] = $authors[$i]->familyName;
+				$autt["b"][0] = $authors[$i]->givenName;
+				$autt["4"][0] = "005";
+				$unimarc[$autf][] = $autt;
+				$auttotal[] = $authors[$i];
+			}
+			$naut+= count($authors);
+		}
+		
+		// publicationDate (2017-03-28)
+		if ($nt->publicationDate) {
+			if(!($publicationDate = formatdate($nt->publicationDate))) {
+				$publicationDate = $nt->publicationDate;
+			}
+			$unimarc["210"][0]["d"][0] = $publicationDate;
+		}
+		
+		/* genres (array)
+						(
+							[0] => Documentaire
+							[1] => Théâtre, cirque et danse	                    
+						)
+		*/
+		$unimarc["610"] = array();
+		$genres = $nt->genres;
+		if (count($genres)) {
+			foreach($genres as $genre) {
+				$keyword = array(
+						'a' => array($genre)
+				);
+				$unimarc["610"][] = $keyword;
+			}
+		}
+		/* themes (array)
+				(
+                    [0] => Comédie romantique
+                )
+		*/
+		$themes = $nt->themes;
+		if (count($themes)) {
+			foreach($themes as $theme) {
+				$keyword = array(
+						'a' => array($theme)
+				);
+				$unimarc["610"][] = $keyword;
+			}
+		}
+		
+		// productionCountry (US)
+		if ($nt->productionCountry) {
+			$unimarc["210"][0]["a"][0] = $nt->productionCountry;
+		}
+			
+		/* codes  => Array
+                (
+                    [0] => stdClass Object
+                        (
+                            [type] => Le meilleur du cinéma
+                            [code] => 622040
+                        )
+                )
+        */
+		$codes = $nt->codes; 
+		if (count($codes)) {
+			for ($i=0; $i<count($codes); $i++) {
+				$autt = array();
+				$autt["t"][0] = $codes[$i]->type;
+				$autt["v"][0] = $codes[$i]->code;
+				$unimarc['410'][] = $autt; // Collection
+			}
+		}
+
+		/* medias (array)[0] => stdClass Object
+                        (
+                            [type] => POSTER
+                            [url] => http://prod-mednum.universcine.com/media/58/da/58da57b51bd44.jpeg
+                            [modificationDate] => 2017-03-28T14:32:22
+                        )
+		*/
+		$medias = $nt->medias;
+		if (count($medias)) {
+			for ($i=0; $i<count($medias); $i++) {
+				if ($medias[$i]->url == $nt->trailerUrl) {
+					continue;
+				}
+				$autt = array();
+				$autt["a"][0] = $medias[$i]->url;
+				$autt["b"][0] = $medias[$i]->type.'_'.basename($medias[$i]->url);
+				$unimarc['897'][] = $autt;
+			}
+		}
+		
+		// target_audience (array)
+		$target_audiences = $nt->targetAudiences;
+		if (count($target_audiences)) {
+			$unimarc["215"][0]["c"][0] = '';
+			foreach($target_audiences as $target_audience) {
+				if ($unimarc["215"][0]["c"][0]) {
+					$unimarc["215"][0]["c"][0].= '; ';
+				}
+				$unimarc["215"][0]["c"][0].= $target_audience->code;
+			}
+		}
+		
+		if($cp['cp_artevod']) {
+			$unimarc["900"][0]["a"][0] = $nt->id;
+			$unimarc["900"][0]["n"][0] = $cp['cp_artevod'];
+		}
+		
+		$unimarc["801"][0]["a"][0] = 'FR';
+		$unimarc["801"][0]["b"][0] = 'ArteVOD';
+
+		return $unimarc;
+	} 
+        
+    public function rec_record($record, $source_id, $search_id) {
+    	global $charset, $base_path, $dbh, $url, $search_index;
+
+    	$date_import = date("Y-m-d H:i:s",time());
     	
-    	if (!$rec_uni_dom->error) {
-    		//Initialisation
-    		$ref="";
-    		$ufield="";
-    		$usubfield="";
-    		$field_order=0;
-    		$subfield_order=0;
-    		$value="";
-    		$date_import=date("Y-m-d H:i:s",time());
-    			
-    		$fs=$rec_uni_dom->get_nodes("f", $noticenode);
-    
-    		$fs[] = array("NAME" => "f", "ATTRIBS" => array("c" => "1000"), 'TYPE' => 1, "CHILDS" => array(array("DATA" => $search_term, "TYPE" => 2)));
+    	//Recherche du 001
+    	$ref = $record["001"][0];
+    	//Mise à jour
+    	if ($ref) {
+    		$ref_exists = $this->has_ref($source_id, $ref);
+    		if ($ref_exists) return false;
     		
-    		//Pas de 001
-    		$ref = md5(serialize($noticenode));
-    		//Mise à jour
-    		if ($ref) {
-    			//Si conservation des anciennes notices, on regarde si elle existe
-    			if (!$this->del_old) {
-    				$requete="select count(*) from entrepot_source_".$source_id." where ref='".addslashes($ref)."'";
-    				$rref=pmb_mysql_query($requete,$dbh);
-    				if ($rref) $ref_exists=pmb_mysql_result($rref,0,0);
-    			}
-    			//Si pas de conservation des anciennes notices, on supprime
-    			if ($this->del_old) {
-    				$requete="delete from entrepot_source_".$source_id." where ref='".addslashes($ref)."'";
-    				pmb_mysql_query($requete,$dbh);
-					$this->delete_from_external_count($source_id, $ref);
-    			}
-    			$ref_exists = false;
-    			//Si pas de conservation ou reférence inexistante
-    			if (($this->del_old)||((!$this->del_old)&&(!$ref_exists))) {
-    				//Insertion de l'entête
-    				$n_header["rs"]=$rec_uni_dom->get_value("unimarc/notice/rs");
-    				$n_header["ru"]=$rec_uni_dom->get_value("unimarc/notice/ru");
-    				$n_header["el"]=$rec_uni_dom->get_value("unimarc/notice/el");
-    				$n_header["bl"]=$rec_uni_dom->get_value("unimarc/notice/bl");
-    				$n_header["hl"]=$rec_uni_dom->get_value("unimarc/notice/hl");
-    				$n_header["dt"]=$rec_uni_dom->get_value("unimarc/notice/dt");
-    					
-    				//Récupération d'un ID
-    				$requete="insert into external_count (recid, source_id) values('".addslashes($this->get_id()." ".$source_id." ".$ref)."', ".$source_id.")";
-    				$rid=pmb_mysql_query($requete,$dbh);
-    				if ($rid) $recid=pmb_mysql_insert_id();
-    					
-    				foreach($n_header as $hc=>$code) {
-    					$requete="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid, search_id) values(
-						'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
-						'".$hc."','',-1,0,'".addslashes($code)."','',$recid, '$search_id')";
-    					pmb_mysql_query($requete,$dbh);
-    				}
-    				if ($fs)
-    				for ($i=0; $i<count($fs); $i++) {
-    					$ufield=$fs[$i]["ATTRIBS"]["c"];
-    					$field_order=$i;
-    					$ss=$rec_uni_dom->get_nodes("s",$fs[$i]);
-    					if (is_array($ss)) {
-    						for ($j=0; $j<count($ss); $j++) {
-    							$usubfield=$ss[$j]["ATTRIBS"]["c"];
-    							$value=$rec_uni_dom->get_datas($ss[$j]);
-    							$subfield_order=$j;
-    							$requete="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid, search_id) values(
-								'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
-								'".addslashes($ufield)."','".addslashes($usubfield)."',".$field_order.",".$subfield_order.",'".addslashes($value)."',
-								' ".addslashes(strip_empty_words($value))." ',$recid, '$search_id')";
-    							pmb_mysql_query($requete,$dbh);
-    						}
-    					} else {
-    						$value=$rec_uni_dom->get_datas($fs[$i]);
-    						$requete="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid, search_id) values(
-							'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
-							'".addslashes($ufield)."','".addslashes($usubfield)."',".$field_order.",".$subfield_order.",'".addslashes($value)."',
-							' ".addslashes(strip_empty_words($value))." ',$recid, '$search_id')";
-    						pmb_mysql_query($requete,$dbh);
-    					}
-    				}
-    			}
-    			$this->n_recu++;
-    			$this->progress();
+    		//Si conservation des anciennes notices, on regarde si elle existe
+    		$ref_exists = false;
+    		if (!$this->del_old) {
+    			$ref_exists = $this->has_ref($source_id, $ref);
+    		}
+    		//Si pas de conservation des anciennes notices, on supprime
+    		if ($this->del_old) {
+    			$this->delete_from_entrepot($source_id, $ref);
+    			$this->delete_from_external_count($source_id, $ref);
+    		}
+    		if (($this->del_old) || ((!$this->del_old)&&(!$ref_exists))) {
+    			//Insertion de l'entête
+				$n_header["rs"] = "*";
+				$n_header["ru"] = "*";
+				$n_header["el"] = "1";
+				$n_header["bl"] = "m";
+				$n_header["hl"] = "0";
+				$n_header["dt"] = "g";
+
+				//Récupération d'un ID
+				$recid = $this->insert_into_external_count($source_id, $ref);
+				foreach($n_header as $hc=>$code) {
+					$this->insert_header_into_entrepot($source_id, $ref, $date_import, $hc, $code, $recid, $search_id);
+				}
+
+				$field_order=0;
+				foreach ($record as $field=>$val) {
+					for ($i=0; $i<count($val); $i++) {
+						if (is_array($val[$i])) {
+							foreach ($val[$i] as $sfield=>$vals) {
+								for ($j=0; $j<count($vals); $j++) {
+									if ($charset!="utf-8") {
+										$vals[$j] = encoding_normalize::clean_cp1252($vals[$j], 'utf-8');
+										$vals[$j] = utf8_decode($vals[$j]);
+									}
+									$this->insert_content_into_entrepot($source_id, $ref, $date_import, $field, $sfield, $field_order, $j, $vals[$j], $recid, $search_id);
+								}
+							}
+						} else {
+							if ($charset!="utf-8") {
+								$vals[$i] = encoding_normalize::clean_cp1252($vals[$i], 'utf-8');
+								$vals[$i] = utf8_decode($vals[$i]);
+							}
+							$this->insert_content_into_entrepot($source_id, $ref, $date_import, $field, '', $field_order, 0, $val[$i], $recid, $search_id);
+						}
+						$field_order++;
+					}
+				}
+				$this->rec_isbd_record($source_id, $ref, $recid);    		
     		}
     	}
+    	return true;
     }
 
-    function enrichment_is_allow(){
+    public function enrichment_is_allow(){
     	return true;
     }
 	
-	function getTypeOfEnrichment($source_id){
+	public function getTypeOfEnrichment($source_id){
 		$type['type'] = array(
 			array(
 				"code" => "artevod",
@@ -441,12 +537,12 @@ class artevod extends connector {
 		return $type;
 	}
 	
-	function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array()){
+	public function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array()){
 		$enrichment= array();
 		return $enrichment;
 	}
 	
-	function getEnrichmentHeader(){
+	public function getEnrichmentHeader(){
 		$header= array();
 		return $header;
 	}
@@ -456,7 +552,7 @@ class artevod extends connector {
 	 */
 	private function set_default_enrichment_template() {
 		$this->default_enrichment_template = "{* Template par défaut *}
-<div class='enrichment_artevod_container' style='width:400px;'>
+<div class='enrichment_artevod_container'>
 	
 	<div class='enrichment_artevod_mediatheque_numerique' style='text-align:center;'>
 		<img src='./images/mediatheque_numerique.png' style='margin:5px;' title='Médiathèque numérique' />
@@ -464,86 +560,98 @@ class artevod extends connector {
 				
 	{* titre *}
 	{% if film.title %}
-		<h3 class='enrichment_artevod_title'>{{ film.title }}
-		{% if film.original_title %}
-			({{ film.original_title }})
+		<h2 class='enrichment_artevod_title'>{{ film.title }}</h2>
+	{% endif %}
+	
+	<div class='ui-clearfix enrichment_artevod_infos-container'>
+		{* affiche *}
+		{% if film.poster %}
+			<p class='enrichment_artevod_poster'><img alt='{{ film.title }}' src='{{ film.poster }}'/></p>
 		{% endif %}
-		</h3>
-	{% else %}
-		{% if film.original_title %}
-			<h3 class='enrichment_artevod_title'>{{ film.original_title }}</h3>
-		{% endif %}
-	{% endif %}
-	
-	{* lien vers la ressource *}
-	{% if film.externaluri %}
-		<p class='enrichment_artevod_externaluri'>
-			<a href='{{ film.externaluri }}' target='_BLANK'>Voir le programme</a>
-		</p>
-	{% endif %}
-	
-	{* genres *}
-	{% for genre in film.genres %}
-		{% if loop.first %}<p class='enrichment_artevod_genres'>{% endif %}
-		{{ genre }}{%if !loop.last %}, {% endif %}
-	
-		{* sous-genres *}
-		{% for subgenre in film.subgenres %}
-			{% if loop.first %}/{% endif %}
-			{{ subgenre }}{%if !loop.last %}, {% else %}</p>{% endif %}
-		{% endfor %}
-	{% endfor %}
-	
-	{* auteurs *}
-	{% for author in film.authors %}
-		{% if loop.first %}<p class='enrichment_artevod_authors'>De {% endif %}
-		{{ author }}{%if !loop.last %}, {% else %}</p>{% endif %}
-	{% endfor %}
-	
-	{* acteurs *}
-	{% for actor in film.actors %}
-		{% if loop.first %}<p class='enrichment_artevod_actors'>Avec {% endif %}
-		{{ actor }}{%if !loop.last %}, {% else %}</p>{% endif %}
-	{% endfor %}
-	
-	{* infos *}
-	<p class='enrichment_artevod_infos'>
-	{% if film.production_year %}<strong>Année :</strong> {{ film.production_year }}.{% endif %}
-	{% if film.production_countries %} <strong>Pays :</strong> {{ film.production_countries }}.{% endif %}
-	{% if film.languages %} <strong>Langue :</strong> {{ film.languages }}.{% endif %}
-	{% if film.target_audience %} <strong>Public :</strong> {{ film.target_audience }}.{% endif %}
-	</p>
-	
-	{* description *}
-	{% if film.description %}
-		<p class='enrichment_artevod_description' style='font-weight:bold;font-size:1.2em;'>{{ film.description }}</p>
-	{% endif %}
-	
-	{* résumé *}
-	{% if film.body %}
-		<p class='enrichment_artevod_body'>{{ film.body }}</p>
-	{% endif %}
-	
-	{* durée *}
-	{% if film.duration.format_value %}
-		<p class='enrichment_artevod_duration'><strong>Durée :</strong> {{ film.duration.format_value }}</p>
-	{% endif %}
+		<div class='enrichment_artevod-aside'>
+			
+			{* auteurs *}
+			{% if film.authors %}
+				<p class='enrichment_artevod_authors'>De {{ film.authors }}</p>
+			{% endif %}
+			
+			{* acteurs *}
+			{% if film.actors %}
+				<p class='enrichment_artevod_actors'>Avec {{ film.actors }}</p>
+			{% endif %}
+			
+			{* infos *}
+			{% if film.production_year %}
+				<p class='enrichment_artevod_year'>Date de sortie : {{ film.production_year }}</p>
+			{% endif %}
+			{% if film.production_countries %}
+				<p class='enrichment_artevod_country'>Pays : {{ film.production_countries }}</p>
+			{% endif %}
+			{% if film.languages.langues.0.langue %}
+				<p class='enrichment_artevod_language'>
+					{% for language in film.languages.langues %}
+						{% if loop.first %}Langue :{% endif %}{{ language.langue }}{%if !loop.last %}, {% endif %}
+					{% endfor %}
+				</p>
+			{% endif %}
+			{% if film.target_audience %}
+				<p class='enrichment_artevod_audience'>Public : {{ film.target_audience }}</p>
+			{% endif %}
+			
+			{* durée *}
+			{% if film.duration %}
+				<p class='enrichment_artevod_duration'>Durée : {{ film.duration }}</p>
+			{% endif %}
+			
+			{* genres *}
+			{% for genre in film.genres %}
+				{% if loop.first %}<p class='enrichment_artevod_genres'>Genre(s) : {% endif %}
+					<a href='./index.php?lvl=more_results&mode=keyword&user_query={{genre}}&tags=ok'> {{genre}}</a>
+				{%if !loop.last %}, {% endif %}
+			{% endfor %}
+			
+			{* lien vers la ressource *}
+			{% if film.externaluri %}
+				<p class='enrichment_artevod_externaluri'>
+					<a href='{{ film.externaluri }}' target='_BLANK'>
+						<i class='external-link-alt'>
+							<svg version='1.1' id='Calque_1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' 
+                                 width='24px' height='24px' viewBox='0 0 24 24' enable-background='new 0 0 24 24' xml:space='preserve'>
+                            <path d='M24,2.333v5.333c0,0.894-1.082,1.333-1.707,0.707l-1.488-1.488L10.658,17.032c-0.391,0.391-1.023,0.391-1.414,0L8.301,16.09
+                                c-0.391-0.391-0.391-1.024,0-1.415L18.448,4.528l-1.487-1.488c-0.629-0.628-0.184-1.707,0.707-1.707H23
+                                C23.553,1.333,24,1.781,24,2.333z M16.959,12.616l-0.666,0.667C16.105,13.471,16,13.725,16,13.99V20H2.667V6.667h11
+                                c0.266,0,0.52-0.105,0.707-0.292l0.668-0.667C15.67,5.077,15.225,4,14.334,4H2C0.896,4,0,4.896,0,6v14.666c0,1.105,0.896,2,2,2
+                                h14.666c1.105,0,2-0.895,2-2v-7.342C18.666,12.433,17.59,11.986,16.959,12.616z'/>
+							</svg>
+						</i> Voir le programme
+					</a>
+				</p>
+			{% endif %}
+		</div>
+	</div>
+	<div class='ui-clearfix enrichment_artevod_description-container'>
 	
 	{* extrait *}
 	{% for trailer in film.trailers %}
-		<video class='enrichment_artevod_trailer' width='400px' controls src='{{ trailer }}' style='margin-top:5px;margin-bottom:5px;'>{{ 'Voir l\'extrait' |links_to film.externaluri }}</video>
+		<video class='enrichment_artevod_trailer' width='400px' controls src='{{ trailer }}' >{{ 'Voir l extrait' | links_to film.externaluri }}</video>
 	{% endfor %}
+	
+	{* description *}
+	{% if film.description %}
+		<p class='enrichment_artevod_description'><h4 class='artevod_description_title'>Synopsis :</h4>{{ film.description }}</p>
+	{% endif %}    
+	</div>
 	
 	{* photos *}
 	{% for photo in film.photos %}
-		{% if loop.first %}<div class='enrichment_artevod_photos'>{% endif %}
-			<div style='height:110px;width:49%;float:left;clear:none;margin-right:1%;margin-bottom:2px;text-align:center;'>
-				<img style='max-height:110px;max-width:100%;' src='{{ photo }}' title='photo' class='enrichment_artevod_photo' />
-			</div>
-		{% if loop.last %}</div>{% endif %}
+		{% if loop.first %}<ul class='enrichment_artevod_photos ui-thumbnav'>{% endif %}
+			<li style=''>
+				<a href='{{ photo }}' data-uk-lightbox=\"{group:'group1'}\" data-lightbox-type='image' title='photo' >
+					<img style='' src='{{ photo }}' alt='photo' class='enrichment_artevod_photo' />
+				</a>
+			</li>
+		{% if loop.last %}</ul>{% endif %}
 	{% endfor %}
-				
-	<div class='row'></div>
 </div>";
 	}
 }// class end

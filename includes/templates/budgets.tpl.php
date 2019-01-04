@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: budgets.tpl.php,v 1.14.6.1 2015-08-13 08:05:16 jpermanne Exp $
+// $Id: budgets.tpl.php,v 1.19 2017-11-30 16:11:43 wlair Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -23,137 +23,151 @@ $search_form = "
 		<div class='row'></div>
 	</div>
 </form>
-<br />";
-if($acquisition_gestion_tva==1){
-	$en_tete_view_bud_form="
-	<div class='colonne3'><div class='colonneth'>".htmlentities($msg['acquisition_rub'], ENT_QUOTES, $charset)."</div></div>
-	<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_tot'], ENT_QUOTES, $charset)."</div></div>
-	<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_ava_ht'], ENT_QUOTES, $charset)."</div></div>
-	<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_eng_ht'], ENT_QUOTES, $charset)."</div></div>
-	<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_fac_ht'], ENT_QUOTES, $charset)."</div></div>
-	<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_pay_ht'], ENT_QUOTES, $charset)."</div></div>
-	<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_sol'], ENT_QUOTES, $charset)."</div></div>	
-"; 
-}elseif($acquisition_gestion_tva==2){
-	$en_tete_view_bud_form="
-	<div class='colonne3'><div class='colonneth'>".htmlentities($msg['acquisition_rub'], ENT_QUOTES, $charset)."</div></div>
-	<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_tot'], ENT_QUOTES, $charset)."</div></div>
-	<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_ava_ttc'], ENT_QUOTES, $charset)."</div></div>
-	<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_eng_ttc'], ENT_QUOTES, $charset)."</div></div>
-	<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_fac_ttc'], ENT_QUOTES, $charset)."</div></div>
-	<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_pay_ttc'], ENT_QUOTES, $charset)."</div></div>
-	<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_sol'], ENT_QUOTES, $charset)."</div></div>	
-"; 
-	
-}else {
-	$en_tete_view_bud_form="
-	<div class='colonne3'><div class='colonneth'>".htmlentities($msg['acquisition_rub'], ENT_QUOTES, $charset)."</div></div>
-	<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_tot'], ENT_QUOTES, $charset)."</div></div>
-	<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_ava'], ENT_QUOTES, $charset)."</div></div>
-	<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_eng'], ENT_QUOTES, $charset)."</div></div>
-	<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_fac'], ENT_QUOTES, $charset)."</div></div>
-	<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_pay'], ENT_QUOTES, $charset)."</div></div>
-	<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_sol'], ENT_QUOTES, $charset)."</div></div>
-"; 
-}
-//Template de visualisation d'un budget
-$view_bud_form = "
+<br />
 <div class='row'>
-	<div class='colonne2'>
-		<div class='colonne5'>
-			<label class='etiquette'>".htmlentities($msg['acquisition_bud'],ENT_QUOTES,$charset)."</label> 
+	<div class='row'>";
+		if($acquisition_gestion_tva==1){
+			$en_tete_view_bud_form="
+			<div class='row'>
+				<div class='colonne3'><div class='colonneth'>".htmlentities($msg['acquisition_rub'], ENT_QUOTES, $charset)."</div></div>
+				<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_tot'], ENT_QUOTES, $charset)."</div></div>
+				<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_ava_ht'], ENT_QUOTES, $charset)."</div></div>
+				<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_eng_ht'], ENT_QUOTES, $charset)."</div></div>
+				<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_fac_ht'], ENT_QUOTES, $charset)."</div></div>
+				<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_pay_ht'], ENT_QUOTES, $charset)."</div></div>
+				<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_sol'], ENT_QUOTES, $charset)."</div></div>
+			</div>	
+		"; 
+		}elseif($acquisition_gestion_tva==2){
+			$en_tete_view_bud_form="
+			<div class='row'>
+				<div class='colonne3'><div class='colonneth'>".htmlentities($msg['acquisition_rub'], ENT_QUOTES, $charset)."</div></div>
+				<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_tot'], ENT_QUOTES, $charset)."</div></div>
+				<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_ava_ttc'], ENT_QUOTES, $charset)."</div></div>
+				<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_eng_ttc'], ENT_QUOTES, $charset)."</div></div>
+				<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_fac_ttc'], ENT_QUOTES, $charset)."</div></div>
+				<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_pay_ttc'], ENT_QUOTES, $charset)."</div></div>
+				<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_sol'], ENT_QUOTES, $charset)."</div></div>
+			</div>	
+		"; 
+			
+		}else {
+			$en_tete_view_bud_form="
+			<div class='ux-table-simili'>
+			<div class='row'>
+				<div class='colonne3'><div class='colonneth'>".htmlentities($msg['acquisition_rub'], ENT_QUOTES, $charset)."</div></div>
+				<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_tot'], ENT_QUOTES, $charset)."</div></div>
+				<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_ava'], ENT_QUOTES, $charset)."</div></div>
+				<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_eng'], ENT_QUOTES, $charset)."</div></div>
+				<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_fac'], ENT_QUOTES, $charset)."</div></div>
+				<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_pay'], ENT_QUOTES, $charset)."</div></div>
+				<div class='colonne10'><div class='colonneth'>".htmlentities($msg['acquisition_rub_mnt_sol'], ENT_QUOTES, $charset)."</div></div>
+			</div>
+		"; 
+		}
+		//Template de visualisation d'un budget
+		$view_bud_form = "
+		<div class='ux-simple-table-simili'>
+			<div class='row'>
+				<div class='colonne2'>
+					<div class='colonne5'>
+						<label class='etiquette'>".htmlentities($msg['acquisition_bud'],ENT_QUOTES,$charset)."</label> 
+					</div>
+					<div class='colonne_suite'>!!lib_bud!!</div>
+				</div>
+				<div class='colonne2'>
+					<div class='colonne5'>
+						<label class='etiquette'>".htmlentities($msg['acquisition_budg_montant'],ENT_QUOTES,$charset)."</label> 
+					</div>
+					<div class='colonne_suite'>!!mnt_bud!!&nbsp;!!devise!!&nbsp;!!htttc!!</div>
+				</div>
+			</div>
+
+			<div class='row'>
+				<div class='colonne2'>
+					<div class='colonne5'>
+						<label class='etiquette'>".htmlentities($msg['acquisition_budg_exer'],ENT_QUOTES,$charset)."</label>
+					</div>
+					<div class='colonne_suite'>!!lib_exer!!</div>
+				</div>
+				<div class='colonne2'>
+					<div class='colonne5'>
+						<label class='etiquette'>".htmlentities($msg['acquisition_budg_aff_lib'],ENT_QUOTES,$charset)."</label>
+					</div>
+					<div class='colonne_suite'>!!typ_bud!!</div>
+				</div>
+			</div>
+
+			<div class='row'>
+				<div class='colonne2'>
+					<div class='colonne5'>
+						<label class='etiquette'>".htmlentities($msg['acquisition_statut'],ENT_QUOTES,$charset)."</label>
+					</div>
+					<div class='colonne_suite'>!!sta_bud!!</div>
+				</div>
+				<div class='colonne2'>
+					<div class='colonne5'>
+						<label class='etiquette'>".htmlentities($msg['acquisition_budg_seuil'],ENT_QUOTES,$charset)."</label>
+					</div>
+					<div class='colonne_suite'>!!seu_bud!!&nbsp;%</div>
+				</div>
+			</div>
+			<div class='row'>&nbsp;</div>
 		</div>
-		<div class='colonne_suite'>!!lib_bud!!</div>
-	</div>
-	<div class='colonne2'>
-		<div class='colonne5'>
-			<label class='etiquette'>".htmlentities($msg['acquisition_budg_montant'],ENT_QUOTES,$charset)."</label> 
+
+		<!-- tableau rubriques budgetaires -->
+
+		</table>
+		<div class='row'>
+			<a href=\"javascript:expandAllImb()\"><img src='".get_url_icon('expand_all.gif')."' id='expandall' /></a>
+			<a href=\"javascript:collapseAllImb()\"><img src='".get_url_icon('collapse_all.gif')."' id='collapseall' /></a>
 		</div>
-		<div class='colonne_suite'>!!mnt_bud!!&nbsp;!!devise!!&nbsp;!!htttc!!</div>
+
+		$en_tete_view_bud_form
+
+			<!-- rubriques -->
+		<div class='row'>&nbsp;</div>
+			<!-- totaux -->
+		<div class='row'>&nbsp;</div>
+		<div class='row'>&nbsp;</div>
+		<script type='text/javascript'>
+
+		function expandAllImb() {
+		var tempColl    = document.getElementsByTagName('DIV');
+		var tempCollCnt = tempColl.length;
+		for (var i = 0; i < tempCollCnt; i++) {
+			if(tempColl[i].className == 'imb')
+			tempColl[i].style.display = 'block';
+		}
+		tempColl    = document.getElementsByTagName('IMG');
+		tempCollCnt = tempColl.length;
+		for (var i = 0; i < tempCollCnt; i++) {
+			if(tempColl[i].name == 'imEx') {
+			tempColl[i].src = imgOpened.src;
+			}
+		}
+		}
+
+		function collapseAllImb() {
+		var tempColl    = document.getElementsByTagName('DIV');
+		var tempCollCnt = tempColl.length;
+		for (var i = 0; i < tempCollCnt; i++) {
+			if(tempColl[i].className == 'imb')
+			tempColl[i].style.display = 'none';
+		}
+		tempColl    = document.getElementsByTagName('IMG');
+		tempCollCnt = tempColl.length;
+		for (var i = 0; i < tempCollCnt; i++) {
+			if(tempColl[i].name == 'imEx') {
+			tempColl[i].src = imgClosed.src;
+			}
+		}
+		}
+
+		</script>	
+		</div>
 	</div>
 </div>
-
-<div class='row'>
-	<div class='colonne2'>
-		<div class='colonne5'>
-			<label class='etiquette'>".htmlentities($msg['acquisition_budg_exer'],ENT_QUOTES,$charset)."</label>
-		</div>
-		<div class='colonne_suite'>!!lib_exer!!</div>
-	</div>
-	<div class='colonne2'>
-		<div class='colonne5'>
-			<label class='etiquette'>".htmlentities($msg['acquisition_budg_aff_lib'],ENT_QUOTES,$charset)."</label>
-		</div>
-		<div class='colonne_suite'>!!typ_bud!!</div>
-	</div>
-</div>
-
-<div class='row'>
-	<div class='colonne2'>
-		<div class='colonne5'>
-			<label class='etiquette'>".htmlentities($msg['acquisition_statut'],ENT_QUOTES,$charset)."</label>
-		</div>
-		<div class='colonne_suite'>!!sta_bud!!</div>
-	</div>
-	<div class='colonne2'>
-		<div class='colonne5'>
-			<label class='etiquette'>".htmlentities($msg['acquisition_budg_seuil'],ENT_QUOTES,$charset)."</label>
-		</div>
-		<div class='colonne_suite'>!!seu_bud!!&nbsp;%</div>
-	</div>
-</div>
-<div class='row'>&nbsp;</div>
-
-<!-- tableau rubriques budgetaires -->
-
-</table>
-<div class='row'>
-	<a href=\"javascript:expandAllImb()\"><img src='./images/expand_all.gif' id='expandall' /></a>
-	<a href=\"javascript:collapseAllImb()\"><img src='./images/collapse_all.gif' id='collapseall' /></a>
-</div>
-
-$en_tete_view_bud_form
-
-	<!-- rubriques -->
-<div class='row'>&nbsp;</div>
-	<!-- totaux -->
-<div class='row'>&nbsp;</div>
-<div class='row'>&nbsp;</div>
-<script type='text/javascript'>
-
-function expandAllImb() {
-  var tempColl    = document.getElementsByTagName('DIV');
-  var tempCollCnt = tempColl.length;
-  for (var i = 0; i < tempCollCnt; i++) {
-     if(tempColl[i].className == 'imb')
-     tempColl[i].style.display = 'block';
-  }
-  tempColl    = document.getElementsByTagName('IMG');
-  tempCollCnt = tempColl.length;
-  for (var i = 0; i < tempCollCnt; i++) {
-     if(tempColl[i].name == 'imEx') {
-       tempColl[i].src = imgOpened.src;
-     }
-  }
-}
-
-function collapseAllImb() {
-  var tempColl    = document.getElementsByTagName('DIV');
-  var tempCollCnt = tempColl.length;
-  for (var i = 0; i < tempCollCnt; i++) {
-     if(tempColl[i].className == 'imb')
-     tempColl[i].style.display = 'none';
-  }
-  tempColl    = document.getElementsByTagName('IMG');
-  tempCollCnt = tempColl.length;
-  for (var i = 0; i < tempCollCnt; i++) {
-     if(tempColl[i].name == 'imEx') {
-       tempColl[i].src = imgClosed.src;
-     }
-  }
-}
-
-</script>	
 <form name='print_bud' method='post' action='./print_acquisition.php?categ=ach&sub=bud&action=print_budget&id_bibli=!!id_bibli!!&id_bud=!!id_bud!!' target='_blank'>
 	<input type='button' class='bouton' value='".htmlentities($msg['acquisitions_export_excel'],ENT_QUOTES,$charset)."' onClick='this.form.submit();'>
 </form>
@@ -248,7 +262,7 @@ $view_lig_rub_form = "
 
 //Template de visualisation du total  avec TVA
 $view_tot_rub_form = "	
-	<div class='row'>
+	<div class='row ux-simili-table-row-last'>
 		<div class='colonne3'>&nbsp;</div>
 		<div class='colonne10'><div class='colonneth' style='text-align:right;'>
 			!!mnt_tot!!
@@ -285,20 +299,20 @@ $budg_form = "
 
 	<div class='row'>
 		<div class='colonne5'>
-			<label class='etiquette'>".htmlentities($msg[acquisition_budg_exer],ENT_QUOTES,$charset)."</label>
+			<label class='etiquette'>".htmlentities($msg['acquisition_budg_exer'],ENT_QUOTES,$charset)."</label>
 		</div>
 		<div class='colonne5'>
-			<label class='etiquette'>".htmlentities($msg[acquisition_budg_montant],ENT_QUOTES,$charset)."</label>
+			<label class='etiquette'>".htmlentities($msg['acquisition_budg_montant'],ENT_QUOTES,$charset)."</label>
 		</div>
 		<div class='colonne5'>
-			<label class='etiquette'>".htmlentities($msg[acquisition_budg_aff_lib],ENT_QUOTES,$charset)."</label>
+			<label class='etiquette'>".htmlentities($msg['acquisition_budg_aff_lib'],ENT_QUOTES,$charset)."</label>
 		</div>
 		<div class='colonne5'>
-			<label class='etiquette' for='seuil'>".htmlentities($msg[acquisition_budg_seuil],ENT_QUOTES,$charset)."</label>
+			<label class='etiquette' for='seuil'>".htmlentities($msg['acquisition_budg_seuil'],ENT_QUOTES,$charset)."</label>
 		</div>
 		<div class='colonne5'>
 			<input type='hidden' id='val_statut' name='val_statut' value='!!val_statut!!' />
-			<label class='etiquette'>".htmlentities($msg[acquisition_statut],ENT_QUOTES,$charset)."</label>
+			<label class='etiquette'>".htmlentities($msg['acquisition_statut'],ENT_QUOTES,$charset)."</label>
 		</div>
 	</div>
 
@@ -322,7 +336,7 @@ $budg_form = "
 	</div>
 
 	<div class='row'>
-		<label class='etiquette' for='comment'>".htmlentities($msg[acquisition_budg_comment],ENT_QUOTES,$charset)."</label>
+		<label class='etiquette' for='comment'>".htmlentities($msg['acquisition_budg_comment'],ENT_QUOTES,$charset)."</label>
 	</div>
 	<div class='row'>
 		<textarea id='comment' name='comment' class='saisie-80em' cols='62' rows='6' wrap='virtual'>!!comment!!</textarea>
@@ -343,8 +357,8 @@ $budg_form = "
 	</table>
 
 	<div class='colonne'>
-		<a href=\"javascript:expandAllImb()\"><img src='./images/expand_all.gif' border='0' id='expandall'></a>
-		<a href=\"javascript:collapseAllImb()\"><img src='./images/collapse_all.gif' border='0' id='collapseall'></a>
+		<a href=\"javascript:expandAllImb()\"><img src='".get_url_icon('expand_all.gif')."' border='0' id='expandall'></a>
+		<a href=\"javascript:collapseAllImb()\"><img src='".get_url_icon('collapse_all.gif')."' border='0' id='collapseall'></a>
 	</div>
 
 		<!-- rubriques -->
@@ -485,7 +499,7 @@ $rub_form = "
 	</div>
 
 	<div class='row'>
-		<label class='etiquette' for='comment'>".htmlentities($msg[acquisition_budg_comment],ENT_QUOTES,$charset)."</label>
+		<label class='etiquette' for='comment'>".htmlentities($msg['acquisition_budg_comment'],ENT_QUOTES,$charset)."</label>
 	</div>
 	<div class='row'>
 		<textarea id='comment' name='comment' class='saisie-80em' cols='62' rows='6' wrap='virtual'>!!comment!!</textarea>
@@ -506,8 +520,8 @@ $rub_form = "
 	</table>
 
 	<div class='colonne'>
-		<a href=\"javascript:expandAllImb()\"><img src='./images/expand_all.gif' border='0' id='expandall'></a>
-		<a href=\"javascript:collapseAllImb()\"><img src='./images/collapse_all.gif' border='0' id='collapseall'></a>
+		<a href=\"javascript:expandAllImb()\"><img src='".get_url_icon('expand_all.gif')."' border='0' id='expandall'></a>
+		<a href=\"javascript:collapseAllImb()\"><img src='".get_url_icon('collapse_all.gif')."' border='0' id='collapseall'></a>
 	</div>
 
 		<!-- rubriques -->
@@ -590,7 +604,7 @@ function collapseAllImb() {
 
 $mnt_rub_form[0] = "
 <div class='colonne4'>
-	<label class='etiquette' for='mnt'>".htmlentities($msg[acquisition_rub_mnt],ENT_QUOTES,$charset)."</label>
+	<label class='etiquette' for='mnt'>".htmlentities($msg['acquisition_rub_mnt'],ENT_QUOTES,$charset)."</label>
 </div>";
 
 $mnt_rub_form[1] = "
@@ -629,7 +643,7 @@ $lig_rub[0] = "
 	</div>	
 ";
 
-$lig_rub_img = "<img src='./images/plus.gif' class='img_plus' name='imEx' id='el_!!id_rub!!_Img'  onclick=\"expandBase('el_!!id_rub!!_', true); return false;\" />";
+$lig_rub_img = "<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='el_!!id_rub!!_Img'  onclick=\"expandBase('el_!!id_rub!!_', true); return false;\" />";
 
 $lig_indent = "<span class='child' >&nbsp;</span>";
 
@@ -643,9 +657,9 @@ $bt_add_lig = "<input class='bouton' type='button' value=' ".$msg['acquisition_r
 $ptab[3] ="	<div class='row'><hr /></div>
 			<div class='row'>
 				<input type='hidden' id='auto_id_list' name='auto_id_list' value='!!auto_id_list!!' >
-				<label class='etiquette'>".htmlentities($msg[acquisition_autorisations], ENT_QUOTES, $charset)."</label>
-				<input type='button' class='bouton_small' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);' align='middle'>
-				<input type='button' class='bouton_small' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);' align='middle'>
+				<label class='etiquette'>".htmlentities($msg['acquisition_autorisations'], ENT_QUOTES, $charset)."</label>
+				<input type='button' class='bouton_small align_middle' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);'>
+				<input type='button' class='bouton_small align_middle' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);'>
 			</div>";
 
 $ptab[4] = "

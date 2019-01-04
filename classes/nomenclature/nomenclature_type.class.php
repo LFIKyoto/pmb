@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_type.class.php,v 1.4 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: nomenclature_type.class.php,v 1.5 2017-06-29 13:08:59 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -18,6 +18,8 @@ class nomenclature_type{
 
 	 /*** Attributes: ***/
 
+	protected $id;
+	
 	/**
 	 * Nom du type
 	 * @access protected
@@ -42,9 +44,7 @@ class nomenclature_type{
 	 * @access public
 	 */
 	public function __construct($id=0) {
-		if($id){
-			$this->id = $id*1;			
-		}
+		$this->id = $id*1;
 		$this->fetch_datas();
 	} // end of member function __construct
 

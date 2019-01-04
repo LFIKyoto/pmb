@@ -1,4 +1,4 @@
-<h1>Amministrazione dell'OPAC (interfaccia del catalogo pubblico)</h1>
+<h2>Amministrazione dell'OPAC (interfaccia del catalogo pubblico)</h2>
 
 <p>
 La sezione <b>Amministrazione dell'OPAC</b> permette di configurare i differenti moduli dell'OPAC .

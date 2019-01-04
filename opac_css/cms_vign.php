@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_vign.php,v 1.9.2.1 2015-11-30 08:57:33 mbertin Exp $
+// $Id: cms_vign.php,v 1.14 2018-10-25 10:10:13 dgoron Exp $
 
 // définition du minimum nécéssaire 
 $base_path     = ".";                            
@@ -18,17 +18,30 @@ require_once("./includes/apache_functions.inc.php");
 $mode = (string) $_GET['mode'];
 $type = (string) $_GET['type'];
 $id = (int) $_GET['id'];
-
-$headers = getallheaders();
+$cache_file = '';
+$cache_file_prefix = $base_path."/temp/cms_vign/".$mode."/".$type.$id;
 //une journée
 $offset = 60 * 60 * 24 ;
-if (isset($headers['If-Modified-Since']) && (strtotime($headers['If-Modified-Since']) <= time())) {
-	header('Last-Modified: '.$headers['If-Modified-Since'], true, 304);
-	return;
-}else{
-	header('Expired: '.gmdate("D, d M Y H:i:s", time() + $offset).' GMT', true);
-	header('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT', true, 200);
+//Si le fichier de cache existe, on considère qu'il est activé...
+
+
+if(file_exists($cache_file_prefix.'.png')){
+	$cache_file = $cache_file_prefix.'.png';
+} elseif(file_exists($cache_file_prefix.'.jpeg')){
+	$cache_file = $cache_file_prefix.'.jpeg';
+} elseif(file_exists($cache_file_prefix.'.gif')){
+	$cache_file = $cache_file_prefix.'.gif';
 }
+	
+if($cache_file) {
+	$headers = getallheaders();
+	if (isset($headers['If-Modified-Since']) && (strtotime($headers['If-Modified-Since']) >= filemtime($cache_file))) {
+		header('Last-Modified: '.$headers['If-Modified-Since'], true, 304);
+		return;
+	}
+}
+header('Expired: '.gmdate("D, d M Y H:i:s", time() + $offset).' GMT', true);
+header('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT', true, 200);
 
 require_once ("$base_path/includes/init.inc.php"); 
 require_once ("$base_path/includes/error_report.inc.php");
@@ -39,6 +52,7 @@ if (file_exists($base_path.'/includes/opac_db_param.inc.php')) require_once($bas
 	else die("Fichier opac_db_param.inc.php absent / Missing file Fichier opac_db_param.inc.php");
 require_once($base_path.'/includes/opac_mysql_connect.inc.php');
 $dbh = connection_mysql();
+require_once($base_path."/includes/misc.inc.php");
 require_once($base_path."/includes/session.inc.php");
 session_write_close();
 

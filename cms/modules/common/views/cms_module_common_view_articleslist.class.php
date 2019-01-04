@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_articleslist.class.php,v 1.10 2014-11-17 17:00:52 arenou Exp $
+// $Id: cms_module_common_view_articleslist.class.php,v 1.12 2018-05-16 14:18:35 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -42,6 +42,12 @@ class cms_module_common_view_articleslist extends cms_module_common_view_django{
 	}
 	
 	public function render($datas){	
+		$render_datas = $this->get_render_datas($datas);
+		//on rappelle le tout...
+		return parent::render($render_datas);
+	}
+	
+	protected function get_render_datas($datas) {
 		//on rajoute nos éléments...
 		//le titre
 		$render_datas = array();
@@ -50,13 +56,19 @@ class cms_module_common_view_articleslist extends cms_module_common_view_django{
 		if(is_array($datas)){
 			foreach($datas as $article){
 				$cms_article = new cms_article($article);
+
+				//Dans le cas d'une liste d'articles affichée via un template django, on écrase les valeurs de lien définies par celles du module
+				if($this->parameters['links']['article']['var'] && $this->parameters['links']['article']['page']){
+					$cms_article->set_var_name($this->parameters['links']['article']['var']);
+					$cms_article->set_num_page($this->parameters['links']['article']['page']);
+					$cms_article->update_permalink();
+				}
 				$infos= $cms_article->format_datas();
 				$infos['link'] = $this->get_constructed_link("article",$article);
 				$render_datas['articles'][]=$infos;
 			}
 		}
-		//on rappelle le tout...
-		return parent::render($render_datas);
+		return $render_datas;
 	}
 	
 	public function get_format_data_structure(){		

@@ -2,7 +2,7 @@
 // +--------------------------------------------------------------------------+
 // | PMB est sous licence GPL, la réutilisation du code est cadrée            |
 // +--------------------------------------------------------------------------+
-// $Id: print_doc_dsi.php,v 1.5 2014-06-02 13:21:26 dgoron Exp $
+// $Id: print_doc_dsi.php,v 1.7 2017-11-13 10:24:05 dgoron Exp $
 
 //Impression DSI
 
@@ -11,7 +11,6 @@ $base_auth = "DSI_AUTH";
 $base_title = "\$msg[dsi_menu_title]";
 $base_nobody=1;
 $base_noheader=1;
-
 
 require($base_path."/includes/init.inc.php");
 
@@ -46,13 +45,11 @@ if (!$id_bannette) die( "<script>self.close();</script>" );
 if (!isset($suite)) $suite = "gen_document";
 
 $bannette = new bannette($id_bannette) ;
-$bannette->construit_diff() ;
-
 header("Content-Disposition: attachment; filename=bibliographie.doc;");
 header('Content-type: application/msword'); 
 header("Expires: 0");
 header("Cache-Control: must-revalidate, post-check=0,pre-check=0");
 header("Pragma: public");
-echo $bannette->document_diffuse;
-//print pmb_bidi($bannette->document_diffuse) ;
-
+if($bannette->document_generate) {
+	print $bannette->get_display_document();
+}

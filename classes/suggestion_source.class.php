@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestion_source.class.php,v 1.2 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: suggestion_source.class.php,v 1.3 2017-04-26 10:20:06 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,22 +10,20 @@ require_once($include_path."/templates/suggestion_source.tpl.php");
 
 class suggestion_source{
 	
-	var $id_source=0;
-	var $libelle_source='';
+	public $id_source=0;
+	public $libelle_source='';
 	
 	/*
 	 * Constructeur
 	 */
-	function suggestion_source($id=0){
-		global $dbh;
-		
-		$this->id_source = $id;
+	public function __construct($id=0){
+		$this->id_source = $id+0;
 		
 		if(!$this->id_source){
 			$this->libelle_source ='';
 		} else {
 			$req="select libelle_source from suggestions_source where id_source='".$this->id_source."'";
-			$res = pmb_mysql_query($req,$dbh);
+			$res = pmb_mysql_query($req);
 			$src = pmb_mysql_fetch_object($res);
 			$this->libelle_source = $src->libelle_source;
 		}
@@ -34,7 +32,7 @@ class suggestion_source{
 	/*
 	 * Gestion des actions
 	 */
-	function proceed($action){
+	public function proceed($action){
 		
 		switch($action){
 			
@@ -59,11 +57,11 @@ class suggestion_source{
 	/*
 	 * Formulaire d'ajout/modification
 	 */
-	function show_edit_form(){
+	public function show_edit_form(){
 		global $src_form, $msg, $charset;
 		
 		if(!$this->id_source){
-			$src_form = str_replace('!!form_title!!',$msg[acquisition_ajout_src],$src_form);
+			$src_form = str_replace('!!form_title!!',$msg['acquisition_ajout_src'],$src_form);
 			$src_form = str_replace('!!libelle!!','',$src_form);
 			$src_form = str_replace('!!bouton_sup!!','',$src_form);
 			$src_form = str_replace('!!id!!','',$src_form);
@@ -75,7 +73,7 @@ class suggestion_source{
         		}
         		</script>";
 			$src_form = str_replace('!!id!!',$this->id_source,$src_form);
-			$src_form = str_replace('!!form_title!!',$msg[acquisition_modif_src],$src_form);
+			$src_form = str_replace('!!form_title!!',$msg['acquisition_modif_src'],$src_form);
 			$src_form = str_replace('!!libelle!!',htmlentities($this->libelle_source, ENT_QUOTES, $charset),$src_form);
 			$btn_sup = "<input class='bouton' type='submit' name='del_src' id='del_src' value='$msg[63]' onclick='this.form.act.value=\"del\"; return confirm_del_src();'";
 			$src_form = str_replace('!!bouton_sup!!',$btn_sup,$src_form);
@@ -87,7 +85,7 @@ class suggestion_source{
 	/*
 	 * Formulaire de présentation
 	 */
-	function show_form(){
+	public function show_form(){
 		global $dbh;
 		global $msg;
 		global $charset;
@@ -105,7 +103,7 @@ class suggestion_source{
 		}
 		
 		if(count($tab_src) == 0){
-			$display .= "<tr><td>".$msg[acquisition_no_src_available]."</td></tr>";
+			$display .= "<tr><td>".$msg['acquisition_no_src_available']."</td></tr>";
 		} 
 		$parity=1;
 		foreach($tab_src as $id_src=>$lib_src) {
@@ -120,7 +118,7 @@ class suggestion_source{
 			$display .= "</tr>";
 		}
 		$display .= "</table>
-			<input class='bouton' type='button' value=' ".$msg[acquisition_ajout_src]." ' onClick=\"document.location='./admin.php?categ=acquisition&sub=src&act=add'\" />";
+			<input class='bouton' type='button' value=' ".$msg['acquisition_ajout_src']." ' onClick=\"document.location='./admin.php?categ=acquisition&sub=src&act=add'\" />";
 		
 		print $display;
 	}
@@ -128,7 +126,7 @@ class suggestion_source{
 	/*
 	 * Création/Modification
 	 */
-	function save(){
+	public function save(){
 		
 		global $dbh, $libelle;
 		
@@ -141,8 +139,8 @@ class suggestion_source{
 	}
 	
 	//Suppression d'une source
-	function delete(){
-		global $dbh,$msg;		
+	public function delete(){
+		global $msg;		
 		
 		$error = false;
 		if($this->hasSuggestions()){
@@ -150,19 +148,16 @@ class suggestion_source{
 			$error=true;
 		} else {		
 			$req="delete from suggestions_source where id_source='".$this->id_source."'";
-			pmb_mysql_query($req,$dbh);
+			pmb_mysql_query($req);
 		}
 		
 		return $error;
 	}
 	
 	//Vérifie si la source de suggestions est utilisee dans les suggestions	
-	function hasSuggestions(){
-		
-		global $dbh;
-		
+	public function hasSuggestions(){
 		$q = "select count(1) from suggestions where sugg_source = '".$this->id_source."' ";
-		$r = pmb_mysql_query($q, $dbh); 
+		$r = pmb_mysql_query($q); 
 		return pmb_mysql_result($r, 0, 0);
 		
 	}

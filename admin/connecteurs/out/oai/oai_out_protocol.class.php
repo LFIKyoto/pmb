@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: oai_out_protocol.class.php,v 1.13.2.1 2015-09-15 14:32:56 apetithomme Exp $
+// $Id: oai_out_protocol.class.php,v 1.23 2018-09-19 12:21:47 dgoron Exp $
 //There be komodo dragons
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
@@ -69,13 +69,13 @@ require_once($class_path."/external_services_converters.class.php");
  * @author Florent TETART
 */
 class iso8601 {
-	var $granularity; /*!< \brief Granularité courante des dates en format iso8601 : YYYY-MM-DD ou YYYY-MM-DDThh:mm:ssZ */
+	public $granularity; /*!< \brief Granularité courante des dates en format iso8601 : YYYY-MM-DD ou YYYY-MM-DDThh:mm:ssZ */
 
 	/**
 	 * \brief Constructeur
 	 * @param string $granularity Granularité des dates manipulées : YYYY-MM-DD ou YYYY-MM-DDThh:mm:ssZ
 	 */
-	function iso8601($granularity="YYYY-MM-DD") {
+	public function __construct($granularity="YYYY-MM-DD") {
 		$this->granularity=$granularity;
 	}
 
@@ -84,7 +84,7 @@ class iso8601 {
 	 * @param integer $time date au format unix (nombres de secondes depuis le 01/01/1970)
 	 * @return string date au format YYYY-MM-DD ou YYYY-MM-DDThh:mm:ssZ selon la granularité
 	 */
-	function unixtime_to_iso8601($time) {
+	public function unixtime_to_iso8601($time) {
 		$granularity=str_replace("T","\\T",$this->granularity);
 		$granularity=str_replace("Z","\\Z",$granularity);
 		$granularity=str_replace("YYYY","Y",$granularity);
@@ -102,7 +102,7 @@ class iso8601 {
 	 * @param string $date date au format iso8601 YYYY-MM-DD ou YYYY-MM-DDThh:mm:ssZ selon la granularité
 	 * @return integer date au format unix (nombres de secondes depuis le 01/01/1970)
 	 */
-	function iso8601_to_unixtime($date) {
+	public function iso8601_to_unixtime($date) {
 		$parts=explode("T",$date);
 		if (count($parts)==2) {
 			$day=$parts[0];
@@ -136,15 +136,10 @@ class oai_out_protocol {
 	private $repositoryIdentifier="";
 	private $oai_out_get_records_object=NULL;
 	private $known_metadata_formats=array(
-			/*"notice_id" => array(
-			 "metadataPrefix" => "notice_id",
-					"metadataNamespace" => "http://sigb.net/pmb/es/oai/notice_id",
-					"schema" => "http://sigb.net/pmb/es/oai/notice_id.xsd"
-			),*/
 			"pmb_xml_unimarc" => array(
 					"metadataPrefix" => "pmb_xml_unimarc",
-					"metadataNamespace" => "http://sigb.net/pmb/es/oai/pmb_xml_marc",
-					"schema" => "http://sigb.net/pmb/es/oai/pmb_xml_marc.xsd"
+					"metadataNamespace" => "http://www.pmbservices.fr",
+					"schema" => "http://www.pmbservices.fr/notice.xsd"
 			),
 			"oai_dc" => array(
 					"metadataPrefix" => "oai_dc",
@@ -161,7 +156,7 @@ class oai_out_protocol {
 	private $base_url="";
 
 	//Constructeur
-	function oai_out_protocol($oai_out_get_records_object, &$msg, $repositoryName, $adminEmail, $sets, $repositoryIdentifier, $nb_results, $token_life_expectancy, $compression, $deletion_support, $additional_metadataformats, $base_url, $deletion_transient_duration = 0) {
+	public function __construct($oai_out_get_records_object, &$msg, $repositoryName, $adminEmail, $sets, $repositoryIdentifier, $nb_results, $token_life_expectancy, $compression, $deletion_support, $additional_metadataformats, $base_url, $deletion_transient_duration = 0) {
 		$this->msg = $msg;
 		$this->oai_out_get_records_object=$oai_out_get_records_object;
 		$this->repositoryName = $repositoryName;
@@ -177,9 +172,8 @@ class oai_out_protocol {
 	}
 
 	//Renvoie l'entête
-	function oai_header() {
+	public function oai_header() {
 		global $verb;
-		$page_url = $this->base_url;
 		$iso8601 = new iso8601("YYYY-MM-DDThh:mm:ssZ");
 		$curdate = $iso8601->unixtime_to_iso8601(time());
 		$this->xmlheader_sent = true;
@@ -187,37 +181,49 @@ class oai_out_protocol {
 				<?xml-stylesheet type="text/xsl" href="connecteurs/out/oai/oai2.xsl" ?>
 				<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
 				<responseDate>'.$curdate.'</responseDate>
-						<request '.($this->errored ? '' : 'verb="'.$verb.'"').'>'.XMLEntities($page_url).'</request>';
+						<request '.($this->errored ? '' : 'verb="'.$verb.'"').'>'.XMLEntities($this->base_url).'</request>';
 	}
 
 	//Renvoie le pied de page
-	function oai_footer() {
+	public function oai_footer() {
 		return '</OAI-PMH>';
 	}
 
 	//Renvoie une erreur
-	function oai_error($error_code, $error_string) {
+	public function oai_error($error_code, $error_string) {
+		global $charset;
+		
 		$this->errored = true;
 		$buffer = XMLEntities($error_string);
 		$buffer = $charset != "utf-8" ? utf8_encode($buffer) : $buffer;
-		$result = "";
-		$result .= '<error code="'.XMLEntities($error_code).'">'.$buffer.'</error>';
+		$result = '<error code="'.XMLEntities($error_code).'">'.$buffer.'</error>';
 		return $result;
 	}
 
 	//Renvoie le résultat du verb Identify
-	function oai_identify() {
+	public function oai_identify() {
 		global $charset;
 		global $pmb_version_brut;
-		$result = "";
-		$result .= "<Identify>";
+		global $metadataPrefix;
+		
+		$params = array_merge($_GET,$_POST);
+		unset($params['verb']);
+		unset($params['source_id']);
+		if(count($params)) {
+			return $this->oai_error('badArgument', $this->msg['badArgument']);
+		}
+		
+		$result = '<Identify>';
 
 		$buffer = XMLEntities($this->repositoryName);
-		$buffer = $charset != "utf-8" ? utf8_encode($buffer) : $buffer;
+		$buffer = $charset != 'utf-8' ? utf8_encode($buffer) : $buffer;
 		$result .= '<repositoryName>'.$buffer.'</repositoryName>';
 		$result .= '<baseURL>'.XMLEntities($this->base_url).'</baseURL>';
 		$result .= '<protocolVersion>2.0</protocolVersion>';
-
+		$buffer = XMLEntities($this->adminEmail);
+		$buffer = $charset != "utf-8" ? utf8_encode($buffer) : $buffer;
+		$result .= '<adminEmail>'.$buffer.'</adminEmail>';
+		
 		$unix_earliestdate = $this->oai_out_get_records_object->get_earliest_datestamp();
 		$iso8601 = new iso8601("YYYY-MM-DDThh:mm:ssZ");
 		$earliestdate = $iso8601->unixtime_to_iso8601($unix_earliestdate);
@@ -225,9 +231,6 @@ class oai_out_protocol {
 
 		$result .= '<deletedRecord>'.$this->deletion_support.'</deletedRecord>';
 		$result .= '<granularity>YYYY-MM-DDThh:mm:ssZ</granularity>';
-		$buffer = XMLEntities($this->adminEmail);
-		$buffer = $charset != "utf-8" ? utf8_encode($buffer) : $buffer;
-		$result .= '<adminEmail>'.$buffer.'</adminEmail>';
 
 		$buffer = XMLEntities($this->oai_out_get_records_object->get_sample_oai_identifier());
 		$buffer = $charset != "utf-8" ? utf8_encode($buffer) : $buffer;
@@ -241,7 +244,8 @@ class oai_out_protocol {
 						<sampleIdentifier>'.$buffer.'</sampleIdentifier>
 								</oai-identifier>
 								</description>';
-
+/*
+ * A REVOIR
 		$result .= '<description>
 				<toolkit xsi:schemaLocation="http://oai.dlib.vt.edu/OAI/metadata/toolkit http://oai.dlib.vt.edu/OAI/metadata/toolkit.xsd">
 				<title>PMB OAI Connector</title>
@@ -255,14 +259,16 @@ class oai_out_protocol {
 						<URL>http://sigb.net</URL>
 						</toolkit>
 						</description>';
-
+*/
 		$result .= "</Identify>";
 
 		return $result;
 	}
 
 	//Renvoie le résultat du verb ListSets
-	function oai_list_sets() {
+	public function oai_list_sets() {
+		global $charset;
+		
 		$result = '';
 		$result .= '<ListSets>';
 		foreach ($this->sets as $aset) {
@@ -280,18 +286,40 @@ class oai_out_protocol {
 	}
 
 	//Renvoie le résultat du verb ListRecords
-	function oai_list_records($root_tag="ListRecords") {
+	public function oai_list_records($root_tag='ListRecords') {
 		global $charset, $dbh, $set, $resumptionToken, $from, $until;
-		//Vérifications préhalables
 		global $metadataPrefix;
-		if (!$metadataPrefix)
-			$metadataPrefix = "oai_dc";
-		if (substr($metadataPrefix, 0, 8) == "convert:") {
-
+		
+		//pour compatibilité avec l'ancien fonctionnement
+		$metadataPrefix = str_replace('convert:', 'convert_', $metadataPrefix);
+		
+		//Vérifications des parametres passes
+		$params = array_merge($_GET,$_POST);
+		unset($params['verb']);
+		unset($params['source_id']);
+		
+		//resumptionToken is an exclusive argument
+		//http://www.openarchives.org/OAI/2.0/openarchivesprotocol.htm#ListIdentifiers
+		if(isset($params['resumptionToken'])) {
+			unset($params['resumptionToken']);
+			if(count($params)) {
+				$error = $this->oai_error('badArgument', $this->msg['badArgument']);
+				$error.= $this->oai_error('badResumptionToken', $this->msg['badResumptionToken']);
+				return $error;
+			}
+		} else if(!isset($params['metadataPrefix'])) {
+			$error = $this->oai_error('badArgument', $this->msg['badArgument']);
+			return $error;
 		}
-		else if (($metadataPrefix != "__oai_identifier") && !in_array($metadataPrefix, array_keys($this->known_metadata_formats))) {
-			$erreur_message = $charset != "utf-8" ? utf8_encode(sprintf($this->msg["cannotDisseminateFormat"], XMLEntities($metadataPrefix))) : sprintf($this->msg["cannotDisseminateFormat"], XMLEntities($metadataPrefix));
-			return $this->oai_error("cannotDisseminateFormat", $erreur_message);
+
+		if (!$metadataPrefix) {
+			$metadataPrefix = 'oai_dc';
+		}
+		if ( (substr($metadataPrefix, 0, 8) != 'convert_') && !in_array($metadataPrefix, array_keys($this->known_metadata_formats))) {
+			return $this->oai_error('cannotDisseminateFormat', sprintf($this->msg['cannotDisseminateFormat'], XMLEntities($metadataPrefix)));
+		}
+		if($root_tag=='ListIdentifiers') {
+			$metadataPrefix = '__oai_identifier';
 		}
 
 		//Un peu de ménage dans les tokens
@@ -304,65 +332,103 @@ class oai_out_protocol {
 		$result = "";
 
 		$max_records = $this->nb_results;
-		$total_number_of_records=0;
-		$datefrom=false;
-		$dateuntil=false;
-
+		$total_number_of_records = 0;
+		$datefrom = false;
+		$dateuntil = false;
+		$deleted_fetch_count = 0;
+		
 		//Un token? Cherchons le dans la base de donnée et restaurons son environnement
 		if ($resumptionToken) {
 			$sql = "SELECT connectors_out_oai_token_environnement FROM connectors_out_oai_tokens WHERE connectors_out_oai_token_token = '".addslashes($resumptionToken)."'";
 			$res = pmb_mysql_query($sql, $dbh);
 			if (!pmb_mysql_num_rows($res))
-				return $this->oai_error("badResumptionToken", $this->msg["badResumptionToken"]);
+				return $this->oai_error('badResumptionToken', $this->msg['badResumptionToken']);
 			$row = pmb_mysql_fetch_assoc($res);
-			$config = unserialize($row["connectors_out_oai_token_environnement"]);
+			$config = unserialize($row['connectors_out_oai_token_environnement']);
 			$set_id_list = $config["sets"];
 			$datefrom = $config["datefrom"];
 			$dateuntil = $config["dateuntil"];
 			$metadataPrefix = $config["metadataprefix"];
-		}
-		//Sinon config de début de recherche
-		else {
+			$deleted_fetch_count = $config["deleted_fetch_count"];
+		} else {
+			//Sinon config de début de recherche
 			//Vérifions si on souhaite un set précis
+			$error = false;
 			if (isset($set) && $set) {
 				$the_set_id = substr($set, 4);
 				//On a un id, vérifions qu'il existe dans la liste
 				$found=false;
 				foreach ($this->sets as $aset) {
-					if ($aset["id"] == $the_set_id) {
+					if ($aset['id'] == $the_set_id) {
 						$found = true;
 						break;
 					}
 				}
 				//Non? Erreur!
 				if (!$found) {
-					$buffer = $charset != 'utf-8' ? utf8_encode($this->msg["unknown_set"]) : $this->msg["unknown_set"];
-					return $this->oai_error("unknown_set", $buffer);
+					$error = $this->oai_error('noRecordsMatch', $this->msg['noRecordsMatch']);
+					$error.= $this->oai_error('noSetHierarchy', $this->msg['noSetHierarchy']);
+				} else {
+					//Oui? On génère la "liste" des sets
+					$set_id_list = array(0=>array('id' => $the_set_id));
 				}
-				//Oui? On génère la "liste" des sets
-				else {
-					$set_id_list = array(0=>array("id" => $the_set_id));
-				}
-			}
-			//Sinon on fouille dans tous les sets
-			else
+			} else {
+				//Sinon on fouille dans tous les sets
 				$set_id_list = $this->sets;
+			}
 
-			if (isset($from) && $from)
+			if($error) {
+				return $error;
+			}
+			
+			$from_format = 0;
+			if (isset($from) && $from) {
+				if(preg_match("#^\d{4}-\d{2}-\d{2}$#",$from)) {
+					$from_format = 1;
+				}else if(preg_match("#^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$#",$from)) {
+					$from_format = 2;
+				}
+				if(!$from_format) {
+					$error = $this->oai_error('badArgument', $this->msg['badArgument']);
+					return $error;
+				}
 				$datefrom = $iso8601->iso8601_to_unixtime($from);
-			if (isset($until) && $until)
+				if($datefrom < 0) $datefrom = 0;
+			}
+			$until_format = 0;
+			if (isset($until) && $until) {
+				if(preg_match("#^\d{4}-\d{2}-\d{2}$#",$until)) {
+					$until_format = 1;
+				}else if(preg_match("#^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$#",$until)) {
+					$until_format = 2;
+				}
+				if(!$until_format) {
+					$error = $this->oai_error('badArgument', $this->msg['badArgument']);
+					return $error;
+				}
 				$dateuntil = $iso8601->iso8601_to_unixtime($until);
+				if($dateuntil < 0) $dateuntil = 0;
+			}
+			
+			if($from_format && $until_format && ($from_format!=$until_format)) {
+				$error = $this->oai_error('badArgument', $this->msg['badArgument']);
+				return $error;
+			}
+			
 		}
 
 		//Allons chercher les enregistrements grace à la classe associée
-		$records=array();
+		$records = array();
+		$already_included_sets = array();
 		foreach($set_id_list as &$aset) {
+			connector_out_set::set_already_included_sets($already_included_sets);
 			if (!isset($aset["fetched_count"]))
 				$aset["fetched_count"] = 0;
 
 			//Si on en a déjà assez, on ne fait que compter (pour le total)
 			if (count($records) >= $max_records) {
 				$total_number_of_records += $this->oai_out_get_records_object->get_record_count($aset["id"], $datefrom, $dateuntil);
+				$already_included_sets[] = $aset["id"];
 				continue;
 			}
 
@@ -371,6 +437,7 @@ class oai_out_protocol {
 				$current_set_count = $this->oai_out_get_records_object->get_record_count($aset["id"], $datefrom, $dateuntil);
 				if ($aset["fetched_count"] == $current_set_count) {
 					$total_number_of_records += $current_set_count;
+					$already_included_sets[] = $aset["id"];
 					continue;
 				}
 			}
@@ -380,6 +447,7 @@ class oai_out_protocol {
 			$set_records = $this->oai_out_get_records_object->get_records($aset["id"], $metadataPrefix, $aset["fetched_count"], $number_to_fetch, $datefrom, $dateuntil);
 			$aset["fetched_count"] += count($set_records);
 			$current_set_count = $this->oai_out_get_records_object->get_record_count($aset["id"], $datefrom, $dateuntil);
+			$already_included_sets[] = $aset["id"];
 			$total_number_of_records += $current_set_count;
 			foreach($set_records as $notice_id => $record_content) {
 				if (!isset($records[$notice_id])) {
@@ -390,14 +458,51 @@ class oai_out_protocol {
 
 		//Si pas d'enregistrement, le protocol veut qu'on renvoie une erreur
 		if (!$records) {
-			$erreur_message = $charset != "utf-8" ? utf8_encode($this->msg["noRecordsMatch"]) : $this->msg["noRecordsMatch"];
-			return $this->oai_error("noRecordsMatch", $erreur_message);
+			return $this->oai_error('noRecordsMatch', $this->msg['noRecordsMatch']);
 		}
+		
+		// On regarde les notices supprimées
+		$deleted_records = oai_out_get_records::get_deleted_records();
+		$total_number_of_records += count($deleted_records);
 
 		//Affichons les enregistrements
 		$result .= " <".$root_tag.">";
 		foreach ($records as $arecords) {
 			$result .= $arecords;
+		}
+		
+		// On insère des notices supprimées s'il y a de la place
+		$number_to_fetch = $max_records - count($records);
+		if ($number_to_fetch) {
+			for ($i = 0; $i < $deleted_fetch_count; $i++) {
+				array_shift($deleted_records);
+			}
+			// On génère les enregistrements supprimés
+			foreach ($deleted_records as $notice_id => $deleted_record) {
+				$oai_record = "";
+				$oai_record .= "<record>";
+				$oai_record .= '<header status="deleted">
+							<identifier>oai:'.XMLEntities($this->oai_out_get_records_object->repository_identifier).':'.$notice_id.'</identifier>
+									<datestamp>'.$deleted_record['datestamp'].'</datestamp>';
+				foreach ($deleted_record['sets'] as $aset_id) {
+					$oai_record .= "<setSpec>set_".$aset_id."</setSpec>";
+				}
+				$oai_record .= '</header>';
+				$oai_record .= "</record>";
+				$result.= $oai_record;
+				$deleted_fetch_count++;
+				$number_to_fetch--;
+				if (!$number_to_fetch) {
+					break;
+				}
+			}
+		}
+		
+		//c'est moche pour l'instant, mais c'est validé pour Florent
+		//pour les convertions persos, il faut le faire dans la feuille xslt
+		if ($metadataPrefix == 'pmb_xml_unimarc' && $this->oai_out_get_records_object->oai_pmh_valid) {
+			$result = str_replace('<notice>','<notice xmlns="http://www.pmbservices.fr" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.pmbservices.fr
+					http://www.pmbservices.fr/notice.xsd">',$result);
 		}
 
 		//Calculons le curseur
@@ -414,7 +519,8 @@ class oai_out_protocol {
 					"sets" => $set_id_list,
 					"datefrom" => $datefrom,
 					"dateuntil" => $dateuntil,
-					"metadataprefix" => $metadataPrefix
+					"metadataprefix" => $metadataPrefix,
+					"deleted_fetch_count" => $deleted_fetch_count
 			);
 			$token = md5(microtime());
 			$sql = "INSERT INTO connectors_out_oai_tokens (connectors_out_oai_token_token, connectors_out_oai_token_environnement, connectors_out_oai_token_expirationdate) VALUES ('".$token."', '".addslashes(serialize($env))."', NOW() + INTERVAL ".$this->token_life_expectancy." SECOND)";
@@ -428,25 +534,42 @@ class oai_out_protocol {
 		return $result;
 	}
 
-	function oai_list_identifier() {
+	public function oai_list_identifier() {
 		global $metadataPrefix;
-		$metadataPrefix = "__oai_identifier";
 		return $this->oai_list_records('ListIdentifiers');
 	}
 
-	function oai_get_record() {
+	
+	public function oai_get_record() {
 		global $identifier;
 		global $metadataPrefix;
 		global $charset;
-		if (!$metadataPrefix)
-			$metadataPrefix = "oai_dc";
+		
+		//pour compatibilité avec l'ancien fonctionnement
+		$metadataPrefix = str_replace('convert:', 'convert_', $metadataPrefix);
+		
+		if (!$metadataPrefix){
+			return $this->oai_error("badArgument", $this->msg['badArgument']);
+		}elseif ( (substr($metadataPrefix, 0, 8) != 'convert_') && !in_array($metadataPrefix, array_keys($this->known_metadata_formats))) {
+			return $this->oai_error('cannotDisseminateFormat', sprintf($this->msg['cannotDisseminateFormat'], XMLEntities($metadataPrefix)));
+		}
+		
+		if(!$identifier){
+			return $this->oai_error("badArgument", $this->msg['badArgument']);
+		}
 			
 		$record = $this->oai_out_get_records_object->get_record($identifier, $metadataPrefix);
 		if ($record === false) {
-			$error_message = $charset != 'utf-8' ? utf8_encode($this->msg["idDoesNotExist"]) : $this->msg["idDoesNotExist"];
-			return $this->oai_error("idDoesNotExist", $error_message);
+			return $this->oai_error("idDoesNotExist", $this->msg['idDoesNotExist']);
 		}
-
+		
+		//c'est moche pour l'instant, mais c'est validé pour Florent
+		//pour les convertions persos, il faut le faire dans la feuille xslt		
+		if ($metadataPrefix == 'pmb_xml_unimarc' && $this->oai_out_get_records_object->oai_pmh_valid) {
+			$record = str_replace('<notice>','<notice xmlns="http://www.pmbservices.fr" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.pmbservices.fr
+					http://www.pmbservices.fr/notice.xsd">',$record);
+		}
+		
 		$result = "<GetRecord>";
 		$result .= $record;
 		$result .= "</GetRecord>";
@@ -454,23 +577,42 @@ class oai_out_protocol {
 	}
 
 	//Renvoie le résultat du verb ListMetadataFormat
-	function oai_list_metadata_formats() {
-		$result = '';
-		$result .= '<ListMetadataFormats>';
-
-		foreach ($this->known_metadata_formats as $aformat) {
-			$result .= '<metadataFormat>
-					<metadataPrefix>'.$aformat["metadataPrefix"].'</metadataPrefix>
-							<schema>'.$aformat["schema"].'</schema>
-									<metadataNamespace>'.$aformat["metadataNamespace"].'</metadataNamespace>
-											</metadataFormat>';
+	public function oai_list_metadata_formats() {
+		
+		//Vérifications des parametres passes
+		$params = array_merge($_GET,$_POST);
+		$identifier=0;
+		unset($params['verb']);
+		unset($params['source_id']);
+		if(isset($params['identifier'])) {
+			$identifier = $params['identifier'];
+			unset($params['identifier']);
+		}
+		if(count($params)) {
+			$error = $this->oai_error('badArgument', $this->msg['badArgument']);
+			return $error;
+		}
+	
+		if(($identifier)&&($this->oai_out_get_records_object->get_record($identifier, 'oai_dc')==false)) {
+			return $this->oai_error('idDoesNotExist', $this->msg['idDoesNotExist']);
 		}
 
+		//Sinon, il faut retourner la liste des ListMetadataFormats
+		$result = '<ListMetadataFormats>';
+			foreach ($this->known_metadata_formats as $aformat) {
+			$result .= 
+				'<metadataFormat>
+				<metadataPrefix>'.$aformat['metadataPrefix'].'</metadataPrefix>
+				<schema>'.$aformat['schema'].'</schema>
+				<metadataNamespace>'.$aformat['metadataNamespace'].'</metadataNamespace>
+				</metadataFormat>';
+			}
 		$result .= '</ListMetadataFormats>';
+		
 		return $result;
 	}
 
-	function sets_being_refreshed(){
+	public function sets_being_refreshed(){
 		global $charset, $dbh, $set;
 		global $verb;
 			
@@ -526,9 +668,11 @@ abstract class oai_out_get_records {
 	public $error_string="";
 	private $msg=array();
 	protected $total_record_count_per_set=array();
+	
+	protected static $deleted_records = array();
 
 	//Constructeur
-	public function oai_out_get_records(&$msg) {
+	public function __construct(&$msg) {
 		$this->msg=$msg;
 	}
 
@@ -542,6 +686,14 @@ abstract class oai_out_get_records {
 	abstract public function get_record($rec_id, $format);
 	//Liste les enregistrements
 	abstract public function get_records($set_id="", $format, $first=false, $count=false, $datefrom=false, $dateuntil=false);
+	
+	public static function set_deleted_records($deleted_records = array()) {
+		static::$deleted_records = $deleted_records;
+	}
+	
+	public static function get_deleted_records() {
+		return static::$deleted_records;
+	}
 }
 
 /*
@@ -559,10 +711,11 @@ class oai_out_get_records_notice extends oai_out_get_records {
 	protected $xslt = "";
 	public $deletion_management = 0;
 	public $deletion_management_transient_duration = 0;
+	public $use_items_update_date = 0;
 
 	//Constructeur
-	public function oai_out_get_records_notice(&$msg,$xslt="") {
-		parent::oai_out_get_records($msg);
+	public function __construct(&$msg,$xslt="") {
+		parent::__construct($msg);
 		$this->xslt = $xslt;
 	}
 
@@ -626,11 +779,18 @@ class oai_out_get_records_notice extends oai_out_get_records {
 		//Récupérons du cache les ids des notices
 		$co_set = new_connector_out_set_typed($set_id);
 		$co_set->update_if_expired();
-		$notice_ids = $co_set->get_values($first, $count, $datefrom, $dateuntil);
-		$this->total_record_count[$set_id] = $co_set->get_value_count($datefrom, $dateuntil);
+		//la méthode update_if_expired renvoie toutes les notices en cache
+		//il faut donc ré-initialiser si des critères de date sont présents
+		if ($datefrom || $dateuntil) {
+			$co_set->cache->values = array();
+		}
+		$notice_ids = $co_set->get_values($first, $count, $datefrom, $dateuntil, $this->use_items_update_date);
+		$this->total_record_count[$set_id] = $co_set->get_value_count($datefrom, $dateuntil, $this->use_items_update_date);
 
 		//Récupérons les enregistrements (avec gestion du cache)
 		$oai_cache = new external_services_converter_oairecord(1, $this->oai_cache_duration, $co_set->cache->cache_duration_in_seconds(), $this->source_set_ids, $this->repository_identifier, $this->notice_statut_deletion, $this->include_items,$this->xslt,$this->include_links, $this->deletion_management, $this->deletion_management_transient_duration);
+		$oai_cache->set_date_from($datefrom);
+		$oai_cache->set_date_until($dateuntil);
 		$records = $oai_cache->convert_batch($notice_ids, $format, 'utf-8');
 
 		/*		if ($records) {
@@ -648,7 +808,7 @@ class oai_out_get_records_notice extends oai_out_get_records {
 		if (!isset($this->total_record_count[$set_id])) {
 			$co_set = new_connector_out_set_typed($set_id);
 			$co_set->update_if_expired();
-			$this->total_record_count[$set_id] = $co_set->get_value_count($datefrom, $dateuntil);
+			$this->total_record_count[$set_id] = $co_set->get_value_count($datefrom, $dateuntil, $this->use_items_update_date);
 		}
 		return $this->total_record_count[$set_id];
 	}
@@ -669,9 +829,12 @@ class external_services_converter_oairecord extends external_services_converter 
 	private $include_links=0;
 	private $deletion_management;
 	private $deletion_management_transient_duration;
+	
+	protected $date_from;
+	protected $date_until;
 
-	function external_services_converter_oairecord($object_type, $life_duration, $set_life_duration, $source_set_ids, $repository_identifier, $deleted_record_statut, $include_items,$xslt="",$include_links, $deletion_management = 0, $deletion_management_transient_duration = 0) {
-		parent::external_services_converter($object_type, $life_duration);
+	public function __construct($object_type, $life_duration, $set_life_duration, $source_set_ids, $repository_identifier, $deleted_record_statut, $include_items,$xslt="",$include_links, $deletion_management = 0, $deletion_management_transient_duration = 0) {
+		parent::__construct($object_type, $life_duration);
 		$this->set_life_duration = $set_life_duration+0;
 		$this->source_set_ids = $source_set_ids;
 		$this->repository_identifier = $repository_identifier;
@@ -683,7 +846,7 @@ class external_services_converter_oairecord extends external_services_converter 
 		$this->deletion_management_transient_duration = $deletion_management_transient_duration;
 	}
 
-	function convert_batch($objects, $format, $target_charset='utf-8') {
+	public function convert_batch($objects, $format, $target_charset='utf-8') {
 		//Va chercher dans le cache les notices encore bonnes
 		parent::convert_batch($objects, "oai_".$format, $target_charset);
 		//Converti les notices qui doivent l'être
@@ -691,7 +854,7 @@ class external_services_converter_oairecord extends external_services_converter 
 		return $this->results;
 	}
 
-	function convert_batch_to_oairecords($notices_to_convert, $format, $target_charset) {
+	public function convert_batch_to_oairecords($notices_to_convert, $format, $target_charset) {
 		global $dbh;
 		if (!$notices_to_convert) //Rien à faire? On fait rien
 			return;
@@ -720,7 +883,7 @@ class external_services_converter_oairecord extends external_services_converter 
 					$notice_sets = connector_out_set_noticecaddie::get_notice_setlist($notice_id);
 					$notice_sets = array_intersect($notice_sets, $this->source_set_ids);
 					
-					$deleted_records = array(
+					$deleted_records[$notice_id] = array(
 							'datestamp' => $datestamps[$notice_id],
 							'sets' => $notice_sets
 					);
@@ -728,23 +891,9 @@ class external_services_converter_oairecord extends external_services_converter 
 					unset($notices_to_convert[array_search($notice_id, $notices_to_convert)]);
 				}
 			}
+			oai_out_get_records::set_deleted_records($deleted_records);
 		} else if ($this->deletion_management) {
-			$deleted_records = $this->get_deleted_records($this->source_set_ids, $notices_to_convert, $iso8601);
-		}
-		
-		// On génère les enregistrements supprimés
-		foreach ($deleted_records as $notice_id => $deleted_record) {
-			$oai_record = "";
-			$oai_record .= "<record>";
-			$oai_record .= '<header status="deleted">
-							<identifier>oai:'.XMLEntities($this->repository_identifier).':'.$notice_id.'</identifier>
-									<datestamp>'.$deleted_record['datestamp'].'</datestamp>';
-			foreach ($deleted_record['sets'] as $aset_id) {
-				$oai_record .= "<setSpec>set_".$aset_id."</setSpec>";
-			}
-			$oai_record .= '</header>';
-			$oai_record .= "</record>";
-			$this->results[$notice_id] = $oai_record;
+			oai_out_get_records::set_deleted_records($this->get_deleted_records($this->source_set_ids, $notices_to_convert, $iso8601));
 		}
 		
 		//Convertissons les notices au format demandé si on ne souhaite pas uniquement les entêtes
@@ -781,10 +930,9 @@ class external_services_converter_oairecord extends external_services_converter 
 
 			$this->results[$notice_id] = $oai_record;
 		}
-
 	}
 
-	function convert_uncachedoairecords($format, $target_charset='utf-8') {
+	public function convert_uncachedoairecords($format, $target_charset='utf-8') {
 		$notices_to_convert=array();
 		foreach ($this->results as $notice_id => $aresult) {
 			if (!$aresult) {
@@ -810,16 +958,23 @@ class external_services_converter_oairecord extends external_services_converter 
 	 * @return array Renvoie un tableau array({id_notice} => array('datestamp', 'sets'))
 	 */
 	private function get_deleted_records($record_sets, $records_not_deleted, $iso8601) {
-		global $dbh;
-
 		$deleted_records = array();
-		$query = "select num_notice, num_set, unix_timestamp(deletion_date) as datestamp from connectors_out_oai_deleted_records where num_set in (".implode(",", $record_sets).") and num_notice not in (".implode(",", $records_not_deleted).")";
+		$query = "select num_notice, num_set, unix_timestamp(deletion_date) as datestamp from connectors_out_oai_deleted_records where num_set in (".implode(",", $record_sets).")";
+		if (count($records_not_deleted)) {
+			$query.= " and num_notice not in (".implode(",", $records_not_deleted).")";
+		}
+		if (!empty($this->date_from)) {
+			$query.= " and deletion_date > FROM_UNIXTIME(".$this->date_from.")";
+		}
+		if (!empty($this->date_until)) {
+			$query.= " and deletion_date < FROM_UNIXTIME(".$this->date_until.")";
+		}
 		if ($this->deletion_management == 1) {
 			$query .= " and timestampdiff(second, deletion_date, now()) < ".$this->deletion_management_transient_duration;
 		}
-		$result = pmb_mysql_query($query, $dbh);
+		$result = pmb_mysql_query($query);
 		if ($result && pmb_mysql_num_rows($result)) {
-			while ($row = mysql_fetch_object($result)) {
+			while ($row = pmb_mysql_fetch_object($result)) {
 				$deleted_records[$row->num_notice]['sets'][] = $row->num_set;
 				$timestamp = $iso8601->unixtime_to_iso8601($row->datestamp); 
 				if (!isset($deleted_records[$row->num_notice]['datestamp']) || ($timestamp > $deleted_records[$row->num_notice]['datestamp'])) {
@@ -837,6 +992,14 @@ class external_services_converter_oairecord extends external_services_converter 
 			}
 		}
 		return $deleted_records;
+	}
+	
+	public function set_date_from($date_from) {
+		$this->date_from = $date_from;
+	}
+	
+	public function set_date_until($date_until) {
+		$this->date_until = $date_until;
 	}
 }
 
@@ -856,13 +1019,13 @@ class oai_out_server {
 	private $sets=array();
 
 	//Constructeur
-	function oai_out_server(&$msg, &$oai_source_object) {
+	public function __construct(&$msg, &$oai_source_object) {
 		$this->msg = $msg;
 		$this->oai_source_object = $oai_source_object;
 	}
 
 	//Fait tourner le serveur
-	function process() {
+	public function process() {
 		global $verb;
 
 		//Pour ne pas avoir les entêtes définissant le fichier comme du xml, placer un &nx dans l'url (pour pouvoir utiliser le debugger zend par exemple)
@@ -889,13 +1052,15 @@ class oai_out_server {
 		$get_records_objects->include_links = $this->oai_source_object->include_links ? $this->oai_source_object->include_links : 0;
 		$get_records_objects->deletion_management = $this->oai_source_object->deletion_management ? $this->oai_source_object->deletion_management : 0;
 		$get_records_objects->deletion_management_transient_duration = $this->oai_source_object->deletion_management_transient_duration ? $this->oai_source_object->deletion_management_transient_duration : 0;
+		$get_records_objects->use_items_update_date = $this->oai_source_object->use_items_update_date ? $this->oai_source_object->use_items_update_date : 0;
+		$get_records_objects->oai_pmh_valid = $this->oai_source_object->oai_pmh_valid ? $this->oai_source_object->oai_pmh_valid : 0;
 
 		$additional_metadataformat = array();
 		foreach ($this->oai_source_object->allowed_admin_convert_paths as $convert_path) {
-			$additional_metadataformat["convert:".$convert_path] = array(
-					"metadataPrefix" => "convert:".$convert_path,
-					"metadataNamespace" => "http://sigb.net/pmb/es/oai/"."convert:".$convert_path,
-					"schema" => "http://sigb.net/pmb/es/oai/unknown.xsd"
+			$additional_metadataformat["convert_".$convert_path] = array(
+					"metadataPrefix" => "convert_".$convert_path,
+					"metadataNamespace" => "http://www.pmbservices.fr/"."convert_".$convert_path,
+					"schema" => "http://www.pmbservices.fr/notice.xsd"
 			);
 		}
 
@@ -933,7 +1098,7 @@ class oai_out_server {
 		if ($this->oai_source_object->allow_gzip_compression)
 			$test = ob_start("ob_gzhandler");
 
-		$response = "";
+		$response = '';
 
 		//Si la source n'est pas bien configurée
 		if (!$this->oai_source_object->repository_name || !$this->oai_source_object->admin_email || !$this->oai_source_object->repositoryIdentifier) {
@@ -942,8 +1107,31 @@ class oai_out_server {
 			echo $oai_out_protocol->oai_footer();
 			return;
 		}
-		//Sinon c'est parti
-		else {
+		
+		//Le validateur precise de verifier l'unicite des arguments
+		// /!\ Il faudra peut être prendre en compte les POSTS.
+		$error = false;
+		$qs_params = explode('&',$_SERVER['QUERY_STRING']);
+		
+		$args = array();
+		foreach($qs_params as $k=>$v) {
+			$tmp = explode('=',$v);
+			if(!$tmp[1]) {
+				$tmp[1]='';
+			}
+			$args[$tmp[0]] = $tmp[1];
+		}
+		if(count($args) != count($qs_params)) {
+			$response .= $oai_out_protocol->oai_error('badArgument', $this->msg['badArgument']);
+			$error = true;
+		}
+		unset($qs_params);
+		unset($args);
+		unset($tmp);
+		
+		if(!$error) {
+		
+			//Sinon c'est parti
 			//on regarde si un des sets manipulés n'est en cours de rafraississement, si oui, on bloque tout et fait patienter le client
 			if($oai_out_protocol->sets_being_refreshed()){
 				header('HTTP/1.1 503 Service Temporarily Unavailable',true,503);
@@ -970,18 +1158,18 @@ class oai_out_server {
 						$response .= $oai_out_protocol->oai_list_metadata_formats();
 						break;
 					default:
-						$response .= $oai_out_protocol->oai_error('badVerb', $this->msg["illegal_verb"]);
+						$response .= $oai_out_protocol->oai_error('badVerb', $this->msg['illegal_verb']);
 						break;
 				}
 			}
-			//Header
-			$response = $oai_out_protocol->oai_header() . $response;
-
-			//Footer
-			$response .= $oai_out_protocol->oai_footer();
-
-			echo $response;
 		}
+		//Header
+		$response = $oai_out_protocol->oai_header() . $response;
+
+		//Footer
+		$response .= $oai_out_protocol->oai_footer();
+
+		echo $response;
 	}
 }
 

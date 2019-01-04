@@ -1,14 +1,14 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: receptions.js,v 1.4 2014-08-01 15:06:54 Alexandre Exp $
+// $Id: receptions.js,v 1.6 2017-09-28 09:23:37 dgoron Exp $
 
 /*
- * nécessite :	ajax.js
+ * nï¿½cessite :	ajax.js
  * 				tablist.js
  * 				http_request.js
  *  
- * variables a déclarer dans le formulaire appelant:
+ * variables a dï¿½clarer dans le formulaire appelant:
  * msg_parcourir		//valeur bouton parcourir
  * msg_raz				//valeur bouton suppression
  * msg_uncheckAll		//message acquisition_recept_uncheckAll
@@ -44,7 +44,7 @@ function sel_fou() {
     var name_id = name.substr(0,5)+'_code'+name.substr(5);
     var id_bibli = document.getElementById('id_bibli').value;
     var deb_rech = document.getElementById(name).value;
-    openPopUp('./select.php?what=fournisseur&caller=recept_search_form&param1='+name_id+'&param2='+name+'&id_bibli='+id_bibli+'&deb_rech='+encode_URL(deb_rech), 'select_fournisseur', 500, 400, -2, -2, '');
+    openPopUp('./select.php?what=fournisseur&caller=recept_search_form&param1='+name_id+'&param2='+name+'&id_bibli='+id_bibli+'&deb_rech='+encode_URL(deb_rech), 'selector');
 }
 
 
@@ -117,7 +117,7 @@ function sel_dem() {
     var name_id = name.substr(0,5)+'_code'+name.substr(5);
     var name_type = 't'+name.substr(1);
     var deb_rech = document.getElementById(name).value;
-    openPopUp('./select.php?what=origine&sub=empr&caller=recept_search_form&param1='+name_id+'&param2='+name+'&param3='+name_type+'&deb_rech='+encode_URL(deb_rech), 'select_user', 500, 400, -2, -2, '');
+    openPopUp('./select.php?what=origine&sub=empr&caller=recept_search_form&param1='+name_id+'&param2='+name+'&param3='+name_type+'&deb_rech='+encode_URL(deb_rech), 'selector');
 }
 
 
@@ -193,7 +193,7 @@ function add_dem() {
 }
 
 
-//callback après selection demandeur
+//callback aprï¿½s selection demandeur
 function after_dem(f_dem) {
 	var suffixe=f_dem.substr(5);
 	var f_dem_code=document.getElementById('f_dem_code'+suffixe);
@@ -210,7 +210,7 @@ function sel_rub() {
     var id_bibli=document.getElementById('id_bibli').value;
     var id_exer=document.getElementById('id_exer').value;
     var deb_rech = document.getElementById(name).value;
-    openPopUp('./select.php?what=rubriques&caller=recept_search_form&param1='+name_id+'&param2='+name+'&id_bibli='+id_bibli+'&id_exer='+id_exer+'&deb_rech='+encode_URL(deb_rech), 'select_user', 500, 400, -2, -2, '');
+    openPopUp('./select.php?what=rubriques&caller=recept_search_form&param1='+name_id+'&param2='+name+'&id_bibli='+id_bibli+'&id_exer='+id_exer+'&deb_rech='+encode_URL(deb_rech), 'selector');
 }
 
 
@@ -431,9 +431,9 @@ function search_code(obj,recept_query) {
 	url= "./ajax.php?module=ajax&categ=isbn&code="+encodeURI(code)+"&fname=getPatterns";
 	// On initialise la classe:
 	var getPatterns = new http_request();
-	// Exécution de la requete
+	// Exï¿½cution de la requete
 	if(getPatterns.request(url,1)){
-		// Il y a une erreur. Afficher le message retourné
+		// Il y a une erreur. Afficher le message retournï¿½
 		alert (getPatterns.get_text());			
 	}else { 
 		 var codes = typeof JSON !='undefined' ?  JSON.parse(getPatterns.get_text()) : eval('('+getPatterns.get_text()+')');
@@ -446,7 +446,7 @@ function search_code(obj,recept_query) {
 	while(!found && (i<elts.length)) {
 		j=0;
 		while(!found && (j<codes.length)) {
-			if (elts[i].value==codes[j]) {
+			if ((elts[i].value==codes[j])||(elts[i].value.replace(/[ -]/g,'')==codes[j])) {
 				found=true;
 			}
 			j++;

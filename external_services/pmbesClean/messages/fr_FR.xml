@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: fr_FR.xml,v 1.5 2015-07-17 15:02:23 dgoron Exp $ -->
+$Id: fr_FR.xml,v 1.6 2015-11-06 15:13:22 dgoron Exp $ -->
 
 <!DOCTYPE XMLlist SYSTEM "../../../includes/XMLlist.dtd" >
 <XMLlist>
@@ -167,5 +167,11 @@ hashEmprPassword
 -->
   <entry code="hashEmprPassword_description">Encoder les mots de passe lecteurs pour la connexion à l'Opac</entry>
   <entry code="hashEmprPassword_output_description"></entry>
-  <entry code="hashEmprPassword_result">Résultat du réencodage des mots de passe</entry>   
+  <entry code="hashEmprPassword_result">Résultat du réencodage des mots de passe</entry>
+<!--
+indexAuthorities
+-->
+  <entry code="indexAuthorities_description">Réindexer toutes les autorités</entry>
+  <entry code="indexAuthorities_output_description"></entry>
+  <entry code="indexAuthorities_result">Résultat de la réindexation des autorités</entry>   
 </XMLlist>

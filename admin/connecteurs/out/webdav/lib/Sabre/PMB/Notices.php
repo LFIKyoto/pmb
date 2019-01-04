@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: Notices.php,v 1.5 2013-04-25 16:02:17 mbertin Exp $
+// $Id: Notices.php,v 1.6 2016-01-26 15:36:15 dgoron Exp $
 namespace Sabre\PMB;
 
 class Notices extends Collection {
@@ -25,11 +25,6 @@ class Notices extends Collection {
 	}
 
 	function getName() {
-		global $charset;
-		if($charset != "utf-8"){
-			return utf8_encode("[Notices]");
-		}else{
-			return "[Notices]";
-		}
+		return $this->format_name("[Notices]");
 	}
 }

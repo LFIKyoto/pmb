@@ -5,7 +5,9 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: en_UK.xml,v 1.1 2011-04-20 06:28:07 ngantier Exp $ -->
+$Id: en_UK.xml,v 1.2 2017-02-01 09:22:09 dgoron Exp $ -->
 
 <XMLlist>
+<entry code="title">Flux RSS</entry>
+<entry code="selection_opac">Sélection</entry>
 </XMLlist>

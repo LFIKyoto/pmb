@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: profil.inc.php,v 1.1 2012-01-25 15:20:35 ngantier Exp $
+// $Id: profil.inc.php,v 1.2 2017-02-20 19:04:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-require_once($class_path."/harvest_profil_import.class.php");
+if(!isset($id_profil)) $id_profil = 0;
 
+require_once($class_path."/harvest_profil_import.class.php");
 
 switch($action) {
 	case 'form':

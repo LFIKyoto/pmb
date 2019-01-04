@@ -1,91 +1,10 @@
-define(
-//begin v1.x content
-{
-	"dateFormat-full": "EEEE d. MMMM y G",
-	"dateFormat-long": "d. MMMM y G",
-	"dateFormat-medium": "d. MMM y G",
-	"dateFormat-short": "d/M/y G",
-	"dateFormatItem-d": "d.",
-	"dateFormatItem-Ed": "E d.",
-	"dateFormatItem-H": "HH",
-	"dateFormatItem-hm": "h.mm a",
-	"dateFormatItem-Hm": "HH.mm",
-	"dateFormatItem-hms": "h.mm.ss a",
-	"dateFormatItem-Hms": "HH.mm.ss",
-	"dateFormatItem-M": "M",
-	"dateFormatItem-Md": "d/M",
-	"dateFormatItem-MEd": "E. d/M",
-	"dateFormatItem-MMdd": "dd/MM",
-	"dateFormatItem-MMM": "MMM",
-	"dateFormatItem-MMMd": "d. MMM",
-	"dateFormatItem-MMMEd": "E d. MMM",
-	"dateFormatItem-MMMMEd": "E d. MMMM",
-	"dateFormatItem-ms": "mm.ss",
-	"dateFormatItem-yyMM": "MM/y G",
-	"dateFormatItem-yyMMM": "MMM y G",
-	"dateFormatItem-yyQ": "Q. 'kvartal' y G",
-	"dateFormatItem-yyyy": "y G",
-	"dateFormatItem-yyyyM": "M/y G",
-	"dateFormatItem-yyyyMd": "d/M/y G",
-	"dateFormatItem-yyyyMEd": "E. d/M/y G",
-	"dateFormatItem-yyyyMMM": "MMM y G",
-	"dateFormatItem-yyyyMMMd": "d. MMM y G",
-	"dateFormatItem-yyyyMMMEd": "E. d. MMM y G",
-	"dateFormatItem-yyyyQ": "Q y G",
-	"dateFormatItem-yyyyQQQ": "QQQ y G",
-	"days-format-abbr": [
-		"søn",
-		"man",
-		"tir",
-		"ons",
-		"tor",
-		"fre",
-		"lør"
-	],
-	"days-format-wide": [
-		"søndag",
-		"mandag",
-		"tirsdag",
-		"onsdag",
-		"torsdag",
-		"fredag",
-		"lørdag"
-	],
-	"days-standAlone-narrow": [
-		"S",
-		"M",
-		"T",
-		"O",
-		"T",
-		"F",
-		"L"
-	],
-	"quarters-format-abbr": [
-		"K1",
-		"K2",
-		"K3",
-		"K4"
-	],
-	"quarters-format-wide": [
-		"1. kvartal",
-		"2. kvartal",
-		"3. kvartal",
-		"4. kvartal"
-	],
-	"dayPeriods-format-wide-am": "f.m.",
-	"dayPeriods-format-wide-pm": "e.m.",
-	"dateFormatItem-yM": "M/y",
-	"dateFormatItem-yMd": "d/M/y",
-	"dateFormatItem-yMEd": "E. d/M/y",
-	"dateFormatItem-yMMM": "MMM y",
-	"dateFormatItem-yMMMd": "d. MMM y",
-	"dateFormatItem-yMMMEd": "E. d. MMM y",
-	"dateFormatItem-yQ": "Q yyyy",
-	"dateFormatItem-yQQQ": "QQQ y",
-	"timeFormat-full": "HH.mm.ss zzzz",
-	"timeFormat-long": "HH.mm.ss z",
-	"timeFormat-medium": "HH.mm.ss",
-	"timeFormat-short": "HH.mm"
-}
-//end v1.x content
-);
+//>>built
+define("dojo/cldr/nls/da/islamic",{"days-standAlone-short":"s\u00f8 ma ti on to fr l\u00f8".split(" "),"field-second-relative+0":"nu","field-weekday":"Ugedag","field-wed-relative+0":"denne onsdag","field-wed-relative+1":"n\u00e6ste onsdag","dateFormatItem-GyMMMEd":"E d. MMM y G","dateFormatItem-MMMEd":"E d. MMM","field-tue-relative+-1":"sidste tirsdag","days-format-short":"s\u00f8 ma ti on to fr l\u00f8".split(" "),"dateFormat-long":"d. MMMM y G","field-fri-relative+-1":"sidste fredag","field-wed-relative+-1":"sidste onsdag",
+"dateFormatItem-yyyyQQQ":"QQQ y G","dateFormat-full":"EEEE d. MMMM y G","dateFormatItem-yyyyMEd":"E d/M/y G","field-thu-relative+-1":"sidste torsdag","dateFormatItem-Md":"d/M","dayPeriods-format-wide-noon":"middag","field-era":"\u00c6ra","timeFormat-short":"HH.mm","quarters-format-wide":["1. kvartal","2. kvartal","3. kvartal","4. kvartal"],"timeFormat-long":"HH.mm.ss z","field-year":"\u00c5r","field-hour":"Time","field-sat-relative+0":"denne l\u00f8rdag","field-sat-relative+1":"n\u00e6ste l\u00f8rdag",
+"timeFormat-full":"HH.mm.ss zzzz","field-day-relative+0":"i dag","field-thu-relative+0":"denne torsdag","field-day-relative+1":"i morgen","field-thu-relative+1":"n\u00e6ste torsdag","dateFormatItem-GyMMMd":"d. MMM y G","field-day-relative+2":"i overmorgen","quarters-format-abbr":["K1","K2","K3","K4"],"quarters-standAlone-wide":["1. kvartal","2. kvartal","3. kvartal","4. kvartal"],"dateFormatItem-Gy":"y G","dateFormatItem-yyyyMMMEd":"E d. MMM y G","dateFormatItem-M":"M","days-standAlone-wide":"s\u00f8ndag mandag tirsdag onsdag torsdag fredag l\u00f8rdag".split(" "),
+"dateFormatItem-yyyyMMM":"MMM y G","dateFormatItem-yyyyMMMd":"d. MMM y G","dayPeriods-format-abbr-noon":"middag","timeFormat-medium":"HH.mm.ss","field-sun-relative+0":"denne s\u00f8ndag","dateFormatItem-Hm":"HH.mm","field-sun-relative+1":"n\u00e6ste s\u00f8ndag","quarters-standAlone-abbr":["K1","K2","K3","K4"],eraAbbr:["AH"],"field-minute":"Minut","field-dayperiod":"AM/PM","days-standAlone-abbr":"s\u00f8n man tir ons tor fre l\u00f8r".split(" "),"dateFormatItem-d":"d.","dateFormatItem-ms":"mm.ss",
+"field-day-relative+-1":"i g\u00e5r","field-day-relative+-2":"i forg\u00e5rs","dateFormatItem-MMMd":"d. MMM","dateFormatItem-MEd":"E d/M","field-fri-relative+0":"denne fredag","field-fri-relative+1":"n\u00e6ste fredag","field-day":"Dag","days-format-wide":"s\u00f8ndag mandag tirsdag onsdag torsdag fredag l\u00f8rdag".split(" "),"field-zone":"Tidszone","dateFormatItem-y":"y G","field-year-relative+-1":"sidste \u00e5r","field-month-relative+-1":"sidste m\u00e5ned","dateFormatItem-hm":"h.mm a","days-format-abbr":"s\u00f8n. man. tir. ons. tor. fre. l\u00f8r.".split(" "),
+"days-format-narrow":"SMTOTFL".split(""),"dateFormatItem-yyyyMd":"d/M/y G","field-month":"M\u00e5ned","dateFormatItem-MMM":"MMM","days-standAlone-narrow":"SMTOTFL".split(""),"field-tue-relative+0":"denne tirsdag","field-tue-relative+1":"n\u00e6ste tirsdag","field-mon-relative+0":"denne mandag","field-mon-relative+1":"n\u00e6ste mandag","dateFormat-short":"d/M/y","dayPeriods-format-narrow-noon":"middag","field-second":"Sekund","field-sat-relative+-1":"sidste l\u00f8rdag","field-sun-relative+-1":"sidste s\u00f8ndag",
+"field-month-relative+0":"denne m\u00e5ned","field-month-relative+1":"n\u00e6ste m\u00e5ned","dateFormatItem-Ed":"E 'd'. d.","field-week":"Uge","dateFormat-medium":"d. MMM y G","field-year-relative+0":"i \u00e5r","field-week-relative+-1":"sidste uge","dateFormatItem-yyyyM":"M/y G","field-year-relative+1":"n\u00e6ste \u00e5r","dateFormatItem-yyyyQQQQ":"QQQQ y G","dateFormatItem-Hms":"HH.mm.ss","dateFormatItem-hms":"h.mm.ss a","dateFormatItem-GyMMM":"MMM y G","field-mon-relative+-1":"sidste mandag",
+"dateFormatItem-yyyy":"y G","field-week-relative+0":"denne uge","field-week-relative+1":"n\u00e6ste uge"});
+//# sourceMappingURL=islamic.js.map

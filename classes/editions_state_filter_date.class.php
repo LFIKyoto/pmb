@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: editions_state_filter_date.class.php,v 1.5 2014-10-28 18:03:42 mbertin Exp $
+// $Id: editions_state_filter_date.class.php,v 1.6 2017-07-12 15:15:00 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,9 +16,9 @@ class editions_state_filter_date extends editions_state_filter {
 	
 	public function get_from_form(){
 		$filter_value = $this->elem['id']."_filter";
-		global $$filter_value;
-		if(isset($$filter_value)){
-			$this->value = $$filter_value;
+		global ${$filter_value};
+		if(isset(${$filter_value})){
+			$this->value = ${$filter_value};
 		}
 	}
 	

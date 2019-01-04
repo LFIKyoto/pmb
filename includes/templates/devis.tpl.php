@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: devis.tpl.php,v 1.39 2013-04-11 08:47:35 mbertin Exp $
+// $Id: devis.tpl.php,v 1.45 2018-07-27 09:52:08 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -39,82 +39,6 @@ $devlist_form = "
 	<!-- nav_bar -->
 </div>
 ";
-
-
-$devlist_bt_chk ="<input type='button' id='bt_chk' class='bouton_small' value='".$msg['acquisition_sug_checkAll']."' onClick=\"checkAll('act_list_form', 'chk', check); return false;\" />";
-$devlist_bt_supChk = "<input type='button' class='bouton_small' value='$msg[63]' onClick=\"supChk();\" />";
-
-$devlist_bt_rec="<input type='button' class='bouton_small' value='".$msg['acquisition_dev_bt_rec']."' onClick=\"devlist_rec();\" />";
-$devlist_bt_arc="<input type='button' class='bouton_small' value='".$msg['acquisition_act_bt_arc']."' onClick=\"devlist_arc();\" />";
-$devlist_bt_delete="<input type='button' class='bouton_small' value='".$msg['63']."' onClick=\"devlist_delete();\" />";
-
-
-$devlist_script = "
-<script type='text/javascript'>
-
-	var check = true;
-
-	//Coche et decoche les elements de la liste
-	function checkAll(the_form, the_objet, do_check) {
-	
-		var elts = document.forms[the_form].elements[the_objet+'[]'];
-		var elts_cnt  = (typeof(elts.length) != 'undefined')
-	              ? elts.length
-	              : 0;
-	
-		if (elts_cnt) {
-			for (var i = 0; i < elts_cnt; i++) {
-				elts[i].checked = do_check;
-			} 
-		} else {
-			elts.checked = do_check;
-		}
-		if (check == true) {
-			check = false;
-			document.getElementById('bt_chk').value ='".$msg['acquisition_sug_uncheckAll']."';
-		} else {
-			check = true;
-			document.getElementById('bt_chk').value ='".$msg['acquisition_sug_checkAll']."';	
-		}
-		return true;
-	}
-	
-	
-	function devlist_delete() {
-		r = confirm(\"".$msg['acquisition_devlist_sup']."\");
-		if (r) {
-			document.forms['act_list_form'].setAttribute('action', './acquisition.php?categ=ach&sub=devi&action=list_delete&id_bibli='+document.getElementById('id_bibli').value);
-			document.forms['act_list_form'].submit();
-			return true;	
-		}
-		return false;
-	}
-	
-
-	function devlist_rec() {
-		r = confirm(\"".$msg['acquisition_devlist_rec']."\");
-		if (r) {
-			document.forms['act_list_form'].setAttribute('action', './acquisition.php?categ=ach&sub=devi&action=list_rec&id_bibli='+document.getElementById('id_bibli').value);
-			document.forms['act_list_form'].submit();
-			return true;	
-		}
-		return false;
-	}
-	
-
-	function devlist_arc() {
-		r = confirm(\"".$msg['acquisition_devlist_arc']."\");
-		if (r) {
-			document.forms['act_list_form'].setAttribute('action', './acquisition.php?categ=ach&sub=devi&action=list_arc&id_bibli='+document.getElementById('id_bibli').value);
-			document.forms['act_list_form'].submit();
-			return true;	
-		}
-		return false;
-	}
-	
-</script>
-";
-
 
 //	------------------------------------------------------------------------------
 //	$modif_dev_form : template de création/modification pour les devis
@@ -153,8 +77,8 @@ $modif_dev_form = "
 		    		<label class='etiquette'>".htmlentities($msg['acquisition_ach_fou2'], ENT_QUOTES, $charset)."</label>&nbsp;
 				</div>
 				<div class='colonne_suite'>
-					<input type='text' id='lib_fou' name='lib_fou' tabindex='1' value='!!lib_fou!!' class='saisie-30emr' onchange=\"openPopUp('./select.php?what=fournisseur&caller=act_modif&param1=id_fou&param2=lib_fou&param3=adr_fou&id_bibli=!!id_bibli!!&deb_rech='+".pmb_escape()."(this.form.lib_fou.value), 'select_fournisseur', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes'); \" />
-					<input type='button' class='bouton_small' style='width:20px;' tabindex='1' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=fournisseur&caller=act_modif&param1=id_fou&param2=lib_fou&param3=adr_fou&id_bibli=!!id_bibli!!&deb_rech='+".pmb_escape()."(this.form.lib_fou.value), 'select_fournisseur', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes'); \" />
+					<input type='text' id='lib_fou' name='lib_fou' tabindex='1' value='!!lib_fou!!' class='saisie-30emr' onchange=\"openPopUp('./select.php?what=fournisseur&caller=act_modif&param1=id_fou&param2=lib_fou&param3=adr_fou&id_bibli=!!id_bibli!!&deb_rech='+".pmb_escape()."(this.form.lib_fou.value), 'selector'); \" />
+					<input type='button' class='bouton_small' style='width:20px;' tabindex='1' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=fournisseur&caller=act_modif&param1=id_fou&param2=lib_fou&param3=adr_fou&id_bibli=!!id_bibli!!&deb_rech='+".pmb_escape()."(this.form.lib_fou.value), 'selector'); \" />
 				</div>
 			</div>
 		</div>
@@ -170,7 +94,7 @@ $modif_dev_form = "
 				</div>
 			</div>
 			<div class='colonne2'>
-				<img id='adr_fou_Img' name='adr_fou_Img' src='./images/plus.gif' class='img_plus' onclick=\"javascript:expandBase('adr_fou_', true);\"/>
+				<img id='adr_fou_Img' name='adr_fou_Img' src='".get_url_icon('plus.gif')."' class='img_plus' onclick=\"javascript:expandBase('adr_fou_', true);\"/>
 		    	<label class='etiquette'>".htmlentities($msg['acquisition_adr_fou'], ENT_QUOTES, $charset)."</label>
 			</div>
 		</div>
@@ -189,7 +113,7 @@ $modif_dev_form = "
 			
 		<div class='row'>
 			<div class='colonne2'>
-				<img id='adr_bib_Img' src='./images/plus.gif' class='img_plus' onclick=\"javascript:expandBase('adr_bib_', true);\" />
+				<img id='adr_bib_Img' src='".get_url_icon('plus.gif')."' class='img_plus' onclick=\"javascript:expandBase('adr_bib_', true);\" />
 	    		<label class='etiquette'>".htmlentities($msg['acquisition_adr_liv'], ENT_QUOTES, $charset)."</label>
 			</div>
 			<div class='colonne2'>
@@ -203,7 +127,7 @@ $modif_dev_form = "
 					<textarea id='adr_liv' name='adr_liv' class='saisie-30emr' readonly='readonly' cols='50' rows='4' wrap='virtual'>!!adr_liv!!</textarea>&nbsp;
 				</div>
 				<div class='colonne_suite'>
-					<input type='button' tabindex='1' class='bouton_small' style='width:20px;' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=coord&caller=act_modif&param1=id_adr_liv&param2=adr_liv&id_bibli=!!id_bibli!!', 'select_adresse', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes'); \" />
+					<input type='button' tabindex='1' class='bouton_small' style='width:20px;' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=coord&caller=act_modif&param1=id_adr_liv&param2=adr_liv&id_bibli=!!id_bibli!!', 'selector'); \" />
 					<input type='button' tabindex='1' class='bouton_small' style='width:20px;' value='".$msg['raz']."' onclick=\"document.getElementById('id_adr_liv').value='0';document.getElementById('adr_liv').value='';\" />
 				</div>
 			</div>
@@ -212,14 +136,14 @@ $modif_dev_form = "
 					<textarea id='adr_fac' name='adr_fac' class='saisie-30emr' readonly='readonly' cols='50' rows='4' wrap='virtual'>!!adr_fac!!</textarea>&nbsp;
 				</div>
 				<div class='colonne_suite'>
-					<input type='button' tabindex='1' class='bouton_small' style='width:20px;' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=coord&caller=act_modif&param1=id_adr_fac&param2=adr_fac&id_bibli=!!id_bibli!!', 'select_adresse', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes'); \" />
+					<input type='button' tabindex='1' class='bouton_small' style='width:20px;' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=coord&caller=act_modif&param1=id_adr_fac&param2=adr_fac&id_bibli=!!id_bibli!!', 'selector'); \" />
 					<input type='button' tabindex='1' class='bouton_small' style='width:20px;' value='".$msg['raz']."' onclick=\"document.getElementById('id_adr_fac').value='0';document.getElementById('adr_fac').value='';\" />
 				</div>
 			</div>
 		</div>
 
 		<div class='row'>
-			<img id='comment_Img' src='./images/plus.gif' class='img_plus' onclick=\"javascript:expandBase('comment_', true);\"/>
+			<img id='comment_Img' src='".get_url_icon('plus.gif')."' class='img_plus' onclick=\"javascript:expandBase('comment_', true);\"/>
     		<label class='etiquette'>".htmlentities($msg['acquisition_commentaires'], ENT_QUOTES, $charset)."</label>
 		</div>
 		<div class='row' style='margin-left:30px'>
@@ -227,7 +151,7 @@ $modif_dev_form = "
 		</div>
 		
 		<div class='row'>
-			<img id='comment_i_Img' src='./images/plus.gif' class='img_plus' onclick=\"javascript:expandBase('comment_i_', true);\"/>
+			<img id='comment_i_Img' src='".get_url_icon('plus.gif')."' class='img_plus' onclick=\"javascript:expandBase('comment_i_', true);\"/>
     		<label class='etiquette'>".htmlentities($msg['acquisition_commentaires_i'], ENT_QUOTES, $charset)."</label>
 		</div>
 		<div class='row' style='margin-left:30px'>
@@ -241,10 +165,10 @@ $modif_dev_form = "
 			<div class='colonne3'>
 				<table style='background-color:transparent;' >
 					<tr>
-						<td valign='top'>
+						<td style='vertical-align:top'>
 							<label class='etiquette'>".htmlentities($msg['acquisition_cde_liees'], ENT_QUOTES, $charset)."</label>
 							<span class='current'>!!liens_cde!!</span>
-						</td valign='top'>
+						</td>
 						<td>&nbsp;</td>
 					</tr>
 				</table>		
@@ -252,10 +176,10 @@ $modif_dev_form = "
 			<div class='colonne3'>					
 				<table style='background-color:transparent;' >
 					<tr>
-						<td valign='top'>
+						<td style='vertical-align:top'>
 							<label class='etiquette'>".htmlentities($msg['acquisition_dev_ref_fou'], ENT_QUOTES, $charset)."</label>
 						</td>
-						<td valign='top'>
+						<td style='vertical-align:top'>
 							<input type='text' id='ref' name='ref' tabindex='1' class='saisie-1Oem' value='!!ref!!' />
 						</td>
 					</tr>
@@ -370,6 +294,7 @@ $modif_dev_form.= "
 	var msg_no_fou = '".addslashes($msg['acquisition_cde_fou_err'])."';
 	var msg_act_vide='".addslashes($msg['acquisition_dev_vid'])."';
 	var acquisition_budget='0';
+	var acquisition_type_produit='0';
 	var act_nblines='!!act_nblines!!';
 	var act_curline='!!act_nblines!!';
 	if(act_nblines>0) {
@@ -395,18 +320,18 @@ $modif_dev_row_form = "
 		<textarea id='lib[!!no!!]' name='lib[!!no!!]' tabindex='1' class='in_cell' rows='2' wrap='virtual'>!!lib!!</textarea>
 	</td>
 	<td>
-		<input type='text' id='qte[!!no!!]' name='qte[!!no!!]' tabindex='1' class='in_cell_nb' value='!!qte!!' />
+		<input type='text' id='qte[!!no!!]' name='qte[!!no!!]' tabindex='1' class='in_cell_nb' value='!!qte!!' onchange='thresholds_notification();' />
 	</td>
 	<td>
-		<input type='text' id='prix[!!no!!]' name='prix[!!no!!]' tabindex='1' class='in_cell_nb' value='!!prix!!' />
+		<input type='text' id='prix[!!no!!]' name='prix[!!no!!]' tabindex='1' class='in_cell_nb' value='!!prix!!' onchange='thresholds_notification();' />
 	</td>
 	<td>
 		<input type='hidden' id='typ[!!no!!]' name='typ[!!no!!]' value='!!typ!!' />
 		<input type='text' id='lib_typ[!!no!!]' name='lib_typ[!!no!!]' tabindex='1' class='in_cell' value='!!lib_typ!!' /><input type='button' tabindex='1' class='bouton_small' style='width:20px;' value='".$msg['parcourir']."' onclick=\"act_getType(this);\" /><input type='button' tabindex='1' class='bouton_small' style='width:20px;' value='".$msg['raz']."' onclick=\"act_delType(this);\" />";
 if ($acquisition_gestion_tva) {
-	$modif_dev_row_form.= "&nbsp;<input type='text' id='tva[!!no!!]' name='tva[!!no!!]' tabindex='1' class='in_cell_nb' style='width:20%;' value='!!tva!!' />&nbsp;%";
+	$modif_dev_row_form.= "&nbsp;<input type='text' id='tva[!!no!!]' name='tva[!!no!!]' tabindex='1' class='in_cell_nb' style='width:20%;' value='!!tva!!' onchange='thresholds_notification();' />&nbsp;%";
 } 	
-$modif_dev_row_form.= "&nbsp;<input type='text' id='rem[!!no!!]' name='rem[!!no!!]' tabindex='1' class='in_cell_nb' style='width:20%;' value='!!rem!!' />&nbsp;%		
+$modif_dev_row_form.= "&nbsp;<input type='text' id='rem[!!no!!]' name='rem[!!no!!]' tabindex='1' class='in_cell_nb' style='width:20%;' value='!!rem!!' onchange='thresholds_notification();'  />&nbsp;%		
 	</td>
 	<td>
 		<input type='checkbox' id='chk[!!no!!]' name='chk[!!no!!]' tabindex='1' value='1' />
@@ -444,7 +369,7 @@ $bt_cde = "<input type='button' class='bouton' value='".$msg['acquisition_dev_bt
 				document.forms['act_modif'].setAttribute('action', 'acquisition.php?categ=ach&sub=cmde&action=from_devis'); 
 				document.forms['act_modif'].submit(); \" />";
 
-$bt_audit = "<input type='button' class='bouton' value='".$msg['audit_button']."' title='".$msg['audit_button']."' onclick=\"openPopUp('./audit.php?type_obj=4&object_id=".$id_dev."', 'audit_popup', 700, 500, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes')\" />";
+$bt_audit = "<input type='button' class='bouton' value='".$msg['audit_button']."' title='".$msg['audit_button']."' onclick=\"openPopUp('./audit.php?type_obj=4&object_id=".$id_dev."', 'audit_popup')\" />";
 
-$bt_imp = "<input type='button' class='bouton' value='".$msg['imprimer']."' title='".$msg['imprimer']."' onclick=\"openPopUp('./pdf.php?pdfdoc=devi&id_dev=".$id_dev."&id_bibli=".$id_bibli."' ,'print_PDF', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\" />"; 
+$bt_imp = "<input type='button' class='bouton' value='".$msg['imprimer']."' title='".$msg['imprimer']."' onclick=\"openPopUp('./pdf.php?pdfdoc=devi&id_dev=".$id_dev."&id_bibli=".$id_bibli."' ,'print_PDF')\" />"; 
 ?>

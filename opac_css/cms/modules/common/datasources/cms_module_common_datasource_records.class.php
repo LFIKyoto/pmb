@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_records.class.php,v 1.18 2015-04-09 16:19:51 arenou Exp $
+// $Id: cms_module_common_datasource_records.class.php,v 1.22 2018-06-14 10:19:16 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+require_once($class_path."/etagere.class.php");
 require_once($include_path."/etagere_func.inc.php");
 
 class cms_module_common_datasource_records extends cms_module_common_datasource_list{
@@ -18,7 +20,7 @@ class cms_module_common_datasource_records extends cms_module_common_datasource_
 	 */
 	public function get_available_selectors(){
 		return array(
-			"cms_module_common_selector_shelve",		
+			"cms_module_common_selector_shelve",
 			"cms_module_common_selector_type_article",
 			"cms_module_common_selector_type_section",
 			"cms_module_common_selector_type_article_generic",
@@ -39,19 +41,29 @@ class cms_module_common_datasource_records extends cms_module_common_datasource_
 				}
 			}
 			$shelves = $selector->get_value();
+			$source_infos = array();
+			$records = array();
 			if(is_array($shelves) && count($shelves)){
 				foreach ($shelves as $shelve_id){
-					$query = "select id_tri from etagere where idetagere =".$shelve_id;
+					$query = "select id_tri, name, thumbnail_url from etagere where idetagere = '".($shelve_id*1)."'";
 					$result = pmb_mysql_query($query);
-					$records = $notices = array();
+					$notices = array();
 					if($result && pmb_mysql_num_rows($result)){
-						while($row = pmb_mysql_fetch_object($result)){
-							notices_caddie($shelve_id, $notices, '', '', '',0,$row->id_tri);
+						$row = pmb_mysql_fetch_object($result);
+						notices_caddie($shelve_id, $notices, '', '', '',0,$row->id_tri);						
+						
+						foreach($notices as $id => $niv){
+							$records[]=$id;
 						}
-					}
-					foreach($notices as $id => $niv){
-						$records[]=$id;
-					}
+						$etagere_instance = new etagere($shelve_id);
+						$source_infos[] = array(
+								'type' => 'shelve',
+								'id' => $shelve_id,
+								'name' => $etagere_instance->get_translated_name(),
+								'thumbnail_url' => $row->thumbnail_url,
+								'url' => './index.php?lvl=etagere_see&id='.$shelve_id,
+						);
+					}					
 				}
 			}
 			$records = $this->filter_datas("notices",$records);
@@ -60,9 +72,9 @@ class cms_module_common_datasource_records extends cms_module_common_datasource_
 			}
 			$return = array(
 					'title'=> 'Liste de Notices',
-					'records' => $records
+					'records' => $records,
+					'source_infos' => $source_infos
 			);
-			
 			return $return;
 		}
 		return false;

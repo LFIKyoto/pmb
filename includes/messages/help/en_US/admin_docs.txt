@@ -1,4 +1,4 @@
-<h1>Items' administration</h1>
+<h2>Items' administration</h2>
 
 <p>You'll define the parameters of the application for the loan and the documents' statistics through the section <b>Items</b> 
 <ul>

@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: upload.js,v 1.4 2014-03-05 08:22:55 mbertin Exp $
+// $Id: upload.js,v 1.5 2017-03-29 11:57:53 jpermanne Exp $
 
 
 //Ouverture de la frame a partir du parent
@@ -95,7 +95,7 @@ function testing_file(id){
 		var fichier = document.getElementById('f_fichier').value;
 		if(fichier){
 			var action = new http_request();
-			var url = "./ajax.php?module=catalog&categ=explnum&id="+id+"&id_repertoire="+document.getElementById('id_rep').value+"&fichier="+fichier+"&quoifaire=exist_file";
+			var url = "./ajax.php?module=catalog&categ=explnum&id="+id+"&id_repertoire="+document.getElementById('id_rep').value+"&fichier="+encodeURIComponent(fichier)+"&quoifaire=exist_file";
 			
 			action.request(url);
 			if(action.get_status() == 0){

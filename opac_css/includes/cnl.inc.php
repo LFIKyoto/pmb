@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cnl.inc.php,v 1.9 2015-04-03 11:16:16 jpermanne Exp $
+// $Id: cnl.inc.php,v 1.10 2018-02-08 08:54:41 jpermanne Exp $
 
 function get_field_dateparution() {
 	global $field_dateparution;
@@ -31,7 +31,7 @@ function search_other_function_filters() {
 	$r.="</select>";
  	
 	$r.="<select name='cnl_mois'>";
-	$r.="<option value=''>Toutes les mois</option>";
+	$r.="<option value=''>Tous les mois</option>";
 	for($i=1;$i<=12;$i++) {
 		$r.="<option value='".sprintf("%02d",$i)."' ";
 		if ($i==$cnl_mois) $r.="selected";

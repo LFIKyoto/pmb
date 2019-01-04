@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: index_mso.class.php,v 1.3 2013-01-31 11:32:45 mbertin Exp $
+// $Id: index_mso.class.php,v 1.4 2018-06-08 10:46:38 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -83,7 +83,11 @@ abstract class index_mso {
 			@copy($this->filename, $this->tmp_filename);
 			$this->to_filename=$this->filename.'.'.$this->convert_to;
 			$url=sprintf($this->params['jodconverter_url'],$this->to_filename);
-			$post=array('inputDocument'=>'@'.$this->tmp_filename);
+			if(function_exists("curl_file_create")){
+				$post=array("inputDocument"=>curl_file_create($this->tmp_filename));
+			}else{
+				$post=array('inputDocument'=>'@'.$this->tmp_filename);
+			}
 			$res='';
 			$ch=curl_init();
 			curl_setopt($ch, CURLOPT_URL, $url);
@@ -171,7 +175,11 @@ class index_mso_ppt extends index_mso {
 			@copy($this->filename, $this->tmp_filename);
 			$this->to_filename=$this->filename.'.'.$this->convert_to;
 			$url=sprintf($this->params['jodconverter_url'],$this->to_filename);
-			$post=array('inputDocument'=>'@'.$this->tmp_filename);
+			if(function_exists("curl_file_create")){
+				$post=array("inputDocument"=>curl_file_create($this->tmp_filename));
+			}else{
+				$post=array('inputDocument'=>'@'.$this->tmp_filename);
+			}
 			$res='';
 			$ch=curl_init();
 			curl_setopt($ch, CURLOPT_URL, $url);

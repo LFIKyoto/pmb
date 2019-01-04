@@ -2,70 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_achats.inc.php,v 1.20 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: func_achats.inc.php,v 1.25 2018-05-26 06:51:26 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-//Recuperation du statut session d'affichage des devis
-function getSessionDevState() {
-	global $deflt3dev_statut;
-	if (!$_SESSION['dev_statut'] && $deflt3dev_statut) {
-		$_SESSION['dev_statut']=$deflt3dev_statut;
-	}
-	return $_SESSION['dev_statut'];
-}
-//Definition du statut session d'affichage des devis
-function setSessionDevState($statut) {
-	$_SESSION['dev_statut']=$statut;
-	return;
-}
-
-//Recuperation du statut session d'affichage des bons de commande
-function getSessionCdeState() {
-	global $deflt3cde_statut;
-	if (!$_SESSION['cde_statut'] && $deflt3cde_statut) {
-		$_SESSION['cde_statut']=$deflt3cde_statut;
-	}
-	return $_SESSION['cde_statut'];
-}
-//Definition du statut session d'affichage des bons de commande
-function setSessionCdeState($statut) {
-	$_SESSION['cde_statut']=$statut;
-	return;
-}
-
-
-//Recuperation du statut session d'affichage des bons de livraison
-function getSessionLivState() {
-	global $deflt3liv_statut;
-	if (!$_SESSION['liv_statut'] && $deflt3liv_statut) {
-		$_SESSION['liv_statut']=$deflt3liv_statut;
-	}
-	return $_SESSION['liv_statut'];
-}
-//Definition du statut session d'affichage des bons de livraison
-function setSessionLivState($statut) {
-	$_SESSION['liv_statut']=$statut;
-	return;
-}
-
-
-//Recuperation du statut session d'affichage des factures
-function getSessionFacState() {
-	global $deflt3fac_statut;
-	if (!$_SESSION['fac_statut'] && $deflt3fac_statut) {
-		$_SESSION['fac_statut']=$deflt3fac_statut;
-	}
-	return $_SESSION['fac_statut'];
-}
-//Definition du statut session d'affichage des bons de livraison
-function setSessionFacState($statut) {
-	$_SESSION['fac_statut']=$statut;
-	return;
-}
-
-
-if ($acquisition_custom_calc_numero) {
+if(!isset($acquisition_custom_calc_numero)) $acquisition_custom_calc_numero = '';
+if ($acquisition_custom_calc_numero && file_exists($base_path."/acquisition/achats/".$acquisition_custom_calc_numero)) {
 	require_once($base_path."/acquisition/achats/".$acquisition_custom_calc_numero);
 } else {
 	
@@ -126,7 +68,7 @@ function calc($tab, $precision=0) {
 			case '1' :	//saisie des prix ht
 				$mnt_ht=$mnt_ht+($v['q']*$v['p']*((100-$v['r'])/100));
 				$mnt_tva=$mnt_tva+($v['q']*$v['p']*((100-$v['r'])/100)*($v['t']/100));
-				if($v['debit_tva']==2){ // on ajoute le montant de la TVA
+				if(isset($v['debit_tva']) && $v['debit_tva']==2){ // on ajoute le montant de la TVA
 					$mnt_ht+=($v['q']*$v['p']*((100-$v['r'])/100)*($v['t']/100));
 				}	
 				break;
@@ -142,7 +84,8 @@ function calc($tab, $precision=0) {
 				break;
 		}
 	}
-	
+	$tot_ht = 0;
+	$tot_tva = 0;
 	switch($acquisition_gestion_tva) {
 		case '1' :
 			$tot_ht=$mnt_ht;

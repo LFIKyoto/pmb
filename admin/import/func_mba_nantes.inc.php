@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_mba_nantes.inc.php,v 1.11 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: func_mba_nantes.inc.php,v 1.12 2018-01-09 08:54:31 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+global $include_path, $class_path; //Nécessaire pour certaines inclusions
 require_once("$class_path/thesaurus.class.php");
 require_once("$class_path/noeuds.class.php");
 require_once("$class_path/categories.class.php");

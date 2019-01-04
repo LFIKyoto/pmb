@@ -2,25 +2,23 @@
 
 // $Id: import_empr.txt,v 0.1 2003/11/21 9:44:264 Jonathan charest
 
-// Documentation sur l&atilde;utilisation de l&atilde;import
+// Documentation sur l'utilisation de l'import
 
 $content = "
-  <p><b>PMB: import-mini-howto</b> </p>
-  <p><strong>Na coluna da esquerda</strong> tem o nome dos campos da base de 
-  dados.<br />
-    &Eacute; nestes campos que se introduzir&aacute; as informa&ccedil;&otilde;es sobre os leitores.</p>
-  <p><strong>Na coluna do centro</strong> figura a posi&ccedil;&atilde;o do campo no ficheiro ex:<br />
-    2003,&quot;3&quot;,&quot;Archambault&quot;,... <br />2003 &eacute; a primeira posi&ccedil;&atilde;o,
-    &eacute; o ano em que o estudante entrou na escola, &quot;3&quot; est&aacute; na segunda posi&ccedil;&atilde;o, 
-  &eacute; a sess&atilde;o em curso do estudante, 
-    &quot;Archambault&quot; est&aacute; na terceira posi&ccedil;&atilde;o, &eacute; o nome de fam&iacute;lia do 
-  estudante.</p>
-  <p><strong>Na coluna da direita</strong>, &eacute; um exemplo da primeira linha do ficheiro, 
-  pode ser muito &uacute;til se se quiser mudar a posi&ccedil;&atilde;o dentro do ficheiro. N&atilde;o 
-  esquecer de clicar sobre Actualizar para que as mudan&ccedil;as sejam tomadas em 
-  conta.</p>
-  <p><strong>Os campos a vermelho</strong> s&atilde;o os campos n&atilde;o modific&aacute;veis pelo 
-  utilizador, eles preenchem-se sozinhos.</p>
+  <p><b>PMB : import-mini-howto</b> </p>
+  <p><strong>Dans la colonne de  gauche</strong> sont pr&eacute;sents le nom des champs de la base de donn&eacute;es pour y ins&eacute;rer les informations des lecteurs &agrave; importer.</p>
+  <p><strong>Dans la colonne du centre</strong> figure la position du champ dans
+    le fichier ex:<br />
+    &quot;12527&quot;,&quot;Archambault&quot;,&quot;rue de... <br />
+    &quot;12528&quot;,&quot;Baudin&quot;,&quot;rue de... <br />
+    12527 est la 1&egrave;re position,
+    c'est le code-barres du lecteur, la 2e position est le nom de famille du lecteur, la 3e son adresse, etc..</p>
+  <p><strong>La colonne de droite</strong> correspond au d&eacute;coupage de la premi&egrave;re
+    ligne du fichier.</p>
+  <p><strong>Les champs en rouge</strong>, sont des champ non modifiables par
+    l'utilisateur, ils 
+    vont se remplir tout seul.</p>
+  <p>Les champs marqu&eacute;s du signe * doivent &ecirc;tre imp&eacute;rativement renseign&eacute;s.</p>
 ";
 
 print $content;

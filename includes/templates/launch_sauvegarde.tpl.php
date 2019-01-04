@@ -5,7 +5,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: launch_sauvegarde.tpl.php,v 1.7 2009-05-16 11:19:54 dbellamy Exp $
+// $Id: launch_sauvegarde.tpl.php,v 1.9 2017-11-07 15:34:41 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -35,13 +35,13 @@ function checkForm(f)
 <form name="launch_sauvegarde" action="timer.php" method="post">
 <table>
 <th class"brd">
-	<center>'.$msg["sauv_launch_tree_titre"].'<br /><i>'.$msg["sauv_launch_tree_help"].'</i></center>
+	'.$msg["sauv_launch_tree_titre"].'<br /><i>'.$msg["sauv_launch_tree_help"].'</i>
 </th>
 <th class="brd" colspan="2">
-	<center>'.$msg["sauv_launch_title"].'</center>
+	'.$msg["sauv_launch_title"].'
 </th>
 <tr>
-	<td class="brd" rowspan=10 valign=top >!!sauvegardes_tree!!</td>
+	<td class="brd" rowspan=10 style="vertical-align:top">!!sauvegardes_tree!!</td>
 	<td class="nobrd" colspan="2">
 		<input type="radio" name="sauv_timer" value="1" checked 
 			onChange="

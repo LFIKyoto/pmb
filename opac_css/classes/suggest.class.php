@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggest.class.php,v 1.9.4.1 2015-09-16 11:12:40 jpermanne Exp $
+// $Id: suggest.class.php,v 1.13 2017-03-08 12:40:04 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
 	die("no access");
@@ -20,26 +20,26 @@ class suggest {
 	//  propriétés de la classe
 	// ---------------------------------------------------------------------------------------------------
 
-	var $inputString;       		// chaine en entrée
-	var $cleanInputString;       	// chaine en entrée nettoyée
-	var $searchIndex;       		// table d'indexation
-	var $searchValueFields;       	// table des contenus de champs
-	var $excludeNotes;       		// exclure les notes des recherches
-	var $arrayWords;				// liste des mots en entrée
-	var $arraySimilars;				// liste de tous les approchants pondérés
-	var $arraySimilarsByWord;		// liste de tous les approchants par mot
-	var $arrayPermutations;			// liste des différentes permutations d'approchants
-	var $permutationCode;			// tableau utilisé pour les permutations
-	var $permutationPos;			// position utilisée pour les permutations
-	var $maxSuggestions;			// nombre de suggestions maximum
-	var $maxResultsByPermutation;	// nombre de résultats maximum par permutation
-	var $tbChampBase;				// correspondance champs en base/libellé
-	var $arrayResults;				// tableau des résultats classés
+	public $inputString;       		// chaine en entrée
+	public $cleanInputString;       	// chaine en entrée nettoyée
+	public $searchIndex;       		// table d'indexation
+	public $searchValueFields;       	// table des contenus de champs
+	public $excludeNotes;       		// exclure les notes des recherches
+	public $arrayWords;				// liste des mots en entrée
+	public $arraySimilars;				// liste de tous les approchants pondérés
+	public $arraySimilarsByWord;		// liste de tous les approchants par mot
+	public $arrayPermutations;			// liste des différentes permutations d'approchants
+	public $permutationCode;			// tableau utilisé pour les permutations
+	public $permutationPos;			// position utilisée pour les permutations
+	public $maxSuggestions;			// nombre de suggestions maximum
+	public $maxResultsByPermutation;	// nombre de résultats maximum par permutation
+	public $tbChampBase;				// correspondance champs en base/libellé
+	public $arrayResults;				// tableau des résultats classés
 
 // ---------------------------------------------------------------------------------------------------
 //  suggest($string) : constructeur
 // ---------------------------------------------------------------------------------------------------
-	function suggest($string,$searchTable='notices',$maxSuggest=10,$maxResultsByPermutation=500,$excludeNotes=true) {
+	public function __construct($string,$searchTable='notices',$maxSuggest=10,$maxResultsByPermutation=500,$excludeNotes=true) {
 		$this->loadTbChampBase();
 		$this->maxSuggestions = $maxSuggest;
 		$this->arrayResults = array();
@@ -58,7 +58,7 @@ class suggest {
 // ---------------------------------------------------------------------------------------------------
 //  loadTbChampBase() : correspondance champs base / libellés OPAC
 // ---------------------------------------------------------------------------------------------------
-	function loadTbChampBase() {
+	public function loadTbChampBase() {
 		global $champ_base,$include_path,$msg;
 	
 		if(!count($champ_base)) {
@@ -115,7 +115,7 @@ class suggest {
 // ---------------------------------------------------------------------------------------------------
 //  findWords() : nettoie et trouve tous les mots de la chaine saisie
 // ---------------------------------------------------------------------------------------------------
-	function findWords() {
+	public function findWords() {
 		$this->cleanInputString = $this->cleanString($this->inputString);
 		$this->arrayWords = str_word_count($this->cleanInputString,1);
 		//on nettoie les doublons éventuels
@@ -131,7 +131,7 @@ class suggest {
 //  findSimilars() : trouve les approchants pondérés depuis le tableau de mots
 //	la pondération est inversée : plus "pond" est faible, plus le mot est pertinent
 // ---------------------------------------------------------------------------------------------------
-	function findAndPermuteSimilars() {
+	public function findAndPermuteSimilars() {
 		global $dbh,$lang;
 		
 		if(count($this->arrayWords)){
@@ -196,7 +196,7 @@ class suggest {
 // ---------------------------------------------------------------------------------------------------
 //  listUniqueSimilars() : renvoie un tableau des suggestions uniques
 // ---------------------------------------------------------------------------------------------------
-	function listUniqueSimilars(){
+	public function listUniqueSimilars(){
 		$arrayReturn = array();
 		if (count($this->arraySimilars)) {
 			foreach ($this->arraySimilars as $value) {
@@ -212,7 +212,7 @@ class suggest {
 //  findPermutations() : trouve les permutations du tableau en entrée
 //	attention : fonction récursive (d'où le paramètre en entrée, et les deux propriétés de classe)
 // ---------------------------------------------------------------------------------------------------
-	function findPermutations($array) {	
+	public function findPermutations($array) {	
 		if(count($array)) {
 			for($i=0; $i<count($array[0]); $i++) {				
 				$tmpArray = $array;
@@ -234,7 +234,7 @@ class suggest {
 // ---------------------------------------------------------------------------------------------------
 //  arrayResultsSort($sort) : trie la propriété arrayResultFinal selon la clé donnée 
 // ---------------------------------------------------------------------------------------------------
-	function arrayResultsSort($sort){
+	public function arrayResultsSort($sort){
 		$sort_values=array();
 		for ($i = 0; $i < sizeof($this->arrayResults); $i++) {
 			$sort_values[$i] = $this->arrayResults[$i][$sort];
@@ -253,7 +253,7 @@ class suggest {
 //	classés par distance max des deux termes les plus éloignés (ou position si un seul terme) pondérée
 //	par nombre d'occurrences en regroupement
 // ---------------------------------------------------------------------------------------------------
-	function findAndOrderPermutationInDatabase() {
+	public function findAndOrderPermutationInDatabase() {
 		global $dbh;
 		
 		if(count($this->arrayPermutations)){
@@ -391,7 +391,7 @@ class suggest {
 // ---------------------------------------------------------------------------------------------------
 //  markBold($string,$wordToFind) : met un mot en gras dans une chaîne
 // ---------------------------------------------------------------------------------------------------
-	function markBold($string,$wordsToFind){
+	public function markBold($string,$wordsToFind){
 		$specialChars = array("a","e","i","o","u","y","c","n" );
 		$specialCharsReplacement = array("[a|à|á|â|ã|ä|å]{1}","[e|è|é|ê|ë]{1}","[i|ì|í|î|ï]{1}","[o|ò|ó|ô|õ|ö|ø]{1}","[u|ù|ú|û|ü]{1}","[y|y]{1}","[c|ç]{1}","[n|ñ]{1}" );
 		$wordsToFind = str_replace($specialChars, $specialCharsReplacement, $wordsToFind);
@@ -406,7 +406,7 @@ class suggest {
 // ---------------------------------------------------------------------------------------------------
 //  listFoundWords($string) : renvoie un tableau des mots uniques trouvés en gras
 // ---------------------------------------------------------------------------------------------------
-	function listFoundWords($string){
+	public function listFoundWords($string){
 		preg_match_all("`<b>(.*?)<\/b>`",$string,$arrayReturn);
 		$arrayReturn = array_unique($arrayReturn[1]);
 		return $arrayReturn;
@@ -415,11 +415,24 @@ class suggest {
 // ---------------------------------------------------------------------------------------------------
 //  cleanString($string) : renvoie une chaine nettoyée
 // ---------------------------------------------------------------------------------------------------
-	function cleanString($string){
+	public function cleanString($string){
 		$string = str_replace("%","",$string);
 		$string = convert_diacrit($string);
 		$string = strip_empty_words($string);
 		return $string;
 	}
-
+	
+	public static function get_add_link() {
+		global $msg;
+		global $opac_show_suggest;
+		global $opac_resa_popup;
+		$add_link = '';
+		if ($opac_show_suggest) {
+			$add_link .= "<span class=\"espaceResultSearch\">&nbsp;&nbsp;&nbsp;</span><span class=\"search_bt_sugg\"><a href=# ";
+			if ($opac_resa_popup) $add_link .= " onClick=\"w=window.open('./do_resa.php?lvl=make_sugg&oresa=popup','doresa','scrollbars=yes,width=600,height=600,menubar=0,resizable=yes'); w.focus(); return false;\"";
+			else $add_link .= "onClick=\"document.location='./do_resa.php?lvl=make_sugg&oresa=popup' \" ";
+			$add_link .= " title='".$msg["empr_bt_make_sugg"]."' >".$msg['empr_bt_make_sugg']."</a></span>";
+		}
+		return $add_link;
+	}
 } # fin de définition de la classe

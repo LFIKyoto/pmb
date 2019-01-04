@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: start_import.php,v 1.22 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: start_import.php,v 1.28 2018-07-25 06:19:18 dgoron Exp $
 
 //Execution de l'import
 $base_path = "../..";
@@ -11,6 +11,10 @@ $base_title = "\$msg[ie_import_running]";
 require ($base_path."/includes/init.inc.php");
 require_once ("$include_path/parser.inc.php");
 
+require_once ($base_path."/admin/convert/start_import.class.php");
+require_once ($base_path."/admin/convert/start_export.class.php");
+
+if(!isset($n_current)) $n_current = 0;
 //Gestion de l'encodage du fichier d'import
 if(isset($encodage_fic_source)){
 	$_SESSION["encodage_fic_source"]=$encodage_fic_source;
@@ -100,42 +104,13 @@ for ($i = 0; $i < count($step); $i ++) {
 require_once ("xmltransform.php");
 
 //En fonction du type de fichier d'entrée, inclusion du script de gestion des entrées
-switch ($input_type) {
-	case "xml" :
-		require_once ("imports/input_xml.inc.php");
-		break;
-	case "iso_2709" :
-		require_once ("imports/input_iso_2709.inc.php");
-		break;
-	case "text" :
-		require_once("imports/input_text.inc.php");
-		break;
-	case "custom" :
-		require_once ("imports/$param_path/".$input_params['SCRIPT']);
-		break;
-	default :
-		die($msg["ie_import_entry_not_valid"]);
-}
+$input_instance = start_import::get_instance_from_input_type($input_type);
 
 //En fonction du type de fichier de sortie, inclusion du script de gestion des sorties
-switch ($output_type) {
-	case "xml" :
-		require_once ("imports/output_xml.inc.php");
-		break;
-	case "txt" :
-		require_once ("imports/output_txt.inc.php");
-		break;
-	case "iso_2709" :
-		require_once("imports/output_iso_2709.inc.php");
-		break;
-	case "custom" :
-		require_once ("imports/$param_path/".$output_params['SCRIPT']);
-		break;
-	default :
-		die($msg["ie_output_type_not_valid"]);
-}
+$output_instance = start_export::get_instance_from_output_type($output_type);
 
 //Si premier accès
+if(!isset($first)) $first = '';
 if (!$first) {
 	$origine=str_replace(" ","",microtime());
 	$origine=str_replace("0.","",$origine);
@@ -175,14 +150,33 @@ if (!$first) {
 	$fi = fopen("$base_path/temp/".$file_in, "r");
 
 	//Récupération du nombre de notices et enregistrement dans la base de données des notices
-	$index = _get_n_notices_($fi, "$base_path/temp/".$file_in, $input_params,$origine);
+	if(is_object($input_instance)) {
+		$index = $input_instance->_get_n_notices_($fi, "$base_path/temp/".$file_in, $input_params,$origine);
+	} else {
+		$index = _get_n_notices_($fi, "$base_path/temp/".$file_in, $input_params,$origine);
+	}
+	
 	if (count($index) == 0) {
 		error_message_history($msg["ie_empty_file"], sprintf($msg["ie_empty_file_detail"],$import_type_l), 1);
 		exit;
 	}
 
 	//Entête
-	@ fwrite($fo, _get_header_($output_params));
+	if(isset($output_params['SCRIPT'])) {
+		$class_name = str_replace('.class.php', '', $output_params['SCRIPT']);
+		if(class_exists($class_name)) {
+			$import_instance = new $class_name();
+			fwrite($fo, $import_instance->_get_header_($output_params));
+		} else {
+			fwrite($fo, _get_header_($output_params));
+		}
+	} else {
+		if(is_object($output_instance)) {
+			fwrite($fo, $output_instance->_get_header_($output_params));
+		} else {
+			fwrite($fo, _get_header_($output_params));
+		}
+	}
 	fclose($fo);
 
 	//Vidage de la table de log
@@ -203,7 +197,7 @@ function convert_notice($notice,$encoding) {
 		if($encoding) $s['ENCODING'] = $encoding;
 		$islast=($i==count($step)-1);
 		$isfirst=($i==0);
-		switch ($s[TYPE]) {
+		switch ($s['TYPE']) {
 				case "xmltransform" :
 					$r = perform_xslt($notice, $s, $islast, $isfirst, $param_path);
 					break;
@@ -227,7 +221,7 @@ function convert_notice($notice,$encoding) {
 				break;
 		} else {
 				$notice = $r['DATA'];
-				if($r['WARNING']){
+				if(isset($r['WARNING']) && $r['WARNING']){
 					$n_errors ++;
 					$message_convert.= "<b>Notice ". ($n_current + $z)." : </b>".$r['WARNING']."<br />\n";
 				}
@@ -243,11 +237,11 @@ $n_notices=pmb_mysql_result($resultat,0,0);
 $percent = @ round(($n_current / $n_notices) * 100);
 if ($percent == 0)
 	$percent = 1;
-echo "<center><h3>".$msg["conversion_en_cours"]."</h3></center><br />\n";
+echo "<h3>".$msg["conversion_en_cours"]."</h3></center><br />\n";
 
-echo "<table align=center width=100%><tr><td style=\"border-width:1px;border-style:solid;border-color:#FFFFFF;\" width=100%><img src=\"$base_path/images/jauge.png\" width=\"".$percent."%\" height=\"16\"></td></tr><tr><td ><center>".round($percent)."%</center></td></tr></table>\n";
+echo "<table class='' width=100%><tr><td style=\"border-width:1px;border-style:solid;border-color:#FFFFFF;\" width=100%><div class='jauge'><img src='".get_url_icon('jauge.png')."' width=\"".$percent."%\" height=\"16\"></div></td></tr><tr><td >".round($percent)."%</td></tr></table>\n";
 
-echo "<center>".sprintf($msg["ie_processed_notices"],$n_current,$n_notices,($n_notices - $n_current))."</center>";
+echo "<span class='center'>".sprintf($msg["ie_processed_notices"],$n_current,$n_notices,($n_notices - $n_current))."</span>";
 $z = 0;
 
 //Ouverture du fichier final
@@ -286,7 +280,21 @@ if ($message_convert != "") {
 //Fin du fichier de notice ?
 if ($z < $n_per_pass) {
 	$n_current = $n_current + $z;
-	@ fwrite($fo, _get_footer_($output_params));
+	if(isset($output_params['SCRIPT'])) {
+		$class_name = str_replace('.class.php', '', $output_params['SCRIPT']);
+		if(class_exists($class_name)) {
+			$export_instance = new $class_name();
+			fwrite($fo, $export_instance->_get_footer_($output_params));
+		} else {
+			fwrite($fo, _get_footer_($output_params));
+		}
+	} else {
+		if(is_object($output_instance)) {
+			fwrite($fo, $output_instance->_get_footer_($output_params));
+		} else {
+			fwrite($fo, _get_footer_($output_params));
+		}
+	}
 	fclose($fo);
 	$requete="delete from import_marc where origine='$origine'";
 	pmb_mysql_query($requete);

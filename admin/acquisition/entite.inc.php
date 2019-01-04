@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entite.inc.php,v 1.31 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: entite.inc.php,v 1.32 2017-04-19 12:37:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -38,7 +38,7 @@ function show_list_coord() {
         print ("<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td><i>$row->raison_sociale</i></td></tr>");
 	}
 	print "</table>
-		<input class='bouton' type='button' value=' ".htmlentities($msg[acquisition_ajout_biblio],ENT_QUOTES,$charset)." ' onClick=\"document.location='./admin.php?categ=acquisition&sub=entite&action=add'\" />";
+		<input class='bouton' type='button' value=' ".htmlentities($msg['acquisition_ajout_biblio'],ENT_QUOTES,$charset)." ' onClick=\"document.location='./admin.php?categ=acquisition&sub=entite&action=add'\" />";
 
 
 }
@@ -52,12 +52,12 @@ function show_coord_form($id= 0) {
 	global $ptab, $script;
 	
 	$ptab[1] = $ptab[1].$ptab[10].$ptab[11];
-	$ptab[1] = str_replace('!!adresse!!', htmlentities($msg[acquisition_adr_fac],ENT_QUOTES, $charset), $ptab[1]);
+	$ptab[1] = str_replace('!!adresse!!', htmlentities($msg['acquisition_adr_fac'],ENT_QUOTES, $charset), $ptab[1]);
 	$coord_form = str_replace('!!id!!', $id, $coord_form);
 	$ptab[3] = str_replace('!!id!!', $id, $ptab[3]);
 
 	if(!$id) {
-		$coord_form = str_replace('!!form_title!!', htmlentities($msg[acquisition_ajout_biblio],ENT_QUOTES,$charset), $coord_form);
+		$coord_form = str_replace('!!form_title!!', htmlentities($msg['acquisition_ajout_biblio'],ENT_QUOTES,$charset), $coord_form);
 		$coord_form = str_replace('!!raison_suppr!!', '', $coord_form);
 		$coord_form = str_replace('!!raison!!', '', $coord_form);
 		
@@ -106,7 +106,7 @@ function show_coord_form($id= 0) {
 	} else {
 		
 		$biblio = new entites($id);
-		$coord_form = str_replace('!!form_title!!', htmlentities($msg[acquisition_modif_biblio],ENT_QUOTES,$charset), $coord_form);
+		$coord_form = str_replace('!!form_title!!', htmlentities($msg['acquisition_modif_biblio'],ENT_QUOTES,$charset), $coord_form);
 	
 		$coord_form = str_replace('!!raison!!', htmlentities($biblio->raison_sociale,ENT_QUOTES, $charset), $coord_form);
 
@@ -200,6 +200,7 @@ function autorisations($autorisations='') {
 	global $coord_form;
 	global $ptab;
 	
+	$id_check_list = '';
 	$aut = explode(' ',$autorisations);
 	
 	//Récupération de la liste des utilisateurs
@@ -324,12 +325,12 @@ switch($action) {
 				entites::delete($id);
 				show_list_coord();
 			} else {
-				$msg_suppr_err = $msg[acquisition_entite_used] ;
-				if ($total2) $msg_suppr_err .= "<br />- ".$msg[acquisition_entite_used_fou] ;
-				if ($total3) $msg_suppr_err .= "<br />- ".$msg[acquisition_entite_used_exe] ;
-				if ($total4) $msg_suppr_err .= "<br />- ".$msg[acquisition_entite_used_bud] ;
-				if ($total5) $msg_suppr_err .= "<br />- ".$msg[acquisition_entite_used_sug] ;
-				if ($total7) $msg_suppr_err .= "<br />- ".$msg[acquisition_entite_used_act] ;		
+				$msg_suppr_err = $msg['acquisition_entite_used'] ;
+				if ($total2) $msg_suppr_err .= "<br />- ".$msg['acquisition_entite_used_fou'] ;
+				if ($total3) $msg_suppr_err .= "<br />- ".$msg['acquisition_entite_used_exe'] ;
+				if ($total4) $msg_suppr_err .= "<br />- ".$msg['acquisition_entite_used_bud'] ;
+				if ($total5) $msg_suppr_err .= "<br />- ".$msg['acquisition_entite_used_sug'] ;
+				if ($total7) $msg_suppr_err .= "<br />- ".$msg['acquisition_entite_used_act'] ;		
 				
 				error_message($msg[321], $msg_suppr_err, 1, 'admin.php?categ=acquisition&sub=entite');
 			}

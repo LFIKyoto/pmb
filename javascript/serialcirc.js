@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc.js,v 1.8 2014-12-12 09:59:03 jpermanne Exp $
+// $Id: serialcirc.js,v 1.9 2017-09-28 09:23:37 dgoron Exp $
 
 function serialcirc_circ_get_info_cb(cb,container){		
 	
@@ -26,7 +26,7 @@ function serialcirc_circ_list_bull_envoyer_alert(expl_id){
 function serialcirc_print_list_circ(expl_id,start_diff_id){
 	var url = './ajax.php?module=circ&categ=periocirc&sub=print_diffusion&expl_id='+expl_id;
 	url+='&start_diff_id='+start_diff_id;	
-	openPopUp(url, 'circulation', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes');
+	openPopUp(url, 'circulation');
 }
 
 function serialize (txt) {
@@ -59,7 +59,7 @@ function serialcirc_print_all_sel_list_diff(list){
 	url+='&list='+serialize(list);
 	//console.log(url);
 	
-	openPopUp(url, 'circulation', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes');
+	openPopUp(url, 'circulation');
 }
 
 function serialcirc_comeback_expl(expl_id){

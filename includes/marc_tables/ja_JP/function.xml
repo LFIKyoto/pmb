@@ -2,7 +2,7 @@
 <!DOCTYPE XMLlist SYSTEM "../../XMLlist.dtd">
 
 <!-- liste des codes fonction en UNIMARC (japonais)
-$Id: function.xml,v 1.1 2012-09-27 15:20:18 arenou Exp $ -->
+$Id: function.xml,v 1.2 2017-04-05 14:11:48 ngantier Exp $ -->
 
 <XMLlist>
 	<entry code="005">俳優</entry>
@@ -40,7 +40,7 @@ $Id: function.xml,v 1.1 2012-09-27 15:20:18 arenou Exp $ -->
 	<entry code="260">Copyright holder</entry>
 	<entry code="270">Corrector</entry>
 	<entry code="273">Exposition Commissioner</entry>
-	<entry code="274">ダンサー</entry>
+	<entry code="275">ダンサー</entry>
 	<entry code="280">Dedicatee</entry>
 	<entry code="290">Dedicator</entry>
 	<entry code="300">監督</entry>

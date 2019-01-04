@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: opac_config.inc.php,v 1.14 2015-04-16 14:34:14 jpermanne Exp $
+// $Id: opac_config.inc.php,v 1.16 2017-06-15 12:25:23 mbertin Exp $
 
 // fichier de configuration de l'OPAC PMB
 // the lang is set in start.inc.php why this piece of code?
@@ -27,5 +27,13 @@ define('AUDIT_TITRE_UNIFORME',13);
 define('AUDIT_DEMANDE'	,    14);
 define('AUDIT_ACTION'	,    15);
 define('AUDIT_NOTE',16);
+define('AUDIT_EDITORIAL_ARTICLE',20);
+define('AUDIT_EDITORIAL_SECTION',21);
+define('AUDIT_EXPLNUM',22);
+define('AUDIT_CONCEPT', 23);
+
+$CACHE_ENGINE = 'apcu';//Type de moteur de cache php utilisé
+$CACHE_MAXTIME = 86400;//Duree de mise en cache
+$KEY_CACHE_FILE_XML = 'key_cache_file_xml';//Prefix pour la cle des variables en cache pour les fichiers XML
 		
 @include_once("includes/opac_config_local.inc.php") ;

@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: en_UK.xml,v 1.2 2015-06-26 08:07:04 pmbs Exp $ -->
+$Id: en_UK.xml,v 1.3 2016-06-01 10:34:57 jpermanne Exp $ -->
 
 <XMLlist>
 	<entry code="planificateur_dsi_bannette">Selection of the SDI basket(s)</entry>
@@ -23,5 +23,5 @@ $Id: en_UK.xml,v 1.2 2015-06-26 08:07:04 pmbs Exp $ -->
 	<entry code="dsi_report_header">Selective dissemination of informations</entry>
 	<entry code="dsi_report_action">Action(s) on the SDI basket</entry>
 	<entry code="dsi_stopped">Stopped task</entry>
-	<entry code="dsi_no_diffusable">Time before next dissemination : %s day(s)</entry>
+	<entry code="dsi_no_diffusable">No action made, basket deadline didn't occure (periodicity : %s day(s))</entry>
 </XMLlist>

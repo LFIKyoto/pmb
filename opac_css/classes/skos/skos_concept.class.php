@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: skos_concept.class.php,v 1.14 2015-06-18 14:23:54 apetithomme Exp $
+// $Id: skos_concept.class.php,v 1.36 2018-10-16 09:50:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -20,42 +20,51 @@ require_once($class_path."/titre_uniforme.class.php");
 require_once($class_path."/indexint.class.php");
 require_once($class_path."/explnum.class.php");
 require_once($class_path."/authperso_authority.class.php");
+require_once($class_path."/skos/skos_view_concepts.class.php");
+require_once($class_path."/skos/skos_view_concept.class.php");
+require_once($class_path."/authority.class.php");
 
-if(!defined(TYPE_NOTICE)){
-	define(TYPE_NOTICE,1);
+if(!defined('TYPE_NOTICE')){
+	define('TYPE_NOTICE',1);
 }
-if(!defined(TYPE_AUTHOR)){
-	define(TYPE_AUTHOR,2);
+if(!defined('TYPE_AUTHOR')){
+	define('TYPE_AUTHOR',2);
 }
-if(!defined(TYPE_CATEGORY)){
-	define(TYPE_CATEGORY,3);
+if(!defined('TYPE_CATEGORY')){
+	define('TYPE_CATEGORY',3);
 }
-if(!defined(TYPE_PUBLISHER)){
-	define(TYPE_PUBLISHER,4);
+if(!defined('TYPE_PUBLISHER')){
+	define('TYPE_PUBLISHER',4);
 }
-if(!defined(TYPE_COLLECTION)){
-	define(TYPE_COLLECTION,5);
+if(!defined('TYPE_COLLECTION')){
+	define('TYPE_COLLECTION',5);
 }
-if(!defined(TYPE_SUBCOLLECTION)){
-	define(TYPE_SUBCOLLECTION,6);
+if(!defined('TYPE_SUBCOLLECTION')){
+	define('TYPE_SUBCOLLECTION',6);
 }
-if(!defined(TYPE_SERIE)){
-	define(TYPE_SERIE,7);
+if(!defined('TYPE_SERIE')){
+	define('TYPE_SERIE',7);
 }
-if(!defined(TYPE_TITRE_UNIFORME)){
-	define(TYPE_TITRE_UNIFORME,8);
+if(!defined('TYPE_TITRE_UNIFORME')){
+	define('TYPE_TITRE_UNIFORME',8);
 }
-if(!defined(TYPE_INDEXINT)){
-	define(TYPE_INDEXINT,9);
+if(!defined('TYPE_INDEXINT')){
+	define('TYPE_INDEXINT',9);
 }
-if(!defined(TYPE_EXPL)){
-	define(TYPE_EXPL,10);
+if(!defined('TYPE_EXPL')){
+	define('TYPE_EXPL',10);
 }
-if(!defined(TYPE_EXPLNUM)){
-	define(TYPE_EXPLNUM,11);
+if(!defined('TYPE_EXPLNUM')){
+	define('TYPE_EXPLNUM',11);
 }
-if(!defined(TYPE_AUTHPERSO)){
-	define(TYPE_AUTHPERSO,12);
+if(!defined('TYPE_AUTHPERSO')){
+	define('TYPE_AUTHPERSO',12);
+}
+if(!defined('TYPE_CMS_SECTION')){
+	define('TYPE_CMS_SECTION',13);
+}
+if(!defined('TYPE_CMS_ARTICLE')){
+	define('TYPE_CMS_ARTICLE',14);
 }
 
 /**
@@ -101,10 +110,22 @@ class skos_concept {
 	private $narrowers;
 	
 	/**
+	 * template des enfants du concept
+	 * @var string
+	 */
+	private $narrowers_list;
+	
+	/**
 	 * Parents du concept
 	 * @var skos_concepts_list
 	 */
 	private $broaders;
+	
+	/**
+	 * template des parents du concept
+	 * @var string
+	 */
+	private $broaders_list;
 	
 	/**
 	 * Concepts composés qui utilisent ce concept
@@ -123,6 +144,34 @@ class skos_concept {
 	 * @var array
 	 */
 	private $indexed_authorities;
+
+	/**
+	 * Tableau des champs perso
+	 * @var array
+	 */	
+	private $p_perso;
+	
+	/**
+	 * Note du concept
+	 * @var string
+	 */
+	private $note;
+	/**
+	 * Definition du concept
+	 * @var string
+	 */
+	private $definition;
+	/**
+	 * Termes associés
+	 * @var skos_concepts_list $related
+	 */
+	private $related;
+	
+	/**
+	 * template des termes associés du concept
+	 * @var string
+	 */
+	private $related_list;
 	
 	/**
 	 * Constructeur d'un concept
@@ -169,27 +218,39 @@ class skos_concept {
 	public function get_display_label() {
 		if (!$this->display_label) {
 			global $lang;
+				
+			$this->check_display_label_in_index();
+			if(!$this->display_label){
 	
-			$query = "select * where {
-				<".$this->uri."> <http://www.w3.org/2004/02/skos/core#prefLabel> ?label
-			}";
-			
-			skos_datastore::query($query);
-			if(skos_datastore::num_rows()){
-				$results = skos_datastore::get_result();
-				foreach($results as $key=>$result){
-					if($result->label_lang==substr($lang,0,2)){
-						$this->display_label = $result->label;
-						break;
+				$query = "select * where {
+					<".$this->uri."> <http://www.w3.org/2004/02/skos/core#prefLabel> ?label
+				}";
+				
+				skos_datastore::query($query);
+				if(skos_datastore::num_rows()){
+					$results = skos_datastore::get_result();
+					foreach($results as $key=>$result){
+						if(isset($result->label_lang) && $result->label_lang==substr($lang,0,2)){
+							$this->display_label = $result->label;
+							break;
+						}
 					}
-				}
-				//pas de langue de l'interface trouvée
-				if (!$this->display_label){
-					$this->display_label = $result->label;
+					//pas de langue de l'interface trouvée
+					if (!$this->display_label){
+						$this->display_label = $result->label;
+					}
 				}
 			}
 		}
 		return $this->display_label;
+	}
+	
+	private function check_display_label_in_index(){
+		$query = 'select value from skos_fields_global_index where id_item = '.$this->id.' and code_champ = code_ss_champ and code_champ = 1';
+		$result = pmb_mysql_query($query);
+		if(pmb_mysql_num_rows($result)){
+			$this->display_label = pmb_mysql_result($result, 0, 0);
+		}
 	}
 	
 	/**
@@ -199,19 +260,24 @@ class skos_concept {
 	public function get_schemes() {
 		global $dbh, $lang;
 		
-		if (!$this->schemes) {
-			$query = "select value, lang from skos_fields_global_index where id_item = ".$this->id." and code_champ = 4 and code_ss_champ = 1";
+		if (!isset($this->schemes)) {
+			$this->schemes = array();
+			$query = "select value, lang, authority_num from skos_fields_global_index where id_item = ".$this->id." and code_champ = 4 and code_ss_champ = 1";
+			$last_values = array();
 			$result = pmb_mysql_query($query, $dbh);
-			if ($result && pmb_mysql_num_rows($result)) {
+			if (pmb_mysql_num_rows($result)) {
 				while ($row = pmb_mysql_fetch_object($result)) {
 					if ($row->lang == substr($lang,0,2)) {
-						$this->schemes = $row->value;
+						$this->schemes[$row->authority_num] = $row->value;
 						break;
 					}
+					$last_values[$row->authority_num] = $row->value;
 				}
 				//pas de langue de l'interface trouvée
-				if (!$this->schemes) {
-					$this->schemes = $row->value;
+				foreach ($last_values as $scheme_id => $last_value) {
+					if (!isset($this->schemes[$scheme_id])) {
+						$this->schemes[$scheme_id] = $last_value;
+					}
 				}
 			}
 		}
@@ -255,6 +321,16 @@ class skos_concept {
 	}
 	
 	/**
+	 * Retourne le rendu HTML des enfants du concept
+	 */
+	public function get_narrowers_list() {
+	    if (!isset($this->narrowers_list)) {
+	        $this->narrowers_list = skos_view_concepts::get_narrowers_list($this->get_narrowers());
+	    }
+	    return $this->narrowers_list;
+	}
+	
+	/**
 	 * Retourne les parents du concept
 	 * @return skos_concepts_list Liste des parents du concept
 	 */
@@ -278,6 +354,26 @@ class skos_concept {
 	}
 	
 	/**
+	 * Retourne le rendu HTML des enfants du concept
+	 */
+	public function get_broaders_list() {
+	    if (!isset($this->broaders_list)) {
+	        $this->broaders_list = skos_view_concepts::get_broaders_list($this->get_broaders());
+	    }
+	    return $this->broaders_list;
+	}
+	
+	/**
+	 * Retourne le rendu HTML des termes associés
+	 */
+	public function get_related_list() {	    
+	    if (!isset($this->related_list)) {
+	        $this->related_list = skos_view_concepts::get_related_list($this->get_related());
+	    }
+	    return $this->related_list;
+	}
+	
+	/**
 	 * Retourne les identifiants des notices indexées par le concept
 	 * @return array Tableau des notices indexées par le concept
 	 */
@@ -294,6 +390,8 @@ class skos_concept {
 					$this->indexed_notices[] = $row->num_object;
 				}
 			}
+			$filter = new filter_results($this->indexed_notices);
+			$this->indexed_notices = explode(",",$filter->get_results());
 		}
 		return $this->indexed_notices;
 	}
@@ -603,5 +701,146 @@ class skos_concept {
 			}
 		}
 		return $details;
+	}
+	
+	public function get_details_list() {
+		return skos_view_concept::get_detail_concept($this);
+	}
+	
+	public function get_db_id() {
+		return $this->get_id();
+	}
+	
+	public function get_isbd() {
+		return $this->get_display_label();
+	}
+	
+	public function get_header() {
+		return $this->get_display_label();
+	}
+	
+	public function get_permalink() {
+		global $liens_opac;
+		return str_replace('!!id!!', $this->get_id(), $liens_opac['lien_rech_concept']);
+	}
+	
+	public function get_comment() {
+		return '';
+	}
+	
+	public function get_authoritieslist() {
+		return skos_view_concept::get_authorities_indexed_with_concept($this);
+	}
+	
+	public function format_datas($antiloop = false){
+		$formatted_data = array(
+				'id' => $this->get_id(),
+				'uri' => $this->get_uri(),
+				'permalink' => $this->get_permalink(),
+				'label' => $this->get_isbd(),
+				'note' => $this->get_note(),
+				'schemes' => $this->get_schemes(),
+				'broaders_list' => $this->get_broaders_list(),
+				'narrowers_list' => $this->get_narrowers_list()
+		);
+// 		$authority = new authority(0, $this->id, AUT_TABLE_CONCEPT);
+// 		$formatted_data = array_merge($authority->format_datas(), $formatted_data);
+		return $formatted_data;
+	}
+	
+	/**
+	 * Retourne les champs perso du concept
+	 */
+	public function get_p_perso() {
+		if(!isset($this->p_perso)) {
+			$this->p_perso = $this->get_authority()->get_p_perso();
+		}
+		return $this->p_perso;
+	}
+	
+	public function get_authority() {
+		return authorities_collection::get_authority('authority', 0, ['num_object' => $this->id, 'type_object' => AUT_TABLE_CONCEPT]);
+	}
+	
+	/**
+	 * Retourne la note
+	 * @return string
+	 */
+	public function get_note() {
+		global $lang;
+			
+		if (!$this->note) {
+			$query = "select * where {
+				<".$this->uri."> <http://www.w3.org/2004/02/skos/core#note> ?note
+			}";
+			skos_datastore::query($query);
+			if(skos_datastore::num_rows()){
+				$results = skos_datastore::get_result();
+				foreach($results as $key=>$result){
+					if($result->note_lang==substr($lang,0,2)){
+						$this->note = $result->note;
+						break;
+					}
+				}
+				//pas de langue de l'interface trouvée
+				if (!$this->note){
+					$this->note = $result->note;
+				}
+			}
+		}
+		return $this->note;
+	}
+	
+	/**
+	 * Retourne la definition
+	 * @return string
+	 */
+	public function get_definition() {
+	    global $lang;
+	    
+	    if (!$this->definition) {
+	        $query = "select * where {
+				<".$this->uri."> <http://www.w3.org/2004/02/skos/core#definition> ?definition
+			}";
+	        skos_datastore::query($query);
+	        if(skos_datastore::num_rows()){
+	            $results = skos_datastore::get_result();
+	            foreach($results as $key=>$result){
+	                if($result->definition_lang==substr($lang,0,2)){
+	                    $this->definition = $result->definition;
+	                    break;
+	                }
+	            }
+	            //pas de langue de l'interface trouvée
+	            if (!$this->definition){
+	                $this->definition = $result->definition;
+	            }
+	        }
+	    }
+	    return $this->definition;
+	}
+	
+	/**
+	 * retourne les termes associés
+	 * @return skos_concepts_list
+	 */
+	public function get_related() {
+	    if (isset($this->related)) {
+	        return $this->related;
+	    }
+	    $this->related = new skos_concepts_list();
+	    
+	    $query = "select ?related where {
+			<".$this->uri."> <http://www.w3.org/2004/02/skos/core#related> ?related
+		}";
+	    
+	    skos_datastore::query($query);
+	    if(skos_datastore::num_rows()){
+	        $results = skos_datastore::get_result();
+	        foreach($results as $result){
+	            $this->related->add_concept(new skos_concept(0, $result->related));
+	        }
+	    }
+	    return $this->related;
 	}
 }

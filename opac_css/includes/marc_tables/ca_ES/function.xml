@@ -2,7 +2,7 @@
 <!DOCTYPE XMLlist SYSTEM "../../XMLlist.dtd">
 
 <!-- liste des codes fonction en UNIMARC (français)
-$Id: function.xml,v 1.1 2006-03-07 23:12:25 touraine37 Exp $ -->
+$Id: function.xml,v 1.2 2017-04-05 14:11:48 ngantier Exp $ -->
 
 <XMLlist>
 <entry code="005">Actor</entry>
@@ -33,7 +33,7 @@ $Id: function.xml,v 1.1 2006-03-07 23:12:25 touraine37 Exp $ -->
 	
 <entry code="273">Comissari d'una exposició</entry>
 	
-<entry code="274">Coordinador</entry>
+<entry code="275">Coordinador</entry>
 
 <entry code="300">Director</entry>
 	

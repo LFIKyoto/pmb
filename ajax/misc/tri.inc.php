@@ -2,17 +2,22 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: tri.inc.php,v 1.4 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: tri.inc.php,v 1.7 2016-12-13 10:54:34 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+require_once($class_path."/notice_relations.class.php");
+
 switch($quoifaire){	
 	case 'up_order' :
-		update_order();	
-	break;	
+		update_order($notices_relations_ids);	
+		break;	
 	case 'up_order_avis' :
 		update_order_avis();	
-	break;
+		break;
+	case 'up_order_search_perso' :
+		update_order_search_perso();
+		break;
 }
 
 function update_order_avis(){	
@@ -25,15 +30,20 @@ function update_order_avis(){
 	}
 }
 
-function update_order(){
-	
-	global $dbh,$idpere, $type_rel, $tablo_fille;
-	
-	$liste_fille = explode(",",$tablo_fille);
-	for($i=0;$i<count($liste_fille);$i++){
-		$req = "update notices_relations set rank='".$i."' where num_notice='".$liste_fille[$i]."' and linked_notice='".$idpere."' and relation_type='".$type_rel."'";
-		pmb_mysql_query($req,$dbh);
+function update_order($notices_relations_ids){
+	$list = explode(",",$notices_relations_ids);
+	for($i=0;$i<count($list);$i++){
+		notice_relations::update_rank($list[$i], $i);
 	}
+}
 
+function update_order_search_perso(){
+	global $tab_search_perso;
+
+	$liste_search_perso = explode(",",$tab_search_perso);
+	for($i=0;$i<count($liste_search_perso);$i++){
+		$query = "update search_perso set search_order='".$i."' where search_id='".$liste_search_perso[$i]."' ";
+		pmb_mysql_query($query);
+	}
 }
 ?>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: view_serial.inc.php,v 1.1.4.1 2015-08-14 10:30:03 dbellamy Exp $
+// $Id: view_serial.inc.php,v 1.3 2017-02-20 19:04:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -29,6 +29,5 @@ if(pmb_mysql_num_rows($res)) {
 	print $end_result_liste;
 
 } else {
-	print $RESA_author_query;
 	error_message($msg[235], $msg['resa_no_expl'], 1, "./circ.php?categ=resa_planning=resa_action=search_resa&id_empr=$id_empr&groupID=$groupID&mode=0");
 }

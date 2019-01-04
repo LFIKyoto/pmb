@@ -2,7 +2,7 @@
 <!DOCTYPE XMLlist SYSTEM "../XMLlist.dtd" [<!ENTITY nbsp "&amp;nbsp;">]>
 
 <!-- messages localisés en japonais pour l'OPAC de PMB
-$Id: ja_JP.xml,v 1.129.2.12 2015-12-11 11:14:34 jpermanne Exp $ -->
+$Id: ja_JP.xml,v 1.300 2018-12-28 16:28:41 dgoron Exp $ -->
 
 <XMLlist>
 <entry code="not_allowed">その操作は許可されません</entry>
@@ -82,7 +82,7 @@ $Id: ja_JP.xml,v 1.129.2.12 2015-12-11 11:14:34 jpermanne Exp $ -->
 <entry code="no_document_found"><![CDATA[Aucun document trouvé]]></entry>
 <entry code="available">利用可能</entry>
 <entry code="exclu">利用不可</entry>
-<entry code="out_until">返却予定日</entry>
+<entry code="out_until">返却予定日 !!date!!</entry>
 <entry code="prec">前へ</entry>
 <entry code="next">次へ</entry>
 <entry code="barcode">登録番号</entry>
@@ -317,19 +317,11 @@ $Id: ja_JP.xml,v 1.129.2.12 2015-12-11 11:14:34 jpermanne Exp $ -->
 <entry code="resa_available_til">(予約は %sまで有効)</entry>
 <entry code="resa_overtime">(期限切れの予約)</entry>
 <entry code="actions_last_search">最後の検索の結果画面</entry>
-<entry code="actions_last_page">検索結果のページ%sに戻る（%s）</entry>
-<entry code="actions_last_page_last_search">最後の検索</entry>
-<entry code="actions_last_page_extended_search">詳細検索</entry>
-<entry code="actions_last_page_simple_search">簡易検索</entry>
+<entry code="actions_last_page">Previous result set</entry>
 <entry code="actions_history">検索履歴を調べる</entry>
 <entry code="actions_first_screen">最初の画面に戻る</entry>
-<entry code="actions_you_can">このページで検索できます</entry>
 <entry code="etageres_see">Voir toutes les autres étagères</entry>
-<entry code="navig_categ">分類と</entry>
 <entry code="navig_lastnotices">最終項目と</entry>
-<entry code="navig_etageres">avec les étagères virtuelles　</entry>
-<entry code="navig_marguerite">avec la marguerite des couleurs</entry>
-<entry code="navig_100cases">avec les 100 cases du savoir</entry>
 <entry code="categ_see_alt">Voir les documents dans cette catégorie...</entry>
 <entry code="no_analysis">Aucun dépouillement pour ce bulletin.</entry>
 <entry code="see_bull">Voir les bulletins disponibles</entry>
@@ -675,8 +667,8 @@ $Id: ja_JP.xml,v 1.129.2.12 2015-12-11 11:14:34 jpermanne Exp $ -->
 <entry code="connecteurs_no_source">該当する資料はありません</entry>
 <entry code="connecteurs_search_multi">一つまたは複数のキーワードで検索できます&lt;a href='%s'&gt;詳細検索&lt;/a&gt;</entry>
 <entry code="subs_not_yet_subscriber">まだ登録してませんか？</entry>
-<entry code="subs_intro_services"><![CDATA[<h1><span>登録するとサービスを受けることができます</span></h1>Vous pouvez vous créer un compte pour accéder à certains services comme la création d'alertes aux nouveautés ou bien la possibilité de donner votre avis. <em>Cette inscription n'est pas nécessaire si vous êtes déjà emprunteur !</em>]]></entry>
-<entry code="subs_intro_explication"><![CDATA[<h1><span>どのようアカウントを設定するのですか？</span></h1>Remplissez simplement le formulaire ci-dessous puis validez. Vous recevrez un mail permettant de confirmer votre inscription.<br />Vous devrez confirmer votre inscription dans les !!nb_h_valid!! heures. <em>Les champs <b>en gras</b> sont obligatoires.</em><br /><br />]]></entry>
+<entry code="subs_intro_services"><![CDATA[<h2 class='subs_intro_services'><span>登録するとサービスを受けることができます</span></h2>Vous pouvez vous créer un compte pour accéder à certains services comme la création d'alertes aux nouveautés ou bien la possibilité de donner votre avis. <em>Cette inscription n'est pas nécessaire si vous êtes déjà emprunteur !</em>]]></entry>
+<entry code="subs_intro_explication"><![CDATA[<h2 class='subs_intro_explication'><span>どのようアカウントを設定するのですか？</span></h2>Remplissez simplement le formulaire ci-dessous puis validez. Vous recevrez un mail permettant de confirmer votre inscription.<br />Vous devrez confirmer votre inscription dans les !!nb_h_valid!! heures. <em>Les champs <b>en gras</b> sont obligatoires.</em><br /><br />]]></entry>
 <entry code="subs_titre_form"> ログインする</entry>
 <entry code="subs_f_nom">名字: </entry>
 <entry code="subs_f_prenom">名前 : </entry>
@@ -973,7 +965,7 @@ $Id: ja_JP.xml,v 1.129.2.12 2015-12-11 11:14:34 jpermanne Exp $ -->
 <entry code="list_lecture_already_requested">Vous avez déjà demandé l'accès à cette liste. La demande est en cours de traitement.　</entry>
 <entry code="list_lecture_delete_subscriber">Etes-vous sûr de vouloir retirer l'accès à la liste de cet utilisateur ?　</entry>
 <entry code="accueil_bannette">Mon information personnalisée　</entry>
-<entry code="empr_no_alerts">Vous n'avez pas d'information personnalisée enregistrée　</entry>
+<entry code="empr_no_alerts">Aucune nouveauté pour cette alerte.</entry>
 <entry code="empr_view_no_sugg">リクエストは送信されていません</entry>
 <entry code="empr_connexion_interdite">OPACに接続できません！</entry>
 <entry code="export_cart_all">すべての項目を送信する</entry>
@@ -1129,7 +1121,7 @@ $Id: ja_JP.xml,v 1.129.2.12 2015-12-11 11:14:34 jpermanne Exp $ -->
 <entry code="252">Année</entry>
 <entry code="253">No. dans la collection</entry>
 <entry code="254">Autre éditeur</entry>
-<entry code="facette_active">Votre recherche:</entry>
+<entry code="facette_active">Votre recherche :</entry>
 <entry code="facette_list">Affiner</entry>
 <entry code="lib_categ">Libellé catégorie</entry>
 <entry code="134">Catégories</entry>
@@ -1296,7 +1288,7 @@ $Id: ja_JP.xml,v 1.129.2.12 2015-12-11 11:14:34 jpermanne Exp $ -->
 <entry code="ordinal_s_2">second</entry>
 <entry code="ordinal_s_3">third</entry>
 <entry code="ordinal_s_4">fourth</entry>
-<entry code="facette_plus_link">...</entry>
+<entry code="facette_plus_link">[+]</entry>
 <entry code="print_export_get_form_bt">Exporter</entry>
 <entry code="print_export_form_title">Exporter</entry>
 <entry code="print_export_form_print_onglet">Imprimer</entry>
@@ -1416,7 +1408,7 @@ $Id: ja_JP.xml,v 1.129.2.12 2015-12-11 11:14:34 jpermanne Exp $ -->
 <entry code="aut_oeuvre_form_contexte">Contexte de l'oeuvre</entry>
 <entry code="aut_oeuvre_form_coordonnees">Coordonnées (oeuvre cartographique)</entry>
 <entry code="aut_oeuvre_form_equinoxe">Equinoxe (oeuvre cartographique)</entry>
-<entry code="aut_oeuvre_form_auteur">Auteur de l'oeuvre</entry>
+<entry code="aut_oeuvre_form_auteur">Auteurs de l'oeuvre</entry>
 <entry code="tu_dont_del_author">Cet auteur est utilisé dans des titres uniformes. Impossible de le supprimer.</entry>
 <entry code="isbd_oeuvre">Oeuvre</entry>
 
@@ -1506,7 +1498,7 @@ $Id: ja_JP.xml,v 1.129.2.12 2015-12-11 11:14:34 jpermanne Exp $ -->
 <entry code="authperso_see_title">Détail de l'autorité</entry>
 <entry code="authperso_doc_auth_title">Documents disponibles</entry>
 <entry code="authperso_multi_search_title">Autorités personalisées</entry>
-<entry code="categ_see_synonyme">Synonymes</entry>
+<entry code="categ_see_synonyme">Synonyme(s)</entry>
 <entry code="categ_see_renvoi_voir">Voir aussi</entry>
 
 <entry code="search_bull_exact">le</entry>
@@ -1523,7 +1515,6 @@ $Id: ja_JP.xml,v 1.129.2.12 2015-12-11 11:14:34 jpermanne Exp $ -->
 <entry code="collstate_header_state_collections">Collection</entry>
 <entry code="categ_see_aut_link">Relation(s) </entry>
 <entry code="statut_explnum_sort">Statut de document numérique</entry>
-
 <entry code="authperso_multi_search_by_field_title">Autorité</entry>
 <entry code="authperso_multi_search_tous_champs_title">Tous les champs</entry>
 <entry code="cms_module_common_datasource_desc_nb_documents">Nombre de documents attachés</entry>
@@ -1533,14 +1524,15 @@ $Id: ja_JP.xml,v 1.129.2.12 2015-12-11 11:14:34 jpermanne Exp $ -->
 <entry code="cms_module_common_datasource_desc_medium">300x300</entry>
 <entry code="cms_module_common_datasource_desc_big">600x600</entry>
 <entry code="cms_module_common_datasource_desc_custom">Taille à définir manuellement (concaténer avec un nombre. ex : {{logo.custom}}150)</entry>
+
 <entry code="map_notice_echelle">Echelle : </entry>
 <entry code="map_notice_projection">Projection : </entry>
 <entry code="map_notice_ref">Référence : </entry>
 <entry code="map_notice_equinoxe">Equinoxe : </entry>
 <entry code="map_notice_transcription">Emprise : </entry>
 <entry code="map_notice_map">Carte : </entry>
-<entry code="search_map">Géolocalisation</entry>
-<entry code="search_by_map">Géolocalisation</entry>
+<entry code="search_map">Géoréférencement</entry>
+<entry code="search_by_map">Géoréférencement</entry>
 <entry code="categ_map_title">Carte</entry>
 
 <entry code="map_echelle">Echelle</entry>
@@ -1556,7 +1548,7 @@ $Id: ja_JP.xml,v 1.129.2.12 2015-12-11 11:14:34 jpermanne Exp $ -->
 <entry code="map_multisearch_aerainf">surface inférieure</entry>
 <entry code="map_multisearch_aerasup">surface supérieure</entry>
 <entry code="map_multisearch_intersects">Intersecte</entry>
-<entry code="map_history_emprises"> Géolocalisation : Emprises </entry>
+<entry code="map_history_emprises"> Géoréférencement : Emprises </entry>
 
 <entry code="mail_sugg_non_empr">Visiteur non authentifié</entry>
 <entry code="mail_sugg_obj">Nouvelle suggestion</entry>
@@ -1666,7 +1658,7 @@ $Id: ja_JP.xml,v 1.129.2.12 2015-12-11 11:14:34 jpermanne Exp $ -->
 <entry js="carto" code="carto_create_form_polygon">Création d'un polygone</entry>
 <entry js="carto" code="carto_create_form_path">Création d'une ligne</entry>
 
-<entry code="script_analytics_content">Les cookies assurent le bon fonctionnement de nos services; En utilisant ces derniers, vous acceptez l'utilisation des cookies.</entry>
+<entry code="script_analytics_content">Les cookies assurent le bon fonctionnement de nos services, en utilisant ces derniers, vous acceptez l'utilisation des cookies.</entry>
 <entry code="script_analytics_inform_ask_opposite">S'opposer</entry>
 <entry code="script_analytics_inform_ask_accept">Accepter</entry>
 <entry code="accessibility_font_size_small">Réduire le texte</entry>
@@ -1732,9 +1724,19 @@ $Id: ja_JP.xml,v 1.129.2.12 2015-12-11 11:14:34 jpermanne Exp $ -->
 <entry code="aut_link_tu">[Titre uniforme] %1s</entry>
 <entry code="aut_link_indexint">[Indexation décimale] %1s</entry>
 
+<entry code="do_demande_on_record">Faire une demande sur ce document</entry>
+<entry code="demandes_linked_record">Document lié</entry>
+<entry code="demandes_demande">Demande</entry>
+<entry code="cp_chklnk_check">Vérifier</entry>
+
 <entry code="a2z_abt_actif_filter_no_result">Aucun abonnement actif</entry>
 
 <entry code="opac_notice_vignette_alt">vignette</entry>
+
+<entry code="aut_oeuvre_form_oeuvre_type">Type d'oeuvre</entry>
+<entry code="aut_oeuvre_form_oeuvre_nature">Nature de l'oeuvre</entry>
+<entry code="aut_oeuvre_form_oeuvre_expression">Expression de</entry>
+<entry code="aut_oeuvre_form_other_link">Autres liens</entry>
 
 <entry code="bbcode_button_label_b"> B </entry>
 <entry code="bbcode_button_label_i"> I </entry>
@@ -1763,11 +1765,734 @@ $Id: ja_JP.xml,v 1.129.2.12 2015-12-11 11:14:34 jpermanne Exp $ -->
 <entry code="show_history_uncheck_all">Tout décocher</entry>
 <entry code="show_sort_check_all">Tout cocher</entry>
 <entry code="show_sort_uncheck_all">Tout décocher</entry>
+<entry code="aut_oeuvre_form_oeuvre_event">Evènements</entry>
+<entry js="search" code="search_fields_no_selected_fields">Aucun critère sélectionné. Double-cliquez sur la liste pour en ajouter un.</entry>
 <entry code="cms_editorial_desc_parent_section">Rubrique parente</entry>
+
+<entry code="aut_oeuvre_form_completude_finished">Oeuvre finie</entry>
+<entry code="aut_oeuvre_form_completude_infinite">Oeuvre infinie</entry>
 
 <entry code="cms_module_common_datasource_desc_last_update_date">Date de dernière mise à jour</entry>
 <entry code="may">mai</entry>
 <entry code="explnum_singular_label">Document numérique</entry>
 
 <entry code="search_navigation_section">sections</entry>
+
+<entry code="search_navigation_categ">catégories</entry>
+<entry js="search" code="search_perso_title">Recherches prédéfinies</entry>
+
+<entry code="notice_is_new_gestion">Nouveauté</entry>
+<entry code="empr_menu_scan_requests">Mes demandes de numérisation</entry>
+<entry code="empr_no_allow_scan_requests">Les paramètres de votre compte ne vous autorisent pas la demande de numérisation.</entry>
+<entry code="do_scan_request_on_document">Faire une demande de numérisation</entry>
+<entry code="scan_request_from_caddie">Demander une numérisation du panier</entry>
+<entry code="scan_request_from_caddie_title">Demander une numérisation du panier</entry>
+<entry code="scan_request_from_checked">Demander une numérisation des notices cochées</entry>
+<entry code="scan_request_from_checked_title">Demander une numérisation des notices cochées</entry>
+<entry code="scan_request_scan">Numérisation</entry>
+<entry code="scan_request_title">Titre</entry>
+<entry code="scan_request_desc">Description</entry>
+<entry code="scan_request_status">Statut</entry>
+<entry code="scan_request_priority">Priorité</entry>
+<entry code="scan_request_update_date">Date de mise à jour</entry>
+<entry code="scan_request_date">Créée le</entry>
+<entry code="scan_request_wish_date">Date souhaitée</entry>
+<entry code="scan_request_deadline_date">Date butoir</entry>
+<entry code="scan_request_comment">Commentaire</entry>
+<entry code="scan_request_elapsed_time">Temps passé</entry>
+<entry code="scan_request_linked_records">Ressources associées</entry>
+<entry code="scan_request_linked_record_comment">Commentaire lié</entry>
+<entry code="scan_request_back">Retour</entry>
+<entry code="scan_request_edit">Modifier</entry>
+<entry code="scan_request_cancel">Annuler la demande</entry>
+<entry code="scan_request_delete">Supprimer</entry>
+<entry code="scan_request_create_form">Création d'une demande de numérisation</entry>
+<entry code="scan_request_edit_form">Modification d'une demande de numérisation</entry>
+<entry code="scan_request_confirm_cancel">Voulez-vous vraiment annuler la demande ?</entry>
+<entry code="scan_request_saved">La demande a bien été enregistrée.</entry>
+<entry code="scan_request_saved_see_link"><![CDATA[Vous pouvez la consulter en cliquant <a class='scan_request_saved_see_link' href='!!link!!' >ici</a>.]]></entry>
+<entry code="scan_request_cant_save">La demande n'a pas été enregistrée.</entry>
+<entry code="scan_request_deleted">La demande a bien été annulée.</entry>
+<entry code="scan_request_cant_delete">La demande ne peut pas être annulée.</entry>
+<entry code="scan_request_linked_records_docnums">Documents numériques</entry>
+<entry code="scan_request_list_empty">Aucune demande de numérisation.</entry>
+<entry code="scan_request_on_record_already_exists">Il y a déjà une demande de numérisation sur cette ressource.</entry>
+<entry code="scan_requests_on_record_already_exist">Il y a déjà des demandes de numérisation sur cette ressource.</entry>
+<entry code="scan_requests_saved_see_link"><![CDATA[Vous pouvez les consulter en cliquant <a href='!!link!!' >ici</a>.]]></entry>
+<entry code="scan_request_test_form_title_mandatory">Le champs "Titre" est obligatoire.</entry>
+<entry code="scan_request_test_form_wish_greater_than_date">La date souhaitée doit être supérieure à la date de création.</entry>
+<entry code="scan_request_test_form_deadline_greater_than_wish">La date butoir doit être supérieure à la date souhaitée.</entry>
+<entry code="scan_request_linked_record_no_scannable">Ressource non numérisable.</entry>
+<entry code="scan_request_linked_record">Ressource associée</entry>
+<entry code="scan_request_linked_record_no_scannable_from_caddie">Les notices sélectionnées du panier ne sont pas numérisables</entry>
+<entry code="scan_request_elapsed_time_unit">heure(s)</entry>
+
+<entry code="empr_my_resa_planning">Mes réservations planifiées</entry>
+<entry code="empr_resa">Réservations</entry>
+<entry code="empr_resa_planning">Réservations planifiées</entry>
+<entry code="resa_planning_add_from_cart">Ajout de réservations planifiées :</entry>
+<entry code="resa_planning_add">Ajout d'une réservation planifiée :</entry>
+
+<entry code="banette_suite">Voir la suite...</entry>
+<entry code="list_lecture_add_empr">Ajouter un lecteur à la liste :</entry>
+<entry code="list_lecture_add_empr_confirm">Etes-vous sûr de vouloir ajouter ce lecteur à la liste ?</entry>
+<entry code="list_lecture_objet_subscribe_mail">Inscription à la liste "%s"</entry>
+<entry code="list_lecture_subscribe_mail">%s vous a inscrit à la liste "%s".</entry>
+<entry code="avis_private">Privé</entry>
+<entry code="avis_liste_lecture">Vous pouvez associer ce commentaire à une liste de lecture :</entry>
+<entry code="avis_liste_lecture_empty">Aucune liste de lecture</entry>
+<entry code="avis_liste_lecture_default_value">Uniquement pour soi</entry>
+<entry code="notice_title_liste_lecture">Ajouter à une liste de lecture</entry>
+<entry code="list_lecture_tag">Classement :</entry>
+<entry code="notice_title_liste_lecture_default_value">Choisissez une liste de lecture</entry>
+<entry code="avis_le">le</entry>
+<entry code="avis_public">Visible par tous</entry>
+<entry code="notice_title_liste_lecture_added">La notice a été ajoutée à la liste de lecture.</entry>
+<entry code="notice_title_liste_lecture_failed">La notice existe déjà dans la liste de lecture.</entry>
+<entry code="avis_private_list">Avis privés</entry>
+<entry code="avis_bt_save">Enregistrer</entry>
+<entry code="avis_bt_delete">Supprimer</entry>
+<entry code="avis_bt_delete_confirm">Souhaitez-vous vraiment supprimer cet avis ?</entry>
+<entry code="avis_bt_edit">Editer</entry>
+<entry code="list_lecture_avis_search">Y compris dans les avis</entry>
+<entry code="avis_title_query">Titre des avis</entry>
+<entry code="avis_comment_query">Commentaire des avis</entry>
+<entry code="list_lecture_query">Listes de lecture</entry>
+<entry code="list_lecture_created_by_me">Afficher uniquement celles que j'ai créées</entry>
+<entry code="search_list_lecture">Listes de lecture</entry>
+<entry code="search_list_lecture_all">Toutes mes listes</entry>
+<entry code="search_avis">Avis de notice</entry>
+<entry code="search_avis_all">Tous les avis</entry>
+<entry code="search_avis_own">Mes avis</entry>
+<entry code="list_lecture_search_all_list">Recherche dans les notices des listes de lecture</entry>
+<entry code="list_lecture_search_in_list">Recherche dans les notices de la liste de lecture</entry>
+<entry code="list_lecture_tag_no_ranking">[Non classées]</entry>
+<entry code="list_lecture_ask_in_progess">Demande d'accès en cours</entry>
+
+<entry code="empr_my_resas_planning">Mes réservations planifiées</entry>
+
+<entry code="mail_obj_serialcirc_added">Nouvelle demande d'inscription à une liste de circulation</entry>
+<entry code="mail_obj_serialcirc_canceled">Nouvelle demande de désinscription à une liste de circulation</entry>
+
+<entry code="mail_obj_resa_planning_added">Nouvelle réservation planifiée ajoutée dans l'OPAC</entry>
+<entry code="mail_obj_resa_planning_canceled">Réservation planifiée supprimée dans l'OPAC</entry>
+<entry code="mail_obj_resa_planning_reaffected">Réservation planifiée supprimée et réaffectée au rang suivant dans l'OPAC</entry>
+
+<entry code="dsi_bannette_gerer_pub">Gérer vos alertes</entry>
+<entry code="search_in_oeuvre_title">Titre d'oeuvres</entry>
+
+<entry code="show_tris_selector_no_sort">Aucun tri</entry>
+<entry code="detail_authority_title">Détail de l'autorité</entry>
+<entry code="aut_oeuvre_form_interprete">Interprètes de l'oeuvre</entry>
+<entry code="aut_oeuvre_form_comment">Commentaire de l'oeuvre</entry>
+<entry code="comment">Commentaire</entry>
+<entry code="author_see">Forme retenue (renvoi voir)</entry>
+
+<entry code="contact_form_title">Formulaire de contact</entry>
+<entry code="contact_form_introduction">Formuler votre demande ci-dessous.</entry>
+<entry code="contact_form_recipient_by_object">Choisissez un objet :</entry>
+<entry code="contact_form_recipient_by_person">Choisissez un destinataire :</entry>
+<entry code="contact_form_recipient_by_location">Choisissez une localisation :</entry>
+<entry code="contact_form_parameter_name">Nom :</entry>
+<entry code="contact_form_parameter_firstname">Prénom :</entry>
+<entry code="contact_form_parameter_group">Groupe :</entry>
+<entry code="contact_form_parameter_email">Email :</entry>
+<entry code="contact_form_parameter_tel">Téléphone :</entry>
+<entry code="contact_form_parameter_mandatory_field">*</entry>
+<entry code="contact_form_object">Objet de votre message :</entry>
+<entry code="contact_form_text">Votre message :</entry>
+<entry code="contact_form_button_send">Envoyer votre message</entry>
+<entry code="contact_form_parameter_name_mandatory">Vous devez saisir votre nom.</entry>
+<entry code="contact_form_parameter_firstname_mandatory">Vous devez saisir votre prénom.</entry>
+<entry code="contact_form_parameter_group_mandatory">Vous devez saisir votre groupe.</entry>
+<entry code="contact_form_parameter_email_mandatory">Vous devez saisir votre adresse mail.</entry>
+<entry code="contact_form_parameter_tel_mandatory">Vous devez saisir votre téléphone.</entry>
+<entry code="contact_form_recipient_mandatory">Vous devez sélectionner un destinataire.</entry>
+<entry code="contact_form_object_mandatory">Vous devez sélectionner un objet.</entry>
+<entry code="contact_form_text_mandatory">Vous devez saisir un message.</entry>
+<entry code="contact_form_verifcode_mandatory">Le code figurant sur l'image ne correspond pas à ce que vous avez saisi.</entry>
+<entry code="contact_form_send_success_msg">Votre demande a bien été envoyée.</entry>
+<entry code="contact_form_send_error_msg">Une erreur est survenue lors de l'envoi de votre demande.</entry>
+<entry code="contact_form_send_copy_suffix">- Copie de votre demande</entry>
+<entry code="contact_form_send_copy_success_msg">Vous allez recevoir une copie de ce mail.</entry>
+<entry code="contact_form_send_copy_error_msg">Nous n'avons pas réussi à vous envoyer une copie de ce mail.</entry>
+
+<entry code="search_record_creator">Créateur de la notice</entry>
+
+<entry code="search_item_creator">Créateur de l'exemplaire</entry>
+
+<entry code="other_title_t3_start">Titre original:</entry>
+<entry code="other_title_t2_start">Autre titre:</entry>
+<entry code="langues_start">Langues:</entry>
+<entry code="langues_org_start">Langues originales:</entry>
+<entry code="keywords_start">Mots-clés:</entry>
+
+<entry code="eq_query"><![CDATA[=]]></entry>
+<entry code="gt_query"><![CDATA[>]]></entry>
+<entry code="lt_query"><![CDATA[<]]></entry>
+<entry code="gteq_query"><![CDATA[>=]]></entry>
+<entry code="lteq_query"><![CDATA[<=]]></entry>
+
+<entry code="print_emailobj_label">Objet :</entry>
+<entry code="per_page">Par page :</entry>
+<entry code="display_all">Tout afficher</entry>
+<entry code="common_tpl_empr_password">Mot de passe</entry>
+
+<entry code="empr_dema_not_configured">Le module des demandes n'est pas configuré.</entry>
+<entry code="record_rss_flux_name">Recherche dans %s</entry>
+
+<entry code="meta_opac_title"> Catalogue en ligne</entry>
+<entry code="meta_historique_title">Historique des recherches...</entry>
+<entry code="meta_compte_title">Mon compte...</entry>
+<entry code="meta_panier_title">Mon panier...</entry>
+<entry code="meta_event_title">Agenda...</entry>
+<entry code="meta_a2z_title">Périodiques...</entry>
+
+<entry code="empr_ban_priv_opening_quotation_mark"><![CDATA[«&nbsp;]]></entry>
+<entry code="empr_ban_priv_closing_quotation_mark"><![CDATA[&nbsp;»]]></entry>
+
+<entry code="empr_confirm_delete_resa">Voulez-vous vraiment annuler cette réservation ?</entry>
+<entry code="empr_confirm_delete_resa_planning">Voulez-vous vraiment annuler cette réservation planifiée ?</entry>
+<entry code="empr_sugg_notice_doublon">Notices proposées</entry>
+<entry code="explnum_lender">Propriétaire du document numérique</entry>
+<entry code="explnum_location">Localisation du document numérique</entry>
+<entry code="record_expl_map_location">Carte des localisations des exemplaires</entry>
+
+<entry code='short_url_permalink'>Lien permanent de la recherche</entry>
+
+<entry js="opac" code="opac_dnt_enabled">You've enabled DNT, we're respecting your choice</entry>
+<entry code="collstate_linked_bulletins_list">Bulletins associés</entry>
+<entry code="collstate_linked_bulletins_list_link">Voir</entry>
+<entry code="collstate_linked_bulletins_list_page_title">Liste des bulletins de la reliure</entry>
+<entry code="bul_collstate">Reliure</entry>
+
+<entry code="list_lecture_name_exists">Vous avez déjà créé une liste de lecture avec ce nom.</entry>
+<entry code="parperso_date_inter">Intervalle de dates</entry>
+<entry code="extexplnum_lender_num_lender">Propriétaire</entry>
+<entry code="extexpl_location">Localisation</entry>
+<entry code="extexpl_surlocation">Sur-localisation</entry>
+
+<entry code="dsi_bt_bannette_priv_empr">Créer une alerte</entry>
+<entry code="search_between_query">Intervalle</entry>
+<entry code="search_between_query_date_start">Date de début. Si vide, pas de limite antérieure</entry>
+<entry code="search_between_query_date_end">Date de fin. Si vide, pas de limite de fin</entry>
+<entry code="search_permalink">Permalink</entry>
+
+<entry code="add_cart_loans_bt">Ajouter au panier</entry>
+
+<entry code="print_emailexp">Expéditeur :</entry>
+<entry code="ontology_object">Objets %1s</entry>
+<entry code="ontology_object_uri">URI</entry>
+<entry code="ontology_object_toadd">Créer un objet %1s</entry>
+<entry code="ontology_object_add">Création d'un objet %1s</entry>
+<entry code="ontology_object_edit">Modification d'un objet %1s</entry>
+<entry code="ontology_p_lang">(%1s)</entry>
+<entry code="ontology_p_add_button">+</entry>
+<entry code="ontology_p_del_button">X</entry>
+<entry code="ontology_p_sel_button">Créer</entry>
+<entry code="onto_error_no_minima">%s : Ce champ doit être renseigné.</entry>
+<entry code="onto_error_too_much_values">%s : Ce champ ne peut pas contenir autant de valeurs.</entry>
+<entry code="onto_common_datatype_ui_fr">français</entry>
+<entry code="onto_common_datatype_ui_en">anglais</entry>
+<entry code="onto_common_datatype_ui_no_lang">Sans langue</entry>
+<entry code="onto_contribution_push_button">Enregistrer et valider</entry>
+<entry code="operator_between_multiple_authorities">Opérateur entre autorités :</entry>
+<entry code="operator_between_multiple_authorities_or">Ou</entry>
+<entry code="operator_between_multiple_authorities_and">Et</entry>
+<entry code="operator_between_multiple_selection">Opérateur entre sélections :</entry>
+<entry code="operator_between_multiple_selection_or">Ou</entry>
+<entry code="operator_between_multiple_selection_and">Et</entry>
+<entry code="demandes_date_ko">La date de fin ne peut pas être antérieure à la date de début !</entry>
+<entry code="demandes_create_no_date">La date de la demande est obligatoire !</entry>
+<entry code="selector_author">Sélection d'un auteur</entry>
+<entry code="selector_category">Sélection d'une catégorie</entry>
+<entry code="selector_codepostal">Sélection d'une ville</entry>
+<entry code="selector_collection">Sélection d'une collection</entry>
+<entry code="selector_country">Sélection d'un pays</entry>
+<entry code="selector_empr">Sélection d'un emprunteur</entry>
+<entry code="selector_func">Sélection d'une fonction</entry>
+<entry code="selector_indexint">Sélection d'une indexation décimale</entry>
+<entry code="selector_lang">Sélection d'une langue</entry>
+<entry code="selector_music_form">Sélection d'une forme d'oeuvre</entry>
+<entry code="selector_music_key">Sélection d'une tonalité</entry>
+<entry code="selector_publisher">Sélection d'un éditeur</entry>
+<entry code="selector_serie">Sélection d'un titre de série</entry>
+<entry code="selector_subcollection">Sélection d'une sous-collection</entry>
+<entry code="selector_titre_uniforme">Sélection d'un titre uniforme</entry>
+<entry code="selector_author_add">Créer un auteur</entry>
+<entry code="selector_category_add">Créer une catégorie</entry>
+<entry code="selector_collection_add">Créer une collection</entry>
+<entry code="selector_indexint_add">Créer une indexation décimale</entry>
+<entry code="selector_publisher_add">Créer un éditeur</entry>
+<entry code="selector_serie_add">Créer un titre de série</entry>
+<entry code="selector_subcollection_add">Créer une sous-collection</entry>
+<entry code="selector_titre_uniforme_add">Créer un titre uniforme</entry>
+<entry code="no_author_found">Aucun auteur trouvé</entry>
+<entry code="no_category_found">Aucune catégorie trouvée</entry>
+<entry code="no_collection_found">Aucune collection trouvée</entry>
+<entry code="no_indexint_found">Aucune indexation décimale trouvée</entry>
+<entry code="no_publisher_found">Aucun éditeur trouvé</entry>
+<entry code="no_serie_found">Aucun titre de série trouvé</entry>
+<entry code="no_subcollection_found">Aucune sous-collection trouvée</entry>
+<entry code="no_titre_uniforme_found">Aucun titre uniforme trouvé</entry>
+<entry code="selector_author_type_all">Afficher tout</entry>
+<entry code="selector_author_type_pp">Personne physique</entry>
+<entry code="selector_author_type_coll">Collectivité</entry>
+<entry code="selector_author_type_congres">Congrès</entry>
+<entry code="authorities_select_all">Tous</entry>
+<entry code="empr_menu_contribution_area">Espace de contribution</entry>
+<entry code="empr_menu_contribution_area_new">Nouvelle contribution</entry>
+<entry code="empr_menu_contribution_area_list">Mes contributions</entry>
+<entry code="empr_contribution_area_not_activate">Les contributions ne sont pas activées.</entry>
+<entry code="empr_no_prolongation_short_loan_flag">Ce prêt ne peut être prolongé.</entry>
+<entry code="empr_no_prolongation_limit">Nombre de prolongations autorisées atteint.</entry>
+<entry code="empr_no_prolongation_resa">Impossible de prolonger ce prêt, le document est réservé par un autre lecteur.</entry>
+<entry code="empr_no_prolongation_relance">Ce prêt ne peut être prolongé.</entry>
+<entry code="empr_no_prolongation_date_prolongation">Ce prêt ne peut être prolongé.</entry>
+<entry code="parperso_text">Texte</entry>
+<entry code="parperso_choice_list">Liste de choix</entry>
+<entry code="parperso_query_choice_list">Liste de choix à partir d'une requête</entry>
+<entry code="parperso_authorities">Valeurs à partir d'un sélecteur d'autorités</entry>
+<entry code="parperso_date">Sélection d'une date</entry>
+<entry code="parperso_comment">Zone de commentaire</entry>
+<entry code="parperso_url">URL</entry>
+<entry code="parperso_resolve">Résolveur de lien</entry>
+<entry code="parperso_marclist">Marclist</entry>
+<entry code="parperso_html">Zone de saisie HTML</entry>
+<entry code="parperso_text_i18n">Texte multilingue</entry>
+<entry code="parperso_q_txt_i18n">Texte multilingue qualifié</entry>
+<entry code="parperso_datatype_text">Texte</entry>
+<entry code="parperso_datatype_huge_text">Texte large</entry>
+<entry code="parperso_datatype_integer">Entier</entry>
+<entry code="parperso_datatype_date">Date</entry>
+<entry code="parperso_datatype_float">Nombre à virgule</entry>
+<entry code="plus_detail">détail</entry>
+<entry code="demandes_action_time_unit">H</entry>
+<entry code="demandes_creation">Création d'une nouvelle demande</entry>
+<entry code="map_echelle_name">Nom de l'échelle</entry>
+<entry code="map_ref_name">Nom de la référence</entry>
+<entry code="map_projection_name">Nom de la projection</entry>
+<entry code="extexplnum_statut">Statut</entry>
+<entry code="extexplnum_location">Localisation</entry>
+<entry code="parcourir">...</entry>
+<entry code="empr_menu_contribution_area_no_started">Aucune contribution en cours</entry>
+<entry code="search_extended_subcollection_publisher">Editeur de la sous-collection</entry>
+<entry code="cart_anonymous_alert_merge">Voulez-vous intégrer les notices du panier anonyme à votre panier de lecteur ?</entry>
+<entry code="cart_anonymous_alert_replace">Voulez-vous remplacer votre panier courant par le panier anonyme ?</entry>
+<entry code="civilite_unknown">Madame, Monsieur</entry>
+<entry code="civilite_monsieur">Monsieur</entry>
+<entry code="civilite_madame">Madame</entry>
+<entry code="selvars_empr_auth_opac">Connexion automatique à l'OPAC</entry>
+<entry code="onto_contribution_push_in_progress">Validation en cours...</entry>
+<entry code="onto_contribution_submit_button">Enregistrer comme brouillon</entry>
+<entry code="onto_contribution_datatype_docnum_file_duplication_existing">Un doublon existe dans la base</entry>
+<entry code="cart_empty_simplified">Panier (0)</entry>
+<entry code="cart_full_simplified">Panier plein</entry>
+<entry code="cart_contents_simplified">Panier (%s)</entry>
+<entry code="onto_contribution_last_file">Fichier actuel</entry>
+<entry code="empr_menu_contribution_area_done">Mes contributions validées</entry>
+
+<entry code="download_docnum_no_doc">Votre sélection ne contient aucun document numérique téléchargeable.</entry>
+
+<entry code="scan_request_creation_mail_title">Nouvelle demande de numérisation</entry>
+<entry code="scan_request_creation_mail_content"><![CDATA[Une demande de numérisation a été créée :<br><br><b>Titre :</b> !!scan_title!!<br><b>Description :</b> !!scan_desc!!<br><b>Destinataire :</b> !!scan_dest!!]]></entry>
+
+<entry code="facette_moins_link">[-]</entry>
+
+<entry code="search_custom_expl">Champs personnalisés des exemplaires</entry>
+
+<entry code="empr_prolongation_not_yet_dispo">Prolongation disponible du %s au %s.</entry>
+
+<entry code="etagere_print">Imprimer...</entry>
+
+<entry code="record_numerisation">Demande de numérisation</entry>
+<entry code="onto_contribution_inter_submit_button">Enregistrer</entry>
+<entry code="onto_empr_contribution_area_last_contribution_title">Dernière contribution</entry>
+<entry code="onto_empr_contribution_area_last_contribution_copy">Copier le lien</entry>
+<entry code="onto_empr_contribution_area_last_contribution_copy_success">Le lien est copié dans votre presse-papier</entry>
+<entry code="onto_empr_contribution_area_last_contribution_copy_not_allowed">Votre navigateur n'autorise pas la copie automatique. Copiez le champ ci-dessous.</entry>
+<entry code="empr_menu_contribution_area">Espace de contribution</entry>
+
+<entry code="bannette_human_query_show">Voir les critères de recherche de l'alerte</entry>
+<entry code="entity_graph_records_having_as_authors">Notices ayant pour auteur</entry>
+<entry code="entity_graph_works_having_as_performer">Oeuvres ayant pour interprète</entry>
+<entry code="entity_graph_works_having_as_author">Oeuvres ayant pour auteur</entry>
+<entry code="entity_graph_records_from_work">Notices issues de l'oeuvre</entry>
+<entry code="entity_graph_works_of_record">Oeuvres de la notice</entry>
+<entry code="entity_graph_authors_of_record">Auteurs de la notice</entry>
+<entry code="entity_graph_records_indexed_with">Notices indexées avec</entry>
+<entry code="entity_graph_authors_indexed_with">Auteurs indexés avec</entry>
+<entry code="entity_graph_category_indexed_with">Catégories indexées avec</entry>
+<entry code="entity_graph_publishers_indexed_with">Editeurs indexés avec</entry>
+<entry code="entity_graph_collections_indexed_with">Collections indexées avec</entry>
+<entry code="entity_graph_subcollections_indexed_with">Sous-collections indexées avec</entry>
+<entry code="entity_graph_series_indexed_with">Séries indexées avec</entry>
+<entry code="entity_graph_works_indexed_with">Oeuvres indexées avec</entry>
+<entry code="entity_graph_indexint_indexed_with">Indexation décimales indexées avec</entry>
+<entry code="entity_graph_authpersos_indexed_with">Autorités personnalisées indexées avec</entry>
+<entry code="entity_graph_work_which_use_event">Oeuvres associées à l'événement</entry>
+<entry code="entity_graph_record_which_use_authperso">Notices associées à l'autorité personnalisée</entry>
+<entry code="entity_graph_associated_authpersos">Autorités personnalisées associées à la notice</entry>
+
+<entry code="index_concept_label">Concepts</entry>
+<entry code="demandes_liste">Liste des demandes</entry>
+<entry code="demandes_progres_ko">La progression doit être un chiffre compris entre 0 et 100</entry>
+<entry code="demandes_nocheck">Sélectionnez au moins une demande</entry>
+<entry code="demandes_confirm_suppr">Etes-vous sûr de vouloir supprimer ?</entry>
+
+<entry code="anonymous_session_expired">Attention, cela fait plus de %s mn que vous n'avez pas utilisé l'OPAC. Vos informations de navigation ont été ré-initialisées.</entry>
+<entry js="shareLink" code="share_link">Partager le lien</entry>
+<entry js="shareLink" code="copy_link">Copier</entry>
+<entry js="shareLink" code="copied_link">Le lien a été copié</entry>
+
+<entry code="empr_no_prolongation_adhesion_depassee">Prolongation impossible car l'adhésion est dépassée</entry>
+<entry code="empr_no_prolongation_retour_ahesion_depassee">Prolongation impossible car la date de retour dépasse la date d'expiration de l'adhésion</entry>
+
+<entry code="cant_uncheck_look_all">La recherche Tous les champs ne peut être décochée.</entry>
+<entry code="demandes_modification">Modification de la demande %s</entry>
+<entry code="demandes_note_confirm_suppr">Etes-vous sûr de vouloir supprimer cette note ? </entry>
+<entry code="demandes_action_time_ko">Le temps doit être un chiffre représentant les heures.</entry>
+<entry code="demandes_action_cout_ko">Le coût doit être un chiffre.</entry>
+<entry code="demandes_action_create_ko">Le champ sujet est obligatoire !</entry>
+<entry code="demandes_actions_nocheck">Sélectionner au moins une action.</entry>
+<entry code="demandes_attach_docnum_lib">Documents numériques associés</entry>
+<entry code="empr_contribution_area_no_area">Aucun espace accessible</entry>
+<entry code="empr_menu_contribution_area_moderation">Modération</entry>
+<entry code="onto_common_warning_object_in_assertions">Attention, ce concept est lié à d'autres entités</entry>
+<entry code="onto_common_assertion_subject">Sujet</entry>
+<entry code="onto_common_assertion_predicate">Propriété</entry>
+<entry code="onto_common_assertion_object">Objet</entry>
+<entry code="aut_select_coll">Sélection d'une collectivité</entry>
+<entry code="aut_select_congres">Sélection d'un congrès</entry>
+<entry code="record_display_no_lendable">Non prêtable</entry>
+<entry code="search_concepts_autopostage_multicritere">Concepts avec autopostage</entry>
+<entry code="search_extended_author_concepts_autopostage">Concepts avec autopostage de l'auteur</entry>
+<entry code="search_extended_category_concepts_autopostage">Concepts avec autopostage de la catégorie</entry>
+<entry code="search_extended_publisher_concepts_autopostage">Concepts avec autopostage de l'éditeur</entry>
+<entry code="search_extended_collection_concepts_autopostage">Concepts avec autopostage de la collection</entry>
+<entry code="search_extended_subcollection_concepts_autopostage">Concepts avec autopostage de la sous-collection</entry>
+<entry code="search_extended_titre_uniforme_concepts_autopostage">Concepts avec autopostage du titre uniforme</entry>
+<entry code="search_extended_serie_concepts_autopostage">Concepts avec autopostage de la série</entry>
+<entry code="search_extended_indexint_concepts_autopostage">Concepts avec autopostage de l'indexation décimale</entry>
+<entry code="notice_basket_remove">Retirer de votre panier</entry>
+<entry code="empr_contribution_area_unauthorized">Vous n'êtes pas autorisé à accéder à cet espace.</entry>
+
+<entry code="print_title_search">Imprimer la page de recherche courante</entry>
+<entry code="print_title_etagere">Impression d'étagère</entry>
+<entry code="print_title_cart">Impression de panier</entry>
+<entry code="print_title_list">Impression de liste</entry>
+<entry code="histo_print_current_page">Imprimer la page de recherche courante...</entry>
+<entry code="index_generic_concept_label_autopostage">Concepts génériques autopostés</entry>
+<entry code="index_specific_concept_label_autopostage">Concepts spécifiques autopostés</entry>
+<entry code="record_display_forbidden">Vous ne pouvez pas accéder à ce document.</entry>
+<entry code="onto_contribution_datatype_docnum_file_bigger_than_size_limit">Ce document dépasse la taille autorisée (%s).</entry>
+
+<entry code="title_select_from_list">Rechercher dans la liste</entry>
+<entry code="edit">Editer</entry>
+<entry code="dsi_bannette_edit">Modifier une alerte</entry>
+<entry code="dsi_bannette_saved">Liste de nouveautés «!!nom_bannette!!» enregistrée.</entry>
+<entry code="parperso_date_flottante">Date flottante</entry>
+<entry code="parperso_option_duration">Durée de recherche autour de la date</entry>
+<entry code="parperso_option_duration_d">Jours</entry>
+<entry code="parperso_option_duration_m">Mois</entry>
+<entry code="parperso_option_duration_y">Années</entry>
+<entry code="parperso_option_duration_type0">Vers</entry>
+<entry code="parperso_option_duration_type1">Avant</entry>
+<entry code="parperso_option_duration_type2">Après</entry>
+<entry code="parperso_option_duration_type3">Date précise</entry>
+<entry code="parperso_option_duration_type4">Intervalle de date</entry>
+<entry code="parperso_option_duration_comment">Commentaire: </entry>
+<entry code="parperso_option_duration_entre">Entre</entry>
+<entry code="parperso_option_duration_et">et</entry>
+<entry code="searcher_publisher">Editeur</entry>
+<entry code="searcher_coll">Collection</entry>
+<entry code="searcher_subcoll">Sous collection</entry>
+<entry code="dsi_priv_diffusion">Diffusion après enregistrement ?</entry>
+<entry code="search_segment">Segment de recherche</entry>
+<entry js="cart" code="show_cart_check_all">Tout cocher</entry>
+<entry js="cart" code="show_cart_uncheck_all">Tout décocher</entry>
+<entry code="search_segment_back_to_universe">Retour à l'univers</entry>
+<entry code="search_segment_new_search">Nouvelle recherche</entry>
+<entry code="extended_search_authorities">Recherche multi-critères autorités</entry>
+<entry code="search_extended_authors">Auteurs</entry>
+<entry code="search_extended_author_type">Type d'auteur</entry>
+<entry code="search_extended_author_name">Nom de l'auteur</entry>
+<entry code="search_extended_author_rejete">Rejeté de l'auteur</entry>
+<entry code="search_extended_author_date">Date de l'auteur</entry>
+<entry code="search_extended_author_lieu">Lieu de l'auteur</entry>
+<entry code="search_extended_author_ville">Ville de l'auteur</entry>
+<entry code="search_extended_author_pays">Pays de l'auteur</entry>
+<entry code="search_extended_author_subdivision">Subdivision de l'auteur</entry>
+<entry code="search_extended_author_numero">Numéro de l'auteur</entry>
+<entry code="search_extended_author_site_web">Site Web de l'auteur</entry>
+<entry code="search_extended_author_comment">Commentaire de l'auteur</entry>
+<entry code="search_extended_author_concepts">Concepts de l'auteur</entry>
+<entry code="search_extended_author_aut_link">Autorités liées de l'auteur</entry>
+<entry code="search_extended_author_statut">Statut de l'auteur</entry>
+<entry code="search_extended_categories">Catégories</entry>
+<entry code="search_extended_category_label">Libellé de la catégorie</entry>
+<entry code="search_extended_category_na">Note d'application de la catégorie</entry>
+<entry code="search_extended_category_cm">Commentaire de la catégorie</entry>
+<entry code="search_extended_category_parent">Catégorie parente de la catégorie</entry>
+<entry code="search_extended_category_concepts">Concepts de la catégorie</entry>
+<entry code="search_extended_category_aut_link">Autorités liées de la catégorie</entry>
+<entry code="search_extended_category_statut">Statut de la catégorie</entry>
+<entry code="search_extended_publishers">Editeurs</entry>
+<entry code="search_extended_publisher_name">Nom de l'éditeur</entry>
+<entry code="search_extended_publisher_adr">Adresse de l'éditeur</entry>
+<entry code="search_extended_publisher_cp">C.P. de l'éditeur</entry>
+<entry code="search_extended_publisher_ville">Ville de l'éditeur</entry>
+<entry code="search_extended_publisher_pays">Pays de l'éditeur</entry>
+<entry code="search_extended_publisher_site_web">Site Web de l'éditeur</entry>
+<entry code="search_extended_publisher_comment">Commentaire de l'éditeur</entry>
+<entry code="search_extended_publisher_concepts">Concepts de l'éditeur</entry>
+<entry code="search_extended_publisher_aut_link">Autorités liées de l'éditeur</entry>
+<entry code="search_extended_publisher_statut">Statut de l'éditeur</entry>
+<entry code="search_extended_collections">Collections</entry>
+<entry code="search_extended_collection_name">Nom de la collection</entry>
+<entry code="search_extended_collection_issn">ISSN de la collection</entry>
+<entry code="search_extended_collection_publisher">Editeur de la collection</entry>
+<entry code="search_extended_collection_site_web">Site Web de la collection</entry>
+<entry code="search_extended_collection_comment">Commentaire de la collection</entry>
+<entry code="search_extended_collection_concepts">Concepts de la collection</entry>
+<entry code="search_extended_collection_aut_link">Autorités liées de la collection</entry>
+<entry code="search_extended_collection_statut">Statut de la collection</entry>
+<entry code="search_extended_subcollections">Sous collections</entry>
+<entry code="search_extended_subcollection_name">Nom de la sous-collection</entry>
+<entry code="search_extended_subcollection_issn">ISSN de la sous-collection</entry>
+<entry code="search_extended_subcollection_parent">Sous collection de</entry>
+<entry code="search_extended_subcollection_parent_publisher">Editeur parent de la sous-collection</entry>
+<entry code="search_extended_subcollection_site_web">Site Web de la sous-collection</entry>
+<entry code="search_extended_subcollection_comment">Commentaire de la sous-collection</entry>
+<entry code="search_extended_subcollection_concepts">Concepts de la sous-collection</entry>
+<entry code="search_extended_subcollection_aut_link">Autorités liées de la sous-collection</entry>
+<entry code="search_extended_subcollection_statut">Statut de la sous-collection</entry>
+<entry code="search_extended_series">Séries</entry>
+<entry code="search_extended_serie_label">Titre de la série</entry>
+<entry code="search_extended_serie_concepts">Concepts de la série</entry>
+<entry code="search_extended_serie_aut_link">Autorités liées de la série</entry>
+<entry code="search_extended_serie_statut">Statut de la série</entry>
+<entry code="search_extended_titres_uniformes">Titres uniformes</entry>
+<entry code="search_extended_titre_uniforme_oeuvre_type">Type d'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_oeuvre_nature">Nature de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_name">Nom de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_expression">Expression de</entry>
+<entry code="search_extended_titre_uniforme_others_link">Autres liens</entry>
+<entry code="search_extended_titre_uniforme_author">Auteur de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_forme">Forme de l'oeuvre (Saisie Libre)</entry>
+<entry code="search_extended_titre_uniforme_forme_marclist">Forme de l'oeuvre (Liste)</entry>
+<entry code="search_extended_titre_uniforme_date">Date de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_lieu">Lieu d'origine de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_sujet">Sujet de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_completude">Complétude visée de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_public">Public visé de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_histoire">Histoire de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_contexte">Contexte de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_distrib">Distribution instrumentale et vocale de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_ref_num">Référence numérique de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_tonalite">Tonalité (Saisie Libre) de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_tonalite_marclist">Tonalité (Liste) de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_coords">Coordonnées (oeuvre cartographie)</entry>
+<entry code="search_extended_titre_uniforme_equinoxe">Equinoxe (oeuvre cartographie)</entry>
+<entry code="search_extended_titre_uniforme_subdiv_forme">Subdivision de forme (oeuvre)</entry>
+<entry code="search_extended_titre_uniforme_caracteristiques">Caractéristiques de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_comment">Commentaire de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_concepts">Concepts de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_aut_link">Autorités liées de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_statut">Statut de l'oeuvre</entry>
+<entry code="search_extended_indexint">Indéx. décimales</entry>
+<entry code="search_extended_indexint_label">Libellé de l'index. décimale</entry>
+<entry code="search_extended_indexint_comment">Commentaire de l'index. décimale</entry>
+<entry code="search_extended_indexint_concepts">Concepts de l'index. décimale</entry>
+<entry code="search_extended_indexint_aut_link">Autorités liées de l'index. décimale</entry>
+<entry code="search_extended_indexint_statut">Statut de l'index. décimale</entry>
+<entry code="search_custom_author">Personnalisables des auteurs</entry>
+<entry code="search_custom_categ">Personnalisables des catégories</entry>
+<entry code="search_custom_publisher">Personnalisables des éditeurs</entry>
+<entry code="search_custom_collection">Personnalisables des collections</entry>
+<entry code="search_custom_subcollection">Personnalisables des sous-collections</entry>
+<entry code="search_custom_serie">Personnalisables des séries</entry>
+<entry code="search_custom_tu">Personnalisables des titres uniformes</entry>
+<entry code="search_custom_indexint">Personnalisables des index. décimales</entry>
+<entry code="search_extended_skos_concepts_notation">Notation</entry>
+<entry code="search_extended_skos_concepts_note">Note</entry>
+<entry code="search_extended_skos_concepts_change_note">Note modifiée</entry>
+<entry code="search_extended_skos_concepts_definition">Définition</entry>
+<entry code="search_extended_skos_concepts_editorial_note">Note éditoriale</entry>
+<entry code="search_extended_skos_concepts_example">Exemple</entry>
+<entry code="search_extended_skos_concepts_history_note">Note historique</entry>
+<entry code="search_extended_skos_concepts_scope_note">Note d'emploi</entry>
+<entry code="search_extended_author_concepts_autopostage">Concepts avec autopostage de l'auteur</entry>
+<entry code="search_extended_category_concepts_autopostage">Concepts avec autopostage de la catégorie</entry>
+<entry code="search_extended_publisher_concepts_autopostage">Concepts avec autopostage de l'éditeur</entry>
+<entry code="search_extended_collection_concepts_autopostage">Concepts avec autopostage de la collection</entry>
+<entry code="search_extended_subcollection_concepts_autopostage">Concepts avec autopostage de la sous-collection</entry>
+<entry code="search_extended_titre_uniforme_concepts_autopostage">Concepts avec autopostage du titre uniforme</entry>
+<entry code="search_extended_serie_concepts_autopostage">Concepts avec autopostage de la série</entry>
+<entry code="search_extended_indexint_concepts_autopostage">Concepts avec autopostage de l'indexation décimale</entry>
+<entry code="search_extended_skos_concepts_autoposted">Concepts autopostés</entry>
+<entry code="search_extended_subcollection_publisher">Editeur de la sous-collection</entry>
+<entry code="search_extended_skos_concept">Concepts</entry>
+<entry code="search_extended_skos_concepts_preflabel">Libellé du concept</entry>
+<entry code="search_extended_skos_concepts_scheme">Schéma du concept</entry>
+<entry code="search_extended_common">Communs</entry>
+<entry code="search_extended_common_statut">Statut de l'autorité</entry>
+<entry code="search_extended_titre_uniforme_responsability_qualification">Qualification d'auteur de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_qualified_author">Auteur qualifié de l'oeuvre</entry>
+<entry code="search_extended_titre_uniforme_qualified_interpreter">Interprète qualifié de l'oeuvre</entry>
+<entry code="search_extended_publisher_supplier">Fournisseur lié à l'éditeur</entry>
+<entry code="search_extended_lonely_fields">Autres</entry>
+<entry code="search_extended_titre_uniforme_interpreter">Interprète de l'oeuvre</entry>
+<entry code="search_extended_category_thesaurus">Thésaurus</entry>
+<entry code="search_extended_concept_statut">Statut du concept</entry>
+<entry code="search_extended_indexint_pclassement">Plan de classement de l'index. décimale</entry>
+<entry code="search_extended_authorities_found"> autorité(s) trouvée(s).</entry>
+<entry code="authorities_found">autorité(s) trouvée(s) pour la recherche</entry>
+<entry code="search_autority_contributor">Contributeur de l'autorité</entry>
+<entry code="search_item_creator">Créateur de l'exemplaire</entry>
+<entry code="search_author_creator">Créateur de l'auteur</entry>
+<entry code="search_category_creator">Créateur de la categorie</entry>
+<entry code="search_publisher_creator">Créateur de l'éditeur</entry>
+<entry code="search_coll_creator">Créateur de la collection</entry>
+<entry code="search_subcoll_creator">Créateur de la sous-collection</entry>
+<entry code="search_serie_creator">Créateur de la série</entry>
+<entry code="search_tu_creator">Créateur du titre uniforme</entry>
+<entry code="search_indexint_creator">Créateur de l'indexation décimale</entry>
+<entry code="search_segment_new_search">Nouvelle recherche à partir d'un autre segment</entry>
+<entry code="bannette_unsubscribe_confirm">Vous devez cliquer sur ce lien pour confirmer votre désinscription.</entry>
+<entry code="bannette_unsubscribe_confirmed">Désinscription confirmée.</entry>
+<entry code="connecteurs_search_simple"><![CDATA[Vous pouvez lancer une recherche portant sur un ou plusieurs champs ou <a href='%s'>faire une recherche simple</a>]]></entry>
+<entry code="empr_menu_pnb_loan">Mes prêts numériques</entry>
+<entry code="empr_menu_pnb_loan_list">Mes prêts en cours</entry>
+<entry code="empr_menu_pnb_devices">Mes périphériques de lecture</entry>
+<entry code="empr_pnb_loan_not_activate">Le prêt numérique n'est pas activé</entry>
+<entry code="empr_pnb_devices_list">Périphériques disponibles</entry>
+<entry code="126">Masculin</entry>
+<entry code="127">Féminin</entry>
+<entry code="128">Non précisé</entry>
+<entry code="empr_pnb_current_loans_list">Mes prêts numériques en cours</entry>
+<entry code="empr_pnb_no_current_loans">Aucun prêt numérique en cours</entry>
+<entry js="search" code="results">résultat(s)</entry>
+<entry code="empr_menu_pnb_parameters">Paramètres</entry>
+<entry code="empr_pnb_parameters_hint">Indice du mot de passe</entry>
+<entry code="empr_pnb_parameters_password">Mot de passe</entry>
+<entry code="pnb_digital_expl">Exemplaire numérique</entry>
+<entry code="empr_pnb_choose_device">Choix du périphérique de lecture</entry>
+<entry code="pnb_loan_failed">Le prêt a échoué</entry>
+<entry code="pnb_loan_succeed">Document emprunté avec succès</entry>
+<entry code="notice_is_numeric_search">Numérique</entry>
+<entry code="dsi_priv_form_date_used_to_calc">Date des notices utilisée pour calculer la nouveauté</entry>
+<entry code="dsi_ban_update_type_c">Date de création</entry>
+<entry code="dsi_ban_update_type_u">Date de mise à jour</entry>
+<entry code="dsi_bannette_gerer_date_used_to_calc">Date utilisée</entry>
+<entry code="combine_extended_search">Recherches multi-critères</entry>
+<entry code="search_history_combine">Combiner les recherches cochées</entry>
+<entry code="empr_pnb_loan_extend">Prolonger</entry>
+<entry code="empr_pnb_loan_redownload">Re-télécharger</entry>
+<entry code="pnb_loan_already_borrowed">Vous avez déjà emprunté ce document</entry>
+<entry code="ontology_skos_concept">Concepts</entry>
+<entry js="history" code="show_history_check_all">Tout cocher</entry>
+<entry js="history" code="show_history_uncheck_all">Tout décocher</entry>
+<entry js="sort" code="show_sort_check_all">Tout cocher</entry>
+<entry js="sort" code="show_sort_uncheck_all">Tout décocher</entry>
+<entry code="search_universe_history">Univers "%s" : Recherche "%s"</entry>
+<entry code="search_segment_history">Segment "%s" : %s</entry>
+<entry code="search_segment_all_fields">Tous les champs du segment</entry>
+<entry code="perso_select">Sélection %s</entry>
+<entry code="reset">Réinitialiser</entry>
+<entry code="facette_reset_one">Déselectionner ce critère</entry>
+<entry code="facette_reset_all">Déselectionner tout les critères</entry>
+<entry code="notice_preview_close">Fermer la fenêtre</entry>
+<entry code="close">Fermer</entry>
+<entry code="disable_this_filter">Déselectionner ce filtre</entry>
+<entry code="writing_area">Zone des notes</entry>
+<entry code="expand">Déplier</entry>
+<entry code="expandall">Tout déplier</entry>
+<entry code="collapse">Replier</entry>
+<entry code="collapseall">Tout replier</entry>
+<entry code="onto_contribution_mandatory_field">Champ obligatoire</entry>
+<entry code="search_universe_new_search">Nouvelle recherche dans : </entry>
+<entry code="search_segment_refine_search">Affiner</entry>
+<entry code="aut_link_concept">[Concept] %1s</entry>
+<entry code="search_perso_menu">Prédéfinie</entry>
+<entry code="search_perso_title">Recherches prédéfinies > Toutes les recherches</entry>
+<entry code="search_perso_list_title">Toutes les recherches</entry>
+<entry code="search_perso_list">Liste des recherches prédéfinies</entry>
+<entry code="search_perso_table_preflink">Raccourci</entry>
+<entry code="search_perso_table_name">Nom</entry>
+<entry code="search_perso_table_shortname">Nom court</entry>
+<entry code="search_perso_table_humanquery">Recherche</entry>
+<entry code="search_perso_table_edit">Edition</entry>
+<entry code="search_perso_add">Ajouter</entry>
+<entry code="search_perso_save">Mémoriser en recherche prédéfinie</entry>
+<entry code="search_perso_modifier">Modifier</entry>
+<entry code="search_perso_form_title">Recherche prédéfinie</entry>
+<entry code="search_perso_form_add">Ajout de la recherche prédéfinie</entry>
+<entry code="search_perso_form_edit">Edition de la recherche prédéfinie</entry>
+<entry code="search_perso_form_annuler">Annuler</entry>
+<entry code="search_perso_form_save">Enregistrer</entry>
+<entry code="search_perso_form_delete">Supprimer</entry>
+<entry code="search_perso_form_name_empty">Le nom de la recherche est vide.</entry>
+<entry code="search_perso_form_name">Nom</entry>
+<entry code="search_perso_form_shortname">Raccourci du nom</entry>
+<entry code="search_perso_form_direct_search">Actif dans le bandeau de recherche</entry>
+<entry code="search_perso_form_add_error">Erreur de l'enregistrement de la recherche</entry>
+<entry code="confirm_suppr">Confirmez-vous la suppression </entry>
+<entry code="search_perso_form_autorisations">Autorisations accordées à :</entry>
+<entry code="search_perso_form_comment">Commentaire</entry>
+<entry code="tout_cocher_checkbox">Tout cocher</entry>
+<entry code="tout_decocher_checkbox">Tout décocher</entry>
+<entry code="message_unload_page">En fermant cette page, vous perdrez les modifications apportées.</entry>
+<entry code="155">Votre saisie peut aussi être une</entry>
+<entry code="1900">Aide</entry>
+<entry code="1901"> : </entry>
+<entry code="1902">Les expressions booléennes</entry>
+<entry code="1550">expression booléenne.</entry>
+<entry js="selector" code="selector_tab_simple_search">Recherche simple</entry>
+<entry js="selector" code="selector_tab_advanced_search">Recherche multi-critères</entry>
+<entry js="selector" code="selector_tab_add">Ajouter</entry>
+<entry js="selector" code="selector_tab_results">Résultats</entry>
+<entry js="selector" code="selector_tab_hierarchical_search">Recherche hiérarchique</entry>
+<entry js="selector" code="selector_tab_terms_search">Recherche par termes</entry>
+<entry js="selector" code="selector_tab_indexation_auto">Indexation automatique</entry>
+<entry js="selector" code="selector_tab_search_concept">Recherche concept</entry>
+<entry js="selector" code="selector_tab_linked_concept">Concept(s) associé(s)</entry>
+<entry code="authorities">Autorités</entry>
+<entry code="authorities_statut_label">Statut</entry>
+<entry code="searcher_all_status">Tous les statuts</entry>
+<entry code="searcher_results">%s résultat(s)</entry>
+<entry code="48">Page précédente</entry>
+<entry code="49">Page suivante</entry>
+<entry code="searcher_all_types">Tous les types</entry>
+<entry code="search_authorities">Toutes autorités</entry>
+<entry code="333">Titres de série</entry>
+<entry code="354">Auteur/titre</entry>
+<entry code="356">Éditeur/collection</entry>
+<entry code="search_categorie_title">Catégorie</entry>
+<entry code="17">Types de document</entry>
+<entry code="noti_statut_noti">Statut de notice</entry>
+<entry code="notice_id_libelle">Identifiant de la notice :</entry>
+<entry code="103">Libellé</entry>
+<entry code="searcher_all_schemes">Tous les schémas</entry>
+<entry code="resa_loc_retrait">Localisation de retrait</entry>
+<entry code="resa_empr_location">Localisation du lecteur</entry>
+<entry code="authentification_page_mandatory">Vous devez vous authentifier pour accéder à cette page :</entry>
+<entry code="serialcirc_ask_saved_success">Votre demande a été bien enregistrée.</entry>
+<entry code="serialcirc_ask_saved_failed">Un problème est survenu à l'enregistrement de votre demande.</entry>
+<entry code="scan_request_location">Localisation</entry>
+<entry code="group_prolonge_pret">Prolonger les prêts</entry>
+<entry code="group_prolonge_pret_date_title">Date de prolongation</entry>
+<entry js="empr" code="group_prolonge_pret_no_date">Veuillez sélectionner une date de prolongation.</entry>
+<entry js="empr" code="group_prolonge_pret_confirm">Confirmez-vous la prolongation des prêts des membres du groupe ?</entry>
+<entry code="print_validate">Valider</entry>
+<entry js="carto" code="carto_search_radius">Rechercher dans un rayon</entry>
+<entry js="carto" code="carto_km">Km</entry>
+<entry code="search_extended_map_circle">Cercle</entry>
+<entry code="search_extended_map_circle_center">Centre(x,y): </entry>
+<entry code="search_extended_map_circle_radius">Rayon(km): </entry>
+<entry code="list_lecture_add_list">Ajouter</entry>
+<entry code="list_lecture_no_classement">--</entry>
+<entry code="173">Collections trouvées sous la clé</entry>
+<entry code="empr_sugg_verifcode">Code de vérification :</entry>
+<entry code="empr_sugg_wrongcode">Le code de vérification saisi n'est pas valide !</entry>
 </XMLlist>

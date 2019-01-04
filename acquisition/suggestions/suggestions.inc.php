@@ -2,9 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions.inc.php,v 1.36 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: suggestions.inc.php,v 1.38 2018-06-06 09:22:22 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($transition)) $transition = '';
+if(!isset($catnoti)) $catnoti = '';
+if(!isset($id_sug)) $id_sug = 0;
 
 //URL de retour du form de création/modification de suggestion
 $back_url = "onClick=\"document.location='./acquisition.php?categ=sug&action=list'\"";
@@ -113,7 +117,7 @@ switch($action) {
 			if (file_exists($base_path."/catalog/z3950/".$z3950_import_modele)) {
 				require_once($base_path."/catalog/z3950/".$z3950_import_modele);
 			} else {
-				error_message("", $msg["admin_error_file_import_modele_z3950"], 1, "./admin.php?categ=param");
+				error_message("", $msg["admin_error_file_import_modele_z3950"], 1, "./admin.php?categ=param&form_type_param=z3950&form_sstype_param=import_modele#justmodified");
 				exit;
 			}
 		} else require_once($base_path."/catalog/z3950/func_other.inc.php");

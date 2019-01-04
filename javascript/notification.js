@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notification.js,v 1.2 2014-01-13 08:07:15 arenou Exp $
+// $Id: notification.js,v 1.5 2018-01-30 14:27:27 ngantier Exp $
 
 var notification = function (module,empty_msg,new_msg,new_icon,empty_icon){
 	this.dom; //Objet DOM du div de notification...
@@ -14,7 +14,7 @@ var notification = function (module,empty_msg,new_msg,new_icon,empty_icon){
 	this.new_icon = new_icon;
 	this.empty_icon = empty_icon;
 	
-	//pseudo-constructeur, on attache la fonction init à  l'évènement onload de la page...
+	//pseudo-constructeur, on attache la fonction init ï¿½  l'ï¿½vï¿½nement onload de la page...
 	window.addEventListener("load",pmbtk.c(this,"init"),false);
 	this.init = function(){
 		this.dom = document.getElementById('notification');
@@ -64,7 +64,7 @@ var notification = function (module,empty_msg,new_msg,new_icon,empty_icon){
 	
 	this.save_new_notification = function(){
 		var ajax = new http_request();
-		ajax.request("ajax.php?module="+this.current_module+"&categ=dashboard&sub=save_new_notification",0,"",0,pmbtk.c(this,"new_notification_saved"));
+		ajax.request("ajax.php?module="+this.current_module+"&categ=dashboard&sub=save_new_notification",0,"",true,pmbtk.c(this,"new_notification_saved"));
 	}
 	
 	this.new_notification_saved = function(response){
@@ -87,7 +87,7 @@ var notification = function (module,empty_msg,new_msg,new_icon,empty_icon){
 	
 	this.read_new_notification = function(){
 		var ajax = new http_request();
-		ajax.request("ajax.php?module="+this.current_module+"&categ=dashboard&sub=save_notification_readed",0,"",0,pmbtk.c(this,"notification_readed"));
+		ajax.request("ajax.php?module="+this.current_module+"&categ=dashboard&sub=save_notification_readed",0,"",true,pmbtk.c(this,"notification_readed"));
 	}
 	
 	this.load_icon = function(){
@@ -102,6 +102,10 @@ var notification = function (module,empty_msg,new_msg,new_icon,empty_icon){
 		this.img.src =  this.new_icon;
 		this.img.title = this.new_msg;
 		this.img.alt = this.img.title;
+		//wlair ajout class si notif present
+		if (!this.dom.classList.contains('ui-active') ){
+			this.dom.className += " ui-active";	
+		}
 	}
 	
 	this.load_empty_icon = function(){

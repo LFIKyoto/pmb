@@ -4,10 +4,11 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: fr_FR.xml,v 1.1 2012-07-31 10:12:16 dgoron Exp $ -->
+$Id: fr_FR.xml,v 1.2 2017-08-18 15:29:02 jpermanne Exp $ -->
 
 <XMLlist>
 	<entry code="planificateur_mailing_template">Template de mail</entry>
 	<entry code="planificateur_mailing_caddie_empr">Panier d'emprunteurs destinataires</entry>
 	<entry code="mailing_unknown">Template de mail ou panier d'emprunteurs inconnu</entry>
+	<entry code="planificateur_mailing_email_cc">Destinataire supplémentaire en copie cachée</entry>
 </XMLlist>

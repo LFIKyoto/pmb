@@ -1,4 +1,4 @@
-<h1>Administration du planificateur</h1>
+<h2>Administration du planificateur</h2>
 
 <p>La section <b>administration du planificateur</b> permet d&apos;automatiser des actions effectu&eacute;es manuellement par l&apos;administrateur.
 <ul>

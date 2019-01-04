@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: term_show.php,v 1.7 2012-08-23 14:58:11 mbertin Exp $
+// $Id: term_show.php,v 1.8 2017-11-22 11:07:35 dgoron Exp $
 
 $base_path="../../..";                            
 $base_auth = ""; 
@@ -31,7 +31,7 @@ function parent_link($categ_id,$categ_see) {
 		$visible=false;
 		
 	if ($tcateg->has_notices()) {
-		$link="<a href='".$base_path."/circ.php?categ=resa&mode=1&aut_id=$categ&etat=aut_search&aut_type=categ&id_empr=$id_empr&groupID=$groupID&mode=1&unq=$unq' target=_top><img src='$base_path/images/search.gif' border=0 align='absmiddle'></a>";
+		$link="<a href='".$base_path."/circ.php?categ=resa&mode=1&aut_id=$categ&etat=aut_search&aut_type=categ&id_empr=$id_empr&groupID=$groupID&mode=1&unq=$unq' target=_top><img src='".get_url_icon('search.gif')."' border=0 align='absmiddle'></a>";
 		$visible=true;	
 	}
 	$r=array("VISIBLE"=>$visible,"LINK"=>$link);

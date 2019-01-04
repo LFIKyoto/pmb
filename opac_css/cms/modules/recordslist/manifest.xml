@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.15 2015-04-16 12:14:57 dgoron Exp $ -->
+$Id: manifest.xml,v 1.23 2018-02-26 10:45:34 arenou Exp $ -->
 
 <manifest>
 	<name>Liste de notices</name>
@@ -20,6 +20,9 @@ $Id: manifest.xml,v 1.15 2015-04-16 12:14:57 dgoron Exp $ -->
 		<datasources>
 			<datasource>cms_module_common_datasource_similarrecords</datasource>
 			<datasource>cms_module_common_datasource_records_categories</datasource>
+			<datasource>cms_module_common_datasource_records_by_categories</datasource>
+			<datasource conditionParam="thesaurus_concepts_active">cms_module_common_datasource_records_by_concepts</datasource>
+			<datasource conditionParam="thesaurus_concepts_active">cms_module_common_datasource_records_used_by_composed_concepts</datasource>
 			<datasource>cms_module_common_datasource_records_section_categories</datasource>
 			<datasource>cms_module_common_datasource_records</datasource>
 			<datasource>cms_module_common_datasource_records_author</datasource>
@@ -32,9 +35,15 @@ $Id: manifest.xml,v 1.15 2015-04-16 12:14:57 dgoron Exp $ -->
 			<datasource>cms_module_common_datasource_records_by_cp_val</datasource>
 			<datasource>cms_module_common_datasource_records_bannette</datasource>
 			<datasource>cms_module_recordslist_datasource_records_last_read</datasource>
+			<datasource>cms_module_recordslist_datasource_records_category</datasource>
 		</datasources>
+		<filters>
+			<filter>cms_module_common_filter_records_by_doctype</filter>
+			<filter>cms_module_common_filter_records_by_cp</filter>
+		</filters>
 		<views>
 			<view>cms_module_common_view_recordslist</view>
+			<view>cms_module_recordslist_view_django_directory</view>
 			<view>cms_module_recordslist_view_carousel_responsive</view>
 			<view>cms_module_recordslist_view_carousel</view>
 		</views>

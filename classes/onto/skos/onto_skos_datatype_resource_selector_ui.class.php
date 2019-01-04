@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_skos_datatype_resource_selector_ui.class.php,v 1.2 2015-03-04 14:26:24 apetithomme Exp $
+// $Id: onto_skos_datatype_resource_selector_ui.class.php,v 1.7 2017-10-30 13:42:59 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -33,10 +33,11 @@ class onto_skos_datatype_resource_selector_ui extends onto_common_datatype_resou
 
 		//on regarde si le flag change quelque chose pour notre sélecteur 
 		$fixed = false;
+		/* Pourquoi plus de bouton de selection ??
 		if(strpos($flag, "_selector_form") !== false){
 			$fixed =true;
 		}
-		
+		*/
 		$form=$ontology_tpl['form_row'];
 		$form=str_replace("!!onto_row_label!!",htmlentities($property->label ,ENT_QUOTES,$charset) , $form);
 		
@@ -47,10 +48,11 @@ class onto_skos_datatype_resource_selector_ui extends onto_common_datatype_resou
 		}
 		$content='';
 		if(!$fixed){
+			
 			$content.=$ontology_tpl['form_row_content_input_sel'];
-			if($restrictions->get_max()<$i || $restrictions->get_max()===-1){
+// 			if($restrictions->get_max()<$i || c$restrictions->get_max()===-1){ //Edit VT 16/10/17 pour moi la condition n'a plus lieu d'être
 				$content.=$ontology_tpl['form_row_content_input_add_ressource_selector'];
-			}
+// 			}
 		}
 		$content = str_replace("!!property_name!!", rawurlencode($property->pmb_name), $content);
 		if(sizeof($datas)){
@@ -74,7 +76,6 @@ class onto_skos_datatype_resource_selector_ui extends onto_common_datatype_resou
 				$inside_row=str_replace("!!form_row_content_resource_selector_value!!",$data->get_raw_value() , $inside_row);
 				$inside_row=str_replace("!!form_row_content_resource_selector_range!!",$data->get_value_type() , $inside_row);
 				$inside_row=str_replace("!!onto_current_element!!",onto_common_uri::get_id($item_uri),$inside_row);
-				$inside_row=str_replace("!!onto_current_range!!",$range_for_form,$inside_row);
 				
 				$row=str_replace("!!onto_inside_row!!",$inside_row , $row);
 				
@@ -106,7 +107,6 @@ class onto_skos_datatype_resource_selector_ui extends onto_common_datatype_resou
 			$inside_row=str_replace("!!form_row_content_resource_selector_value!!","" , $inside_row);
 			$inside_row=str_replace("!!form_row_content_resource_selector_range!!","" , $inside_row);
 			$inside_row=str_replace("!!onto_current_element!!",onto_common_uri::get_id($item_uri),$inside_row);
-			$inside_row=str_replace("!!onto_current_range!!",$range_for_form,$inside_row);
 			
 			$row=str_replace("!!onto_inside_row!!",$inside_row , $row);
 			
@@ -121,10 +121,10 @@ class onto_skos_datatype_resource_selector_ui extends onto_common_datatype_resou
 				
 			$content.=$row;
 		}
-		
 		$form=str_replace("!!onto_rows!!",$content ,$form);
+		$form=str_replace("!!onto_completion!!",self::get_completion_from_range($range_for_form), $form);
 		$form=str_replace("!!onto_row_id!!",$instance_name.'_'.$property->pmb_name , $form);
-		
+		$form=str_replace("!!onto_current_range!!",$range_for_form,$form);
 		return $form;
 	} // end of member function get_form
 	

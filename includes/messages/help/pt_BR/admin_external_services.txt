@@ -1,4 +1,4 @@
-<h1>Administração de serviços externos</h1>
+<h2>Administração de serviços externos</h2>
 
 <p>Os serviços externos são funções destinadas a ser utilizadas por outros programas, a fim de interagir com o PMB</p>
 

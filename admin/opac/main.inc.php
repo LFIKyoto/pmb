@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.7 2012-08-08 14:42:08 arenou Exp $
+// $Id: main.inc.php,v 1.9 2018-04-27 10:18:26 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -30,11 +30,22 @@ switch($sub) {
 		print $admin_layout;
 		include("./admin/opac/navigation_opac.inc.php");
 		break;
-	case "facette_search_opac":
-		// affichage de la liste des facette en opac
-		$admin_layout = str_replace('!!menu_sous_rub!!', $msg["admin_menu_opac_facette"], $admin_layout);
-		include("./admin/opac/facette_search/main.inc.php");
-	break;
+	case "facettes":
+	case "facettes_authorities":
+	case "facettes_external":
+	case "facettes_comparateur":
+		require_once($class_path.'/modules/module_admin.class.php');
+		$module_admin = new module_admin();
+		$module_admin->set_url_base($base_path."/admin.php?categ=opac");
+	    if(!isset($id)) $id = 0;
+	    $module_admin->set_object_id($id);
+		$module_admin->proceed_facets();
+		break;
+	case "maintenance":
+		// définition de la page de maintenance
+		$admin_layout = str_replace('!!menu_sous_rub!!', $msg["admin_menu_opac_maintenance"], $admin_layout);
+		include("./admin/opac/maintenance/main.inc.php");
+		break;
 	default :
 		$admin_layout = str_replace('!!menu_sous_rub!!', "", $admin_layout);
         print $admin_layout;

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: autorites.php,v 1.14 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: autorites.php,v 1.15 2017-05-06 12:03:22 dgoron Exp $
 
 // définition du minimum nécéssaire 
 $base_path=".";                            
@@ -27,7 +27,9 @@ if($use_shortcuts) {
 $authpersos=new authpersos();
 $autorites_layout=str_replace('!!authpersos!!',$authpersos->get_menu(), $autorites_layout);
 
-print $autorites_layout;
+if($categ != 'caddie') {
+	print $autorites_layout;
+}
 
 include("./autorites/autorites.inc.php");
 

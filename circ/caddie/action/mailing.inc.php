@@ -2,14 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mailing.inc.php,v 1.1 2007-07-15 11:22:40 touraine37 Exp $
+// $Id: mailing.inc.php,v 1.2 2016-11-15 13:35:24 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 if($idemprcaddie) {
 	$myCart= new empr_caddie($idemprcaddie);
-	print aff_empr_cart_titre ($myCart);
-	print aff_empr_cart_nb_items ($myCart) ;
+	print $myCart->aff_cart_titre();
+	print $myCart->aff_cart_nb_items();
 	switch ($action) {
 		case 'envoi':
 			print "<iframe name='mailing_empr' frameborder='0' scrolling='yes' width='100%' height='700' src='./circ/caddie/action/mailing.php?idemprcaddie=$idemprcaddie&sub=redige'>

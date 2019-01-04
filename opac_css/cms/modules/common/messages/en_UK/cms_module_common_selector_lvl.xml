@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: cms_module_common_selector_lvl.xml,v 1.1 2015-06-16 10:24:25 pmbs Exp $ -->
+$Id: cms_module_common_selector_lvl.xml,v 1.4 2016-11-14 11:01:26 dgoron Exp $ -->
 
 <XMLlist>
 	<entry code="cms_module_common_selector_lvl">OPAC page type</entry>
@@ -22,12 +22,14 @@ $Id: cms_module_common_selector_lvl.xml,v 1.1 2015-06-16 10:24:25 pmbs Exp $ -->
 	<entry code="cms_module_common_selector_lvl_search_result">Search result (level 1)</entry>
 	<entry code="cms_module_common_selector_lvl_subcoll_see">Sub-collection</entry>
 	<entry code="cms_module_common_selector_lvl_search_history">Search history</entry>
-	<entry code="cms_module_common_selector_lvl_etagere_see">Shelves</entry>
+	<entry code="cms_module_common_selector_lvl_etagere_see">Shelve</entry>
 	<entry code="cms_module_common_selector_lvl_etageres_see">Shelves</entry>
 	<entry code="cms_module_common_selector_lvl_show_cart">Basket</entry>
 	<entry code="cms_module_common_selector_lvl_show_list">Reading list</entry>
 	<entry code="cms_module_common_selector_lvl_section_see">Section</entry>
 	<entry code="cms_module_common_selector_lvl_rss_see">RSS feed</entry>
+	<entry code="cms_module_common_selector_lvl_concept_see">Concepts</entry>
+	<entry code="cms_module_common_selector_lvl_authperso_see">custom authorities</entry>
 	<entry code="cms_module_common_selector_lvl_sort">Sort</entry>
 	<entry code="cms_module_common_selector_lvl_lastrecords">Latest books</entry>
 	<entry code="cms_module_common_selector_lvl_infopages">Infopages</entry>
@@ -48,4 +50,6 @@ $Id: cms_module_common_selector_lvl.xml,v 1.1 2015-06-16 10:24:25 pmbs Exp $ -->
 	<entry code="cms_module_common_selector_lvl_empr">My account</entry>
 	<entry code="cms_module_common_selector_lvl_askmdp">Forgotten password</entry>
 	<entry code="cms_module_common_selector_lvl_subscribe">Online inscription</entry>
+	<entry code="cms_module_common_selector_lvl_contact_form">Contact form</entry>
+	<entry code="cms_module_common_selector_lvl_collstate_bulletins_display">Constitution des reliures</entry>
 </XMLlist>

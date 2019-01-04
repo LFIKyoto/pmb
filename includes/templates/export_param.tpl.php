@@ -3,7 +3,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export_param.tpl.php,v 1.3 2012-10-08 09:52:04 dbellamy Exp $
+// $Id: export_param.tpl.php,v 1.5 2016-12-13 10:54:34 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -36,12 +36,16 @@ $form_param ="
 		</div>			
 		<blockquote>	
 			<div class='row'>
-				<input type=\"checkbox\" id=\"mere\"\ name=\"mere\" value='1' !!checked_1!! onclick=\"param_activate();\"  />
+				<input type=\"checkbox\" id=\"mere\" name=\"mere\" value='1' !!checked_1!! onclick=\"param_activate();\"  />
 				<label for=\"mere\">$msg[export_mere]</label>
 			</div>	
 			<div class='row'>
 				<input type=\"checkbox\" id=\"fille\" name=\"fille\" value='1' !!checked_2!! onclick=\"param_activate();\" /> 
 				<label for=\"fille\">$msg[export_fille]</label>
+			</div>
+			<div class='row'>
+				<input type=\"checkbox\" id=\"horizontale\" name=\"horizontale\" value='1' !!checked_11!! onclick=\"param_activate();\" /> 
+				<label for=\"horizontale\">$msg[export_horizontale]</label>
 			</div>
 			<div class='row'>
 				<input type=\"checkbox\" id=\"notice_mere\" name=\"notice_mere\" value='1' !!checked_9!! !!disabled_3!!/> 
@@ -50,6 +54,10 @@ $form_param ="
 			<div class='row'>
 				<input type=\"checkbox\" id=\"notice_fille\" name=\"notice_fille\" value='1' !!checked_10!! !!disabled_4!!/> 
 				<label for=\"notice_fille\">$msg[export_notice_fille]</label>
+			</div>
+			<div class='row'>
+				<input type=\"checkbox\" id=\"notice_horizontale\" name=\"notice_horizontale\" value='1' !!checked_12!! !!disabled_5!!/> 
+				<label for=\"notice_horizontale\">$msg[export_notice_horizontale]</label>
 			</div>
 		</blockquote>	
 	</blockquote>
@@ -125,6 +133,12 @@ $form_param ="
 			document.getElementById('notice_fille').disabled='';
 		} else {
 			document.getElementById('notice_fille').disabled='disabled';
+		}
+			
+		if(document.getElementById('horizontale').checked){	
+			document.getElementById('notice_horizontale').disabled='';
+		} else {
+			document.getElementById('notice_horizontale').disabled='disabled';
 		}	
 	}
 	

@@ -2,13 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: autorites.inc.php,v 1.14 2015-01-14 11:31:08 dgoron Exp $
+// $Id: autorites.inc.php,v 1.24 2017-10-04 13:39:46 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 echo window_title($database_window_title.$msg[132].$msg[1003].$msg[1001]);
 
-if($pmb_javascript_office_editor) print $pmb_javascript_office_editor;
+//initialisation pour toutes les autorités
+if (!isset($user_input)) $user_input = '';
+
+if($pmb_javascript_office_editor){
+	print $pmb_javascript_office_editor;
+	print "<script type='text/javascript' src='".$base_path."/javascript/tinyMCE_interface.js'></script>";
+}
 
 switch($categ) {
 	case 'series':
@@ -33,10 +39,7 @@ switch($categ) {
 		include('./autorites/subcollections/subcollections.inc.php');
 		break;
 	case 'concepts':
-		if (SESSrights & THESAURUS_AUTH){
-			//include('./autorites/concepts/concepts.inc.php');
-			include('./autorites/onto/main.inc.php');
-		}
+		if (SESSrights & CONCEPTS_AUTH) include('./autorites/onto/main.inc.php');
 		break;
 	case 'semantique':
 		if (SESSrights & THESAURUS_AUTH) include('./autorites/semantique/semantique_main.inc.php');
@@ -52,6 +55,25 @@ switch($categ) {
 		break;
 	case 'authperso' :
 		include('./autorites/authperso/authperso.inc.php');
+		break;
+	case 'see' :
+		include('./autorites/see/main.inc.php');
+		break;
+	case 'search':
+		include('./autorites/search/main.inc.php');
+		break;
+	case 'search_perso':
+		include('./autorites/search_perso/main.inc.php');
+		break;
+	case 'caddie':
+		include('./autorites/caddie/caddie.inc.php');
+		break;
+	case 'plugin' :
+		$plugins = plugins::get_instance();
+		$file = $plugins->proceed("autorites",$plugin,$sub);
+		if($file){
+			include $file;
+		}
 		break;
 	default:
 		include('./autorites/authors/authors.inc.php');

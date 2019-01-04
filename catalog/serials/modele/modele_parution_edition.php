@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: modele_parution_edition.php,v 1.7 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: modele_parution_edition.php,v 1.10 2017-11-22 14:51:56 wlair Exp $
 
 // définition du minimum nécéssaire
 $base_path="./../../..";
@@ -10,6 +10,8 @@ $base_auth = "CATALOGAGE_AUTH";
 $base_title = "\$msg[6]";
 require_once ("$base_path/includes/init.inc.php");
 
+if(!isset($act)) $act = '';
+		
 $templates = <<<ENDOFFILE
 			<script type='text/javascript'>
 				function Fermer(obj,type_doc) {
@@ -22,13 +24,13 @@ $templates = <<<ENDOFFILE
 				}				
 			</script>
 <div style='width: 90%;'>
-	<div id="bouton_fermer_notice_preview" class="right"><a href='#' onClick='parent.kill_frame_periodique();return false;'>X</a></div>
+	<div id="bouton_fermer_notice_preview" class="right"><a href='#' class='panel-close' onClick='parent.kill_frame_periodique();return false;'><i class='fa fa-times' aria-hidden='true'></i></a></div>
 	!!form!!
 </div>						
 ENDOFFILE;
 
 $form="<form class='form-$current_module' id='form_modele' name='form_modele' method='post' action='./modele_parution_edition.php?modele_id=$modele_id&date_parution=$date_parution'>
-	<div class='row'  ALIGN='center'>!!date_parution!!</div>			
+	<div class='row center'>!!date_parution!!</div>			
 	<div class='row'>
 	<input type='checkbox' value='1' !!check_periodique!! name='doc_type[1]'/>".$msg["abonnements_serie"]."
 	</div>

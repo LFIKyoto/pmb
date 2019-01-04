@@ -1,4 +1,4 @@
-<h1>Administration of the task manager</h1>
+<h2>Administration of the task manager</h2>
 
 <p>The <b>administration of the task manager</b> section lets you automate actions usually done manually by the administrator.
 <ul>

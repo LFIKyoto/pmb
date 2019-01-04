@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: faq_question.tpl.php,v 1.3 2015-05-31 18:43:12 Alexandre Exp $
+// $Id: faq_question.tpl.php,v 1.5 2017-09-28 09:23:36 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -77,56 +77,12 @@ $faq_question_form ="
 <script type='text/javascript'>
 	ajax_parse_dom();
 	function add_categ() {
-        template = document.getElementById('addcateg');
-        categ=document.createElement('div');
-        categ.className='row';
-
-        suffixe = eval('document.faq_question_form.max_categ.value')
-        nom_id = 'f_categ'+suffixe
-        f_categ = document.createElement('input');
-        f_categ.setAttribute('name',nom_id);
-        f_categ.setAttribute('id',nom_id);
-        f_categ.setAttribute('type','text');
-        f_categ.className='saisie-80emr';
-        f_categ.setAttribute('value','');
-		f_categ.setAttribute('completion','categories_mul');
-        f_categ.setAttribute('autfield','f_categ_id'+suffixe);
-
-        del_f_categ = document.createElement('input');
-        del_f_categ.setAttribute('id','del_f_categ'+suffixe);
-        del_f_categ.onclick=fonction_raz_categ;
-        del_f_categ.setAttribute('type','button');
-        del_f_categ.className='bouton';
-        del_f_categ.setAttribute('readonly','');
-        del_f_categ.setAttribute('value','$msg[raz]');
-
-        f_categ_id = document.createElement('input');
-        f_categ_id.name='f_categ_id'+suffixe;
-        f_categ_id.setAttribute('type','hidden');
-        f_categ_id.setAttribute('id','f_categ_id'+suffixe);
-        f_categ_id.setAttribute('value','');
-
-        categ.appendChild(f_categ);
-        space=document.createTextNode(' ');
-        categ.appendChild(space);
-        categ.appendChild(del_f_categ);
-        categ.appendChild(f_categ_id);
-
-        template.appendChild(categ);
-
-        document.faq_question_form.max_categ.value=suffixe*1+1*1 ;
-        ajax_pack_element(f_categ);
+		templates.add_completion_field('f_categ', 'f_categ_id', 'categories_mul');
     }
     function fonction_selecteur_categ() {
         name=this.getAttribute('id').substring(4);
         name_id = name.substr(0,7)+'_id'+name.substr(7);
-        openPopUp('./select.php?what=categorie&caller=!!cms_editorial_form_name!!&p1='+name_id+'&p2='+name+'&dyn=1', 'select_categ', 700, 500, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes');
-    }
-    function fonction_raz_categ() {
-        name=this.getAttribute('id').substring(4);
-        name_id = name.substr(0,7)+'_id'+name.substr(7);
-        document.getElementById(name_id).value=0;
-        document.getElementById(name).value='';
+        openPopUp('./select.php?what=categorie&caller=!!cms_editorial_form_name!!&p1='+name_id+'&p2='+name+'&dyn=1', 'selector_category');
     }
 </script>";
 
@@ -134,10 +90,10 @@ $faq_question_form ="
 
 $faq_question_first_desc = "
 <div class='row'>
-<input type='hidden' name='max_categ' value=\"!!max_categ!!\" />
+<input type='hidden' id='max_categ' name='max_categ' value=\"!!max_categ!!\" />
 <input type='text' class='saisie-80emr' id='f_categ!!icateg!!' name='f_categ!!icateg!!' value=\"!!categ_libelle!!\" completion=\"categories_mul\" autfield=\"f_categ_id!!icateg!!\" />
 
-<input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=categorie&caller='+this.form.name+'&p1=f_categ_id!!icateg!!&p2=f_categ!!icateg!!&dyn=1&parent=0&deb_rech=', 'select_categ', 700, 500, -2, -2, '$select_categ_prop')\" />
+<input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=categorie&caller='+this.form.name+'&p1=f_categ_id!!icateg!!&p2=f_categ!!icateg!!&dyn=1&parent=0&deb_rech=', 'selector_category')\" />
 <input type='button' class='bouton' value='$msg[raz]' onclick=\"this.form.f_categ!!icateg!!.value=''; this.form.f_categ_id!!icateg!!.value='0'; \" />
 <input type='hidden' name='f_categ_id!!icateg!!' id='f_categ_id!!icateg!!' value='!!categ_id!!' />
 <input type='button' class='bouton' value='+' onClick=\"add_categ();\"/>

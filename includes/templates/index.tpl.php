@@ -2,10 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: index.tpl.php,v 1.29 2011-09-15 13:42:02 trenon Exp $
+// $Id: index.tpl.php,v 1.34 2017-10-19 15:03:23 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+if(!isset($ret_url)) $ret_url = '';
+if(!isset($nav_bar)) $nav_bar = '';
 // templates index
 //    ----------------------------------
 // $login_form : template form login
@@ -13,51 +15,54 @@ if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 $login_form = "
 <div id='login-box'>
     <h1>$msg[1000]</h1>
-    <form class='form-$current_module' id='login' method='post' action='./main.php'>
-    <div class='form-contenu'>";
-if ($login_message) $login_form .="<div class='colonne2'>";
-if ($ret_url) $login_form .= "<input type=hidden name=ret_url value=\"".addslashes($ret_url)."\">";
-$login_form .= "<div class='row'>
-            <label class='etiquette' for='user'>$msg[1]</label>
-        </div>
-        <div class='row'>
-            <input class='saisie-20em' type='text' name='user' id='user' value='' size='15'/>
-        </div>
-        <div class='row'>
-            <label class='etiquette' for='password'>$msg[2]</label>
-        </div>
-        <div class='row'>
-            <input class='saisie-20em' type='password' name='password' id='password' value='' size='15'/>
-        </div>
-    ";
+    <div class='login_page'>
+    	<div class='login_form'>
+    		<form class='form-$current_module' id='login' method='post' action='./main.php'>
+    			<input type=hidden name=ret_url value=\"".addslashes($ret_url)."\">";
 if (count($_tableau_databases)>1) {
-	$login_form .= "<div class='row'>
-            <label class='etiquette' for='database'>$msg[choix_database]</label>
-        </div>
-        <div class='row'><select name='database' class='liste_choix_db_login'>";
-	for ($idatabase=0;$idatabase<count($_tableau_databases);$idatabase++) $login_form .= "<option value='".$_tableau_databases[$idatabase]."' class='liste_choix_db_login'>".$_libelle_databases[$idatabase]."</option>" ;
-	$login_form .= "</select></div>" ;
-	} else {
-		 $login_form .= "<input type='hidden' name='database' value='".$_tableau_databases[0]."'>" ;
+	$login_form .= "<script type='text/javascript' src='./javascript/http_request.js'></script>
+	<script type='text/javascript' src='./javascript/change_db.js'></script>
+	<div class='row'>
+		<label class='etiquette' for='database'>$msg[choix_database]</label>
+	</div>
+	<div class='row'><select name='database' class='liste_choix_db_login' onchange='change_db(this.options[this.selectedIndex].value);'>";
+	for ($idatabase=0;$idatabase<count($_tableau_databases);$idatabase++){
+		$login_form .= "<option value='".$_tableau_databases[$idatabase]."' class='liste_choix_db_login'";
+		if ($_tableau_databases[$idatabase] == LOCATION) {
+			$login_form .= " selected";
 		}
-if ($login_message) {
-	$login_form.="</div>
-	<div class='colonne-suite'>
-		!!login_message!!
-	</div>
-	<div class='row'></div>";
+		$login_form .= ">".$_libelle_databases[$idatabase]."</option>" ;
+	}
+	$login_form .= "</select></div>" ;
+} else {
+	$login_form .= "<input type='hidden' name='database' value='".$_tableau_databases[0]."'>" ;
 }
-$login_form .= "
+$login_form .= "<div class='row'>
+			<label class='etiquette' for='user'>$msg[1]</label>
+		</div>
+		<div class='row'>
+			<input class='saisie-20em' type='text' name='user' id='user' value='' size='15'/>
+		</div>
+		<div class='row'>
+			<label class='etiquette' for='password'>$msg[2]</label>
+		</div>
+		<div class='row'>
+			<input class='saisie-20em' type='password' name='password' id='password' value='' size='15'/>
+		</div>
+		<div class='row'></div>
+		<!--    Bouton d'envoi    -->
+	    <div class='row'>
+	        <input type='submit' class='bouton' value='$msg[715]' />
+	    </div>
+	    <div class='row'>
+	        !!erreur!!
+	    </div>
+			</form>
+    	</div>
+		<div class='pmb_login_message' id='pmb_login_message'>".$pmb_login_message."</div>
+		<div class='login_message' id='login_message'>!!login_message!!</div>
 	</div>
-    <!--    Bouton d'envoi    -->
-    <div class='row'>
-        <input type='submit' class='bouton' value='$msg[715]' />
-    </div>
-    </form>
-    <div class='row'>
-        !!erreur!!
-        </div>
-    </div>";
+</div>";
 
 $login_form_demo = "
 <div id='login-box'>
@@ -163,21 +168,18 @@ $login_form_demo = "
 $login_form_error = "<h4 class='erreur'>$msg[10]</h4>";
 
 // $index_header : template header index
-$index_header = "
-<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN'
-'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
-<html xmlns='http://www.w3.org/1999/xhtml' lang='$msg[1002]' charset='".$charset."'>
-  <head>
+$index_header = "<!DOCTYPE html>
+<html lang='".get_iso_lang_code()."'>
+<head>
+	<meta charset=\"".$charset."\" />
     <title>
       $msg[1001]
     </title>
     <meta name='author' content='PMB Group' />
     <meta name='description' content='Logiciel libre de gestion de médiathèque' />
-    <meta name='keywords' content='logiciel, gestion, bibliothèque, médiathèque, libre, free, software, mysql, php, linux, windows, mac' />
+    <meta name='keywords' content='logiciel, gestion, bibliothèque, médiathèque, libre, free, software, mysql, php, linux, windows, mac, PMB $pmb_version' />
     <meta http-equiv='Pragma' content='no-cache' />
-    <meta http-equiv='Cache-Control' content='no-cache' />
-    <meta http-equiv='content-type' content='text/html; charset=".$charset."' />
-    <meta http-equiv='Content-Language' content='$lang' />";
+    <meta http-equiv='Cache-Control' content='no-cache' />";
 //$stylesheet='couleurs_onglets' ;
 $index_header.= link_styles($stylesheet); //"    <link rel='stylesheet' type='text/css' href='./styles/$stylesheet'>";
 $index_header.="
@@ -187,7 +189,7 @@ $index_header.="
 ";
 
 $extra_version ="
-<div id='extra'>".$msg['sauv_misc_restaure_db']." : ".LOCATION." / ".sprintf($msg["print_n_notices"],$pmb_nb_documents)."
+<div id='extra'>".$msg['sauv_misc_restaure_db']." : <span id='extra_bdd'>".LOCATION."</span> / ".sprintf($msg["print_n_notices"],'<span id=\'extra_nb_docs\'>'.$pmb_nb_documents.'</span>')."
 </div>
 ";
 
@@ -208,7 +210,7 @@ $nav_bar = $nav_bar."
 				<a title='$msg[1913]' class='current' href='./' accesskey='$msg[2008]'>$msg[1913]</a>
 			</li>
         		<li id='navbar-opac'>
-				<a title='$msg[1027]' href='$pmb_opac_url' accesskey='$msg[2007]'>$msg[1026]</a>
+				<a title='$msg[1027]' href='$pmb_opac_url' target=_blank accesskey='$msg[2007]' id='opac_url'>$msg[1026]</a>
 			</li>
 		</ul>
 	</div>";
@@ -228,7 +230,8 @@ $index_footer = "
 </div>
 <div id='footer'>
     <hr />
-        <a title='PMB : $homepage' href='$homepage'>PMB</a> ($pmb_version - $pmb_bdd_version) &copy; 2002~".date("Y")." <a title='PMB Group : $homepage' href='$homepage'>PMB Group</a>
+        <div class='left'>&nbsp;&nbsp;PMB $pmb_version (<a href='./changelogs.txt' title='changelogs.txt' style='margin-left: 0px;' target=_blank>changelogs.txt</a>) - database <span id='bdd_version'>$pmb_bdd_version</span> - &copy; 2002~".date("Y")."</div>
+        <div class='right'><a title='www.sigb.net' href='$homepage' style='margin-left: 0px;' target=_blank>www.sigb.net</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a title='forge PMB' href='http://forge.sigb.net' style='margin-left: 0px;' target=_blank>forge.sigb.net</a>&nbsp;&nbsp;</div>
     </div>
 </div>
 </body>

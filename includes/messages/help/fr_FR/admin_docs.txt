@@ -1,4 +1,4 @@
-<h1>Administration des exemplaires</h1>
+<h2>Administration des exemplaires</h2>
 
 <p>L'<b>administration des exemplaires</b> permet de d&eacute;finir les param&egrave;tres de l'application pour le pr&ecirc;t et les statistiques sur les documents.
 <ul>

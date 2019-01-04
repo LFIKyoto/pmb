@@ -2,15 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: import_form.tpl.php,v 1.9 2014-03-20 16:39:12 dgoron Exp $
+// $Id: import_form.tpl.php,v 1.11 2018-11-22 15:34:57 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+require_once($class_path."/import/import_entities.class.php");
 
 //Gestion de l'encodage du fichier à convertir (pour les fichiers unimarc iso)
 if(isset($encodage_fic_source)){
 	$_SESSION["encodage_fic_source"]=$encodage_fic_source;
-}elseif($_SESSION["encodage_fic_source"]){
+}elseif(isset($_SESSION["encodage_fic_source"])){
 	$encodage_fic_source=$_SESSION["encodage_fic_source"];
+} else {
+	$encodage_fic_source='';
 }
 
 // template pour le formulaire d'import
@@ -48,12 +52,7 @@ $form="
 		<label class=\"etiquette\" for=\"encodage_fic_source\" id=\"text_desc_encodage_fic_source\" name=\"text_desc_encodage_fic_source\">".htmlentities($msg["admin_import_encodage_fic_source"],ENT_QUOTES,$charset)."</label>
 	</div>
 	<div class='colonne_suite'>
-		<select name=\"encodage_fic_source\" id=\"encodage_fic_source\">
-			<option value=\"\" ".(!$encodage_fic_source ? " selected=\"selected\" ": "").">".htmlentities($msg["admin_import_encodage_fic_source_undefine"],ENT_QUOTES,$charset)."</option>
-			<option value=\"iso5426\" ".(($encodage_fic_source == "iso5426") ? " selected=\"selected\" ": "").">".htmlentities($msg["admin_import_encodage_fic_source_iso5426"],ENT_QUOTES,$charset)."</option>
-			<option value=\"utf8\" ".(($encodage_fic_source == "utf8") ? " selected=\"selected\" ": "").">".htmlentities($msg["admin_import_encodage_fic_source_utf8"],ENT_QUOTES,$charset)."</option>
-			<option value=\"iso8859\" ".(($encodage_fic_source == "iso8859") ? " selected=\"selected\" ": "").">".htmlentities($msg["admin_import_encodage_fic_source_iso8859"],ENT_QUOTES,$charset)."</option>
-		</select>
+		".import_entities::get_encoding_selector()."
 	</div>
 </div>
 <div class='row'> </div>

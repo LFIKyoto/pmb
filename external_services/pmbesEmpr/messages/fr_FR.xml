@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: fr_FR.xml,v 1.2 2015-02-25 09:36:07 mbertin Exp $ -->
+$Id: fr_FR.xml,v 1.5 2018-10-12 12:28:34 vtouchard Exp $ -->
 
 <!DOCTYPE XMLlist SYSTEM "../../../includes/XMLlist.dtd" >
 <XMLlist>
@@ -98,7 +98,7 @@ fetch_empr
 	<entry code="fetch_empr_nb_retard">Nombre de retards</entry>
 	<entry code="fetch_empr_nb_resa">Nombre de réservations</entry>
 	<entry code="fetch_empr_nb_previsions">Nombre de prévisions</entry>
-	
+	<entry code="fetch_empr_empr_thumbnail">Photo du lecteur</entry>
 <!--
 delete_empr
 -->	
@@ -151,8 +151,6 @@ statut_list
 	<entry code="statut_list_allow_self_checkout">Prêt autonome</entry>
 	<entry code="statut_list_allow_self_checkin">Retour autonome</entry>
 	<entry code="statut_list_allow_serialcirc">Circulation des périodiques</entry>
-	<entry code=""></entry>
-	<entry code=""></entry>
 
 <!--
 categ_list
@@ -285,5 +283,18 @@ is_in_caddie
 caddie_pointage_raz
 -->			
 	<entry code="caddie_pointage_raz">Raz des pointages d'un panier</entry>						
+	
+<!--
+pperso_list_type_values
+-->			
+	<entry code="pperso_list_type_values">Liste des valeurs d'un champ personnalisé de type liste</entry>
+	<entry code="pperso_name">Nom du champ personnalisé</entry>
+	<entry code="pperso_list_type_values_value">Valeur</entry>
+	<entry code="pperso_list_type_values_libelle">Libellé</entry>
+
+<!--
+bibloto_empr_list
+-->	
+	<entry code="bibloto_empr_list">Liste de lecteurs pour bibloto</entry>	
 		
 </XMLlist>

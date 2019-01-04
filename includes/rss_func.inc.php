@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rss_func.inc.php,v 1.8.2.1 2015-09-11 08:53:13 jpermanne Exp $
+// $Id: rss_func.inc.php,v 1.10 2017-10-19 14:06:21 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -96,7 +96,7 @@ function affiche_rss_from_url($url_fichier="") {
 			for ($j=0; $j<count($param["CHANNEL"]); $j++) {
 				$current=$param["CHANNEL"][$j];
 				$articles.="<div class='row'>";
-				if ($current["IMAGE"][0]) $articles.="<a href='".$current["IMAGE"][0]["LINK"][0]["value"]."' target='_blank'><img src='".$current["IMAGE"][0]["URL"][0]["value"]."' border='0' alt='".$current["IMAGE"][0]["TITLE"][0]["value"]."' title='".$current["IMAGE"][0]["TITLE"][0]["value"]."' align='center'></a>&nbsp;";
+				if ($current["IMAGE"][0]) $articles.="<a href='".$current["IMAGE"][0]["LINK"][0]["value"]."' target='_blank'><img src='".$current["IMAGE"][0]["URL"][0]["value"]."' border='0' alt='".$current["IMAGE"][0]["TITLE"][0]["value"]."' title='".$current["IMAGE"][0]["TITLE"][0]["value"]."' class='center'></a>&nbsp;";
 				$articles.="<b>".$current["TITLE"][0]["value"]."</b>";
 				if (strpos($forme,"RDF")!==false) $current=$param;
 				$articles.="<ul class='rss_section'>";
@@ -127,7 +127,7 @@ function affiche_rss_from_fichier($fichier="") {
 		for ($j=0; $j<count($param["CHANNEL"]); $j++) {
 			$current=$param["CHANNEL"][$j];
 			$articles.="<div class='row'>";
-			if ($current["IMAGE"][0]) $articles.="<a href='".$current["IMAGE"][0]["LINK"][0]["value"]."' target='_blank'><img src='".$current["IMAGE"][0]["URL"][0]["value"]."' border='0' alt='".$current["IMAGE"][0]["TITLE"][0]["value"]."' title='".$current["IMAGE"][0]["TITLE"][0]["value"]."' align='center'></a>&nbsp;";
+			if ($current["IMAGE"][0]) $articles.="<a href='".$current["IMAGE"][0]["LINK"][0]["value"]."' target='_blank'><img src='".$current["IMAGE"][0]["URL"][0]["value"]."' border='0' alt='".$current["IMAGE"][0]["TITLE"][0]["value"]."' title='".$current["IMAGE"][0]["TITLE"][0]["value"]."' class='center'></a>&nbsp;";
 			$articles.="<b>".$current["TITLE"][0]["value"]."</b>";
 			if (strpos($forme,"RDF")!==false) $current=$param;
 			$articles.="<ul class='rss_section'>";

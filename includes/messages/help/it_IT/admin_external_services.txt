@@ -1,4 +1,4 @@
-<h1>Amministrazione dei servizi esterni</h1>
+<h2>Amministrazione dei servizi esterni</h2>
 
 <p>I servizi esterni sono delle funzionalit&agrave utilizzate da altri programmi per interagire con PMB</p>
 

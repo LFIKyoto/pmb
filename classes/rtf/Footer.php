@@ -37,7 +37,7 @@ class Footer extends Container {
   	 * @param string $type
   	 * @access public
   	 */
-  	function Footer(&$rtf, $type) {	    
+	function __construct(&$rtf, $type) {	    
 	    $this->rtf = &$rtf;	
 	    
 	    switch ($type) {		  

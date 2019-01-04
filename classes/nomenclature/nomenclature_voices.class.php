@@ -2,11 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_voices.class.php,v 1.2 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: nomenclature_voices.class.php,v 1.3 2016-03-30 13:13:27 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/encoding_normalize.class.php");
+require_once($class_path."/nomenclature/nomenclature_voice.class.php");
 
 /**
  * class nomenclature_voices
@@ -39,7 +40,7 @@ class nomenclature_voices{
 		global $dbh;
 		$this->voices =array();
 		
-		$query = "select id_voice from nomenclature_voices order by voice_oder, voice_code, voice_name";
+		$query = "select id_voice from nomenclature_voices order by voice_order, voice_code, voice_name";
 		$result = pmb_mysql_query($query,$dbh);
 		if(pmb_mysql_num_rows($result)){
 			while($row = pmb_mysql_fetch_object($result)){

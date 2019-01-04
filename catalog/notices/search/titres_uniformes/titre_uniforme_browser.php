@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: titre_uniforme_browser.php,v 1.4 2015-04-23 13:00:54 mhoestlandt Exp $
+// $Id: titre_uniforme_browser.php,v 1.5 2017-01-26 15:36:34 dgoron Exp $
 
 // page d'affichage du browser de collections
 
@@ -11,6 +11,8 @@ $base_path="../../../..";
 $base_auth = "CATALOGAGE_AUTH";
 $base_title = "\$msg[6]";
 require_once ("$base_path/includes/init.inc.php");
+
+if(!isset($ancre)) $ancre = '';
 
 // javascript pour retrouver l'offset dans la liste des titres uniformes
 $j_offset = "
@@ -45,7 +47,7 @@ function select($ref, $id) {
 	return "window.parent.document.location='../../../../catalog.php?categ=search&mode=9&etat=aut_search&aut_type=$ref&aut_id=$id&no_rec_history=1'; return(false);";
 }
 
-if ($limite_affichage=="")$restriction = " limit 0,30 ";
+if (!isset($limite_affichage)) $restriction = " limit 0,30 ";
 else $restriction = "";
 
 print "<a href='$browser_url?limite_affichage=ALL'>$msg[tout_afficher]</a><br />";
@@ -56,8 +58,8 @@ $result = pmb_mysql_query($requete, $dbh);
 
 while(($tu=pmb_mysql_fetch_object($result))) {
 	if($tu->tu_id){		
-		$tu = new titre_uniforme($tu->tu_id);
-		$titre_uniforme_entry = $tu->display;
+		$titre_uniforme = new titre_uniforme($tu->tu_id);
+		$titre_uniforme_entry = $titre_uniforme->display;
 		print "<a name='a".$tu->tu_id."'  href='#' onClick=\"".select('titre_uniforme', $tu->tu_id)."\">$titre_uniforme_entry</a><br />\n";
 	}
 		

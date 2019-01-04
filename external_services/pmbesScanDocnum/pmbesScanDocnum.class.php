@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesScanDocnum.class.php,v 1.3 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: pmbesScanDocnum.class.php,v 1.5 2017-06-22 08:49:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,23 +10,21 @@ require_once($class_path."/external_services.class.php");
 require_once($class_path."/explnum.class.php");
 
 class pmbesScanDocnum extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	
-	function get_doc_num($explnum, $upload_folder) {
-		global $pmb_set_time_limit, $dbh;		
+	public function get_doc_num($explnum, $upload_folder) {
+		global $pmb_set_time_limit, $dbh, $base_path;		
 		$report=array();
 		
 		if (SESSrights & ADMINISTRATION_AUTH) {
@@ -82,7 +80,13 @@ class pmbesScanDocnum extends external_services_api_class {
 						}
 						
 						if(!$explnum['explnum_vignette']){
-							$explnum['explnum_vignette']=reduire_image($upload_folder.$explnum['explnum_nomfichier']);
+							$nom_temp = session_id().microtime();
+							$nom_temp = str_replace(' ','_',$nom_temp);
+							$nom_temp = str_replace('.','_',$nom_temp);
+							$fichier_tmp = $base_path."/temp/".$nom_temp;
+							copy($upload_folder.$explnum['explnum_nomfichier'],$fichier_tmp);
+							$explnum['explnum_vignette']=reduire_image($fichier_tmp);
+							unlink($fichier_tmp);
 						}
 						
 						$query='INSERT INTO explnum SET '.$idLien.',

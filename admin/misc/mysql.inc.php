@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mysql.inc.php,v 1.15 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: mysql.inc.php,v 1.18 2017-02-09 13:45:19 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+if(!isset($info)) $info = '';
 switch ($info) {
 	case 'phpinfo':
 		echo window_title($database_window_title."Php - Info");
@@ -18,11 +19,12 @@ switch ($info) {
 		foreach ($tabindexref as $table=>$key_names) {
 			$rqti="show index from $table";
 			$resi=pmb_mysql_query($rqti) or die(pmb_mysql_error()."<br />".$rqti);
-				for ($i=0;$i<pmb_mysql_num_rows($resi);$i++) {
-					$key_name=pmb_mysql_result($resi,$i,'Key_name');
-					$col_name=pmb_mysql_result($resi,$i,'Column_name');
-					$cles_reelles[$key_name][]=$col_name;
-				}
+			$cles_reelles = array();
+			for ($i=0;$i<pmb_mysql_num_rows($resi);$i++) {
+				$key_name=pmb_mysql_result($resi,$i,'Key_name');
+				$col_name=pmb_mysql_result($resi,$i,'Column_name');
+				$cles_reelles[$key_name][]=$col_name;
+			}
 			foreach ($key_names as $key_name=>$col_names) {
 				if ($cles_reelles[$key_name]) {
 					for($j=0;$j<count($col_names);$j++) {
@@ -36,34 +38,38 @@ switch ($info) {
 			}	
 		}
 		
-		if ($pb) echo "<b>".$msg[admin_info_table_index_pb]."</b><br />".$pb;
-		else echo $msg[admin_info_table_index_ok];
+		if ($pb) echo "<b>".$msg['admin_info_table_index_pb']."</b><br />".$pb;
+		else echo $msg['admin_info_table_index_ok'];
 		break;
+	/*case 'verif_base':
+		echo window_title($database_window_title.$msg[verification_verif_base]);
+		require_once("$base_path/admin/misc/verifications/verif_base.inc.php");
+		break;*/
 	case 'mysqlinfo':
 		echo window_title($database_window_title."MySQL - Info");
 		
-		echo "<div class='row'><div class='row'><label class='etiquette'>".$msg[sql_info_notices]."</label></div>
+		echo "<div class='row'><div class='row'><label class='etiquette'>".$msg['sql_info_notices']."</label></div>
 			  <div class='row'>".pmb_sql_value("select count(*) as nb from notices")."</div>" ;
 
-		echo "<div class='row'><label class='etiquette'>".$msg[sql_info_exemplaires]."</label></div>
+		echo "<div class='row'><label class='etiquette'>".$msg['sql_info_exemplaires']."</label></div>
 			  <div class='row'>".pmb_sql_value("select count(*) as nb from exemplaires")."</div>" ;
 
-		echo "<div class='row'><label class='etiquette'>".$msg[sql_info_bulletins]."</label></div>
+		echo "<div class='row'><label class='etiquette'>".$msg['sql_info_bulletins']."</label></div>
 			  <div class='row'>".pmb_sql_value("select count(*) as nb from bulletins")."</div>" ;
 
-		echo "<div class='row'><label class='etiquette'>".$msg[sql_info_authors]."</label></div>
+		echo "<div class='row'><label class='etiquette'>".$msg['sql_info_authors']."</label></div>
 			  <div class='row'>".pmb_sql_value("select count(*) as nb from authors")."</div>" ;
 
-		echo "<div class='row'><label class='etiquette'>".$msg[sql_info_publishers]."</label></div>
+		echo "<div class='row'><label class='etiquette'>".$msg['sql_info_publishers']."</label></div>
 			  <div class='row'>".pmb_sql_value("select count(*) as nb from publishers")."</div>" ;
 
-		echo "<div class='row'><label class='etiquette'>".$msg[sql_info_empr]."</label></div>
+		echo "<div class='row'><label class='etiquette'>".$msg['sql_info_empr']."</label></div>
 			  <div class='row'>".pmb_sql_value("select count(*) as nb from empr")."</div>" ;
 
-		echo "<div class='row'><label class='etiquette'>".$msg[sql_info_pret]."</label></div>
+		echo "<div class='row'><label class='etiquette'>".$msg['sql_info_pret']."</label></div>
 			  <div class='row'>".pmb_sql_value("select count(*) as nb from pret")."</div>" ;
 
-		echo "<div class='row'><label class='etiquette'>".$msg[sql_info_pret_archive]."</label></div>
+		echo "<div class='row'><label class='etiquette'>".$msg['sql_info_pret_archive']."</label></div>
 			  <div class='row'>".pmb_sql_value("select count(*) as nb from pret_archive")."</div>" ;
 
 		echo "<hr />" ;
@@ -145,6 +151,9 @@ switch ($info) {
 			<div class='row'>
 				<a href='./admin.php?categ=misc&sub=mysql&info=table_index'>$msg[admin_info_table_index]</a>
 				</div>";
+			/*<div class='row'>
+				<a href='./admin.php?categ=misc&sub=mysql&info=verif_base'>$msg[admin_info_verif_base]</a>
+				</div>*/
 			break;
 	}
 

@@ -2,27 +2,27 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: comptes.class.php,v 1.5 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: comptes.class.php,v 1.6 2017-01-25 16:43:50 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-define(CMPTE_INIT,1);
-define(CMPTE_CREATE,2);
-define(CMPTE_REC_TRANSACTION,3);
-define(CMPTE_VALIDATE_TRANSACTION,4);
-define(CMPTE_UPDATE_SOLDE,5);
+define('CMPTE_INIT',1);
+define('CMPTE_CREATE',2);
+define('CMPTE_REC_TRANSACTION',3);
+define('CMPTE_VALIDATE_TRANSACTION',4);
+define('CMPTE_UPDATE_SOLDE',5);
 
 class comptes {
 
-	var $id_compte; //Identifiant du compte en cours
-	var $typ_compte; //Type de compte en cours de traitement
-	var $compte; //Informations du compte
+	public $id_compte; //Identifiant du compte en cours
+	public $typ_compte; //Type de compte en cours de traitement
+	public $compte; //Informations du compte
 
-	var $error=false;
-	var $error_message="";
-	var $error_action=0;
+	public $error=false;
+	public $error_message="";
+	public $error_action=0;
 
-    function comptes($id_compte="") {
+    public function __construct($id_compte="") {
     	global $msg;
 
     	if ($id_compte) {
@@ -40,7 +40,7 @@ class comptes {
     	} else $this->id_compte="";
     }
 
-    function is_typ_compte($typ_compte) {
+    public function is_typ_compte($typ_compte) {
     	$requete="select * from type_comptes where id_type_compte='".$typ_compte."'";
     	$resultat=pmb_mysql_query($requete);
     	if (pmb_mysql_num_rows($resultat)) {
@@ -49,15 +49,15 @@ class comptes {
     	} else return false;
     }
 
-   	function is_valid() {
-   		if (($this->id_compte)&&(!$error)) return true; else return false;
+   	public function is_valid() {
+   		if ($this->id_compte) return true; else return false;
    	}
 
-    function must_be_unique() {
+    public function must_be_unique() {
     	if ($this->typ_compte->multiple==0) return true; else return false;
     }
 
-    function create_compte($libelle,$typ_compte,$proprio_id,$droits) {
+    public function create_compte($libelle,$typ_compte,$proprio_id,$droits) {
     	global $msg;
 
     	//Vérification validité du type de compte
@@ -100,7 +100,7 @@ class comptes {
     	return true;
     }
 
-    function record_transaction($date_prevue,$montant,$sens,$comment="",$encaissement=0) {
+    public function record_transaction($date_prevue,$montant,$sens,$comment="",$encaissement=0) {
     	global $msg;
     	global $PMBuserid, $PMBusername;
     	if ($this->is_valid()) {
@@ -125,19 +125,19 @@ class comptes {
     	} else return false;
     }
 
-    function is_transaction_validate($id_transaction) {
+    public function is_transaction_validate($id_transaction) {
     	$requete="select count(*) from transactions where id_transaction=$id_transaction and realisee=1";
     	$resultat=pmb_mysql_query($requete);
     	if (@pmb_mysql_result($resultat,0,0)) return true; else return false;
     }
 
-    function transaction_exists($id_transaction) {
+    public function transaction_exists($id_transaction) {
     	$requete="select count(*) from transactions where id_transaction=$id_transaction and compte_id=".$this->id_compte;
     	$resultat=pmb_mysql_query($requete);
     	if (@pmb_mysql_result($resultat,0,0)) return true; else return false;
     }
 
-    function validate_transaction($id_transaction) {
+    public function validate_transaction($id_transaction) {
     	global $msg;
     	if ($this->is_valid()) {
 	    	if ($this->transaction_exists($id_transaction)) {
@@ -160,7 +160,7 @@ class comptes {
     	} else return false;
     }
 
-    function delete_transaction($id_transaction) {
+    public function delete_transaction($id_transaction) {
     	global $msg;
     	if ($this->is_valid()) {
 	    	if ($this->transaction_exists($id_transaction)) {
@@ -183,13 +183,17 @@ class comptes {
     	} else return false;
     }
 
-    function summarize_transactions($date_debut,$date_fin,$sens=0,$realisee=1) {
+	public function summarize_transactions($date_debut,$date_fin,$sens=0,$realisee=1) {
     	global $msg;
     	if ($this->is_valid()) {
     		if ($date_debut) $date_debut_terme=" and date_effective>='$date_debut'";
+    		else $date_debut_terme="";
     		if ($date_fin) $date_fin_terme=" and date_effective<='$date_fin'";
+    		else $date_fin_terme="";
     		if (($sens==-1)||($sens==1)) $sens_terme=" and sens=$sens";
+    		else $sens_terme="";
     		if ($realisee!=-1) $realisee_terme=" and realisee=$realisee";
+    		else $realisee_terme="";
     		$requete="select sum(montant*sens) from transactions where compte_id=".$this->id_compte.$date_debut_terme.$date_fin_terme.$sens_terme.$realisee_terme;
     		$resultat=pmb_mysql_query($requete);
     		$montant=@pmb_mysql_result($resultat,0,0);
@@ -197,12 +201,16 @@ class comptes {
     	} else return false;
     }
 
-    function get_transactions($date_debut,$date_fin,$sens=0,$realisee=-1, $limit=0, $order="desc") {
+	public function get_transactions($date_debut,$date_fin,$sens=0,$realisee=-1, $limit=0, $order="desc") {
     	if ($this->is_valid()) {
     		if ($date_debut) $date_debut_terme=" and date_enrgt>='$date_debut'";
+    		else $date_debut_terme="";
     		if ($date_fin) $date_fin_terme=" and date_enrgt<='$date_fin'";
+    		else $date_fin_terme="";
     		if (($sens==-1)||($sens==1)) $sens_terme=" and sens=$sens";
+    		else $sens_terme="";
     		if ($realisee!=-1) $realisee_terme=" and realisee=$realisee";
+    		else $realisee_terme="";
     		$requete="select * from transactions where compte_id=".$this->id_compte.$date_debut_terme.$date_fin_terme.$sens_terme.$realisee_terme." order by date_enrgt $order";
     		if ($limit) $requete.=" limit $limit";
     		$resultat=pmb_mysql_query($requete);
@@ -213,7 +221,7 @@ class comptes {
     	} else return false;
     }
 
-    function update_solde() {
+    public function update_solde() {
     	global $msg ;
     	if ($this->is_valid()) {
     		$solde=$this->summarize_transactions("","",0,1);
@@ -234,7 +242,7 @@ class comptes {
     	} else return false;
     }
 
-	static function get_compte_id_from_empr($empr_id,$typ_compte) {
+	public static function get_compte_id_from_empr($empr_id,$typ_compte) {
     	$requete="select id_compte from comptes where proprio_id='$empr_id' and type_compte_id='".$typ_compte."'";
     	$resultat=pmb_mysql_query($requete);
     	if (@pmb_mysql_num_rows($resultat)==0) {
@@ -247,13 +255,13 @@ class comptes {
     	return pmb_mysql_result($resultat,0,0);
     }
 
-    function get_empr_from_compte_id() {
+    public function get_empr_from_compte_id() {
     	$requete="select proprio_id from comptes where id_compte=".$this->id_compte;
     	$resultat=pmb_mysql_query($requete);
     	if (@pmb_mysql_num_rows($resultat)) return pmb_mysql_result($resultat,0,0); else return false;
     }
 
-    static function format($f) {
+    public static function format($f) {
     	global $pmb_gestion_devise, $pmb_fine_precision;
     	if (!isset($pmb_fine_precision)) $pmb_fine_precision=2;
     	$neg="<span class='erreur'>%s %s</span>";
@@ -261,14 +269,14 @@ class comptes {
     	return sprintf($f<0?$neg:$pos,sprintf('%01.'.$pmb_fine_precision.'f',$f),$pmb_gestion_devise);
     }
 
-    static function format_simple($f) {
+    public static function format_simple($f) {
     	global $pmb_gestion_devise,$pmb_fine_precision;
     	if (!isset($pmb_fine_precision)) $pmb_fine_precision=2;
     	$pos="%s %s";
     	return sprintf($pos,sprintf('%01.'.$pmb_fine_precision.'f',$f),$pmb_gestion_devise);
     }
 
-    function get_typ_compte_lib($id_typ_compte) {
+    public function get_typ_compte_lib($id_typ_compte) {
     	global $msg;
     	$r="";
     	switch ($id_typ_compte) {
@@ -289,7 +297,7 @@ class comptes {
     	return $r;
     }
 
-    function get_solde() {
+    public function get_solde() {
     	if ($this->is_valid()) {
     		$requete="select solde from comptes where id_compte=".$this->id_compte;
     		$resultat=pmb_mysql_query($requete);
@@ -297,7 +305,7 @@ class comptes {
     	} else return false;
     }
 
-    function frais_relance($niveau) {
+    public function frais_relance($niveau) {
     	global $finance_relance_1, $finance_relance_2, $finance_relance_3;
 
     	$frais=0;

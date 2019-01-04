@@ -1,23 +1,31 @@
 /* +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// | 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_composee_drag_n_drop.js,v 1.2 2014-08-08 13:29:24 apetithomme Exp $ */
+// $Id: vedette_composee_drag_n_drop.js,v 1.9 2018-12-28 16:27:31 tsamson Exp $ */
 
 
 /******************************************************************
  *																  *				
- *      Drag'n'drop des éléments d'une vedette composée        	  *
+ *      Drag'n'drop des ï¿½lï¿½ments d'une vedette composï¿½e        	  *
  *							 									  * 
  ******************************************************************/
 /*
- * Fonction pour ajouter un nouvel élément
+ * Fonction pour ajouter un nouvel ï¿½lï¿½ment
  */
 function vedette_composee_available_fields_vedette_composee_subdivision(dragged,target){
 	var subdivision_id = target.getAttribute("id");
+	var n = subdivision_id.indexOf("_composed_");
+	/**
+	 * Ci dessous: les trois globales ï¿½ dï¿½gager
+	 */
+	
+	var caller_property_name = subdivision_id.substring(0,n)+"_composed";
+	var caller_property_authid = dragged.getAttribute("authid");
+	var caller_property_authlabel = dragged.getAttribute("dragtext");
+	
 	var elements_order = document.getElementById(subdivision_id + "_elements_order");
 	var new_order;
 	var nb_elements;
-	
 	if (elements_order.value) {
 		var tab_elements_order = elements_order.value.split(",");
 		nb_elements = tab_elements_order.length;
@@ -28,7 +36,7 @@ function vedette_composee_available_fields_vedette_composee_subdivision(dragged,
 	}
 	vedette_element_downlight(target);
 	
-	if ((target.getAttribute("cardmax") == "") || (target.getAttribute("cardmax") > nb_elements)) {
+	if ((dragged.getAttribute("parentorder") == target.getAttribute("parentorder")) && ((target.getAttribute("cardmax") == "") || (target.getAttribute("cardmax") > nb_elements))) {
 		var div = document.createElement("div");
 		div.setAttribute("id", subdivision_id + "_element_" + new_order);
 		div.setAttribute("class", "vedette_composee_element");
@@ -41,6 +49,8 @@ function vedette_composee_available_fields_vedette_composee_subdivision(dragged,
 		div.setAttribute("downlight", "vedette_element_downlight");
 		div.setAttribute("handler", subdivision_id + "_element_" + new_order + "_handler");
 		div.setAttribute("vedettetype", dragged.getAttribute("vedettetype"));
+		div.setAttribute("available_field_num", dragged.getAttribute("available_field_num"));
+		div.setAttribute("data-pmb-params", dragged.getAttribute("data-pmb-params"));
 		
 		var handler = document.createElement("span");
 		handler.setAttribute("id", subdivision_id + "_element_" + new_order + "_handler");
@@ -52,29 +62,29 @@ function vedette_composee_available_fields_vedette_composee_subdivision(dragged,
 		
 		handler.appendChild(img);
 		div.appendChild(handler);
-		
-		vedette_element.create_box(dragged.getAttribute("vedettetype"), div, target.getAttribute("subdivisiontype"), new_order);
+
+		vedette_element.create_box(caller_property_name,dragged.getAttribute("vedettetype"), div, target.getAttribute("subdivisiontype"), new_order, 0, "", "", target.getAttribute("parentorder"), dragged.getAttribute("data-pmb-params"));
 		
 		target.insertBefore(div, target.lastElementChild);
 		vedette_composee_update_order(target);
 		
 		init_drag();
 		ajax_pack_element(document.getElementById(subdivision_id + "_element_" + new_order + "_label"));
+	    ajax_parse_dom();
 	} else {
 		alert("Le nombre maximal d'elements pour cette subdivision est atteint !");
 	}
 }
 
 /*
- * Fonction pour trier les éléments
+ * Fonction pour trier les ï¿½lï¿½ments
  */
 function vedette_composee_element_vedette_composee_element(dragged,target){
 	var dragged_parent = dragged.parentNode;
 	var target_parent = target.parentNode;
-	
 	vedette_element_downlight(target);
 	
-	// On commence par vérifier qu'on reste bien dans la même subdivision
+	// On commence par vï¿½rifier qu'on reste bien dans la mï¿½me subdivision
 	if (dragged_parent == target_parent) {
 		dragged_parent.insertBefore(dragged, target);
 		recalc_recept();
@@ -93,7 +103,9 @@ function vedette_composee_element_vedette_composee_subdivision(dragged,target){
 	var elements_order = document.getElementById(subdivision_id + "_elements_order");
 	var new_order;
 	var nb_elements;
-	
+	var element_label_id = dragged.getAttribute("id")+'_label';
+	var element_label_node = document.getElementById(element_label_id);
+	var authid = element_label_node .getAttribute("authid");
 	vedette_element_downlight(target);
 	
 	if (elements_order.value) {
@@ -105,10 +117,10 @@ function vedette_composee_element_vedette_composee_subdivision(dragged,target){
 		new_order = 0;
 	}
 	
-	if ((target.getAttribute("cardmax") == "") || (target.getAttribute("cardmax") > nb_elements)) {
-	// On vérifie qu'on change de subdivision, sinon on ne fait rien
+	if ((dragged_parent.getAttribute("parentorder") == target.getAttribute("parentorder")) && ((target.getAttribute("cardmax") == "") || (target.getAttribute("cardmax") > nb_elements))) {
+	// On vï¿½rifie qu'on change de subdivision, sinon on ne fait rien
 		if (dragged_parent != target) {
-			vedette_element.update_box(dragged.getAttribute("vedettetype"), dragged, target.getAttribute("subdivisiontype"), new_order);
+			vedette_element.update_box(dragged.getAttribute("vedettetype"), dragged, target.getAttribute("subdivisiontype"), new_order, target.getAttribute("parentorder"), authid);
 			
 			dragged.setAttribute("id", subdivision_id + "_element_" + new_order);
 			dragged.setAttribute("order", new_order);
@@ -121,6 +133,7 @@ function vedette_composee_element_vedette_composee_subdivision(dragged,target){
 			recalc_recept();
 			vedette_composee_update_order(dragged_parent);
 			vedette_composee_update_order(target);
+			ajax_pack_element(document.getElementById(subdivision_id + "_element_" + new_order + "_label"));
 		}
 	} else {
 		alert("Le nombre maximal d'elements pour cette subdivision est atteint !");
@@ -128,11 +141,11 @@ function vedette_composee_element_vedette_composee_subdivision(dragged,target){
 }
 
 /*
- * Fonction supprimer un élément
+ * Fonction supprimer un ï¿½lï¿½ment
  */
 function vedette_composee_element_vedette_composee_delete_element(dragged,target){
 	var parent = dragged.parentNode;
-	
+
 	parent.removeChild(dragged);
 	recalc_recept();
 	vedette_composee_update_order(parent);
@@ -141,25 +154,23 @@ function vedette_composee_element_vedette_composee_delete_element(dragged,target
 }
 
 /**
- * Mise à jour de l'ordre
+ * Mise ï¿½ jour de l'ordre
  * 
  * @param parent Subdivision parente
  */
 function vedette_composee_update_order(parent){
 	var parent_id = parent.getAttribute("id");
 	var subdivisionorder = parent.getAttribute("order");
-	
-	// On met à jour le tableau des libellés pour l'aperçu
+	// On met ï¿½ jour le tableau des libellï¿½s pour l'aperï¿½u
 	var id_tab_vedette_elements = parent_id.replace("_" + parent.getAttribute("subdivisiontype"), "") + "_tab_vedette_elements";
 	window[id_tab_vedette_elements][subdivisionorder] = new Object();
-	
 	var index = 0;
 	var elements_order = new Array();
 	for(var i=0;i<parent.childNodes.length;i++){
 		if(parent.childNodes[i].nodeType == 1){
 			if(parent.childNodes[i].getAttribute("recepttype")=="vedette_composee_element"){
 				elements_order[index] = parent.childNodes[i].getAttribute("order");
-				
+
 				var label = document.getElementById(parent.childNodes[i].getAttribute("id") + "_label").getAttribute("rawlabel");
 				window[id_tab_vedette_elements][subdivisionorder][index] = label;
 				
@@ -177,11 +188,10 @@ function vedette_composee_update_order(parent){
 }
 
 /*
- * Mise à jour de l'aperçu
+ * Mise ï¿½ jour de l'aperï¿½u
  */
 function vedette_composee_update_apercu(id_apercu, tab_vedette_elements, vedette_separator) {
 	apercu = "";
-	
 	for (var i in tab_vedette_elements) {
 		for (var j in tab_vedette_elements[i]) {
 			if (tab_vedette_elements[i][j]) {
@@ -191,10 +201,13 @@ function vedette_composee_update_apercu(id_apercu, tab_vedette_elements, vedette
 		}
 	}
 	document.getElementById(id_apercu).value = apercu;
+	if(document.getElementById(id_apercu+'_autre')) {
+		document.getElementById(id_apercu+'_autre').value = apercu;
+	}	
 }
 
 /**
- * Mise à jour de l'ensemble des éléments de la vedette composée
+ * Mise ï¿½ jour de l'ensemble des ï¿½lï¿½ments de la vedette composï¿½e
  */
 function vedette_composee_update_all(id_vedette_composee_subdivisions) {
 	var vedette_composee_subdivisions = document.getElementById(id_vedette_composee_subdivisions);
@@ -205,6 +218,44 @@ function vedette_composee_update_all(id_vedette_composee_subdivisions) {
 			}
 		}
 	}
+}
+
+function vedette_composee_delete_subdivisiontype(parent){
+	var parent_id = parent.getAttribute("id");
+	var subdivisionorder = parent.getAttribute("order");
+	// On met ï¿½ jour le tableau des libellï¿½s pour l'aperï¿½u
+	var id_tab_vedette_elements = parent_id.replace("_" + parent.getAttribute("subdivisiontype"), "") + "_tab_vedette_elements";
+	window[id_tab_vedette_elements][subdivisionorder] = new Object();
+	
+	var index = 0;
+	var elements_order = new Array();
+	for(var i=0;i<parent.childNodes.length;i++){
+		if(parent.childNodes[i].nodeType == 1){
+			if(parent.childNodes[i].getAttribute("recepttype")=="vedette_composee_element"){
+				var child=(parent.childNodes[i]);
+				parent.removeChild(child);
+			}
+		}
+	}
+	var id_vedette_apercu = parent_id.replace("_" + parent.getAttribute("subdivisiontype"), "") + "_vedette_composee_apercu";
+	var id_vedette_separator = parent_id.replace("_" + parent.getAttribute("subdivisiontype"), "") + "_separator";
+	vedette_composee_update_apercu(id_vedette_apercu, window[id_tab_vedette_elements], window[id_vedette_separator]);
+	
+	if(document.getElementById(parent_id + "_elements_order")){
+		document.getElementById(parent_id + "_elements_order").value=elements_order.join(",");
+	}
+}
+
+function vedette_composee_delete_all(id_vedette_composee_subdivisions) {
+	var vedette_composee_subdivisions = document.getElementById(id_vedette_composee_subdivisions);
+	for(var i=0;i<vedette_composee_subdivisions.childNodes.length;i++){
+		if(vedette_composee_subdivisions.childNodes[i].nodeType == 1){
+			if(vedette_composee_subdivisions.childNodes[i].getAttribute("recepttype")=="vedette_composee_subdivision"){
+				vedette_composee_delete_subdivisiontype(vedette_composee_subdivisions.childNodes[i]);
+			}
+		}
+	}
+	 vedette_composee_update_all(id_vedette_composee_subdivisions);
 }
 
 function vedette_element_highlight(obj) {

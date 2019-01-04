@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_documents.class.php,v 1.4 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: cms_module_common_selector_documents.class.php,v 1.5 2016-09-20 14:33:53 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -31,7 +31,7 @@ class cms_module_common_selector_documents extends cms_module_common_selector{
 				case "cms_module_common_selector_generic_article" :
 					$id_article = $type_selector->get_value();
 					$id_article+=0;
-					$query = "select document_link_num_document from cms_documents_links where document_link_type_object = 'article' and document_link_num_object = '".$id_article."'";
+					$query = "select document_link_num_document from cms_documents_links where document_link_type_object = 'article' and document_link_num_object = '".($id_article*1)."'";
 					$result = pmb_mysql_query($query);
 					
 					$this->value['type_object'] = 'article';
@@ -47,7 +47,7 @@ class cms_module_common_selector_documents extends cms_module_common_selector{
 				case "cms_module_common_selector_generic_section" :
 					$id_section = $type_selector->get_value();
 					$id_section+=0;
-					$query = "select document_link_num_document from cms_documents_links where document_link_type_object = 'section' and document_link_num_object = '".$id_section."'";
+					$query = "select document_link_num_document from cms_documents_links where document_link_type_object = 'section' and document_link_num_object = '".($id_section*1)."'";
 					$result = pmb_mysql_query($query);
 						
 					$this->value['type_object'] = 'section';
@@ -63,7 +63,7 @@ class cms_module_common_selector_documents extends cms_module_common_selector{
 				case "cms_module_common_selector_generic_portfolio_collection" :
 					$id_collection = $type_selector->get_value();
 					$id_collection+=0;
-					$query = "select id_document from cms_documents where document_type_object = 'collection' and document_num_object = ".$id_collection;
+					$query = "select id_document from cms_documents where document_type_object = 'collection' and document_num_object = '".($id_collection*1)."'";
 					$result = pmb_mysql_query($query);
 						
 					$this->value['type_object'] = 'collection';

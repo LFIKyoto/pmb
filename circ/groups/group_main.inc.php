@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: group_main.inc.php,v 1.8 2013-10-24 08:24:12 dgoron Exp $
+// $Id: group_main.inc.php,v 1.11 2018-02-09 15:55:44 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -10,7 +10,13 @@ require_once("$class_path/group.class.php");
 require_once("$include_path/templates/group.tpl.php");
 
 print pmb_bidi($group_header);
+if(!isset($group_query)) $group_query = '';
 $group_search = str_replace("!!group_query!!", htmlentities(stripslashes($group_query),ENT_QUOTES, $charset), $group_search );
+if ($empr_groupes_localises) {
+	$group_search = str_replace("!!group_combo!!", group::gen_combo_box_grp(), $group_search );
+} else {
+	$group_search = str_replace("!!group_combo!!", '', $group_search );
+}
 
 switch($action) {
 	case 'create':
@@ -51,6 +57,21 @@ switch($action) {
 	case 'prolonggroup':
 		// prolonger l'abonnement des membres d'un groupe
 		if ($groupID) require_once('./circ/groups/prolong_group.inc.php');
+		break;
+	case 'group_prolonge_pret':
+		// prolonger l'abonnement des membres d'un groupe
+		if ($groupID) {
+			$group = new group($groupID);
+			$group->pret_prolonge_members();			
+			require_once('./circ/groups/show_group.inc.php');
+		}
+		break;
+	case 'showcompte':
+		// Transactions d'un groupe
+		if ($groupID) {
+			$group = new group($groupID);
+			print $group->transactions_proceed();		
+		}
 		break;
 	default:
 		// action par défaut : affichage form de recherche

@@ -1,4 +1,4 @@
-<h1>Amministrazione degli utenti</h1>
+<h2>Amministrazione degli utenti</h2>
 <p>I vari codici assegnati a ciascuno degli utenti della mediateca permettono la generazione di statistiche sugli utenti della mediateca.
 </p>
 

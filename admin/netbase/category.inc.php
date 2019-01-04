@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: category.inc.php,v 1.18 2015-04-03 11:16:18 jpermanne Exp $
+// $Id: category.inc.php,v 1.21 2017-11-22 11:07:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -54,7 +54,7 @@ $v_state=urldecode($v_state);
 
 if ($deleted=="") $deleted=0 ;
 
-print "<br /><br /><h2 align='center'>".htmlentities($msg["nettoyage_suppr_categories"], ENT_QUOTES, $charset)."</h2>";
+print "<br /><br /><h2 class='center'>".htmlentities($msg["nettoyage_suppr_categories"], ENT_QUOTES, $charset)."</h2>";
 
 $list_thesaurus = thesaurus::getThesaurusList();
 foreach($list_thesaurus as $id_thesaurus=>$libelle_thesaurus) {
@@ -73,17 +73,10 @@ $spec = $spec - CLEAN_CATEGORIES;
 //TODO non repris >> Utilité ???
 //	$delete = pmb_mysql_query("delete from categories where categ_libelle='#deleted#'");
 
-$v_state .= "<br /><img src=../../images/d.gif hspace=3>".htmlentities($msg["nettoyage_suppr_categories"], ENT_QUOTES, $charset)." : ";
+$v_state .= "<br /><img src='".get_url_icon('d.gif')."' hspace=3>".htmlentities($msg["nettoyage_suppr_categories"], ENT_QUOTES, $charset)." : ";
 $v_state .= $deleted." ".htmlentities($msg["nettoyage_res_suppr_categories"], ENT_QUOTES, $charset);
 
 $optn = noeuds::optimize();
 $optc = categories::optimize();
 
-print "<form class='form-$current_module' name='process_state' action='./clean.php' method='post'>
-				<input type='hidden' name='v_state' value=\"".urlencode($v_state)."\">
-				<input type='hidden' name='spec' value=\"$spec\">
-			</form>
-			<script type=\"text/javascript\"><!--
-				document.forms['process_state'].submit();
-				-->
-			</script>";
+print netbase::get_process_state_form($v_state, $spec);

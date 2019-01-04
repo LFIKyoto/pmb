@@ -2,40 +2,42 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bulletin.inc.php,v 1.12 2008-12-15 14:26:50 ngantier Exp $
+// $Id: bulletin.inc.php,v 1.15 2016-10-20 09:29:15 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 if($item) {
-	$bull=new bulletinage_display($item);
-	$aff_bull=$bull->header;
+	$item_list = explode(',', $item);
+	if(!count($item_list)) $item_list[0]=$item;
 	
-	print pmb_bidi($aff_bull);
+	foreach ($item_list as $elt) {	
+		$bull=new bulletinage_display($elt);
+		$aff_bull=$bull->header;	
+		print pmb_bidi($aff_bull).'<br />';
+	}
+	
 	switch($action) {
 		case 'add_item':
 			if($idcaddie)$caddie[0]=$idcaddie;
 			foreach($caddie  as $idcaddie) {
 				$myCart = new caddie($idcaddie);
-				if($include_child) {					
-					$tab_list_child=notice::get_list_child($item);
-					if(count($tab_list_child))
-					foreach ($tab_list_child as $notice_id) {
-						$myCart->add_item($notice_id,"BULL",$what);					
-					}		
-				} else	$myCart->add_item($item,"BULL",$what);
+				foreach ($item_list as $elt) {
+					if($include_child) {					
+						$tab_list_child=notice::get_list_child($elt);
+						if(count($tab_list_child)) {
+							foreach ($tab_list_child as $notice_id) {
+								$myCart->add_item($notice_id,"BULL",$what);					
+							}	
+						}	
+					} else {
+						$myCart->add_item($elt,"BULL",$what);
+					}
+				}
 				$myCart->compte_items();
 			}	
 			print "<script type='text/javascript'>window.close();</script>"; 
 			break;
 		case 'new_cart':
-			$select_cart="
-			<select name='cart_type'>
-				<option value='NOTI'>$msg[caddie_de_NOTI]</option>
-				<option value='EXPL'>$msg[caddie_de_EXPL]</option>
-				<option value='BULL' selected>$msg[caddie_de_BULL]</option>
-			</select>";
-		 	$c_form=str_replace('!!cart_type_select!!', $select_cart, $cart_form);
-			print $c_form;
 			break;
 		case 'del_cart':
 		case 'valid_new_cart':		

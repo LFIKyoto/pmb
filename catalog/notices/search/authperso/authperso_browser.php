@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authperso_browser.php,v 1.2 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: authperso_browser.php,v 1.4 2017-07-26 07:59:05 dgoron Exp $
 
 // page d'affichage du browser de collections
 
@@ -35,7 +35,7 @@ function jump_anchor(anc) {
 	}
 }
 // -->
-jump_anchor('$ancre');
+jump_anchor('".(isset($ancre) ? $ancre : '')."');
 </script>
 ";
 
@@ -44,17 +44,17 @@ $browser_url = "./authperso_browser.php";
 
 print "<div id='contenu-frame'>";
 
-if ($limite_affichage=="")$restriction = " limit 0,30 ";
+if (!isset($limite_affichage) || $limite_affichage=="")$restriction = " limit 0,30 ";
 else $restriction = "";
 
-print "<a href='$browser_url?limite_affichage=ALL'>$msg[tout_afficher]</a><br />";
+print "<a href='$browser_url?mode=".$mode."&limite_affichage=ALL'>$msg[tout_afficher]</a><br />";
 
 // affichage de la liste
 $select="window.parent.document.location='../../../../catalog.php?categ=search&mode=$mode&etat=aut_search&aut_type=authperso&authperso_id=".($mode - 1000)."&aut_id=!!auth_id!!&no_rec_history=1'; return(false);";
 $authperso= new authperso($mode-1000);
 print $authperso->get_search_list("<a href='#' onclick=\"$select\">!!isbd!!</a><br />",$restriction);
 
-if($ancre)
+if(isset($ancre) && $ancre)
 	print $j_offset;
 pmb_mysql_close($dbh);
 

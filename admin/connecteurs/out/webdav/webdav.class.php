@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: webdav.class.php,v 1.17.2.1 2015-10-13 08:01:50 ngantier Exp $
+// $Id: webdav.class.php,v 1.29 2017-10-05 11:02:10 jpermanne Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path, $include_path,$javascript_path;
@@ -17,8 +17,27 @@ require_once("$class_path/acces.class.php");
 require_once("$class_path/notice.class.php");
 require_once("$class_path/notice_doublon.class.php");
 require_once($class_path."/epubData.class.php");
-
+require_once($class_path.'/scan_request/scan_request.class.php');
+require_once($class_path.'/scan_request/scan_request_status.class.php');
+require_once($class_path.'/scan_request/scan_request_priority.class.php');
+require_once($class_path.'/encoding_normalize.class.php');
+require_once($class_path.'/vedette/vedette_composee.class.php');
+require_once($class_path.'/onto/common/onto_common_uri.class.php');
+require_once($class_path.'/nomenclature/nomenclature_record_formations.class.php');
+require_once($class_path.'/nomenclature/nomenclature_record_formation.class.php');
+require_once($class_path.'/nomenclature/nomenclature_nomenclature.class.php');
+require_once($class_path.'/nomenclature/nomenclature_musicstand.class.php');
+require_once($class_path.'/authperso_authority.class.php');
+require_once($class_path."/autoloader.class.php");
+require_once($class_path."/rdf/arc2/ARC2.php");
+require_once($class_path."/concept.class.php");
+require_once($class_path."/index_concept.class.php");
+require_once($class_path."/titre_uniforme.class.php");
 require_once("$base_path/admin/connecteurs/out/webdav/lib/Sabre/autoload.php");//On charge de façon automatique tous les fichiers dont on a besoin
+require_once($class_path.'/nomenclature/nomenclature_voices.class.php');
+require_once($class_path.'/nomenclature/nomenclature_voice.class.php');
+require_once($class_path.'/nomenclature/nomenclature_workshop.class.php');
+require_once($class_path.'/notice_relations.class.php');
 
 // on teste si des répertoires de stockages sont paramétrés
 if (pmb_mysql_num_rows(pmb_mysql_query("select * from upload_repertoire "))==0) {
@@ -46,26 +65,26 @@ function debug($elem,$new_file=true){
 }
 
 function sortChildren($a,$b){
-	return strcmp($a->getName(), $b->getName());
+	return strcmp(strtolower(convert_diacrit($a->getName())), strtolower(convert_diacrit($b->getName())));
 }
 
 
 class webdav extends connecteur_out {
 	
-	function get_config_form() {
+	public function get_config_form() {
 		//Rien
 		return '';
 	}
 	
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		return;
 	}
 	
-	function instantiate_source_class($source_id) {
+	public function instantiate_source_class($source_id) {
 		return new webdav_source($this, $source_id, $this->msg);
 	}
 	
-	function process($source_id, $pmb_user_id) {
+	public function process($source_id, $pmb_user_id) {
 		global $class_path;
 		global $webdav_current_user_id,$webdav_current_user_name;
 		global $pmb_url_base;
@@ -73,7 +92,18 @@ class webdav extends connecteur_out {
 		$source_object = $this->instantiate_source_class($source_id);
 		$webdav_current_user_id=0;
 		$webdav_current_user_name = "Anonymous";
-		$rootDir = new Sabre\PMB\Tree($source_object->config);
+		switch ($source_object->config['group_tree']) {
+			case 'scan_request' :
+				$rootDir = new Sabre\PMB\ScanRequest\Tree($source_object->config);
+				break;
+			case 'music' :
+				$rootDir = new Sabre\PMB\Music\Tree($source_object->config);
+				break;
+			case 'standard' :
+			default :
+				$rootDir = new Sabre\PMB\Tree($source_object->config);
+				break;
+		}
 		$server = new Sabre\DAV\Server($rootDir);
 
 		if($source_object->config['allow_web']){
@@ -97,27 +127,75 @@ class webdav extends connecteur_out {
 }
 
 class webdav_source extends connecteur_out_source {
-	var $onglets = array();
+	public $onglets = array();
+	public $groups_collections = array();
 	
-	function webdav_source($connector, $id, $msg) {
+	public function __construct($connector, $id, $msg) {
 		
-		parent::connecteur_out_source($connector, $id, $msg);
+		parent::__construct($connector, $id, $msg);
 		$this->included_sets = isset($this->config["included_sets"]) ? $this->config["included_sets"] : array();
 	}
 	
-	function get_config_form() {
-		global $charset, $msg, $dbh;
-		global $thesaurus_default;
+	protected function get_msg_to_display($message) {
+		global $msg;
+	
+		if (substr($message, 0, 4) == "msg:") {
+			if(isset($this->msg[substr($message, 4)])){
+				return $this->msg[substr($message, 4)];
+			}
+		}
+		return $message;
+	}
+	
+	protected function parse_file_collections() {
 		global $base_path;
 		
-		if(!$this->config['used_thesaurus']){
-			$this->config['used_thesaurus'] = $thesaurus_default;
+		//Liste des collections possibles
+		if (file_exists("$base_path/admin/connecteurs/out/webdav/collections_subst.xml"))
+			$filename = "$base_path/admin/connecteurs/out/webdav/collections_subst.xml";
+		else
+			$filename = "$base_path/admin/connecteurs/out/webdav/collections.xml";
+		
+		$xml=file_get_contents($filename);
+		$param=_parser_text_no_function_($xml,"COLLECTIONS");
+		foreach ($param['GROUPS'][0]['GROUP'] as $group) {
+			$group_collections = array();
+			if($group['COLLECTION']){
+				foreach ($group['COLLECTION'] as $collection) {
+					$group_collections[$collection['CODE']] = $this->get_msg_to_display($collection['value']); 
+				}
+			}
+			$this->groups_collections[$group['NAME']] = array(
+					'label' => $this->get_msg_to_display($group['VALUE']),
+					'collections' => $group_collections,
+					'class' => $group['CLASS']
+			);
 		}
+	}
+	
+	public function get_groups_collections() {
+		if(!count($this->groups_collections)){
+			$this->parse_file_collections();
+		}
+		return $this->groups_collections;
+	}
+	
+	public function get_group_collections($name) {
+		if(!count($this->groups_collections)){
+			$this->parse_file_collections();
+		}
+		return $this->groups_collections[$name]['collections'];
+	}
+	
+	public function get_config_form() {
+		global $charset, $msg, $dbh;
+		global $base_path, $class_path;
+		
 		if(!$this->config['base_uri']){
 			$this->config['base_uri'] = "/";
 		}
-		if(!$this->config['tree']){
-			$this->config['tree'] = array();
+		if(!$this->config['group_tree']){
+			$this->config['group_tree'] = 'standard';
 		}
 		if(!$this->config['restricted_empr_write_permission']){
 			$this->config['restricted_empr_write_permission'] = array();
@@ -138,11 +216,11 @@ class webdav_source extends connecteur_out_source {
 				$this->config['upload_rep'] = 0;
 			}
 		}
-		
 		$result = parent::get_config_form();
 		
 		//Included sets
 		$result.= "
+			<script src='./javascript/ajax.js' type='text/javascript'></script>
 			<div class='row'>
 				<label for='base_uri'>".htmlentities($this->msg['webdav_base_uri'],ENT_QUOTES,$charset)."</label>
 			</div>
@@ -231,110 +309,48 @@ class webdav_source extends connecteur_out_source {
 			$result.= "
 					<option ".(in_array($aset->id, $this->included_sets) ? "selected" : "")." value='".$aset->id."'>".htmlentities($aset->caption ,ENT_QUOTES, $charset)."</option>";
 		}
-		$result.= "
-				</select>
-			</div>
-			<div class='row'>&nbsp;</div>
-			<div class='row'>
-				<label for='used_thesaurus'>".htmlentities($this->msg['webdav_user_thesaurus'],ENT_QUOTES,$charset)."</label>
-			</div>
-			<div class='row'>
-				<select name='used_thesaurus'>";
-		$liste_thesaurus = thesaurus::getThesaurusList();
-		foreach($liste_thesaurus as $id_thesaurus=>$libelle_thesaurus) {
-			$result.= "
-					<option value='".$id_thesaurus."' ".($id_thesaurus == $this->config['used_thesaurus'] ? "selected='selected'" : "").">".htmlentities($libelle_thesaurus,ENT_QUOTES,$charset)."</option>";	
-		}
-		$result.= "
-				</select>
-			</div>
-			<div class='row'>&nbsp;</div>
-			<div class='row'>
-				<label for='only_with_notices'>".htmlentities($this->msg['webdav_only_with_notices'],ENT_QUOTES,$charset)."</label>
-			</div>
-			<div class='row'>
-				".$this->msg['webdav_yes']."&nbsp;<input type='radio' value='1' name='only_with_notices' ".($this->config['only_with_notices'] ? "checked='checked'" : "")."/>
-				".$this->msg['webdav_no']."&nbsp;<input type='radio' value='0' name='only_with_notices' ".($this->config['only_with_notices'] ? "" : "checked='checked'")."/> 
+		$result.= "</select>
 			</div>";
+		
 		$result.="
 			<div class='row'>&nbsp;</div>
 			<div class='row'>
-				<label for='tree'>".htmlentities($this->msg['webdav_tree'],ENT_QUOTES,$charset)."</label>
+				<label for='tree'>".htmlentities($this->msg['webdav_collections_group_tree'],ENT_QUOTES,$charset)."</label>
 			</div>
 			<div class='row'>
-				<select name='tree_elem' id='select_tree_elem' onchange='load_tree_elem(this.value)'>
-					<option value='0'>".htmlentities($this->msg['webdav_select_tree_elem'],ENT_QUOTES,$charset)."</option>
-					<option value='typdoc'>typdoc</option>
-					<option value='statut'>statut</option>
-					<option value='categorie'>categorie</option>
-					<option value='indexint'>indexint</option>
-				</select><br />
-				<table id='tree'>";
-		foreach($this->config['tree'] as $pos => $elem){
-			$result.="
-					<tr id='tree_elem_tr".$pos."'>
-						<td recept='yes' recepttype='tree_elem' highlight='tree_elem_show_recept' downlight='tree_elem_hide_recept' id='tree_elem_td".$pos."' draggable='yes' callback_after='move_tree_elem' dragtype='tree_elem' dragicon='$base_path/images/icone_drag_notice.png' dragtext='".$elem."'>
-							<input type='hidden' name='tree[]' value='".$elem."' />
-							<img src='$base_path/images/sort.png' style='width:12px; vertical-align:middle'/>".$elem."</td>
-						<td onclick='tree_elem_delete(\"tree_elem_tr".$pos."\");'><img src=\"$base_path/images/trash.png\" /></td>
-					</tr>";
+				<select name='group_tree_elem' id='select_group_tree_elem' onchange='load_group_config_form(this.value)'>";
+		foreach ($this->get_groups_collections() as $name=>$group_collection) {
+			$result.="<option value='".$name."' ".($this->config['group_tree'] == $name ? 'selected="selected"' : '').">".$group_collection['label']."</option>";
 		}
+		$result.="</select>
+			</div>";
+		
+		$result.= '<script type="text/javascript">
+				function load_group_config_form(group_name){
+					var request = new http_request();
+					request.request("./ajax.php?module=admin&categ=webdav&sub=config_form",1, "&connector_id='.$this->connector_id.'&source_id='.$this->id.'&group_name="+group_name, 0, replace_group_config_form);
+				}
+				function replace_group_config_form(data){
+					data = JSON.parse(data);
+					document.getElementById("group_config_form").innerHTML = data.form;
+					var script = document.createElement("script");
+					script.innerHTML = data.script;
+					document.getElementById("group_config_form").appendChild(script);
+				}
+				
+		</script>';
+		
+		require_once($base_path.'/admin/connecteurs/out/webdav/groups/'.$this->groups_collections[$this->config['group_tree']]['class'].'.class.php');
+		$webdav_group = new $this->groups_collections[$this->config['group_tree']]['class']($this->config, $this->get_group_collections($this->config['group_tree']), $this->msg);
+		
+		$result.= '<div id="group_config_form">';
+		$result.= $webdav_group->get_config_form();
+		if ($config_form_script = $webdav_group->get_config_form_script()) {
+			$result.='<script type="text/javascript">'.$config_form_script.'</script>';
+		}
+		$result.='</div>';
+		
 		$result.="
-				</table>
-				<script type='text/javascript'>
-					var nb_tree_elems = ".count($this->config['tree']).";
-					function load_tree_elem(elem){
-						if(elem){
-							var tr = document.createElement('tr');
-							document.getElementById('tree').appendChild(tr);
-							tr.setAttribute('id','tree_elem_tr'+nb_tree_elems);
-							var td = document.createElement('td');	
-							td.setAttribute('recept','yes');
-							td.setAttribute('recepttype','tree_elem');
-							td.setAttribute('highlight','tree_elem_show_recept');
-							td.setAttribute('downlight','tree_elem_hide_recept');
-							td.setAttribute('id','tree_elem_td'+nb_tree_elems);
-							td.setAttribute('draggable','yes');
-							td.setAttribute('callback_after','move_tree_elem');
-							td.setAttribute('dragtype','tree_elem');
-							td.setAttribute('dragicon','$base_path/images/icone_drag_notice.png');
-							td.setAttribute('dragtext',elem);
-							td.innerHTML = '<input type=\"hidden\" name=\"tree[]\" value=\"'+elem+'\" /> <img src=\"$base_path/images/sort.png\" style=\"width:12px; vertical-align:middle\"/>'+elem;
-							tr.appendChild(td);
-							var td = document.createElement('td');	
-							td.setAttribute('onclick','tree_elem_delete(\"tree_elem_tr'+nb_tree_elems+'\")');
-							td.innerHTML = '<img src=\"$base_path/images/trash.png\" />';
-							tr.appendChild(td);
-							nb_tree_elems++;
-							init_drag();
-							document.getElementById('select_tree_elem').selectedIndex=0;
-						}
-					}
-					
-					function move_tree_elem(elem,evt,target){
-					
-						if(target != 'false' || target != 'null'){
-							elem = elem.parentNode;
-							target = document.getElementById(target).parentNode;
-							parent = target.parentNode;
-							parent.insertBefore(elem,target);
-						}
-					}
-					
-					function tree_elem_show_recept(obj){
-						obj.style.background='#DDD';
-					}
-					
-					function tree_elem_hide_recept(obj){
-						obj.style.background='';
-					} 
-					
-					function tree_elem_delete(id){
-						document.getElementById(id).parentNode.removeChild(document.getElementById(id));
-					}
-				</script>
-			</div>
-			<div class='row'>&nbsp;</div>
 			<div class='row'>
 				<label for='default_statut'>".htmlentities($this->msg['webdav_metasMapper_class'],ENT_QUOTES,$charset)."</label>
 			</div>
@@ -353,7 +369,7 @@ class webdav_source extends connecteur_out_source {
 				<select name='default_statut'>";
 			while($row=pmb_mysql_fetch_object($res)){
 				$result.="
-					<option value='".$row->id_notice_statut."'".($row->id_notice_statut == $this->config['default_statut'] ? "selected='selected'" : "").">".htmlentities($row->gestion_libelle,ENT_QUOTES,$charset)."</option>";
+					<option value='".$row->id_notice_statut."'".($row->id_notice_statut == $this->config['default_statut'] ? " selected='selected' " : "").">".htmlentities($row->gestion_libelle,ENT_QUOTES,$charset)."</option>";
 			}
 			$result.="
 				</select>";
@@ -379,7 +395,7 @@ class webdav_source extends connecteur_out_source {
 				<select name='default_docnum_statut'>";
 			while($row = pmb_mysql_fetch_object($res)){
 				$result.="
-					<option value='".$row->id_explnum_statut."'".($row->id_explnum_statut == $this->config['default_docnum_statut'] ? "selected='selected'" : "").">".htmlentities($row->gestion_libelle,ENT_QUOTES,$charset)."</option>";
+					<option value='".$row->id_explnum_statut."'".($row->id_explnum_statut == $this->config['default_docnum_statut'] ? " selected='selected' " : "").">".htmlentities($row->gestion_libelle,ENT_QUOTES,$charset)."</option>";
 			}
 			$result .="
 				</select>";
@@ -405,7 +421,7 @@ class webdav_source extends connecteur_out_source {
 						<select name='id_rep'>";
 					while ($row = pmb_mysql_fetch_object($res)){
 						$result.="
-							<option value='".$row->repertoire_id."' ".($row->repertoire_id == $this->config['upload_rep'] ? "selected='selected'" : "").">".htmlentities($row->repertoire_nom,ENT_QUOTES,$charset)."</option>";
+							<option value='".$row->repertoire_id."' ".($row->repertoire_id == $this->config['upload_rep'] ? " selected='selected' " : "").">".htmlentities($row->repertoire_nom,ENT_QUOTES,$charset)."</option>";
 					}
 					$result.=" 
 						</select>";
@@ -425,12 +441,10 @@ class webdav_source extends connecteur_out_source {
 		return $result;
 	}
 	
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		global $dbh;
 		global $included_sets;
-		global $used_thesaurus;	
-		global $only_with_notices;
-		global $tree;
+		global $group_tree_elem;
 		global $authentication;
 		global $write_permission;
 		global $restricted_empr_write_permission,$restricted_user_write_permission;
@@ -441,12 +455,12 @@ class webdav_source extends connecteur_out_source {
 		global $allow_web;
 		global $default_docnum_statut;
 		global $metasMapper_class;
+		global $base_path;
+		global $class_path;
 
 		parent::update_config_from_form();
 		$this->config['included_sets'] = $included_sets;
-		$this->config['used_thesaurus'] = $used_thesaurus;
-		$this->config['only_with_notices'] = $only_with_notices;
-		$this->config['tree'] = $tree;
+		$this->config['group_tree'] = $group_tree_elem;
 		$this->config['authentication']= $authentication;
 		$this->config['write_permission']= $write_permission;
 		$this->config['restricted_empr_write_permission'] = $restricted_empr_write_permission;
@@ -458,8 +472,16 @@ class webdav_source extends connecteur_out_source {
 		$this->config['allow_web'] = $allow_web;
 		$this->config['default_docnum_statut'] = $default_docnum_statut;
 		$this->config['metasMapper_class'] = $metasMapper_class;
+		
+		if ($this->config['group_tree']) {
+			$this->get_groups_collections();
+			$group_class = $this->groups_collections[$this->config['group_tree']]['class'];
+			require_once($base_path.'/admin/connecteurs/out/webdav/groups/'.$group_class.'.class.php');
+			$this->config = array_merge($this->config, $group_class::update_config_from_form());
+		}
 		return;
 	}
+
 }
 
 ?>

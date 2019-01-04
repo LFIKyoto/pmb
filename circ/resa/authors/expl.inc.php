@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl.inc.php,v 1.14.2.1 2015-08-14 10:30:03 dbellamy Exp $
+// $Id: expl.inc.php,v 1.16 2017-02-20 19:04:08 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 // accès à une notice par code-barre, ISBN, ou numéro commercial ou par CB exemplaire
@@ -63,7 +63,7 @@ if ($EAN && $isbn) {
 	$requete.= "join exemplaires on notices.notice_id=exemplaires.expl_notice ";
 	$requete.= "WHERE niveau_biblio='m' AND (exemplaires.expl_cb like '$code' OR exemplaires.expl_cb='$ex_query' OR notices.code in ('$code','$EAN'".($code10?",'$code10'":"").")) limit 10";
 	$myQuery = pmb_mysql_query($requete, $dbh);
-	
+
 } elseif ($isbn) {
 
 	// recherche d'un isbn
@@ -134,7 +134,6 @@ if ($rqt_bulletin!=1) {
 			print "</script>";
 		}
 	} else {
-		print $RESA_author_query;
 		error_message($msg[235], $msg[307]." $ex_query", 1, "./circ.php?categ=resa&id_empr=$id_empr&groupID=$groupID&mode=0");
 	}
 } else {
@@ -159,7 +158,6 @@ if ($rqt_bulletin!=1) {
 			print "</script>";
 		}
 	} else {
-		print $RESA_author_query;
 		error_message($msg[235], $msg[307]." $ex_query", 1, "./circ.php?categ=resa&id_empr=$id_empr&groupID=$groupID&mode=0");
 	}
 }

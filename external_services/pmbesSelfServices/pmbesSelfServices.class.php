@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesSelfServices.class.php,v 1.17.2.1 2015-10-02 15:27:54 vtouchard Exp $
+// $Id: pmbesSelfServices.class.php,v 1.24 2018-12-12 09:08:19 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -18,22 +18,20 @@ require_once("$class_path/expl_to_do.class.php");
 
 
 class pmbesSelfServices extends external_services_api_class{
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	
-	function self_checkout_bibloto($expl_cb,$empr_cb="",$confirm=1) {
+	public function self_checkout_bibloto($expl_cb,$empr_cb="",$confirm=1) {
 		global $msg;
 		global $charset;	
 		global $selfservice_pret_carte_invalide_msg;
@@ -43,6 +41,9 @@ class pmbesSelfServices extends external_services_api_class{
 		global $selfservice_pret_quota_bloc_msg;
 		global $selfservice_pret_non_pretable_msg;
 		global $selfservice_pret_expl_inconnu_msg;
+		
+		//Effacement des prêts temporaires
+		clean_pret_temp();
 		
 		$titre="";
 		$due_date="";
@@ -96,7 +97,7 @@ class pmbesSelfServices extends external_services_api_class{
 			$res_empr=pmb_mysql_query($req_empr);
 			if (!pmb_mysql_num_rows($res_empr)) {
 				$error=true;
-				$error_message=$selfservice_pret_carte_invalide_msg. " ".$requete;
+				$error_message=$selfservice_pret_carte_invalide_msg;
 				$ok=0;
 			} else {
 				$empr_cb=pmb_mysql_result($res_empr,0,0);
@@ -134,8 +135,13 @@ class pmbesSelfServices extends external_services_api_class{
 										$ret["status"]=$ok;
 										$ret["message"]=$error_message;
 										$ret["transaction_date"]=date("Ymd    His",time());
-										if($charset != "utf-8")$ret["title"]=utf8_encode($titre);
-										else $ret["title"]=$titre;
+										$ret["title"]=$titre;
+										if($charset != "utf-8") {
+											$ret["title"]=utf8_encode($ret["title"]);
+											if(isset($ret["message_expl_comment"])){
+												$ret["message_expl_comment"]=utf8_encode($ret["message_expl_comment"]);
+											}
+										}
 										return $ret;
 									}
 									$pret->confirm_pret($id_empr, $expl->expl_id);
@@ -180,7 +186,7 @@ class pmbesSelfServices extends external_services_api_class{
 		return $ret;
 	}
 	
-	function self_checkout($expl_cb,$id_empr,$PMBUserId=-1) {
+	public function self_checkout($expl_cb,$id_empr,$PMBUserId=-1) {
 	    global $msg;
 	    global $charset;
 	    global $selfservice_pret_carte_invalide_msg;
@@ -305,7 +311,7 @@ class pmbesSelfServices extends external_services_api_class{
 	}
 	
 	
-	function self_del_temp_pret($expl_cb) {
+	public function self_del_temp_pret($expl_cb) {
 
 		$requete="select expl_id,expl_bulletin,expl_notice,type_antivol,empr_cb from exemplaires join pret on (expl_id=pret_idexpl) join empr on (pret_idempr=id_empr) where expl_cb='".addslashes($expl_cb)."' and pret_temp != ''";
 		$resultat=pmb_mysql_query($requete);
@@ -321,7 +327,7 @@ class pmbesSelfServices extends external_services_api_class{
 		return $ret;
 	}
 	
-	function self_checkin($expl_cb,$PMBUserId=-1) {
+	public function self_checkin($expl_cb,$PMBUserId=-1) {
 		global $selfservice_pret_expl_inconnu_msg;
 		global $charset;
 			
@@ -409,7 +415,7 @@ class pmbesSelfServices extends external_services_api_class{
 		return $ret;
 	}
 	
-	function self_renew($expl_cb,$PMBUserId=-1) {
+	public function self_renew($expl_cb,$PMBUserId=-1) {
 		global $opac_pret_prolongation, $opac_pret_duree_prolongation,$pmb_pret_restriction_prolongation,$pmb_pret_nombre_prolongation,$dbh,$msg;
 		global $selfservice_pret_prolonge_non_msg;
 		
@@ -487,11 +493,17 @@ class pmbesSelfServices extends external_services_api_class{
 					$query = "update pret set cpt_prolongation='".$cpt_prolongation."', pret_retour='".$date_prolongation."' where pret_idexpl=".$expl_id;
 					$result = pmb_mysql_query($query, $dbh);
 					$due_date=$date_prolongation;
-					$due_date=sql_value("select date_format('$date_prolongation', '".$msg["format_date"]."')");
+					$due_date=sql_value("select date_format('".$date_prolongation."', '".$msg["format_date"]."')");
 					//$due_date=@pmb_mysql_result($resultat,0,0);
+					// Memorisation de la nouvelle date de prolongation dans la table d'archive
+					$res_arc=pmb_mysql_query("select pret_arc_id from pret where pret_idexpl=".$expl_id."",$dbh);
+					if($res_arc && pmb_mysql_num_rows($res_arc)){
+						$query = "update pret_archive set arc_cpt_prolongation='".$cpt_prolongation."', arc_fin='".$date_prolongation."' where arc_id = ".pmb_mysql_result($res_arc,0,0);
+						pmb_mysql_query($query,$dbh);
+					}
 				} else {
 					$ok=0;
-					$error_message="$selfservice_pret_prolonge_non_msg";						
+					$error_message=$selfservice_pret_prolonge_non_msg;						
 				}
 			}	
 		
@@ -508,7 +520,7 @@ class pmbesSelfServices extends external_services_api_class{
 		$ret["due_date"]=$due_date;
 		return $ret;
 	}
-	function sql_value($rqt) {
+	public function sql_value($rqt) {
 		if(($result=pmb_mysql_query($rqt))) {
 			if(($row = pmb_mysql_fetch_row($result)))	return $row[0];
 		}	

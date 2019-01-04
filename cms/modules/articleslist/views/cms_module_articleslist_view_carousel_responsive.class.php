@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_articleslist_view_carousel_responsive.class.php,v 1.2 2015-03-10 14:19:39 dgoron Exp $
+// $Id: cms_module_articleslist_view_carousel_responsive.class.php,v 1.3 2016-09-20 10:25:41 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 

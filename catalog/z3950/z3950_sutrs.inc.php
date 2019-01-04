@@ -5,7 +5,7 @@
 // authors: Marco Vaninetti, Massimo Mancini
 // state: experimental ;-)
 // +-------------------------------------------------+
-// $Id: z3950_sutrs.inc.php,v 1.9 2009-10-01 09:41:59 mbertin Exp $
+// $Id: z3950_sutrs.inc.php,v 1.10 2017-03-21 11:32:17 dgoron Exp $
 
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
@@ -86,16 +86,14 @@ function convert_notice($notice) {
 		$n_errors ++;
 		$message_convert.= "<b>Notice ". ($n_current)." : </b>".$r['ERROR']."<br />\n";
 		$notice = "";
-		break;
-		} else {
-			$notice = $r['DATA'];
-			}
+	} else {
+		$notice = $r['DATA'];
+	}
 	$r = toiso($notice, $step[1], "1","0", $param_path);
 	if (!$r['VALID']) {
 		$n_errors ++;
 		$message_convert.= "<b>Notice ". ($n_current)." : </b>".$r['ERROR']."<br />\n";
 		$notice = "";
-		break;
 	} else {
 		$notice = $r['DATA'];
 		if($r['WARNING']){

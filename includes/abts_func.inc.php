@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: abts_func.inc.php,v 1.5 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: abts_func.inc.php,v 1.11 2017-11-24 14:53:54 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -88,6 +88,7 @@ function calendar_gestion($date = '', $navbar=0, $url_maj_base='', $base_url_moi
 	global $admin_calendrier_form_mois_start, $admin_calendrier_form_mois_end, $admin_calendrier_form_mois_commentaire ;
 	global $deflt2docs_location;
 	
+	$output = '';
 	// Default Params
 	$param_d['calendar_id']		= 1; // Calendar ID
 	$param_d['calendar_columns']= 5; // Nb of columns
@@ -96,7 +97,7 @@ function calendar_gestion($date = '', $navbar=0, $url_maj_base='', $base_url_moi
 	$param_d['nav_link']		= 1; // Add a nav bar below
 	$param_d['link_after_date']	= 0; // Enable link on days after the current day
 	$param_d['link_before_date']= 0; // Enable link on days before the current day
-	$param_d['link_on_day']		= $PHP_SELF.'?date='; // Link to put on each day
+	//$param_d['link_on_day']		= $PHP_SELF.'?date='; // Link to put on each day
 	$param_d['font_face']		= 'Verdana, Arial, Helvetica'; // Default font to use
 	$param_d['font_size']		= 10; // Font size in px
 	$param_d['bg_color']		= '#FFFFFF'; 
@@ -170,14 +171,14 @@ function calendar_gestion($date = '', $navbar=0, $url_maj_base='', $base_url_moi
 		$output = $style_calendrier ;
 	}
 	if ($form_input_par_jour) $output .= $admin_calendrier_form_mois_start ;  	
-	$output .= '<TABLE border="0"  cellpadding="1" cellspacing="0">'."\n";
+	$output .= '<TABLE style="border:0px"  cellpadding="1" cellspacing="0" class="calendar-container">'."\n";
 	// Displaying the current month/year
 	if ($param['show_month'] == 1) {
 		$output .= '<TR>'."\n";
-		$output .= '	<TD colspan="'.$param['calendar_columns'].'" align="right" >'."\n";
+		$output .= '	<TD colspan="'.$param['calendar_columns'].'" class="align_right">'."\n";
 		$output .= "<a name='".$current_year."-".$current_month_2."' ></a>";
 		if ($base_url_mois) $output .= "<a href='".$base_url_mois."&date=".$current_year.$current_month_2."01' alt='".$msg["calendrier_edition"]."' title='".$msg["calendrier_edition"]."'>";
-		if ($param['use_img'] ) $output .= "<IMG src='./images/mois.gif'>";			
+		if ($param['use_img'] ) $output .= "<IMG src='".get_url_icon('mois.gif')."'>";			
 		$output .= $current_month_name.' '.$current_year;
 		if ($base_url_mois) $output .= "</a>";
 		$output .= "</TD>";
@@ -189,7 +190,7 @@ function calendar_gestion($date = '', $navbar=0, $url_maj_base='', $base_url_moi
 	}
 	// Building the table row with the days
 	if ($param['show_day'] == 1) {
-		$output .= '<TR align="right">'."\n";
+		$output .= '<TR class="center">'."\n";
 		if($pmb_first_week_day_format) $output .= '<TD class="calendarHeader'.$param['calendar_id'].'"><B>'.$msg[1024].'</B></TD>'."\n";
 		$output .= '<TD class="calendarHeader'.$param['calendar_id'].'"><B>'.$msg[1018].'</B></TD>'."\n";
 		$output .= '<TD class="calendarHeader'.$param['calendar_id'].'"><B>'.$msg[1019].'</B></TD>'."\n";
@@ -203,7 +204,7 @@ function calendar_gestion($date = '', $navbar=0, $url_maj_base='', $base_url_moi
 		$first_day_pos = 1;	
 	}
 
-	$output .= '<TR align="right">';
+	$output .= '<TR class="center">';
 	$int_counter = 0;
 	for ($i = 1; $i < $first_day_pos; $i++) {
 		$output .= '<TD>&nbsp;</TD>'."\n";
@@ -212,17 +213,17 @@ function calendar_gestion($date = '', $navbar=0, $url_maj_base='', $base_url_moi
 	// Building the table
 	for ($i = 1; $i <= $nb_days_month; $i++) {
 		$i_2 = ($i < 10) ? '0'.$i : $i;
-		$commentaire=htmlentities($reception[$current_year.'-'.$current_month_2.'-'.$i_2]['commentaire'],ENT_QUOTES, $charset) ;
+		//$commentaire=htmlentities($reception[$current_year.'-'.$current_month_2.'-'.$i_2]['commentaire'],ENT_QUOTES, $charset) ;
 		$obj="$current_year-$current_month_2-$i_2";	
 	
 		### Row start
 		if ((($i + $first_day_pos-1) % $param['calendar_columns']) == 1 && $i != 1) {
-			$output .= "<TR align='right'>";
+			$output .= "<TR class='center'>";
 			$int_counter = 0;
 		}
 		if ($form_input_par_jour) {
 			$input_commentaire = "&nbsp;".str_replace("!!name!!", "comment_".$i_2, $admin_calendrier_form_mois_commentaire) ;
-			$input_commentaire = "&nbsp;".str_replace("!!commentaire!!", $commentaire, $input_commentaire) ;
+			$input_commentaire = "&nbsp;".str_replace("!!commentaire!!", '', $input_commentaire) ;
 		} else $input_commentaire = "" ; 
 		$serie=0;
 		if($num_abt){// Pour la grille abonnement
@@ -261,7 +262,7 @@ function calendar_gestion($date = '', $navbar=0, $url_maj_base='', $base_url_moi
 			$class = " ";
 		}		
 		$td_link="onClick='ad_date(\"$obj\",event);return false;'";
-		$output .="<TD align='right' $class id='$obj' $td_link>" .
+		$output .="<TD $class id='$obj' $td_link>" .
 				"<a href='#'>$i</a></TD>\n";   
 		$int_counter++;
 		// Row end
@@ -272,9 +273,9 @@ function calendar_gestion($date = '', $navbar=0, $url_maj_base='', $base_url_moi
 	$cell_missing = $param['calendar_columns'] - $int_counter;
 	
 	for ($i = 0; $i < $cell_missing; $i++) {
-		$output .= '<TD align="right">&nbsp;</TD>'."\n";
+		$output .= '<TD class="align_right">&nbsp;</TD>'."\n";
 	}
-	$output .= '</TR>'."\n";
+	if($cell_missing)$output .= '</TR>'."\n";
 	$output .= '</TABLE>'."\n";
 	return $output;
 }

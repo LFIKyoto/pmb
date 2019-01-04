@@ -2,17 +2,17 @@
 // +--------------------------------------------------------------------------+
 // | PMB est sous licence GPL, la réutilisation du code est cadrée            |
 // +--------------------------------------------------------------------------+
-// $Id: unapi.class.php,v 1.2 2010-12-23 09:12:45 arenou Exp $
+// $Id: unapi.class.php,v 1.3 2017-07-03 13:07:42 dgoron Exp $
 
 require_once ($include_path."/parser.inc.php");
 
 class unapi {
-	var $id = 0;	//id de la notice
-	var $format;	//format demandé
-	var $notice;	//notice dans le format demandé
-	var $formats;	//tableau regroupant les infos du XML
+	public $id = 0;	//id de la notice
+	public $format;	//format demandé
+	public $notice;	//notice dans le format demandé
+	public $formats;	//tableau regroupant les infos du XML
 
-    function unapi($format,$id) {
+    public function __construct($format,$id) {
     	$this->format = $format;
     	$this->id = $id;
     	$this->formats = array();
@@ -26,7 +26,7 @@ class unapi {
     	}   	
     }
     
-	function getFormats(){
+	public function getFormats(){
     	global $charset;
     	global $base_path;
     	
@@ -42,7 +42,7 @@ class unapi {
 	</formats>"; 			
 	}   
    
-    function getFormatInfo($format){
+    public function getFormatInfo($format){
     	global $charset;
     	
     	$this->formats[$format['NAME']] = $format;
@@ -50,14 +50,14 @@ class unapi {
 		<format name='".$format['NAME']."' type='".$format['TYPE']."'/>";
     }
     
-     function sendFormats(){
+     public function sendFormats(){
      	global $charset;
   
 		header("Content-type: application/xml; charset=" .$charset, true);
 		print $this->xml;
     }
        
-    function getNotice(){
+    public function getNotice(){
     	global $charset;
 
 		//on récupère l'identifiant du l'export associé au format

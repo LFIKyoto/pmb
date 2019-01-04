@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_expor_import_erreur_pmb.inc.php,v 1.4 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: func_expor_import_erreur_pmb.inc.php,v 1.6 2018-01-09 08:54:31 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+global $class_path; //Nécessaire pour certaines inclusions
 require_once("$class_path/thesaurus.class.php");
 require_once("$class_path/noeuds.class.php");
 require_once("$class_path/categories.class.php");
@@ -13,7 +14,7 @@ require_once($class_path."/serials.class.php");
 
 
 if($action == "beforeupload"){
-	$var_lib="<h2 align='center'>ATTENTION : Cette fonction d'import est destinée  à l'import/export en cas de suppression par erreur de notices</h2> 
+	$var_lib="<h2 class='center'>ATTENTION : Cette fonction d'import est destinée  à l'import/export en cas de suppression par erreur de notices</h2> 
             	<div class='form-contenu'> 
             		<div class='row'> 
                         <h3>Récupérer et installer sur un autre PMB une sauvegarde de la base datant d'avant la suppression, puis faire l'un des exports (iso-2709) ci-dessous et procéder à l'import avec cette fonction en cochant bien \"Générer les liens entre notices ?\" du fichier obtenu précédemment.<br/> Affecter un statut particulier aux notices importées afin de les retrouver plus facilement.</h3>

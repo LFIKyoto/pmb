@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fichier_gestion.inc.php,v 1.5 2012-03-09 08:40:19 jpermanne Exp $
+// $Id: fichier_gestion.inc.php,v 1.6 2017-04-20 16:25:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($act)) $act = '';
 
 require_once($class_path."/parametres_perso.class.php");
 require_once($class_path."/fiche.class.php");

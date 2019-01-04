@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: liste-suggestions.inc.php,v 1.18 2015-04-13 16:12:25 mbertin Exp $
+// $Id: liste-suggestions.inc.php,v 1.20 2017-06-12 07:01:21 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -115,10 +115,10 @@ if ($acquisition_pdfsug_print) {
 	$mask=$sug_map->getMask_FILED();
 	
 	if(!$user_input) {
-		$q = suggestions::listSuggestions(0, $statut, $num_categ, $mask,0, 0, $aq,'',$sugg_location_id,'', 0, $origine_id, $type_origine);
+		$q = suggestions::listSuggestions(0, $statut, $num_categ, $mask,0, 0, $aq,'',$sugg_location_id,'', $filtre_src, $origine_id, $type_origine, $date_inf, $date_sup);
 	} else {
 		$aq=new analyse_query(stripslashes($user_input),0,0,0,0);
-		$q = suggestions::listSuggestions(0, $statut, $num_categ, $mask, 0, 0, $aq,'',$sugg_location_id, $user_input, 0, $origine_id, $type_origine);
+		$q = suggestions::listSuggestions(0, $statut, $num_categ, $mask, 0, 0, $aq,'',$sugg_location_id, $user_input, $filtre_src, $origine_id, $type_origine, $date_inf, $date_sup);
 	}
 	$res = pmb_mysql_query($q, $dbh);
 	

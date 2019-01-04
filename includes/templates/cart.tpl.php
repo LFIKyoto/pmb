@@ -2,159 +2,85 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cart.tpl.php,v 1.49.2.2 2015-11-04 10:09:06 jpermanne Exp $
+// $Id: cart.tpl.php,v 1.65 2018-05-25 13:35:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+if(!isset($quelle)) $quelle = '';
 
 require_once("$include_path/templates/export_param.tpl.php");
 
 // templates pour la gestion des paniers
 
-// template pour le form de création d'un panier
+// template pour le formulaire d'un panier
 $cart_form = "
 <script type=\"text/javascript\">
-function test_form(form)
-{
-	if(form.cart_name.value.length == 0)
-	{
-		alert(\"$msg[caddie_name_oblig]\");
-		return false;
+	function test_form(form) {
+		if(form.cart_name.value.length == 0) {
+			alert(\"".$msg['caddie_name_oblig']."\");
+			return false;
+		}
+		return true;
 	}
-	return true;
-}
-
-function show_hide_acces_rapide(selected_value) {
-	if (selected_value == 'NOTI') {
-		document.getElementById('div_acces_rapide').style.visibility='visible';
-	} else {
-		document.getElementById('div_acces_rapide').style.visibility='hidden';
-	}
-}
 </script>
 
 <form class='form-$current_module' name='cart_form' method='post' action='!!formulaire_action!!'>
-<h3>$msg[new_cart]</h3>
-<div class='form-contenu'>
-<!--	type	-->
-<!--memo_contexte-->
-<div class='row'>
-	<label class='etiquette' for='form_type'>$msg[caddie_name]</label>
+	<h3>!!title!!</h3>
+	<div class='form-contenu'>
+		<!--	type	-->
+		<!--memo_contexte-->
+		<div class='row'>
+			<label class='etiquette' for='cart_name'>".$msg['caddie_name']."</label>
+		</div>
+		<div class='row'>
+			<input type='text' class='saisie-80em' id='cart_name' name='cart_name' value='!!name!!' />
+			!!infos_creation!!
+		</div>
+		<div class='row'>
+			<label class='etiquette' for='cart_type'>".$msg['caddie_type']."</label>
+		</div>
+		<div class='row'>
+			!!cart_type!!
+		</div>
+		<div class='row'>
+			<label class='etiquette' for='cart_comment'>".$msg['caddie_comment']."</label>
+		</div>
+		<div class='row'>
+			<input type='text' class='saisie-80em' id='cart_comment' name='cart_comment' value='!!comment!!' />
+		</div>
+		<div class='row'>
+			<label class='etiquette' for='form_type'>".$msg['caddie_autorisations']."</label>
+			<input type='button' class='bouton_small align_middle' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);'>
+			<input type='button' class='bouton_small align_middle' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);'>
+		</div>
+		<div class='row'>
+			!!autorisations_users!!
+		</div>
+		<div class='row'>
+			<label class='etiquette' for='classementGen_!!object_type!!'>".$msg['caddie_classement_list']."</label>
+		</div>
+		<div class='row'>
+			<select data-dojo-type='dijit/form/ComboBox' id='classementGen_!!object_type!!' name='classementGen_!!object_type!!'>
+				!!classements_liste!!
+			</select>
+		</div>
+		<div id='div_acces_rapide' class='row'>
+			<label class='etiquette' for='acces_rapide'>".$msg["caddie_fast_access"]."</label>&nbsp;<input type='checkbox' id='acces_rapide' name='acces_rapide' !!acces_rapide!!>
+		</div>
 	</div>
-<div class='row'>
-	<input type='text' class='saisie-80em' name='cart_name' value='' />
+	<!-- liaisons -->
+	<!--	boutons	-->
+	<div class='row'>
+		<div class='left'>
+			<input type='button' class='bouton' value='".$msg['76']."' onClick=\"!!formulaire_annuler!!\">&nbsp;
+			<input type='submit' value='".$msg['77']."' class='bouton' onClick=\"return test_form(this.form)\" />
+			<input type='hidden' name='form_actif' value='1'>
+		</div>
+		<div class='right'>
+			!!button_delete!!
+		</div>
 	</div>
-<div class='row'>
-	<label class='etiquette' for='form_type'>$msg[caddie_type]</label>
-	</div>
-<div class='row'>
-	!!cart_type_select!!
-	</div>
-<div class='row'>
-	<label class='etiquette' for='form_type'>$msg[caddie_comment]</label>
-	</div>
-<div class='row'>
-	<input type='text' class='saisie-80em' name='cart_comment' value='' />
-	</div>
-<div class='row'>
-	<label class='etiquette' for='form_type'>$msg[caddie_autorisations]</label>
-		<input type='button' class='bouton_small' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);' align='middle'>
-		<input type='button' class='bouton_small' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);' align='middle'>
-	</div>
-<div class='row'>
-	!!autorisations_users!!
-</div>
-<div class='row'>
-	<label class='etiquette' for='form_type'>".$msg['caddie_classement_list']."</label>
-</div>
-<div class='row'>
-	<select data-dojo-type='dijit/form/ComboBox' id='classementGen_!!object_type!!' name='classementGen_!!object_type!!'>
-		!!classements_liste!!
-	</select>
-</div>
-<div id='div_acces_rapide' class='row'>
-	<label class='etiquette' for='form_type'>".$msg["caddie_fast_access"]."</label>&nbsp;<input type='checkbox' name='acces_rapide' >
-</div>
-</div>
-<!--	boutons	-->
-<div class='row'>
-	<input type='button' class='bouton' value='$msg[76]' onClick=\"history.go(-1);\">
-	<input type='submit' value='$msg[77]' class='bouton' onClick=\"return test_form(this.form)\" />
-	<input type='hidden' name='form_actif' value='1'>
-	</div>
-</form>
-<script type=\"text/javascript\">
-		document.forms['cart_form'].elements['cart_name'].focus();
-</script>
-";
-
-$cart_edit_form = "
-<script type=\"text/javascript\">
-function test_form(form)
-{
-	if(form.cart_name.value.length == 0)
-	{
-		alert(\"$msg[caddie_name_oblig]\");
-		return false;
-	}
-	return true;
-}
-</script>
-
-<form class='form-$current_module' name='cart_form' method='post' action='!!formulaire_action!!'>
-<h3>$msg[edit_cart]</h3>
-<div class='form-contenu'>
-<!--	type	-->
-<div class='row'>
-	<label class='etiquette' for='form_type'>$msg[caddie_name]</label>
-	</div>
-<div class='row'>
-	<input type='text' class='saisie-80em' name='cart_name' value='!!name!!' />
-	</div>
-<div class='row'>
-	<label class='etiquette' for='form_type'>$msg[caddie_type]</label>
-	</div>
-<div class='row'>
-	!!cart_type!!
-	</div>
-<div class='row'>
-	<label class='etiquette' for='form_type'>$msg[caddie_comment]</label>
-	</div>
-<div class='row'>
-	<input type='text' class='saisie-80em' name='cart_comment' value='!!comment!!' />
-	</div>
-<div class='row'>
-	<label class='etiquette' for='form_type'>$msg[caddie_autorisations]</label>
-	<input type='button' class='bouton_small' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);' align='middle'>
-	<input type='button' class='bouton_small' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);' align='middle'>
-	</div>
-<div class='row'>
-	!!autorisations_users!!
-</div>
-<div class='row'>
-	<label class='etiquette' for='form_type'>".$msg['caddie_classement_list']."</label>
-</div>
-<div class='row'>
-	<select data-dojo-type='dijit/form/ComboBox' id='classementGen_!!object_type!!' name='classementGen_!!object_type!!'>
-		!!classements_liste!!
-	</select>
-</div>
-<div id='acces_rapide' class='row'>
-	!!acces_rapide!!
-</div>
-</div>
-<!--	boutons	-->
-<!-- liaisons --> 
-<div class='row'>
-	<div class='left'>
-		<input type='button' class='bouton' value='$msg[76]' onClick=\"document.location='!!formulaire_annuler!!';\">&nbsp;
-		<input type='submit' value='$msg[77]' class='bouton' onClick=\"return test_form(this.form)\" />
-		<input type='hidden' name='form_actif' value='1'>
-	</div>
-	<div class='right'>
-		<input type='button' class='bouton' value=' $msg[supprimer] ' onClick=\"javascript:confirmation_delete(!!idcaddie!!,'!!name_suppr!!')\" />
-	</div>
-</div>
-<div class='row'></div>
+	<div class='row'></div>
 </form>
 <script type=\"text/javascript\">
 		document.forms['cart_form'].elements['cart_name'].focus();
@@ -163,19 +89,19 @@ function test_form(form)
 
 $liaison_tpl = "
 <div id='el0Parent' class='parent' >
-<h3>
-<img src='./images/plus.gif' class='img_plus' align='bottom' name='imEx' id='el0Img' title='$msg[caddie_used_in]' border='0' onClick=\"expandBase('el0', true); return false;\" />
-$msg[caddie_used_in]
-</h3>
+	<h3>
+	<img src='".get_url_icon('minus.gif')."' class='img_moins align_bottom' name='imEx' id='el0Img' title='".$msg['caddie_used_in']."' border='0' onClick=\"expandBase('el0', true); return false;\" />
+	".$msg['caddie_used_in']."
+	</h3>
 </div>
 <div id='el0Child' class='child'>
-<!-- info_liaisons -->
+	<!-- info_liaisons -->
 </div>
 <div class='row'>&nbsp;</div>";
 
 // $expl_cb_caddie_tmpl : template pour le form de saisie code-barre
 if ($pmb_rfid_activate==1 && $pmb_rfid_serveur_url ) {
-	if(!$rfid_port)$rfid_port= get_rfid_port();	
+	if(!isset($rfid_port) || !$rfid_port)$rfid_port= get_rfid_port();	
 
 	$rfid_script="
 		$rfid_js_header
@@ -270,17 +196,17 @@ $rfid_script
 !!script!!
 <h3>!!title!!</h3>
 <form class='form-$current_module' name='saisie_cb_ex' method='post' action='!!form_action!!' onSubmit='return test_form(this)'>
-<h3>!!titre_formulaire!!</h3>
-<div class='form-contenu'>
-	<div class='row'>
-		<label class='etiquette' for='form_cb_expl'>!!message!!</label>
+	<h3>!!titre_formulaire!!</h3>
+	<div class='form-contenu'>
+		<div class='row'>
+			<label class='etiquette' for='form_cb_expl'>!!message!!</label>
 		</div>
-	<div class='row'>
-		<input class='saisie-20em' type='text' id='form_cb_expl' name='form_cb_expl' value=''  />
+		<div class='row'>
+			<input class='saisie-20em' type='text' id='form_cb_expl' name='form_cb_expl' value=''  />
 		</div>
 	</div>
-<div class='row'>
-	<input type='submit' class='bouton' value='$msg[502]' />
+	<div class='row'>
+		<input type='submit' class='bouton' value='".$msg['502']."' />
 	</div>
 </form>
 $table_cb
@@ -295,55 +221,57 @@ $begin_result_expl_liste_unique = "
 
 // $cart_procs_form : template form procédures stockées
 $cart_procs_form = "
+<hr />
 <form class='form-$current_module' name='maj_proc' method='post' action='!!action!!'>
-<h3>!!form_title!!</h3>
-<!--	Contenu du form	-->
-<div class='form-contenu'>
-	<div class='row'>
-		<label class='etiquette' for='form_type'>$msg[caddie_procs_type]</label>
+	<h3>!!form_title!!</h3>
+	<!--	Contenu du form	-->
+	<div class='form-contenu'>
+		<div class='row'>
+			<label class='etiquette' for='form_type'>".$msg['caddie_procs_type']."</label>
 		</div>
-	<div class='row'>
-		<select name='f_proc_type'>
-		<option value='SELECT'>$msg[caddie_procs_type_SELECT]</option>
-		<option value='ACTION'>$msg[caddie_procs_type_ACTION]</option>
-		</select>
+		<div class='row'>
+			!!type!!
 		</div>
-	<div class='row'>
-		<label class='etiquette' for='form_name'>$msg[705]</label>
+		<div class='row'>
+			<label class='etiquette' for='form_name'>".$msg['705']."</label>
 		</div>
-	<div class='row'>
-		<input type='text' name='f_proc_name' value='!!name!!' maxlength='255' class='saisie-50em' />
+		<div class='row'>
+			<input type='text' name='f_proc_name' value='!!name!!' maxlength='255' class='saisie-50em' />
 		</div>
-	<div class='row'>
-		<label class='etiquette' for='form_code'>$msg[706]</label>
+		<div class='row'>
+			<label class='etiquette' for='form_code'>".$msg['706']."</label>
 		</div>
-	<div class='row'>
-		<textarea cols='70' rows='8' name='f_proc_code'>!!code!!</textarea><br />
-		".$msg['cart_ex_selection']." select notice_id as <b>object_id</b>, <b>'NOTI'</b> as object_type from notices where ...<br />
-		'NOTI' / 'EXPL' / 'BULL'<br />
-		".$msg['cart_ex_action']." update exemplaires set expl_statut=!!nouveau_statut!! where expl_id in (CADDIE(<b>EXPL</b>))<br />
-		EXPL / NOTI / BULL
+		<div class='row'>
+			<textarea cols='70' rows='10' name='f_proc_code'>!!code!!</textarea><br />
+			!!example_code!!
 		</div>
-	<div class='row'>
-		<label class='etiquette' for='form_comment'>$msg[707]</label>
+		<div class='row'>
+			<label class='etiquette' for='form_comment'>".$msg['707']."</label>
 		</div>
-	<div class='row'>
-		<input type='text' name='f_proc_comment' value='!!comment!!' maxlength='255' class='saisie-50em' />
+		<div class='row'>
+			<input type='text' name='f_proc_comment' value='!!comment!!' maxlength='255' class='saisie-50em' />
 		</div>
-	<div class='row'>
-		<label class='etiquette' for='form_comment'>$msg[procs_autorisations]</label>
-		<input type='button' class='bouton_small' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);' align='middle'>
-		<input type='button' class='bouton_small' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);' align='middle'>
+		<div class='row'>
+			<label class='etiquette' for='form_comment'>".$msg['procs_autorisations']."</label>
+			<input type='button' class='bouton_small align_middle' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);'>
+			<input type='button' class='bouton_small align_middle' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);'>
 		</div>
-	<div class='row'>
-		!!autorisations_users!!
+		<div class='row'>
+			!!autorisations_users!!
 		</div>
 	</div>
-<!-- Boutons -->
-<div class='row'>
-	<input type='button' class='bouton' value='$msg[76]' onClick='document.location=\"./catalog.php?categ=caddie&sub=gestion&quoi=procs\"' />&nbsp;
-	<input type='submit' class='bouton' value='$msg[77]' onClick=\"return test_form(this.form)\" />&nbsp;
+	<!-- Boutons -->
+	<div class='row'>
+		<div class='left'>
+			<input type='button' class='bouton' value='".$msg['76']."' onClick='document.location=\"!!cancel_link!!\"' />&nbsp;
+			<input type='submit' class='bouton' value='".$msg['77']."' onClick=\"return test_form(this.form)\" />&nbsp;
+			!!exec_button!!
+		</div>
+		<div class='right'>
+			!!button_delete!!
+		</div>
 	</div>
+	<div class='row'></div>
 </form>
 <script type='text/javascript'>document.forms['maj_proc'].elements['f_proc_name'].focus();</script>
 ";
@@ -357,27 +285,27 @@ $cart_proc_view_remote = "
 	</div>
 	<div class=colonne2>
 		<div class='row'>
-		<label class='etiquette' for='form_name'>$msg[remote_procedures_procedure_name]</label>
+			<label class='etiquette' for='form_name'>".$msg['remote_procedures_procedure_name']."</label>
 		</div>
 		<div class='row'>
-		<input type='text' readonly name='f_proc_name' value='!!name!!' maxlength='255' class='saisie-50em' />
+			<input type='text' readonly name='f_proc_name' value='!!name!!' maxlength='255' class='saisie-50em' />
 		</div>
 	</div>
 	<div class='row'>
-		<label class='etiquette' for='form_code'>$msg[caddie_procs_type]</label>
-		</div>
+		<label class='etiquette' for='form_code'>".$msg['caddie_procs_type']."</label>
+	</div>
 	<div class='row'>
 		!!ptype!!
 	</div>
 	<div class='row'>
-		<label class='etiquette' for='form_code'>$msg[remote_procedures_procedure_sql]</label>
-		</div>
+		<label class='etiquette' for='form_code'>".$msg['remote_procedures_procedure_sql']."</label>
+	</div>
 	<div class='row'>
 		<textarea cols='80' readonly rows='8' name='f_proc_code'>!!code!!</textarea>
 	</div>
 	<div class='row'>
-		<label class='etiquette' for='form_comment'>$msg[remote_procedures_procedure_comment]</label>
-		</div>
+		<label class='etiquette' for='form_comment'>".$msg['remote_procedures_procedure_comment']."</label>
+	</div>
 	<div class='row'>
 		<input type='text' readonly name='f_proc_comment' value='!!comment!!' maxlength='255' class='saisie-50em' />
 	</div>
@@ -391,72 +319,11 @@ $cart_proc_view_remote = "
 <!-- Boutons -->
 <div class='row'>
 	<div class='left'>
-		<input type='button' class='bouton' value='".$msg["remote_procedures_back"]."' onClick='document.location=\"./catalog.php?categ=caddie&sub=gestion&quoi=remote_procs\"' />&nbsp;
-		<input class='bouton' type='button' value=\"".$msg["remote_procedures_import"]."\" onClick=\"document.location='./catalog.php?categ=caddie&sub=gestion&quoi=remote_procs&action=import_remote&id=!!id!!'\" />
-		</div>
-</div>
-<div class='row'></div>
-<script type='text/javascript'>document.forms['maj_proc'].elements['f_proc_name'].focus();</script>";
-
-
-// template form édition procédures stockées
-$cart_procs_edit_form = "
-<hr /><form class='form-$current_module' name='maj_proc' method='post' action='!!action!!'>
-<h3>!!form_title!!</h3>
-<!--	Contenu du form	-->
-<div class='form-contenu'>
-	<div class='row'>
-		<label class='etiquette' for='form_type'>$msg[caddie_procs_type]</label>
-		</div>
-	<div class='row'>
-		!!type!!
-		</div>
-	<div class='row'>
-		<label class='etiquette' for='form_name'>$msg[705]</label>
-		</div>
-	<div class='row'>
-		<input type='text' name='f_proc_name' value='!!name!!' maxlength='256' class='saisie-50em' />
-		</div>
-	<div class='row'>
-		<label class='etiquette' for='form_code'>$msg[706]</label>
-		</div>
-	<div class='row'>
-		<textarea cols='70' rows='8' name='f_proc_code'>!!code!!</textarea><br />
-		".$msg['cart_ex_selection']." select notice_id as <b>object_id</b>, <b>'NOTI'</b> as object_type from notices where ...<br />
-		'NOTI' / 'EXPL' / 'BULL'<br />
-		".$msg['cart_ex_action']." update exemplaires set expl_statut=!!nouveau_statut!! where expl_id in (CADDIE(<b>EXPL</b>))<br />
-		EXPL / NOTI / BULL
-		</div>
-	<div class='row'>
-		<label class='etiquette' for='form_comment'>$msg[707]</label>
-		</div>
-	<div class='row'>
-		<input type='text' name='f_proc_comment' value='!!comment!!' maxlength='256' class='saisie-50em' />
-		</div>
-	<div class='row'>
-		<label class='etiquette' for='form_comment'>$msg[procs_autorisations]</label>
-		<input type='button' class='bouton_small' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);' align='middle'>
-		<input type='button' class='bouton_small' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);' align='middle'>
-		</div>
-	<div class='row'>
-		!!autorisations_users!!
-		</div>
-	</div>
-<!-- Boutons -->
-<div class='row'>
-	<div class='left'>
-		<input type='button' class='bouton' value='$msg[76]' onClick='document.location=\"./catalog.php?categ=caddie&sub=gestion&quoi=procs\"' />&nbsp;
-		<input type='submit' class='bouton' value='$msg[77]' onClick=\"return test_form(this.form)\" />&nbsp;
-		!!exec_button!!
-	</div>
-	<div class='right'>
-		<input type='button' class='bouton' value=' $msg[supprimer] ' onClick=\"javascript:confirmation_delete(!!id!!,'!!name_suppr!!')\" />
+		<input type='button' class='bouton' value='".$msg["remote_procedures_back"]."' onClick='document.location=\"!!back_link!!\"' />&nbsp;
+		<input class='bouton' type='button' value=\"".$msg["remote_procedures_import"]."\" onClick=\"document.location='!!import_remote_link!!'\" />
 	</div>
 </div>
-<div class='row'></div>
-</form>
-<script type='text/javascript'>document.forms['maj_proc'].elements['f_proc_name'].focus();</script>
-";
+<div class='row'></div>";
 
 $notice_linked_suppr_form="
 <div class='row'>&nbsp;</div>
@@ -492,35 +359,36 @@ $bull_liked_suppr_form="
 ";
 
 $cart_choix_quoi = "
-<hr /><form class='form-$current_module' name='maj_proc' method='post' action='!!action!!' >
-<h3>!!titre_form!!</h3>
-<!--	Contenu du form	-->
-<div class='form-contenu'>
-<div class=row>
-	<div class=colonne2>
-		<div class='row'>
-			<input type='checkbox' name='elt_flag' value='1' !!elt_flag_checked!!>$msg[caddie_item_marque]";
-	if ($quelle=="supprbase" || $quelle=="supprpanier") $cart_choix_quoi .= "&nbsp;<input type='checkbox' name='elt_flag_inconnu' value='1'>$msg[caddie_item_blob]";
-	$cart_choix_quoi .= "
+<hr />
+<form class='form-$current_module' name='maj_proc' method='post' action='!!action!!' >
+	<h3>!!titre_form!!</h3>
+	<!--	Contenu du form	-->
+	<div class='form-contenu'>
+		<div class=row>
+			<div class=colonne2>
+				<div class='row'>
+					<input type='checkbox' name='elt_flag' value='1' !!elt_flag_checked!!>".$msg['caddie_item_marque'];
+			if ($quelle=="supprbase" || $quelle=="supprpanier") $cart_choix_quoi .= "&nbsp;<input type='checkbox' name='elt_flag_inconnu' value='1'>".$msg['caddie_item_blob'];
+			$cart_choix_quoi .= "
+				</div>
+				<!--<div class='row'>&nbsp;</div>-->
+				<div class='row'>
+					<input type='checkbox' name='elt_no_flag' value='1' !!elt_no_flag_checked!!>".$msg['caddie_item_NonMarque'];
+			if ($quelle=="supprbase" || $quelle=="supprpanier") $cart_choix_quoi .= "&nbsp;<input type='checkbox' name='elt_no_flag_inconnu' value='1'>".$msg['caddie_item_blob'];
+			$cart_choix_quoi .= "
+				</div>
+			</div>
+			<div class=colonne_suite>
+				!!bull_not_ou_dep!!
+			</div>
 		</div>
-		<!--<div class='row'>&nbsp;</div>-->
-		<div class='row'>
-			<input type='checkbox' name='elt_no_flag' value='1' !!elt_no_flag_checked!!>$msg[caddie_item_NonMarque]";
-	if ($quelle=="supprbase" || $quelle=="supprpanier") $cart_choix_quoi .= "&nbsp;<input type='checkbox' name='elt_no_flag_inconnu' value='1'>$msg[caddie_item_blob]";
-	$cart_choix_quoi .= "
-		</div>
+		<!--suppr_link-->
+		<div class='row'></div>
 	</div>
-	<div class=colonne_suite>
-		!!bull_not_ou_dep!!
-	</div>
-</div>
-<!--suppr_link-->
-<div class='row'></div>
-</div>
-<!-- Boutons -->
-<div class='row'>
-	<input type='button' class='bouton' value='$msg[76]' onClick='document.location=\"!!action_cancel!!\"' />&nbsp;
-	<input type='submit' class='bouton' value='!!bouton_valider!!' !!onclick_valider!!/>&nbsp;
+	<!-- Boutons -->
+	<div class='row'>
+		<input type='button' class='bouton' value='".$msg['76']."' onClick='document.location=\"!!action_cancel!!\"' />&nbsp;
+		<input type='submit' class='bouton' value='!!bouton_valider!!' !!onclick_valider!!/>&nbsp;
 	</div>
 </form>
 ";
@@ -528,25 +396,26 @@ $cart_choix_quoi = "
 // $cart_choix_quoi_not_ou_dep : template form choix des éléments notice de bulletin ou dépouillements de bulletin
 $cart_choix_quoi_not_ou_dep = "
 	<div class='row'>
-		<input type='checkbox' name='bull_dep' value='1'>$msg[caddie_transfert_BULL_DEP]
-		</div>
+		<input type='checkbox' name='bull_dep' value='1'>".$msg['caddie_transfert_BULL_DEP']."
+	</div>
 	<div class='row'>&nbsp;</div>
 	<div class='row'>
-		<input type='checkbox' name='bull_not' value='1'>$msg[caddie_transfert_BULL_NOT]
-		</div>
+		<input type='checkbox' name='bull_not' value='1'>".$msg['caddie_transfert_BULL_NOT']."
+	</div>
 ";
 
 // $cart_choix_quoi_action : template form choix des éléments à traiter pour une procédure d'action
 $cart_choix_quoi_action = "
-<hr /><form class='form-$current_module' name='maj_proc' method='post' action='' >
-<h3>".$msg["caddie_choix_action"]."</h3>
-<!--	Contenu du form	-->
-<div class='form-contenu'>
-	<div class='row'>
-		<input type='checkbox' name='elt_flag' value='1'>$msg[caddie_item_marque]
+<hr />
+<form class='form-$current_module' name='maj_proc' method='post' action='' >
+	<h3>".$msg["caddie_choix_action"]."</h3>
+	<!--	Contenu du form	-->
+	<div class='form-contenu'>
+		<div class='row'>
+			<input type='checkbox' name='elt_flag' value='1'>".$msg['caddie_item_marque']."
 		</div>
-	<div class='row'>
-		<input type='checkbox' name='elt_no_flag' value='1'>$msg[caddie_item_NonMarque]
+		<div class='row'>
+			<input type='checkbox' name='elt_no_flag' value='1'>".$msg['caddie_item_NonMarque']."
 		</div>
 	</div>
 </form>
@@ -554,30 +423,35 @@ $cart_choix_quoi_action = "
 
 // $cart_choix_quoi_exporter : template form choix des éléments à exporter
 $cart_choix_quoi_exporter = "
-<hr /><form class='form-$current_module' name='maj_proc' method='post' action='!!action!!' >
-<h3>!!titre_form!!</h3>
-<!--	Contenu du form	-->
-<div class='form-contenu'>
-	<div class='row'>
-		<input type='checkbox' id='elt_flag' name='elt_flag' value='1'>
-		<label for='elt_flag'>$msg[caddie_item_marque]</label>
+<hr />
+<form class='form-$current_module' name='maj_proc' method='post' action='!!action!!' >
+	<h3>!!titre_form!!</h3>
+	<!--	Contenu du form	-->
+	<div class='form-contenu'>
+		<div class='row'>
+			<input type='checkbox' id='elt_flag' name='elt_flag' value='1'>
+			<label for='elt_flag'>".$msg['caddie_item_marque']."</label>
 		</div>
-	<div class='row'>
-		<input type='checkbox' id='elt_no_flag' name='elt_no_flag' value='1'>
-		<label for='elt_no_flag'>$msg[caddie_item_NonMarque]</label>
+		<div class='row'>
+			<input type='checkbox' id='elt_no_flag' name='elt_no_flag' value='1'>
+			<label for='elt_no_flag'>".$msg['caddie_item_NonMarque']."</label>
 		</div>
-	<div class='row'>
-		Type d'export  !!export_type!!
+		<div class='row'>
+			Type d'export  !!export_type!!
+		</div>
+		<div class='row'>
+			<input type='checkbox' value='1' id='keep_expl' name='keep_expl'> 
+			<label for='keep_expl'>".$msg['caddie_Conserver995']."</label>
+		</div>
+		<div class='row'>
+			<input type='checkbox' value='1' id='keep_explnum' name='keep_explnum'> 
+			<label for='keep_explnum'>".$msg['caddie_export_keep_explnum']."</label>
+		</div>
+		<div class='row'>!!form_param!!</div>
 	</div>
+	<!-- Boutons -->
 	<div class='row'>
-		<input type='checkbox' value='1' id='keep_expl' name='keep_expl'> 
-		<label for='keep_expl'>$msg[caddie_Conserver995]</label>
-	</div>
-	<div class='row'>!!form_param!!</div>
-	
-<!-- Boutons -->
-	<div class='row'>
-		<input type='button' class='bouton' value='$msg[76]' onClick='document.location=\"!!action_cancel!!\"' />&nbsp;
+		<input type='button' class='bouton' value='".$msg['76']."' onClick='document.location=\"!!action_cancel!!\"' />&nbsp;
 		<input type='submit' class='bouton' value='!!bouton_valider!!' />&nbsp;
 	</div>
 </form>
@@ -585,22 +459,23 @@ $cart_choix_quoi_exporter = "
 
 // $cart_choix_quoi_edition : template form choix des éléments à éditer
 $cart_choix_quoi_edition = "
-<hr /><form class='form-$current_module' name='maj_proc' method='post' action='!!action!!' >
-<h3>!!titre_form!!</h3>
-<!--	Contenu du form	-->
-<div class='form-contenu'>
-	<div class='row'>
-		<input type='checkbox' name='elt_flag' value='1'>$msg[caddie_item_marque]
+<hr />
+<form class='form-$current_module' name='maj_proc' method='post' action='!!action!!' >
+	<h3>!!titre_form!!</h3>
+	<!--	Contenu du form	-->
+	<div class='form-contenu'>
+		<div class='row'>
+			<input type='checkbox' name='elt_flag' value='1'>".$msg['caddie_item_marque']."
 		</div>
-	<div class='row'>
-		<input type='checkbox' name='elt_no_flag' value='1'>$msg[caddie_item_NonMarque]
+		<div class='row'>
+			<input type='checkbox' name='elt_no_flag' value='1'>".$msg['caddie_item_NonMarque']."
 		</div>		
-	<!-- notice_template -->
+		<!-- notice_template -->
 	</div>
-<!-- Boutons -->
-<div class='row'>
-	<input type='button' class='bouton' value='$msg[76]' onClick='document.location=\"!!action_cancel!!\"' />&nbsp;
-	<!-- !!boutons_supp!! -->
+	<!-- Boutons -->
+	<div class='row'>
+		<input type='button' class='bouton' value='".$msg['76']."' onClick='document.location=\"!!action_cancel!!\"' />&nbsp;
+		<!-- !!boutons_supp!! -->
 	</div>
 </form>
 ";
@@ -610,76 +485,83 @@ $cart_choix_quoi_edition = "
 $cart_choix_quoi_impr_cote = "
 <hr />
 <form class='form-".$current_module."' name='maj_proc' method='post' action='!!action!!' >
-<h3>!!titre_form!!</h3>
-<!--	Contenu du form	-->
-<div class='form-contenu'>
-	<div class='row'>
-		<input type='checkbox' id='elt_flag' name='elt_flag' value='1' !!elt_flag_chk!! >".$msg[caddie_item_marque]."
-	</div>
-	<div class='row'>
-		<input type='checkbox' id='elt_no_flag' name='elt_no_flag' value='1' !!elt_no_flag_chk!! >".$msg[caddie_item_NonMarque]."
-	</div>
-
-	<br />
-
-	<div class='row'>
-		<!--label_fmt_sel-->
-	</div>
-
-	<br />
-
-	<div class='row'>
-		<div class='colonne' style='float:left;width:45%;'>
-			<!--label_fmt_dis-->
+	<h3>!!titre_form!!</h3>
+	<!--	Contenu du form	-->
+	<div class='form-contenu'>
+		<div class='row'>
+			<input type='checkbox' id='elt_flag' name='elt_flag' value='1' !!elt_flag_chk!! >".$msg['caddie_item_marque']."
 		</div>
-		<div class='colonne' style='float:right;width:45%;'>
-			<!--label_con_dis-->
+		<div class='row'>
+			<input type='checkbox' id='elt_no_flag' name='elt_no_flag' value='1' !!elt_no_flag_chk!! >".$msg['caddie_item_NonMarque']."
+		</div>
+		<br />
+		<div class='row'>
+			<!--label_fmt_sel-->
+		</div>
+		<br />
+		<div class='row'>
+			<div class='colonne' style='float:left;width:45%;'>
+				<!--label_fmt_dis-->
+			</div>
+			<div class='colonne' style='float:right;width:45%;'>
+				<!--label_con_dis-->
+			</div>
+		</div>
+		<br />
+		<div class='row'>
+			<label class='etiquette'>".htmlentities($msg['first_row_impr'], ENT_QUOTES, $charset)."</label>
+			<input type='text' id='first_row' name='first_row' class='saisie-2em' style='text-align:right;' value='1' />
+			<label class='etiquette'>".htmlentities($msg['first_col_impr'], ENT_QUOTES, $charset)."</label>
+			<input type='text' id='first_col' name='first_col' class='saisie-2em' style='text-align:right;' value='1' />
 		</div>
 	</div>
-
-	<br />
-
+	<!-- Boutons -->
 	<div class='row'>
-		<label class='etiquette'>".htmlentities($msg['first_row_impr'], ENT_QUOTES, $charset)."</label>
-		<input type='text' id='first_row' name='first_row' class='saisie-2em' style='text-align:right;' value='1' />
-		<label class='etiquette'>".htmlentities($msg['first_col_impr'], ENT_QUOTES, $charset)."</label>
-		<input type='text' id='first_col' name='first_col' class='saisie-2em' style='text-align:right;' value='1' />
+		<input type='button' class='bouton' value='".$msg['76']."' onClick='document.location=\"!!action_cancel!!\"' />&nbsp;
+		<input type='submit' class='bouton' value='!!bouton_valider!!' onClick=\"return confirm(); \" />&nbsp;
 	</div>
-
-</div>
-<!-- Boutons -->
-<div class='row'>
-	<input type='button' class='bouton' value='$msg[76]' onClick='document.location=\"!!action_cancel!!\"' />&nbsp;
-	<input type='submit' class='bouton' value='!!bouton_valider!!' onClick=\"return confirm(); \" />&nbsp;
-</div>
 </form>
-
 <script type='text/javascript'>
-
-function confirm() {
-
-
-	if ( (document.forms['maj_proc'].elements['elt_flag'].checked==false) && (document.forms['maj_proc'].elements['elt_no_flag'].checked==false) ) {
-		alert(\"".$msg['param_err_impr']."\");
-		return false;
+	function confirm() {
+		if ( (document.forms['maj_proc'].elements['elt_flag'].checked==false) && (document.forms['maj_proc'].elements['elt_no_flag'].checked==false) ) {
+			alert(\"".$msg['param_err_impr']."\");
+			return false;
+		}
+		<!--label_fmt_ver-->
+		<!--label_con_ver-->
 	}
-
-	<!--label_fmt_ver-->
-	<!--label_con_ver-->
-
-}
-
 </script>
 
 ";
 
-$cart_action_selector = '<div data-dojo-type="dijit/form/DropDownButton">
+$cart_action_selector = '
+<div data-dojo-type="dijit/form/DropDownButton">
 	<span>'.$msg["caddie_menu_action"].'</span>
 	<div data-dojo-type="dijit/DropDownMenu">
 		!!cart_action_selector_lines!!
 	</div>
 </div>';
 
-$cart_action_selector_line = '		<div data-dojo-type="dijit/MenuItem" data-dojo-props="onClick:function(){document.location.href=\'!!cart_action_selector_line_location!!\';}">
-			<span>!!cart_action_selector_line_msg!!</span>
-		</div>';
+$cart_action_selector_line = '		
+<div data-dojo-type="dijit/MenuItem" data-dojo-props="onClick:function(){document.location.href=\'!!cart_action_selector_line_location!!\';}">
+	<span>!!cart_action_selector_line_msg!!</span>
+</div>';
+
+$cart_transfert_not_movable_expl_table = '
+		<table id="not_movable_expl" name="not_movable_expl">
+			<tr>
+				<th>num+lien</th>
+				<th>nom</th>
+				<th>localisation</th>
+			</tr>
+			!!cart_transfert_not_movable_expl_table_lines!!
+		</table>
+		';
+
+$cart_transfert_not_movable_expl_table_line = '
+		<tr>
+			<td onclick="window.open(\'./catalog.php?categ=edit_expl&expl_id=!!expl_id!!\', \'_blank\')">!!</td>
+			<td>!!expl_name!!</td>
+			<td>!!expl_location!!</td>
+		</tr>
+		';

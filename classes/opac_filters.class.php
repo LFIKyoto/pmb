@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: opac_filters.class.php,v 1.1 2011-04-20 06:31:06 ngantier Exp $
+// $Id: opac_filters.class.php,v 1.3 2018-11-26 14:32:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,10 +12,10 @@ require_once($class_path."/upload_folder.class.php");
 
 class opac_filters {
 	
-	var $catalog=array();			//Liste des filtres declares
+	public $catalog=array();			//Liste des filtres declares
 	
 	//Constructeur
-	function opac_filters($id_vue) {
+	public function __construct($id_vue) {
 		$this->id_vue=$id_vue;
 		global $base_path;
 		if (file_exists($base_path."/admin/opac/opac_view/filters/catalog_subst.xml")) 
@@ -25,7 +25,7 @@ class opac_filters {
 		$this->parse_catalog($catalog);
 	}
 	
-	function get_messages($lang_path) {
+	public function get_messages($lang_path) {
 		global $lang;
 		global $base_path;
 		
@@ -40,11 +40,11 @@ class opac_filters {
 			return $xmllist->table;
 		}
 	}
-	function parse_catalog($catalog) {
+	public function parse_catalog($catalog) {
 		global $base_path,$lang;
 		//Construction du tableau des connecteurs disponbibles
 		$xml=file_get_contents($catalog);
-		$param=_parser_text_no_function_($xml,"CATALOG");
+		$param=_parser_text_no_function_($xml,"CATALOG",$catalog);
 		for ($i=0; $i<count($param["ITEM"]); $i++) {			
 			$item=$param["ITEM"][$i];		
 			$t=array();
@@ -62,6 +62,7 @@ class opac_filters {
 			//Commentaires
 			$comment=array();
 			for ($j=0; $j<count($manifest["COMMENT"]); $j++) {
+				if(!isset($manifest["COMMENT"][$j]["lang"])) $manifest["COMMENT"][$j]["lang"] = '';
 				if ($manifest["COMMENT"][$j]["lang"]==$lang) { 
 					$comment=$manifest["COMMENT"][$j]["value"];
 					break;
@@ -77,7 +78,7 @@ class opac_filters {
 		}
 	}	
 	
-	function show_form($id) {
+	public function show_form($id) {
 		global $base_path,$charset,$lang,$msg;
 		
 		//Inclusion de la classe
@@ -90,7 +91,7 @@ class opac_filters {
 		return $form;
 	}	
 	
-	function show_all_form() {		
+	public function show_all_form() {		
 		$all_form="";
 		
 		foreach($this->catalog as $id => $val){				
@@ -99,7 +100,7 @@ class opac_filters {
 		return $all_form;
 	}
 	
-	function save_all_form() {	
+	public function save_all_form() {	
 		$all_form="";
 		foreach($this->catalog as $id => $val){				
 			$all_form.=$this->save_form($id);
@@ -107,7 +108,7 @@ class opac_filters {
 		return $all_form;
 	}
 	
-	function save_form($id) {
+	public function save_form($id) {
 		global $base_path,$charset,$lang,$msg;
 		$all_form="";		
 		//Inclusion de la classe

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_logo.class.php,v 1.11 2015-05-29 15:24:28 arenou Exp $
+// $Id: cms_logo.class.php,v 1.24 2018-09-18 13:47:50 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,8 +11,9 @@ require_once($include_path."/templates/cms/cms_logo.tpl.php");
 class cms_logo {
 	public $id;		// identifiant de l'objet
 	public $type;	// type d'objet
-	public $data;	// donnée binaire du logo
-
+	public $data;	// données binaire du logo
+	public $img_infos = array(); //infos image (dimensions,mimetype,...)
+	
 	public function __construct($id="",$type="section"){
 		$this->id= $id*1;
 		$this->type = $type;
@@ -43,9 +44,44 @@ class cms_logo {
 		$res = pmb_mysql_query($rqt);
 		if(pmb_mysql_num_rows($res)){
 			$this->data = pmb_mysql_result($res,0,0);
+			if($this->data) {
+				$this->get_img_infos();
+			}
 		}
 	}
 
+	protected function get_img_infos() {
+		$img_infos = getimagesizefromstring($this->data);
+		if($img_infos) {
+			$this->img_infos['width'] = $img_infos[0];
+			$this->img_infos['height'] = $img_infos[1];
+			$this->img_infos['mimetype'] = $img_infos['mime'];
+				
+			$this->img_infos['render_fct']= false;
+			$this->img_infos['render_params'] = array();
+			
+			switch($this->img_infos['mimetype']) {
+				case 'image/png' :
+					$this->img_infos['type'] = 'png';
+					$this->img_infos['render_fct'] = 'imagepng';
+					$this->img_infos['render_params'] = array(9, PNG_ALL_FILTERS);
+					break;
+				case 'image/jpeg' :
+					$this->img_infos['type'] = 'jpeg';
+					$this->img_infos['render_fct'] = 'imagejpeg';
+					if (strlen($this->data) < 102400) {
+						// Si image < 100ko, on ne réduit pas la qualité, sinon on laisse le réglage par défaut de imagejpeg
+						$this->img_infos['render_params'] = array(100);
+					}
+					break;
+				case 'image/gif' :
+					$this->img_infos['type'] = 'gif';
+					$this->img_infos['render_fct'] = 'imagegif';
+					break;					
+			}
+		}		
+	}
+	
 	public function get_form(){
 		global $msg;
 		global $charset;
@@ -78,14 +114,15 @@ class cms_logo {
 			$result = $this->delete();
 			if($result === true){
 				$js = "
-				var div_vign = window.parent.document.getElementById('cms_logo_vign');
-				var old_img = window.parent.document.getElementById('cms_logo_vign_img');
-				div_vign.removeChild(old_img);
-				var img = document.createElement('img');
-				img.setAttribute('id','cms_logo_vign_img');
-				img.setAttribute('class','cms_logo_vign');
-				img.setAttribute('src','./cms_vign.php?type=".$this->type."&id=".$this->id."&mode=vign');
-				div_vign.appendChild(img);";
+					var div_vign = window.parent.document.getElementById('cms_logo_vign');
+					var old_img = window.parent.document.getElementById('cms_logo_vign_img');
+					div_vign.removeChild(old_img);
+					var date = new Date();
+					var img = document.createElement('img');
+					img.setAttribute('id','cms_logo_vign_img');
+					img.setAttribute('class','cms_logo_vign');
+					img.setAttribute('src','./cms_vign.php?type=".$this->type."&id=".$this->id."&mode=vign'+'&'+ date.getTime());
+					div_vign.appendChild(img);";
 			}else{
 				$js = "
 				alert(\"".$result."\");";
@@ -95,20 +132,30 @@ class cms_logo {
 				$result = $this->save();
 				if($result === true){
 					$js = "
-					var div_vign = window.parent.document.getElementById('cms_logo_vign');
-					var old_img = window.parent.document.getElementById('cms_logo_vign_img');
-					div_vign.removeChild(old_img);
-					var img = document.createElement('img');
-					img.setAttribute('id','cms_logo_vign_img');
-					img.setAttribute('class','cms_logo_vign');
-					img.setAttribute('src','./cms_vign.php?type=".$this->type."&id=".$this->id."&mode=vign');
-					div_vign.appendChild(img);";
+			var div_vign = window.parent.document.getElementById('cms_logo_vign');
+			var old_img = window.parent.document.getElementById('cms_logo_vign_img');
+			div_vign.removeChild(old_img);
+			var date = new Date();
+			var img = document.createElement('img');
+			img.setAttribute('id','cms_logo_vign_img');
+			img.setAttribute('class','cms_logo_vign');
+			img.setAttribute('src','./cms_vign.php?type=".$this->type."&id=".$this->id."&mode=vign'+'&'+date.getTime());
+			div_vign.appendChild(img);";
 				}else{
 					$js = "
 						alert(\"".$result."\");";
 				}
 			}else{
-				$js = "";
+				$js = "	
+			var div_vign = window.parent.document.getElementById('cms_logo_vign');
+			var old_img = window.parent.document.getElementById('cms_logo_vign_img');
+			div_vign.removeChild(old_img);
+			var date = new Date();
+			var img = document.createElement('img');
+			img.setAttribute('id','cms_logo_vign_img');
+			img.setAttribute('class','cms_logo_vign');
+			img.setAttribute('src','./cms_vign.php?type=".$this->type."&id=".$this->id."&mode=vign'+'&'+date.getTime());
+			div_vign.appendChild(img);";
 			}
 		}
 		$field = str_replace("!!js!!",$js,$field);
@@ -117,8 +164,8 @@ class cms_logo {
 	
 	public function clean_cache($id = 0,$opac=false){
 		global $base_path;
-		$path = $base_path."/opac_css";;
-		if(file_exists($path)){
+		$path = $base_path."/opac_css";
+		if(file_exists($path."/temp/cms_vign")){
 			$dh = opendir($path."/temp/cms_vign");
 			while($mode = readdir($dh)){
 				if($mode != "." && $mode!= ".." && $mode != "CVS"){
@@ -155,13 +202,8 @@ class cms_logo {
 		//on ne veut que les images
 		if(substr($mimetype,0,5) != "image"){
 			return $msg['cms_editorial_form_logo_unsupported_file'];
-		}else{
-			if(substr($mimetype,6,3) == "png"){
-				$data = file_get_contents($_FILES['cms_logo_file']['tmp_name']);
-			}else{
-				//et que du png...
-				$data = $this->convert_to_png($_FILES['cms_logo_file']['tmp_name']);
-			}
+		} else {
+			$data = file_get_contents($_FILES['cms_logo_file']['tmp_name']);
 		}
 		$table=$this->get_sql_table();
 		if(!$table) return $msg['cms_editorial_form_logo_cant_save'];
@@ -172,6 +214,19 @@ class cms_logo {
 			return true;
 		}else{
 			return $msg['cms_editorial_form_logo_cant_save'];
+		}
+	}
+	
+	public function save_from_content($content){
+		$table=$this->get_sql_table();
+		if(!$table) return false;
+		$rqt = "update ".$table." set ".$this->type."_logo=\"".addslashes($content)."\" where id_".$this->type." = '".$this->id."'";
+		$res= pmb_mysql_query($rqt);
+		if($res){
+			$this->clean_cache($this->id);
+			return true;
+		}else{
+			return false;
 		}
 	}
 
@@ -199,7 +254,7 @@ class cms_logo {
 		ImageSaveAlpha($dst_img, true);
 		ImageAlphaBlending($dst_img, false);
 		imagefilledrectangle($dst_img,0,0,$src_x,$src_y,imagecolorallocatealpha($dst_img, 0, 0, 0, 127));
-		imagecopyresized($dst_img,$src_img,0,0,0,0,$src_x,$src_y,$src_x,$src_y);
+		imagecopyresampled($dst_img,$src_img,0,0,0,0,$src_x,$src_y,$src_x,$src_y);
 		$tmp_path = realpath("./temp");
 		imagepng($dst_img,$tmp_path."/tmp_cms_logo");
 		$data = file_get_contents($picture);
@@ -207,10 +262,10 @@ class cms_logo {
 		return $data;
 	}
 
-	public function show_picture($mode=""){
-   		header("Content-Type: image/png");
-  		if(strpos($mode,"custom_") !== false){
-	  		$elems = explode("_",$mode);
+	public function show_picture($mode=''){
+
+  		if(strpos($mode,'custom_') !== false){
+	  		$elems = explode('_',$mode);
 	  		$size = $elems[1]*1;
 	  		if($size>0){
 	  			$this->resize($size,$size);
@@ -219,24 +274,28 @@ class cms_logo {
 	  		}
 	  	}else{
 			switch($mode){
-				case "small_vign" :
+				case 'small_vign' :
 					$this->resize(16,16);
 					break;
-				case "vign" :
+				case 'vign' :
 					$this->resize(100,100);
 					break;
-				case "small" :
+				case 'small' :
 					$this->resize(140,140);
 					break;
-				case "medium" :
+				case 'medium' :
 					$this->resize(300,300);
 					break;
-				case "big" :
+				case 'big' :
 					$this->resize(600,600);
 					break;
-				case "large" :
+				case 'large' :
 				default :
 					$this->resize(0,0);
+					if($this->img_infos['type'] == 'png') {
+						//Pour les images non redimensionnées
+						imageSaveAlpha($dst_img, true);
+					}
 					break;
 	  		}
   		}
@@ -270,62 +329,94 @@ class cms_logo {
 
 	protected function resize($size_x=0,$size_y=0){
 		if($this->data){
-			$src_img = imagecreatefromstring($this->data);
-			$maxX=$size_x;
-			$maxY=$size_y;
+			if(!count($this->img_infos)) {
+				$this->get_img_infos();
+			}
+			if(!$this->img_infos['render_fct']) {
+				header('Content-Type: image/png');
+				print file_get_contents(get_url_icon('vide.png'));
+				return;
+			}
 
 			if(!$size_x && !$size_y){
-				ImageSaveAlpha($src_img, true);
-				ImageAlphaBlending($src_img, false);
-				imagepng($src_img);
-			}else if ($src_img) {
-				$rs=$maxX/$maxY;
-				$taillex=imagesx($src_img);
-				$tailley=imagesy($src_img);
-				if (!$taillex || !$tailley) return "" ;
-				if (($taillex>$maxX)||($tailley>$maxY)) {
-					$r=$taillex/$tailley;
-					if (($r<1)&&($rs<1)) {
-						//Si x plus petit que y et taille finale portrait
-						//Si le format final est plus large en proportion
-						if ($rs>$r) {
-							$new_h=$maxY;
-							$new_w=$new_h*$r;
-						} else {
-							$new_w=$maxX;
-							$new_h=$new_w/$r;
-						}
-					} else if (($r<1)&&($rs>=1)){
-						//Si x plus petit que y et taille finale paysage
+				header('Content-Type: '.$this->img_infos['mimetype']);
+				print $this->data;
+				return;
+			}
+			
+			$src_img = imagecreatefromstring($this->data);
+
+			if(!$src_img) {
+				header('Content-Type: image/png');
+				print file_get_contents(get_url_icon('vide.png'));
+				return;
+			}
+			
+			$maxX=$size_x;
+			$maxY=$size_y;
+			
+			$rs=$maxX/$maxY;
+			$taillex=$this->img_infos['width'];
+			$tailley=$this->img_infos['height'];
+			if (!$taillex || !$tailley) {
+				header('Content-Type: image/png');
+				print file_get_contents(get_url_icon('vide.png'));
+				return;
+			}
+			if (($taillex>$maxX)||($tailley>$maxY)) {
+				$r=$taillex/$tailley;
+				if (($r<1)&&($rs<1)) {
+					//Si x plus petit que y et taille finale portrait
+					//Si le format final est plus large en proportion
+					if ($rs>$r) {
 						$new_h=$maxY;
 						$new_w=$new_h*$r;
-					} else if (($r>1)&&($rs<1)) {
-						//Si x plus grand que y et taille finale portrait
+					} else {
+						$new_w=$maxX;
+						$new_h=$new_w/$r;
+					}
+				} else if (($r<1)&&($rs>=1)){
+					//Si x plus petit que y et taille finale paysage
+					$new_h=$maxY;
+					$new_w=$new_h*$r;
+				} else if (($r>1)&&($rs<1)) {
+					//Si x plus grand que y et taille finale portrait
+					$new_w=$maxX;
+					$new_h=$new_w/$r;
+				} else {
+					//Si x plus grand que y et taille finale paysage
+					if ($rs<$r) {
 						$new_w=$maxX;
 						$new_h=$new_w/$r;
 					} else {
-						//Si x plus grand que y et taille finale paysage
-						if ($rs<$r) {
-							$new_w=$maxX;
-							$new_h=$new_w/$r;
-						} else {
-							$new_h=$maxY;
-							$new_w=$new_h*$r;
-						}
+						$new_h=$maxY;
+						$new_w=$new_h*$r;
 					}
-				} else {
-					$new_h = $tailley ;
-					$new_w = $taillex ;
 				}
-				$dst_img=imagecreatetruecolor($new_w,$new_h);
-				ImageSaveAlpha($dst_img, true);
-				ImageAlphaBlending($dst_img, false);
-				imagefilledrectangle($dst_img,0,0,$maxX,$maxY,imagecolorallocatealpha($dst_img, 0, 0, 0, 127));
-				imagecopyresized($dst_img,$src_img,0,0,0,0,$new_w,$new_h,ImageSX($src_img),ImageSY($src_img));
-				imagepng($dst_img);
+			} else {
+				$new_h = $tailley ;
+				$new_w = $taillex ;
 			}
-		}else{
-			print file_get_contents("./images/vide.png");
+			
+			$dst_img=imagecreatetruecolor($new_w,$new_h);
+			if($this->img_infos['type'] == 'png') {
+				imageSaveAlpha($dst_img, true);
+				imageAlphaBlending($dst_img, false);
+			}
+			imagecopyresampled($dst_img,$src_img,0,0,0,0,$new_w,$new_h,$this->img_infos['width'],$this->img_infos['height']);
+			if(function_exists($this->img_infos['render_fct'])) {
+				$render_params = array_merge(array($dst_img,null),$this->img_infos['render_params']);
+				header('Content-Type: '.$this->img_infos['mimetype']);
+				call_user_func_array($this->img_infos['render_fct'], $render_params);
+			} else {
+				header('Content-Type: image/png');
+				print file_get_contents(get_url_icon('vide.png'));
+			}
+			return;
+		} else {
+			header('Content-Type: image/png');
+			print file_get_contents(get_url_icon('vide.png'));
+			return;
 		}
 	}
 
@@ -384,5 +475,13 @@ class cms_logo {
 				'desc' => $msg['cms_module_common_datasource_desc_logo_exists']
 			)
 		);
+	}
+	
+	public function get_id(){
+		return $this->id;
+	}
+	
+	public function get_type(){
+		return $this->type;
 	}
 }

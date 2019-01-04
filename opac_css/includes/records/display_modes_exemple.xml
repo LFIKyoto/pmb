@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: display_modes_exemple.xml,v 1.3.4.2 2015-09-28 15:23:35 apetithomme Exp $ -->
+$Id: display_modes_exemple.xml,v 1.6 2018-08-24 08:44:59 plmrozowski Exp $ -->
 
 <modes>
 	<!--
@@ -29,7 +29,7 @@ $Id: display_modes_exemple.xml,v 1.3.4.2 2015-09-28 15:23:35 apetithomme Exp $ -
 				@typdoc : Le type de document
 		layout #Le type d'affichage du résultat de recherche
 			@type (table|list) Affichage en table ou en liste
-			@colums : le nombre de collonnes (affichage en liste uniquement)
+			@colums : le nombre de collonnes (affichage en liste uniquement)			
 			@nav (yes|no) : affichage de la navigation, yes par defaut
 	nomode #Le mode par défaut (si pas de mode avec default=yes
 		@icon : l'icone affiché 
@@ -45,7 +45,7 @@ $Id: display_modes_exemple.xml,v 1.3.4.2 2015-09-28 15:23:35 apetithomme Exp $ -
 			<code localisation="0" niveau_biblio="0" typdoc="0">
 				<![CDATA[
 					<a href="#permalink();">
-					   <div id="img_notice">#if(#img();,#img();,<img src="./styles/sdn59/images/no_image.jpg" />);</div>
+					   <div id="img_notice">#if(#img();,#img();,<img src="./styles/sdn59/images/no_image.jpg" alt="" />);</div>
 					<div class="preResume">
 					<h4>#title();</h4>
 					<p class="TypAutAnn">[#typdoc();] #not_empty(#authors();,#ellipse(#authors,40, [...]);); #year_publication();</p>

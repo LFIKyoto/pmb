@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum_associate.tpl.php,v 1.3 2014-03-25 10:19:21 apetithomme Exp $
+// $Id: explnum_associate.tpl.php,v 1.4 2017-11-21 12:00:59 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -21,10 +21,10 @@ $explnum_associate_tpl = "
 	<div id='speech_timeline_cursors_pos'>
 		<label>Debut : </label>
 		<input id='left_cursor_svg_pos' type='text' value='0:00' size='4'/>
-		<img id='left_cursor_svg_to_cursor' src='./images/cursor.png' height='20px' style='cursor:pointer'/>
+		<img id='left_cursor_svg_to_cursor' src='".get_url_icon('cursor.png')."' height='20px' style='cursor:pointer'/>
 		<label>Fin : </label>
 		<input id='right_cursor_svg_pos' type='text' value='0:00' size='4'/>
-		<img id='right_cursor_svg_to_cursor' src='./images/cursor.png' height='20px' style='cursor:pointer'/>
+		<img id='right_cursor_svg_to_cursor' src='".get_url_icon('cursor.png')."' height='20px' style='cursor:pointer'/>
 	</div>
 	<div id='speech_timeline_js'>
 	</div>

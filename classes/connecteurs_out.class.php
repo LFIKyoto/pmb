@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: connecteurs_out.class.php,v 1.8 2015-06-02 13:48:57 dgoron Exp $
+// $Id: connecteurs_out.class.php,v 1.13 2018-11-26 14:32:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -47,27 +47,27 @@ require_once($class_path."/external_services_esusers.class.php");
 require_once($include_path."/connecteurs_out_common.inc.php");
 
 class connecteur_out {
-	var $id=0;
-	var $path="";
-	var $name="";
-	var $comment="";
-	var $author="";
-	var $org="";
-	var $date="";
-	var $url="";
-	var $api_requirements=array();
-	var $msg;
-	var $config=array();
-	var $sources=array();
+	public $id=0;
+	public $path="";
+	public $name="";
+	public $comment="";
+	public $author="";
+	public $org="";
+	public $date="";
+	public $url="";
+	public $api_requirements=array();
+	public $msg;
+	public $config=array();
+	public $sources=array();
 	
-	function connecteur_out($id, $path='') {
+	public function __construct($id, $path='') {
 		global $base_path;
 		
 		if (!$path) {
 			global $base_path;
 			$filename = $base_path."/admin/connecteurs/out/catalog.xml";
 			$xml=file_get_contents($filename);
-			$param=_parser_text_no_function_($xml,"CATALOG");
+			$param=_parser_text_no_function_($xml,"CATALOG",$filename);
 			
 			foreach ($param["ITEM"] as $anitem) {
 				if ($anitem["ID"] == $id) {
@@ -95,12 +95,12 @@ class connecteur_out {
 		$this->get_sources();
 	}
 	
-	function get_running_pmb_userid($source_id) {
+	public function get_running_pmb_userid($source_id) {
 		//Par défaut, les connecteurs executent leurs fonctions en admin
 		return 1;
 	}
 	
-	function parse_manifest($filename) {
+	public function parse_manifest($filename) {
 		$xml=file_get_contents($filename);
 		$param=_parser_text_no_function_($xml,"MANIFEST");
 		
@@ -122,7 +122,7 @@ class connecteur_out {
 		}
 	}
 	
-	function get_messages() {
+	public function get_messages() {
 		global $lang;
 		global $base_path;
 		$path = $this->path;
@@ -139,8 +139,8 @@ class connecteur_out {
 		}
 	}
 	
-	function ckeck_api_requirements() {
-		$api_catalog = new es_catalog();
+	public function ckeck_api_requirements() {
+		$api_catalog = es_catalog::get_instance();
 		
 		foreach ($this->api_requirements as $arequirement) {
 			//Pas le groupe? NON!
@@ -158,13 +158,13 @@ class connecteur_out {
 		}
 	}
 	
-	function commit_to_db() {
+	public function commit_to_db() {
 		global $dbh;
 		$sql = "REPLACE INTO connectors_out SET connectors_out_config = '".addslashes(serialize($this->config))."', connectors_out_id = ".$this->id;
 		pmb_mysql_query($sql, $dbh);
 	}
 	
-	function get_config_from_db() {
+	public function get_config_from_db() {
 		global $dbh;
 		$sql = "SELECT connectors_out_config FROM connectors_out WHERE connectors_out_id = ".$this->id;
 		$res = pmb_mysql_query($sql, $dbh);
@@ -173,22 +173,22 @@ class connecteur_out {
 	}
 	
 	//Abstraite
-	function get_config_form() {
+	public function get_config_form() {
 		//Rien
 		return "";
 	}
 	
 	//Abstraite
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		//Rien
 		return;
 	}
 	
-	function instantiate_source_class($source_id) {
+	public function instantiate_source_class($source_id) {
 		return new connecteur_out_source($this, $source_id, $this->msg);
 	}
 	
-	function get_sources() {
+	public function get_sources() {
 		global $dbh;
 		$sql = "SELECT connectors_out_source_id FROM connectors_out_sources WHERE connectors_out_sources_connectornum = ".$this->id;
 		$res = pmb_mysql_query($sql, $dbh);
@@ -198,12 +198,12 @@ class connecteur_out {
 	}
 	
 	//Cette fonction défini si le connecteur a besoin des messages de /includes/messages/*.xml
-	function need_global_messages() {
+	public function need_global_messages() {
 		return true;
 	}
 	
 	//Abstraite
-	function process($source_id, $pmb_user_id) {
+	public function process($source_id, $pmb_user_id) {
 		//Cette fonction correspond au traitement d'une requète sur une source dans le cadre de l'utilisation du connecteur
 		
 		//Rien
@@ -212,10 +212,11 @@ class connecteur_out {
 }
 
 function instantiate_connecteur_out($connector_id) {
+	global $msg, $current_module; //utilisées dans les require
 	global $base_path;
 	$filename = $base_path."/admin/connecteurs/out/catalog.xml";
 	$xml=file_get_contents($filename);
-	$param=_parser_text_no_function_($xml,"CATALOG");
+	$param=_parser_text_no_function_($xml,"CATALOG",$filename);
 	
 	foreach ($param["ITEM"] as $anitem) {
 		if ($anitem["ID"] == $connector_id) {
@@ -226,7 +227,7 @@ function instantiate_connecteur_out($connector_id) {
 			$function_variable_names = array("function_variable_names" => 0, "before_eval_vars" => 0, "created" => 0);
 		    $created = array_diff_key(get_defined_vars(), $GLOBALS, $function_variable_names, $before_eval_vars);
 		    foreach ($created as $created_name => $on_sen_fiche)
-        		global $$created_name;
+        		global ${$created_name};
 		    extract($created);
 			
 			$conn = new $anitem["PATH"]($connector_id, $anitem["PATH"]);
@@ -238,13 +239,13 @@ function instantiate_connecteur_out($connector_id) {
 }
 
 class connecteurs_out {
-	var $connectors=array();
+	public $connectors=array();
 	
-	function connecteurs_out() {
+	public function __construct() {
 		global $base_path;
 		$filename = $base_path."/admin/connecteurs/out/catalog.xml";
 		$xml=file_get_contents($filename);
-		$param=_parser_text_no_function_($xml,"CATALOG");
+		$param=_parser_text_no_function_($xml,"CATALOG",$filename);
 		
 		foreach ($param["ITEM"] as $anitem) {
 			$this->connectors[] = new connecteur_out($anitem["ID"], $anitem["PATH"]);
@@ -254,19 +255,19 @@ class connecteurs_out {
 }
 
 class connecteur_out_source {
-	var $id;
-	var $connector_id;
-	var $connector;
-	var $name="";
-	var $comment="";
+	public $id;
+	public $connector_id;
+	public $connector;
+	public $name="";
+	public $comment="";
 	
 	//modif compatibilite E_STRICT php5.4
-	//var $config="";
-	var $config=array();
+	//public $config="";
+	public $config=array();
 	
-	var $msg=array();
+	public $msg=array();
 	
-	function connecteur_out_source($connector, $id, $msg) {
+	public function __construct($connector, $id, $msg) {
 		global $dbh;
 		$id+=0;
 
@@ -286,7 +287,7 @@ class connecteur_out_source {
 		}
 	}
 	
-	function commit_to_db() {
+	public function commit_to_db() {
 		if (!$this->id)
 			return;
 		global $dbh;
@@ -296,7 +297,7 @@ class connecteur_out_source {
 		pmb_mysql_query($sql, $dbh);
 	}
 
-	static function add_new($connector_id) {
+	public static function add_new($connector_id) {
 		global $dbh;
 		$sql = "INSERT INTO connectors_out_sources (connectors_out_sources_connectornum) VALUES (".$connector_id.")";
 		pmb_mysql_query($sql, $dbh);
@@ -305,14 +306,14 @@ class connecteur_out_source {
 		return new connecteur_out_source($conn, $new_source_id, array());
 	}
 	
-	static function name_exists($name_to_test) {
+	public static function name_exists($name_to_test) {
 		global $dbh;
 		$sql = "SELECT COUNT(1) FROM connectors_out_sources WHERE connectors_out_source_name = '".addslashes($name_to_test)."'";
 		$count = pmb_mysql_result(pmb_mysql_query($sql, $dbh), 0, 0);
 		return $count > 0;
 	}
 	
-	static function get_connector_id($source_id) {
+	public static function get_connector_id($source_id) {
 		global $dbh;
 		$sql = "SELECT connectors_out_sources_connectornum FROM connectors_out_sources WHERE connectors_out_source_id = ".($source_id+0);
 		$res = pmb_mysql_query($sql, $dbh);
@@ -320,7 +321,7 @@ class connecteur_out_source {
 		return $row["connectors_out_sources_connectornum"];
 	}
 	
-	function get_config_form() {
+	public function get_config_form() {
 		global $msg, $charset;
 		
 		//Source name
@@ -334,13 +335,13 @@ class connecteur_out_source {
 		return $result;
 	}
 	
-	function delete($source_id) {
+	public function delete($source_id) {
 		global $dbh;
 		$sql = "DELETE FROM connectors_out_sources WHERE connectors_out_source_id = ".($source_id+0);
 		pmb_mysql_query($sql, $dbh);
 	}
 	
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		global $source_name, $source_comment;
 		$this->name = stripslashes($source_name);
 		$this->comment = stripslashes($source_comment);

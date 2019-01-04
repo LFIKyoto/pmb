@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: options.php,v 1.6 2007-03-10 09:46:47 touraine37 Exp $
+// $Id: options.php,v 1.7 2017-02-24 15:34:34 dgoron Exp $
 
 $base_path="../..";
 $base_auth = "CATALOGAGE_AUTH|ADMINISTRATION_AUTH";
+$base_title = "";
 include($base_path."/includes/init.inc.php");
 
 require_once("$include_path/fields.inc.php");

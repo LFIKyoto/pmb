@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions_categ.inc.php,v 1.6 2009-05-16 11:11:54 dbellamy Exp $
+// $Id: suggestions_categ.inc.php,v 1.7 2017-04-19 12:37:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -36,7 +36,7 @@ function show_list_categ() {
 			print "</tr>";
 	}
 	print "</table>
-		<input class='bouton' type='button' value=' ".$msg[acquisition_ajout_categ]." ' onClick=\"document.location='./admin.php?categ=acquisition&sub=categ&action=add'\" />";
+		<input class='bouton' type='button' value=' ".$msg['acquisition_ajout_categ']." ' onClick=\"document.location='./admin.php?categ=acquisition&sub=categ&action=add'\" />";
 
 }
 
@@ -52,14 +52,14 @@ function show_categ_form($id=0) {
 	
 	if(!$id) {
 		
-		$categ_form = str_replace('!!form_title!!', htmlentities($msg[acquisition_ajout_categ],ENT_QUOTES,$charset), $categ_form);
+		$categ_form = str_replace('!!form_title!!', htmlentities($msg['acquisition_ajout_categ'],ENT_QUOTES,$charset), $categ_form);
 		$categ_form = str_replace('!!libelle!!', '', $categ_form);
 		$categ_form = str_replace('!!commentaire!!', '', $categ_form);
 
 	} else {
 		
 		$categ = new suggestions_categ($id);
-		$categ_form = str_replace('!!form_title!!', htmlentities($msg[acquisition_modif_categ],ENT_QUOTES,$charset), $categ_form);
+		$categ_form = str_replace('!!form_title!!', htmlentities($msg['acquisition_modif_categ'],ENT_QUOTES,$charset), $categ_form);
 		$categ_form = str_replace('!!libelle!!', htmlentities($categ->libelle_categ,ENT_QUOTES,$charset), $categ_form);
 		
 		$ptab = str_replace('!!id!!', $id, $ptab);
@@ -109,7 +109,7 @@ $categ_form = "
 
 ";
 
-$ptab = "<input class='bouton' type='button' value=' ".$msg[supprimer]." ' onClick=\"javascript:confirmation_delete('!!id!!', '!!libelle_suppr!!')\" />";
+$ptab = "<input class='bouton' type='button' value=' ".$msg['supprimer']." ' onClick=\"javascript:confirmation_delete('!!id!!', '!!libelle_suppr!!')\" />";
 
 ?>
 

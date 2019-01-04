@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: navigation_opac.inc.php,v 1.5 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: navigation_opac.inc.php,v 1.7 2017-07-12 15:15:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -46,17 +46,17 @@ $admin_expl_nagopac="
 	<div class='row'></div>
 </form>";
 
-function show_navigopac($dbh){
+function show_navigopac(){
 	global $msg,$thesaurus_classement_mode_pmb,$thesaurus_classement_defaut;
 	global $charset;
 	global $admin_expl_nagopac,$admin_expl_nagopac_new_ligne,$admin_expl_nagopac_ligne_loc;// les templates utilisés
 
 	$requete = "SELECT location_libelle,section_libelle,num_pclass,idsection,idlocation,show_a2z FROM docsloc_section JOIN docs_location ON num_location=idlocation JOIN docs_section ON num_section=idsection ORDER BY location_libelle,section_libelle";
-	$res = pmb_mysql_query($requete, $dbh);
+	$res = pmb_mysql_query($requete);
 	$nbr = pmb_mysql_num_rows($res);
 
 	$requete_pclass = "SELECT id_pclass,name_pclass FROM pclassement";
-	$res_pclass = pmb_mysql_query($requete_pclass, $dbh);
+	$res_pclass = pmb_mysql_query($requete_pclass);
 	$tabl_pclass=array();
 	if(pmb_mysql_num_rows($res_pclass)){
 		while ($ligne=pmb_mysql_fetch_object($res_pclass)) {
@@ -139,27 +139,27 @@ switch($action) {
 	case 'save':
 		$i=0;
 		$id_pclass="pclass_".$i;
-		while(isset($$id_pclass)){
+		while(isset(${$id_pclass})){
 			//On enregistre la valeur
 			$idsection="id_section_".$i;
 			$idlocalisation="id_localisation_".$i;
-			$requete="UPDATE docsloc_section SET num_pclass='".$$id_pclass."' WHERE num_location='".$$idlocalisation."' AND num_section='".$$idsection."' ";
-			pmb_mysql_query($requete,$dbh);
+			$requete="UPDATE docsloc_section SET num_pclass='".${$id_pclass}."' WHERE num_location='".${$idlocalisation}."' AND num_section='".${$idsection}."' ";
+			pmb_mysql_query($requete);
 			$i++;
 			$id_pclass="pclass_".$i;
 		}
 
 		//a2z
 		$q = "update docs_location set show_a2z='0'";
-		pmb_mysql_query($q,$dbh);
-		if (is_array($a2z) && count($a2z)) {
+		pmb_mysql_query($q);
+		if (isset($a2z) && is_array($a2z) && count($a2z)) {
 			$q = "update docs_location set show_a2z='1' where idlocation in (".implode(',',array_keys($a2z)).")";
-			pmb_mysql_query($q,$dbh);
+			pmb_mysql_query($q);
 		}
 		$admin_expl_nagopac=str_replace("<!-- info_enregistrée -->","<div class='erreur'>".$msg["exemplaire_admin_navigopac_modif_sauv"]."</div>",$admin_expl_nagopac);
-		show_navigopac($dbh);
+		show_navigopac();
 		break;
 	default:
-		show_navigopac($dbh);
+		show_navigopac();
 		break;
 }

@@ -2,12 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: editions_state_view.class.php,v 1.2 2013-03-11 10:40:08 mbertin Exp $
+// $Id: editions_state_view.class.php,v 1.3 2017-02-22 11:11:39 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-require_once ($class_path."/writeexcel/class.writeexcel_workbook.inc.php");
-require_once ($class_path."/writeexcel/class.writeexcel_worksheet.inc.php");
+require_once ($class_path."/spreadsheet.class.php");
 
 class editions_state_view {
 	public $datas =array();		//tableau de données
@@ -69,19 +68,12 @@ class editions_state_view {
 	}
 	
 	public function render_xls_file($name="state"){
-		$tmp_file = tempnam(sys_get_temp_dir(),"state_");
-		header("Content-Type: application/x-msexcel; name=\"".$name.".xls\"");
-		header("Content-Disposition: inline; filename=\"".$name.".xls\"");
-		$workbook = new writeexcel_workbook($tmp_file);
-		$worksheet = &$workbook->addworksheet();
+		$worksheet = new spreadsheet();
 		for($i=0 ; $i<count($this->datas) ; $i++){
 			for($j=0 ; $j<count($this->datas[$i]) ; $j++){
 				$worksheet->write($i,$j,$this->datas[$i][$j]);
 			}
 		}
-		$workbook->close();
-		$fh=fopen($tmp_file, "rb");
-		fpassthru($fh);
-		unlink($tmp_file);		
+		$worksheet->download($name.'.xls');	
 	}
 }

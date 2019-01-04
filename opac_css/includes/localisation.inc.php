@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: localisation.inc.php,v 1.14 2015-04-07 15:21:40 vtouchard Exp $
+// $Id: localisation.inc.php,v 1.15 2018-01-26 15:19:03 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -28,7 +28,7 @@ function set_language($lang) {
 	$messages = new XMLlist($base_path."/includes/messages/$lang.xml", 0);
 	$messages->analyser();
 	$msg = $messages->table;
-	}	
+}	
 // localisation
 set_language($lang);
 

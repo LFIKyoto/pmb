@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: collection.tpl.php,v 1.7 2010-11-02 16:20:29 ngantier Exp $
+// $Id: collection.tpl.php,v 1.8 2018-01-25 10:13:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
@@ -24,7 +24,8 @@ if ( ! defined( 'COLLECTION_TMPL' ) ) {
 // !!publisher!! nom de l'éditeur principal
 // !!subcolls!!  sous-collections
 
-
+global $collection_level2_display;
+global $collection_level2_no_issn_info;
 
 // level 2 : affichage général
 $collection_level2_display = "

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rapport_ajax.inc.php,v 1.6 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: rapport_ajax.inc.php,v 1.7 2017-11-22 11:07:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -29,7 +29,7 @@ switch($quoifaire){
  * Ajout d'une note au rapport
  */
 function add_note($idnote=0){
-	global $dbh, $base_path, $idtype, $idobject, $comment, $ordre_cible;
+	global $dbh, $idtype, $idobject, $comment, $ordre_cible;
 	
 	$iddemande = $idobject;
 	$commentaire = trim($comment);
@@ -79,11 +79,11 @@ function add_note($idnote=0){
 			$contenu = "<u>".$item->sujet_action."</u> : ".$content;
 		else $contenu = $content;
 			
-		$drag = "<span id=\"rap_handle_$item->id_item\" style='padding-left:7px'  ><img src=\"".$base_path."/images/notice_drag.png\" /></span>";
-		$del = "<span id=\"rap_del_$item->id_item\" style='padding-left:7px' onclick='delete_item($item->id_item);' ><img src=\"".$base_path."/images/cross.png\" style='cursor:pointer;width:10px;vertical-align:middle;' /></span>";
-		$modif = "<span id=\"rap_modif_$item->id_item\" style='padding-left:7px;' onclick='modif_item($item->id_item);' ><img src=\"".$base_path."/images/b_edit.png\" style='cursor:pointer;width:10px;vertical-align:middle;'/></span>";
+		$drag = "<span id=\"rap_handle_$item->id_item\" style='padding-left:7px'  ><img src=\"".get_url_icon('notice_drag.png')."\" /></span>";
+		$del = "<span id=\"rap_del_$item->id_item\" style='padding-left:7px' onclick='delete_item($item->id_item);' ><img src='".get_url_icon('cross.png')."' style='cursor:pointer;width:10px;vertical-align:middle;' /></span>";
+		$modif = "<span id=\"rap_modif_$item->id_item\" style='padding-left:7px;' onclick='modif_item($item->id_item);' ><img src='".get_url_icon('b_edit.png')."' style='cursor:pointer;width:10px;vertical-align:middle;'/></span>";
 		$display .= "
-					<div class='row' $style id='rap_drag_$item->id_item' draggable=\"yes\" dragtype=\"rapport\" dragtext=\"$titre\" dragicon=\"".$base_path."/images/icone_drag_notice.png\"
+					<div class='row' $style id='rap_drag_$item->id_item' draggable=\"yes\" dragtype=\"rapport\" dragtext=\"$titre\" dragicon='".get_url_icon('icone_drag_notice.png')."'
 						handler=\"rap_handle_$item->id_item\" recepttype=\"rapport\" recept=\"yes\" highlight=\"rap_highlight\" downlight=\"rap_downlight\" iditem='$item->id_item' order='$ordre'>".$contenu.$drag.$modif.$del."</div>			
 				";
 	}
@@ -163,7 +163,7 @@ function del_item($id=0){
  * Mis à jour de la note du rapport
  */
 function update_contenu($id){
-	global $dbh, $comment, $idobject, $base_path, $charset;
+	global $dbh, $comment, $idobject, $charset;
 	
 	if($id){
 		$req = "update rapport_demandes set contenu='".$comment."' where id_item='".$id."'";
@@ -196,11 +196,11 @@ function update_contenu($id){
 				$contenu = "<u>".$item->sujet_action."</u> : ".$content;
 			else $contenu = $content;
 			
-			$drag = "<span id=\"rap_handle_$item->id_item\" style='padding-left:7px'  ><img src=\"".$base_path."/images/notice_drag.png\" /></span>";
-			$del = "<span id=\"rap_del_$item->id_item\" style='padding-left:7px' onclick='delete_item($item->id_item);' ><img src=\"".$base_path."/images/cross.png\" style='cursor:pointer;width:10px;vertical-align:middle;' /></span>";
-			$modif = "<span id=\"rap_modif_$item->id_item\" style='padding-left:7px;' onclick='modif_item($item->id_item);' ><img src=\"".$base_path."/images/b_edit.png\" style='cursor:pointer;width:10px;vertical-align:middle;'/></span>";
+			$drag = "<span id=\"rap_handle_$item->id_item\" style='padding-left:7px'  ><img src=\"".get_url_icon('notice_drag.png')."\" /></span>";
+			$del = "<span id=\"rap_del_$item->id_item\" style='padding-left:7px' onclick='delete_item($item->id_item);' ><img src='".get_url_icon('cross.png')."' style='cursor:pointer;width:10px;vertical-align:middle;' /></span>";
+			$modif = "<span id=\"rap_modif_$item->id_item\" style='padding-left:7px;' onclick='modif_item($item->id_item);' ><img src='".get_url_icon('b_edit.png')."' style='cursor:pointer;width:10px;vertical-align:middle;'/></span>";
 			$display .= "
-						<div class='row' $style id='rap_drag_$item->id_item' draggable=\"yes\" dragtype=\"rapport\" dragtext=\"$titre\" dragicon=\"".$base_path."/images/icone_drag_notice.png\"
+						<div class='row' $style id='rap_drag_$item->id_item' draggable=\"yes\" dragtype=\"rapport\" dragtext=\"$titre\" dragicon='".get_url_icon('icone_drag_notice.png')."'
 							handler=\"rap_handle_$item->id_item\" recepttype=\"rapport\" recept=\"yes\" highlight=\"rap_highlight\" downlight=\"rap_downlight\" iditem='$item->id_item' order='$ordre'>".$contenu.$drag.$modif.$del."</div>			
 					";
 		}

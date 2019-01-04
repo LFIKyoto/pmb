@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: enrichment.class.php,v 1.11 2015-04-03 11:16:18 jpermanne Exp $
+// $Id: enrichment.class.php,v 1.14 2017-07-18 13:47:42 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,16 +11,16 @@ require_once($class_path."/marc_table.class.php");
 require_once($include_path."/parser.inc.php");
 
 class enrichment {
-	var $enhancer = array();
-	var $active = array();
-	var $typnotice = "";
-	var $typdoc = "";
-	var $catalog;
-	var $enrichmentsTabHeaders = array();
+	public $enhancer = array();
+	public $active = array();
+	public $typnotice = "";
+	public $typdoc = "";
+	public $catalog;
+	public $enrichmentsTabHeaders = array();
 
 	protected $params = array();
 
-    function enrichment($typnotice="",$typdoc="") {
+    public function __construct($typnotice="",$typdoc="") {
     	global $base_path;
     	
     	$this->typnotice = $typnotice;
@@ -30,26 +30,28 @@ class enrichment {
     }
     
 	//On récupère la liste des sources dispos pour enrichir
-    function fetch_sources(){
+    public function fetch_sources(){
   		global $base_path;
   		
-  		$connectors = new connecteurs();
+  		$connectors = connecteurs::get_instance();
   		$this->catalog = $connectors->catalog;
     	foreach ($connectors->catalog as $id=>$prop) {
 			$comment=$prop['COMMENT'];
 			//Recherche du nombre de sources
 			$n_sources=0;
-			if($prop['ENRICHMENT'] == "yes"){
+			if(isset($prop['ENRICHMENT']) && ($prop['ENRICHMENT'] == "yes")){
 				if (is_file($base_path."/admin/connecteurs/in/".$prop['PATH']."/".$prop['NAME'].".class.php")) {
 					require_once($base_path."/admin/connecteurs/in/".$prop['PATH']."/".$prop['NAME'].".class.php");
 					eval("\$conn=new ".$prop['NAME']."(\"".$base_path."/admin/connecteurs/in/".$prop['PATH']."\");");
 					$conn->get_sources();
 					foreach($conn->sources as $source_id=>$s) {
-						if($s['ENRICHMENT'] == 1){
-	   						$this->enhancer[] = array(
-	   							'id' =>$s['SOURCE_ID'],
-	   							'name' =>$s['NAME']
-	   						);
+						if(isset($s['ENRICHMENT'])) {
+							if($s['ENRICHMENT'] == 1){
+		   						$this->enhancer[] = array(
+		   							'id' =>$s['SOURCE_ID'],
+		   							'name' =>$s['NAME']
+		   						);
+							}
 						}
 					}
 	    		}
@@ -58,7 +60,7 @@ class enrichment {
     }
 
     //Récupération des données existantes
-	function fetch_data(){
+	public function fetch_data(){
     	$rqt = "select * from sources_enrichment";
     	if($this->typnotice && $this->typdoc){
     		$rqt.= " where (source_enrichment_typnotice like '".$this->typnotice."' and source_enrichment_typdoc like '') or (source_enrichment_typnotice like '".$this->typnotice."' and source_enrichment_typdoc like '".$this->typdoc."')";
@@ -73,7 +75,7 @@ class enrichment {
     }
     
 	//retourne les éléments à rajouter dans le head, les calculs aux besoins;
-	function getHeaders(){
+	public function getHeaders(){
 		global $include_path;
 		
 		
@@ -88,7 +90,7 @@ class enrichment {
 	}
 	
 	//Méthode qui génère les éléments à insérer dans le header pour le bon fonctionnement des enrichissements
-	function generateHeaders(){
+	public function generateHeaders(){
 		global $base_path;
 
 		$this->enrichmentsTabHeaders =array();
@@ -114,14 +116,15 @@ class enrichment {
 		}
 	}
 	
-	function getTypeOfEnrichment($notice_id){
+	public function getTypeOfEnrichment($notice_id){
 		global $base_path;
 		global $msg;
 		
+		$infos = array();
 		$this->parseType();
-		if($this->active[$this->typnotice.$this->typdoc]) $type = $this->typnotice.$this->typdoc;
+		if(isset($this->active[$this->typnotice.$this->typdoc])) $type = $this->typnotice.$this->typdoc;
 		else $type = $this->typnotice;
-		if($this->active[$type]){
+		if(isset($this->active[$type])){
 			foreach($this->active[$type] as $source_id){
 				//on récupère les infos de la source nécessaires pour l'instancier
 				$name = connecteurs::get_class_name($source_id);	
@@ -163,12 +166,12 @@ class enrichment {
 		return $infos;		
 	}
 		
-	function getEnrichment($notice_id,$enrichmentType ="",$enrich_params=array(),$enrichPage=1){
+	public function getEnrichment($notice_id,$enrichmentType ="",$enrich_params=array(),$enrichPage=1){
 		global $base_path;
 		$infos = array();
-		if($this->active[$this->typnotice.$this->typdoc]) $type = $this->typnotice.$this->typdoc;
+		if(isset($this->active[$this->typnotice.$this->typdoc])) $type = $this->typnotice.$this->typdoc;
 		else $type = $this->typnotice;
-		if($this->active[$type]){
+		if(isset($this->active[$type])){
 			foreach($this->active[$type] as $source_id){
 				//on récupère les infos de la source nécessaires pour l'instancier
 				$name = connecteurs::get_class_name($source_id);	
@@ -198,7 +201,7 @@ class enrichment {
 		return $infos;
 	}
 	
-	function parseType(){
+	public function parseType(){
 		global $include_path,$lang;
 	
 		$file = $include_path."/enrichment/categories.xml";

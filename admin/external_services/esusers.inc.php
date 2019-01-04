@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: esusers.inc.php,v 1.2 2009-07-15 14:17:17 erwanmartin Exp $
+// $Id: esusers.inc.php,v 1.3 2017-05-19 10:06:11 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -129,15 +129,15 @@ function update_esuser_from_form() {
 		$new_esuser->commit_to_db(); 
 	}
 	else {
-		$theuser = new es_esuser($id);
+		$the_user = new es_esuser($id);
 			if ($the_user->error) {
 				return false;
 		}
-		$theuser->esuser_username = $esuser_username;
-		$theuser->esuser_fullname = $esuser_fullname;
-		$theuser->esuser_password = $esuser_password;
-		$theuser->esuser_group = $esuser_esgroup;
-		$theuser->commit_to_db(); 
+		$the_user->esuser_username = $esuser_username;
+		$the_user->esuser_fullname = $esuser_fullname;
+		$the_user->esuser_password = $esuser_password;
+		$the_user->esuser_group = $esuser_esgroup;
+		$the_user->commit_to_db(); 
 	}
 	return true;
 }

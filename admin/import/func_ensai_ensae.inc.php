@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_ensai_ensae.inc.php,v 1.4 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: func_ensai_ensae.inc.php,v 1.5 2018-01-05 11:10:23 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -266,4 +266,3 @@ function ajoute_explnum () {
 	}
 	
 }
-?>		

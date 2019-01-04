@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.7 2015-03-30 07:14:52 jpermanne Exp $
+// $Id: main.inc.php,v 1.8 2017-05-06 12:03:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -23,7 +23,8 @@ switch($sub) {
 		echo window_title($database_window_title.$msg["etagere_menu"]." : ".$msg["etagere_menu_classement"]);
 		print "<h1>".$msg["etagere_menu"]." > ".$msg["etagere_menu_classement"]."</h1>" ;
 		$baseLink="./catalog.php?categ=etagere&sub=classementGen";
-		include($include_path.'/classementGen.inc.php');
+		$classementGen = new classementGen($categ,0);
+		$classementGen->proceed($action);
 		break;
 	case "gestion" :
 	default:

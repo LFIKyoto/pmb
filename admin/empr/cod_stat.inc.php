@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cod_stat.inc.php,v 1.12 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: cod_stat.inc.php,v 1.13 2018-10-12 11:59:35 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+require_once($class_path."/list/configuration/empr/list_configuration_empr_codstat_ui.class.php");
 
 ?>
 <script type="text/javascript">
@@ -21,36 +23,8 @@ function test_form(form)
 </script>
 <?php
 function show_codstat($dbh) {
-	global $msg;	
-	
-	print "<table>
-		<tr>
-		<th>".$msg[103]."</th>
-		</tr>";
-
-	// affichage du tableau des utilisateurs
-
-	$requete = "SELECT idcode, libelle FROM empr_codestat ORDER BY libelle, idcode ";
-	$res = pmb_mysql_query($requete, $dbh);
-
-	$nbr = pmb_mysql_num_rows($res);
-
-	$parity=1;
-	for($i=0;$i<$nbr;$i++) {
-		$row=pmb_mysql_fetch_row($res);
-		if ($parity % 2) {
-			$pair_impair = "even";
-			} else {
-				$pair_impair = "odd";
-				}
-		$parity += 1;
-			$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./admin.php?categ=empr&sub=codstat&action=modif&id=$row[0]';\" ";
-			print pmb_bidi("<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td>$row[1]</td>
-						</tr>");
-		}
-	print "</table>
-		<input class='bouton' type='button' value=' $msg[99] ' onClick=\"document.location='./admin.php?categ=empr&sub=codstat&action=add'\" />";
-	}
+	print list_configuration_empr_codstat_ui::get_instance()->get_display_list();
+}
 
 function codstat_form($libelle="", $id=0)
 {

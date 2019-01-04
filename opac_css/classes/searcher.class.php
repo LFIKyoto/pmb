@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher.class.php,v 1.70.2.1 2015-11-03 12:36:27 jpermanne Exp $
+// $Id: searcher.class.php,v 1.100 2018-12-17 13:57:26 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -78,11 +78,10 @@ class searcher {
 	}
 
 	protected function _get_notices_ids(){
-		global $dbh;
 		if(!$this->searched){
 			$query = $this->_get_search_query();
 			$this->notices_ids="";
-			$res = pmb_mysql_query($query,$dbh);
+			$res = pmb_mysql_query($query);
 			if($res){
 				if(pmb_mysql_num_rows($res)){
 					while ($row = pmb_mysql_fetch_object($res)){
@@ -96,11 +95,20 @@ class searcher {
 		}
 		return $this->notices_ids;
 	}
+	
+	public function set_notices_ids($notices_ids) {
+	    if (is_array($notices_ids)) {
+	        $this->notices_ids = implode(',', $notices_ids);
+	    } else {
+	        $this->notices_ids = $notices_ids;
+	    }
+	    $this->searched = true;
+	    return $this;
+	}
 
 	protected function _delete_old_objects(){
-		global $dbh;
 		$delete= "delete from search_cache where delete_on_date < NOW()";
-		pmb_mysql_query($delete,$dbh);
+		pmb_mysql_query($delete);
 	}
 
 	protected function _get_user_query(){
@@ -114,9 +122,10 @@ class searcher {
 		global $lang;
 		global $dont_check_opac_indexation_docnum_allfields;
 		global $mutli_crit_indexation_docnum_allfields;
+		global $nb_per_page_custom;
 
 		$str_to_hash = session_id();
-		$str_to_hash.= "&opac_view=".$_SESSION['opac_view'];
+		$str_to_hash.= "&opac_view=".(isset($_SESSION['opac_view']) ? $_SESSION['opac_view'] : '');
 		$str_to_hash.= $_SESSION['user_code'];
 		$str_to_hash.= "&lang=".$lang;
 		$str_to_hash.= "&type_search=".$this->_get_search_type();
@@ -127,19 +136,21 @@ class searcher {
 		$str_to_hash.= "&mutli_crit_indexation_docnum_allfields=".$mutli_crit_indexation_docnum_allfields;
 		
 		if($opac_search_other_function){
-			$str_to_hash.= "&perso=".search_other_function_get_values();
+			$str_to_hash.= "&perso=".serialize(search_other_function_get_values());
 		}
 		if($sorted){
 			$str_to_hash.= "&tri=".$this->tri;
 			$str_to_hash.= "&page=$page";
 		}
+		if($nb_per_page_custom) {
+			$str_to_hash.= "&nb_per_page_custom=".$nb_per_page_custom;
+		}
 		return md5($str_to_hash);
 	}
 
 	protected function _get_in_cache($sorted=false){
-		global $dbh;
 		$read = "select value from search_cache where object_id='".$this->_get_sign($sorted)."'";
-		$res = pmb_mysql_query($read,$dbh);
+		$res = pmb_mysql_query($read);
 		if(pmb_mysql_num_rows($res)>0){
 			$row = pmb_mysql_fetch_object($res);
 			if(!$sorted){
@@ -154,14 +165,16 @@ class searcher {
 	}
 
 	protected function _set_in_cache($sorted=false){
-		global $dbh, $opac_search_cache_duration;
+		global $opac_search_cache_duration;
 		if($sorted == false){
 			$str_to_cache = $this->notices_ids;
 		}else{
 			$str_to_cache = serialize($this->result);
 		}
-		$insert = "insert into search_cache set object_id ='".addslashes($this->_get_sign($sorted))."', value ='".addslashes($str_to_cache)."', delete_on_date = now() + interval ".$opac_search_cache_duration." second";
-		pmb_mysql_query($insert,$dbh);
+		if (!pmb_mysql_num_rows(pmb_mysql_query('select 1 from search_cache where object_id = "'.addslashes($this->_get_sign($sorted)).'" limit 1'))) {
+			$insert = "insert into search_cache set object_id ='".addslashes($this->_get_sign($sorted))."', value ='".addslashes($str_to_cache)."', delete_on_date = now() + interval ".$opac_search_cache_duration." second";
+			pmb_mysql_query($insert);
+		}
 	}
 
 	public function get_nb_results(){
@@ -174,12 +187,11 @@ class searcher {
 	}
 
 	protected function _sort($start,$number){
-		global $dbh;
 		if($this->table_tempo != ""){
 			$sort = new sort("notices","session");
 			
 			$query = $sort->appliquer_tri_from_tmp_table($this->tri,$this->table_tempo,"notice_id",$start,$number);
-			$res = pmb_mysql_query($query,$dbh);
+			$res = pmb_mysql_query($query);
 			if($res && pmb_mysql_num_rows($res)){
 				$this->result=array();
 				while($row = pmb_mysql_fetch_object($res)){
@@ -191,15 +203,13 @@ class searcher {
 
 	public function get_result(){
 		global $opac_search_noise_limit_type;		
-		global $dbh;	
 		
-		$this->tri = $tri;
 		$cache_result = $this->_get_in_cache();
 		if($cache_result===false){
 			$this->_get_notices_ids();
 			$this->_filter_results();
 			//Ecretage
-			if($opac_search_noise_limit_type && $this->user_query != "*"){
+			if($opac_search_noise_limit_type && $this->user_query !== "*"){
 				$limit = 0;
 				//calcul pertinance
 				$this->_get_pert();
@@ -221,15 +231,15 @@ class searcher {
 						$query = "select (max(pert)*".$ratio.") as seuil from ".$this->table_tempo;
 						break;				
 				}
-				$result = pmb_mysql_query($query,$dbh) or die(pmb_mysql_error());
+				$result = pmb_mysql_query($query) or die(pmb_mysql_error());
 				if(pmb_mysql_num_rows($result)){
 					$limit = pmb_mysql_result($result,0,0);
 				}
 				if($limit){
 					$query = "delete from ".$this->table_tempo." where pert < ".$limit;
-					pmb_mysql_query($query,$dbh);
+					pmb_mysql_query($query);
 					$query ="select distinct notice_id from ".$this->table_tempo;
-					$result = pmb_mysql_query($query,$dbh) or die(pmb_mysql_error());
+					$result = pmb_mysql_query($query) or die(pmb_mysql_error());
 					
 					if(pmb_mysql_num_rows($result)){
 						$this->notices_ids = "";
@@ -265,9 +275,8 @@ class searcher {
 					$restriction_query ="and notices.notice_id in (".$this->notices_ids.")";
 				}
 				$text_query = "select t0.notice_id from ".$from." join notices on t0.notice_id = notices.notice_id ".$restriction_emprise." $restriction_query group by t0.notice_id  order by notices.index_sew ";
-				$result = pmb_mysql_query($text_query,$dbh);
+				$result = pmb_mysql_query($text_query);
 				$nbresults = pmb_mysql_num_rows($result);
-			
 				$this->notices_ids="";
 				if($result){
 					if(pmb_mysql_num_rows($result)){
@@ -276,7 +285,8 @@ class searcher {
 							$this->notices_ids.=$row->notice_id;
 						}
 					}
-					pmb_mysql_free_result($res);
+					pmb_mysql_free_result($result);
+					$this->_filter_results();
 				}
 			}
 			
@@ -319,73 +329,117 @@ class searcher {
 	}
 
 	public function get_typdocs(){
-		global $dbh;
 		if(!$this->typdocs){
 			if(!$this->notices_ids){
 				$this->get_result();
 			}
 			$this->typdocs = array();
 			if($this->notices_ids != ""){
-				$query = "select distinct typdoc from notices where notice_id in (".$this->notices_ids.")";
-				$res = pmb_mysql_query($query,$dbh);
-				if(pmb_mysql_num_rows($res)){
-					while ($row = pmb_mysql_fetch_object($res)){
-						$this->typdocs[] = $row->typdoc;
-					}
-				}
+				$this->typdocs = self::get_typdocs_from_notices_ids($this->notices_ids);
 			}
 		}
 		return $this->typdocs;
 	}
+	
+	public static function get_typdocs_from_notices_ids($notices_ids = '') {
+		$typdocs = array();
+		if($notices_ids != ""){
+			$query = "select distinct typdoc from notices ".gen_where_in('notice_id', $notices_ids);
+			$res = pmb_mysql_query($query);
+			if(pmb_mysql_num_rows($res)){
+				while ($row = pmb_mysql_fetch_object($res)){
+					$typdocs[] = $row->typdoc;
+				}
+			}
+		}
+		return $typdocs;
+	}
 
-	public function get_nb_explnums(){
-		global $dbh;
-		global $gestion_acces_active;
-		global $gestion_acces_empr_notice;
-		global $gestion_acces_empr_docnum;
-		global $opac_show_links_invisible_docnums;
-		global $opac_photo_filtre_mimetype;
+	public function get_nb_explnums($limit_one = 1){
 
 		if(!$this->notices_ids){
 			$this->get_result();
 		}
 		$this->nb_explnum = 0;
 		if($this->notices_ids != ""){
-			$acces_j='';
-			
-			if(!$opac_show_links_invisible_docnums){
-				if ($gestion_acces_active==1 && ($gestion_acces_empr_docnum || $gestion_acces_empr_notice)){
-					$ac= new acces();
-					if ($gestion_acces_empr_notice==1) {
-						$dom_2= $ac->setDomain(2);
-						$join = $dom_2->getJoin($_SESSION['id_empr_session'],16,'notice_id');
-					}
-					if ($gestion_acces_empr_docnum==1) {
-						$dom_3= $ac->setDomain(3);
-						$join_explnum = $dom_3->getJoin($_SESSION['id_empr_session'],16,'explnum_id');
-					}
-				}
-				if(!$join){
-					$join_noti = "join notices on notice_id = explnum_notice join notice_statut on statut=id_notice_statut and ((notice_statut.explnum_visible_opac=1 and notice_statut.explnum_visible_opac_abon=0)".($_SESSION["user_code"]?" or (notice_statut.explnum_visible_opac_abon=1 and notice_statut.explnum_visible_opac=1)":"").")";
-					$join_issue ="join notice_statut on notices.statut=id_notice_statut and ((notice_statut.explnum_visible_opac=1 and notice_statut.explnum_visible_opac_abon=0)".($_SESSION["user_code"]?" or (notice_statut.explnum_visible_opac_abon=1 and notice_statut.explnum_visible_opac=1)":"").")";
-				}
-				if(!$join_explnum){
-					$join_explnum ="join explnum_statut on explnum_docnum_statut=id_explnum_statut and ((explnum_statut.explnum_visible_opac=1 and explnum_statut.explnum_visible_opac_abon=0)".($_SESSION["user_code"]?" or (explnum_statut.explnum_visible_opac_abon=1 and explnum_statut.explnum_visible_opac=1)":"").")";
-				}
-			}
-			$query_noti = "select explnum_id from explnum $join_noti $join_explnum where explnum_notice in (".$this->notices_ids.") and explnum_mimetype in ($opac_photo_filtre_mimetype)";
-			$query_issue = "select explnum_id from explnum join bulletins on explnum_bulletin!= 0 and explnum_bulletin = bulletin_id join notices on notice_id = num_notice and num_notice!=0 $join_issue $join_explnum where notice_id in (".$this->notices_ids.") and explnum_mimetype in ($opac_photo_filtre_mimetype)";
-			$query = "select explnum_id from(".$query_noti ." union ".$query_issue.") as uni";
-			$res = pmb_mysql_query($query,$dbh);
-			if($res && pmb_mysql_num_rows($res)){
-				$this->nb_explnum =pmb_mysql_num_rows($res);
-			}else{
-				$this->nb_explnum =0;
-			}
+			$this->nb_explnum = self::get_nb_explnums_from_notices_ids($this->notices_ids, $limit_one);
 		}
 		return $this->nb_explnum;
 	}
-
+	
+	public static function get_nb_explnums_from_notices_ids($notices_ids = '', $limit_one = 1) {
+		if ($notices_ids == '') {
+			return 0;
+		}
+		$nb_explnums = 0;
+		
+		global $gestion_acces_active;
+		global $gestion_acces_empr_notice;
+		global $gestion_acces_empr_docnum;
+		global $opac_show_links_invisible_docnums;
+		global $opac_photo_filtre_mimetype;
+		
+		$join_noti = '';
+		$join_explnum = '';
+		$join_issue = '';
+		if(!$opac_show_links_invisible_docnums){
+			$join = '';
+			if ($gestion_acces_active==1 && ($gestion_acces_empr_docnum || $gestion_acces_empr_notice)){
+				$ac= new acces();
+				if ($gestion_acces_empr_notice==1) {
+					$dom_2= $ac->setDomain(2);
+					$join = $dom_2->getJoin($_SESSION['id_empr_session'],16,'notice_id');
+				}
+				if ($gestion_acces_empr_docnum==1) {
+					$dom_3= $ac->setDomain(3);
+					$join_explnum = $dom_3->getJoin($_SESSION['id_empr_session'],16,'explnum_id');
+				}
+			}
+			if(!$join){
+				$join_noti = "join notices on (explnum_notice != 0 AND notice_id = explnum_notice) join notice_statut on statut=id_notice_statut and ((notice_statut.explnum_visible_opac=1 and notice_statut.explnum_visible_opac_abon=0)".($_SESSION["user_code"]?" or (notice_statut.explnum_visible_opac_abon=1 and notice_statut.explnum_visible_opac=1)":"").")";
+				$join_issue ="join notice_statut on notices.statut=id_notice_statut and ((notice_statut.explnum_visible_opac=1 and notice_statut.explnum_visible_opac_abon=0)".($_SESSION["user_code"]?" or (notice_statut.explnum_visible_opac_abon=1 and notice_statut.explnum_visible_opac=1)":"").")";
+			}
+			if(!$join_explnum){
+				$join_explnum ="join explnum_statut on explnum_docnum_statut=id_explnum_statut and ((explnum_statut.explnum_visible_opac=1 and explnum_statut.explnum_visible_opac_abon=0)".($_SESSION["user_code"]?" or (explnum_statut.explnum_visible_opac_abon=1 and explnum_statut.explnum_visible_opac=1)":"").")";
+			}
+		}
+		$limit = '';
+		if($limit_one) {
+			$limit = ' limit 1 ';
+		}
+		$query_noti = "select explnum_id from explnum ".$join_noti." ".$join_explnum." ".gen_where_in('explnum.explnum_notice', $notices_ids);
+		if($opac_photo_filtre_mimetype) {
+			$query_noti.= gen_where_in_string('explnum_mimetype', $opac_photo_filtre_mimetype);
+		}
+		if($limit_one) {
+			$query_noti.= $limit;
+			$res = pmb_mysql_query($query_noti);
+			if(pmb_mysql_num_rows($res)) {
+				$nb_explnums = pmb_mysql_num_rows($res);
+			}
+			return $nb_explnums;
+		}
+		$query_issue = "select explnum_id as count_explnum from explnum join bulletins on explnum_bulletin!= 0 and explnum_bulletin = bulletin_id join notices on notice_id = num_notice and num_notice!=0 ".$join_issue." ".$join_explnum."
+		".gen_where_in('notices.notice_id', $notices_ids);
+		if($opac_photo_filtre_mimetype) {
+			$query_issue.= gen_where_in_string('explnum_mimetype', $opac_photo_filtre_mimetype);
+		}
+		if($limit_one) {
+			$query_issue.= $limit;
+			$res = pmb_mysql_query($query_issue);
+			if(pmb_mysql_num_rows($res)) {
+				$nb_explnums = pmb_mysql_num_rows($res);
+			}
+			return $nb_explnums;
+		}
+		$query = "select explnum_id from(".$query_noti." union ".$query_issue.") as uni";
+		$res = pmb_mysql_query($query);
+		if(pmb_mysql_num_rows($res)) {
+			$nb_explnums = pmb_mysql_num_rows($res);
+		}
+		return $nb_explnums;
+	}
+	
 	protected function _sort_result($start,$number){
 		$this->_get_pert();
 		$this->_sort($start,$number);
@@ -438,11 +492,12 @@ class searcher {
 	}
 
 	public function get_explnums($tri){ 
-		global $dbh;
 		global $gestion_acces_active;
 		global $gestion_acces_empr_notice;
 		global $gestion_acces_empr_docnum;
 		global $opac_show_links_invisible_docnums;
+		global $opac_explnum_order;
+		
 		$this->explnums = array();
 		$this->get_result();
 		//$table = $this->_get_pert();
@@ -453,7 +508,8 @@ class searcher {
 			//$query = $sort->appliquer_tri_from_tmp_table($tri,$table,"notice_id",0,0);
 			$query = $sort->appliquer_tri_from_tmp_table($tri,$this->table_tempo,"notice_id",0,0);
 			//vérification de la visibilité des documents numériques
-			$acces_j='';
+			$join = '';
+			$join_explnum = '';
 			if(!$opac_show_links_invisible_docnums){
 				if ($gestion_acces_active==1 && ($gestion_acces_empr_docnum || $gestion_acces_empr_notice)){
 					$ac= new acces();
@@ -474,18 +530,28 @@ class searcher {
 				}
 			}
 			$explnum_noti = "select explnum_id,".$sort->table_tri_tempo.".* from explnum join ".$sort->table_tri_tempo." on explnum_notice!=0 and explnum_notice = ".$sort->table_tri_tempo.".notice_id $join $join_explnum";
+			if($opac_explnum_order){
+				$explnum_noti.=" order by ".$opac_explnum_order;
+			}else{
+				$explnum_noti .= " order by explnum_mimetype, explnum_nom, explnum_id ";
+			}
 			$rqt = "create temporary table explnum_list $explnum_noti";
-			pmb_mysql_query($rqt,$dbh);
+			pmb_mysql_query($rqt);
 			$explnum_issue = "select explnum_id,".$sort->table_tri_tempo.".* from explnum join bulletins on explnum_bulletin!=0 and bulletin_id = explnum_bulletin join ".$sort->table_tri_tempo." on num_notice != 0 and num_notice = ".$sort->table_tri_tempo.".notice_id $join $join_explnum";
+			if($opac_explnum_order){
+				$explnum_issue.=" order by ".$opac_explnum_order;
+			}else{
+				$explnum_issue .= " order by explnum_mimetype, explnum_nom, explnum_id ";
+			}
 			$rqt = "insert ignore into explnum_list $explnum_issue";
-			pmb_mysql_query($rqt,$dbh);
+			pmb_mysql_query($rqt);
 			pmb_mysql_query("alter table explnum_list order by ".$sort->get_order_by($tri));
 			$rqt = "select explnum_id from explnum_list order by ".$sort->get_order_by($tri);
-			$res = pmb_mysql_query($rqt,$dbh);
+			$res = pmb_mysql_query($rqt);
 			//si get_order_by renvoit une valeur nulle, on ne s'occupe pas du tri. 
 			if (!$res) {
 				$rqt = "select explnum_id from explnum_list";
-				$res = pmb_mysql_query($rqt,$dbh);
+				$res = pmb_mysql_query($rqt);
 			}
 			if ($res) {
 				if(pmb_mysql_num_rows($res)){
@@ -499,10 +565,10 @@ class searcher {
 	}
 	
 	
-	function get_current_search_map($mode_search=0){
+	public static function get_current_search_map($mode_search=0){
 		global $opac_map_activate;
 		$map = "";
-		if($opac_map_activate){
+		if($opac_map_activate==1 || $opac_map_activate==2){
 			$map = "<div id='map_container'><div id='map_search' ></div></div>";			
 		}
 		return $map;
@@ -515,7 +581,7 @@ class searcher {
 		$map = "";
 		$size=explode("*",$opac_map_size_search_result);
 		if(count($size)!=2)$map_size="width:800px; height:480px;";
-		$map_size= "width:".$size[0]."px; height:".$size[1]."px;";
+		$map_size= "width:".$size[0]."; height:".$size[1].";";
 		$current_search = $_SESSION['nb_queries'];
 		$map_search_controler = new map_search_controler(null, $current_search, $opac_map_max_holds,false);
 		$json = $map_search_controler->get_json_informations();
@@ -544,6 +610,13 @@ class searcher {
 		print $map;
 	}
 	
+	public function init_fields_restrict($mode){
+		return false;
+	}
+	
+	public function get_temporary_table_name($suffix='') {
+		return get_called_class().substr(md5(microtime(true)), 0, 16).$suffix;
+	}
 }
 
 class searcher_all_fields extends searcher{
@@ -623,7 +696,6 @@ class searcher_all_fields extends searcher{
 	}
 
 	protected function _get_pert($with_explnum=false, $get_query=false){
-		global $dbh;
 		global $opac_indexation_docnum_allfields,$dont_check_opac_indexation_docnum_allfields,$mutli_crit_indexation_docnum_allfields;
 		global $opac_search_all_keep_empty_words ;
 		
@@ -641,9 +713,9 @@ class searcher_all_fields extends searcher{
 			if($get_query){
 				return $query;
 			}else{
-				$this->table_tempo = "seach_result".md5(microtime(true));
-				$res = pmb_mysql_query("create temporary table ".$this->table_tempo." ".$query, $dbh);
-				pmb_mysql_query("alter table ".$this->table_tempo." add index i_id(notice_id)", $dbh);
+				$this->table_tempo = $this->get_temporary_table_name('get_pert');
+				$res = pmb_mysql_query("create temporary table ".$this->table_tempo." ".$query);
+				pmb_mysql_query("alter table ".$this->table_tempo." add index i_id(notice_id)");
 			}
 		}else{
 			if($get_query){
@@ -670,7 +742,6 @@ class searcher_all_fields extends searcher{
 		    }elseif(($opac_indexation_docnum_allfields && !$dont_check_opac_indexation_docnum_allfields)){
 		    	$pass=true;
 		    }
-			
 			if($pass){
 				//si la recherche dans les documents numériques est incluse dans la recherche tous les champs, on doit le prendre en compte
 				$this->_get_explnum_members();
@@ -715,7 +786,7 @@ class searcher_all_fields extends searcher{
 
 	protected function _get_explnum_where(){
 		$where="where ((".$this->members_explnum_noti['where'].")) ";
-		if($this->view_restrict) $where.=" and ".$this->view_restrict;
+		//if($this->view_restrict) $where.=" and ".$this->view_restrict;
 		return $where;
 	}
 
@@ -726,14 +797,16 @@ class searcher_all_fields extends searcher{
 			$ac= new acces();
 			$dom_2= $ac->setDomain(2);
 			$join = $dom_2->getJoin($_SESSION['id_empr_session'],16,$field);
+		} else {
+			$join = '';
 		}
 		if(!$join){
 			switch($type){
 				case "notice" :
-					$join="join notices on explnum_notice = notice_id join notice_statut on notices.statut= id_notice_statut and (notice_statut.explnum_visible_opac=1 and notice_statut.explnum_visible_opac_abon=0)".($_SESSION["user_code"]?" or (notice_statut.explnum_visible_opac_abon=1 and notice_statut.explnum_visible_opac=1)":"");
+					$join="join notices on explnum_notice = notice_id and explnum.explnum_bulletin = 0 join notice_statut on notices.statut= id_notice_statut and (notice_statut.explnum_visible_opac=1 and notice_statut.explnum_visible_opac_abon=0)".($_SESSION["user_code"]?" or (notice_statut.explnum_visible_opac_abon=1 and notice_statut.explnum_visible_opac=1)":"");
 					break;
 				case "bulletin" :
-					$join="join notices on explnum_notice = bulletins.num_notice join notice_statut on notices.statut= id_notice_statut and (notice_statut.explnum_visible_opac=1 and notice_statut.explnum_visible_opac_abon=0)".($_SESSION["user_code"]?" or (notice_statut.explnum_visible_opac_abon=1 and notice_statut.explnum_visible_opac=1)":"");
+					$join="join notices on notices.notice_id = bulletins.num_notice and explnum.explnum_notice = 0 join notice_statut on notices.statut= id_notice_statut and (notice_statut.explnum_visible_opac=1 and notice_statut.explnum_visible_opac_abon=0)".($_SESSION["user_code"]?" or (notice_statut.explnum_visible_opac_abon=1 and notice_statut.explnum_visible_opac=1)":"");
 					break;
 			}
 		}
@@ -747,6 +820,8 @@ class searcher_all_fields extends searcher{
 			$ac= new acces();
 			$dom_3= $ac->setDomain(3);
 			$join = $dom_3->getJoin($_SESSION['id_empr_session'],16,$field);
+		} else {
+			$join = '';
 		}
 		if(!$join){
 			switch($type){
@@ -762,6 +837,7 @@ class searcher_all_fields extends searcher{
 class searcher_title extends searcher{
 
 	public function __construct($user_query){
+		global $mutli_crit_indexation_oeuvre_title;
 		$this->field_restrict=array();
 		$this->field_restrict[]= array(
 			'field' => "code_champ",
@@ -769,6 +845,23 @@ class searcher_title extends searcher{
 			'op' => "and",
 			'not' => false
 		);
+		
+		if($mutli_crit_indexation_oeuvre_title==1){
+			$this->field_restrict[]= array(
+					'field' => "code_champ",
+					'values' => array(26),
+					'op' => "or",
+					'not' => false,
+					'sub'=> array(
+						array(
+							'sub_field' => "code_ss_champ",
+							'values' => 1,
+							'op' => "and",
+							'not' => false
+						),
+				)
+			);
+		}
 		parent::__construct($user_query);
 	}
 
@@ -810,10 +903,10 @@ class searcher_tags extends searcher{
 		
 		$query = "SELECT notice_id AS id_notice 
 				FROM notices 
-				WHERE index_l like '".$this->user_query."' 
-				OR index_l like '".$this->user_query.$pmb_keyword_sep."%' 
-				OR index_l like '%".$pmb_keyword_sep.$this->user_query.$pmb_keyword_sep."%' 
-				OR index_l like '%".$pmb_keyword_sep.$this->user_query."'";
+				WHERE index_l like '".addslashes($this->user_query)."' 
+				OR index_l like '".addslashes($this->user_query.$pmb_keyword_sep)."%' 
+				OR index_l like '%".addslashes($pmb_keyword_sep.$this->user_query.$pmb_keyword_sep)."%' 
+				OR index_l like '%".addslashes($pmb_keyword_sep.$this->user_query)."'";
 		return $query;
 	}
 }
@@ -906,7 +999,9 @@ class searcher_extended extends searcher{
 	}
 
 	protected function _get_user_query(){
-		return search::serialize_search();
+		global $es;
+		if(!is_object($es)) $es = new search();
+		return $es->serialize_search(true);
 	}
 
 	protected function _get_search_query(){
@@ -920,14 +1015,14 @@ class searcher_extended extends searcher{
     		for ($i=0; $i<count($search); $i++) {
     			if($i==0){//On supprime le premier opérateur inter (il est renseigné pour les recherches prédéfinies avec plusieurs champs et une recherche avec le premier champ vide
     				$inter="inter_".$i."_".$search[$i];
-    				global $$inter;
-    				$$inter="";
+    				global ${$inter};
+    				${$inter}="";
     			}
 	    		$op="op_".$i."_".$search[$i];
-    			global $$op;
+    			global ${$op};
     			$field_="field_".$i."_".$search[$i];
-	   			global $$field_;
-	   			$field=$$field_;
+	   			global ${$field_};
+	   			$field=${$field_};
 	   			$s=explode("_",$search[$i]);
 	   			if ($s[0]=="f") {
 		    		$champ=$es->fixedfields[$s[1]]["TITLE"];
@@ -936,7 +1031,7 @@ class searcher_extended extends searcher{
 	   			} else {
 		    		$champ=$es->pp->t_fields[$s[1]]["TITRE"];
 	   			}
-	   			if (((string)$field[0]=="") && (!$es->op_empty[$$op])) {
+	   			if (((string)$field[0]=="") && (!$es->op_empty[${$op}])) {
 		    		$search_error_message=sprintf($msg["extended_empty_field"],$champ);
 	   				$flag=true;
 					break;
@@ -945,29 +1040,26 @@ class searcher_extended extends searcher{
     	}
 		//$es->remove_forbidden_fields();
     	$this->with_make_search=true;
-    	$this->table = $es->make_search();
+    	$this->table = $es->make_search($this->get_temporary_table_name("_".rand(0,10)."_"));
 		return "select notice_id as id_notice, pert from ".$this->table;
 	}
 
 	protected function _get_pert($with_explnum=false, $query=false){
-		global $dbh;
 		if(!$this->notices_ids) return;
 		if($this->with_make_search){
-			$this->table_tempo = "search_result".md5(microtime(true));
+			$this->table_tempo = $this->get_temporary_table_name("get_pert");
 			$rqt = "create temporary table ".$this->table_tempo." select * from ".$this->table." where notice_id in(".$this->notices_ids.")";
-			$res = pmb_mysql_query($rqt,$dbh);
-			pmb_mysql_query("alter table ".$this->table_tempo." add index i_id(notice_id)",$dbh);
+			$res = pmb_mysql_query($rqt);
+			pmb_mysql_query("alter table ".$this->table_tempo." add index i_id(notice_id)");
 		}else{
-			$this->table_tempo = "search_result".md5(microtime(true));
+			$this->table_tempo = $this->get_temporary_table_name("get_pert_2");
 			$rqt = "create temporary table ".$this->table_tempo." select notice_id,100 as pert from notices where notice_id in(".$this->notices_ids.")";
-			$res = pmb_mysql_query($rqt,$dbh);
-			pmb_mysql_query("alter table ".$this->table_tempo." add index i_id(notice_id)",$dbh);
+			$res = pmb_mysql_query($rqt);
+			pmb_mysql_query("alter table ".$this->table_tempo." add index i_id(notice_id)");
 		}
 	}
 	
 	public function get_result(){
-		global $dbh;
-		$this->tri = $tri;
 		$cache_result = $this->_get_in_cache();
 		if($cache_result===false){
 			$this->_get_notices_ids();
@@ -975,10 +1067,11 @@ class searcher_extended extends searcher{
 			$this->_set_in_cache();
 		}else{
 			$this->notices_ids = $cache_result;
-			$this->table = "search_result".md5(microtime(true));
+			if(!$this->notices_ids) return array();
+			$this->table = $this->get_temporary_table_name('get_result');
 			$rqt = "create temporary table ".$this->table." engine=memory select notice_id from notices where notice_id in(".$this->notices_ids.")";
-			$res = pmb_mysql_query($rqt,$dbh);
-			pmb_mysql_query("alter table ".$this->table." add index i_id(notice_id)",$dbh);			
+			$res = pmb_mysql_query($rqt);
+			pmb_mysql_query("alter table ".$this->table." add index i_id(notice_id)");			
 		}
 		return $this->notices_ids;
 	}
@@ -1174,14 +1267,17 @@ class searcher_categorie extends searcher{
 }
 
 class searcher_pfield extends searcher{
+	
+	protected $id;
 
 	public function __construct($user_query,$id=0){
 		$this->field_restrict=array();
+		$this->id = $id;
 		$sub=array();
-		if($id>0){
+		if($this->id>0){
 			$sub[]=array(
 				'sub_field' => "code_ss_champ",
-				'values' => $id,
+				'values' => $this->id,
 				'op' => "and",
 				'not' => false
 			);
@@ -1199,6 +1295,12 @@ class searcher_pfield extends searcher{
 
 	protected function _get_search_type(){
 		return "pfield";
+	}
+	
+	protected function _get_sign($sorted=false){
+		$sign = parent::_get_sign($sorted);
+		$sign.= md5('&id='.$this->id);
+		return $sign;
 	}
 }
 
@@ -1303,6 +1405,23 @@ class searcher_concept extends searcher {
 		$this->field_restrict[]= array(
 				'field' => "code_champ",
 				'values' => array(36),
+				'op' => "and",
+				'not' => false
+		);
+	}
+
+	protected function _get_search_type(){
+		return "concept";
+	}
+}
+
+class searcher_concept_autopostage extends searcher {
+
+	public function __construct($user_query){
+		parent::__construct($user_query);
+		$this->field_restrict[]= array(
+				'field' => "code_champ",
+				'values' => array(36,129),
 				'op' => "and",
 				'not' => false
 		);

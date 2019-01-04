@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rapport.class.php,v 1.11 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: rapport.class.php,v 1.14 2017-11-22 11:07:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,18 +10,18 @@ require_once($include_path."/templates/rapport.tpl.php");
 
 class rapport {
 	
-	var $export_elements = array();
-	var $rapport_elements = array();
-	var $titre_gauche = "";
-	var $cancel_action = "";
-	var $form_action = "";
-	var $rapport_xml = "";
-	var $intro = "";
+	public $export_elements = array();
+	public $rapport_elements = array();
+	public $titre_gauche = "";
+	public $cancel_action = "";
+	public $form_action = "";
+	public $rapport_xml = "";
+	public $intro = "";
 	
-	function rapport(){				
+	public function __construct(){				
 	}
 	
-	function showRapport(){
+	public function showRapport(){
 		global $form_rapport, $charset, $base_path, $tab_traite;
 		
 		$tab_traite = array();
@@ -37,9 +37,9 @@ class rapport {
 				$sujet = htmlentities($this->export_elements[$i]['sujet'],ENT_QUOTES,$charset);
 				$id_parent = $this->export_elements[$i]['id_parent'];
 				
-				$drag = "<span id=\"elt_handle_$id\" style='padding-left:7px'  ><img src=\"".$base_path."/images/notice_drag.png\" /></span>";
+				$drag = "<span id=\"elt_handle_$id\" style='padding-left:7px'  ><img src=\"".get_url_icon('notice_drag.png')."\" /></span>";
 				$liste .= "<div id='elt_$id' idelt='$id' draggable=\"yes\" dragtype=\"export\" dragtext=\"$titre\" 
-					dragicon=\"".$base_path."/images/icone_drag_notice.png\" handler='elt_handle_$id'>".gen_plus("elt_".$id,"[".formatdate($date)."] ".$sujet." : ".$titre.$drag,$contenu)."</div>";
+					dragicon='".get_url_icon('icone_drag_notice.png')."' handler='elt_handle_$id'>".gen_plus("elt_".$id,"[".formatdate($date)."] ".$sujet." : ".$titre.$drag,$contenu)."</div>";
 			}
 			
 		}
@@ -71,11 +71,11 @@ class rapport {
 				if($this->rapport_elements[$i]['sujet'])
 					$contenu =  "<u>".htmlentities($this->rapport_elements[$i]['sujet'],ENT_QUOTES,$charset)."</u> : ".$contenu;
 				
-				$drag = "<span id=\"rap_handle_$id\" style='padding-left:7px'  ><img src=\"".$base_path."/images/notice_drag.png\" /></span>";
-				$del = "<span id=\"rap_del_$id\" style='padding-left:7px;' onclick='delete_item($id);' ><img src=\"".$base_path."/images/cross.png\" style='cursor:pointer;width:10px;vertical-align:middle;'/></span>";
-				$modif = "<span id=\"rap_modif_$id\" style='padding-left:7px;' onclick='modif_item($id);' ><img src=\"".$base_path."/images/b_edit.png\" style='cursor:pointer;width:10px;vertical-align:middle;'/></span>";				
+				$drag = "<span id=\"rap_handle_$id\" style='padding-left:7px'  ><img src=\"".get_url_icon('notice_drag.png')."\" /></span>";
+				$del = "<span id=\"rap_del_$id\" style='padding-left:7px;' onclick='delete_item($id);' ><img src='".get_url_icon('cross.png')."' style='cursor:pointer;width:10px;vertical-align:middle;'/></span>";
+				$modif = "<span id=\"rap_modif_$id\" style='padding-left:7px;' onclick='modif_item($id);' ><img src='".get_url_icon('b_edit.png')."' style='cursor:pointer;width:10px;vertical-align:middle;'/></span>";				
 				$liste_rap .= "
-					<div class='row' $style id='rap_drag_$id' draggable=\"yes\" dragtype=\"rapport\" dragtext=\"$titre\" dragicon=\"".$base_path."/images/icone_drag_notice.png\"
+					<div class='row' $style id='rap_drag_$id' draggable=\"yes\" dragtype=\"rapport\" dragtext=\"$titre\" dragicon='".get_url_icon('icone_drag_notice.png')."'
 						handler=\"rap_handle_$id\" recepttype=\"rapport\" recept=\"yes\" highlight=\"rap_highlight\" downlight=\"rap_downlight\" iditem='$id' order='$ordre'>".$contenu.$drag.$modif.$del."</div>			
 				";
 			}
@@ -109,17 +109,17 @@ class rapport {
 	/*
 	 * Tableau des éléments exportables dans le rapport
 	 */
-	function getListeExport(){}
+	public function getListeExport(){}
 	
 	/*
 	 * Tableau des éléments composants le rapport
 	 */
-	function getListeRapport(){}
+	public function getListeRapport(){}
 	
 	/*
 	 * Affectation des tableaux
 	 */
-	function setElements(){
+	public function setElements(){
 		$this->getListeRapport();
 		$this->getListeExport();
 	}
@@ -127,7 +127,7 @@ class rapport {
 	/*
 	 * Création du rapport au format XML
 	 */
-	function create_rapport(){
+	public function create_rapport(){
 		global $charset, $base_path;
 		
 		$this->rapport_xml = "<?xml version='1.0' encoding='".$charset."' ?>\n";
@@ -165,12 +165,12 @@ class rapport {
 
 class rapport_demandes extends rapport {
 	
-	var $id_demande=0;
+	public $id_demande=0;
 	
-	function rapport_demandes($id=0){
+	public function __construct($id=0){
 		global $msg, $form_rapport;
 		
-		$this->id_demande = $id;
+		$this->id_demande = $id+0;
 		$this->titre_gauche = $msg['demandes_liste_notes'];
 		$this->cancel_action = "document.location='./demandes.php?categ=gestion&act=see_dmde&iddemande=".$this->id_demande."'";
 		$this->form_action = "./demandes/get_rapport.php?iddemande=".$this->id_demande;
@@ -183,7 +183,7 @@ class rapport_demandes extends rapport {
 	/*
 	 * Tableau des notes liées à la demande
 	 */	 
-	function getListeExport(){
+	public function getListeExport(){
 		global $dbh;	
 		
 		$req = "select id_note, CONCAT(SUBSTRING(contenu,1,20),'','...') as titre, contenu, date_note, num_note_parent, sujet_action as sujet from demandes_notes 
@@ -211,7 +211,7 @@ class rapport_demandes extends rapport {
 	/*
 	 * Tableau des éléments composants le rapport des demandes
 	 */
-	function getListeRapport(){
+	public function getListeRapport(){
 		
 		global $dbh;
 		
@@ -239,7 +239,7 @@ class rapport_demandes extends rapport {
 	/*
 	 * Générer l'intro du rapport
 	 */
-	function generer_intro(){
+	public function generer_intro(){
 		global $dbh, $charset;
 		
 		$req = " select titre_demande, date_demande, deadline_demande, sujet_demande, group_concat(distinct if(concat(prenom,' ',nom)!='',concat(prenom,' ',nom),username) separator '/ ') as docu, 

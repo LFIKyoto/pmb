@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_transactions.php,v 1.5 2011-09-06 08:54:29 jpermanne Exp $
+// $Id: list_transactions.php,v 1.9 2018-12-19 16:19:54 ngantier Exp $
 
 //Liste des trabsactions d'un compte
 $base_path="..";
@@ -12,6 +12,7 @@ $current_alert="circ";
 
 require_once("../includes/init.inc.php");
 require_once("$base_path/classes/comptes.class.php");
+require_once("$base_path/classes/transaction/transaction_payment_method.class.php");
 
 $cpte=new comptes($id_compte);
 if ($cpte->error) {
@@ -38,7 +39,7 @@ print "<form name='form_transactions' action='encaissement.php' method='post' on
 <input type='hidden' name='date_debut' value='".htmlentities($date_debut,ENT_QUOTES,$charset)."'/>
 ";
 if (!count($t)) print $msg["finance_list_tr_no_tr"]; else {
-	print "<table width=100%>";
+	print "<table style='width:100%'>";
 	print "<tr>";
 	print "<th>".$msg["finance_list_tr_date_enrgt"]."</th>";
 	print "<th>&nbsp;</th>";
@@ -55,14 +56,19 @@ if (!count($t)) print $msg["finance_list_tr_no_tr"]; else {
 		print pmb_bidi("<td>".($t[$i]->encaissement?"*":"")."</td>");
 		print pmb_bidi("<td>".$t[$i]->commentaire."</td>");
 		print pmb_bidi("<td  style='text-align:right'>".($t[$i]->sens==-1? "<span class='erreur'>":"").comptes::format($t[$i]->montant).($t[$i]->sens==-1? "</span>":"")."</td>");
-		print pmb_bidi("<td style='text-align:right'>".($t[$i]->sens==1 ? $msg["finance_form_empr_libelle_credit"]:$msg["finance_form_empr_libelle_debit"])."</td>");
+		$payment_method = '';
+		if ($t[$i]->transaction_payment_method_num) {
+		    $transaction_payment_method = new transaction_payment_method($t[$i]->transaction_payment_method_num);
+		    $payment_method = ' (' . $transaction_payment_method->get_name() . ')';
+		}		
+		print pmb_bidi("<td style='text-align:right'>".($t[$i]->sens==1 ? $msg["finance_form_empr_libelle_credit"]: $msg["finance_form_empr_libelle_debit"]) . $payment_method . "</td>");
 		print pmb_bidi("<td style='text-align:center'>".($t[$i]->realisee ? "X":"")."</td>");
 		print pmb_bidi("<td>".formatdate($t[$i]->date_effective)."</td>");
 		print "<td>";
 		if (!$t[$i]->realisee) {
 			print "<input type='checkbox' value='1' name='trans[".$t[$i]->id_transaction."]' ";
 			//$tans="trans_".$t[$i]->id_transaction;
-			//if ($$trans) print "checked";
+			//if (${$trans}) print "checked";
 			print ">";
 		}
 		print "</td>";

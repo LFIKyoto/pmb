@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: requests.tpl.php,v 1.7 2013-04-12 07:04:38 mbertin Exp $
+// $Id: requests.tpl.php,v 1.9 2017-11-22 11:07:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -63,8 +63,8 @@ $req_add_form = "
 		
 		<div class='row'>
 			<label class='etiquette'>".htmlentities($msg['req_auth_lbl'], ENT_QUOTES, $charset)."</label>
-			<input type='button' class='bouton_small' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);' align='middle'>
-			<input type='button' class='bouton_small' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);' align='middle'>
+			<input type='button' class='bouton_small align_middle' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);'>
+			<input type='button' class='bouton_small align_middle' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);'>
 		</div>
 		<div class='row'>
 			!!req_auth!!
@@ -192,10 +192,10 @@ $frame_req_add_form="
 $req_tab_header_select="
 <tr>
 	<th id='dz_DA' recept='yes' recepttype='celldropzone' highlight='cell_highlight' downlight='cell_downlight'>
-		<img src='../../images/add.png' class='add_bt' onClick=\"req_addLine();\"/>".htmlentities($msg['req_th_don'], ENT_QUOTES, $charset)."
+		<img src='".get_url_icon('add.png')."' class='add_bt' onClick=\"req_addLine();\"/>".htmlentities($msg['req_th_don'], ENT_QUOTES, $charset)."
 	</th>
 	<th id='dz_FI' recept='yes' recepttype='celldropzone' highlight='cell_highlight' downlight='cell_downlight'>
-		<img src='../../images/add.png' class='add_bt' onClick=\"req_addLine();\"/>".htmlentities($msg['req_th_fil'], ENT_QUOTES, $charset)."
+		<img src='".get_url_icon('add.png')."' class='add_bt' onClick=\"req_addLine();\"/>".htmlentities($msg['req_th_fil'], ENT_QUOTES, $charset)."
 	</th>
 	<th class='col_ali'>".htmlentities($msg['req_th_ali'], ENT_QUOTES, $charset)."</th>			
 	<th class='col_vis'>".htmlentities($msg['req_th_vis'], ENT_QUOTES, $charset)."</th>			
@@ -248,9 +248,9 @@ $lim_tab_line_select="
 $req_tab_header_insert="
 <tr>
 	<th id='dz_DA' recept='yes' recepttype='celldropzone' highlight='cell_highlight' downlight='cell_downlight'>
-		<img src='../../images/add.png' class='add_bt' onClick=\"req_addLine();\"/>".htmlentities($msg['req_th_don'], ENT_QUOTES, $charset)."</th>
+		<img src='".get_url_icon('add.png')."' class='add_bt' onClick=\"req_addLine();\"/>".htmlentities($msg['req_th_don'], ENT_QUOTES, $charset)."</th>
 	<th id='dz_VA' recept='yes' recepttype='celldropzone' highlight='cell_highlight' downlight='cell_downlight'>
-		<img src='../../images/add.png' class='add_bt' onClick=\"req_addLine();\"/>".htmlentities($msg['req_th_val'], ENT_QUOTES, $charset)."</th>			
+		<img src='".get_url_icon('add.png')."' class='add_bt' onClick=\"req_addLine();\"/>".htmlentities($msg['req_th_val'], ENT_QUOTES, $charset)."</th>			
 	<th class='col_obl'>".htmlentities($msg['req_th_obl'], ENT_QUOTES, $charset)."</th>			
 	<th class='col_act'>".htmlentities($msg['req_th_act'], ENT_QUOTES, $charset)."</th>			
 </tr>";
@@ -258,20 +258,20 @@ $req_tab_header_insert="
 $req_tab_header_update="
 <tr>
 	<th id='dz_DA' recept='yes' recepttype='celldropzone' highlight='cell_highlight' downlight='cell_downlight'>
-		<img src='../../images/add.png' class='add_bt' onClick=\"req_addLine();\"/>".htmlentities($msg['req_th_don'], ENT_QUOTES, $charset)."</th>
+		<img src='".get_url_icon('add.png')."' class='add_bt' onClick=\"req_addLine();\"/>".htmlentities($msg['req_th_don'], ENT_QUOTES, $charset)."</th>
 	<th id='dz_VA' recept='yes' recepttype='celldropzone' highlight='cell_highlight' downlight='cell_downlight'>
-		<img src='../../images/add.png' class='add_bt' onClick=\"req_addLine();\"/>".htmlentities($msg['req_th_val'], ENT_QUOTES, $charset)."</th>			
+		<img src='".get_url_icon('add.png')."' class='add_bt' onClick=\"req_addLine();\"/>".htmlentities($msg['req_th_val'], ENT_QUOTES, $charset)."</th>			
 	<th id='dz_FI' recept='yes' recepttype='celldropzone' highlight='cell_highlight' downlight='cell_downlight'>
-		<img src='../../images/add.png' class='add_bt' onClick=\"req_addLine();\"/>".htmlentities($msg['req_th_fil'], ENT_QUOTES, $charset)."</th>
+		<img src='".get_url_icon('add.png')."' class='add_bt' onClick=\"req_addLine();\"/>".htmlentities($msg['req_th_fil'], ENT_QUOTES, $charset)."</th>
 	<th class='col_act'>".htmlentities($msg['req_th_act'], ENT_QUOTES, $charset)."</th>			
 </tr>";
 
 $req_tab_header_delete="
 <tr>
 	<th id='dz_DA' recept='yes' recepttype='celldropzone' highlight='cell_highlight' downlight='cell_downlight'>
-		<img src='../../images/add.png' class='add_bt' onClick=\"req_addLine();\"/>".htmlentities($msg['req_th_don'], ENT_QUOTES, $charset)."</th>
+		<img src='".get_url_icon('add.png')."' class='add_bt' onClick=\"req_addLine();\"/>".htmlentities($msg['req_th_don'], ENT_QUOTES, $charset)."</th>
 	<th id='dz_FI' recept='yes' recepttype='celldropzone' highlight='cell_highlight' downlight='cell_downlight'>
-		<img src='../../images/add.png' class='add_bt' onClick=\"req_addLine();\"/>".htmlentities($msg['req_th_fil'], ENT_QUOTES, $charset)."</th>
+		<img src='".get_url_icon('add.png')."' class='add_bt' onClick=\"req_addLine();\"/>".htmlentities($msg['req_th_fil'], ENT_QUOTES, $charset)."</th>
 	<th class='col_act'>".htmlentities($msg['req_th_act'], ENT_QUOTES, $charset)."</th>			
 </tr>";
 		

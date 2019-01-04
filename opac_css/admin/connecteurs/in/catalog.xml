@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: catalog.xml,v 1.20 2015-05-25 09:21:04 apetithomme Exp $ -->
+$Id: catalog.xml,v 1.26 2018-11-02 10:42:20 pmbs Exp $ -->
 
 <catalog>
 	<item name="Z 39.50" path="z3950" id="1"/>
@@ -31,4 +31,9 @@ $Id: catalog.xml,v 1.20 2015-05-25 09:21:04 apetithomme Exp $ -->
 	<item name="data.bnf.fr" path="databnf" id="25"/>
 	<item name="ArteVOD" path="artevod" id="26"/>
 	<item name="Tout Apprendre" path="toutapprendre" id="27"/>
+	<item name="Cairn.info" path="cairn" id="28"/>
+	<item name="OdiloTK" path="odilotk" id="29"/>
+	<item name="Isidore" path="isidore" id="31"/>
+	<item name="Flux RSS" path="fluxrss" id="32"/>
+        <item name="Legifrance" path="legifrance" id="33"/>
 </catalog>

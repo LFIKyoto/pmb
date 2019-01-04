@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: budgets.inc.php,v 1.8.4.1 2015-08-13 08:05:16 jpermanne Exp $
+// $Id: budgets.inc.php,v 1.15 2018-04-23 13:25:26 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -18,49 +18,9 @@ if (!$acquisition_no_html) {
 //globalisé
 $line=0;
 
-//Affiche la liste des etablissements
-function show_list_biblio() {
-	
-	global $msg, $charset;
-	global $tab_bib, $nb_bib;
-	global $current_module;
-
-	//Affiche de la liste des etablissements auxquels a acces l'utilisateur si > 1
-	if ($nb_bib == '1') {
-		show_list_bud($tab_bib[0][0]);		
-		exit;
-	}
-	
-	$def_bibli=entites::getSessionBibliId();
-	if (in_array($def_bibli, $tab_bib[0])) {
-		show_list_bud($def_bibli);
-		exit;		
-	}			
-
-	$aff = "<form class='form-".$current_module."' id='list_biblio_form' name='list_biblio_form' method='post' action=\"\" >";
-	$aff.= "<h3>".htmlentities($msg['acquisition_menu_chx_ent'], ENT_QUOTES, $charset)."</h3><div class='row'></div>";
-	$aff.= "<table>";
-
-	$parity=1;
-	foreach($tab_bib[0] as $k=>$v) {
-		if ($parity % 2) {
-			$pair_impair = "even";
-		} else {
-			$pair_impair = "odd";
-		}
-		$parity += 1;
-		$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='".$pair_impair."'\" onmousedown=\"document.forms['list_biblio_form'].setAttribute('action','./acquisition.php?categ=ach&sub=bud&action=list&id_bibli=".$v."');document.forms['list_biblio_form'].submit(); \" ";
-        $aff.= "<tr class='".$pair_impair."' ".$tr_javascript." style='cursor: pointer'><td><i>".htmlentities($tab_bib[1][$k], ENT_QUOTES, $charset)."</i></td></tr>";
-	}
-	$aff.=" </table></form>";
-	print $aff;
-}
-
-
 //Affiche la liste des budgets
 function show_list_bud($id_bibli) {
-	
-	global $dbh, $msg, $charset;
+	global $msg, $charset;
 	
 	//Affichage du formulaire de recherche
 	show_search_form($id_bibli);
@@ -69,12 +29,12 @@ function show_list_bud($id_bibli) {
 	$form = "<table>
 	<tr>
 		<th>".htmlentities($msg[103],ENT_QUOTES,$charset)."</th>
-		<th>".htmlentities($msg[acquisition_statut],ENT_QUOTES,$charset)."</th>
+		<th>".htmlentities($msg['acquisition_statut'],ENT_QUOTES,$charset)."</th>
 		<th>".htmlentities($msg['acquisition_budg_exer'],ENT_QUOTES,$charset)."</th>
 	</tr>";
 
 	$q = budgets::listByEntite($id_bibli);
-	$r = pmb_mysql_query($q, $dbh);
+	$r = pmb_mysql_query($q);
 	$nb = pmb_mysql_num_rows($r);
 
 	$parity=1;
@@ -91,13 +51,13 @@ function show_list_bud($id_bibli) {
 	        $form.='<td>';
 	        switch ($row->statut) {
 	        	case STA_BUD_VAL :
-	        		$form.=htmlentities($msg[acquisition_statut_actif],ENT_QUOTES,$charset) ;
+	        		$form.=htmlentities($msg['acquisition_statut_actif'],ENT_QUOTES,$charset) ;
 	        		break;
 	        	case  STA_BUD_CLO :
-	        		$form.=htmlentities($msg[acquisition_statut_clot],ENT_QUOTES,$charset) ;
+	        		$form.=htmlentities($msg['acquisition_statut_clot'],ENT_QUOTES,$charset) ;
 	        		break;
 	        	default:
-	        		$form.=htmlentities($msg[acquisition_budg_pre],ENT_QUOTES,$charset) ;
+	        		$form.=htmlentities($msg['acquisition_budg_pre'],ENT_QUOTES,$charset) ;
 	        		break;
 	        }
 			$form.="</td>";
@@ -110,10 +70,8 @@ function show_list_bud($id_bibli) {
 	print $form;
 }
 
-
 //Affiche le formulaire de recherche
 function show_search_form($id_bibli) {
-	
 	global $msg, $charset;
 	global $search_form;	
 	global $tab_bib;
@@ -135,11 +93,9 @@ function show_search_form($id_bibli) {
 	print $form;
 }
 
-
 //Affiche le formulaire d'un budget
 function show_bud($id_bibli=0, $id_bud=0) {
-
-	global $dbh, $msg, $charset;
+	global $msg, $charset;
 	global $view_bud_form;
 	global $view_lig_rub_form, $lig_rub_img, $view_tot_rub_form;
 	global $pmb_gestion_devise;
@@ -151,9 +107,6 @@ function show_bud($id_bibli=0, $id_bud=0) {
 	
 	//Recuperation budget
 	$bud= new budgets($id_bud);
-	$lib_bud = htmlentities($bud->libelle, ENT_QUOTES, $charset);
-	$mnt_bud = $bud->montant_global;
-	$devise = $pmb_gestion_devise;
 	switch ($acquisition_gestion_tva) {
 		case '0' :
 		case '2' :
@@ -167,11 +120,7 @@ function show_bud($id_bibli=0, $id_bud=0) {
 			$k_htttc_autre='ttc';
 			break;
 	}
-	if(!$bud->type_budget) {
-		$typ_bud = htmlentities($msg['acquisition_budg_aff_rub'], ENT_QUOTES, $charset);
-	} else {
-		$typ_bud = htmlentities($msg['acquisition_budg_aff_glo'], ENT_QUOTES, $charset);
-	}
+	
 	//montant total pour budget par rubriques
 	if ($bud->type_budget == TYP_BUD_GLO) {
 		$mnt['tot'][$k_htttc] = $bud->montant_global;
@@ -194,29 +143,30 @@ function show_bud($id_bibli=0, $id_bud=0) {
 			$sta_bud = htmlentities($msg['acquisition_budg_pre'],ENT_QUOTES,$charset);
 			break;	
 	}
-	$seu_bud = $bud->seuil_alerte;
 	
 	//Recuperation exercice
 	$exer = new exercices($bud->num_exercice);
-	$lib_exer = htmlentities($exer->libelle, ENT_QUOTES, $charset);
 
 	$form = $view_bud_form;
 	
-	$lib_mnt_bud=number_format($mnt_bud,'2','.',' ');
-	$form = str_replace('!!lib_bud!!', $lib_bud, $form);
-	$form = str_replace('!!lib_exer!!', $lib_exer, $form);
-	$form = str_replace('!!mnt_bud!!', $lib_mnt_bud, $form);
-	$form = str_replace('!!devise!!', $devise, $form);
+	$form = str_replace('!!lib_bud!!', htmlentities($bud->libelle, ENT_QUOTES, $charset), $form);
+	$form = str_replace('!!lib_exer!!', htmlentities($exer->libelle, ENT_QUOTES, $charset), $form);
+	$form = str_replace('!!mnt_bud!!', number_format($bud->montant_global,'2','.',' '), $form);
+	$form = str_replace('!!devise!!', $pmb_gestion_devise, $form);
 	$form = str_replace('!!htttc!!', $htttc, $form);
-	$form = str_replace('!!typ_bud!!', $typ_bud, $form);
+	if(!$bud->type_budget) {
+		$form = str_replace('!!typ_bud!!', htmlentities($msg['acquisition_budg_aff_rub'], ENT_QUOTES, $charset), $form);
+	} else {
+		$form = str_replace('!!typ_bud!!', htmlentities($msg['acquisition_budg_aff_glo'], ENT_QUOTES, $charset), $form);
+	}
+	
 	$form = str_replace('!!sta_bud!!', $sta_bud, $form);
-	$form = str_replace('!!seu_bud!!', $seu_bud, $form);
+	$form = str_replace('!!seu_bud!!', $bud->seuil_alerte, $form);
 	
 	//recuperation de la liste complete des rubriques
 	$q = budgets::listRubriques($id_bud, 0);	
-	$list_n1 = pmb_mysql_query($q, $dbh); 
+	$list_n1 = pmb_mysql_query($q); 
 	while(($row=pmb_mysql_fetch_object($list_n1))) {
-		
 		$form = str_replace('<!-- rubriques -->', $view_lig_rub_form.'<!-- rubriques -->', $form);
 		$form = str_replace('<!-- marge -->', '', $form);
 		$nb_sr = rubriques::countChilds($row->id_rubrique);
@@ -227,8 +177,7 @@ function show_bud($id_bibli=0, $id_bud=0) {
 		}
 		$form = str_replace('!!id_rub!!', $row->id_rubrique, $form);
 		$form = str_replace('!!id_parent!!', $row->num_parent, $form);			
-		$libelle = htmlentities($row->libelle, ENT_QUOTES, $charset);
-		$form = str_replace('!!lib_rub!!', $libelle, $form);
+		$form = str_replace('!!lib_rub!!', htmlentities($row->libelle, ENT_QUOTES, $charset), $form);
 		
 		//montant total pour budget par rubriques
 		$mnt['tot'][$k_htttc] = $row->montant;
@@ -248,6 +197,7 @@ function show_bud($id_bibli=0, $id_bud=0) {
 		}
 	
 		foreach($totaux_autre as $k=>$v) {
+			if(!isset($mnt[$k][$k_htttc_autre])) $mnt[$k][$k_htttc_autre] = 0;
 			$totaux_autre[$k]=$v+$mnt[$k][$k_htttc_autre];
 		}
 		
@@ -290,7 +240,6 @@ function show_bud($id_bibli=0, $id_bud=0) {
 			$totaux[$k]='&nbsp;';
 		}
 	}
-
 	foreach($totaux_autre as $k=>$v) {
 		if(is_numeric($v) && $k!='tot' && $k!='sol') {
 			$totaux_autre[$k]=number_format($v,2,'.',' ');
@@ -298,7 +247,6 @@ function show_bud($id_bibli=0, $id_bud=0) {
 			$totaux_autre[$k]='&nbsp;';
 		}
 	}
-	
 	foreach($totaux as $k=>$v) {
 		$form = str_replace('!!mnt_'.$k.'!!', $totaux[$k].(($acquisition_gestion_tva)?'<br />'.$totaux_autre[$k]:''), $form);
 	}
@@ -310,7 +258,7 @@ function show_bud($id_bibli=0, $id_bud=0) {
 }
 
 function print_bud($id_bibli=0, $id_bud=0) {
-	global $dbh, $msg, $charset;
+	global $msg, $charset;
 	global $pmb_gestion_devise;
 	global $acquisition_gestion_tva;
 	global $base_path,$class_path;
@@ -319,20 +267,17 @@ function print_bud($id_bibli=0, $id_bud=0) {
 	if (!$id_bibli || !$id_bud) return;
 
 	//Export excel
-	$fname=str_replace(" ","",microtime());
-	$fname=str_replace("0.","",$base_path."/temp/".$fname);
-	require_once ("$class_path/writeexcel/class.writeexcel_workbook.inc.php");
-	require_once ("$class_path/writeexcel/class.writeexcel_worksheet.inc.php");
-	$workbook = new writeexcel_workbook($fname);
-	$worksheet = $workbook->addworksheet();
-	$bold  = $workbook->addformat(array(bold=> 1));
+	require_once ($class_path."/spreadsheet.class.php");
+	$worksheet = new spreadsheet();
+	$bold = array(
+		'font' => array(
+			'bold' => true
+		)
+	);
 
 	//Recuperation budget
 	$bud= new budgets($id_bud);
 	
-	$lib_bud = $bud->libelle;
-	$mnt_bud = $bud->montant_global;
-	$devise = $pmb_gestion_devise;
 	switch ($acquisition_gestion_tva) {
 		case '0' :
 		case '2' :
@@ -345,11 +290,6 @@ function print_bud($id_bibli=0, $id_bud=0) {
 			$k_htttc='ht';
 			$k_htttc_autre='ttc';
 			break;
-	}
-	if(!$bud->type_budget) {
-		$typ_bud = $msg['acquisition_budg_aff_rub'];
-	} else {
-		$typ_bud = $msg['acquisition_budg_aff_glo'];
 	}
 	
 	//montant total pour budget par rubriques
@@ -378,21 +318,23 @@ function print_bud($id_bibli=0, $id_bud=0) {
 	
 	//Recuperation exercice
 	$exer = new exercices($bud->num_exercice);
-	$lib_exer = $exer->libelle;
-	$lib_mnt_bud=number_format($mnt_bud,'2','.','');
 	
 	$worksheet->write($line,0,$msg['acquisition_bud'],$bold);
-	$worksheet->write($line,1,$lib_bud);
+	$worksheet->write($line,1,$bud->libelle);
 	$worksheet->write($line,2,$msg['acquisition_budg_montant'],$bold);
 	//problème du symbole euro à faire passer en encodage iso...
-	$worksheet->write($line,3,$lib_mnt_bud." ".($charset=="utf-8"?html_entity_decode(stripslashes($devise)):mb_convert_encoding(html_entity_decode(stripslashes($devise)),"windows-1252","utf-8"))." ".$htttc);
+	$worksheet->write($line,3,number_format($bud->montant_global,'2','.','')." ".($charset=="utf-8"?html_entity_decode(stripslashes($pmb_gestion_devise)):mb_convert_encoding(html_entity_decode(stripslashes($pmb_gestion_devise)),"windows-1252","utf-8"))." ".$htttc);
 	
 	$line++;
 	
 	$worksheet->write($line,0,$msg['acquisition_budg_exer'],$bold);
-	$worksheet->write($line,1,$lib_exer);
+	$worksheet->write($line,1,$exer->libelle);
 	$worksheet->write($line,2,$msg['acquisition_budg_aff_lib'],$bold);
-	$worksheet->write($line,3,$typ_bud);
+	if(!$bud->type_budget) {
+		$worksheet->write($line,3,$msg['acquisition_budg_aff_rub']);
+	} else {
+		$worksheet->write($line,3,$msg['acquisition_budg_aff_glo']);
+	}
 	
 	$line++;
 	
@@ -430,9 +372,8 @@ function print_bud($id_bibli=0, $id_bud=0) {
 	}
 	
 	$q = budgets::listRubriques($id_bud, 0);
-	$list_n1 = pmb_mysql_query($q, $dbh);
+	$list_n1 = pmb_mysql_query($q);
 	while(($row=pmb_mysql_fetch_object($list_n1))) {
-		
 		//montant total pour budget par rubriques
 		$mnt['tot'][$k_htttc] = $row->montant;
 		//montant a valider
@@ -451,6 +392,7 @@ function print_bud($id_bibli=0, $id_bud=0) {
 		}
 		
 		foreach($totaux_autre as $k=>$v) {
+			if(!isset($mnt[$k][$k_htttc_autre])) $mnt[$k][$k_htttc_autre] = 0;				
 			$totaux_autre[$k]=$v+$mnt[$k][$k_htttc_autre];
 		}
 		
@@ -503,7 +445,6 @@ function print_bud($id_bibli=0, $id_bud=0) {
 		if ($nb_sr) {
 			printSousRubriques($bud, $row->id_rubrique, $worksheet, 1);
 		}
-		
 	}
 
 	//recuperation de la liste complete des rubriques
@@ -548,18 +489,13 @@ function print_bud($id_bibli=0, $id_bud=0) {
 	}
 	
 	//Final
-	$workbook->close();
-	header("Content-Type: application/x-msexcel; name=\"budget.xls\"");
-	header("Content-Disposition: inline; filename=\"budget.xls\"");
-	$fh=fopen($fname, "rb");
-	fpassthru($fh);
-	unlink($fname);
+	$worksheet->download('Budget.xls');
 	die();
 }
 
 //Export excel des sous-rubriques d'une rubrique
 function printSousRubriques($bud, $id_rub, &$worksheet, $indent=0) {
-	global $dbh, $msg, $charset;
+	global $msg, $charset;
 	global $acquisition_gestion_tva,$line;
 
 	switch ($acquisition_gestion_tva) {
@@ -577,7 +513,7 @@ function printSousRubriques($bud, $id_rub, &$worksheet, $indent=0) {
 	}
 	$id_bud = $bud->id_budget;
 	$q = budgets::listRubriques($id_bud, $id_rub);
-	$list_n = pmb_mysql_query($q, $dbh);
+	$list_n = pmb_mysql_query($q);
 	while(($row=pmb_mysql_fetch_object($list_n))){
 				
 		$marge = '';
@@ -649,8 +585,7 @@ function printSousRubriques($bud, $id_rub, &$worksheet, $indent=0) {
 
 //Affiche les sous-rubriques d'une rubrique
 function afficheSousRubriques($bud, $id_rub, &$form, $indent=0) {
-	
-	global $dbh, $charset;
+	global $charset;
 	global $view_lig_rub_form, $lig_rub_img, $lig_indent;
 	global $acquisition_gestion_tva;
 
@@ -669,7 +604,7 @@ function afficheSousRubriques($bud, $id_rub, &$form, $indent=0) {
 	}
 	$id_bud = $bud->id_budget;
 	$q = budgets::listRubriques($id_bud, $id_rub);
-	$list_n = pmb_mysql_query($q, $dbh); 
+	$list_n = pmb_mysql_query($q); 
 	while(($row=pmb_mysql_fetch_object($list_n))){
 		$form = str_replace('<!-- sous_rub'.$id_rub.' -->', $view_lig_rub_form.'<!-- sous_rub'.$id_rub.' -->', $form);
 		$marge = '';
@@ -727,31 +662,24 @@ function afficheSousRubriques($bud, $id_rub, &$form, $indent=0) {
 	}
 }
 
-
-
 //Traitement des actions
 if (!$acquisition_no_html) {
 	print "<h1>".htmlentities($msg['acquisition_ach_ges'],ENT_QUOTES, $charset)."&nbsp;:&nbsp;".htmlentities($msg['acquisition_menu_ref_budget'],ENT_QUOTES, $charset)."</h1>";
 }
 
 switch($action) {
-
 	case 'list':
 		entites::setSessionBibliId($id_bibli);
 		show_list_bud($id_bibli);
 		break;
-
 	case 'show':
 		show_bud($id_bibli, $id_bud);
 		break;
-		
 	case 'print_budget':
 		print_bud($id_bibli, $id_bud);
 		break;
-
 	default:
-		show_list_biblio();	
+		print entites::show_list_biblio('show_list_bud');	
 		break;
-		
 }
 ?>

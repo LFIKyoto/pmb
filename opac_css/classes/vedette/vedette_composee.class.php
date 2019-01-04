@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_composee.class.php,v 1.8 2015-06-18 14:23:54 apetithomme Exp $
+// $Id: vedette_composee.class.php,v 1.15 2018-07-03 08:42:14 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -46,9 +46,10 @@ class vedette_composee {
 	 */
 	static private $configs = array();
 	
+	static private $grammars;
+	
 	public function __construct($id = 0, $config_filename = "rameau"){
-		$this->id=$id;
-		
+		$this->id=$id+0;
 		if($this->id){
 			$this->read();
 		} else {
@@ -200,18 +201,19 @@ class vedette_composee {
 		
 		$query='select object_type, object_id, subdivision, position from vedette_object where num_vedette = '.$this->id.' order by position';
 		$result=pmb_mysql_query($query,$dbh);
-		
 		if(!pmb_mysql_error($dbh) && pmb_mysql_num_rows($result)){
 			while($element_from_database=pmb_mysql_fetch_object($result)){
 				$field=$this->get_at_available_field_num($element_from_database->object_type);
 				$vedette_element_class_name=$field['class_name'];
-				require_once($class_path."/vedette/".$vedette_element_class_name.".class.php");
-				if($field['params']){
-					$element=new $vedette_element_class_name($field['params'],$field["num"], $element_from_database->object_id);
-				}else{
-					$element=new $vedette_element_class_name($field["num"], $element_from_database->object_id);
+				if($vedette_element_class_name){
+					require_once($class_path."/vedette/".$vedette_element_class_name.".class.php");
+					if(isset($field['params']) && $field['params']){
+						$element=new $vedette_element_class_name($field['params'],$field["num"], $element_from_database->object_id);
+					}else{
+						$element=new $vedette_element_class_name($field["num"], $element_from_database->object_id);
+					}
+					$this->add_element($element, $element_from_database->subdivision, $element_from_database->position);
 				}
-				$this->add_element($element, $element_from_database->subdivision, $element_from_database->position);
 			}
 		}
 	}
@@ -233,7 +235,7 @@ class vedette_composee {
 				//pas de fichier à analyser
 				return false;
 			}
-	
+			
 			$fileInfo = pathinfo($xmlFile);
 			$tempFile = $base_path."/temp/XML".preg_replace("/[^a-z0-9]/i","",$fileInfo['dirname'].$fileInfo['filename'].$charset).".tmp";
 	
@@ -248,11 +250,11 @@ class vedette_composee {
 					$xml=fread($fp,filesize($xmlFile));
 					fclose($fp);
 					$xml_2_analyze=_parser_text_no_function_($xml, 'COMPOSED_HEADINGS');
-	
+					
 					self::$configs[$this->config_filename]['available_fields'] = array_map("self::clean_read_xml", $xml_2_analyze['AVAILABLE_FIELDS'][0]['FIELD']);
 					self::$configs[$this->config_filename]['subdivisions'] = array_map("self::clean_read_xml", $xml_2_analyze['HEADING'][0]['SUBDIVISION']);
 					self::$configs[$this->config_filename]['separator'] = $xml_2_analyze['SEPARATOR'][0]['value'];
-	
+					
 					$tmp = fopen($tempFile, "wb");
 					fwrite($tmp,serialize(self::$configs[$this->config_filename]));
 					fclose($tmp);
@@ -348,32 +350,35 @@ class vedette_composee {
 		global $dbh;
 		
 		$vedettes_id = array();
-		
-		$query = "select distinct grammar from vedette";
-		$result = pmb_mysql_query($query, $dbh);
-		if ($result && pmb_mysql_num_rows($result)) {
-			while ($row = pmb_mysql_fetch_object($result)) {
-				$vedette = new vedette_composee(0, $row->grammar);
-		
-				// On récupère l'identifiant lié au type d'élément
+		if($element_type == 'authperso'){
+		    $query = "select authperso_authority_authperso_num from authperso_authorities where id_authperso_authority=".$element_id;
+		    $result = pmb_mysql_query($query);
+		    if(pmb_mysql_num_rows($result)){
+		        $element_type.=pmb_mysql_result($result, 0, 0);
+		    }
+		}
+		$grammars = static::get_grammars();
+		foreach ($grammars as $grammar) {
+			$vedette = new vedette_composee(0, $grammar);
+			
+			// On récupère l'identifiant lié au type d'élément
+			if($vedette->get_available_fields())
 				foreach($vedette->get_available_fields() as $key=>$field){
 					if($field["type"] == $element_type){
 						$element_type_num = $field["num"];
 						break;
 					}
-				}
-		
-				// On va chercher en base les vedettes contenant cet élément
-				$query = "select distinct num_vedette from vedette_object inner join vedette on num_vedette = id_vedette where object_id = ".$element_id." and object_type = ".$element_type_num." and grammar = ".$row->grammar;
-				$result2 = pmb_mysql_query($query, $dbh);
-				if ($result2 && pmb_mysql_num_rows($result2)) {
-					while ($row2 = pmb_mysql_fetch_object($result2)) {
-						$vedettes_id[] = $row2->num_vedette;
-					}
-				}
 			}
+			
+			// On va chercher en base les vedettes contenant cet élément
+			$query = "select distinct num_vedette from vedette_object inner join vedette on num_vedette = id_vedette where object_id = ".$element_id." and object_type = ".$element_type_num." and grammar = '".$grammar."' ";
+			$result = pmb_mysql_query($query, $dbh);
+			if ($result && pmb_mysql_num_rows($result)) {
+				while ($row = pmb_mysql_fetch_object($result)) {
+					$vedettes_id[] = $row->num_vedette;
+				}
+			}	
 		}
-		
 		return $vedettes_id;
 	}
 	
@@ -418,7 +423,7 @@ class vedette_composee {
 			if(self::$configs[$this->config_filename]['available_fields'][$i]['type'] == 'authperso'){
 				$infos = self::$configs[$this->config_filename]['available_fields'][$i];
 				unset(self::$configs[$this->config_filename]['available_fields'][$i]);
-				$authpersos=new authpersos();
+				$authpersos=authpersos::get_instance();
 				foreach($authpersos->info as $authority){
 					$authorities[] = array(
 						'num' => (string)($infos['num']+$authority['id']),
@@ -434,7 +439,11 @@ class vedette_composee {
 				break;
 			}
 		}
- 		self::$configs[$this->config_filename]['available_fields'] = array_merge(self::$configs[$this->config_filename]['available_fields'], $authorities);
+		if(self::$configs[$this->config_filename]['available_fields']){
+ 			self::$configs[$this->config_filename]['available_fields'] = array_merge(self::$configs[$this->config_filename]['available_fields'], $authorities);
+		}  else{
+			self::$configs[$this->config_filename]['available_fields'] = $authorities;
+		}	
 	}
 	
 	public function get_subdivision_name_by_code($code) {
@@ -456,5 +465,19 @@ class vedette_composee {
 			}
 		}
 		return "";
+	}
+	
+	public static function get_grammars() {
+		if(!isset(static::$grammars)) {
+			static::$grammars = array();
+			$query = "select distinct grammar from vedette";
+			$result = pmb_mysql_query($query);
+			if ($result && pmb_mysql_num_rows($result)) {
+				while ($row = pmb_mysql_fetch_object($result)) {
+					static::$grammars[] = $row->grammar;
+				}
+			}
+		}
+		return static::$grammars;
 	}
 }

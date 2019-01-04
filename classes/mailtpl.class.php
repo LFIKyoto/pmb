@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mailtpl.class.php,v 1.4 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: mailtpl.class.php,v 1.8 2017-08-29 12:20:10 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,16 +10,16 @@ require_once($include_path."/templates/mailtpl.tpl.php");
 require_once($class_path."/files_gestion.class.php");
 
 class mailtpl {
-	var $id=0;
-	var $info=array();
-	var $users=array();
+	public $id=0;
+	public $info=array();
+	public $users=array();
 	
-	function mailtpl($id=0) {
+	public function __construct($id=0) {
 		$this->id=$id+0;
 		$this->fetch_data();
 	}
 	
-	function fetch_data() {
+	public function fetch_data() {
 		global $include_path;
 		global $PMBuserid;
 		
@@ -51,7 +51,7 @@ class mailtpl {
 	// printr($this->info[28]);
 	}
 
-    function get_mailtpl(){
+    public function get_mailtpl(){
 		global $charset;
     	$ajax_send=$this->info;
     	if($charset != 'utf-8'){ // cause: json_encode veut de l'utf8
@@ -64,12 +64,17 @@ class mailtpl {
     	return($ajax_send);
     }
 	
-    static function get_selvars(){
+    public static function get_selvars(){
     	global $msg,$mailtpl_form_selvars;    	
 		return $mailtpl_form_selvars;   
-    }   
+    }  
+    
+    public static function get_resavars(){
+    	global $msg,$mailtpl_form_resavars;
+    	return $mailtpl_form_resavars;
+    }
  	
-    static function get_sel_img(){
+    public static function get_sel_img(){
     	global $msg,$mailtpl_form_sel_img, $pmb_img_folder,$pmb_img_url;
     	if(!$pmb_img_folder) return '';
     	$tpl=$mailtpl_form_sel_img;
@@ -81,23 +86,33 @@ class mailtpl {
 		return $tpl;   
     }   
        
-	function get_form() {
-		global $mailtpl_form_tpl,$msg,$charset;		
+	public function get_form($duplicate = false) {
+		global $mailtpl_form_tpl,$msg,$charset;
+		global $pdflettreresa_resa_prolong_email;
 		
 		$tpl=$mailtpl_form_tpl;
+		$name="";
 		if($this->id){
-			$tpl=str_replace('!!msg_title!!',$msg['admin_mailtpl_form_edit'],$tpl);
-			$tpl=str_replace('!!delete!!',"<input type='button' class='bouton' value='".$msg['admin_mailtpl_delete']."'  onclick=\"document.getElementById('action').value='delete';this.form.submit();\"  />", $tpl);
-			$name=$this->info['name'];
+			if (!$duplicate) {
+				$tpl=str_replace('!!msg_title!!',$msg['admin_mailtpl_form_edit'],$tpl);
+				$tpl=str_replace('!!delete!!',"<input type='button' class='bouton' value='".$msg['admin_mailtpl_delete']."' onclick=\"document.getElementById('action').value='delete';this.form.submit();\"  />", $tpl);
+				$name=$this->info['name'];
+				$tpl = str_replace("!!duplicate!!","<input class='bouton' type='button' value=' ".$msg["admin_mailtpl_duplicate"]." ' onclick=\"document.getElementById('action').value='duplicate';this.form.submit();\" />",$tpl);
+			} else {
+				$tpl=str_replace('!!msg_title!!',$msg['admin_mailtpl_form_add'],$tpl);
+				$tpl=str_replace('!!delete!!',"",$tpl);
+				$tpl = str_replace("!!duplicate!!","",$tpl);
+			}
 			$tpl_objet=$this->info['objet'];
 			$tpl_contens=$this->info['tpl'];
 		}else{ 
 			$tpl=str_replace('!!msg_title!!',$msg['admin_mailtpl_form_add'],$tpl);
 			$tpl_objet="";
 			$tpl=str_replace('!!delete!!',"",$tpl);
-			$name="";
+			$tpl = str_replace("!!duplicate!!","",$tpl);
 			$tpl_contens="";
 		}
+		$autorisations_users="";
 		$id_check_list="";
 		foreach($this->all_users as $a_user) {
 			$id_check="auto_".$a_user[0];			
@@ -114,6 +129,11 @@ class mailtpl {
 		}		
 		$tpl=str_replace('!!name!!',htmlentities($name, ENT_QUOTES, $charset),$tpl);
 		$tpl=str_replace('!!selvars!!',mailtpl::get_selvars(),$tpl);	
+		
+		if($pdflettreresa_resa_prolong_email){
+			$tpl=str_replace('!!resavars!!',mailtpl::get_resavars(),$tpl);
+		}
+		
 		$sel_img_tpl="";
 		$sel_img=mailtpl::get_sel_img();
 		if($sel_img)$sel_img_tpl="
@@ -128,12 +148,15 @@ class mailtpl {
 		$tpl=str_replace('!!id_check_list!!',$id_check_list,$tpl);			
 		$tpl=str_replace('!!tpl!!',htmlentities($tpl_contens, ENT_QUOTES, $charset),$tpl);		
 		$tpl=str_replace('!!objet!!',htmlentities($tpl_objet,ENT_QUOTES,$charset),$tpl);
+		if ($duplicate) {
+			$this->id = 0;
+		}
 		$tpl=str_replace('!!id_mailtpl!!',$this->id,$tpl);
 		 
 		return $tpl;
 	}
 
-	function save($data) {
+	public function save($data) {
 		global $dbh;
 		
 		$fields="
@@ -154,7 +177,7 @@ class mailtpl {
 		$this->fetch_data();
 	}	
 	
-	function delete() {
+	public function delete() {
 		global $dbh;
 		
 		$req="DELETE from mailtpl WHERE id_mailtpl=".$this->id;
@@ -170,32 +193,31 @@ class mailtpl {
 
 
 class mailtpls {	
-	var $info=array();
+	public $info=array();
 	
-	function mailtpls() {
+	public function __construct() {
 		$this->fetch_data();
 	}
 	
-	function fetch_data() {
+	public function fetch_data() {
 		global $PMBuserid;
 		$this->info=array();
 		$i=0;
-		$req="select * from mailtpl where  mailtpl_users like '% $PMBuserid %' ";
+		$req="SELECT * FROM mailtpl WHERE mailtpl_users LIKE '% $PMBuserid %' ORDER BY mailtpl_name";
 		$resultat=pmb_mysql_query($req);	
 		if (pmb_mysql_num_rows($resultat)) {
 			while($r=pmb_mysql_fetch_object($resultat)){	
-				$this->info[$i]= $mailtpl=new mailtpl($r->id_mailtpl);	
-				
+				$this->info[$i]= $mailtpl=new mailtpl($r->id_mailtpl);
 				$i++;
 			}
 		}
 	}
 		
-	function get_count_tpl() {
+	public function get_count_tpl() {
 		return count($this->info);
 	}
 		
-	function get_list() {
+	public function get_list() {
 		global $mailtpl_list_tpl,$mailtpl_list_line_tpl,$msg;
 		
 		$tpl=$mailtpl_list_tpl;
@@ -214,7 +236,7 @@ class mailtpls {
 		return $tpl;
 	}	
 	
-	function get_sel($sel_name,$sel_id=0) {
+	public function get_sel($sel_name,$sel_id=0) {
 		global $msg;
 		$tpl="<select name='$sel_name' id='$sel_name'>";				
 		foreach($this->info as $elt){

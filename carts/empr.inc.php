@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr.inc.php,v 1.16.4.1 2015-09-30 10:14:34 jpermanne Exp $
+// $Id: empr.inc.php,v 1.21 2017-11-29 16:13:10 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -48,17 +48,9 @@ switch ($action) {
 		print "<script type='text/javascript'>window.close();</script>"; 
 		break;
 	case 'new_cart':
-		$select_cart="<input type='hidden' name='cart_type' value='EMPR'/> ";
-	 	$c_form=str_replace('!!cart_type_select!!', $select_cart, $cart_form);
-	 	$memo_contexte="<input type='hidden' name='clause' value=\"".htmlentities(stripslashes($clause), ENT_QUOTES, $charset)."\">";
-	 	$memo_contexte.="<input type='hidden' name='filtered_query' value=\"".htmlentities(stripslashes($filtered_query), ENT_QUOTES, $charset)."\">";
-	 	$c_form=str_replace('<!--memo_contexte-->', $memo_contexte, $c_form);
-		print $c_form;
 		break;
 	case 'del_cart':
 	case 'valid_new_cart':		
-
-
 	case 'add_result':
 		if ($sub_action=='update') {
 			if($item) {
@@ -156,8 +148,22 @@ switch ($action) {
 				if ($empr_location_id!=0) $restrict_localisation = " AND empr_location='$empr_location_id' ";
 				else $restrict_localisation = "";
 			}
+			if (($empr_statut_edit) && ($empr_statut_edit!=0)) {
+				$restrict_statut = " AND empr_statut='$empr_statut_edit' ";
+			} else {
+				$restrict_statut = "";
+			}
+			$restrict_categ = '';
+			if($empr_categ_filter) {
+				$restrict_categ = " AND empr_categ= '".$empr_categ_filter."' ";
+			}
+			$restrict_codestat = '';
+			if($empr_codestat_filter) {
+				$restrict_codestat = " AND empr_codestat= '".$empr_codestat_filter."' ";
+			}
 
-			$requete = "SELECT id_empr FROM empr where ((to_days(empr_date_expiration) - to_days(now()) ) <=  $pmb_relance_adhesion ) and empr_date_expiration >= now() $restrict_localisation";
+			$requete = "SELECT id_empr FROM empr where ((to_days(empr_date_expiration) - to_days(now()) ) <=  $pmb_relance_adhesion ) and empr_date_expiration >= now() $restrict_localisation $restrict_statut $restrict_categ $restrict_codestat ";
+
 			$res_rqt=pmb_mysql_query($requete);
 			foreach ( $caddie as $id_caddie => $coche) {
        			if($coche){
@@ -171,7 +177,7 @@ switch ($action) {
 			print "<script type='text/javascript'>window.close();</script>"; 
 		} else {
 			// function aff_paniers_empr($item=0, $lien_origine="./circ.php?", $action_click = "add_item", $titre="", $restriction_panier="", $lien_edition=0, $lien_suppr=0, $lien_creation=1) {
-			aff_paniers_empr(0, "./cart.php?object_type=$object_type&sub_action=add&empr_location_id=$empr_location_id", "add_empr_limite",$msg["caddie_add_emprs"] , "", 0, 0, 0);
+			aff_paniers_empr(0, "./cart.php?object_type=$object_type&sub_action=add&empr_location_id=$empr_location_id&empr_statut_edit=$empr_statut_edit&empr_codestat_filter=$empr_codestat_filter&empr_categ_filter=$empr_categ_filter", "add_empr_limite",$msg["caddie_add_emprs"] , "", 0, 0, 0);
 		}
 		break;
 	case 'add_empr_depasse':
@@ -181,8 +187,17 @@ switch ($action) {
 				if ($empr_location_id=="") $empr_location_id = $deflt2docs_location ;
 				if ($empr_location_id!=0) $restrict_localisation = " AND empr_location='$empr_location_id' ";
 				else $restrict_localisation = "";
+			}				
+			$restrict_categ = '';
+			if($empr_categ_filter) {
+				$restrict_categ = " AND empr_categ= '".$empr_categ_filter."' ";
 			}
-			$requete = "SELECT id_empr FROM empr where empr_date_expiration < now() $restrict_localisation";
+			$restrict_codestat = '';
+			if($empr_codestat_filter) {
+				$restrict_codestat = " AND empr_codestat= '".$empr_codestat_filter."' ";
+			}
+			
+			$requete = "SELECT id_empr FROM empr where empr_date_expiration < now() $restrict_localisation $restrict_categ $restrict_codestat ";
 			$res_rqt=pmb_mysql_query($requete);
 			foreach ( $caddie as $id_caddie => $coche) {
        			if($coche){
@@ -197,7 +212,7 @@ switch ($action) {
 			print "<script type='text/javascript'>window.close();</script>"; 
 		} else {
 			// function aff_paniers_empr($item=0, $lien_origine="./circ.php?", $action_click = "add_item", $titre="", $restriction_panier="", $lien_edition=0, $lien_suppr=0, $lien_creation=1) {
-			aff_paniers_empr(0, "./cart.php?object_type=$object_type&sub_action=add&empr_location_id=$empr_location_id", "add_empr_depasse",$msg["caddie_add_emprs"] , "", 0, 0, 0);
+			aff_paniers_empr(0, "./cart.php?object_type=$object_type&sub_action=add&empr_location_id=$empr_location_id&empr_codestat_filter=$empr_codestat_filter&empr_categ_filter=$empr_categ_filter", "add_empr_depasse",$msg["caddie_add_emprs"] , "", 0, 0, 0);
 		}
 		break;
 	case 'add_empr_encours':
@@ -208,8 +223,17 @@ switch ($action) {
 				if ($empr_location_id!=0) $restrict_localisation = " AND empr_location='$empr_location_id' ";
 				else $restrict_localisation = "";
 			}
+							
+			$restrict_categ = '';
+			if($empr_categ_filter) {
+				$restrict_categ = " AND empr_categ= '".$empr_categ_filter."' ";
+			}
+			$restrict_codestat = '';
+			if($empr_codestat_filter) {
+				$restrict_codestat = " AND empr_codestat= '".$empr_codestat_filter."' ";
+			}
 
-			$requete = "SELECT id_empr FROM empr where empr_date_expiration >= now() $restrict_localisation";
+			$requete = "SELECT id_empr FROM empr where empr_date_expiration >= now() $restrict_localisation $restrict_categ $restrict_codestat ";
 			$res_rqt=pmb_mysql_query($requete);
 			foreach ( $caddie as $id_caddie => $coche) {
        			if($coche){
@@ -223,7 +247,42 @@ switch ($action) {
 			print "<script type='text/javascript'>window.close();</script>"; 
 		} else {
 			// function aff_paniers_empr($item=0, $lien_origine="./circ.php?", $action_click = "add_item", $titre="", $restriction_panier="", $lien_edition=0, $lien_suppr=0, $lien_creation=1) {
-			aff_paniers_empr(0, "./cart.php?object_type=$object_type&sub_action=add&empr_location_id=$empr_location_id", "add_empr_encours",$msg["caddie_add_emprs"] , "", 0, 0, 0);
+			aff_paniers_empr(0, "./cart.php?object_type=$object_type&sub_action=add&empr_location_id=$empr_location_id&empr_codestat_filter=$empr_codestat_filter&empr_categ_filter=$empr_categ_filter", "add_empr_encours",$msg["caddie_add_emprs"] , "", 0, 0, 0);
+		}
+		break;
+	case 'add_empr_categ_change':
+		if ($sub_action=='add' && count($caddie)) {
+			// restriction localisation le cas échéant
+			if ($pmb_lecteurs_localises) {
+				if ($empr_location_id=="") $empr_location_id = $deflt2docs_location ;
+				if ($empr_location_id!=0) $restrict_localisation = " AND empr_location='$empr_location_id' ";
+				else $restrict_localisation = "";
+			}			
+			$restrict_categ = '';
+			if($empr_categ_filter) {
+				$restrict_categ = " AND empr_categ= '".$empr_categ_filter."' ";
+			}
+			$restrict_codestat = '';
+			if($empr_codestat_filter) {
+				$restrict_codestat = " AND empr_codestat= '".$empr_codestat_filter."' ";
+			}
+
+			$requete = "select id_empr from empr left join empr_categ on empr_categ = id_categ_empr ";
+			$requete .=" where ((((age_min<> 0) || (age_max <> 0)) && (age_max >= age_min)) && (((DATE_FORMAT( curdate() , '%Y' )-empr_year) < age_min) || ((DATE_FORMAT( curdate() , '%Y' )-empr_year) > age_max))) $restrict_localisation $restrict_categ $restrict_codestat ";
+			$res_rqt=pmb_mysql_query($requete);
+			foreach ( $caddie as $id_caddie => $coche) {
+       			if($coche){
+       				$myCart = new empr_caddie($id_caddie);
+					while ($r=pmb_mysql_fetch_object($res_rqt)) {
+						$myCart->add_item($r->id_empr);
+					} // fin while
+					pmb_mysql_data_seek($res_rqt,0);
+       			}
+			}
+			print "<script type='text/javascript'>window.close();</script>"; 
+		} else {
+			// function aff_paniers_empr($item=0, $lien_origine="./circ.php?", $action_click = "add_item", $titre="", $restriction_panier="", $lien_edition=0, $lien_suppr=0, $lien_creation=1) {
+			aff_paniers_empr(0, "./cart.php?object_type=$object_type&sub_action=add&empr_location_id=$empr_location_id&empr_codestat_filter=$empr_codestat_filter&empr_categ_filter=$empr_categ_filter", "add_empr_categ_change",$msg["caddie_add_emprs"] , "", 0, 0, 0);
 		}
 		break;
 	default:

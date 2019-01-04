@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: recouvr_reader.inc.php,v 1.11 2015-06-28 15:09:37 Alexandre Exp $
+// $Id: recouvr_reader.inc.php,v 1.12 2017-04-19 09:58:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -176,6 +176,7 @@ function show_recouvr_form($recouvr_id) {
 	
 }
 
+if(!isset($act_line)) $act_line = '';
 switch ($act_line) {
 	case "update_line":
 		show_recouvr_form($recouvr_id);

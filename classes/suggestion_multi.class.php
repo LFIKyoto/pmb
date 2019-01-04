@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestion_multi.class.php,v 1.16 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: suggestion_multi.class.php,v 1.20 2017-11-23 15:21:46 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,19 +16,19 @@ require_once($class_path."/docs_location.class.php");
 
 class suggestion_multi{
 	
-	var $liste_sugg=array();
+	public $liste_sugg=array();
 	
 	/**
 	 * Constructeur
 	 */
-	function suggestion_multi($tableau_sugg=array()){
+	public function __construct($tableau_sugg=array()){
 		$this->liste_sugg = $tableau_sugg;
 	}
 	
 	/**
 	 * Formulaire de saisie des suggestions multiples
 	 */
-	function display_form(){
+	public function display_form(){
 		global $dbh, $multi_sug_form,$charset,$msg, $src_liste;
 		global $PMBusernom;
 		global $PMBuserprenom;
@@ -45,21 +45,21 @@ class suggestion_multi{
 		if(!$this->liste_sugg){
 			$multi_sug_form = str_replace("!!max_lignes!!","1",$multi_sug_form);	
 			$ligne = "<tr id='sugg_0'>
-					<td><input type='texte' name='sugg_tit_0' id='sugg_tit_0' value='' disabled /></td>
-					<td><input type='texte' name='sugg_aut_0' id='sugg_aut_0' value=''disabled  /></td>
-					<td><input type='texte' name='sugg_edi_0' id='sugg_edi_0' value='' disabled /></td>
-					<td><input type='texte' name='sugg_code_0' id='sugg_code_0' value='' disabled /></td>
-					<td><input type='texte' name='sugg_prix_0' id='sugg_prix_0' value='' disabled /></td>
-					<td><input type='texte' name='sugg_url_0' id='sugg_url_0' value='' disabled /></td>
+					<td><input type='text' name='sugg_tit_0' id='sugg_tit_0' value='' disabled /></td>
+					<td><input type='text' name='sugg_aut_0' id='sugg_aut_0' value='' disabled /></td>
+					<td><input type='text' name='sugg_edi_0' id='sugg_edi_0' value='' disabled /></td>
+					<td><input type='text' name='sugg_code_0' id='sugg_code_0' value='' disabled /></td>
+					<td><input type='text' name='sugg_prix_0' id='sugg_prix_0' value='' disabled /></td>
+					<td><input type='text' name='sugg_url_0' id='sugg_url_0' value='' disabled /></td>
 					<td><textarea name='sugg_com_0' id='sugg_com_0' disabled ></textarea></td>
 					<td><textarea name='sugg_com_gestion_0' id='sugg_com_gestion_0' disabled ></textarea></td>
-					<td><input type='texte' name='sugg_date_0' id='sugg_date_0' value='' disabled /></td>
+					<td><input type='text' name='sugg_date_0' id='sugg_date_0' value='' disabled /></td>
 					<td>
 						<select id='sugg_src_0' name='sugg_src_0' disabled>
 							$option
 						</select>
 					</td>
-					<td><input type='texte' name='sugg_qte_0' id='sugg_qte_0' value='1' disabled /></td>
+					<td><input type='text' name='sugg_qte_0' id='sugg_qte_0' value='1' disabled /></td>
 					<td id='act_btn_0'><input type='button' class='bouton' name='add_line_0' id='add_line_0' value='+' onclick=\"add_line(0);\"/></td>
 				</tr>";
 		} else {
@@ -67,21 +67,21 @@ class suggestion_multi{
 			for($i=0;$i<=count($this->liste_sugg);$i++){
 				if($this->liste_sugg[$i]){
 					$ligne .= "<tr id='sugg_$i'>
-						<td><input type='texte' name='sugg_tit_$i' id='sugg_tit_$i' value='".htmlentities($this->liste_sugg[$i]['titre'],ENT_QUOTES,$charset)."' /></td>
-						<td><input type='texte' name='sugg_aut_$i' id='sugg_aut_$i' value='".htmlentities($this->liste_sugg[$i]['auteur'],ENT_QUOTES,$charset)."' /></td>
-						<td><input type='texte' name='sugg_edi_$i' id='sugg_edi_$i' value='".htmlentities($this->liste_sugg[$i]['editeur'],ENT_QUOTES,$charset)."' /></td>
-						<td><input type='texte' name='sugg_code_$i' id='sugg_code_$i' value='".htmlentities($this->liste_sugg[$i]['code'],ENT_QUOTES,$charset)."' /></td>
-						<td><input type='texte' name='sugg_prix_$i' id='sugg_prix_$i' value='".$this->liste_sugg[$i]['prix']."' /></td>
-						<td><input type='texte' name='sugg_url_$i' id='sugg_url_$i' value='".htmlentities($this->liste_sugg[$i]['url'],ENT_QUOTES,$charset)."' /></td>
+						<td><input type='text' name='sugg_tit_$i' id='sugg_tit_$i' value='".htmlentities($this->liste_sugg[$i]['titre'],ENT_QUOTES,$charset)."' /></td>
+						<td><input type='text' name='sugg_aut_$i' id='sugg_aut_$i' value='".htmlentities($this->liste_sugg[$i]['auteur'],ENT_QUOTES,$charset)."' /></td>
+						<td><input type='text' name='sugg_edi_$i' id='sugg_edi_$i' value='".htmlentities($this->liste_sugg[$i]['editeur'],ENT_QUOTES,$charset)."' /></td>
+						<td><input type='text' name='sugg_code_$i' id='sugg_code_$i' value='".htmlentities($this->liste_sugg[$i]['code'],ENT_QUOTES,$charset)."' /></td>
+						<td><input type='text' name='sugg_prix_$i' id='sugg_prix_$i' value='".$this->liste_sugg[$i]['prix']."' /></td>
+						<td><input type='text' name='sugg_url_$i' id='sugg_url_$i' value='".htmlentities($this->liste_sugg[$i]['url'],ENT_QUOTES,$charset)."' /></td>
 						<td><textarea name='sugg_com_$i' id='sugg_com_$i'></textarea></td>
 						<td><textarea name='sugg_com_gestion_$i' id='sugg_com_gestion_$i'></textarea></td>
-						<td><input type='texte' name='sugg_date_$i' id='sugg_date_$i' value='".htmlentities($this->liste_sugg[$i]['date'],ENT_QUOTES,$charset)."' /></td>
+						<td><input type='text' name='sugg_date_$i' id='sugg_date_$i' value='".htmlentities($this->liste_sugg[$i]['date'],ENT_QUOTES,$charset)."' /></td>
 						<td>
 							<select id='sugg_src_$i' name='sugg_src_$i'>
 								$option
 							</select>
 						</td>
-						<td><input type='texte' name='sugg_qte_$i' id='sugg_qte_$i' value='1' /></td>";
+						<td><input type='text' name='sugg_qte_$i' id='sugg_qte_$i' value='1' /></td>";
 					
 					if($i==count($this->liste_sugg)){	
 						$ligne .= "<td id='act_btn_$i'><input type='button' class='bouton' name='add_line_$i' id='add_line_$i' value='+' onclick=\"add_line($i);\"/></td>";
@@ -129,6 +129,7 @@ class suggestion_multi{
 			$sel_categ = "";
 		}
 		//Selecteur de localisation
+		$list_locs = '';
 		if ($acquisition_sugg_localises) {
 			$list_locs .= "<label class='etiquette' >".htmlentities($msg['acquisition_sug_sel_localisation'],ENT_QUOTES, $charset)."</label>&nbsp;";
 			if ($sugg_location_id) $temp_location=$sugg_location_id;
@@ -147,7 +148,7 @@ class suggestion_multi{
 	/**
 	 * Enregistrement de la suggestion multiple
 	 */
-	function save(){
+	public function save(){
 		
 		global $dbh, $max_nblignes, $msg, $id_user, $type_user, $sugg_location_id, $num_categ;
 		
@@ -156,37 +157,37 @@ class suggestion_multi{
 			$code = "sugg_code_".$i; $prix = "sugg_prix_".$i; $com = "sugg_com_".$i; $com_gestion = "sugg_com_gestion_".$i;
 			$url = "sugg_url_".$i; $qte = "sugg_qte_".$i; $src = "sugg_src_".$i;
 			$date = "sugg_date_".$i; $unimarc = "id_unimarc_".$i;
-			global $$tit, $$aut, $$edi, $$code, $$com, $$com_gestion, $$prix, $$url, $$qte, $$src, $$date, $$unimarc;
+			global ${$tit}, ${$aut}, ${$edi}, ${$code}, ${$com}, ${$com_gestion}, ${$prix}, ${$url}, ${$qte}, ${$src}, ${$date}, ${$unimarc};
 			
-			if(isset($$tit)){
-				if(!is_numeric($$qte)){
+			if(isset(${$tit})){
+				if(!is_numeric(${$qte})){
 					print "<strong>".$msg['acquisition_sugg_qte_error']."</strong>";
 					return;
-				} else if(!$$tit || (!$$edi && !$$aut && !$$code)) {
+				} else if(!${$tit} || (!${$edi} && !${$aut} && !${$code})) {
 					print "<strong>".str_replace('\n','<br />',$msg['acquisition_sug_ko'])."</strong>";
 					return;
-				} else if(!suggestions::exists($id_user,$$tit,$$aut,$$edi,$$code)) {
-					$$prix = str_replace(',','.',$$prix);
+				} else if(!suggestions::exists($id_user,${$tit},${$aut},${$edi},${$code})) {
+					${$prix} = str_replace(',','.',${$prix});
 					$req="insert into suggestions set 
-							titre='".$$tit."',
-							auteur='".$$aut."',
-							editeur='".$$edi."',
-							code='".$$code."',
-							prix='".$$prix."',
-							commentaires='".$$com."',
-							commentaires_gestion='".$$com_gestion."',
-							url_suggestion='".$$url."',
-							nb='".$$qte."',
-							sugg_source='".$$src."',
+							titre='".${$tit}."',
+							auteur='".${$aut}."',
+							editeur='".${$edi}."',
+							code='".${$code}."',
+							prix='".${$prix}."',
+							commentaires='".${$com}."',
+							commentaires_gestion='".${$com_gestion}."',
+							url_suggestion='".${$url}."',
+							nb='".${$qte}."',
+							sugg_source='".${$src}."',
 							statut=1,
-							date_publication='".$$date."',
+							date_publication='".${$date}."',
 							date_creation='".date("Y-m-d")."',
 							num_categ='".$num_categ."',
 							sugg_location='".$sugg_location_id."'
 							";
 					
-					if($$unimarc){
-						$uni = new suggestions_unimarc($$unimarc);
+					if(${$unimarc}){
+						$uni = new suggestions_unimarc(${$unimarc});
 						$req .= ", notice_unimarc ='".addslashes($uni->sugg_uni_notice)."'";							
 					} 
 					pmb_mysql_query($req,$dbh);	
@@ -205,7 +206,7 @@ class suggestion_multi{
 		}
 	}
 	
-	function traite_notice($notice_iso2709,$n_notice) {
+	public function traite_notice($notice_iso2709,$n_notice) {
 		$notice=new iso2709_notices($notice_iso2709);
 		$n_notice--;
 		if (!$notice->error) {
@@ -227,7 +228,7 @@ class suggestion_multi{
 		}
 	}
 	
-	function create_table_from_uni() {
+	public function create_table_from_uni() {
 		global $charset,$file_in,$suffix;
 		
 		//Lecture des notices

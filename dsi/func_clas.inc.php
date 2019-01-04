@@ -2,66 +2,79 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_clas.inc.php,v 1.7 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: func_clas.inc.php,v 1.9 2017-02-24 09:40:00 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 function dsi_list_classements() {
-
-global $dbh, $msg;
-global $page, $nbr_lignes;
-global $dsi_list_tmpl;
-global $form_cb;
-
-// nombre de références par pages
-$nb_per_page = 10;
-
-if(!$nbr_lignes) {
-	$requete = "SELECT COUNT(1) FROM classements ";
-	$res = pmb_mysql_query($requete, $dbh);
-	$nbr_lignes = @pmb_mysql_result($res, 0, 0);
-	}
-
-if (!$page) $page=1;
-$debut = ($page-1)*$nb_per_page;
-
-if($nbr_lignes) {
-
-		// on lance la vraie requête
-		$requete = "SELECT id_classement, nom_classement, type_classement FROM classements ORDER BY type_classement, nom_classement, id_classement LIMIT $debut,$nb_per_page ";
-		$res = @pmb_mysql_query($requete, $dbh);
-
-		$parity = 0;
+	global $dbh, $msg;
+	global $dsi_list_tmpl;
+	global $form_cb;
+	
+	// tableau des classements de bannettes
+	$requete = "SELECT id_classement, nom_classement, classement_opac_name, type_classement FROM classements where (type_classement='' or type_classement='BAN')
+			ORDER BY classement_order, nom_classement";
+	$res = @pmb_mysql_query($requete, $dbh);	
+	$parity = 0;
+	if($nb=pmb_mysql_num_rows($res)){
+		$tpl_bannettes=$dsi_list_tmpl;
+		$list='
+				<tr>
+					<th></th>
+					<th>'.$msg['103'].'</th>
+					<th>'.$msg['dsi_clas_form_nom_opac'].'</th>				
+				</tr>
+				';
 		while(($clas=pmb_mysql_fetch_object($res))) {
-			if ($parity % 2) $pair_impair = "even";
-				else $pair_impair = "odd";
+			if ($parity % 2) $pair_impair = "even";	else $pair_impair = "odd";
 			$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./dsi.php?categ=options&sub=classements&id_classement=$clas->id_classement&suite=acces';\" ";
-			$empr_list .= "<tr class='$pair_impair' $tr_javascript style='cursor: pointer'>";
-			$empr_list .= "
-				<td>
-					<strong>".$msg['dsi_clas_type_class_'.$clas->type_classement]."</strong>
-					</td>
-				<td>
-					<strong>$clas->nom_classement</strong>
+			$list .= "
+				<tr class='$pair_impair'>
+					<td>
+						<input class='bouton_small' type='button' onclick=\"document.location='./dsi.php?categ=options&sub=classements&id_classement=$clas->id_classement&suite=up'\" value='-'>
+						<input class='bouton_small' type='button' onclick=\"document.location='./dsi.php?categ=options&sub=classements&id_classement=$clas->id_classement&suite=down'\" value='+'>
+					</td>				
+					<td $tr_javascript style='cursor: pointer'>
+						<strong>$clas->nom_classement</strong>
+					</td>				
+					<td $tr_javascript style='cursor: pointer'>
+						$clas->classement_opac_name
 					</td>
 				</tr>";
-			$parity += 1;
-			}
-		pmb_mysql_free_result($res);
-
-		// affichage de la barre de navig
-		$url_base = "$PHP_SELF?categ=options&sub=classements" ;
-		$nav_bar = aff_pagination ($url_base, $nbr_lignes, $nb_per_page, $page, 10, false, true) ;
-
-		if ($nbr_lignes>0) $dsi_list_tmpl = str_replace("<!--!!nb_total!!-->", "(".$nbr_lignes.")", $dsi_list_tmpl);
-
-		$dsi_list_tmpl = str_replace("!!cle!!", $form_cb, $dsi_list_tmpl);
-		$dsi_list_tmpl = str_replace("!!list!!", $empr_list, $dsi_list_tmpl);
-		$dsi_list_tmpl = str_replace("!!nav_bar!!", $nav_bar, $dsi_list_tmpl);
-		$dsi_list_tmpl = str_replace("!!message_trouve!!", "", $dsi_list_tmpl);
-		$ajout = "<br /><input type='button' class='bouton' value='$msg[dsi_clas_ajouter]' onclick=\"document.location='./dsi.php?categ=options&sub=classements&suite=add'\" />" ;
+			$parity++;
+		}			
+		$tpl_bannettes = str_replace("!!list!!", $list, $tpl_bannettes);
+		$tpl_bannettes = str_replace("!!nav_bar!!", '', $tpl_bannettes);
+		$tpl_bannettes = str_replace("!!message_trouve!!", $msg['dsi_clas_type_class_BAN']." ($nb)", $tpl_bannettes);
+	}
+	// tableau des classements des équations
+	$requete = "SELECT id_classement, nom_classement, type_classement FROM classements where type_classement='EQU' ORDER BY nom_classement";
+	$res = @pmb_mysql_query($requete, $dbh);
+	$parity = 0;
+	$tpl_equations = '';
+	if($nb=pmb_mysql_num_rows($res)){
+		$tpl_equations=$dsi_list_tmpl;
+		$list='
+				<tr>
+					<th>'.$msg['103'].'</th>		
+				</tr>';
+		while(($clas=pmb_mysql_fetch_object($res))) {
+			if ($parity % 2) $pair_impair = "even";	else $pair_impair = "odd";
+			$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./dsi.php?categ=options&sub=classements&id_classement=$clas->id_classement&suite=acces';\" ";
+			$list .= "
+				<tr class='$pair_impair' $tr_javascript style='cursor: pointer'>
+					<td>
+						<strong>$clas->nom_classement</strong>
+					</td>
+				</tr>";
+			$parity++;
+		}	
+		$tpl_equations = str_replace("!!list!!", $list, $tpl_equations);
+		$tpl_equations = str_replace("!!nav_bar!!", '', $tpl_equations);
+		$tpl_equations = str_replace("!!message_trouve!!", $msg['dsi_clas_type_class_EQU']." ($nb)", $tpl_equations);
+	}
 		
-		return $dsi_list_tmpl.$ajout;
-		} else return "";
+	$ajout = "<br /><input type='button' class='bouton' value='$msg[dsi_clas_ajouter]' onclick=\"document.location='./dsi.php?categ=options&sub=classements&suite=add'\" />" ;
+	return $tpl_bannettes.$tpl_equations.$ajout;		
 }
 	

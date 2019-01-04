@@ -4,41 +4,15 @@
 // © 2006 mental works / www.mental-works.com contact@mental-works.com
 // 	complètement repris et corrigé par PMB Services
 // +-------------------------------------------------+
-// $Id: avis.php,v 1.45.2.2 2015-11-04 11:00:46 jpermanne Exp $
+// $Id: avis.php,v 1.54 2018-02-08 15:18:05 dgoron Exp $
 
 $base_path=".";
 require_once($base_path."/includes/init.inc.php");
-require_once($base_path."/includes/error_report.inc.php") ;
-require_once($base_path."/includes/global_vars.inc.php");
-require_once($base_path.'/includes/opac_config.inc.php');
 
-// récupération paramètres MySQL et connection à la base
-require_once($base_path.'/includes/opac_db_param.inc.php');
-require_once($base_path.'/includes/opac_mysql_connect.inc.php');
-$dbh = connection_mysql();
-
-require_once($base_path."/includes/misc.inc.php");
-
-//Sessions !! Attention, ce doit être impérativement le premer include (à cause des cookies)
-require_once($base_path."/includes/session.inc.php");
-require_once($base_path.'/includes/start.inc.php');
-
-require_once($base_path."/includes/notice_authors.inc.php");
-require_once($base_path."/includes/notice_categories.inc.php");
-
-require_once($base_path."/includes/check_session_time.inc.php");
-
-// récupération localisation
-require_once($base_path.'/includes/localisation.inc.php');
-
-// version actuelle de l'opac
-require_once($base_path.'/includes/opac_version.inc.php');
-
-// fonctions de gestion de formulaire
-require_once($base_path.'/includes/javascript/form.inc.php');
+//fichiers nécessaires au bon fonctionnement de l'environnement
+require_once($base_path."/includes/common_includes.inc.php");
 
 require_once($base_path.'/includes/templates/common.tpl.php');
-require_once($base_path.'/includes/divers.inc.php');
 
 // classe de gestion des catégories
 require_once($base_path.'/classes/categorie.class.php');
@@ -50,6 +24,8 @@ require_once($base_path.'/classes/indexint.class.php');
 
 // classe de gestion des réservations
 require_once($base_path.'/classes/resa.class.php');
+
+require_once($base_path.'/classes/cms/cms_article.class.php');
 
 // pour l'affichage correct des notices
 require_once($base_path."/includes/templates/notice.tpl.php");
@@ -115,76 +91,21 @@ if ($opac_avis_allow && !$allow_avis) die($popup_footer);
 print $avis_tpl_header ;
 
 switch($todo) {
-	case 'save':
-		if (!$allow_avis_ajout || !$noticeid) die();
-		if (!$avis_note) $avis_note="NULL";
-		$masque="@<[\/\!]*?[^<>]*?>@si";
-		$commentaire = preg_replace($masque,'',$commentaire);
-		if($charset != "utf-8") $commentaire=cp1252Toiso88591($commentaire);
-		$sql="insert into avis (num_empr,num_notice,note,sujet,commentaire) values ('$id_empr','$noticeid','$avis_note','$sujet','$commentaire')";
-		if (pmb_mysql_query($sql, $dbh)) {
-			print $avis_tpl_post_add;
-		} else {
-			print $avis_tpl_post_add_pb;
-		}
-		break;
-
-	case 'add' :
-		if (!$allow_avis_ajout) die();
-		//ajout d'un avis
-		echo $avis_tpl_form;
-		break;
-	default:
 	case 'liste' :
-		if ($log_ok && $allow_avis && $allow_avis_ajout)
-			echo "<p align='right'><a href=\"avis.php?todo=add&noticeid=$noticeid&login=$user_code\">".$msg[avis_lien_ajout]."</a></p>";
-
-		//affichage de la liste des avis
-		//moyenne des notes
-
-		$sql="select avg(note) as m from avis where valide=1 and num_notice='".$noticeid."' group by num_notice";
-		$r = pmb_mysql_query($sql, $dbh);
-		$loc = pmb_mysql_fetch_object($r);
-		$moyenne=number_format($loc->m,1, ',', '');
-		$c_notice = new notice_affichage($noticeid,"");
-		$etoiles_moyenne = $c_notice->stars();
-		//liste des témoignages
-		$requete="select note,sujet,commentaire,DATE_FORMAT(dateajout,'".$msg['format_date']."') as ladate,empr_login,empr_nom, empr_prenom
-				from avis
-				left join empr on id_empr=num_empr
-				where valide=1 and num_notice='".$noticeid."'
-				order by dateajout desc";
-
-		$r = pmb_mysql_query($requete, $dbh);
-		if (pmb_mysql_num_rows($r)){
-			echo "<div class='row'>
-					<div class='left'><b>".$msg['avis_titre_tous'].":</b> ".$msg['avis_note'].": $moyenne</div>
-					<div class='right'>$etoiles_moyenne</div>&nbsp;
-					</div>";
-			$cpt_star = 4;
-			while ($loc = pmb_mysql_fetch_object($r)) {
-				$etoiles="";
-				for ($i = 1; $i <= $loc->note; $i++) {
-					$etoiles.="<img border=0 src='".get_url_icon('star.png')."' align='absmiddle'>";
-				}
-				for ( $j = round($loc->note);$j <= $cpt_star ; $j++) {
-					$etoiles .= "<img border=0 src='".get_url_icon('star_unlight.png')."' align='absmiddle'>";
-				}
-
-				echo "<hr /><div class='row'>
-					<div class='left'><b>$loc->sujet</b>, ".$loc->ladate ;
-				if ($opac_avis_show_writer==1 && $loc->empr_nom) echo " ".$msg['avis_de']." $loc->empr_prenom $loc->empr_nom ";
-				if ($opac_avis_show_writer==2 && $loc->empr_login) echo " ".$msg['avis_de']." $loc->empr_login ";
-				echo "</div><div class='right'>$etoiles</div>";
-				if($charset != "utf-8") $loc->commentaire=cp1252Toiso88591($loc->commentaire);
-				echo "
-					<div class='row'>".do_bbcode($loc->commentaire)."</div>
-					</div>";
-			}
-		} else {
-			echo "<div align='center'><br /><br />".$msg['avis_aucun_popup']."</div>";
+	default:
+		if($noticeid) {
+			if ($opac_notice_affichage_class) $notice_affichage=$opac_notice_affichage_class; else $notice_affichage="notice_affichage";
+			$notice=new $notice_affichage($noticeid);
+			print $notice->avis_detail();
 		}
-
+		if($articleid) {
+			$cms_article = new cms_article($articleid);
+			print $cms_article->get_display_avis_detail();
+		}
+		if($sectionid) {
+			$cms_section = new cms_section($sectionid);
+			print $cms_section->get_display_avis_detail();
+		}
 		break;
 	}
 

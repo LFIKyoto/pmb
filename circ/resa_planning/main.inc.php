@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.12.2.1 2015-08-14 10:30:03 dbellamy Exp $
+// $Id: main.inc.php,v 1.16 2017-11-07 15:17:24 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -22,7 +22,6 @@ switch ($categ) {
 
 	case 'resa_planning' :
 		print "<h1>".$msg['resa_menu']." &gt; ".$msg['resa_menu_planning']."</h1>";
-		print $msg_a_pointer ;
 
 		switch($resa_action) {
 
@@ -106,9 +105,9 @@ switch ($categ) {
 				if(count($tab_loc_retrait)>=1) {
 					$form_loc_retrait = '<table ><tbody><tr><th>'.$msg['resa_planning_loc_retrait'].'</th><th>'.$msg['resa_planning_qty_requested'].'</th></tr>';
 					foreach($tab_loc_retrait as $k=>$v) {
-						$form_loc_retrait.= '<tr><td width="50%">'.htmlentities($v['location_libelle'],ENT_QUOTES,$charset).'</td>';
+						$form_loc_retrait.= '<tr><td style="width:50%">'.htmlentities($v['location_libelle'],ENT_QUOTES,$charset).'</td>';
 						$form_loc_retrait.= '<td><select name="location['.$v['location_id'].']">';
-						for($i=0;$i<$v['location_nb']*1+1;$i++) {
+						for($i=1;$i<$v['location_nb']*1+1;$i++) {
 							$form_loc_retrait.= '<option value='.$i.'>'.$i.'</option>';
 						}
 						$form_loc_retrait.= '</select></td>';

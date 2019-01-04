@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rss.inc.php,v 1.7 2015-04-03 11:16:16 jpermanne Exp $
+// $Id: rss.inc.php,v 1.8 2017-05-17 08:42:11 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -10,6 +10,7 @@ require_once ($include_path."/rss_func.inc.php") ;
 
 $req_rss = "select notice_id, eformat from notices where eformat like 'RSS%' order by tit1 " ;
 $res_rss = pmb_mysql_query($req_rss);
+$sites = array();
 while ($rss = pmb_mysql_fetch_object($res_rss)) {
 	$rss_lu = explode(' ', $rss->eformat) ;
 	if ($rss_lu[2]) $sites[]=$rss->notice_id ;

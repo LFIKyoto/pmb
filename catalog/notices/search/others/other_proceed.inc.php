@@ -2,10 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: other_proceed.inc.php,v 1.16 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: other_proceed.inc.php,v 1.23 2018-06-29 09:03:35 dgoron Exp $
 // Armelle : a priori plus utilisé
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+require_once($class_path.'/elements_list/elements_records_list_ui.class.php');
 
 // la couleur pour la mise en évidence des mots trouvés
 $high_color = "#800080";
@@ -13,12 +15,12 @@ define('DEBUG', 0);
 
 // définition de la classe de passage par page
 class other_search {
-	var $requete			= '';	// la requête SQL complète
-	var $nbr_rows 			= 0;	// le nombre de résultats trouvés
-	var $results_per_pages		= 0;	// nombre de résultats par page à afficher
-	var $display			= '';	// affichage en clair de la requête utilisateur
-	var $terms			;	// tableau des mots de la requête (pour highlight)
-	}
+	public $requete			= '';	// la requête SQL complète
+	public $nbr_rows 			= 0;	// le nombre de résultats trouvés
+	public $results_per_pages		= 0;	// nombre de résultats par page à afficher
+	public $display			= '';	// affichage en clair de la requête utilisateur
+	public $terms			;	// tableau des mots de la requête (pour highlight)
+}
 
 if($obj) {
 	// $obj est réputé objet (serialisé et urlencodé)
@@ -66,27 +68,12 @@ if($ourSearch->nbr_rows == 0) {
 
 	// boucle de fetch des notices
 	$res = @pmb_mysql_query($requete, $dbh);
-	while(($n=pmb_mysql_fetch_object($res))) { 
-		if($n->niveau_biblio != 's' && $n->niveau_biblio != 'a') {
-			// notice de monographie
-			$link = './catalog.php?categ=isbd&id=!!id!!';
-			$link_expl = './catalog.php?categ=edit_expl&id=!!notice_id!!&cb=!!expl_cb!!&expl_id=!!expl_id!!'; 
-			$link_explnum = './catalog.php?categ=edit_explnum&id=!!notice_id!!&explnum_id=!!explnum_id!!';   
-			$display = new mono_display($n, 6, $link, 1, $link_expl, '', $link_explnum,1);
-			$notice = $display->result;
-			} else {
-				// on a affaire à un périodique
-				// préparation des liens pour lui
-				$link_serial = './catalog.php?categ=serials&sub=view&serial_id=!!id!!';
-				$link_analysis = './catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=!!bul_id!!&art_to_show=!!id!!';
-				$link_bulletin = './catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=!!id!!';
-				$link_explnum = "./catalog.php?categ=serials&sub=analysis&action=explnum_form&bul_id=!!bul_id!!&analysis_id=!!analysis_id!!&explnum_id=!!explnum_id!!";
-				// function serial_display ($id, $level='1', $action_serial='', $action_analysis='', $action_bulletin='', $lien_suppr_cart="", $lien_explnum="", $bouton_explnum=1,$print=0,$show_explnum=1, $show_statut=0, $show_opac_hidden_fields=true, $draggable=0 ) {
-				$serial = new serial_display($n, 6, $link_serial, $link_analysis, $link_bulletin, "", $link_explnum, 0, 0, 1, 1, true, 1);
-				$notice = $serial->result;
-				}
- 		print pmb_bidi($notice);
-		}
+	$records = array();
+	while(($n=pmb_mysql_fetch_object($res))) {
+		$records[] = $n->notice_id;
+	}
+	$elements_records_list_ui = new elements_records_list_ui($records, count($records), false);
+	print $elements_records_list_ui->get_elements_list();
 
 	// fin de liste
 	//	print "</form>";
@@ -103,8 +90,8 @@ if($ourSearch->nbr_rows == 0) {
 
 	if($precedente > 0) {
 		$nav_bar .= "<form class='form-$current_module' style='display: none;' name='page_prec' action=\"./catalog.php?categ=search&mode=4&unq=$unq\" method='post'><input type='hidden' name='obj' value=\"$obj\" /><input type='hidden' name='page' value=\"$precedente\" /></form>";
-		$nav_bar .= "<img src='./images/left.gif' hspace='3' align='middle' border='0' onClick=\"document.page_prec.submit();\">";
-		}
+		$nav_bar .= "<img src='".get_url_icon('left.gif')."' style='border:0px; margin:3px 3px' class='align_middle' onClick=\"document.page_prec.submit();\">";
+	}
 
 	for($i = 1; $i <= $nbepages; $i++) {
 		if($i==$page) $nav_bar .= "<b>page $i/$nbepages</b>";
@@ -112,11 +99,11 @@ if($ourSearch->nbr_rows == 0) {
 	
 	if($suivante<=$nbepages) {
 		$nav_bar .= "<form class='form-$current_module' style='display: none;' name=\"page_next\" method=\"post\" action=\"./catalog.php?categ=search&mode=4&unq=$unq\"><input type='hidden' name='obj' value=\"$obj\" /><input type='hidden' name='page' value=\"$suivante\" /></form>";
-		$nav_bar .= "<img src='./images/right.gif' hspace='3' align='middle' border='0' onClick=\"document.page_next.submit();\">";
-		}	
+		$nav_bar .= "<img src='".get_url_icon('right.gif')."' style='border:0px; margin:3px 3px' class='align_middle' onClick=\"document.page_next.submit();\">";
+	}	
 
-	print "<div class=\"row\"><div align='center'>$nav_bar</div></div>";	
-	}
+	print "<div class=\"row\"><div class='center'>$nav_bar</div></div>";	
+}
 
 
 // la couleur pour la mise en évidence des mots trouvés
@@ -124,7 +111,7 @@ $high_color = "#800080";
 
 // pour débuggage
 if(DEBUG) {
-	print "<p><font color=#ff0000>&lt;debug mode&gt;</font>";
+	print "<p><span style='color:#ff0000'>&lt;debug mode&gt;</span>";
 	print '<br />$ourSearch->requete : '.$ourSearch->requete;
 	print '<br />$ourSearch->nbr_rows : '.$ourSearch->nbr_rows;
 //	print '<br />$ourSearch->nb_results : '.$ourSearch->nb_results;
@@ -138,5 +125,5 @@ if(DEBUG) {
 	$result = serialize($ourSearch);
 	print "<br />$result<br />";
 	print '<br /><strong>$obj content (sent to hidden form)</strong> :<br />'.$obj;
-	print '<br /><font color=#ff0000>&lt;/debug mode&gt;</font></p>';
+	print '<br /><span style="color:#ff0000">&lt;/debug mode&gt;</span></p>';
 }

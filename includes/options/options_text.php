@@ -2,11 +2,12 @@
  // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: options_text.php,v 1.10 2009-05-16 11:05:14 dbellamy Exp $
+// $Id: options_text.php,v 1.12 2018-06-21 16:09:19 dgoron Exp $
 
 //Gestion des options de type text
 $base_path = "../..";
 $base_auth = "CATALOGAGE_AUTH|ADMINISTRATION_AUTH";
+$base_title = "";
 include ($base_path."/includes/init.inc.php");
 
 require_once ("$include_path/parser.inc.php");
@@ -17,8 +18,8 @@ $options = stripslashes($options);
 //Si enregistrer
 if ($first == 1) {
 	$param["FOR"] = "text";
-	$param[SIZE][0][value] = stripslashes($SIZE*1);
-	$param[MAXSIZE][0][value] = stripslashes($MAXSIZE*1);
+	$param['SIZE'][0]['value'] = stripslashes($SIZE*1);
+	$param['MAXSIZE'][0]['value'] = stripslashes($MAXSIZE*1);
 
 	$options = array_to_xml($param, "OPTIONS");
 	?> 
@@ -30,7 +31,7 @@ if ($first == 1) {
 	<?php
 	 } else {
 	?> 
-	<h3><?php  echo $msg[procs_options_param].$name;
+	<h3><?php  echo $msg['procs_options_param'].$name;
 	?> </h3><hr />
 	
 	<?php
@@ -54,15 +55,15 @@ if ($first == 1) {
 		$charset);
 	?>">
 	<table class='table-no-border' width=100%>
-	<tr><td><?php  echo $msg[procs_options_text_taille];
+	<tr><td><?php  echo $msg['procs_options_text_taille'];
 	?> </td><td><input class='saisie-10em' type="text" name="SIZE" value="<?php  echo htmlentities(
-		$param[SIZE][0][value],
+		$param['SIZE'][0]['value'],
 		ENT_QUOTES,
 		$charset);
 	?>"></td></tr>
-	<tr><td><?php  echo $msg[procs_options_text_max];
+	<tr><td><?php  echo $msg['procs_options_text_max']."<br /><span style='font-size: 0.8em'>".$msg['procs_options_text_max_help']."</span>";
 	?> </td><td><input type="text" class='saisie-10em' name="MAXSIZE" value="<?php  echo htmlentities(
-		$param[MAXSIZE][0][value],
+		$param['MAXSIZE'][0]['value'],
 		ENT_QUOTES,
 		$charset);
 	?>"></td></tr>

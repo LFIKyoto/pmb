@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: photo_tableau.inc.php,v 1.4 2014-01-14 09:25:06 dgoron Exp $
+// $Id: photo_tableau.inc.php,v 1.6 2018-05-25 13:48:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -19,6 +19,7 @@ function photo_tableau($id,$cart) {
 	
 	$max_tableau_pos=3;
 	
+	$retour_aff="";
 	//Début du flux
 	if ($id==-1) {
 		$retour_aff="<table>";
@@ -45,7 +46,7 @@ function photo_tableau($id,$cart) {
 			$retour_aff.="</tr>";
 		}
 		if (!$photo_tableau_pos) $retour_aff.="<tr>";
-		$retour_aff.="<td valign='top'>";
+		$retour_aff.="<td style='vertical-align:top'>";
 		$retour_aff .= $current->result ;
 		$retour_aff.="</td>";
 		$photo_tableau_pos++;

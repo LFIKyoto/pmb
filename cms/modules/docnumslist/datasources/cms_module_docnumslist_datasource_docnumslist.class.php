@@ -1,9 +1,8 @@
-
 <?php
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_docnumslist_datasource_docnumslist.class.php,v 1.1.2.9 2015-10-07 14:57:05 arenou Exp $
+// $Id: cms_module_docnumslist_datasource_docnumslist.class.php,v 1.7 2018-04-18 09:12:34 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -28,7 +27,7 @@ class cms_module_docnumslist_datasource_docnumslist extends cms_module_common_da
 	}
 	
 	public function get_form(){
-		$facette_search = new facette_search();
+		$facette_search = new facette_search_opac();
 		$form = parent::get_form();
 		$form.= '
 		<div class="row">
@@ -50,7 +49,7 @@ class cms_module_docnumslist_datasource_docnumslist extends cms_module_common_da
 		</div>
 		<script type="text/javascript" src="./javascript/http_request.js"></script>
 			<script type="text/javascript">
-				var crit_label = '.json_encode($this->utf8_normalize($facette_search->array_sort())).';		
+				var crit_label = '.json_encode($this->utf8_normalize($facette_search->fields_sort())).';		
 				function valid_facette(){
 					var crit = document.getElementById("list_crit").value;
 					var table_crit = document.getElementById("defined_crits");
@@ -130,10 +129,10 @@ class cms_module_docnumslist_datasource_docnumslist extends cms_module_common_da
         $return_table = '<table id="defined_crits" name="defined_crits">';
         $return_table.= '<th>'.$this->format_text($this->msg['cms_module_docnumslist_datasource_docnumslist_facette_crit']).'</th><th></th>';
 	    if(isset($this->parameters['crit'])){
-	        $facette_search = new facette_search(); 
+	        $facette_search = new facette_search_opac(); 
 	        foreach($this->parameters['crit'] as $index => $crit){
 	            $return_table.='<tr>
-	                <td><label>'.$this->format_text($facette_search->array_sort()[$crit]).'</label> 
+	                <td><label>'.$this->format_text($facette_search->fields_sort()[$crit]).'</label> 
 	                   <input type="hidden" value="'.$crit.'" name="'.$this->get_form_value_name("crit").'[]"/> 
 	                   <input type="hidden" value="'.($this->parameters['subcrit'][$index]*1).'" name="'.$this->get_form_value_name("subcrit").'[]"/>'.'
 	                </td>
@@ -180,7 +179,7 @@ class cms_module_docnumslist_datasource_docnumslist extends cms_module_common_da
 		global $lang;		
 		
 		$req = 'select group_concat(id_notice) as notices_ids, value from notices_fields_global_index where lang in ("", "'.$lang.'")
-	        and id_notice in ('.implode(',', $records).') and code_champ="'.$this->parameters['crit'][$lvl].'"';
+	        and id_notice in ("'.implode('","', $records).'") and code_champ="'.($this->parameters['crit'][$lvl]*1).'"';
 		if($this->parameters['subcrit'][$lvl]){
 			$req.= ' and code_ss_champ ="'.$this->parameters['subcrit'][$lvl].'"';
 		}
@@ -236,15 +235,15 @@ class cms_module_docnumslist_datasource_docnumslist extends cms_module_common_da
 		 * Va récupérer les docnums des monographie, des notices de bulletins et des notices de perio
 		*/
 		$req_notices = 'select explnum.explnum_id,explnum_nom from explnum
-	    join notices on notices.notice_id = explnum.explnum_notice where explnum_notice in ('.implode(',', $records).') and explnum_bulletin=0';
+	    join notices on notices.notice_id = explnum.explnum_notice where explnum_notice in ("'.implode('","', $records).'") and explnum_bulletin=0';
 		 
 		/**
 		 * Récupération des documents numériques des bulletins d'un periodique
 		 */
-		$req_bulletin_from_perio = 'select explnum.explnum_id,explnum_nom  from explnum
+		$req_bulletin_from_perio = 'select explnum.explnum_id,explnum_nom from explnum
         join bulletins on bulletins.bulletin_id = explnum.explnum_bulletin
         join notices on notices.notice_id = bulletins.bulletin_notice
-        and notices.niveau_hierar = "1" and notices.niveau_biblio = "s" and notices.notice_id in ('.implode(',', $records).')';
+        and notices.niveau_hierar = "1" and notices.niveau_biblio = "s" and notices.notice_id in ("'.implode('","', $records).'")';
 		
 		/**
 		 * Récupération des documents numériques des articles d'un périodique
@@ -255,7 +254,7 @@ class cms_module_docnumslist_datasource_docnumslist extends cms_module_common_da
         join notices as notice_art on notice_art.notice_id = analysis.analysis_notice
         join notices as notice_serial on notice_serial.notice_id = bulletins.bulletin_notice
         and notice_art.niveau_hierar = "2" and notice_art.niveau_biblio = "a"
-        and notice_serial.niveau_hierar = "1" and notice_serial.niveau_biblio = "s" and notice_serial.notice_id in ('.implode(',', $records).')';
+        and notice_serial.niveau_hierar = "1" and notice_serial.niveau_biblio = "s" and notice_serial.notice_id in ("'.implode('","', $records).'")';
 		
 		$final_req = 'select explnum_id,explnum_nom  from (('.$req_notices.') ';
 		$final_req.= 'union ('.$req_bulletin_from_perio.') ';

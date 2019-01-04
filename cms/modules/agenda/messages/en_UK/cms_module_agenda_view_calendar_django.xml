@@ -5,14 +5,15 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: cms_module_agenda_view_calendar_django.xml,v 1.1 2015-06-15 12:55:32 pmbs Exp $ -->
+$Id: cms_module_agenda_view_calendar_django.xml,v 1.3 2017-06-07 14:32:16 dgoron Exp $ -->
 
 <XMLlist>
 	<entry code='cms_module_agenda_view_calendar_django_nb_displayed_events_under'>Number of events to display under the calendar</entry>
-	<entry code='cms_module_agenda_view_calendar_django_link_event'>Creation of a link to an event</entry>
-	<entry code='cms_module_agenda_view_calendar_django_link_eventslist'>Construction of a link to a list of events</entry>
-	<entry code='cms_module_agenda_view_calendar_django_calendar_desc'>Calendar display</entry>
-	<entry code='cms_module_agenda_view_calendar_django_legends_desc'>Table of calendars (legends)</entry>
-	<entry code='cms_module_agenda_view_calendar_django_legend_calendar_desc'>Calendar label</entry>
-	<entry code='cms_module_agenda_view_calendar_django_legend_color_desc'>Color linked to the calendar</entry>
+	<entry code='cms_module_agenda_view_calendar_django_link_event'>Creation of the link towards an event</entry>
+	<entry code='cms_module_agenda_view_calendar_django_link_eventslist'>Creation of the link towards a list of events</entry>
+	<entry code='cms_module_agenda_view_calendar_django_calendar_desc'>Display of the calendar</entry>
+	<entry code='cms_module_agenda_view_calendar_django_legends_desc'>Table of the calendars (legends)</entry>
+	<entry code='cms_module_agenda_view_calendar_django_legend_calendar_desc'>Label of a calendar</entry>
+	<entry code='cms_module_agenda_view_calendar_django_legend_color_desc'>Colour linked to the calendar</entry>
+	<entry code='cms_module_agenda_view_calendar_django_link_desc'>Link to the event</entry>
 </XMLlist>

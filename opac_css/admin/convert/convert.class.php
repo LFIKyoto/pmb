@@ -2,11 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: convert.class.php,v 1.2 2008-07-15 15:44:06 ohennequin Exp $
+// $Id: convert.class.php,v 1.5 2018-07-26 13:54:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once ("$include_path/parser.inc.php");
+require_once ($base_path."/admin/convert/start_import.class.php");
+require_once ($base_path."/admin/convert/start_export.class.php");
 
 //Récupération du chemin du fichier de paramétrage de l'import
 function _item_($param) {
@@ -22,7 +24,7 @@ function _item_($param) {
 	$i ++;
 }
 
-function _item_export_list_($param) {
+function _item_export_list_convert_($param) {
 	global $export_list;
 	global $i, $iall;
 	
@@ -78,14 +80,14 @@ function _import_name_($param) {
 
 class convert {
 
-	var $export_type;
-	var $id_notice;
-	var $prepared_notice;
-	var $output_notice;
-    var $message_convert;
-    var $error;
+	public $export_type;
+	public $id_notice;
+	public $prepared_notice;
+	public $output_notice;
+    public $message_convert;
+    public $error;
     
-    function convert($notice,$type_convert) {
+    public function __construct($notice,$type_convert) {
 		global $i;
 		global $param_path;
 		global $specialexport;
@@ -106,59 +108,72 @@ class convert {
 		//Récupération du répertoire
 		$i = 0;
 		$param_path = "";
-		if (file_exists("$base_path/admin/convert/imports/catalog_subst.xml"))
+		if (file_exists("$base_path/admin/convert/imports/catalog_subst.xml")) {
 			$fic_catal = "$base_path/admin/convert/imports/catalog_subst.xml";
-		else
+		} else {
 			$fic_catal = "$base_path/admin/convert/imports/catalog.xml";
-		
+		}
 		_parser_($fic_catal, array("ITEM" => "_item_"), "CATALOG");
 
 		//Lecture des paramètres
 		_parser_("$base_path/admin/convert/imports/".$param_path."/params.xml", array("IMPORTNAME" => "_import_name_","STEP" => "_step_","OUTPUT" => "_output_","INPUT" => "_input_"), "PARAMS");
 		
 		//En fonction du type de fichier de sortie, inclusion du script de gestion des sorties
-		switch ($output_type) {
-			case "xml" :
-				require_once ("$base_path/admin/convert/imports/output_xml.inc.php");
-			break;
-			case "iso_2709" :
-				require_once ("$base_path/admin/convert/imports/output_iso_2709.inc.php");
-			break;
-			case "custom" :
-				require_once ("$base_path/admin/convert/imports/".$param_path."/".$output_params['SCRIPT']);
-			break;
-			case "txt":
-				require_once ("$base_path/admin/convert/imports/output_txt.inc.php");
-			break;
-			default :
-				die($msg["export_cant_find_output_type"]);
-		}
+		$output_instance = start_export::get_instance_from_output_type($output_type);
 			
 		$this->prepared_notice=$notice;
 		$this->output_notice.=$this->transform();
     }
     
-    function get_exports() {
+    public function get_exports() {
     	global $export_list;
     	global $i, $iall;
     	global $base_path;
     	$i=0;
     	$iall=0;
-    	_parser_("$base_path/admin/convert/imports/catalog.xml", array("ITEM" => "_item_export_list_"), "CATALOG");
+    	_parser_("$base_path/admin/convert/imports/catalog.xml", array("ITEM" => "_item_export_list_convert_"), "CATALOG");
     	return $export_list;
     }
     
-    function get_header() {
+	public function get_header() {
     	global $output_params;
-    	return _get_header_($output_params);
+    	global $output_type;
+    	
+    	if(isset($output_params['SCRIPT'])) {
+    		$class_name = str_replace('.class.php', '', $output_params['SCRIPT']);
+    		if(class_exists($class_name)) {
+    			$instance = new $class_name();
+    			return $instance->_get_header_($output_params);
+    		}
+    	}
+		$output_instance = start_export::get_instance_from_output_type($output_type);
+    	if(is_object($output_instance)) {
+    		return $output_instance->_get_header_($output_params);
+    	} else {
+    		return _get_header_($output_params);
+    	}
     }
     
-    function get_footer() {
+    public function get_footer() {
     	global $output_params;
-    	return _get_footer_($output_params);
+    	global $output_type;
+    	
+    	if(isset($output_params['SCRIPT'])) {
+    		$class_name = str_replace('.class.php', '', $output_params['SCRIPT']);
+    		if(class_exists($class_name)) {
+    			$instance = new $class_name();
+    			return $instance->_get_footer_($output_params);
+    		}
+    	}
+    	$output_instance = start_export::get_instance_from_output_type($output_type);
+    	if(is_object($output_instance)) {
+    		return $output_instance->_get_footer_($output_params);
+    	} else {
+    		return _get_footer_($output_params);
+    	}
     }
     
-    function transform() {
+    public function transform() {
    		global $step;
 		global $param_path;
 		global $n_errors;
@@ -183,28 +198,13 @@ class convert {
 		require_once ("xmltransform.php");
 
 		//En fonction du type de fichier d'entrée, inclusion du script de gestion des entrées
-		switch ($input_type) {
-			case "xml" :
-				require_once ("imports/input_xml.inc.php");
-			break;
-			case "iso_2709" :
-				require_once ("imports/input_iso_2709.inc.php");
-			break;
-			case "text" :
-				require_once("imports/input_text.inc.php");
-				break;
-			case "custom" :
-				require_once ("imports/$param_path/".$input_params['SCRIPT']);
-				break;
-			default :
-			die($msg["ie_import_entry_not_valid"]);
-		}
+		$input_instance = start_import::get_instance_from_input_type($input_type);
 
 		for ($i = 0; $i < count($step); $i ++) {
 			$s = $step[$i];
 			$islast=($i==count($step)-1);
 			$isfirst=($i==0);
-			switch ($s[TYPE]) {
+			switch ($s['TYPE']) {
 					case "xmltransform" :
 						$r = perform_xslt($notice, $s, $islast, $isfirst, $param_path);
 						break;
@@ -222,19 +222,19 @@ class convert {
 						break;
 			}
 			if (!$r['VALID']) {
-					$this->n_errors=true;
-					$this->message_convert= $r['ERROR'];
-					$notice = "";
-					break;
+				$this->n_errors=true;
+				$this->message_convert= $r['ERROR'];
+				$notice = "";
+				break;
 			} else {
-					$notice = $r['DATA'];
+				$notice = $r['DATA'];
 			}
 		}
 		return $notice;
     }
 
 	// Récupération de l'id à partir du nom de l'export
-	function get_id_by_path($path) {
+	public function get_id_by_path($path) {
 	   	global $export_list;
 		if (!count($export_list)) start_export::get_exports() ;
 		for ($i=0;$i<count($export_list);$i++) {

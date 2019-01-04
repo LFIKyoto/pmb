@@ -1,5 +1,7 @@
 {% extends 'gabarit.html' %}
 
+<!-- $Id: author.html,v 1.17 2018-07-09 11:47:22 dgoron Exp $ -->
+
 {% block header %}
 	<h3><span>{% if authority.type == 72 %}{{msg.congres_see_title}}: {% else %}{{msg.author_see_title}}{% endif %}</span></h3>
 {% endblock %}
@@ -13,9 +15,9 @@
 {% block title %}
 	<h3>
 		{% if authority.type == 72 %}{{msg.congres_libelle}}: {% else %}{{msg.author_tpl_author}}{% endif %}
-		{{authority.display}} 
+		{{ authority.display }} 
 		{% if authority.date %} ({{authority.date}}){% endif %}
-		{% if authority.author_web %} <a target="_blank" href="{{authority.author_web}}"><img src='./images/globe.gif'/></a>{% endif %}
+		{% if authority.author_web %} <a target="_blank" href="{{authority.author_web}}"><img src='{{ img.globe.gif }}'/></a>{% endif %}
 		{% if authority.enrichment %} <a href="#" onclick="(enrichment_accordion.style.display=='none'?enrichment_accordion.style.display='block':enrichment_accordion.style.display='none'); return false;" ><span style='float:right'><img src='http://data.bnf.fr/data/d33bdf57d4c5db403a4ee12d090359dd/logo-data.gif' title="Détails sur l'auteur" alt="Détails sur l'auteur"/> ></span></a>{% endif %}
 	</h3>
 	
@@ -23,12 +25,23 @@
 
 {% block details %}
 	{% if authority.author_comment %}
-		<div class='aut_comment'>{{authority.author_comment}}</div>
+		<div class="aut_display_row">
+			<div class="aut_display_cell">
+				<b>{{ msg.comment }} :</b>
+			</div>
+			<div class='aut_comment aut_display_cell'>{{authority.author_comment | nl2br }}</div>
+		</div>
 	{% endif %}
 	{% if authority.author_see %}
-		<font class='number_resutls'>{{authority.author_see}}</font>
+		<div class="aut_display_row">
+			<div class="aut_display_cell">
+				<b>{{ msg.author_see }} :</b>
+			</div>
+			<div class='aut_display_cell'>
+				<span class='number_results'><a href="./index.php?lvl=author_see&id={{ authority.see }}">{{authority.author_see}}</a></span>
+			</div>
+		</div>
 	{% endif %}
-	
 {% endblock %}
 
 {% block enrichment %}
@@ -152,12 +165,12 @@
 			<div id="enrichment_vignettes">
 			{% if authority.enrichment.depictions.depictions_bnf %}
 				<h3>Vignettes (BnF)</h3>
-				<div align='center'>
+				<div class='center'>
 					<div style='overflow-x:scroll;overflow-y:auto;width:100%;'>
-						<table width='100%'>
+						<table style='width:100%'>
 							<tr>
 								{% for depiction in authority.enrichment.depictions.depictions_bnf %}
-								<td align='center'><img src='{{depiction}}'/></td>
+								<td class='center'><img src='{{depiction}}'/></td>
 							{% endfor %}
 							</tr>
 						</table>
@@ -168,7 +181,7 @@
 			<div id="enrichment_biblio">
 			{% if authority.enrichment.biblio %}
 				<h3>Oeuvre(s) principale(s) (BNF)</h3>
-				<div align='center'>
+				<div class='center'>
 					<div style='overflow-x:scroll;overflow-y:auto;width:100%;'>
 						<table>
 							<tr>

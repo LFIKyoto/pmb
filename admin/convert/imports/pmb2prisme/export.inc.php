@@ -2,13 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export.inc.php,v 1.14 2015-04-03 11:16:27 jpermanne Exp $
+// $Id: export.inc.php,v 1.16 2018-07-10 06:42:45 dgoron Exp $
 
 require_once("$class_path/marc_table.class.php");
 require_once("$class_path/category.class.php");
 
-/*
-function trouve_champ_perso($nom) {
+function find_custom_field($nom) {
 	$rqt = "SELECT idchamp FROM notices_custom WHERE name='" . addslashes($nom) . "'";
 	$res = pmb_mysql_query($rqt);
 	if (pmb_mysql_num_rows($res)>0)
@@ -16,7 +15,17 @@ function trouve_champ_perso($nom) {
 	else
 		return 0;
 }
-*/
+
+//trouve le thesaurus avec le code et renvoi son id
+function find_thesaurus($code) {
+	$rqt = "SELECT num_thesaurus FROM noeuds WHERE autorite='" . $code . "'";
+	$res = pmb_mysql_query($rqt);
+
+	if (pmb_mysql_num_rows($res)>0)
+		return pmb_mysql_result($res,0);
+		else
+			return 0;
+}
 
 function _export_($id,$keep_expl) {
 	global $ty,$charset;
@@ -74,7 +83,7 @@ function _export_($id,$keep_expl) {
 	$notice.="  <REF>".htmlspecialchars($id,ENT_QUOTES,$charset)."</REF>\n";
 	
 	//Organisme (OP)
-	$no_champ = trouve_champ_perso("op");
+	$no_champ = find_custom_field("op");
 	if ($no_champ>0) {
 		$requete=	"SELECT notices_custom_list_lib ".
 					"FROM notices_custom_lists, notices_custom_values ".
@@ -90,7 +99,7 @@ function _export_($id,$keep_expl) {
 	}
 	
 	//Date saisie (DS)
-	$no_champ = trouve_champ_perso("ds");
+	$no_champ = find_custom_field("ds");
 	if ($no_champ>0) {
 		$requete="SELECT notices_custom_date FROM notices_custom_values WHERE notices_custom_champ=$no_champ AND notices_custom_origine=$id";
 		$resultat=pmb_mysql_query($requete);
@@ -114,7 +123,7 @@ function _export_($id,$keep_expl) {
 	$notice.="<TY>".htmlspecialchars($tyd,ENT_QUOTES,$charset)."</TY>\n";
 	
 	//Genre (GEN)
-	$no_champ = trouve_champ_perso("gen");
+	$no_champ = find_custom_field("gen");
 	if ($no_champ>0) {
 		$requete = 	"SELECT notices_custom_list_lib ".
 					"FROM notices_custom_lists, notices_custom_values ".
@@ -309,15 +318,15 @@ function _export_($id,$keep_expl) {
 	if ($m_thess>1) {
 		while (list($categ_id)=pmb_mysql_fetch_row($resultat)) {
 			$categ=new category($categ_id);
-			if (trouve_thesaurus("GO")==$categ->thes->id_thesaurus) {
+			if (find_thesaurus("GO")==$categ->thes->id_thesaurus) {
 				$go[]=$categ->libelle;
-			} elseif (trouve_thesaurus("HI")==$categ->thes->id_thesaurus) {
+			} elseif (find_thesaurus("HI")==$categ->thes->id_thesaurus) {
 				$hi[]=$categ->libelle;
-			} elseif (trouve_thesaurus("DENP")==$categ->thes->id_thesaurus) {
+			} elseif (find_thesaurus("DENP")==$categ->thes->id_thesaurus) {
 				$denp[]=$categ->libelle;
-			} elseif (trouve_thesaurus("DE")==$categ->thes->id_thesaurus) {
+			} elseif (find_thesaurus("DE")==$categ->thes->id_thesaurus) {
 				$de[]=$categ->libelle;
-			} elseif (trouve_thesaurus("CD")==$categ->thes->id_thesaurus) {
+			} elseif (find_thesaurus("CD")==$categ->thes->id_thesaurus) {
 				$cd[]=$categ->libelle;
 			}
 		}

@@ -5,10 +5,11 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: cms_module_metadatas_datasource_metadatas_generic.xml,v 1.1 2015-06-15 12:55:33 pmbs Exp $ -->
+$Id: cms_module_metadatas_datasource_metadatas_generic.xml,v 1.2 2017-11-28 15:33:39 dgoron Exp $ -->
 
 <XMLlist>
 	<entry code="cms_module_metadatas_datasource_metadatas_generic_def_metadatas">Creation of the Meta-data</entry>
+	<entry code="cms_module_metadatas_datasource_metadatas_generic_active">Activate</entry>
 	<entry code="cms_module_metadatas_datasource_metadatas_generic_django_template_content">Content of the template</entry>
 	
 	<entry code="cms_module_metadatas_datasource_django_add_template">Add a template</entry>

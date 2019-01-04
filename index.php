@@ -39,7 +39,7 @@ termes.
 
  */
 // +-------------------------------------------------+
-// $Id: index.php,v 1.18 2011-07-18 13:01:03 gueluneau Exp $
+// $Id: index.php,v 1.20 2017-03-17 13:51:42 dgoron Exp $
 
 // définition du minimum nécéssaire 
 $base_path=".";
@@ -69,6 +69,7 @@ $msg = $messages->table;
 
 // temporaire :
 $inst_language = "";
+$current_module = "";
 	
 require_once("$include_path/templates/common.tpl.php");
 require_once("$include_path/templates/index.tpl.php");
@@ -84,10 +85,10 @@ if (!$dbh) {
 	}
 
 // affichage du form de login
-if ($demo=="") $demo = 0;
+if (!isset($demo) || $demo=="") $demo = 0;
 header ("Content-Type: text/html; charset=$charset");
 
-if (!$login_error) {
+if (!isset($login_error) || !$login_error) {
 	//Est-on déjà authentifié ?
 	if (checkUser('PhpMyBibli')) {
 		header("Location: ./main.php");
@@ -98,7 +99,7 @@ if (!$login_error) {
 print $index_layout;
 
 if ($demo) {
-	if (!$login_error) {
+	if (!isset($login_error) || !$login_error) {
 		$login_form_demo = str_replace("!!erreur!!", "&nbsp;", $login_form_demo);
 		print $login_form_demo;
 	} else {
@@ -106,13 +107,15 @@ if ($demo) {
 		print $login_form_demo;
 	}
 } else { 
-	if (!$login_error) {
+	if (!isset($login_error) || !$login_error) {
 		$login_form = str_replace("!!erreur!!", "&nbsp;", $login_form);
 	} else {
 		$login_form = str_replace("!!erreur!!", $login_form_error, $login_form);
 	}
-	if ($login_message) { 
+	if (isset($login_message) && $login_message) { 
 		$login_form = str_replace("!!login_message!!", $login_message, $login_form); 
+	} else {
+		$login_form = str_replace("!!login_message!!", "", $login_form);
 	}
 	print $login_form;
 }

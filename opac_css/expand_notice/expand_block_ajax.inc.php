@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expand_block_ajax.inc.php,v 1.8 2015-06-19 07:43:03 mbertin Exp $
+// $Id: expand_block_ajax.inc.php,v 1.9 2017-01-31 16:25:45 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -26,6 +26,7 @@ function read_notice_contenu($cmd) {
 	$display = new $opac_notice_affichage_class($param['id'], $param['aj_liens'], $param['aj_cart'], $param['aj_to_print'], $param['aj_header_only'], !$param['aj_no_header']);
 	//$display->do_header_without_html();
 	if($param['aj_nodocnum']) $display->docnum_allowed = 0;
+	$flag_no_onglet_perso = 0;
 	$type_aff=$param['aj_type_aff'];
 	switch ($type_aff) {
 		case AFF_ETA_NOTICES_ISBD :

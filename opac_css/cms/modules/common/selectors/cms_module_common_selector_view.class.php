@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_view.class.php,v 1.2 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: cms_module_common_selector_view.class.php,v 1.3 2016-07-15 10:09:59 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 //require_once($base_path."/cms/modules/common/selectors/cms_module_selector.class.php");
@@ -63,5 +63,23 @@ class cms_module_common_selector_view extends cms_module_common_selector{
 			$this->value = $this->parameters;
 		}
 		return $this->value;
+	}
+	
+	public function get_human_description_selector(){
+		$description = "";
+		$query= "select opac_view_id, opac_view_name from opac_views order by opac_view_name asc";
+		$result = pmb_mysql_query($query);
+		if(pmb_mysql_num_rows($result)){
+			while($row = pmb_mysql_fetch_object($result)){
+				if(in_array($row->opac_view_id,$this->parameters)){
+					if(array_search($row->opac_view_id, $this->parameters) == 0){
+						$description .= $this->format_text($row->opac_view_name);
+					}else{
+						$description .= ", ".$this->format_text($row->opac_view_name);
+					}
+				}
+			}
+		}	
+		return $description;
 	}
 }

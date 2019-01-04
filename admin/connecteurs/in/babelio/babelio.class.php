@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: babelio.class.php,v 1.4 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: babelio.class.php,v 1.9 2017-11-30 14:33:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,65 +12,35 @@ require_once($class_path."/curl.class.php");
 
 class babelio extends connector {
 	//Variables internes pour la progression de la récupération des notices
-	var $del_old;				//Supression ou non des notices dejà existantes
+	public $del_old;				//Supression ou non des notices dejà existantes
 	
-	var $profile;				//Profil Amazon
-	var $match;					//Tableau des critères UNIMARC / AMAZON
-	var $current_site;			//Site courant du profile (n°)
-	var $searchindexes;			//Liste des indexes de recherche possibles pour le site
-	var $current_searchindex;	//Numéro de l'index de recherche de la classe
-	var $match_index;			//Type de recherche (power ou simple)
-	var $types;					//Types de documents pour la conversino des notices
+	public $profile;				//Profil Amazon
+	public $match;					//Tableau des critères UNIMARC / AMAZON
+	public $current_site;			//Site courant du profile (n°)
+	public $searchindexes;			//Liste des indexes de recherche possibles pour le site
+	public $current_searchindex;	//Numéro de l'index de recherche de la classe
+	public $match_index;			//Type de recherche (power ou simple)
+	public $types;					//Types de documents pour la conversino des notices
 	
 	//Résultat de la synchro
-	var $error;					//Y-a-t-il eu une erreur	
-	var $error_message;			//Si oui, message correspondant
+	public $error;					//Y-a-t-il eu une erreur	
+	public $error_message;			//Si oui, message correspondant
 	
-    function babelio($connector_path="") {
-    	parent::connector($connector_path);
+    public function __construct($connector_path="") {
+    	parent::__construct($connector_path);
     }
     
-    function get_id() {
+    public function get_id() {
     	return "babelio";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 2;
 	}
     
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-    
-    function get_libelle($message) {
-    	if (substr($message,0,4)=="msg:") return $this->msg[substr($message,4)]; else return $message;
-    }
-    
-    function source_get_property_form($source_id) {
-		return "";
-    }
-    
-    function make_serialized_source_properties($source_id) {
-    	$this->sources[$source_id]["PARAMETERS"]=serialize(array());
-	}
-	
-	//Récupération  des proriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
-		$this->timeout=5;
-		$this->repository=2;
-		$this->retry=3;
-		$this->ttl=1800;
-		$this->parameters="";
-	}
-	
- //Formulaire des propriétés générales
-	function get_property_form() {
+ 	//Formulaire des propriétés générales
+	public function get_property_form() {
 		global $charset;
 		$this->fetch_global_properties();
 		//Affichage du formulaire en fonction de $this->parameters
@@ -93,7 +63,7 @@ class babelio extends connector {
 		return $r;
 	}
     
-    function make_serialized_properties() {
+    public function make_serialized_properties() {
     	global $login, $mdp;
 		//Mise en forme des paramètres à partir de variables globales (mettre le résultat dans $this->parameters)
 		$keys = array();
@@ -103,11 +73,11 @@ class babelio extends connector {
 		$this->parameters = serialize($keys);
 	}
 
-	function enrichment_is_allow(){
+	public function enrichment_is_allow(){
 		return true;
 	}
 	
-	function getEnrichmentHeader(){
+	public function getEnrichmentHeader(){
 		$header= array();
 		$header[]= "<!-- Script d'enrichissement Babélio-->";
 		$header[]= "<script type='text/javascript'>
@@ -115,7 +85,7 @@ class babelio extends connector {
 			var pagin= new http_request();
 			var content = document.getElementById('div_'+type+notice_id);
 			var patience= document.createElement('img');
-			patience.setAttribute('src','images/patience.gif');
+			patience.setAttribute('src','".get_url_icon('patience.gif')."');
 			patience.setAttribute('align','middle');
 			patience.setAttribute('id','patience'+notice_id);
 			content.innerHTML = '';
@@ -135,7 +105,7 @@ class babelio extends connector {
 		return $header;
 	}
 	
-	function getTypeOfEnrichment($source_id){
+	public function getTypeOfEnrichment($source_id){
 		$type['type'] = array(
 			"citation",
 			"critique"
@@ -144,7 +114,7 @@ class babelio extends connector {
 		return $type;
 	}
 	
-	function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array(),$page=1){
+	public function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array(),$page=1){
 		$enrichment= array();
 		$this->noticeToEnrich = $notice_id;
 		$this->enrichPage = $page;
@@ -172,7 +142,7 @@ class babelio extends connector {
 		return $enrichment;
 	}
 	
-	function getInfos($type,$isbn){
+	public function getInfos($type,$isbn){
 		global $charset;
 		if(!$isbn) return "";
 		$return = "";
@@ -189,24 +159,24 @@ class babelio extends connector {
 		return $return;
 	}
 	
-	function getHash($t){
+	public function getHash($t){
 		$keys = unserialize($this->parameters);
 		return md5($keys['login'].md5($keys['mdp'])."PMB".$t);
 	}
 	
-	function getEnrichmentPagin($sommaire){
+	public function getEnrichmentPagin($sommaire){
 		$current = $sommaire['PAGE'][0]['value'];
 		$nb_page = ceil($sommaire['NB_RESULTATS'][0]['value']/$sommaire['RESULTATS_PAR_PAGE'][0]['value']);
 		$ret = "";
-		if($current > 1) $ret .= "<img src='images/prev.gif' onclick='switchPage(\"".$this->noticeToEnrich."\",\"".$this->typeOfEnrichment."\",\"".$current."\",\"previous\");'/>";
-		else $ret .= "<img src='images/prev-grey.gif'/>";
+		if($current > 1) $ret .= "<img src='".get_url_icon('prev.png')."' onclick='switchPage(\"".$this->noticeToEnrich."\",\"".$this->typeOfEnrichment."\",\"".$current."\",\"previous\");'/>";
+		else $ret .= "<img src='".get_url_icon('prev-grey.png')."'/>";
 		$ret .="&nbsp;".$current."/$nb_page&nbsp;";
-		if($current < $nb_page) $ret .= "<img src='images/next.gif' onclick='switchPage(\"".$this->noticeToEnrich."\",\"".$this->typeOfEnrichment."\",\"".$current."\",\"next\");'/>";
-		else $ret .= "<img src='images/next-grey.gif'/>";
-		return "<div class='row'><center>$ret</center></div>";
+		if($current < $nb_page) $ret .= "<img src='".get_url_icon('next.png')."' onclick='switchPage(\"".$this->noticeToEnrich."\",\"".$this->typeOfEnrichment."\",\"".$current."\",\"next\");'/>";
+		else $ret .= "<img src='".get_url_icon('next-grey.png')."'/>";
+		return "<div class='row'><span style='text-align:center'>".$ret."</span></div>";
 	}
 	
-	function formatEnrichmentResult($xml){
+	public function formatEnrichmentResult($xml){
 		$result = "";
 		foreach($xml['URL'] as $url){
 			$d = explode("T",$url['DT'][0]['value']);
@@ -232,18 +202,18 @@ class babelio extends connector {
 	}
 	
 	// Gestion des étoiles pour les notes
-	function stars($note) {
+	public function stars($note) {
 		$etoiles_moyenne="";
 		$cpt_star = 5;
 		
 		for ($i = 1; $i <= $cpt_star; $i++) {
-			if($note >= $i) $etoiles_moyenne.="<img border=0 src='images/star.png' align='absmiddle'>";
-			else $etoiles_moyenne.="<img border=0 src='images/star_unlight.png' align='absmiddle'>";
+			if($note >= $i) $etoiles_moyenne.="<img border=0 src='".get_url_icon('star.png')."' align='absmiddle'>";
+			else $etoiles_moyenne.="<img border=0 src='".get_url_icon('star_unlight.png')."' align='absmiddle'>";
 		}
 		return $etoiles_moyenne;
 	} // fin stars()
 	
-	function cp1252Toiso88591($str){
+	public function cp1252Toiso88591($str){
 		$cp1252_map = array(
 			"\x80" => "EUR", /* EURO SIGN */
 			"\x82" => "\xab", /* SINGLE LOW-9 QUOTATION MARK */

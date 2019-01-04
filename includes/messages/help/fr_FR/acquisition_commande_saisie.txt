@@ -1,5 +1,5 @@
 <br />
-<h1>Aide à la saisie</h1>
+<h2>Aide &agrave; la saisie</h2>
 <ul>
 <li>Ligne 1 : Titre</li>
 <li>Ligne 2 (Auteur) : Entr&eacute;e,rejet&eacute;</li>

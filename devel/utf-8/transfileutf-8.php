@@ -6,11 +6,9 @@
  * Window - Preferences - PHPeclipse - PHP - Code Templates
  */
  header ("Content-Type: text/html; charset=utf-8")
-?>
-<html>
+?><html lang="fr">
 <head>
-<meta http-equiv="Content-Language" content="fr" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta charset="utf-8"/>
 <title>Transfert fichier en utf-8</title>
 </head>
 <body bgcolor="#FFFFFF" text="#000000" link="#FF9966" vlink="#FF9966" alink="#FFCC99">

@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: func_customfields_artevod.inc.php,v 1.2.4.1 2015-09-02 09:32:05 mbertin Exp $
+// $Id: func_customfields_artevod.inc.php,v 1.4 2017-12-04 10:33:10 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -101,6 +101,9 @@ function traite_info_subst(&$mes_info){
 			$mes_info->doc_nums[$i]['b'] = $filename; 
 		}
 	}
+}
+
+function traite_concepts_for_form($tableau_606 = array()) {
 }
 
 ?>

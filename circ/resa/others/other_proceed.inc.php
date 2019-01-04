@@ -5,7 +5,7 @@
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-// $Id: other_proceed.inc.php,v 1.10 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: other_proceed.inc.php,v 1.16 2017-11-21 12:01:00 dgoron Exp $
 // Armelle : a priori plus utilisé
 // la couleur pour la mise en évidence des mots trouvés
 $high_color = "#800080";
@@ -13,11 +13,11 @@ define('DEBUG', 0);
 
 // définition de la classe de passage par page
 class other_search {
-	var $requete			= '';	// la requête SQL complète
-	var $nbr_rows 			= 0;	// le nombre de résultats trouvés
-	var $results_per_pages	= 0;	// nombre de résultats par page à afficher
-	var $display			= '';	// affichage en clair de la requête utilisateur
-	var $terms					;	// tableau des mots de la requête (pour highlight)
+	public $requete			= '';	// la requête SQL complète
+	public $nbr_rows 			= 0;	// le nombre de résultats trouvés
+	public $results_per_pages	= 0;	// nombre de résultats par page à afficher
+	public $display			= '';	// affichage en clair de la requête utilisateur
+	public $terms					;	// tableau des mots de la requête (pour highlight)
 }
 
 if($obj) {
@@ -102,7 +102,7 @@ print	$end_result_list;
 		<input type='hidden' name='obj' value=\"$obj\" />
 		<input type='hidden' name='page' value=\"$precedente\" />
 		</form>";
-		$nav_bar .= "<img src='./images/left.gif' hspace='3' align='middle' border='0' onClick=\"document.page_prec.submit();\">";
+		$nav_bar .= "<img src='".get_url_icon('left.gif')."' style='border:0px; margin:3px 3px' class='align_middle' onClick=\"document.page_prec.submit();\">";
 		}
 
 	for($i = 1; $i <= $nbepages; $i++) {
@@ -110,14 +110,14 @@ print	$end_result_list;
 		}
 	
 	if($suivante<=$nbepages) {
-		$nav_bar .= "<img src='./images/right.gif' hspace='3' align='middle' border='0' onClick=\"document.page_next.submit();\">";
+		$nav_bar .= "<img src='".get_url_icon('right.gif')."' style='border:0px; margin:3px 3px' class='align_middle' onClick=\"document.page_next.submit();\">";
 		$nav_bar .= "<form class='form-$current_module' name=\"page_next\" method=\"post\" action=\"./circ.php?categ=resa&mode=4&id_empr=$id_empr&groupID=$groupID&unq=$unq\">
 		<input type='hidden' name='obj' value=\"$obj\" />
 		<input type='hidden' name='page' value=\"$suivante\" />
 		</form>";
 		}	
 
-	print "<div class=\"row\"><div align='center'>$nav_bar</div></div>";	
+	print "<div class=\"row\"><div class='center'>$nav_bar</div></div>";	
 }
 
 
@@ -130,7 +130,7 @@ $high_color = "#800080";
 
 // pour débuggage
 if(DEBUG) {
-	print "<p><font color=#ff0000>&lt;debug mode&gt;</font>";
+	print "<p><span style='color:#ff0000'>&lt;debug mode&gt;</span>";
 	print '<br />$ourSearch->requete : '.$ourSearch->requete;
 	print '<br />$ourSearch->nbr_rows : '.$ourSearch->nbr_rows;
 //	print '<br />$ourSearch->nb_results : '.$ourSearch->nb_results;
@@ -144,7 +144,7 @@ if(DEBUG) {
 	$result = serialize($ourSearch);
 	print "<br />$result<br />";
 	print '<br /><strong>$obj content (sent to hidden form)</strong> :<br />'.$obj;
-	print '<br /><font color=#ff0000>&lt;/debug mode&gt;</font></p>';
+	print '<br /><span style="color:#ff0000">&lt;/debug mode&gt;</span></p>';
 }
 
 ?>

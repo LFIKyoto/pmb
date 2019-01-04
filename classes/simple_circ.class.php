@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: simple_circ.class.php,v 1.3.2.2 2015-09-22 13:17:41 ngantier Exp $
+// $Id: simple_circ.class.php,v 1.7 2017-11-07 15:20:00 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -95,13 +95,22 @@ class simple_circ {
 
 	private function empr_info($id){
 		$info=array();
-		$req="select empr_cb, empr_nom ,  empr_prenom, empr_mail from empr where id_empr=".$id;
-		$res_empr=pmb_mysql_query($req);
+	//	$req="select empr_cb, empr_nom ,  empr_prenom, empr_mail, empr_statut from empr where id_empr=".$id;
+		$requete = "SELECT e.*, c.libelle AS code1, s.libelle AS code2, es.statut_libelle AS empr_statut_libelle, allow_loan, allow_book, allow_opac, allow_dsi, allow_dsi_priv, allow_sugg, allow_prol, d.location_libelle as localisation, date_format(empr_date_adhesion, '".$msg["format_date"]."') as aff_empr_date_adhesion, date_format(empr_date_expiration, '".$msg["format_date"]."') as aff_empr_date_expiration,date_format(last_loan_date, '".$msg["format_date"]."') as aff_last_loan_date FROM empr e left join docs_location as d on e.empr_location=d.idlocation, empr_categ c, empr_codestat s, empr_statut es ";
+		$requete .= " WHERE e.id_empr='".$id."' " ;
+		$requete .= " AND c.id_categ_empr=e.empr_categ";
+		$requete .= " AND s.idcode=e.empr_codestat";
+		$requete .= " AND es.idstatut=e.empr_statut";
+		$requete .= " LIMIT 1";		
+		$res_empr=pmb_mysql_query($requete);
 		if ($empr=pmb_mysql_fetch_object($res_empr)) {
 			$info['cb'] = $empr->empr_cb;
 			$info['nom'] = $empr->empr_nom;
 			$info['prenom'] = $empr->empr_prenom;
 			$info['mail'] = $empr->empr_mail;
+			$info['statut_libelle'] = $empr->empr_statut_libelle;
+			$info['categ_libelle'] = $empr->code1;
+			$info['codestat_libelle'] = $empr->code2;
 			$info['id_empr']=$id;
 			$info['view_link']='./circ.php?categ=pret&form_cb='.$empr->empr_cb;
 			$info['empr_libelle']=$info['nom']." ".$info['prenom']." ( ".$info['cb'] ." ) ";
@@ -115,6 +124,7 @@ class simple_circ {
 
 	public function get_display(){
 		global $msg,$base_path;
+		global $current_module;
 		$simple_circ_form_tpl="
 		<script>
 		</script>
@@ -125,12 +135,12 @@ class simple_circ {
 					<label class='etiquette' for='start_date'>".$msg["serial_simple_circ_edit_start_date"]."</label>
 					<input type='hidden' name='start_date' id='start_date' value='!!start_date!!' />
 					<input type='button' class='button' id='form_start_date' name='form_start_date' 
-					onclick='openPopUp(\"$base_path/select.php?what=calendrier&caller=\"+this.form.name+\"&date_caller=!!day!!&param1=start_date&param2=form_start_date&auto_submit=NO&date_anterieure=YES\", \"".$msg["serial_simple_circ_edit_start_date"]."\", 250, 300, -2, -2, \"toolbar=no, dependent=yes, resizable=yes\")' value='!!form_start_date!!'/>
+					onclick='openPopUp(\"$base_path/select.php?what=calendrier&caller=\"+this.form.name+\"&date_caller=!!day!!&param1=start_date&param2=form_start_date&auto_submit=NO&date_anterieure=YES\", \"calendar\")' value='!!form_start_date!!'/>
 
 					<label class='etiquette' for='end_date'>".$msg["serial_simple_circ_edit_end_date"]."</label>
 					<input type='hidden' name='end_date' id='end_date' value='!!end_date!!' />
 					<input type='button' class='button' id='form_end_date' name='form_end_date' 
-					onclick='openPopUp(\"$base_path/select.php?what=calendrier&caller=\"+this.form.name+\"&date_caller=!!day!!&param1=end_date&param2=form_end_date&auto_submit=NO&date_anterieure=YES\", \"".$msg["serial_simple_circ_edit_end_date"]."\", 250, 300, -2, -2, \"toolbar=no, dependent=yes, resizable=yes\")' value='!!form_end_date!!'/>
+					onclick='openPopUp(\"$base_path/select.php?what=calendrier&caller=\"+this.form.name+\"&date_caller=!!day!!&param1=end_date&param2=form_end_date&auto_submit=NO&date_anterieure=YES\", \"calendar\")' value='!!form_end_date!!'/>
 										
 					<input type='button' value='".$msg["serial_simple_circ_edit_calculate"]."' class='bouton' onclick=\"this.form.setAttribute('action','');this.form.submit();\"   />		
 				</div>				
@@ -240,7 +250,7 @@ class simple_circ {
 					<input type='button' value='".$msg["serial_simple_circ_edit_list_add"]."' class='bouton' onclick=\"add_cb();\" />				
 				</div>	
 				<div class='row'>
-					<table class='sortable' width='100%' id='cb_list'>
+					<table class='sortable' style='width:100%' id='cb_list'>
 						<tr>
 							<th>".$msg["serial_simple_circ_edit_list_table_perio"]."</th>
 							<th>".$msg["serial_simple_circ_edit_list_table_abt"]."</th>

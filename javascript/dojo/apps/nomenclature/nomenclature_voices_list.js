@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_voices_list.js,v 1.4 2015-02-09 11:17:32 vtouchard Exp $
+// $Id: nomenclature_voices_list.js,v 1.6 2016-06-23 16:55:56 dgoron Exp $
 
 define(["dojo/_base/declare", "dojo/_base/lang", "dojo/topic", "dijit/registry"], function(declare, lang, topic, registry){
 	/*
@@ -14,6 +14,7 @@ define(["dojo/_base/declare", "dojo/_base/lang", "dojo/topic", "dijit/registry"]
 		  	nomenclature_voices:null,
 		  	hash:null,
 		  	id:0,
+		  	effective: 0,
 
 		    constructor: function(){
 		    	this.voices = new Array();
@@ -60,12 +61,8 @@ define(["dojo/_base/declare", "dojo/_base/lang", "dojo/topic", "dijit/registry"]
 		    	}
 		    	return this.hash;
 		    },
-			    
-			calc_abbreviation:function(){
-				
-			},
 			get_effective:function(){
-				
+				return this.effective;
 			},
 			add_voice: function(voice, reorder){
 				var reorder = reorder || false;
@@ -141,10 +138,10 @@ define(["dojo/_base/declare", "dojo/_base/lang", "dojo/topic", "dijit/registry"]
 						if(array_types[i][j].effective == 0)
 							flag_part_undef = true;
 						if(array_types[i].length == 1){
-							if(array_types[i][j].effective == 0){
+							if(array_types[i][j].abbreviation == this.nomenclature_voices.indefinite_character){
 								abbr+=array_types[i][j].code;
 							}else{
-								abbr+=array_types[i][j].abbreviation+array_types[i][j].code;	
+								abbr+=array_types[i][j].abbreviation+array_types[i][j].code;
 							}
 						}else{
 							increment_effective = increment_effective+parseInt(array_types[i][j].effective);

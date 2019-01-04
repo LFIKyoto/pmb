@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: apijsonrpc_jsonrpcserver.class.php,v 1.4 2010-04-15 08:15:12 erwanmartin Exp $
+// $Id: apijsonrpc_jsonrpcserver.class.php,v 1.5 2017-07-03 13:07:42 dgoron Exp $
 //Here be komodo dragons
 
 /*
@@ -17,20 +17,20 @@ require_once ($class_path."/external_services.class.php");
 require_once 'jsonRPCServer.php';
 
 class apijsonrpc_jsonrpcserver {
-	var $connector_object;
-	var $server;
+	public $connector_object;
+	public $server;
 	
-	function apijsonrpc_jsonrpcserver($connector_object) {
+	public function __construct($connector_object) {
 		$this->connector_object = $connector_object;
 	}
 	
-	function return_error($error_string) {
+	public function return_error($error_string) {
 		highlight_string(print_r($error_string, true));
 		die();
 	}
 	
 	
-	function process($source_id, $pmb_user_id, $json_input) {
+	public function process($source_id, $pmb_user_id, $json_input) {
 		global $charset;
 		global $wsdl;
 		global $class_path;

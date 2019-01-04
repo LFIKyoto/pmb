@@ -6,22 +6,15 @@
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+require_once($class_path."/entities/entities_serials_explnum_controller.class.php");
+
 // suppression d'un exemplaire numérique de pério
-echo str_replace('!!page_title!!', $msg[4000].$msg[1003].$msg[explnum_doc_associe], $serial_header);
+echo str_replace('!!page_title!!', $msg[4000].$msg[1003].$msg['explnum_doc_associe'], $serial_header);
 
-print "<div class=\"row\"><div class=\"msg-perio\">".$msg['catalog_notices_suppression']."</div></div>";
-
-$expl = new explnum($explnum_id);
-$expl->delete();
-
-$id_form = md5(microtime());
-$retour = "./catalog.php?categ=serials&sub=view&serial_id=$serial_id";
-print "
-	<form class='form-$current_module' name='dummy' method='post' action='$retour' style='display:none'>
-		<input type='hidden' name='id_form' value='$id_form'>
-	</form>
-	<script type='text/javascript'>document.dummy.submit();</script>
-	";
+$entities_serials_explnum_controller = new entities_serials_explnum_controller($explnum_id);
+$entities_serials_explnum_controller->set_serial_id($serial_id);
+$entities_serials_explnum_controller->set_action('explnum_delete');
+$entities_serials_explnum_controller->proceed();
 
 
 		

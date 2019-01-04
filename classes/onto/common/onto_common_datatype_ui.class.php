@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_datatype_ui.class.php,v 1.17 2014-08-08 10:11:53 arenou Exp $
+// $Id: onto_common_datatype_ui.class.php,v 1.21 2018-09-21 12:14:57 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -37,7 +37,7 @@ abstract class onto_common_datatype_ui extends onto_root_ui{
 	 * @static
 	 * @access public
 	 */
-	abstract public static function get_form($item_uri,$property, $restrictions,$datas, $instance_name,$flag);
+	public static function get_form($item_uri,$property, $restrictions,$datas, $instance_name,$flag){}
 
 	/**
 	 * 
@@ -96,6 +96,59 @@ abstract class onto_common_datatype_ui extends onto_root_ui{
 		$combobox.='</select>';
 	
 		return $combobox;
+	}
+	
+	public static function get_hidden_fields($item_uri,$property, $restrictions,$datas, $instance_name,$flag) {
+		global $msg,$charset,$ontology_tpl;
+	
+		$form=$ontology_tpl['form_row_hidden'];
+	
+		$content='';
+	
+		if(sizeof($datas)){
+			$new_element_order=max(array_keys($datas));
+				
+			$form=str_replace("!!onto_new_order!!",$new_element_order , $form);
+	
+			foreach($datas as $key=>$data){
+				$row=$ontology_tpl['form_row_content_hidden'];
+	
+				if($data->get_order()){
+					$order=$data->get_order();
+				}else{
+					$order=$key;
+				}
+				/**
+				 * TODO  : voir $data->get_formated_value() pour les sélecteurs multiples 
+				 */
+				$formated_value = $data->get_formated_value();
+				$row=str_replace("!!onto_row_content_hidden_value!!",htmlentities((is_array($formated_value) ? reset($formated_value) : $formated_value) ,ENT_QUOTES,$charset) ,$row);
+				$row=str_replace("!!onto_row_content_hidden_lang!!",$data->get_lang(),$row);
+				$row=str_replace("!!onto_row_content_hidden_range!!",$property->range[0] , $row);
+	
+				$row=str_replace("!!onto_row_order!!",$order , $row);
+	
+				$content.=$row;
+			}
+		} else {
+	
+			$form=str_replace("!!onto_new_order!!","0" , $form);
+				
+			$row = $ontology_tpl['form_row_content_hidden'];
+	
+			$row = str_replace("!!onto_row_content_hidden_value!!", "", $row);
+			$row = str_replace("!!onto_row_content_hidden_lang!!","" , $row);
+			$row = str_replace("!!onto_row_content_hidden_range!!",$property->range[0] , $row);
+	
+			$row=str_replace("!!onto_row_order!!","0" , $row);
+	
+			$content.=$row;
+		}
+	
+		$form=str_replace("!!onto_rows!!",$content ,$form);
+		$form=str_replace("!!onto_row_id!!",$instance_name.'_'.$property->pmb_name , $form);
+	
+		return $form;
 	}
 	
 } // end of onto_common_datatype_ui

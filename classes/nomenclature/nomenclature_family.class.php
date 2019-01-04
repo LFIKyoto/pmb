@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_family.class.php,v 1.7 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: nomenclature_family.class.php,v 1.8 2016-02-15 14:09:40 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -43,6 +43,12 @@ class nomenclature_family{
 	protected $abbreviation;
 
 	/**
+	 * Ordre de la famille en base
+	 * @access protected
+	 */
+	protected $order;
+	
+	/**
 	 * Constructeur
 	 *
 	 * @param string name Nom de la famille
@@ -62,11 +68,12 @@ class nomenclature_family{
 		global $dbh;
 		if($this->id){
 			//le nom de la famille
-			$query = "select family_name from nomenclature_families where id_family = ".$this->id;
+			$query = "select family_name, family_order from nomenclature_families where id_family = ".$this->id;
 			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				while($row = pmb_mysql_fetch_object($result)){
 					$this->set_name($row->family_name);
+					$this->order = $row->family_order;
 				}
 				//récupération des pupitres
 				$query = "select id_musicstand from nomenclature_musicstands where musicstand_famille_num = ".$this->id." order by musicstand_order asc";
@@ -80,6 +87,7 @@ class nomenclature_family{
 		}else{
 			$this->musicstands =array();
 			$this->name = "";
+			$this->order = "";
 		}
 	}
 	
@@ -180,6 +188,17 @@ class nomenclature_family{
 	public function get_abbreviation( ) {
 		return  pmb_preg_replace('/\s+/', '', $this->abbreviation);
 	} // end of member function get_abbreviation
+	
+	/**
+	 *  Récupération de l'ordre
+	 *
+	 * @return int
+	 * @access public
+	 */
+	public function get_order() {
+		return $this->order;
+	} // end of member function get_abbreviation
+	
 	
 	/**
 	 * Calcule et affecte la nomenclature abrégée à  partir de l'arbre

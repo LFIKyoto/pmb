@@ -2,12 +2,12 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_link.class.php,v 1.1 2015-06-18 14:23:54 apetithomme Exp $
+// $Id: vedette_link.class.php,v 1.2 2017-02-28 11:43:27 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-if(!defined(TYPE_CONCEPT_PREFLABEL)){
-	define(TYPE_CONCEPT_PREFLABEL, 1);
+if(!defined('TYPE_CONCEPT_PREFLABEL')){
+	define('TYPE_CONCEPT_PREFLABEL', 1);
 }
 
 class vedette_link {

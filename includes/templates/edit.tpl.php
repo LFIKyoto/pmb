@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: edit.tpl.php,v 1.29.4.1 2015-09-22 13:17:41 ngantier Exp $
+// $Id: edit.tpl.php,v 1.37 2018-06-07 12:55:12 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -21,6 +21,7 @@ $edit_menu = "
 <li><a href='./edit.php?categ=expl&sub=retard_par_date'>".$msg['edit_expl_retard_par_date']."</a></li>
 <li><a href='./edit.php?categ=expl&sub=ppargroupe'>$msg[1114]</a></li>
 <li><a href='./edit.php?categ=expl&sub=rpargroupe'>".$msg["menu_retards_groupe"]."</a></li>";
+
 if ($pmb_short_loan_management==1) {
 $edit_menu.= "
 </ul>
@@ -31,7 +32,17 @@ $edit_menu.= "
 <li><a href='./edit.php?categ=expl&sub=overdue_short_loans'>".$msg['overdue_short_loans']."</a></li>
 ";	
 }
-
+if($pmb_pnb_param_login) {
+	$edit_menu.= "
+	</ul>
+	<h3 onclick='menuHide(this,event)'>" . $msg['edit_menu_pnb'] . "</h3>
+	<ul>
+		<li><a href='./edit.php?categ=pnb&sub=orders'>".$msg["edit_menu_pnb_orders"]."</a></li>
+		";
+}
+// <li><a href='./edit.php?categ=pnb&sub=loans'>".$msg["1111"]."</a></li>
+// <li><a href='./edit.php?categ=pnb&sub=group_loans'>".$msg["1114"]."</a></li>
+ 
 $edit_menu.= "
 </ul>
 <h3 onclick='menuHide(this,event)'>$msg[350]</h3>
@@ -52,11 +63,16 @@ $edit_menu.= "
 <ul>
 <li><a href='./edit.php?categ=serials&sub=collect'>$msg[1151]</a></li>
 <!-- <li><a href='./edit.php?categ=serials&sub=manquant'>$msg[1154]</a></li> -->
+<li><a href='./edit.php?categ=serials&sub=circ_state'>".$msg["serial_circ_state_edit"]."</a></li>
 <li><a href='./edit.php?categ=serials&sub=simple_circ'>".$msg["serial_simple_circ_edit"]."</a></li>
 </ul>
 <h3 onclick='menuHide(this,event)'>$msg[1140]</h3>
 <ul>
 <li><a href='./edit.php?categ=cbgen&sub=libre'>$msg[1141]</a></li>
+</ul>
+<h3 onclick='menuHide(this,event)'>".$msg['sticks_sheet']."</h3>
+<ul>
+<li><a href='./edit.php?categ=sticks_sheet&sub=models'>".$msg['sticks_sheet_models']."</a></li>
 </ul>
 
 <h3 onclick='menuHide(this,event)'>".$msg["edit_tpl_menu"]."</h3>
@@ -75,18 +91,21 @@ if ($pmb_transferts_actif=="1") {
 			<li><a href='./edit.php?categ=transferts&sub=validation'>".$msg['transferts_edition_validation']."</a></li>";
 	$edit_menu .= "
 		<li><a href='./edit.php?categ=transferts&sub=envoi'>".$msg['transferts_edition_envoi']."</a></li>
+		<li><a href='./edit.php?categ=transferts&sub=reception'>".$msg['transferts_edition_reception']."</a></li>
 		<li><a href='./edit.php?categ=transferts&sub=retours'>".$msg['transferts_edition_retours']."</a></li>
 		</ul>
 		";
 }
 
+$edit_menu .= "<h3 onclick='menuHide(this,event)'>".$msg['opac_admin_menu']."</h3>
+<ul>";
 if($pmb_logs_activate){
-	$edit_menu .= "<h3 onclick='menuHide(this,event)'>".$msg['opac_admin_menu']."</h3>
-	<ul>
-	<li><a href='./edit.php?categ=stat_opac'>".$msg['stat_opac_menu']."</a></li>
-	</ul>";
+	$edit_menu .= "<li><a href='./edit.php?categ=stat_opac'>".$msg['stat_opac_menu']."</a></li>";
 }
-$edit_menu .= "</div>";
+$edit_menu .= "<li><a href='./edit.php?categ=opac&sub=campaigns'>".$msg['campaigns']."</a></li>
+</ul>";
+$plugins = plugins::get_instance();
+$edit_menu .= $plugins->get_menu('edit')."</div>";
 
 // $edit_layout : layout page edition
 $edit_layout = "

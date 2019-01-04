@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_menu_view_menu.class.php,v 1.4 2015-03-12 08:58:39 arenou Exp $
+// $Id: cms_module_menu_view_menu.class.php,v 1.6 2018-08-24 08:44:59 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -39,15 +39,16 @@ class cms_module_menu_view_menu extends cms_module_common_view{
 				<li".(str_replace($opac_url,"",$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']) == substr($item['link'],2) ? " class='cms_menu_current'":"").">";
 				if($item['link']){
 					$display.= "
-					<a href='".$item['link']."' alt='".$this->format_text($item['title'])."' title='".$this->format_text($item['title'])."'>";
+					<a href='".$item['link']."' title='".$this->format_text($item['title'])."'>";
 				}
 				$display.=$item['title'];
 				if($item['link']){
 					$display.= "
 					</a>";
 				}
-					
-				$display.=$this->build_items($item['children'],$lvl+1);
+				if(isset($item['children'])) {
+					$display.=$this->build_items($item['children'],$lvl+1);
+				}
 				$display.="
 				</li>";	
 			}

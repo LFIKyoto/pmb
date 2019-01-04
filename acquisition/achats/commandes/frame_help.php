@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frame_help.php,v 1.2 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: frame_help.php,v 1.5 2017-11-21 12:01:00 dgoron Exp $
 
 $base_path="./../../..";
 $base_auth = "ACQUISITION_AUTH";
@@ -14,7 +14,7 @@ require_once ("$base_path/includes/init.inc.php");
 
 print "
 <div class='row'>
-	<div class='right'><a href='#' onClick='parent.kill_frame_help();return false;'><img src='".$base_path."/images/close.gif' border='0' align='right'></a></div>";
+	<div class='right'><a href='#' onClick='parent.kill_frame_help();return false;'><img src='".get_url_icon('close.gif')."' style='border:0px' class='align_right'></a></div>";
 
 switch ($whatis) {
 	case 'cde_saisie':

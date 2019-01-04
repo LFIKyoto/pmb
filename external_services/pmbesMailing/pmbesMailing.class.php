@@ -2,29 +2,27 @@
 // +-------------------------------------------------+
 // | 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesMailing.class.php,v 1.1 2012-07-31 10:12:16 dgoron Exp $
+// $Id: pmbesMailing.class.php,v 1.3 2017-08-18 15:29:02 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/external_services.class.php");
 
 class pmbesMailing extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	
-	function sendMailingCaddie($id_caddie_empr, $id_tpl) {
+	public function sendMailingCaddie($id_caddie_empr, $id_tpl, $email_cc = '') {
 
 		$id_caddie_empr += 0;
 		if (!$id_caddie_empr)
@@ -40,7 +38,7 @@ class pmbesMailing extends external_services_api_class {
 				$objet_mail = $mailtpl->info['objet'];
 				$message = $mailtpl->info['tpl'];
 
-				$mailing = new mailing_empr($id_caddie_empr);
+				$mailing = new mailing_empr($id_caddie_empr, $email_cc);
 				$mailing->send($objet_mail, $message);
 				
 				$result["name"] = $mailtpl->info['name'];

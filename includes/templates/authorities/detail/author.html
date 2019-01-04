@@ -1,0 +1,26 @@
+{% extends 'gabarit.html' %}
+
+<!-- $Id: author.html,v 1.1 2018-02-16 15:45:42 apetithomme Exp $ -->
+
+{% block detail %}
+	{% if element.author_comment %}
+		<div class="aut_display_row">
+			<div class="aut_display_cell">
+				<b>{{ msg.search_extended_author_comment }} :</b>
+			</div>
+			<div class="aut_display_cell">
+				{{ element.author_comment | nl2br }}
+			</div>
+		</div>
+	{% endif %}
+	{% if element.see %}
+		<div class="aut_display_row">
+			<div class="aut_display_cell">
+				<b>{{ msg.206 }} :</b>
+			</div>
+			<div class='aut_display_cell'>
+				<span class='number_results'><a href="./autorites.php?categ=see&sub=author&id={{ element.see }}">{{ element.see_libelle}}</a></span>
+			</div>
+		</div>
+	{% endif %}
+{% endblock detail %}

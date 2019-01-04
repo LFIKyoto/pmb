@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: alter.php,v 1.19 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: alter.php,v 1.20 2017-01-25 16:43:49 dgoron Exp $
 
 // définition du minimum nécéssaire 
 $base_path="../..";                            
@@ -107,7 +107,7 @@ $version_pmb_bdd = $data['valeur_param'];
 
 echo "<div id='contenu-frame'>";
 echo "<h1>".$msg[1803]."<span class='bdd_version'>".$version_pmb_bdd."</span></h1>";  
-echo "<h2>".$msg[pmb_v_db_as_it_should_be]."<span class='bdd_version'>".$pmb_version_database_as_it_should_be."</span></h2>";  
+echo "<h2>".$msg['pmb_v_db_as_it_should_be']."<span class='bdd_version'>".$pmb_version_database_as_it_should_be."</span></h2>";  
 
 if ($action=="lancement" || !$action ) $deb_version_pmb_bdd = substr($version_pmb_bdd,0,2) ;
 else $deb_version_pmb_bdd = substr($action,0,2) ;

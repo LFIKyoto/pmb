@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: valid_sugg.inc.php,v 1.19.4.1 2015-10-05 13:15:41 jpermanne Exp $
+// $Id: valid_sugg.inc.php,v 1.21 2017-11-07 15:43:32 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -73,7 +73,7 @@ if (($tit != "") && ($aut != "" || $edi != "" || $code != "" || $_FILES['piece_j
 		
 		//Ré-affichage de la suggestion
 		$sug_form.= "
-		<table width='60%' cellpadding='5'>
+		<table style='width:60%' cellpadding='5'>
 			<tr>
 				<td >".htmlentities($msg["empr_sugg_tit"], ENT_QUOTES, $charset)."</td>
 				<td>".htmlentities($su->titre, ENT_QUOTES, $charset)."</td>
@@ -154,7 +154,7 @@ if (($tit != "") && ($aut != "" || $edi != "" || $code != "" || $_FILES['piece_j
 		$code = stripslashes($code);
 		//Ré-affichage de la suggestion
 		$sug_form.= "
-		<table width='60%' cellpadding='5'>
+		<table style='width:60%' cellpadding='5'>
 			<tr>
 				<td >".htmlentities($msg["empr_sugg_tit"], ENT_QUOTES, $charset)."</td>
 				<td>".htmlentities($tit, ENT_QUOTES, $charset)."</td>

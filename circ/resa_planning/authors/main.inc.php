@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.4.2.1 2015-08-14 10:30:03 dbellamy Exp $
+// $Id: main.inc.php,v 1.5 2015-08-14 12:33:05 dbellamy Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -21,4 +21,3 @@ if($pmb_show_notice_id && $f_notice_id){
 
 	$sh=new searcher_title("./circ.php?categ=resa_planning&resa_action=search_resa&id_empr=$id_empr&groupID=$groupID");
 }
-

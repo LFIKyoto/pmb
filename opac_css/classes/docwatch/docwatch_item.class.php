@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // Â© 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_item.class.php,v 1.3.4.1 2015-10-09 13:49:20 dgoron Exp $
+// $Id: docwatch_item.class.php,v 1.5 2017-06-15 15:53:58 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -374,16 +374,8 @@ class docwatch_item{
 		$query.= "update docwatch_items set	item_num_notice = '".$num_notice."' where id_item = '".$this->id."'";
 		pmb_mysql_query($query, $dbh);
 		
-		// permet de charger la bonne langue, mot vide...
-		$info=notice::indexation_prepare($num_notice);
-		// Mise a jour des index de la notice
-		notice::majNotices($num_notice);
-		// Mise a jour de la table notices_global_index
-		notice::majNoticesGlobalIndex($num_notice);
-		// Mise a jour de la table notices_mots_global_index
-		notice::majNoticesMotsGlobalIndex($num_notice);
-		// restaure l'environnement de langue
-		notice::indexation_restaure($info);
+		// Mise à jour de tous les index de la notice
+		notice::majNoticesTotal($num_notice);
 		return array('id'=>$num_notice, 'title'=> $this->title,'link'=>"./catalog.php?categ=isbd&id=".$num_notice);
 	}
 

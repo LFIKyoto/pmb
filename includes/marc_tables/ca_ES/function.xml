@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE XMLlist SYSTEM "../../XMLlist.dtd">
 <!-- liste des codes fonction en UNIMARC (français)
-$Id: function.xml,v 1.17 2008-10-07 09:38:18 rgarcia Exp $ -->
+$Id: function.xml,v 1.18 2017-04-05 14:11:49 ngantier Exp $ -->
 
 <XMLlist>
 	
@@ -46,7 +46,7 @@ $Id: function.xml,v 1.17 2008-10-07 09:38:18 rgarcia Exp $ -->
 	<entry code="260">Detentor del copyright</entry>
 	<entry code="270">Corrector</entry>
 	<entry code="273">Comissari d'exposició</entry>
-	<entry code="274">Ballarí</entry>
+	<entry code="275">Ballarí</entry>
 	<entry code="280">Dedicatari</entry>
 	<entry code="290">Dedicador</entry>
 	<entry code="295">Organisme de sosteniment</entry>

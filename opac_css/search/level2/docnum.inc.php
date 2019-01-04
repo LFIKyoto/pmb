@@ -2,11 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docnum.inc.php,v 1.25 2015-07-09 10:21:31 mbertin Exp $
+// $Id: docnum.inc.php,v 1.30 2018-01-18 08:30:15 wlair Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // second niveau de recherche OPAC sur document numérique
+require_once($class_path."/suggest.class.php");
+require_once($class_path."/sort.class.php");
 
 //Enregistrement des stats
 if($pmb_logs_activate){
@@ -20,7 +22,7 @@ print "	<div id=\"resultatrech\"><h3>".$msg['resultat_recherche']."</h3>\n
 ";
 
 // requête de recherche sur les titres
-print pmb_bidi("<h3><span>$count ".$msg['docnum_found']." '".htmlentities(stripslashes($user_query),ENT_QUOTES,$charset)."'");
+print pmb_bidi("<h3 class='searchResult-search'><span class='searchResult-equation'>$count ".$msg['docnum_found']." '".htmlentities(stripslashes($user_query),ENT_QUOTES,$charset)."'");
 
 //calcul restriction
 if ($opac_search_other_function) {
@@ -248,21 +250,7 @@ if ($opac_notices_depliable) print $begin_result_liste;
 print "<span class='print_search_result'>".$link_to_print_search_result."</span>";
 
 //gestion du tri
-if ($count<=$opac_nb_max_tri) {
-	$pos=strpos($_SERVER['REQUEST_URI'],"?");
-	$pos1=strpos($_SERVER['REQUEST_URI'],"get");
-	if ($pos1==0) $pos1=strlen($_SERVER['REQUEST_URI']);
-	else $pos1=$pos1-3;
-	$para=urlencode(substr($_SERVER['REQUEST_URI'],$pos+1,$pos1-$pos+1));
-	$para1=substr($_SERVER['REQUEST_URI'],$pos+1,$pos1-$pos+1);
-	$affich_tris_result_liste=str_replace("!!page_en_cours!!",$para,$affich_tris_result_liste); 
-	$affich_tris_result_liste=str_replace("!!page_en_cours1!!",$para1,$affich_tris_result_liste);
-	print $affich_tris_result_liste;
-	if ($_SESSION["last_sortnotices"]!="") {
-		print " ".$msg['tri_par']." ".$sort->descriptionTriParId($_SESSION["last_sortnotices"])."<span class=\"espaceResultSearch\">&nbsp;</span>"; 
-	}
-} else print "<span class=\"espaceResultSearch\">&nbsp;</span>";
-//fin gestion du tri
+print sort::show_tris_in_result_list($count);
 
 print $add_cart_link;
 if($opac_visionneuse_allow && $nbexplnum){
@@ -278,20 +266,17 @@ $_SESSION["notice_view".$n]["search_mod"]="docnum";
 $_SESSION["notice_view".$n]["search_page"]=$page;
 
 //affichage
-print "<span class=\"espaceResultSearch\">&nbsp;&nbsp;</span><span class=\"affiner_recherche\"><a href='$base_path/index.php?search_type_asked=extended_search&mode_aff=aff_simple_search' title='".$msg["affiner_recherche"]."'>".$msg["affiner_recherche"]."</a></span>";
+if($opac_search_allow_refinement){
+	print "<span class=\"espaceResultSearch\">&nbsp;&nbsp;</span><span class=\"affiner_recherche\"><a href='$base_path/index.php?search_type_asked=extended_search&mode_aff=aff_simple_search' title='".$msg["affiner_recherche"]."'>".$msg["affiner_recherche"]."</a></span>";	
+}
+
 //fin affinage
 
 //Etendre
 if ($opac_allow_external_search) print "<span class=\"espaceResultSearch\">&nbsp;&nbsp;</span><span class=\"search_bt_external\"><a href='$base_path/index.php?search_type_asked=external_search&mode_aff=aff_simple_search&external_type=simple' title='".$msg["connecteurs_external_search_sources"]."'>".$msg["connecteurs_external_search_sources"]."</a></span>";
 //fin etendre
 
-if ($opac_show_suggest) {
-	$bt_sugg = "<span class=\"espaceResultSearch\">&nbsp;&nbsp;&nbsp;</span><span class=\"search_bt_sugg\"><a href=# ";		
-	if ($opac_resa_popup) $bt_sugg .= " onClick=\"w=window.open('./do_resa.php?lvl=make_sugg&oresa=popup','doresa','scrollbars=yes,width=600,height=600,menubar=0,resizable=yes'); w.focus(); return false;\"";
-	else $bt_sugg .= "onClick=\"document.location='./do_resa.php?lvl=make_sugg&oresa=popup' \" ";			
-	$bt_sugg.= " title='".$msg["empr_bt_make_sugg"]."' >".$msg[empr_bt_make_sugg]."</a></span>";
-	print $bt_sugg;
-}
+print suggest::get_add_link();
 
 require_once("$class_path/explnum_affichage.class.php");
 // Ancienne version 

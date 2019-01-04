@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_doublon.class.php,v 1.9 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: notice_doublon.class.php,v 1.13 2017-07-13 14:33:33 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,22 +10,25 @@ require_once($include_path."/parser.inc.php");
 require_once($class_path."/parametres_perso.class.php");
 
 class notice_doublon {
-	var $external = false;		//booléen qui détermine si l'on est en recherche externe ou non...
-	var $signature = '';
-	var $duplicate = object;
+	public $external = false;		//booléen qui détermine si l'on est en recherche externe ou non...
+	public $signature = '';
+	public $duplicate;
+	public static $fields;
 	
 	// constructeur
-	function notice_doublon($external = false,$source_id=0) {
+	public function __construct($external = false,$source_id=0) {
 		global $include_path;
 		global $msg;
 		
 		$this->source_id = $source_id;
 		$this->external= $external; 	
 		// lecture des fonctions de pièges à exécuter pour faire un pret
-		$this->parse_xml_fields($include_path."/notice/notice.xml");		
+		if(!isset(static::$fields)) {
+			$this->parse_xml_fields($include_path."/notice/notice.xml");
+		}
 	}
 
-	function parse_xml_fields($filename) {
+	public function parse_xml_fields($filename) {
 		global $msg;
 		$f_pos=strrpos($filename,'.');
 		$f_end=substr($filename,$f_pos);
@@ -39,25 +42,29 @@ class notice_doublon {
 		for($i=0; $i<count($param['FIELD']); $i++) {
 			
 			$name=$param['FIELD'][$i]['NAME'];	
-			$this->fields[$name]['name'] = $param['FIELD'][$i]['NAME'];;
-			$this->fields[$name]['size_max'] = $param['FIELD'][$i]['SIZE_MAX'];
-			$this->fields[$name]['html'] = $param['FIELD'][$i]['HTML'][0]['value'];
-			$this->fields[$name]['html_ext'] = $param['FIELD'][$i]['HTML_EXT'][0]['value'];
-			$this->fields[$name]['sql'] = $param['FIELD'][$i]['SQL'][0]['value'];
-			$this->fields[$name]['sql_ext']= $param['FIELD'][$i]['SQL_EXT'][0]['value'];
+			static::$fields[$name]['name'] = $param['FIELD'][$i]['NAME'];;
+			static::$fields[$name]['size_max'] = $param['FIELD'][$i]['SIZE_MAX'];
+			static::$fields[$name]['html'] = $param['FIELD'][$i]['HTML'][0]['value'];
+			static::$fields[$name]['html_ext'] = $param['FIELD'][$i]['HTML_EXT'][0]['value'];
+			static::$fields[$name]['sql'] = $param['FIELD'][$i]['SQL'][0]['value'];
+			if(isset($param['FIELD'][$i]['SQL_EXT'][0]['value'])) {
+				static::$fields[$name]['sql_ext']= $param['FIELD'][$i]['SQL_EXT'][0]['value'];
+			} else {
+				static::$fields[$name]['sql_ext']= '';
+			}
 			$label = $param['FIELD'][$i]['LABEL'];
 			if(stripos($label,'msg:')===0 ) {
 				$label = $msg[substr($label,4)];
 			}
-			$this->fields[$name]['label']= $label;
+			static::$fields[$name]['label']= $label;
 		}
 		return 0;
 	}
 	
-	function read_field_form($field) {
-		if($this->external) $html=$this->fields[$field]["html_ext"];
-		else $html=$this->fields[$field]["html"];
-		$size_max=	$this->fields[$field]["size_max"];
+	public function read_field_form($field) {
+		if($this->external) $html=static::$fields[$field]["html_ext"];
+		else $html=static::$fields[$field]["html"];
+		$size_max=	static::$fields[$field]["size_max"];
 		
 		if(!$html) {
 			// c'est surement un param perso
@@ -65,6 +72,7 @@ class notice_doublon {
 			$chaine=$p_perso->read_form_fields_perso($field); 			
 			return $chaine;
 		} else  {
+			$chaine='';
 			for($i=0;$i<$size_max;$i++) {
 				$chaine.=stripslashes($GLOBALS[$html]);
 				// incrément du name de l'objet dans le formulaire
@@ -74,10 +82,10 @@ class notice_doublon {
 		}	
 	}
 	
-	function read_field_database($field,$id) {
+	public function read_field_database($field,$id) {
 		global $dbh;
-		if($this->external) $rqt = $this->fields[$field]["sql_ext"];	
-		else $rqt=$this->fields[$field]["sql"];	
+		if($this->external) $rqt = static::$fields[$field]["sql_ext"];	
+		else $rqt=static::$fields[$field]["sql"];	
  		if(!$rqt) {			
 			// c'est surement un param perso
 			$p_perso=new parametres_perso("notices");
@@ -96,7 +104,7 @@ class notice_doublon {
  		}	
 	}
 	
-	function gen_signature($id=0) {
+	public function gen_signature($id=0) {
 		global $dbh;
 		global $msg;
 		global $pmb_notice_controle_doublons;
@@ -105,6 +113,7 @@ class notice_doublon {
 				
 		// Pas de control activé en paramétrage: Sortir.
 		if( ($metod = $field_list[0]) < 1 ) return 0;
+		$chaine='';
 		foreach($field_list as  $i => $field) {
 			if ($i>0){	
 				if (!$id) {
@@ -128,7 +137,7 @@ class notice_doublon {
 		return $this->signature;
 	}			
 	
-	function getDuplicate() {
+	public function getDuplicate() {
 		
 		global $dbh;
 		$q = "select signature, niveau_biblio ,niveau_hierar ,notice_id from notices where signature='".$this->signature."' limit 1";

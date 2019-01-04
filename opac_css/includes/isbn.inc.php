@@ -2,12 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: isbn.inc.php,v 1.17 2015-06-18 13:55:50 jpermanne Exp $
+// $Id: isbn.inc.php,v 1.20 2017-06-22 13:23:54 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+require_once($class_path."/cache_factory.class.php");
+
 if ((!isset($array_isbn_ranges))||(!is_array($array_isbn_ranges))||(!count($array_isbn_ranges))) {
-	require_once ($includes_path."parser.inc.php") ;
+	require_once ($include_path.'/parser.inc.php') ;
 	$array_isbn_ranges = load_isbn_ranges();
 }
 
@@ -165,7 +167,7 @@ function formatISBN($isbn,$taille="") {
 }
 
 function load_isbn_ranges() {
-	global $include_path,$base_path,$charset;
+	global $include_path,$base_path,$charset, $KEY_CACHE_FILE_XML;
 
 	$array_isbn_ranges = array();
 	
@@ -177,8 +179,25 @@ function load_isbn_ranges() {
 	}
 	$fileInfo = pathinfo($xmlFile);
 	$tempFile = $base_path."/temp/XML".preg_replace("/[^a-z0-9]/i","",$fileInfo['dirname'].$fileInfo['filename'].$charset).".tmp";
+	$dejaParse=false;
 	
-	if (!file_exists($tempFile) || filemtime($xmlFile) > filemtime($tempFile)) {
+	$cache_php=cache_factory::getCache();
+	$key_file="";
+	if($cache_php){
+		$key_file=getcwd().$xmlFile.filemtime($xmlFile);
+		if($xmlFile_subst && file_exists($xmlFile_subst)){
+			$key_file.=filemtime($xmlFile_subst);
+		}
+		$key_file=$KEY_CACHE_FILE_XML.md5($key_file);
+		
+		if($tmp_key = $cache_php->getFromCache($key_file)){
+			if($array_isbn_ranges = $cache_php->getFromCache($tmp_key)){
+				$dejaParse = true;
+			}
+		}
+	}
+	
+	if (!$dejaParse &&  (!file_exists($tempFile) || (filemtime($xmlFile) > filemtime($tempFile)))) {
 		//Le fichier XML original a-t-il été modifié ultérieurement ?
 			//on va re-générer le pseudo-cache
 			if(file_exists($tempFile)){
@@ -197,9 +216,16 @@ function load_isbn_ranges() {
 					}
 				}
 			}
-			$tmp = fopen($tempFile, "wb");
-			fwrite($tmp,serialize($array_isbn_ranges));
-			fclose($tmp);
+			
+			if($cache_php){
+				$key_file_content=$KEY_CACHE_FILE_XML.md5(serialize($array_isbn_ranges));
+				$cache_php->setInCache($key_file_content, $array_isbn_ranges);
+				$cache_php->setInCache($key_file,$key_file_content);
+			}else{
+				$tmp = fopen($tempFile, "wb");
+				fwrite($tmp,serialize($array_isbn_ranges));
+				fclose($tmp);
+			}
 	} else if (file_exists($tempFile)){
 		$tmp = fopen($tempFile, "r");
 		$array_isbn_ranges = unserialize(fread($tmp,filesize($tempFile)));

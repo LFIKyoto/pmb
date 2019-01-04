@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: alert.php,v 1.14 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: alert.php,v 1.18 2018-09-10 13:21:36 dgoron Exp $
 
 // définition du minimum nécéssaire 
 $base_path=".";                            
@@ -15,6 +15,10 @@ if ($current_alert=="circ") {
 	require_once("./alert/resa.inc.php");
 	require_once("./alert/expl_todo.inc.php");		
 	require_once("./alert/empr.inc.php");
+	
+	if($pmb_scan_request_activate) {
+		require_once("./alert/scan_request.inc.php");
+	}
 	//pour les alertes de transferts
 	if ($pmb_transferts_actif && (SESSrights & TRANSFERTS_AUTH))
 		require_once ("./alert/transferts.inc.php");
@@ -22,6 +26,10 @@ if ($current_alert=="circ") {
 if ($current_alert=="catalog") {
 	require_once("./alert/tag.inc.php");
 	require_once("./alert/sugg.inc.php");
+	require_once("./alert/bulletinage.inc.php");
+	if($pmb_pnb_param_login) {
+	   require_once("./alert/pnb.inc.php");
+	}
 }
 
 if ($current_alert=="acquisition") {

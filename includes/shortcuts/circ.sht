@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: circ.sht,v 1.12 2010-12-03 15:27:05 dbellamy Exp $
+// $Id: circ.sht,v 1.13 2017-05-16 08:25:15 jpermanne Exp $
 
 // raccourcis clavier pour la page main
 
@@ -18,6 +18,7 @@ $raclavier[] = array("K" , "./catalog.php");									// Catalogue > Recherche > 
 $raclavier[] = array("B" , "./catalog.php?shcut=B");							// Catalogue > Recherche > Toutes notices > Auteur / Titre > N° d'exemplaire,ISBN,numero commercial
 $raclavier[] = array("M" , "./catalog.php?categ=search&mode=6");				// Catalogue > Recherche > Toutes notices > Multi-criteres
 $raclavier[] = array("I" , "./catalog.php?categ=search_perso");					// Catalogue > Recherche > Prédéfinie
+$raclavier[] = array("D" , "./catalog.php?categ=last_records");					// Catalogue > Dernières notices
 $raclavier[] = array("N" , "./catalog.php?categ=create");	 					// Catalogue > Documents > Nouvelle Notice
 $raclavier[] = array("F" , "./catalog.php?categ=serials&sub=pointage&id=0");	// Catalogue > Periodiques > Bulletinage
 $raclavier[] = array("G" , "./catalog.php?categ=caddie&sub=action");			// Catalogue > Paniers > Actions

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ontology.class.php,v 1.2 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: ontology.class.php,v 1.3 2017-01-06 16:10:52 tsamson Exp $
 
 
 if (stristr ($_SERVER['REQUEST_URI'], ".class.php"))
@@ -204,6 +204,14 @@ class ontology_parser {
 		return $r;
 	}
 	
+	protected function get_label ($res_id) {
+		$label = '';
+		if($this->t_resources[$res_id]['rdf:Description']['rdfs:label']['value'][0]) {
+			$label = $this->t_resources[$res_id]['rdf:Description']['rdfs:label']['value'][0];
+		}
+		return $label;
+	}
+	
 	
 	public function get_pmb_display_label($res_uri='') {
 
@@ -385,7 +393,6 @@ class ontology_parser {
 	
 	
 	protected function get_disjointwith($res_id) {
-	
 		$r=array();
 		if(is_array($this->t_resources[$res_id]['rdf:Description']['owl:disjointWith']['rdf:resource'])) {
 			$r=$this->t_resources[$res_id]['rdf:Description']['owl:disjointWith']['rdf:resource'];
@@ -459,9 +466,12 @@ class ontology_parser {
 			
 			//range
 			$this->t_properties[$uri]['range'] = $this->get_range($res['res_id']);
-			
+						
 			//disjointwith
 			$this->t_properties[$uri]['disjointwith'] = $this->get_disjointwith($res['res_id']);
+			
+			//label
+			$this->t_properties[$uri]['label'] = $this->get_label($res['res_id']);
 			
 		}
 		
@@ -475,7 +485,6 @@ class ontology_parser {
 			
 			//disjointwith
 			$this->t_objects[$uri]['disjointwith'] = $this->get_disjointwith($res['res_id']);
-		
 		}
 		
 		
@@ -551,6 +560,7 @@ class ontology_parser {
 
 require_once ("$include_path/templates/ontology.tpl.php");
 
+
 class ontology_handler {
 	
 	public $op=NULL;
@@ -571,8 +581,8 @@ class ontology_handler {
 	
 //TODO a revoir pour mettre en paramètre dans pmb	
 	public $t_lang = array(	'0'		=> '',
-							'fr'	=> 'fre',
-							'en'	=> 'eng',
+//							'fr'	=> 'fre',
+//							'en'	=> 'eng',
 // 							'es'	=> 'spa',
 // 							'ru'	=> 'rus',
 				);
@@ -789,7 +799,7 @@ class ontology_handler {
 	 * 
 	 */
 	
-	public function showform ($params=array()) {
+	public function showform ($params=array(), $pdo = array()) {
 
 		//un handler specifique ?
 		$this->get_handler('showform', $params);
@@ -797,9 +807,9 @@ class ontology_handler {
 		if(!$this->handled && $params['object'] && array_key_exists($params['object'], $this->op->t_objects) ) {
 			
 			//recuperation et verification parametres
-			$this->params=$params;
+			$this->params = $params;
 			
-			$fname=$this->format($this->params['object'] );
+			$fname = $this->format($this->params['object']);
 			
 			$object_uri='';
 			$raw_object_uri='';
@@ -824,14 +834,16 @@ class ontology_handler {
 			
 			
 			//recuperation des proprietes definies par l'ontologie pour le type d'objet donne
-			$pdo = $this->op->get_object_properties($this->params['object']);
+			if (!count($pdo)) {
+				$pdo = $this->op->get_object_properties($this->params['object']);
+			}
 // 			print '-->propriétés définies par l\'ontologie<br />';
 // 			highlight_string(print_r($pdo,true));
 				
 			$peb=array();
 			//récuperation des proprietes enregistrees en base
 			if ($this->params['object_uri']) {
-				$peb = $this->get_object_properties($this->params['object_uri']);
+				$peb = $this->get_object_properties($this->params['object_uri'], $pdo);
 				
 				if($charset!='utf-8') {
 					foreach($peb as $k=>$v) {
@@ -924,38 +936,45 @@ class ontology_handler {
 			$tpl='';
 			$tpl_mod='';
 			
+			
 			$p_pmb_datatype = $this->op->t_properties[$property_uri]['pmb_datatype'];
 			$p_range = $this->op->t_properties[$property_uri]['range'];
 			$p_min_cardinality = $this->op->t_objects[$this->params['object']]['cardinalities'][$property_uri]['min'];
 			$p_max_cardinality = $this->op->t_objects[$this->params['object']]['cardinalities'][$property_uri]['max'];
 			$o_disjointwith = $this->op->t_objects[$this->params['object']]['disjointwith'];
 			$p_disjointwith = $this->op->t_properties[$property_uri]['disjointwith'];
-				
+			
 			//possibilite de creer +sieurs proprietes
 			$display_add_button=true;
 			if($p_max_cardinality==1) {
 				$display_add_button=false;
 			}
-
+			
+			//datatype
 			if($p_pmb_datatype=='pmb:text') {
 				$tpl_mod = $ontology_tpl['text'];
 			} else if ($p_pmb_datatype=='pmb:small_text') {
 				$tpl_mod = $ontology_tpl['small_text'];
 			}
-
+			
+			//label
+			if($msg['ontology_'.$fname]) {
+				$label=$msg['ontology_'.$fname];
+			} elseif ($this->op->t_properties[$property_uri]['label']) {
+				$label = $this->op->t_properties[$property_uri]['label'];
+			} else {
+				$label=$property_uri;
+			}
+			
+			
 			//zone texte
 			if ($tpl_mod) {
 				
-				if($msg['ontology_'.$fname]) {
-					$label=$msg['ontology_'.$fname];
-				} else {
-					$label=$property_uri;
-				}
 				$tpl.=$ontology_tpl['label'];
 				$tpl = str_replace('!!label!!', $label,$tpl);
 				
 				$t_values=array();
-							foreach($peb as $k=>$v) {
+				foreach($peb as $k=>$v) {
 					if( ($v['p']==$property_uri) && $v['o'] /*&& array_key_exists($v['o lang'],$this->t_lang)  */) {
 						if ($v['o lang'] && array_key_exists($v['o lang'],$this->t_lang)) { 
 							$t_values[$v['o lang']][]=$v['o'];
@@ -969,13 +988,12 @@ class ontology_handler {
 				$index=0;
 				
 				foreach($this->t_lang as $k=>$v) {
-					
 					$i_lang=0;
 					$code_lang=$k;
 					if($k) {
 						$i_lang = $k;
 					}
-
+					
 					//propriete existante en base ?
 					if(array_key_exists($i_lang, $t_values)) {
 
@@ -1010,7 +1028,7 @@ class ontology_handler {
 						}
 						
 					} else {
-
+						
 						$index=0;
 						$value = '';
 						
@@ -1050,15 +1068,8 @@ class ontology_handler {
 				}
 				
 				
-			} else {
-			
-				//zone objet
+			} else { //zone objet
 				
-				if($msg['ontology_'.$fname]) {
-					$label=$msg['ontology_'.$fname];
-				} else {
-					$label=$property_uri;
-				}
 				$tpl.= $ontology_tpl['label'];
 				$tpl = str_replace('!!label!!', $label,$tpl);
 				

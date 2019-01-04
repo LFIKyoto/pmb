@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_document.class.php,v 1.4 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: cms_document.class.php,v 1.8 2018-08-24 08:44:59 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -49,7 +49,7 @@ class cms_document {
 	
 	protected function fetch_datas(){
 		if($this->id){
-			$query = "select document_title,document_description,document_filename,document_mimetype,document_filesize,document_vignette,document_url,document_path,document_create_date,document_num_storage,document_type_object,document_num_object from cms_documents where id_document = ".$this->id;
+			$query = "select document_title,document_description,document_filename,document_mimetype,document_filesize,document_vignette,document_url,document_path,document_create_date,document_num_storage,document_type_object,document_num_object from cms_documents where id_document = '".$this->id."'";
 			$result = pmb_mysql_query($query);
 			if(pmb_mysql_num_rows($result)){
 				$row = pmb_mysql_fetch_object($result);
@@ -77,7 +77,7 @@ class cms_document {
 		$item = "
 		<div class='document_item' id='document_".$this->id."'>
 			<div class='document_item_content'>
-			<img src='".$this->get_vignette_url()."'/>
+			<img src='".$this->get_vignette_url()."' alt='".$msg["opac_notice_vignette_alt"]."'/>
 			<br/>
 			<p> <a href='#' onclick='".$edit_js_function."(".$this->id.");return false;' title='".htmlentities($msg['cms_document_edit_link'])."'>".htmlentities(($this->title ? $this->title : $this->filename),ENT_QUOTES,$charset)."</a><br />
 			<span style='font-size:.8em;'>".htmlentities($this->mimetype,ENT_QUOTES,$charset).($this->filesize ? " - (".$this->get_human_size().")" : "")."</span></p>
@@ -94,7 +94,7 @@ class cms_document {
 				<input name='cms_documents_linked[]' onchange='document_change_background(".$this->id.");' type='checkbox'".($selected ? "checked='checked'" : "")." value='".htmlentities($this->id,ENT_QUOTES,$charset)."'/>
 			</div>
 			<div class='document_item_content'>
-				<img src='".$this->get_vignette_url()."'/>
+				<img src='".$this->get_vignette_url()."' alt='".$msg["opac_notice_vignette_alt"]."'/>
 				<br/>
 				<p>".htmlentities(($this->title ? $this->title : $this->filename),ENT_QUOTES,$charset)."<br />
 				<span style='font-size:.8em;'>".htmlentities($this->mimetype,ENT_QUOTES,$charset).($this->filesize ? " - (".$this->get_human_size().")" : "")."</span></p>
@@ -262,7 +262,7 @@ class cms_document {
 		
 		if($this->id){
 			$query = "update cms_documents set ";
-			$clause = " where id_document = ".$this->id;
+			$clause = " where id_document = '".$this->id."'";
 		}else{
 			$query = "insert into cms_documents set ";
 			$clause="";
@@ -287,7 +287,7 @@ class cms_document {
 		//suppression physique
 		if($this->storage->delete($this->path.$this->filename)){
 			//il ne reste plus que la base
-			if(pmb_mysql_query("delete from cms_documents where id_document = ".$this->id)){
+			if(pmb_mysql_query("delete from cms_documents where id_document = '".$this->id."'")){
 				return true;
 			}
 		}else{
@@ -389,7 +389,7 @@ class cms_document {
 		return $datas;
 	}
 	
-	public function get_format_data_structure(){
+	public static function get_format_data_structure(){
 		global $msg;
 		$format_datas = array();
 		$format_datas[] = array(
@@ -475,7 +475,7 @@ class cms_document {
 		$content = $this->storage->get_content($this->path.$this->filename);
 		if($content){
 			header('Content-Type: '.$this->mimetype);
-			header("Content-Disposition: inline; filename=".$this->filename."");
+			header('Content-Disposition: inline; filename="'.$this->filename.'"');
 			if($this->filesize) header("Content-Length: ".$this->filesize);
 			print $content;
 		}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: peruser.inc.php,v 1.4 2011-09-07 07:40:45 jpermanne Exp $
+// $Id: peruser.inc.php,v 1.5 2017-05-19 10:06:11 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -58,7 +58,7 @@ function update_rights_for_user(&$es_r,$val) {
 }
 
 //Enregistrement des droits si nécessaire
-if ($is_not_first) {
+if (isset($is_not_first) && $is_not_first) {
 	foreach ($es->catalog->groups as $group_name => &$group_content) {
 		$val = isset($grp_right[$group_name]) && $grp_right[$group_name];
 		$es_r=$es_rights->get_rights($group_name,"");
@@ -82,7 +82,7 @@ if ($is_not_first) {
 //Génération de la liste des utilisateurs
 $list_users="<select name='iduser' onChange='this.form.submit();'>\n";
 foreach ($es_rights->users as $userid=>$user) {
-	if (!$iduser) {
+	if (!isset($iduser) || !$iduser) {
 		$iduser=$userid;
 	}
 	$list_users.="	<option value='".$userid."' ".($userid==$iduser?"selected":"").">".htmlentities($user->username,ENT_QUOTES,$charset)."</option>\n";
@@ -102,7 +102,7 @@ for ($i=0; $i<count($group_list); $i++) {
 	
 	$rights=$es_rights->get_rights($group["name"],"");
 	
-	$has_basics=(!$es_rights->has_basic_rights($iduser,$group["name"],"")?"disabled='disabled'":"");
+	//$has_basics=(!$es_rights->has_basic_rights($iduser,$group["name"],"")?"disabled='disabled'":"");
 	
 	$full_group_allowed = array_search($iduser,$rights->users)!==false;
 	$table_rights.= "<tr class='".($i%2?"even":"odd")."'><td><br /><b>".htmlentities($group["name"],ENT_QUOTES,$charset)."</b><br /><br /></td><td colspan='2'><i>".htmlentities($group["description"],ENT_QUOTES,$charset)."</i></td>
@@ -115,26 +115,28 @@ for ($i=0; $i<count($group_list); $i++) {
 	</th></thead>";
 	
 	//Pour chaque méthode
-	for ($j=0; $j<count($group["methods"]); $j++) {
-		$method=$group["methods"][$j];
-		
-		$rights=$es_rights->get_rights($group["name"],$method["name"]);
-		
-		$has_basics=(!$es_rights->has_basic_rights($iduser,$group["name"],$method["name"])?"disabled='disabled'":"");
-		
-		$method_checked = !$full_group_allowed && array_search($iduser,$rights->users)!==false;
-		$method_enabled = !$full_group_allowed;
-		
-		$table_rights.= "<tr class='".($i%2?"even":"odd")."'>
-		".(!$j?"<td rowspan='".count($group["methods"])."'>&nbsp;</td>":"")."
-		<td><b>".htmlentities($method["name"],ENT_QUOTES,$charset)."</b></td><td><i>".htmlentities($method["description"],ENT_QUOTES,$charset)."</i></td>
-		<td></td>
-		<td>
-		<a name=\"".htmlentities($group["name"], ENT_QUOTES, $charset).'_'.htmlentities($method["name"], ENT_QUOTES, $charset)."\"/><input type='checkbox' es_group='".$group["name"]."' $has_basics value='1' ".(!$method_enabled ? "disabled" : "")." ".($method_checked ? "checked" : "")." name='mth_right[".htmlentities($group["name"]."][".$method["name"]."]",ENT_QUOTES,$charset)."]' id='available_".htmlentities($group["name"]."_".$method["name"],ENT_QUOTES,$charset)."'>
-		</td>
-		<td>
-		</td>
-		</tr>";
+	if(isset($group["methods"])) {
+		for ($j=0; $j<count($group["methods"]); $j++) {
+			$method=$group["methods"][$j];
+			
+			$rights=$es_rights->get_rights($group["name"],$method["name"]);
+			
+			$has_basics=(!$es_rights->has_basic_rights($iduser,$group["name"],$method["name"])?"disabled='disabled'":"");
+			
+			$method_checked = !$full_group_allowed && array_search($iduser,$rights->users)!==false;
+			$method_enabled = !$full_group_allowed;
+			
+			$table_rights.= "<tr class='".($i%2?"even":"odd")."'>
+			".(!$j?"<td rowspan='".count($group["methods"])."'>&nbsp;</td>":"")."
+			<td><b>".htmlentities($method["name"],ENT_QUOTES,$charset)."</b></td><td><i>".htmlentities($method["description"],ENT_QUOTES,$charset)."</i></td>
+			<td></td>
+			<td>
+			<a name=\"".htmlentities($group["name"], ENT_QUOTES, $charset).'_'.htmlentities($method["name"], ENT_QUOTES, $charset)."\"/><input type='checkbox' es_group='".$group["name"]."' $has_basics value='1' ".(!$method_enabled ? "disabled" : "")." ".($method_checked ? "checked" : "")." name='mth_right[".htmlentities($group["name"]."][".$method["name"]."]",ENT_QUOTES,$charset)."]' id='available_".htmlentities($group["name"]."_".$method["name"],ENT_QUOTES,$charset)."'>
+			</td>
+			<td>
+			</td>
+			</tr>";
+		}
 	}
 }
 

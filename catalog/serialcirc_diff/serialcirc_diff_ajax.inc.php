@@ -2,11 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_diff_ajax.inc.php,v 1.4 2014-10-14 08:23:05 ngantier Exp $
+// $Id: serialcirc_diff_ajax.inc.php,v 1.5 2017-08-23 07:22:08 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once("$class_path/serialcirc_diff.class.php");
+
+if(!isset($id_serialcirc)) $id_serialcirc = 0;
 
 switch($sub){		
 	case 'option_form':

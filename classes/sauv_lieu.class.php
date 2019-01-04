@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sauv_lieu.class.php,v 1.10 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: sauv_lieu.class.php,v 1.13 2017-11-07 15:20:00 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,16 +11,16 @@ include ($include_path."/templates/lieux_form.tpl.php");
 class sauv_lieu {
 
 	//Données
-	var $sauv_lieu_id; //Identifiant
-	var $sauv_lieu_nom; //Nom du lieu
-	var $sauv_lieu_url; //Chemin
-	var $sauv_lieu_protocol; //Protocole
-	var $sauv_lieu_host; //Serveur
-	var $sauv_lieu_login; //Login
-	var $sauv_lieu_password; //Mot de passe
-	var $act; //Action
+	public $sauv_lieu_id; //Identifiant
+	public $sauv_lieu_nom; //Nom du lieu
+	public $sauv_lieu_url; //Chemin
+	public $sauv_lieu_protocol; //Protocole
+	public $sauv_lieu_host; //Serveur
+	public $sauv_lieu_login; //Login
+	public $sauv_lieu_password; //Mot de passe
+	public $act; //Action
 
-	function sauv_lieu() {
+	public function __construct() {
 		global $sauv_lieu_id; //Données reçues du formulaire
 		global $sauv_lieu_nom;
 		global $sauv_lieu_url;
@@ -41,7 +41,7 @@ class sauv_lieu {
 		$this -> act = $act;
 	}
 	
-	function verifName() {
+	public function verifName() {
 		global $msg;
 		// we must avoid duplication also when changing a pre-existents destination
 		//$requete="select sauv_lieu_id from sauv_lieux where sauv_lieu_nom='".$this->sauv_lieu_nom."'";
@@ -55,7 +55,7 @@ class sauv_lieu {
 	
 	//Traitement de l'action reçue du formulaire (à appeller juste après l'instanciation de la classe)
 	//Renvoie le formulaire à afficher
-	function proceed() {
+	public function proceed() {
 
 		global $first;
 
@@ -96,14 +96,14 @@ class sauv_lieu {
 	}
 
 	//Préaparation du formulaire pour affiochage
-	function showForm() {
+	public function showForm() {
 		global $form;
 		global $first;
 		global $msg;
 		
 		//Si première connexion
 		if (!$first) {
-			$form = "<center><h3>".$msg["sauv_lieux_sel_or_add"]."</h3></center>";
+			$form = "<h3>".$msg["sauv_lieux_sel_or_add"]."</h3>";
 		} else {
 			//Si identifiant non vide
 			if ($this -> sauv_lieu_id) {
@@ -112,12 +112,10 @@ class sauv_lieu {
 				$resultat = pmb_mysql_query($requete);
 				if (pmb_mysql_num_rows($resultat) != 0)
 					list ($this -> sauv_lieu_nom, $this -> sauv_lieu_url, $this -> sauv_lieu_protocol, $this->sauv_lieu_host, $this -> sauv_lieu_login, $this -> sauv_lieu_password) = pmb_mysql_fetch_row($resultat);
-				//$form = "<center><b>".$this -> sauv_lieu_nom."</b></center>".$form;
 				$form = str_replace("!!quel_lieu!!", $this -> sauv_lieu_nom, $form);
 				$form = str_replace("!!delete!!", "<input type=\"submit\" value=\"".$msg["sauv_supprimer"]."\" onClick=\"if (confirm('".$msg["sauv_lieux_confirm_delete"]."')) { this.form.act.value='delete'; return true; } else { return false; }\" class=\"bouton\">", $form);
 			} else {
 				//Sinon : Nouvelle fiche
-				//$form = "<center><b>".$msg["sauv_lieu_new"]."</b></center>".$form;
 				$form = str_replace("!!quel_lieu!!", $msg["sauv_lieu_new"], $form);
 				$form = str_replace("!!delete!!", "", $form);
 			}
@@ -130,7 +128,7 @@ class sauv_lieu {
 			$login.= "<tr><td class='nobrd'>".$msg["sauv_lieux_host"]."</td><td class='nobrd'><input type=\"text\" name=\"sauv_lieu_host\" value=\"".$this -> sauv_lieu_host."\" class=\"saisie-simple\"></td></tr>\n";
 			$login.= "<tr><td class='nobrd'>".$msg["sauv_lieux_user"]."</td><td class='nobrd'><input type=\"text\" name=\"sauv_lieu_login\" value=\"".$this -> sauv_lieu_login."\" class=\"saisie-simple\"></td></tr>\n";
 			$login.= "<tr><td class='nobrd'>".$msg["sauv_lieux_password"]."</td ><td class='nobrd'><input type=\"password\" name=\"sauv_lieu_password\" value=\"".$this -> sauv_lieu_password."\" class=\"saisie-simple\"></td></tr>\n";
-			$login.= "<tr><td class='nobrd' colspan=2 align=center><a href=\"\" onClick=\"callFtpTest(); return false\">".$msg["sauv_lieux_test_cnx"]."</a></td></tr>";
+			$login.= "<tr><td class='nobrd center' colspan=2><a href=\"\" onClick=\"callFtpTest(); return false\">".$msg["sauv_lieux_test_cnx"]."</a></td></tr>";
 
 			$form = str_replace("!!login!!", $login, $form);
 		}
@@ -139,13 +137,12 @@ class sauv_lieu {
 
 	//Affichage de la liste des lieux existants dans la base
 	//linkToForm : true = rend la liste interactive avec le formulaire
-	function showTree($linkToForm = true) {
+	public function showTree($linkToForm = true) {
 		global $dbh;
 		global $msg;
 		
-//		$tree.= "<center><b>".$msg["sauv_lieux_tree_title"]."</b></center>\n";
-		$tree.= "<form><table>\n";
-		$tree.= "<th class='brd'><center>".$msg["sauv_lieux_tree_title"]."</center></th>";
+		$tree = "<form><table>\n";
+		$tree.= "<th class='brd'>".$msg["sauv_lieux_tree_title"]."</th>";
 
 		//Récupération de la liste
 		$requete = "select sauv_lieu_id, sauv_lieu_nom, sauv_lieu_protocol from sauv_lieux order by sauv_lieu_nom";
@@ -154,10 +151,10 @@ class sauv_lieu {
 			$tree.= "<tr><td class='brd'>";
 			switch ($res -> sauv_lieu_protocol) {
 				case "ftp" :
-					$tree.= "<img src=\"images/ftp.png\" border=0 align=center>&nbsp;";
+					$tree.= "<img src=\"images/ftp.png\" border=0 class='center'>&nbsp;";
 					break;
 				case "file" :
-					$tree.= "<img src=\"images/file.png\" border=0 align=center>&nbsp;";
+					$tree.= "<img src=\"images/file.png\" border=0 class='center'>&nbsp;";
 					break;
 			}
 			if ($linkToForm == true) {
@@ -172,20 +169,20 @@ class sauv_lieu {
 		$tree.= "</table>";
 		//Nouveau lieu
 		if ($linkToForm) {
-			//$tree.= "<center><a href=\"admin.php?categ=sauvegarde&sub=lieux&act=show&sauv_lieu_id=&first=1\">".$msg["sauv_lieux_tree_add"]."</a></center>";
+			//$tree.= "<a href=\"admin.php?categ=sauvegarde&sub=lieux&act=show&sauv_lieu_id=&first=1\">".$msg["sauv_lieux_tree_add"]."</a>";
 			$tree.="
-				<div class='center'><center>
+				<div class='center'>
 				<input type=\"button\" value=\"".$msg["sauv_lieux_tree_add"]."\" 
 					class=\"bouton\" 
 					onClick=\"document.location='./admin.php?categ=sauvegarde&sub=lieux&act=show&sauv_lieu_id=&first=1';\" />
-				</center></div></form>";
+				</div></form>";
 			
 		}
 		return $tree;
 	}
 
 	//Liste des protocols avec sélection par défaut
-	function showSelectProtocol() {
+	public function showSelectProtocol() {
 		global $msg;
 		$values = array("file", "ftp");
 		$toshow = array($msg["sauv_lieux_pro_list_file"],$msg["sauv_lieux_pro_list_ftp"]);

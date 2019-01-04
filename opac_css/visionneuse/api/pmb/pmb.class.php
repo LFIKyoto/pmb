@@ -2,25 +2,28 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmb.class.php,v 1.39 2015-04-14 08:35:40 arenou Exp $
+// $Id: pmb.class.php,v 1.54 2018-06-22 09:57:10 ngantier Exp $
 require_once("$include_path/notice_affichage.inc.php");
 require_once("$include_path/bulletin_affichage.inc.php");
 require_once("$class_path/upload_folder.class.php");
 require_once("$class_path/search.class.php");
 require_once("$class_path/searcher.class.php");
 require_once($class_path."/auth_popup.class.php");
+if($opac_search_other_function){
+	require_once($include_path."/".$opac_search_other_function);
+}
 
 class pmb extends base_params implements params {
-	var $listeDocs = array();		//tableau de documents
-	var $current = 0;				//position courante dans le tableau
-	var $currentDoc = "";			//tableau décrivant le document courant
-	var $params;					//tableau de paramètres utiles pour la recontructions des requetes...et même voir plus
-	var $listeBulls = array();
-	var $listeNotices = array();
-	var $watermark = array();			//Url du watermark si défini  + transparence
-	var $bibliInfos = array();
+	public $listeDocs = array();		//tableau de documents
+	public $current = 0;				//position courante dans le tableau
+	public $currentDoc = "";			//tableau décrivant le document courant
+	public $params;					//tableau de paramètres utiles pour la recontructions des requetes...et même voir plus
+	public $listeBulls = array();
+	public $listeNotices = array();
+	public $watermark = array();			//Url du watermark si défini  + transparence
+	public $bibliInfos = array();
 	
-    function pmb($params,$visionneuse_path) {
+    public function __construct($params,$visionneuse_path) {
     	global $opac_photo_mean_size_x,$opac_photo_mean_size_y;
     	$this->params = $params;
     	
@@ -33,26 +36,12 @@ class pmb extends base_params implements params {
 	    if($this->params["lvl"] != "afficheur" && $this->params["explnum"] !== 0)
 	    	$this->getDocById($this->params["explnum"]);
     }
- 	//renvoie un param
- 	function getParam($parametre){
- 		return $this->params[$parametre];
- 	}
- 	//renvoie le nombre de documents
- 	function getNbDocs(){
- 		return sizeof($this->listeDocs);
- 	}
- 	//renvoie un document précis
- 	function getDoc($numDoc){
- 		if($numDoc >= 0 && $numDoc <= $this->getNbDocs()-1){
- 			$this->current = $numDoc;
- 			return $this->getCurrentDoc();
- 		}else return false;
- 	}
- 	function getDocById($id){
+ 	
+ 	public function getDocById($id){
 		$this->getExplnums($id);
  	}
  	
- 	function recupListDocNum(){
+ 	public function recupListDocNum(){
  		global $dbh;
  		global $opac_indexation_docnum_allfields;
  		global $gestion_acces_active,$gestion_acces_empr_notice;
@@ -94,7 +83,11 @@ class pmb extends base_params implements params {
 				$searcher = new searcher_keywords(stripslashes($this->params['user_query']));
 				break;
 			case "extended" :
-				$searcher = new searcher_extended(stripslashes($this->params['search']));
+				if($this->params['serialized_search']){
+					$searcher = new searcher_extended(stripslashes($this->params['serialized_search']));
+				}else{
+					$searcher = new searcher_extended(stripslashes($this->params['search']));
+				}
 				break;
 			case "abstract" :
 				$searcher = new searcher_abstract(stripslashes($this->params['user_query']));
@@ -145,7 +138,6 @@ class pmb extends base_params implements params {
 			case "categ_see":
 				global $opac_auto_postage_nb_descendant,$opac_auto_postage_nb_montant;
 				global $opac_auto_postage_descendant,$opac_auto_postage_montant,$opac_auto_postage_etendre_recherche;
-				global $opac_categories_categ_sort_records;
 				
 				//auto-postage...
 				$nb_level_descendant=$opac_auto_postage_nb_descendant;
@@ -191,7 +183,7 @@ class pmb extends base_params implements params {
 					$suite_req.= "WHERE num_noeud=".$this->params["idautorite"]." $statut_r ";
 				}
 				//on a ce qu'il nous faut, on peut lancer la recherche...
-				$requete_noti ="SELECT distinct notices.notice_id, notices.niveau_biblio, notices.niveau_hierar $suite_req ORDER BY $opac_categories_categ_sort_records";
+				$requete_noti ="SELECT distinct notices.notice_id, notices.niveau_biblio, notices.niveau_hierar $suite_req";
 				break;
 			case "indexint_see":
 				$requete_noti = "SELECT notice_id,niveau_biblio,niveau_hierar FROM notices, notice_statut WHERE indexint='".$this->params["idautorite"]."' and statut=id_notice_statut and ((notice_visible_opac=1 and notice_visible_opac_abon=0)".( $_SESSION["user_code"]? " or (notice_visible_opac_abon=1 and notice_visible_opac=1)" : "").")" ;
@@ -215,9 +207,10 @@ class pmb extends base_params implements params {
 			case "perio_bulletin":
 				//TODO : droits sur les bulletins et dépouillements
 				$requete_bull = "SELECT bulletin_id FROM bulletins WHERE bulletin_notice='".$this->params["idperio"]."'";
-				//on récupère aussi les articles associés aux bulletins
-				//commit JP 04/03/2015 : ben non... le lien dit "Voir les documents numériques associés aux bulletins", pas aux articles
-				//$requete_noti ="select analysis_notice as notice_id from analysis join bulletins on analysis_bulletin = bulletin_id AND bulletin_notice='".$this->params["idperio"]."'";
+				if($this->params['bull_only']!=1){
+					//on récupère aussi les articles associés aux bulletins
+					$requete_noti ="select analysis_notice as notice_id from analysis join bulletins on analysis_bulletin = bulletin_id AND bulletin_notice='".$this->params["idperio"]."'";
+				}
 				break;
 			case "docnum":
 				//cas assez particulier, on va pas rechercher toutes les notices et bulletins pour retrouver les explnum le tout en partant des explnums....
@@ -225,7 +218,22 @@ class pmb extends base_params implements params {
 				$requete2 = "select explnum_id,explnum_notice,explnum_bulletin,explnum_nom,explnum_mimetype,explnum_url,explnum_extfichier,explnum_nomfichier,explnum_repertoire,explnum_path, notice_id, ".stripslashes($this->params["pert"])." from bulletins, explnum, notices $statut_j $acces_j ".stripslashes($this->params["clause_bull"])." ";
 				$requete3 = "select explnum_id,explnum_notice,explnum_bulletin,explnum_nom,explnum_mimetype,explnum_url,explnum_extfichier,explnum_nomfichier,explnum_repertoire,explnum_path, notice_id, ".stripslashes($this->params["pert"])." from bulletins, explnum, notices $statut_j $acces_j ".stripslashes($this->params["clause_bull_num_notice"])." ";
 				$requete_explnum = "select explnum_id,explnum_notice,explnum_bulletin,explnum_nom,explnum_mimetype,explnum_url,explnum_extfichier,explnum_nomfichier,explnum_repertoire,explnum_path from ($requete1 UNION $requete2 UNION $requete3) as uni join notices n on uni.notice_id=n.notice_id  ".stripslashes($this->params["tri"]); 
-				break; 
+				break;
+			case "scan_request":
+				$requete_base = "SELECT explnum_id, scan_request_explnum_num_notice as explnum_notice, scan_request_explnum_num_bulletin as explnum_bulletin, explnum_nom, explnum_mimetype, explnum_url, explnum_vignette, explnum_nomfichier, explnum_extfichier, explnum_docnum_statut, explnum_repertoire, explnum_path
+					FROM explnum
+					JOIN scan_request_explnum ON scan_request_explnum.scan_request_explnum_num_explnum = explnum.explnum_id";
+				
+				$requete1 = $requete_base." JOIN bulletins ON bulletins.bulletin_id = explnum_bulletin AND explnum_bulletin <> 0";
+				$requete1.=  " WHERE scan_request_explnum_num_request = '".$this->params['id']."'";
+				
+				$requete2 = $requete_base." JOIN notices ON notices.notice_id = explnum_notice AND explnum_notice <> 0";
+				$requete2.= " ".$statut_j." ".$acces_j;
+				$requete2.=  " WHERE scan_request_explnum_num_request = '".$this->params['id']."'";
+				$requete2.= $statut_r;
+				
+				$requete_explnum = "SELECT explnum_id, explnum_notice, explnum_bulletin, explnum_nom, explnum_mimetype, explnum_url, explnum_vignette, explnum_nomfichier, explnum_extfichier, explnum_docnum_statut, explnum_repertoire, explnum_path from (".$requete1." union ".$requete2.") as uni";
+				break;
 			default :
 				//on ne peut avoir que l'id de l'exemplaire
 				$requete_noti = "select explnum_notice as notice_id from explnum where explnum_notice != 0 and explnum_id = ".$this->params["explnum_id"];
@@ -300,22 +308,17 @@ class pmb extends base_params implements params {
   	}
  	
  	//recupére les documents numériques associés
- 	function getExplnums($id=0){
+ 	public function getExplnums($id=0){
 		global $dbh;
 		global $opac_photo_filtre_mimetype; //filtre des mimetypes
 		global $gestion_acces_active,$gestion_acces_empr_notice;
+		global $opac_explnum_order,$opac_show_links_invisible_docnums;
 		
 		if( sizeof($this->listeDocs) ==0 ){
 			$requete = "select explnum_id,explnum_notice,explnum_bulletin,explnum_nom,explnum_mimetype,explnum_url,explnum_extfichier,explnum_nomfichier,explnum_repertoire,explnum_path from explnum ";
 			if($id !=0){
 				$id+=0;
 				$requete .= "where explnum_id = $id";
-				//if($opac_photo_filtre_mimetype) //Si on est ici c'est que la visionneuse est activé alors on filtre les mimetypes (si il y en a pas on ne doit rien afficher)
-					$requete .= " and explnum_mimetype in ($opac_photo_filtre_mimetype)";
-				$res = pmb_mysql_query($requete,$dbh);
-				if($res && pmb_mysql_num_rows($res)){
-					$this->listeDocs[] = pmb_mysql_fetch_object($res);
-				}
 				$this->current = 0;
 			}else {
 				if(sizeof($this->listeNotices) > 0 && sizeof($this->listeBulls) == 0){
@@ -325,12 +328,68 @@ class pmb extends base_params implements params {
 				}else {
 					$requete .= "where ((explnum_notice in ('".implode("','",$this->listeNotices)."') and explnum_bulletin = 0) or (explnum_bulletin in ('".implode("','",$this->listeBulls)."') and explnum_notice = 0))";
 				}
-				//if($opac_photo_filtre_mimetype) //Si on est ici c'est que la visionneuse est activé alors on filtre les mimetypes (si il y en a pas on ne doit rien afficher)
-					$requete .= " and explnum_mimetype in ($opac_photo_filtre_mimetype)";
-				$res = pmb_mysql_query($requete,$dbh);
-				if($res && pmb_mysql_num_rows($res)){
-					while(($expl = pmb_mysql_fetch_object($res))){
-						$this->listeDocs[] = $expl;
+			}
+			$requete .= " and explnum_mimetype in ($opac_photo_filtre_mimetype)";
+			if($opac_explnum_order){
+				$requete.=" order by ".$opac_explnum_order;
+			}else{
+				$requete .= " order by explnum_mimetype, explnum_nom, explnum_id ";
+			}
+			$res = pmb_mysql_query($requete,$dbh);
+			if($res && pmb_mysql_num_rows($res)){
+				while(($expl = pmb_mysql_fetch_object($res))){
+					$docnum_visible = true;
+					if ($expl->explnum_notice) {
+						$id_for_right = $expl->explnum_notice;
+					} else {
+						if($expl->explnum_bulletin){
+							$query = "select num_notice,bulletin_notice from bulletins where bulletin_id = ".$expl->explnum_bulletin;
+							$result = pmb_mysql_query($query);
+							if(pmb_mysql_num_rows($result)){
+								$infos = pmb_mysql_fetch_object($result);
+								if($infos->num_notice){
+									$id_for_right = $infos->num_notice;
+								}else{
+									$id_for_right = $infos->bulletin_notice;
+								}
+							}
+						}
+					}
+					if ($gestion_acces_active==1 && $gestion_acces_empr_notice==1) {
+						$ac= new acces();
+						$dom_2= $ac->setDomain(2);
+						$docnum_visible = $dom_2->getRights($_SESSION['id_empr_session'],$id_for_right,16);
+					} else {
+						$requete = "SELECT explnum_visible_opac, explnum_visible_opac_abon FROM notices, notice_statut WHERE notice_id ='".$id_for_right."' and id_notice_statut=statut ";
+						$myQuery = pmb_mysql_query($requete, $dbh);
+						if(pmb_mysql_num_rows($myQuery)) {
+							$statut_temp = pmb_mysql_fetch_object($myQuery);
+							if(!$statut_temp->explnum_visible_opac)	$docnum_visible=false;
+							if($statut_temp->explnum_visible_opac_abon && !$_SESSION['id_empr_session']) $docnum_visible=false;
+						} else $docnum_visible=false;
+					}
+					if ($docnum_visible || $opac_show_links_invisible_docnums) {
+						$explnum_docnum_visible = true;
+						if ($gestion_acces_active==1 && $gestion_acces_empr_docnum==1) {
+							$ac= new acces();
+							$dom_3= $ac->setDomain(3);
+							$explnum_docnum_visible = $dom_3->getRights($_SESSION['id_empr_session'],$expl->explnum_id,16);
+						} else {
+							$requete = "SELECT explnum_visible_opac, explnum_visible_opac_abon FROM explnum, explnum_statut WHERE explnum_id ='".$expl->explnum_id."' and id_explnum_statut=explnum_docnum_statut ";
+							$myQuery = pmb_mysql_query($requete, $dbh);
+							if(pmb_mysql_num_rows($myQuery)) {
+								$statut_temp = pmb_mysql_fetch_object($myQuery);
+								if(!$statut_temp->explnum_visible_opac)	{
+									$explnum_docnum_visible=false;
+								}
+								if($statut_temp->explnum_visible_opac_abon && !$_SESSION['id_empr_session'])	$explnum_docnum_visible=false;
+							} else {
+								$explnum_docnum_visible=false;
+							}
+						}
+						if ($explnum_docnum_visible ||  $opac_show_links_invisible_docnums) {
+							$this->listeDocs[] = $expl;
+						}
 					}
 				}
 			}
@@ -338,7 +397,7 @@ class pmb extends base_params implements params {
 		}
 	} 
 	
-	function checkCurrentExplnumId(){
+	public function checkCurrentExplnumId(){
 		if($this->params["explnum_id"] != 0 && $this->params["start"]){
 			for ($i=0;$i<sizeof($this->listeDocs);$i++){
 				if($this->params["explnum_id"] == $this->listeDocs[$i]->explnum_id){
@@ -349,7 +408,7 @@ class pmb extends base_params implements params {
 		}else $this->current = $this->params["position"];			
 	}
 	
-	function getCurrentDoc(){
+	public function getCurrentDoc(){
 		$this->currentDoc = "";
 		//on peut récup déjà un certain nombre d'infos...
 		$this->currentDoc["id"] = $this->listeDocs[$this->current]->explnum_id;
@@ -380,7 +439,9 @@ class pmb extends base_params implements params {
 		}elseif($this->listeDocs[$this->current]->explnum_repertoire != 0){
 			//il est en répertoire d'upload
 			$rep = new upload_folder($this->listeDocs[$this->current]->explnum_repertoire);
-			$this->currentDoc["path"] = $rep->repertoire_path."/".$this->listeDocs[$this->current]->explnum_nomfichier;	
+			$this->currentDoc["path"] = $rep->repertoire_path."/".$this->listeDocs[$this->current]->explnum_nomfichier;
+			$this->currentDoc["path"] = str_replace("//", "/", $rep->repertoire_path . $this->listeDocs[$this->current]->explnum_path . $this->listeDocs[$this->current]->explnum_nomfichier);
+			$this->currentDoc["path"] = $rep->encoder_chaine($this->currentDoc["path"]);
 		}else{
 			//il est en base
 			//faudra revoir ce truc
@@ -388,16 +449,19 @@ class pmb extends base_params implements params {
 		}
 
 		//dans le cadre d'une URL, on doit récup le mimetype...
-		if ($this->listeDocs[$this->current]->explnum_url){
-			if (file_exists($this->visionneuse_path."/conf/mime_magic.txt")){
-				$fp = fopen($this->visionneuse_path."/conf/mime_magic.txt","r");
-				$mimetype_file=fread($fp,filesize($this->visionneuse_path."/conf/mime_magic.txt"));
-				fclose($fp);
-				if ($mimetype_file == "") $mimetype_file=get_cfg_var("mime_magic.magicfile");
-			}else $mimetype_file= get_cfg_var("mime_magic.magicfile");	
-			$finfo = finfo_open(FILEINFO_MIME,$mimetype_file); 
-			$mime_magic=finfo_file($finfo, $this->listeDocs[$this->current]->explnum_url);
-			$this->currentDoc["mimetype"] =(strpos($mime_magic,";") >0 ? substr($mime_magic,0,strpos($mime_magic,";")) : $mime_magic);		
+		if ($this->listeDocs[$this->current]->explnum_url){						
+			
+			$src = fopen( $this->listeDocs[$this->current]->explnum_url, 'r');
+			if ($src) {
+				$meta = stream_get_meta_data($src);	
+				foreach($meta['wrapper_data'] as $header) {
+					$data = explode(':', $header);
+					if(trim(strtolower($data[0])) == 'content-type') {
+						$this->currentDoc["mimetype"] = trim($data[1]);
+						break;
+					}
+				}
+			}
 		}else{
 		//sinon il a déjà été détecté et est présent en base...	
 			$this->currentDoc["mimetype"] =$this->listeDocs[$this->current]->explnum_mimetype;				
@@ -410,20 +474,22 @@ class pmb extends base_params implements params {
 		if (!$ext && $this->listeDocs[$this->current]->explnum_url) $ext=substr($this->listeDocs[$this->current]->explnum_url,strrpos($this->listeDocs[$this->current]->explnum_url,'.')*1+1);
 		$this->currentDoc['extension'] = $ext;
 		
-		//on récup la notice associée...
-		if($this->listeDocs[$this->current]->explnum_notice)
-			$this->currentDoc["desc"]=aff_notice($this->listeDocs[$this->current]->explnum_notice,1,1,0,"",0,1);
-		else $this->currentDoc["desc"]=bulletin_affichage($this->listeDocs[$this->current]->explnum_bulletin,"visionneuse");
+		if($this->params['nodesc'] == 0){
+			//on récup la notice associée...
+			if($this->listeDocs[$this->current]->explnum_notice)
+				$this->currentDoc["desc"]=aff_notice($this->listeDocs[$this->current]->explnum_notice,1,1,0,"",0,1);
+			else $this->currentDoc["desc"]=bulletin_affichage($this->listeDocs[$this->current]->explnum_bulletin,"visionneuse");
 		
-		preg_match_all("/(<a href=[\"'][^#][^>]*>)(.*?)<\/a>/",$this->currentDoc["desc"],$lop);
-		for ($i = 0 ; $i <sizeof($lop[0]) ; $i++){
-			$plop = explode ($lop[0][$i],$this->currentDoc["desc"]);
-			$this->currentDoc["desc"] = implode($lop[2][$i],$plop); 
+			preg_match_all("/(<a href=[\"'][^#][^>]*>)(.*?)<\/a>/",$this->currentDoc["desc"],$lop);
+			for ($i = 0 ; $i <sizeof($lop[0]) ; $i++){
+				$plop = explode ($lop[0][$i],$this->currentDoc["desc"]);
+				$this->currentDoc["desc"] = implode($lop[2][$i],$plop); 
+			}	
 		}	
 		return $this->currentDoc;
 	}
 	
-	function getCurrentBiblioInfos(){
+	public function getCurrentBiblioInfos(){
 		global $msg;
 		
 		$current = $this->listeDocs[$this->current]->explnum_id;
@@ -459,12 +525,13 @@ class pmb extends base_params implements params {
 				if(pmb_mysql_num_rows($result)){
 					$author_id = pmb_mysql_result($result,0,0);
 					$author= new auteur($author_id);
-					$this->biblioInfos[$current]['author']['value'] =$author->isbd_entry;
+					$this->biblioInfos[$current]['author']['value'] =$author->get_isbd();
 				}
 				$this->biblioInfos[$current]['title']['label'] = $msg['title'];
 				$this->biblioInfos[$current]['date']['label'] = $msg['serialcirc_ask_date'];
 				$this->biblioInfos[$current]['permalink']['label'] = $msg['location_more_info'];
 				$this->biblioInfos[$current]['author']['label'] = $msg['author_search'];
+				$this->biblioInfos[$current]['explnum_licence'] = explnum_licence::get_explnum_licence_tooltip($current);
 			}
 			
 		}
@@ -474,7 +541,7 @@ class pmb extends base_params implements params {
 /*******************************************************************
  *  Renvoie le contenu du document brut et gère le cache si besoin  *
  ******************************************************************/
-	function openCurrentDoc(){
+	public function openCurrentDoc(){
 		global $dbh;
 				
 		//s'il est en cache, c'est vachement simple
@@ -501,40 +568,7 @@ class pmb extends base_params implements params {
 		return $document;
 	}
 	
-	function getMimetypeConf(){
-		global $opac_visionneuse_params;
- 		return unserialize(htmlspecialchars_decode($opac_visionneuse_params));
-	}
-	
-	function getUrlImage($img){
-		global $opac_url_base;
-	
-		if($img !== "")
-			$img = $opac_url_base."images/".$img;
-			
-		return $img;
-	}
-	
-	function getUrlBase(){
-		global $opac_url_base;
-		return $opac_url_base;
-	}
-	
-	function getClassParam($class){
-		$params = array();
-		if($class != ""){
-			$req="SELECT visionneuse_params_parameters FROM visionneuse_params WHERE visionneuse_params_class LIKE '$class'";
-			if($res=pmb_mysql_query($req)){
-				if(pmb_mysql_num_rows($res)){
-					$result = pmb_mysql_fetch_object($res);
-					$params = htmlspecialchars_decode($result->visionneuse_params_parameters);
-				}
-			}
-		}
-		return $params;
-	}
-	
-	function is_allowed($explnum_id){
+	public function is_allowed($explnum_id){
 		$docnum_visible = true;
 		global $gestion_acces_active,$gestion_acces_empr_notice,$gestion_acces_empr_docnum;
 		
@@ -596,7 +630,7 @@ class pmb extends base_params implements params {
 		return $docnum_visible;
 	}
 	
-	function forbidden_callback(){
+	public function forbidden_callback(){
 		global $opac_show_links_invisible_docnums;
 		
 		$display ="";
@@ -613,7 +647,7 @@ class pmb extends base_params implements params {
 		return $display;
 	}
 	
-	function getBnfClass($mimetype){
+	public function getBnfClass($mimetype){
 		global $base_path,$class_path,$include_path;
 
 		switch($mimetype){
@@ -630,7 +664,7 @@ class pmb extends base_params implements params {
 		return $classname;
 	}
 	
-	function getVisionneuseUrl($params){
+	public function getVisionneuseUrl($params){
 		global $base_path;
 	
 		$url = $base_path."/visionneuse.php";
@@ -640,12 +674,12 @@ class pmb extends base_params implements params {
 		return $url;
 	}
 	
-	function getDocumentUrl($id){
+	public function getDocumentUrl($id){
 		global $opac_url_base;
 		return $opac_url_base."doc_num_data.php?explnum_id=".$id;
 	}
 	
-	function is_downloadable($explnum_id){
+	public function is_downloadable($explnum_id){
 		$docnum_downloadable = true;
 		global $gestion_acces_active,$gestion_acces_empr_notice,$gestion_acces_empr_docnum;
 		
@@ -707,4 +741,3 @@ class pmb extends base_params implements params {
 		return $docnum_downloadable;		
 	}
 }
-?>

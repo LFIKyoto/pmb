@@ -2,31 +2,31 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesNotices.class.php,v 1.27 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: pmbesNotices.class.php,v 1.30 2018-06-01 08:25:11 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/external_services.class.php");
+require_once($class_path."/serials.class.php");
+require_once($class_path."/notice.class.php");
+require_once($class_path."/notice_relations_collection.class.php");
+require_once($class_path."/acces.class.php");
 
 class pmbesNotices extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
-	var $es;				//Classe mère qui implémente celle-ci !
-	var $msg;
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	
-	function fetchNoticeList($noticelist, $recordFormat, $recordCharset, $includeLinks, $includeItems) {
+	public function fetchNoticeList($noticelist, $recordFormat, $recordCharset, $includeLinks, $includeItems) {
 		//Je filtre les notices en fonction des droits
 		$noticelist=$this->filter_tabl_notices($noticelist);
 		if(!count($noticelist)){
@@ -46,7 +46,7 @@ class pmbesNotices extends external_services_api_class {
 		return $results;
 	}
 	
-	function fetchExternalNoticeList($noticelist, $recordFormat, $recordCharset) {
+	public function fetchExternalNoticeList($noticelist, $recordFormat, $recordCharset) {
 		$converter = new external_services_converter_external_notices(4, 600);
 		$converter->set_params(array());
 		$notices = $converter->convert_batch($noticelist, $recordFormat, $recordCharset);
@@ -61,7 +61,7 @@ class pmbesNotices extends external_services_api_class {
 	}
 	
 
-	function fetchNoticeListArray($noticelist, $recordCharset, $includeLinks, $includeItems) {
+	public function fetchNoticeListArray($noticelist, $recordCharset, $includeLinks, $includeItems) {
 		//Je filtre les notices en fonction des droits
 		$noticelist=$this->filter_tabl_notices($noticelist);
 		if(!count($noticelist)){
@@ -76,7 +76,7 @@ class pmbesNotices extends external_services_api_class {
 	}
 	
 	
-	function listNoticeExplNums($noticeId, $OPACUserId=-1) {
+	public function listNoticeExplNums($noticeId, $OPACUserId=-1) {
 		global $dbh;
 		global $opac_url_base;
 		$noticeId += 0;
@@ -126,7 +126,7 @@ class pmbesNotices extends external_services_api_class {
 		return $results;
 	}
 	
-	function listNoticesExplNums($notice_ids, $OPACUserId=-1) {
+	public function listNoticesExplNums($notice_ids, $OPACUserId=-1) {
 		global $dbh;
 		global $opac_url_base;
 		if (!$notice_ids)
@@ -195,7 +195,7 @@ class pmbesNotices extends external_services_api_class {
 		return $results;
 	}
 	
-	function listBulletinExplNums($bulletinId, $OPACUserId=-1) {
+	public function listBulletinExplNums($bulletinId, $OPACUserId=-1) {
 		global $dbh;
 		global $opac_url_base;
 		$bulletinId += 0;
@@ -242,7 +242,7 @@ class pmbesNotices extends external_services_api_class {
 		return $results;
 	}
 	
-	function listBulletinsExplNums($bulletin_ids, $OPACUserId=-1) {
+	public function listBulletinsExplNums($bulletin_ids, $OPACUserId=-1) {
 		global $dbh;
 		global $opac_url_base;
 		if (!$bulletin_ids)
@@ -312,7 +312,7 @@ class pmbesNotices extends external_services_api_class {
 		return $results;
 	}
 	
-	function fetchNoticeByExplCb($emprId,$explCb, $recordFormat, $recordCharset, $includeLinks, $includeItems) {
+	public function fetchNoticeByExplCb($emprId,$explCb, $recordFormat, $recordCharset, $includeLinks, $includeItems) {
 		global $dbh;
 		$sql = "SELECT expl_notice FROM exemplaires WHERE expl_cb LIKE '$explCb'";
 		$res = pmb_mysql_query($sql, $dbh);
@@ -324,7 +324,7 @@ class pmbesNotices extends external_services_api_class {
 		return $this->proxy_parent->pmbesNotices_fetchNoticeList($noticelist, $recordFormat, $recordCharset, $includeLinks);
 	}
 	
-	function fetchNoticeListFull($noticelist, $recordFormat, $recordCharset, $includeLinks) {
+	public function fetchNoticeListFull($noticelist, $recordFormat, $recordCharset, $includeLinks) {
 		$results = array();
 		$notices_ = $this->proxy_parent->pmbesNotices_fetchNoticeList($noticelist, $recordFormat, $recordCharset, $includeLinks, false);
 		$notices = array();
@@ -386,7 +386,7 @@ class pmbesNotices extends external_services_api_class {
 		return $results;
 	}
 	
-	function fetch_bulletin_list($bulletin_ids) {
+	public function fetch_bulletin_list($bulletin_ids) {
 		global $dbh;
 		global $msg;
 		$result = array();
@@ -429,7 +429,7 @@ class pmbesNotices extends external_services_api_class {
 		return $result;
 	}
 	
-	function fetchBulletinListFull($bulletinlist, $recordFormat, $recordCharset) {
+	public function fetchBulletinListFull($bulletinlist, $recordFormat, $recordCharset) {
 		$results = array();
 		$bulletins = $this->proxy_parent->pmbesNotices_fetch_bulletin_list($bulletinlist);
 		$items = $this->proxy_parent->pmbesItems_fetch_bulletins_items($bulletinlist, -1);
@@ -481,7 +481,7 @@ class pmbesNotices extends external_services_api_class {
 		return $results;
 	}
 	
-	function fetch_notices_bulletins($notice_ids, $OPACUserId=-1) {
+	public function fetch_notices_bulletins($notice_ids, $OPACUserId=-1) {
 		global $dbh;
 		global $msg;
 		$result = array();
@@ -539,7 +539,7 @@ class pmbesNotices extends external_services_api_class {
 		return $result;
 	}
 	
-	function findNoticeBulletinId($noticeId) {
+	public function findNoticeBulletinId($noticeId) {
 		global $dbh;
 		$noticeId += 0;
 		if (!$noticeId)
@@ -558,7 +558,7 @@ class pmbesNotices extends external_services_api_class {
 		return 0;
 	}
 	
-	function fetchNoticesCollstates($serial_ids, $OPACUserId=-1) {
+	public function fetchNoticesCollstates($serial_ids, $OPACUserId=-1) {
 		global $dbh;
 		
 		if (!$serial_ids)
@@ -618,7 +618,7 @@ class pmbesNotices extends external_services_api_class {
 		return $result;
 	}
 	
-function fetchNoticeListFullWithBullId($noticelist, $recordFormat, $recordCharset, $includeLinks) {
+public function fetchNoticeListFullWithBullId($noticelist, $recordFormat, $recordCharset, $includeLinks) {
 		$results = array();
 		$notices_ = $this->proxy_parent->pmbesNotices_fetchNoticeList($noticelist, $recordFormat, $recordCharset, $includeLinks, false);
 		$notices = array();
@@ -679,7 +679,7 @@ function fetchNoticeListFullWithBullId($noticelist, $recordFormat, $recordCharse
 		return $results;
 	}
 
-	function fetchNoticesBulletinsList($notice_ids,$OPACUserId=-1) {
+	public function fetchNoticesBulletinsList($notice_ids,$OPACUserId=-1) {
 		global $dbh;
 		global $msg;
 		$result = array();
@@ -725,7 +725,7 @@ function fetchNoticeListFullWithBullId($noticelist, $recordFormat, $recordCharse
 		return $result;
 	}
 	
-	function fetchSerialList($OPACUserId=-1) {
+	public function fetchSerialList($OPACUserId=-1) {
 		global $dbh;
 		$sql = "
 SELECT n1.notice_id,
@@ -772,7 +772,7 @@ ORDER  BY tit1  ";
 		return $results;
 	}
 	
-	function fetchNoticesAdministrative($notice_ids,$OPACUserId=-1) {
+	public function fetchNoticesAdministrative($notice_ids,$OPACUserId=-1) {
 		global $dbh;
 		global $msg;
 		$result = array();
@@ -798,17 +798,128 @@ ORDER  BY tit1  ";
 				$result[] = array(
 					'noticeid' => $row->notice_id,
 					'administrative' => array('statut_id' => $row->statut,
-						'statut_lib' => $row->opac_libelle,
-						'comment_admin' => $row->commentaire_gestion,
-						'thumbnail_url' => $row->thumbnail_url,
-					),
-				);
+					'statut_lib' => utf8_normalize($row->opac_libelle),
+					'comment_admin' => utf8_normalize($row->commentaire_gestion),
+					'thumbnail_url' => utf8_normalize($row->thumbnail_url),
+				),
+			);
 		}
 
 		return $result;
 	}
+	
+	public function deleteNotices($tab_notice, $forcage = false) {
+		global $dbh;
+		global $msg;
+		global $gestion_acces_active;
+		global $gestion_acces_user_notice;
+		$result = array();
+		if (!$tab_notice)
+			throw new Exception("Missing parameter: tab_notice");
+		// on boucle sur le tableau de notice
+		foreach($tab_notice as $notice_id) {
+			// on vérifie les droits d'accès
+			$acces_m = 1;
+			if ($notice_id != 0 && $gestion_acces_active == 1 && $gestion_acces_user_notice == 1) {
+				$ac= new acces();
+				$dom_1= $ac->setDomain(1);
+				$acces_m = $dom_1->getRights($PMBuserid,$notice_id,8);
+			}
+
+			if ($acces_m == 0) {
+				$result[] = array(
+						'noticeId'	=> $notice_id,
+						'state' 	=> 1
+				);
+			} else {
+				// on vérifie si on peux supprimer la notice ou si on force la suppression
+				if ($forcage or $this->checkdelnotice($notice_id)) {
+					$requete = "SELECT niveau_biblio, niveau_hierar FROM notices WHERE notice_id = '".$notice_id."'";
+					$res = pmb_mysql_query($requete, $dbh);
+					if(pmb_mysql_num_rows($res)){
+						// on vérifie si c'est un périodique
+						if((pmb_mysql_result($res,0,'niveau_biblio') == "s") && (pmb_mysql_result($res,0,'niveau_hierar') == "1")){
+							// on supprime le périodique
+							$myPerio = new serial($notice_id);
+							$myPerio->serial_delete();
+						}else{
+							// on supprime la notice
+							notice::del_notice($notice_id);
+						}
+						$result[] = array(
+							'noticeId'	=> $notice_id,
+							'state' 	=> 0
+						);
+					}else{
+						$result[] = array(
+							'noticeId'	=> $notice_id,
+							'state' 	=> 2
+						);
+					}
+				}else{
+					$result[] = array(
+						'noticeId'	=> $notice_id,
+						'state' 	=> 2
+					);
+				}
+			}
+		}
+		return $result;
+	}
+
+	public function checkdelnotice($noti) {
+		global $dbh;
+		global $pmb_confirm_delete_from_caddie;
+		
+		if ($noti) {
+			// TODO concept
+			// on vérifie s'il y a des bulletins 	
+			$query = "select count(1) from bulletins where bulletin_notice=".$noti." limit 1 ";
+			$result = pmb_mysql_query($query, $dbh);
+			if (pmb_mysql_result($result, 0, 0)) return false ;
+			// on vérifie s'il y a des relations				
+			$notice_relations = notice_relations_collection::get_object_instance($noti);
+			if ($notice_relations->get_nb_links()) return false ;
+			// on vérifie s'il y a des exemplaires
+			$query = "select count(1) from exemplaires where expl_notice=".$noti." limit 1 ";
+			$result = pmb_mysql_query($query, $dbh);
+			if (pmb_mysql_result($result, 0, 0)) return false ;
+			// on vérifie s'il y a des réservations
+			$query = "select count(1) from resa where resa_idnotice=".$noti." limit 1 ";
+			$result = pmb_mysql_query($query, $dbh);
+			if (pmb_mysql_result($result, 0, 0)) return false ;
+			// on vérifie s'il y a des demandes
+			$query = "select count(1) from demandes where num_notice=$id";
+			$result = pmb_mysql_query($query, $dbh);
+			if (pmb_mysql_result($result, 0, 0)) return false ;
+			// on vérifie s'il y a des exemplaires numériques
+			$query = "select count(1) from explnum where explnum_notice=".$noti." limit 1 ";
+			$result = pmb_mysql_query($query, $dbh);
+			if (pmb_mysql_result($result, 0, 0)) return false ;
+			// on vérifie s'il sont dans un panier et rajoute un controle sur le parametre 
+			if ($pmb_confirm_delete_from_caddie != '1') {
+				$query = "select count(1) as qte, name from caddie_content, caddie where type='NOTI' and object_id='$id' and caddie_id=idcaddie group by name";
+				$result = pmb_mysql_query($query, $dbh);
+				if (pmb_mysql_result($result, 0, 0)) return false ;
+			}
+			// on vérifie s'il ont des état de collection
+			$query = "select count(1) from collections_state where id_serial=".$noti." limit 1 ";
+			$result = pmb_mysql_query($query, $dbh);
+			if (pmb_mysql_result($result, 0, 0)) return false ;
+			// on vérifie s'il y a des abonnements
+			$query = "select count(1) from abts_abts where num_notice=".$noti." limit 1 ";
+			$result = pmb_mysql_query($query, $dbh);
+			if (pmb_mysql_result($result, 0, 0)) return false ;
+			// on vérifie s'il y a des modèle d'abonnement
+			$query = "select count(1) from abts_modeles where num_notice=".$noti." limit 1 ";
+			$result = pmb_mysql_query($query, $dbh);
+			if (pmb_mysql_result($result, 0, 0)) return false ;
+			
+			return true ;
+		}else{
+			return false ;
+		}
+	}
 }
-
-
 
 ?>

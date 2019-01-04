@@ -1,4 +1,4 @@
-<h1>Administració dels exemplars</h1>
+<h2>Administració dels exemplars</h2>
 
 <p>La secció <b>administració dels exemplars</b> permet definir els paràmetres 
 de l'aplicació pel préstec i per les estadístiques dels documents.

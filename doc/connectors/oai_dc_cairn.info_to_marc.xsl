@@ -153,7 +153,7 @@
 							<s c="a"><xsl:value-of select="normalize-space($input)"/></s>
 						</f>
 					</xsl:when>
-					<xsl:when test="$index = 2">	
+					<xsl:when test="$index = 2">
 						<f c="463">
 							<s c="d"><xsl:value-of select="normalize-space($input)"/></s>
 						</f>
@@ -161,10 +161,12 @@
 					<xsl:when test="$index = 3">	
 						<!-- ignore -->
 					</xsl:when>
-					<xsl:when test="$index = 4">	
-						<f c="463">
-							<s c="v"><xsl:value-of select="normalize-space($input)"/></s>
-						</f>
+					<xsl:when test="$index = 4">
+						<xsl:if test="normalize-space($input)!='-'">
+							<f c="463">
+								<s c="v"><xsl:value-of select="normalize-space($input)"/></s>
+							</f>
+						</xsl:if>
 					</xsl:when>
 					<xsl:when test="$index = 5">	
 						<f c="461">

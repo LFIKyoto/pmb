@@ -8,7 +8,7 @@
 	<input type="xml" rootelement="*" noticeelement="notice"/>
 	<!-- Type de sortie -->
 	<!--<output importable="no" type="xml" suffix="xml">-->
-	<output importable="no" type="custom" script="output_ead.inc.php" suffix="xml">
+	<output importable="no" type="custom" script="pmbxml2ead_output.class.php" suffix="xml">
 		<!--<rootelement>ead</rootelement>-->
 		<!--<xmltemplate>list.xml</xmltemplate>-->
 		<!--<addheader><![CDATA[<eadheader><eadid countrycode="FR">PMB</eadid><filedesc><titlestmt><titleproper>Export XML-EAD</titleproper><author></author></titlestmt></filedesc><profiledesc><creation></creation><langusage>Document rédigé en <language langcode="fre">français</language></langusage></profiledesc></eadheader><archdesc level="fonds"><did><unittitle>Catalogue PMB</unittitle></did>]]></addheader>-->

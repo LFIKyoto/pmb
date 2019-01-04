@@ -1,13 +1,13 @@
 -- +-------------------------------------------------+
 -- © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 -- +-------------------------------------------------+
--- $Id: bibli.sql,v 1.73 2015-05-18 09:27:43 dgoron Exp $
+-- $Id: bibli.sql,v 1.75 2016-03-30 09:04:52 mbertin Exp $
 
--- MySQL dump 10.14  Distrib 5.5.28-MariaDB, for Linux (x86_64)
+-- MySQL dump 10.14  Distrib 5.5.36-MariaDB, for Linux (x86_64)
 --
--- Host: localhost    Database: pmb420
+-- Host: localhost    Database: bibli
 -- ------------------------------------------------------
--- Server version	5.5.28-MariaDB
+-- Server version	5.5.36-MariaDB
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -274,7 +274,7 @@ CREATE TABLE actes (
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE admin_session (
   userid int(10) unsigned NOT NULL DEFAULT '0',
-  `session` blob,
+  `session` mediumblob,
   PRIMARY KEY (userid)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -434,7 +434,12 @@ CREATE TABLE author_custom_values (
   author_custom_date date DEFAULT NULL,
   author_custom_float float DEFAULT NULL,
   KEY editorial_custom_champ (author_custom_champ),
-  KEY editorial_custom_origine (author_custom_origine)
+  KEY editorial_custom_origine (author_custom_origine),
+  KEY i_acv_st (author_custom_small_text),
+  KEY i_acv_t (author_custom_text(255)),
+  KEY i_acv_i (author_custom_integer),
+  KEY i_acv_d (author_custom_date),
+  KEY i_acv_f (author_custom_float)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -580,7 +585,12 @@ CREATE TABLE authperso_custom_values (
   authperso_custom_date date DEFAULT NULL,
   authperso_custom_float float DEFAULT NULL,
   KEY editorial_custom_champ (authperso_custom_champ),
-  KEY editorial_custom_origine (authperso_custom_origine)
+  KEY editorial_custom_origine (authperso_custom_origine),
+  KEY i_acv_st (authperso_custom_small_text),
+  KEY i_acv_t (authperso_custom_text(255)),
+  KEY i_acv_i (authperso_custom_integer),
+  KEY i_acv_d (authperso_custom_date),
+  KEY i_acv_f (authperso_custom_float)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -740,6 +750,7 @@ CREATE TABLE bannettes (
   groupe_lecteurs int(8) unsigned NOT NULL DEFAULT '0',
   bannette_opac_accueil int(10) unsigned NOT NULL DEFAULT '0',
   bannette_tpl_num int(6) unsigned NOT NULL DEFAULT '0',
+  bannette_aff_notice_number int(10) unsigned NOT NULL DEFAULT '1',
   PRIMARY KEY (id_bannette)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -770,7 +781,7 @@ CREATE TABLE budgets (
   num_exercice int(8) unsigned NOT NULL DEFAULT '0',
   libelle varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   commentaires text COLLATE utf8_unicode_ci,
-  montant_global float(8,2) unsigned NOT NULL DEFAULT '0.00',
+  montant_global double(12,2) unsigned NOT NULL DEFAULT '0.00',
   seuil_alerte int(3) unsigned NOT NULL DEFAULT '100',
   statut int(3) unsigned NOT NULL DEFAULT '0',
   type_budget int(3) unsigned NOT NULL DEFAULT '0',
@@ -829,6 +840,7 @@ CREATE TABLE caddie (
   `comment` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   autorisations mediumtext COLLATE utf8_unicode_ci,
   caddie_classement varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  acces_rapide int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (idcaddie),
   KEY caddie_type (`type`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -968,7 +980,12 @@ CREATE TABLE categ_custom_values (
   categ_custom_date date DEFAULT NULL,
   categ_custom_float float DEFAULT NULL,
   KEY editorial_custom_champ (categ_custom_champ),
-  KEY editorial_custom_origine (categ_custom_origine)
+  KEY editorial_custom_origine (categ_custom_origine),
+  KEY i_ccv_st (categ_custom_small_text),
+  KEY i_ccv_t (categ_custom_text(255)),
+  KEY i_ccv_i (categ_custom_integer),
+  KEY i_ccv_d (categ_custom_date),
+  KEY i_ccv_f (categ_custom_float)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1044,6 +1061,7 @@ CREATE TABLE cms_articles (
   article_num_type int(10) unsigned NOT NULL DEFAULT '0',
   article_creation_date date DEFAULT NULL,
   article_order int(10) unsigned DEFAULT '0',
+  article_update_timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id_article),
   KEY i_cms_article_title (article_title),
   KEY i_cms_article_publication_state (article_publication_state),
@@ -1260,7 +1278,12 @@ CREATE TABLE cms_editorial_custom_values (
   cms_editorial_custom_date date DEFAULT NULL,
   cms_editorial_custom_float float DEFAULT NULL,
   KEY editorial_custom_champ (cms_editorial_custom_champ),
-  KEY editorial_custom_origine (cms_editorial_custom_origine)
+  KEY editorial_custom_origine (cms_editorial_custom_origine),
+  KEY i_ccv_st (cms_editorial_custom_small_text),
+  KEY i_ccv_t (cms_editorial_custom_text(255)),
+  KEY i_ccv_i (cms_editorial_custom_integer),
+  KEY i_ccv_d (cms_editorial_custom_date),
+  KEY i_ccv_f (cms_editorial_custom_float)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1424,6 +1447,7 @@ CREATE TABLE cms_sections (
   section_num_type int(10) unsigned NOT NULL DEFAULT '0',
   section_creation_date date DEFAULT NULL,
   section_order int(10) unsigned DEFAULT '0',
+  section_update_timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id_section),
   KEY i_cms_section_title (section_title),
   KEY i_cms_section_publication_state (section_publication_state),
@@ -1534,7 +1558,12 @@ CREATE TABLE collection_custom_values (
   collection_custom_date date DEFAULT NULL,
   collection_custom_float float DEFAULT NULL,
   KEY editorial_custom_champ (collection_custom_champ),
-  KEY editorial_custom_origine (collection_custom_origine)
+  KEY editorial_custom_origine (collection_custom_origine),
+  KEY i_ccv_st (collection_custom_small_text),
+  KEY i_ccv_t (collection_custom_text(255)),
+  KEY i_ccv_i (collection_custom_integer),
+  KEY i_ccv_d (collection_custom_date),
+  KEY i_ccv_f (collection_custom_float)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1733,6 +1762,20 @@ CREATE TABLE connectors_out (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `connectors_out_oai_deleted_records`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE connectors_out_oai_deleted_records (
+  num_set int(11) unsigned NOT NULL DEFAULT '0',
+  num_notice int(11) unsigned NOT NULL DEFAULT '0',
+  deletion_date datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  PRIMARY KEY (num_set,num_notice)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `connectors_out_oai_tokens`
 --
 
@@ -1873,6 +1916,7 @@ CREATE TABLE connectors_sources (
   opac_selected int(3) unsigned NOT NULL DEFAULT '0',
   type_enrichment_allowed text COLLATE utf8_unicode_ci NOT NULL,
   ico_notice varchar(256) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  last_sync_date datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (source_id)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -1964,6 +2008,66 @@ CREATE TABLE demandes_actions (
   KEY i_deadline_action (deadline_action),
   KEY i_num_demande (num_demande),
   KEY i_actions_user (actions_num_user,actions_type_user)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `demandes_custom`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE demandes_custom (
+  idchamp int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  titre varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `type` varchar(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'text',
+  datatype varchar(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `options` text COLLATE utf8_unicode_ci,
+  multiple int(11) NOT NULL DEFAULT '0',
+  obligatoire int(11) NOT NULL DEFAULT '0',
+  ordre int(11) DEFAULT NULL,
+  search int(1) unsigned NOT NULL DEFAULT '0',
+  export int(1) unsigned NOT NULL DEFAULT '0',
+  exclusion_obligatoire int(1) unsigned NOT NULL DEFAULT '0',
+  pond int(11) NOT NULL DEFAULT '100',
+  opac_sort int(11) NOT NULL DEFAULT '0',
+  PRIMARY KEY (idchamp)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `demandes_custom_lists`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE demandes_custom_lists (
+  demandes_custom_champ int(10) unsigned NOT NULL DEFAULT '0',
+  demandes_custom_list_value varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  demandes_custom_list_lib varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  ordre int(11) DEFAULT NULL,
+  KEY i_demandes_custom_champ (demandes_custom_champ),
+  KEY i_demandes_champ_list_value (demandes_custom_champ,demandes_custom_list_value)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `demandes_custom_values`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE demandes_custom_values (
+  demandes_custom_champ int(10) unsigned NOT NULL DEFAULT '0',
+  demandes_custom_origine int(10) unsigned NOT NULL DEFAULT '0',
+  demandes_custom_small_text varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  demandes_custom_text text COLLATE utf8_unicode_ci,
+  demandes_custom_integer int(11) DEFAULT NULL,
+  demandes_custom_date date DEFAULT NULL,
+  demandes_custom_float float DEFAULT NULL,
+  KEY i_demandes_custom_champ (demandes_custom_champ),
+  KEY i_demandes_custom_origine (demandes_custom_origine)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -2373,6 +2477,7 @@ CREATE TABLE empr (
   empr_sexe tinyint(3) unsigned NOT NULL DEFAULT '0',
   empr_login varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   empr_password varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  empr_password_is_encrypted int(1) NOT NULL DEFAULT '0',
   empr_digest varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   empr_date_adhesion date DEFAULT NULL,
   empr_date_expiration date DEFAULT NULL,
@@ -2936,6 +3041,7 @@ CREATE TABLE exemplaires (
   expl_nbparts int(8) unsigned NOT NULL DEFAULT '1',
   expl_retloc smallint(5) unsigned NOT NULL DEFAULT '0',
   expl_abt_num int(10) unsigned NOT NULL DEFAULT '0',
+  transfert_section_origine smallint(5) NOT NULL DEFAULT '0',
   PRIMARY KEY (expl_id),
   UNIQUE KEY expl_cb (expl_cb),
   KEY expl_typdoc (expl_typdoc),
@@ -3360,7 +3466,7 @@ CREATE TABLE frais (
   id_frais int(8) unsigned NOT NULL AUTO_INCREMENT,
   libelle varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   condition_frais text COLLATE utf8_unicode_ci NOT NULL,
-  montant float(8,2) unsigned NOT NULL DEFAULT '0.00',
+  montant double(12,2) unsigned NOT NULL DEFAULT '0.00',
   num_cp_compta varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   num_tva_achat varchar(25) COLLATE utf8_unicode_ci NOT NULL DEFAULT '0',
   index_libelle text COLLATE utf8_unicode_ci,
@@ -3424,7 +3530,12 @@ CREATE TABLE gestfic0_custom_values (
   gestfic0_custom_date date DEFAULT NULL,
   gestfic0_custom_float float DEFAULT NULL,
   KEY gestfic0_custom_champ (gestfic0_custom_champ),
-  KEY gestfic0_custom_origine (gestfic0_custom_origine)
+  KEY gestfic0_custom_origine (gestfic0_custom_origine),
+  KEY i_gcv_st (gestfic0_custom_small_text),
+  KEY i_gcv_t (gestfic0_custom_text(255)),
+  KEY i_gcv_i (gestfic0_custom_integer),
+  KEY i_gcv_d (gestfic0_custom_date),
+  KEY i_gcv_f (gestfic0_custom_float)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -3691,7 +3802,12 @@ CREATE TABLE indexint_custom_values (
   indexint_custom_date date DEFAULT NULL,
   indexint_custom_float float DEFAULT NULL,
   KEY editorial_custom_champ (indexint_custom_champ),
-  KEY editorial_custom_origine (indexint_custom_origine)
+  KEY editorial_custom_origine (indexint_custom_origine),
+  KEY i_icv_st (indexint_custom_small_text),
+  KEY i_icv_t (indexint_custom_text(255)),
+  KEY i_icv_i (indexint_custom_integer),
+  KEY i_icv_d (indexint_custom_date),
+  KEY i_icv_f (indexint_custom_float)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -3707,6 +3823,7 @@ CREATE TABLE infopages (
   title_infopage varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   valid_infopage tinyint(1) NOT NULL DEFAULT '1',
   restrict_infopage int(11) NOT NULL DEFAULT '0',
+  infopage_classement varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   PRIMARY KEY (id_infopage)
 ) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -3756,7 +3873,7 @@ CREATE TABLE lignes_actes (
   num_type int(8) unsigned NOT NULL DEFAULT '0',
   libelle text COLLATE utf8_unicode_ci NOT NULL,
   `code` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
-  prix float(8,2) NOT NULL DEFAULT '0.00',
+  prix double(12,2) unsigned NOT NULL DEFAULT '0.00',
   tva float(8,2) unsigned NOT NULL DEFAULT '0.00',
   nb int(5) unsigned NOT NULL DEFAULT '1',
   date_ech date NOT NULL DEFAULT '0000-00-00',
@@ -3893,7 +4010,7 @@ CREATE TABLE logopac (
   server_log blob NOT NULL,
   empr_carac blob NOT NULL,
   empr_doc blob NOT NULL,
-  empr_expl blob NOT NULL,
+  empr_expl mediumblob NOT NULL,
   nb_result blob NOT NULL,
   gen_stat blob NOT NULL,
   PRIMARY KEY (id_log),
@@ -4349,6 +4466,9 @@ CREATE TABLE notices (
   map_projection_num int(10) unsigned NOT NULL DEFAULT '0',
   map_ref_num int(10) unsigned NOT NULL DEFAULT '0',
   map_equinoxe varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  notice_is_new int(10) unsigned NOT NULL DEFAULT '0',
+  notice_date_is_new datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  opac_serialcirc_demande tinyint(3) unsigned NOT NULL DEFAULT '1',
   PRIMARY KEY (notice_id),
   KEY typdoc (typdoc),
   KEY tparent_id (tparent_id),
@@ -4558,7 +4678,7 @@ CREATE TABLE notices_mots_global_index (
   pond int(4) NOT NULL DEFAULT '100',
   position int(11) NOT NULL DEFAULT '1',
   field_position int(11) NOT NULL DEFAULT '1',
-  PRIMARY KEY (id_notice,code_champ,num_word,position,code_ss_champ),
+  PRIMARY KEY (id_notice,code_champ,code_ss_champ,num_word,position,field_position),
   KEY code_champ (code_champ),
   KEY i_id_mot (num_word,id_notice),
   KEY i_code_champ_code_ss_champ_num_word (code_champ,code_ss_champ,num_word)
@@ -4674,7 +4794,7 @@ CREATE TABLE opac_liste_lecture (
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE opac_sessions (
   empr_id int(10) unsigned NOT NULL DEFAULT '0',
-  `session` blob,
+  `session` mediumblob,
   date_rec timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (empr_id)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -4807,7 +4927,7 @@ CREATE TABLE parametres (
   gestion int(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (id_param),
   UNIQUE KEY typ_sstyp (type_param,sstype_param)
-) ENGINE=MyISAM AUTO_INCREMENT=901 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=951 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4946,6 +5066,67 @@ CREATE TABLE pret_archive (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `pret_custom`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE pret_custom (
+  idchamp int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  titre varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `type` varchar(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'text',
+  datatype varchar(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `options` text COLLATE utf8_unicode_ci,
+  multiple int(11) NOT NULL DEFAULT '0',
+  obligatoire int(11) NOT NULL DEFAULT '0',
+  ordre int(11) DEFAULT NULL,
+  search int(1) unsigned NOT NULL DEFAULT '0',
+  export int(1) unsigned NOT NULL DEFAULT '0',
+  filters int(1) unsigned NOT NULL DEFAULT '0',
+  exclusion_obligatoire int(1) unsigned NOT NULL DEFAULT '0',
+  pond int(11) NOT NULL DEFAULT '100',
+  opac_sort int(11) NOT NULL DEFAULT '0',
+  PRIMARY KEY (idchamp)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `pret_custom_lists`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE pret_custom_lists (
+  pret_custom_champ int(10) unsigned NOT NULL DEFAULT '0',
+  pret_custom_list_value varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  pret_custom_list_lib varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  ordre int(11) DEFAULT NULL,
+  KEY i_pret_custom_champ (pret_custom_champ),
+  KEY i_pret_champ_list_value (pret_custom_champ,pret_custom_list_value)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `pret_custom_values`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE pret_custom_values (
+  pret_custom_champ int(10) unsigned NOT NULL DEFAULT '0',
+  pret_custom_origine int(10) unsigned NOT NULL DEFAULT '0',
+  pret_custom_small_text varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  pret_custom_text text COLLATE utf8_unicode_ci,
+  pret_custom_integer int(11) DEFAULT NULL,
+  pret_custom_date date DEFAULT NULL,
+  pret_custom_float float DEFAULT NULL,
+  KEY i_pret_custom_champ (pret_custom_champ),
+  KEY i_pret_custom_origine (pret_custom_origine)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `procs`
 --
 
@@ -5036,7 +5217,12 @@ CREATE TABLE publisher_custom_values (
   publisher_custom_date date DEFAULT NULL,
   publisher_custom_float float DEFAULT NULL,
   KEY editorial_custom_champ (publisher_custom_champ),
-  KEY editorial_custom_origine (publisher_custom_origine)
+  KEY editorial_custom_origine (publisher_custom_origine),
+  KEY i_pcv_st (publisher_custom_small_text),
+  KEY i_pcv_t (publisher_custom_text(255)),
+  KEY i_pcv_i (publisher_custom_integer),
+  KEY i_pcv_d (publisher_custom_date),
+  KEY i_pcv_f (publisher_custom_float)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -5284,6 +5470,7 @@ CREATE TABLE resa (
   resa_confirmee int(1) unsigned NOT NULL DEFAULT '0',
   resa_loc_retrait smallint(5) unsigned NOT NULL DEFAULT '0',
   resa_arc int(10) unsigned NOT NULL DEFAULT '0',
+  resa_planning_id_resa int(8) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (id_resa),
   KEY resa_date_fin (resa_date_fin),
   KEY resa_date (resa_date),
@@ -5330,6 +5517,7 @@ CREATE TABLE resa_archive (
   resarc_expl_codestat smallint(5) unsigned DEFAULT '0',
   resarc_expl_owner mediumint(8) unsigned DEFAULT '0',
   resarc_expl_section int(5) unsigned NOT NULL DEFAULT '0',
+  resarc_resa_planning_id_resa int(8) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (resarc_id),
   KEY i_pa_idempr (resarc_id_empr),
   KEY i_pa_notice (resarc_idnotice),
@@ -5362,11 +5550,15 @@ CREATE TABLE resa_planning (
   id_resa mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
   resa_idempr mediumint(8) unsigned NOT NULL DEFAULT '0',
   resa_idnotice mediumint(8) unsigned NOT NULL DEFAULT '0',
+  resa_idbulletin int(8) unsigned NOT NULL DEFAULT '0',
   resa_date datetime DEFAULT NULL,
   resa_date_debut date NOT NULL DEFAULT '0000-00-00',
   resa_date_fin date NOT NULL DEFAULT '0000-00-00',
   resa_validee int(1) unsigned NOT NULL DEFAULT '0',
   resa_confirmee int(1) unsigned NOT NULL DEFAULT '0',
+  resa_loc_retrait int(5) unsigned NOT NULL DEFAULT '0',
+  resa_qty int(5) unsigned NOT NULL DEFAULT '1',
+  resa_remaining_qty int(5) unsigned NOT NULL DEFAULT '1',
   PRIMARY KEY (id_resa),
   KEY resa_date_fin (resa_date_fin),
   KEY resa_date (resa_date)
@@ -5596,6 +5788,7 @@ CREATE TABLE search_perso (
   search_query text COLLATE utf8_unicode_ci NOT NULL,
   search_human text COLLATE utf8_unicode_ci NOT NULL,
   search_directlink tinyint(1) unsigned NOT NULL DEFAULT '0',
+  autorisations mediumtext COLLATE utf8_unicode_ci,
   PRIMARY KEY (search_id)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -5659,6 +5852,7 @@ CREATE TABLE serialcirc (
   serialcirc_piedpage text COLLATE utf8_unicode_ci NOT NULL,
   serialcirc_no_ret int(10) unsigned NOT NULL DEFAULT '0',
   serialcirc_sort_diff text COLLATE utf8_unicode_ci NOT NULL,
+  serialcirc_simple int(10) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (id_serialcirc)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -5854,7 +6048,12 @@ CREATE TABLE serie_custom_values (
   serie_custom_date date DEFAULT NULL,
   serie_custom_float float DEFAULT NULL,
   KEY editorial_custom_champ (serie_custom_champ),
-  KEY editorial_custom_origine (serie_custom_origine)
+  KEY editorial_custom_origine (serie_custom_origine),
+  KEY i_scv_st (serie_custom_small_text),
+  KEY i_scv_t (serie_custom_text(255)),
+  KEY i_scv_i (serie_custom_integer),
+  KEY i_scv_d (serie_custom_date),
+  KEY i_scv_f (serie_custom_float)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -5886,6 +6085,23 @@ CREATE TABLE sessions (
   LastOn varchar(12) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   SESSNAME varchar(25) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   notifications text COLLATE utf8_unicode_ci
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `shorturls`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE shorturls (
+  id_shorturl int(10) unsigned NOT NULL AUTO_INCREMENT,
+  shorturl_hash varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  shorturl_last_access datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  shorturl_context text COLLATE utf8_unicode_ci NOT NULL,
+  shorturl_type varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  shorturl_action varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  PRIMARY KEY (id_shorturl)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -5984,7 +6200,7 @@ CREATE TABLE statopac (
   server_log blob NOT NULL,
   empr_carac blob NOT NULL,
   empr_doc blob NOT NULL,
-  empr_expl blob NOT NULL,
+  empr_expl mediumblob NOT NULL,
   nb_result blob NOT NULL,
   gen_stat blob NOT NULL,
   PRIMARY KEY (id_log),
@@ -6139,7 +6355,12 @@ CREATE TABLE subcollection_custom_values (
   subcollection_custom_date date DEFAULT NULL,
   subcollection_custom_float float DEFAULT NULL,
   KEY editorial_custom_champ (subcollection_custom_champ),
-  KEY editorial_custom_origine (subcollection_custom_origine)
+  KEY editorial_custom_origine (subcollection_custom_origine),
+  KEY i_scv_st (subcollection_custom_small_text),
+  KEY i_scv_t (subcollection_custom_text(255)),
+  KEY i_scv_i (subcollection_custom_integer),
+  KEY i_scv_d (subcollection_custom_date),
+  KEY i_scv_f (subcollection_custom_float)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -6369,6 +6590,8 @@ CREATE TABLE titres_uniformes (
   tu_coordonnees varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   tu_equinoxe varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   tu_completude int(2) unsigned NOT NULL DEFAULT '0',
+  tu_tonalite_marclist varchar(5) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  tu_forme_marclist varchar(5) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   PRIMARY KEY (tu_id)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -6591,7 +6814,12 @@ CREATE TABLE tu_custom_values (
   tu_custom_date date DEFAULT NULL,
   tu_custom_float float DEFAULT NULL,
   KEY editorial_custom_champ (tu_custom_champ),
-  KEY editorial_custom_origine (tu_custom_origine)
+  KEY editorial_custom_origine (tu_custom_origine),
+  KEY i_tcv_st (tu_custom_small_text),
+  KEY i_tcv_t (tu_custom_text(255)),
+  KEY i_tcv_i (tu_custom_integer),
+  KEY i_tcv_d (tu_custom_date),
+  KEY i_tcv_f (tu_custom_float)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -6761,6 +6989,7 @@ CREATE TABLE users (
   value_deflt_relation_analysis varchar(20) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   deflt_docs_location int(6) unsigned DEFAULT '0',
   deflt_collstate_location int(6) unsigned DEFAULT '0',
+  deflt_bulletinage_location int(6) unsigned NOT NULL DEFAULT '0',
   deflt_resas_location int(6) unsigned DEFAULT '0',
   deflt_docs_section int(6) unsigned DEFAULT '0',
   value_deflt_module varchar(30) COLLATE utf8_unicode_ci DEFAULT 'circu',
@@ -6806,6 +7035,12 @@ CREATE TABLE users (
   deflt_cashdesk int(11) NOT NULL DEFAULT '0',
   deflt_explnum_statut int(6) unsigned NOT NULL DEFAULT '1',
   user_alert_suggmail int(1) unsigned NOT NULL DEFAULT '0',
+  deflt_notice_replace_keep_categories int(1) NOT NULL DEFAULT '0',
+  deflt_notice_is_new int(1) unsigned NOT NULL DEFAULT '0',
+  deflt_agnostic_warehouse int(6) unsigned NOT NULL DEFAULT '0',
+  deflt_cms_article_statut int(6) unsigned NOT NULL DEFAULT '0',
+  deflt_cms_article_type int(6) unsigned NOT NULL DEFAULT '0',
+  deflt_cms_section_type int(6) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (userid)
 ) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -6833,6 +7068,7 @@ CREATE TABLE users_groups (
 CREATE TABLE vedette (
   id_vedette int(11) unsigned NOT NULL AUTO_INCREMENT,
   label varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  grammar varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'rameau',
   PRIMARY KEY (id_vedette)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -6915,7 +7151,7 @@ CREATE TABLE words (
   PRIMARY KEY (id_word),
   UNIQUE KEY i_word_lang (word,lang),
   KEY i_stem_lang (stem,lang)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7001,4 +7237,4 @@ CREATE TABLE z_query (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-05-15 14:49:55
+-- Dump completed on 2016-03-29 11:56:47

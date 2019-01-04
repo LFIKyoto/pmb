@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: faq_questions.class.php,v 1.2 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: faq_questions.class.php,v 1.3 2017-04-14 14:27:25 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/templates/faq_question.tpl.php");
@@ -13,7 +13,7 @@ class faq_questions  {
 
 	public static function get_list($filter = true,$id_theme=0, $id_type=0, $id_statut=0){
 		global $msg,$charset,$dbh;
-		global $javascript_path;
+		global $javascript_path, $pmb_opac_url;
 		global $module,$categ,$sub;
 		
 		$query = "select * from faq_questions join faq_themes on faq_question_num_theme = id_theme join faq_types on faq_question_num_type = id_type";
@@ -123,7 +123,12 @@ class faq_questions  {
 		$list.="
 		</table>
 		<div class='row'>
-			<input type='button' class='bouton' onclick='document.location=\"./demandes.php?categ=faq&sub=question&action=new\"' value='".htmlentities($msg['faq_add_new_question'],ENT_QUOTES,$charset)."'/>
+			<div class='left'>
+				<input type='button' class='bouton' onclick='document.location=\"./demandes.php?categ=faq&sub=question&action=new\"' value='".htmlentities($msg['faq_add_new_question'],ENT_QUOTES,$charset)."'/>
+			</div>
+			<div class='right'>
+				<a href='".$pmb_opac_url."index.php?lvl=faq' target='_blank'>".$msg['opac_faq_link']."</a>
+			</div>
 		</div>";
 		return $list;
 	}

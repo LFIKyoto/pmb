@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: esusergroups.inc.php,v 1.3 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: esusergroups.inc.php,v 1.5 2017-05-19 10:06:11 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -57,7 +57,7 @@ function list_groups() {
 	}
 	
 	print "</table>
-			<input class='bouton' type='button' value='".htmlentities($msg[es_groups_add] ,ENT_QUOTES, $charset)."' onClick=\"document.location='./admin.php?categ=external_services&sub=esusergroups&action=add'\" />";
+			<input class='bouton' type='button' value='".htmlentities($msg['es_groups_add'] ,ENT_QUOTES, $charset)."' onClick=\"document.location='./admin.php?categ=external_services&sub=esusergroups&action=add'\" />";
 }
 
 function show_esgroup_form($id=0, $esg_name='', $esg_fullname="", $esg_pmbuserid='', $esg_esusers=array(), $esg_emprgroups=array()) {
@@ -200,8 +200,9 @@ function show_esgroup_form_anonymous() {
 function update_esgroup_from_form() {
 	global $msg, $charset,$dbh,$id;
 	global $es_group_name, $es_group_fullname, $es_group_pmbuserid/*, $es_group_esusers*/, $es_group_emprgroups;
-	if (!is_array($es_group_esusers))
-		$es_group_esusers = array($es_group_esusers);
+// 	if (!is_array($es_group_esusers))
+// 		$es_group_esusers = array($es_group_esusers);
+	$es_group_esusers = array();
 	if (!is_array($es_group_emprgroups))
 		$es_group_emprgroups = array($es_group_emprgroups);
 	if (!$id) {
@@ -221,21 +222,21 @@ function update_esgroup_from_form() {
 		$new_esgroup->esgroup_name = $es_group_name;
 		$new_esgroup->esgroup_fullname = $es_group_fullname;
 		$new_esgroup->esgroup_pmbuserid = $es_group_pmbuserid;
-//		$new_esgroup->esgroup_esusers = $es_group_esusers;
+		$new_esgroup->esgroup_esusers = $es_group_esusers;
 		$new_esgroup->esgroup_emprgroups = $es_group_emprgroups;
 		$new_esgroup->commit_to_db(); 
 	}
 	else {
-		$thegroup = new es_esgroup($id);
+		$the_group = new es_esgroup($id);
 			if ($the_group->error) {
 				return false;
 		}
-		$thegroup->esgroup_name = $es_group_name;
-		$thegroup->esgroup_fullname = $es_group_fullname;
-		$thegroup->esgroup_pmbuserid = $es_group_pmbuserid;
-		$thegroup->esgroup_esusers = $es_group_esusers;
-		$thegroup->esgroup_emprgroups = $es_group_emprgroups;
-		$thegroup->commit_to_db(); 
+		$the_group->esgroup_name = $es_group_name;
+		$the_group->esgroup_fullname = $es_group_fullname;
+		$the_group->esgroup_pmbuserid = $es_group_pmbuserid;
+ 		$the_group->esgroup_esusers = $es_group_esusers;
+		$the_group->esgroup_emprgroups = $es_group_emprgroups;
+		$the_group->commit_to_db(); 
 	}
 	return true;
 }
@@ -282,8 +283,8 @@ switch ($action) {
 		break;
 	case "del":
 		if ($id) {
-			$the_groupe = new es_esgroup($id);
-			$the_groupe->delete();
+			$the_group = new es_esgroup($id);
+			$the_group->delete();
 		}
 		list_groups();
 		break;

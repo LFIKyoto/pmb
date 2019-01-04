@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: api.inc.php,v 1.17.4.1 2015-10-05 12:03:43 jpermanne Exp $
+// $Id: api.inc.php,v 1.18 2015-10-05 12:02:10 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 

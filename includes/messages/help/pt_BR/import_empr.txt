@@ -5,15 +5,20 @@
 // Documentation sur l'utilisation de l'import
 
 $content = "
-  <p><b>PMB: como importar</b> </p>
-  <p><strong>Na coluna esquerda</strong> estão os nomes dos campos do seu banco de dados.<br />
-    Este é o local onde são inseridas informações do leitor..</p>
-  <p><strong>A coluna central</strong> indica a posição do campo no arquivo, por exemplo:<br />
+  <p><b>PMB : import-mini-howto</b> </p>
+  <p><strong>Dans la colonne de  gauche</strong> sont pr&eacute;sents le nom des champs de la base de donn&eacute;es pour y ins&eacute;rer les informations des lecteurs &agrave; importer.</p>
+  <p><strong>Dans la colonne du centre</strong> figure la position du champ dans
+    le fichier ex:<br />
     &quot;12527&quot;,&quot;Archambault&quot;,&quot;rue de... <br />
-    &quot;12528&quot;,&quot;Baudin&quot;,&quot;rue de... <br /> <br />12527 na 1a posição 
-    está o código de barras do leitor/devedor, na 2a posição está seu sobrenome e, na 3a posição está seu endereço, etc.</p>
-  <p><strong>Na coluna direita</strong>, há um exemplo da 1a linha do arquivo. Ele pode ser muito útil se você quiser alterar sua posição no arquivo. Não esqueça de clicar em "Update/Atualizar" para confirmar as alterações feitas.</p>
-  <p><strong>Campos em vermelho</strong> não podem ser modificados pelo usuário, eles serão automaticamente preenchidos pela aplicação.</p>
+    &quot;12528&quot;,&quot;Baudin&quot;,&quot;rue de... <br />
+    12527 est la 1&egrave;re position,
+    c'est le code-barres du lecteur, la 2e position est le nom de famille du lecteur, la 3e son adresse, etc..</p>
+  <p><strong>La colonne de droite</strong> correspond au d&eacute;coupage de la premi&egrave;re
+    ligne du fichier.</p>
+  <p><strong>Les champs en rouge</strong>, sont des champ non modifiables par
+    l'utilisateur, ils 
+    vont se remplir tout seul.</p>
+  <p>Les champs marqu&eacute;s du signe * doivent &ecirc;tre imp&eacute;rativement renseign&eacute;s.</p>
 ";
 
 print $content;

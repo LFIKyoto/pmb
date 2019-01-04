@@ -1,10 +1,10 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ItemsListUI.js,v 1.42.4.1 2015-09-03 11:47:13 jpermanne Exp $
+// $Id: ItemsListUI.js,v 1.46 2017-11-30 10:53:34 dgoron Exp $
 
 
-define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/_base/lang", "dojo/topic", "dojox/grid/DataGrid", "dojo/data/ObjectStore", "dojo/store/Memory", "dojo/ready", "apps/docwatch/ItemsStore", "dojo/date/locale", "dojo/dom-construct", "dojo/on", 'dijit/form/Button',  'dojox/widget/Standby', "dojo/dom"], function(declare,ContentPane,lang,topic,DataGrid,ObjectStore,Memory,ready,ItemsStore,locale, domConstruct, on, Button, standby, dom){
+define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/_base/lang", "dojo/topic", "dojox/grid/DataGrid", "dojo/data/ObjectStore", "dojo/store/Memory", "dojo/ready", "apps/docwatch/ItemsStore", "dojo/date/locale", "dojo/dom-construct", "dojo/on", 'dijit/form/Button', 'dijit/form/RadioButton',  'dojox/widget/Standby', "dojo/dom"], function(declare,ContentPane,lang,topic,DataGrid,ObjectStore,Memory,ready,ItemsStore,locale, domConstruct, on, Button, RadioButton, standby, dom){
 	
 	return declare([ContentPane], {
 		idWatch:0,
@@ -14,7 +14,9 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/_base/lang", "do
 		itemsStore:null,
 		datagridStore:null,
 		header:null,
+		storeQuery:null,
 		constructor : function() {
+			this.storeQuery = {num_watch:this.idWatch};
 			this.itemsStore = new ItemsStore({
 				url:'./ajax.php?module=dsi&categ=docwatch&sub=items',
 				directInit: false,
@@ -46,6 +48,7 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/_base/lang", "do
 		    	case "itemTreeSelected" :
 		    		if (evtArgs.itemTree.type == "watch") {
 		    			this.idWatch = evtArgs.itemTree.id;
+		    			this.storeQuery = {num_watch:this.idWatch};
 	    				this.refreshContent();
 	    				if (evtArgs.itemTree.nb_sources > 0) {
 	    					if(this.getParent().selectedChildWidget !== this){
@@ -55,6 +58,7 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/_base/lang", "do
 	    				this.updateHeader(evtArgs.itemTree);
 		    		}else if(evtArgs.itemTree.type == "source"){
 		    			this.idWatch = evtArgs.itemTree.parent_watch;
+		    			this.storeQuery = {num_watch:this.idWatch};
 	    				this.refreshContent();
 		    		}
 		    		break;
@@ -96,7 +100,7 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/_base/lang", "do
 						this.showPatience();
 						this.itemsStore.updateWatch(this.idWatch);
 					}else{
-						//Les items de la veille sont déjà présent, on va juste les afficher (la veille n'a pas été mise à jour)
+						//Les items de la veille sont dï¿½jï¿½ prï¿½sent, on va juste les afficher (la veille n'a pas ï¿½tï¿½ mise ï¿½ jour)
 						this.gotItems();	
 					}	
 				}
@@ -104,9 +108,9 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/_base/lang", "do
 		},
 		formatInteresting: function(value){
 			if(parseInt(value) == 0){
-				return "<img src='./images/star_unlight.png'></img>";
+				return "<img src='"+pmbDojo.images.getImage('star_unlight.png')+"'></img>";
 			}
-            return "<img src='./images/star.png'></img>";
+            return "<img src='"+pmbDojo.images.getImage('star.png')+"'></img>";
         },
         dateFormatter:function(date){
 			if(date=="")return "";
@@ -139,7 +143,7 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/_base/lang", "do
 				this.itemsGrid.setSortIndex(2);
 				this.itemsGrid.setSortIndex(2);
 			}else{
-				this.itemsGrid.setQuery({num_watch:this.idWatch});
+				this.itemsGrid.setQuery(this.storeQuery);
 				this.itemsGrid.selection.deselectAll();
 				topic.publish("itemsListUI","noMoreItems");
 			}
@@ -154,34 +158,34 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/_base/lang", "do
 				var valueScroll = this.itemsGrid.scrollTop;
 				//Recuperation de la ligne de l'item avant refresh
 				var itmIdx = this.itemsGrid.selection.selectedIndex;
-				//Recuperation de l'item sur le datagrid à partir de son index
+				//Recuperation de l'item sur le datagrid ï¿½ partir de son index
 				var item = this.itemsGrid.getItem(itmIdx);
 				//refresh du datagrid
-				this.itemsGrid.setQuery({num_watch:this.idWatch});
+				this.itemsGrid.setQuery(this.storeQuery);
 				
-				//Recuperation de l'index de l'item après refresh, et de l'index actuellement séléctionné
+				//Recuperation de l'index de l'item aprï¿½s refresh, et de l'index actuellement sï¿½lï¿½ctionnï¿½
 				itmIdx = this.itemsGrid.getItemIndex(item);
 				var currentIdx = this.itemsGrid.selection.selectedIndex;
 				
-				if(currentIdx != -1){//Une ligne est séléctionnée
+				if(currentIdx != -1){//Une ligne est sï¿½lï¿½ctionnï¿½e
 					if(currentIdx != itmIdx && itmIdx != -1){//Mais ce n'est pas la bonne
 						this.itemsGrid.selection.deselectAll();
 						this.itemsGrid.selection.addToSelection(itmIdx);
 				
-						//on scroll également jusqu'a cette ligne
+						//on scroll ï¿½galement jusqu'a cette ligne
 						this.itemsGrid.scrollToRow(itmIdx);
 					}else{
 						this.itemsGrid.scrollTo(valueScroll);			
 					}
 				}
-				if(datas.itemUIRefresh){
+				if(datas && datas.itemUIRefresh){
 					var item = this.itemsGrid.store.objectStore.query({id:datas.itemId})[0];
     				topic.publish("itemsListUI","itemSelected",{item: item});
 				}
 			}else if(datas!=null){//Comportement normal sans sort
-				/** Permet de revenir a la même vue qu'avant la mise à jour **/
+				/** Permet de revenir a la mï¿½me vue qu'avant la mise ï¿½ jour **/
 				var valueScroll = this.itemsGrid.scrollTop;
-				this.itemsGrid.setQuery({num_watch:this.idWatch});
+				this.itemsGrid.setQuery(this.storeQuery);
 				this.itemsGrid.scrollTo(valueScroll);	
 				if(datas.itemUIRefresh){
 	    		//	console.log('evt args', evtArgs, 'this', this.itemsGrid, 'selected index', this.itemsGrid.selection.selectedIndex)
@@ -190,7 +194,7 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/_base/lang", "do
 				}
 			}else{//Cas de la suppression
 				var valueScroll = this.itemsGrid.scrollTop;
-				this.itemsGrid.setQuery({num_watch:this.idWatch});
+				this.itemsGrid.setQuery(this.storeQuery);
 				this.itemsGrid.scrollTo(valueScroll);	
 				var item = this.itemsGrid.getItem(this.itemsGrid.selection.selectedIndex);
 				if(item != null){
@@ -259,7 +263,7 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/_base/lang", "do
 				this.itemsGrid.setSortIndex(e.cell.index);
 				this.itemsGrid.onHeaderClick(e);
 				if(this.itemsGrid.getItem(this.itemsGrid.selection.selectedIndex) != itm){
-					//L'item n'est plus selectionné
+					//L'item n'est plus selectionnï¿½
 					this.itemsGrid.selection.deselectAll();
 					this.itemsGrid.selection.setSelected(this.itemsGrid.getItemIndex(itm), true);
 					this.itemsGrid.scrollToRow(this.itemsGrid.getItemIndex(itm));
@@ -288,15 +292,42 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/_base/lang", "do
 			}
 			domConstruct.create('span', {innerHTML:watch.title, style:{marginLeft:'5px',marginRight:'5px'}}, mainRow);
 			domConstruct.create('span', {id: 'watch_last_date', innerHTML:'('+locale.format(new Date(watch.formated_last_date))+')', style:{marginLeft:'5px',marginRight:'5px'}}, mainRow);
-			domConstruct.create('a', {target: '_blank', href:watch.opac_link, innerHTML:'<img src=\'./images/rss.png\'/>', style:{marginLeft:'5px',marginRight:'5px'}}, mainRow);
+			domConstruct.create('a', {target: '_blank', href:watch.opac_link, innerHTML:'<img src=\''+pmbDojo.images.getImage('rss.png')+'\'/>', style:{marginLeft:'5px',marginRight:'5px'}}, mainRow);
 			var myButton = new Button({
 			        label: pmbDojo.messages.getMessage('dsi', 'dsi_js_docwatch_edit_watch'),
 			        onClick: lang.hitch(this, this.editClicked, watch)
 			    }).placeAt(mainRow).startup();
+			domConstruct.create('span', {innerHTML:pmbDojo.messages.getMessage("dsi","docwatch_watch_filter_deleted"), style:{marginLeft:'5px',marginRight:'5px'}}, mainRow);
+			var myButton_1 = new RadioButton({
+				name: 'filter_deleted',
+		        checked: true,
+		        onClick: lang.hitch(this, this.filterDeletedShowClicked, watch)
+		    }).placeAt(mainRow).startup();
+			domConstruct.create('span', {innerHTML:pmbDojo.messages.getMessage("dsi","docwatch_yes"), style:{marginLeft:'5px',marginRight:'5px'}}, mainRow);
+			var myButton_2 = new RadioButton({
+				name: 'filter_deleted',
+		        onClick: lang.hitch(this, this.filterDeletedHideClicked, watch)
+		    }).placeAt(mainRow).startup();	
+			domConstruct.create('span', {innerHTML:pmbDojo.messages.getMessage("dsi","docwatch_no"), style:{marginLeft:'5px',marginRight:'5px'}}, mainRow);
 		},
 		editClicked: function(watch){
 			topic.publish('itemListUI', 'openForm', {item:watch});
 		},
+		filterDeletedShowClicked: function(watch){
+			this.storeQuery = {num_watch:this.idWatch};
+			this.refreshItem(null, false);
+		},
+		filterDeletedHideClicked: function(watch){
+			var num_watch = this.idWatch;
+			this.storeQuery = function(object){
+				if (object.num_watch == num_watch) {
+					if (object.status == 0 || object.status == 1) {
+						return object;
+					}
+				}
+			};
+			this.refreshItem(null, false);
+		},		
 		updateDate:function(datas){
 			if(dom.byId('watch_last_date')){
 				dom.byId('watch_last_date').innerHTML = '('+locale.format(new Date(datas.formated_last_date))+')';	
@@ -307,7 +338,7 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/_base/lang", "do
 				this.itemsStore.updateWatch(watchId);
 			}else{
 				this.itemsStore.query({watch_id:watchId})[0].outdated = true;
-				//TODO: ajouter le false sur le litem qui représente la veille dans l'itemStore
+				//TODO: ajouter le false sur le litem qui reprï¿½sente la veille dans l'itemStore
 			}
 		},
 		watchDeleted: function(){		

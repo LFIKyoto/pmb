@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: make_sug.inc.php,v 1.13 2010-01-07 16:10:41 kantin Exp $
+// $Id: make_sug.inc.php,v 1.14 2017-02-24 15:34:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($id_notice)) $id_notice = 0;
+if(!isset($id_sug)) $id_sug = 0;
 
 //URL de retour du form de création/modification de suggestion
 $back_url="onClick=\"document.location='./catalog.php?'\"";

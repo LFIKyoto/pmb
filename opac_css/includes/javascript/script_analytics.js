@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: script_analytics.js,v 1.2 2015-05-13 15:48:36 dgoron Exp $
+// $Id: script_analytics.js,v 1.5 2017-09-12 12:02:59 dgoron Exp $
 
 
 var scriptAnalytics = {}
@@ -9,7 +9,7 @@ var scriptAnalytics = {}
 scriptAnalytics.CookieConsent = function() {
 	// Remplacez la valeur UA-XXXXXX-Y par l'identifiant analytics de votre site.
     var gaProperty = 'UA-XXXXXX-Y '
-    // Désactive le tracking si le cookie d'Opt-out existe déjà .
+    // Dï¿½sactive le tracking si le cookie d'Opt-out existe dï¿½jï¿½ .
     var disableStr = 'ga-disable-' + gaProperty;
     var firstCall = false;
 
@@ -23,7 +23,7 @@ scriptAnalytics.CookieConsent = function() {
     	return expires;
     }
 
-    // Fonction utile pour récupérer un cookie à partir de son nom
+    // Fonction utile pour rï¿½cupï¿½rer un cookie ï¿½ partir de son nom
     function getCookie(NameOfCookie)  {
         if (document.cookie.length > 0) {        
         	begin = document.cookie.indexOf(NameOfCookie+"=");
@@ -74,16 +74,19 @@ scriptAnalytics.CookieConsent = function() {
         div.setAttribute('id','script_analytics');
         div.setAttribute('align','center');
         // Le code HTML de la demande de consentement
-//        div.innerHTML = '<div id="script_analytics_content">'+msg_script_analytics_content+' <a href="javascript:scriptAnalytics.CookieConsent.showInform()" style="text-decoration:underline;">'+msg_script_analytics_content_link_more+'</a>.</div>';
-        div.innerHTML = "<div id='script_analytics_content'>"+msg_script_analytics_content+" "+script_analytics_content_link_more+
+        link_more_insert = '';
+        if (script_analytics_content_link_more!='') {
+        	link_more_insert = "<a href='"+script_analytics_content_link_more+"' target='_blank'>"+script_analytics_content_link_more_msg+"</a>";
+        }
+        div.innerHTML = "<div id='script_analytics_content'>"+msg_script_analytics_content+" "+link_more_insert+
         "<button style='margin-left:50px;text-decoration:underline;' name='opposite' onclick='scriptAnalytics.CookieConsent.opposite();' id='opposite-button' >"+msg_script_analytics_inform_ask_opposite+"</button>" +
     	"<button style='text-decoration:underline;' name='accept' onclick='scriptAnalytics.CookieConsent.accept();' id='accept-button'>"+msg_script_analytics_inform_ask_accept+"</button>" +
         "</div>";
-        bodytag.insertBefore(div,bodytag.firstChild);
+        bodytag.appendChild(div);
 //        renderInformAndAsk();
     }         
           
-    //Récupère la version d'Internet Explorer, si c'est un autre navigateur la fonction renvoie -1
+    //Rï¿½cupï¿½re la version d'Internet Explorer, si c'est un autre navigateur la fonction renvoie -1
     function getInternetExplorerVersion() {
     	var rv = -1;
     	if (navigator.appName == 'Microsoft Internet Explorer')  {
@@ -102,12 +105,12 @@ scriptAnalytics.CookieConsent = function() {
 
     //Effectue une demande de confirmation de DNT pour les utilisateurs d'IE
     function askDNTConfirmation() {
-        var r = confirm("La signal DoNotTrack de votre navigateur est activé, confirmez vous activer \
+        var r = confirm("La signal DoNotTrack de votre navigateur est activï¿½, confirmez vous activer \
         la fonction DoNotTrack?")
         return r;
     }
 
-    //Vérifie la valeur de navigator.DoNotTrack pour savoir si le signal est activé et est à  1
+    //Vï¿½rifie la valeur de navigator.DoNotTrack pour savoir si le signal est activï¿½ et est ï¿½  1
     function notToTrack() {
         if ( (navigator.doNotTrack && (navigator.doNotTrack=='yes' || navigator.doNotTrack=='1'))
             || ( navigator.msDoNotTrack && navigator.msDoNotTrack == '1') ) {
@@ -119,14 +122,14 @@ scriptAnalytics.CookieConsent = function() {
         }
     }
 
-    //Si le signal est à  0 on considère que le consentement a déjà  été obtenu
+    //Si le signal est ï¿½  0 on considï¿½re que le consentement a dï¿½jï¿½  ï¿½tï¿½ obtenu
     function isToTrack() {
         if ( navigator.doNotTrack && (navigator.doNotTrack=='no' || navigator.doNotTrack==0 )) {
             return true;
         }
     }
        
-    // Efface tous les types de cookies utilisés par Google Analytics    
+    // Efface tous les types de cookies utilisï¿½s par Google Analytics    
     function deleteAnalyticsCookies() {
         var cookieNames = ["__utma","__utmb","__utmc","__utmt","__utmv","__utmz","_ga","_gat"]
         for (var i=0; i<cookieNames.length; i++)
@@ -139,7 +142,7 @@ scriptAnalytics.CookieConsent = function() {
     		document.cookie = disableStr + '=true;'+ getCookieExpireDate() +' ; path=/';       
     		document.cookie = 'PhpMyBibli-COOKIECONSENT=true;'+ getCookieExpireDate() +' ; path=/';
     		var div = document.getElementById('script_analytics');
-    		// Message affiché après que l'utilisateur est accepté
+    		// Message affichï¿½ aprï¿½s que l'utilisateur est acceptï¿½
     		if ( div!= null ) div.innerHTML = '';
     		window[disableStr] = false;
 //    		window.location.reload();
@@ -149,7 +152,7 @@ scriptAnalytics.CookieConsent = function() {
     		document.cookie = disableStr + '=true;'+ getCookieExpireDate() +' ; path=/';       
 	        document.cookie = 'PhpMyBibli-COOKIECONSENT=false;'+ getCookieExpireDate() +' ; path=/';
 	        var div = document.getElementById('script_analytics');
-	        // Message affiché après que l'utilisateur se soit opposé
+	        // Message affichï¿½ aprï¿½s que l'utilisateur se soit opposï¿½
 	        if ( div!= null ) div.innerHTML = ''
 	        window[disableStr] = true;
 	        deleteAnalyticsCookies();
@@ -168,15 +171,15 @@ scriptAnalytics.CookieConsent = function() {
         },
         
         start: function() {
-            //Vérifie que le consentement n'a pas déjà été obtenu avant d'afficher
+            //Vï¿½rifie que le consentement n'a pas dï¿½jï¿½ ï¿½tï¿½ obtenu avant d'afficher
             var consentCookie =  getCookie('PhpMyBibli-COOKIECONSENT');
             clickprocessed = false;
             if (!consentCookie) {
-                //L'utilisateur n'a pas encore de cookie, on affiche la bannière. 
+                //L'utilisateur n'a pas encore de cookie, on affiche la banniï¿½re. 
                 if ( notToTrack() ) {
-                    //L'utilisateur a activé DoNotTrack. Do not ask for consent and just opt him out
+                    //L'utilisateur a activï¿½ DoNotTrack. Do not ask for consent and just opt him out
                     scriptAnalytics.CookieConsent.opposite();
-                    alert("You've enabled DNT, we're respecting your choice")
+                    alert(pmbDojo.messages.getMessage("opac","opac_dnt_enabled"))
                 } else {
                     if (!isToTrack() ) { 
 	                    if (window.addEventListener) {

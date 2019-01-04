@@ -1,4 +1,4 @@
-<h1>Còpia de seguretat</h1>
+<h2>Còpia de seguretat</h2>
 </p><p>
 <b>Lloc</b> localització al disc de les còpies de seguretat
 </p><p>

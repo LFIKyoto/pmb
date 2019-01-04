@@ -23,7 +23,7 @@ function show_clas($dbh) {
 	global $msg;
 	print "<table>
 	<tr>
-		<th>".$msg[proc_clas_lib]."</th>
+		<th>".$msg['proc_clas_lib']."</th>
 	</tr>";
 
 	$requete = "SELECT idproc_classement,libproc_classement FROM procs_classements ORDER BY libproc_classement ";
@@ -52,7 +52,7 @@ function clas_form($libproc_classement="", $idproc_classement=0) {
 	global $admin_procs_clas_form;
 
 	$admin_procs_clas_form = str_replace('!!idproc_classement!!', $idproc_classement, $admin_procs_clas_form);
-	if(!$idproc_classement) $admin_procs_clas_form = str_replace('!!form_title!!', $msg[proc_clas_bt_add], $admin_procs_clas_form);
+	if(!$idproc_classement) $admin_procs_clas_form = str_replace('!!form_title!!', $msg['proc_clas_bt_add'], $admin_procs_clas_form);
 	else $admin_procs_clas_form = str_replace('!!form_title!!', $msg["proc_clas_modif"], $admin_procs_clas_form);
 
 	$admin_procs_clas_form = str_replace('!!libelle!!', htmlentities($libproc_classement,ENT_QUOTES, $charset), $admin_procs_clas_form);
@@ -114,7 +114,7 @@ switch($action) {
 				$res = pmb_mysql_query($requete, $dbh);
 				show_clas($dbh);
 			} else {
-				error_message(	$msg[proc_clas], $msg[proc_clas_used], 1, 'admin.php?categ=proc&sub=clas&action=');
+				error_message(	$msg['proc_clas'], $msg['proc_clas_used'], 1, 'admin.php?categ=proc&sub=clas&action=');
 			}
 		} else show_clas($dbh);
 		break;

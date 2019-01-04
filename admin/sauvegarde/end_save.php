@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: end_save.php,v 1.11 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: end_save.php,v 1.13 2017-10-23 10:13:00 ngantier Exp $
 
 //Création du fichier final et transfert vers les lieux puis passage au jeu suivant
 $base_path="../..";
@@ -17,7 +17,7 @@ print "<div id=\"contenu-frame\">\n";
 echo "<h1>".$msg["sauv_misc_export_running"]."</h1>\n";
 echo "<form class='form-$current_module' name=\"sauv\" action=\"\" method=\"post\">\n";
 echo "<br /><br />";
-echo "<center><input type=\"button\" value=\"".$msg["sauv_annuler"]."\" onClick=\"document.location='launch.php';\" class=bouton></center>\n";
+echo "<input type=\"button\" value=\"".$msg["sauv_annuler"]."\" onClick=\"document.location='launch.php';\" class=bouton>\n";
 
 //Jeux à suivre
 for ($i=0; $i<count($sauvegardes); $i++) {
@@ -62,13 +62,29 @@ unlink($temp_file);
 //Log : Backup complet
 write_log("Backup complete",$logid);
 
+//Récupération de la taille du fichier
+if ($tmp_size = filesize($filename)) {
+	if ($tmp_size < 1000) {
+		write_log("Backup size : ".round($tmp_size,3)." bytes",$logid);
+	} else {
+		$tmp_size = $tmp_size / 1024;
+		if ($tmp_size < 1000) {
+			write_log("Backup size : ".round($tmp_size,3)." Ko",$logid);
+		} else {
+			$tmp_size = $tmp_size / 1024;
+			write_log("Backup size : ".round($tmp_size,3)." Mo",$logid);
+		}
+	}
+	
+}
+
 //Succeed
 $requete="update sauv_log set sauv_log_succeed=1 where sauv_log_id=".$logid;
 @pmb_mysql_query($requete);
 
 //Paramètres
 echo "<input type=\"hidden\" name=\"logid\" value=\"".$logid."\">\n";
-echo "<center><h2>".sprintf($msg["sauv_misc_merging"],$sauv_sauvegarde_nom)."</h2></center>";
+echo "<h2>".sprintf($msg["sauv_misc_merging"],$sauv_sauvegarde_nom)."</h2>";
 echo "<input type=\"hidden\" name=\"filename\" value=\"$filename\">";
 
 //Récupération des lieux

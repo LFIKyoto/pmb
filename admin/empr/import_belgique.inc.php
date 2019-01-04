@@ -2,11 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: import_belgique.inc.php,v 1.11 2015-06-02 13:24:51 dgoron Exp $
+// $Id: import_belgique.inc.php,v 1.12 2018-11-22 15:34:57 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once("$class_path/emprunteur.class.php");
+require_once($class_path."/import/import_empr.class.php");
 //import_belgique - Version modifiée par A.-M Cubat en avril 2006
 //Ecole N.-D. de la Sagesse - Avenue Van Overbeke, 10 - B-1083 Bruxelles (Belgique)
 
@@ -143,27 +144,6 @@ print "
 </form>";
 }
 
-function cre_login($nom, $prenom, $dbh) {
-    $empr_login = substr($prenom,0,1).$nom ;
-    $empr_login = strtolower($empr_login);
-    $empr_login = clean_string($empr_login) ;
-    $empr_login = convert_diacrit(strtolower($empr_login)) ;
-    $empr_login = preg_replace('/[^a-z0-9\.]/', '', $empr_login);
-    $pb = 1 ;
-    $num_login=1 ;
-    while ($pb==1) {
-        $requete = "SELECT empr_login FROM empr WHERE empr_login='$empr_login' AND empr_nom <> '$nom' AND empr_prenom <> '$prenom' LIMIT 1 ";
-        $res = pmb_mysql_query($requete, $dbh);
-        $nbr_lignes = pmb_mysql_num_rows($res);
-        if ($nbr_lignes) {
-            $empr_login .= $num_login ;
-            $num_login++;
-        } 
-        else $pb = 0 ;
-    }
-    return $empr_login;
-}
-
 function import_eleves($separateur, $dbh, $type_import){
 
     //La structure du fichier texte doit être la suivante : 
@@ -199,6 +179,7 @@ function import_eleves($separateur, $dbh, $type_import){
         
         while (!feof($fichier)) {
             $buffer = fgets($fichier, 4096);
+            $buffer = import_empr::get_encoded_buffer($buffer);
             $buffer = pmb_mysql_escape_string($buffer);
             $tab = explode($separateur, $buffer);
 
@@ -229,7 +210,7 @@ function import_eleves($separateur, $dbh, $type_import){
                 $nb_enreg = 2;
             }
             
-            $login = cre_login($tab[1],$tab[2], $dbh);
+            $login = import_empr::cre_login($tab[1],$tab[2]);
             
             switch ($nb_enreg) {
                 case 0:
@@ -254,7 +235,7 @@ function import_eleves($separateur, $dbh, $type_import){
                     	emprunteur::hash_password($login,$tab[8]);
                         $cpt_insert ++;
                     }
-                    gestion_groupe($tab[9], $tab[0], $dbh);
+                    import_empr::gestion_groupe($tab[9], $tab[0]);
                     $j++;
                     break;
 
@@ -280,7 +261,7 @@ function import_eleves($separateur, $dbh, $type_import){
                     	emprunteur::hash_password($login,$tab[8]);
                         $cpt_maj ++;
                     }
-                    gestion_groupe($tab[9], $tab[0], $dbh);
+                    import_empr::gestion_groupe($tab[9], $tab[0]);
                     $j++;
                     break;
                 case 2:
@@ -302,26 +283,6 @@ function import_eleves($separateur, $dbh, $type_import){
         fclose($fichier);
     }
     
-}
-
-function gestion_groupe($lib_groupe, $empr_cb, $dbh) {
-    
-    $sel = pmb_mysql_query("SELECT id_groupe from groupe WHERE libelle_groupe = \"".$lib_groupe."\"",$dbh);
-    $nb_enreg_grpe = pmb_mysql_num_rows($sel);
-    
-    if (!$nb_enreg_grpe) {
-		//insertion dans la table groupe
-		pmb_mysql_query("INSERT INTO groupe(libelle_groupe) VALUES(\"".$lib_groupe."\")");
-		$groupe=pmb_mysql_insert_id();
-    	} else {
-    		$grpobj = pmb_mysql_fetch_object($sel) ;
-    		$groupe = $grpobj->id_groupe ; 
-    		}
-
-	//insertion dans la table empr_groupe
-    $sel_empr = pmb_mysql_query("SELECT id_empr FROM empr WHERE empr_cb = \"".$empr_cb."\"",$dbh);
-    $empr = pmb_mysql_fetch_array($sel_empr);
-    @pmb_mysql_query("INSERT INTO empr_groupe(empr_id, groupe_id) VALUES ('$empr[id_empr]','$groupe')");
 }
 
 function import_profs($separateur, $dbh, $type_import){
@@ -359,6 +320,7 @@ function import_profs($separateur, $dbh, $type_import){
         
         while (!feof($fichier)) {
             $buffer = fgets($fichier, 4096);
+            $buffer = import_empr::get_encoded_buffer($buffer);
             $buffer = pmb_mysql_escape_string($buffer);
             $tab = explode($separateur, $buffer);
 
@@ -389,7 +351,7 @@ function import_profs($separateur, $dbh, $type_import){
                 $nb_enreg = 2;
             }
             
-            $login = cre_login($tab[1],$tab[2], $dbh);
+            $login = import_empr::cre_login($tab[1],$tab[2]);
             
             switch ($nb_enreg) {
                 case 0:
@@ -414,7 +376,7 @@ function import_profs($separateur, $dbh, $type_import){
                     	emprunteur::hash_password($login,$tab[8]);
                         $cpt_insert ++;
                     }
-                    gestion_groupe($tab[9], $tab[0], $dbh);
+                    import_empr::gestion_groupe($tab[9], $tab[0]);
                     $j++;
                     break;
 
@@ -440,7 +402,7 @@ function import_profs($separateur, $dbh, $type_import){
                     	emprunteur::hash_password($login,$tab[8]);
                         $cpt_maj ++;
                     }
-                    gestion_groupe($tab[9], $tab[0], $dbh);
+                    import_empr::gestion_groupe($tab[9], $tab[0]);
                     $j++;
                     break;
                 case 2:

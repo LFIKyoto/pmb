@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: external_services_converters.class.php,v 1.23 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: external_services_converters.class.php,v 1.27 2018-02-08 16:32:06 dgoron Exp $
 
 //
 //Convertisseurs et cacheur de formats des résultats des services externes
@@ -19,23 +19,23 @@ if (version_compare(PHP_VERSION,'5','>=') && extension_loaded('xsl')) {
 }
 
 class external_services_converter {
-	var $object_type=0; //Type d'objet
-	var $life_duration=600; //Durée de vie de l'objet converti, en secondes
-	var $results=array();
-	var $cache=NULL;
-	var $params=array();
+	public $object_type=0; //Type d'objet
+	public $life_duration=600; //Durée de vie de l'objet converti, en secondes
+	public $results=array();
+	public $cache=NULL;
+	public $params=array();
 	
-	function external_services_converter($object_type, $life_duration) {
+	public function __construct($object_type, $life_duration) {
 		$this->object_type = $object_type+0;
 		$this->life_duration = $life_duration+0;
 		$this->cache = new external_services_cache('es_cache_blob', $life_duration);
 	}
 	
-	function set_params($new_params) {
+	public function set_params($new_params) {
 		$this->params = $new_params;
 	}
 	
-	function convert_batch($objects, $format, $target_charset='iso-8859-1') {
+	public function convert_batch($objects, $format, $target_charset='iso-8859-1') {
 		//Cette fonction va chercher les valeurs dans le cache si elle existent.
 		
 		global $dbh;
@@ -68,7 +68,7 @@ class external_services_converter {
 		
 	}
 	
-	function encache_value($object_id, $value, $format) {
+	public function encache_value($object_id, $value, $format) {
 		//Mise en cache d'une valeur
 		global $dbh;
 		$rawed = substr($format, 0, 9) == "raw_array";
@@ -81,7 +81,7 @@ class external_services_converter {
 
 class external_services_converter_notices extends external_services_converter {
 	
-	function convert_batch($objects, $format, $target_charset='iso-8859-1',$xslt="") {
+	public function convert_batch($objects, $format, $target_charset='iso-8859-1',$xslt="") {
 		if (!$objects)
 			return array();
 		//Va chercher dans le cache les notices encore bonnes
@@ -96,7 +96,7 @@ class external_services_converter_notices extends external_services_converter {
 		return $this->results;
 	}
 
-	function convert_batch_to_pmb_xml($notices_to_convert, $target_charset='iso-8859-1') {
+	public function convert_batch_to_pmb_xml($notices_to_convert, $target_charset='iso-8859-1') {
 		global $charset;
 		if (!$notices_to_convert) //Rien à faire? On fait rien
 			return;
@@ -135,16 +135,25 @@ class external_services_converter_notices extends external_services_converter {
 				$this->results[$current_notice_id] = $xmlexport->notice;
 				//La classe export exporte ses données dans la charset de la base.
 				//Convertissons si besoin
-				if ($charset!='utf-8' && $target_charset == 'utf-8')
-					$this->results[$current_notice_id] = utf8_encode($this->results[$current_notice_id]);
-				else if ($charset=='utf-8' && $target_charset != 'utf-8')
-					$this->results[$current_notice_id] = utf8_decode($this->results[$current_notice_id]);
+				if ($charset!='utf-8' && $target_charset == 'utf-8'){
+					if(function_exists("mb_convert_encoding")){
+						$this->results[$current_notice_id] = mb_convert_encoding($this->results[$current_notice_id],"UTF-8","Windows-1252");
+					}else{
+						$this->results[$current_notice_id] = utf8_encode($this->results[$current_notice_id]);
+					}
+				}else if ($charset=='utf-8' && $target_charset != 'utf-8'){
+					if(function_exists("mb_convert_encoding")){
+						$this->results[$current_notice_id] = mb_convert_encoding($this->results[$current_notice_id],"Windows-1252","UTF-8");
+					}else{
+						$this->results[$current_notice_id] = utf8_decode($this->results[$current_notice_id]);
+					}
+				}
 				$current_notice_id = $xmlexport->notice_list[$xmlexport->current_notice];
 			}
 		}
 	}
 
-	function convert_batch_to_json($notices_to_convert, $target_charset='iso-8859-1') {
+	public function convert_batch_to_json($notices_to_convert, $target_charset='iso-8859-1') {
 			global $charset;
 		if (!$notices_to_convert) //Rien à faire? On fait rien
 			return;
@@ -182,22 +191,31 @@ class external_services_converter_notices extends external_services_converter {
 				$this->results[$current_notice_id] = $xmlexport->notice;
 				//La classe export exporte ses données dans la charset de la base.
 				//Convertissons si besoin
-				if ($charset!='utf-8' && $target_charset == 'utf-8')
-					$this->results[$current_notice_id] = utf8_encode($this->results[$current_notice_id]);
-				else if ($charset=='utf-8' && $target_charset != 'utf-8')
-					$this->results[$current_notice_id] = utf8_decode($this->results[$current_notice_id]);
+				if ($charset!='utf-8' && $target_charset == 'utf-8'){
+					if(function_exists("mb_convert_encoding")){
+						$this->results[$current_notice_id] = mb_convert_encoding($this->results[$current_notice_id],"UTF-8","Windows-1252");
+					}else{
+						$this->results[$current_notice_id] = utf8_encode($this->results[$current_notice_id]);
+					}
+				}else if ($charset=='utf-8' && $target_charset != 'utf-8'){
+					if(function_exists("mb_convert_encoding")){
+						$this->results[$current_notice_id] = mb_convert_encoding($this->results[$current_notice_id],"Windows-1252","UTF-8");
+					}else{
+						$this->results[$current_notice_id] = utf8_decode($this->results[$current_notice_id]);
+					}
+				}
 				$current_notice_id = $xmlexport->notice_list[$xmlexport->current_notice];
 			}
 		}
 	}
 
-	function convert_batch_to_json_assoc($notices_to_convert, $target_charset='iso-8859-1') {
+	public function convert_batch_to_json_assoc($notices_to_convert, $target_charset='iso-8859-1') {
 		$this->convert_batch_to_php_array_assoc($notices_to_convert, $target_charset);
 		foreach ($notices_to_convert as $anotice_id)
 			$this->results[$anotice_id] = json_encode($this->results[$anotice_id]);
 	}
 	
-	function convert_batch_to_serialized($notices_to_convert, $target_charset='iso-8859-1') {
+	public function convert_batch_to_serialized($notices_to_convert, $target_charset='iso-8859-1') {
 		global $charset;
 		if (!$notices_to_convert) //Rien à faire? On fait rien
 			return;
@@ -235,23 +253,32 @@ class external_services_converter_notices extends external_services_converter {
 				$this->results[$current_notice_id] = $xmlexport->notice;
 				//La classe export exporte ses données dans la charset de la base.
 				//Convertissons si besoin
-				if ($charset!='utf-8' && $target_charset == 'utf-8')
-					$this->results[$current_notice_id] = utf8_encode($this->results[$current_notice_id]);
-				else if ($charset=='utf-8' && $target_charset != 'utf-8')
-					$this->results[$current_notice_id] = utf8_decode($this->results[$current_notice_id]);
+				if ($charset!='utf-8' && $target_charset == 'utf-8'){
+					if(function_exists("mb_convert_encoding")){
+						$this->results[$current_notice_id] = mb_convert_encoding($this->results[$current_notice_id],"UTF-8","Windows-1252");
+					}else{
+						$this->results[$current_notice_id] = utf8_encode($this->results[$current_notice_id]);
+					}
+				}else if ($charset=='utf-8' && $target_charset != 'utf-8'){
+					if(function_exists("mb_convert_encoding")){
+						$this->results[$current_notice_id] = mb_convert_encoding($this->results[$current_notice_id],"Windows-1252","UTF-8");
+					}else{
+						$this->results[$current_notice_id] = utf8_decode($this->results[$current_notice_id]);
+					}
+				}
 				$current_notice_id = $xmlexport->notice_list[$xmlexport->current_notice];
 			}
 		}
 	}
 	
-	function convert_batch_to_serialized_assoc($notices_to_convert, $target_charset='iso-8859-1') {
+	public function convert_batch_to_serialized_assoc($notices_to_convert, $target_charset='iso-8859-1') {
 		$this->convert_batch_to_php_array_assoc($notices_to_convert, $target_charset);
 		foreach ($notices_to_convert as $anotice_id) {
 			$this->results[$anotice_id] = serialize($this->results[$anotice_id]);
 		}
 	}	
 	
-	function convert_batch_to_php_array($notices_to_convert, $target_charset='iso-8859-1') {
+	public function convert_batch_to_php_array($notices_to_convert, $target_charset='iso-8859-1') {
 		global $charset;
 		if (!$notices_to_convert) //Rien à faire? On fait rien
 			return;
@@ -314,10 +341,19 @@ class external_services_converter_notices extends external_services_converter {
 						$as["c"] = isset($as["c"]) ? $as["c"] : "";
 						//La classe export exporte ses données dans la charset de la base.
 						//Convertissons si besoin
-						if ($charset!='utf-8' && $target_charset == 'utf-8')
-							$as["value"] = utf8_encode($as["value"]);
-						else if ($charset=='utf-8' && $target_charset != 'utf-8')
-							$as["value"] = utf8_decode($as["value"]);
+						if ($charset!='utf-8' && $target_charset == 'utf-8'){
+							if(function_exists("mb_convert_encoding")){
+								$as["value"] = mb_convert_encoding($as["value"],"UTF-8","Windows-1252");
+							}else{
+								$as["value"] = utf8_encode($as["value"]);
+							}
+						}else if ($charset=='utf-8' && $target_charset != 'utf-8'){
+							if(function_exists("mb_convert_encoding")){
+								$as["value"] = mb_convert_encoding($as["value"],"Windows-1252","UTF-8");
+							}else{
+								$as["value"] = utf8_decode($as["value"]);
+							}
+						}
 					}
 
 				}
@@ -327,7 +363,7 @@ class external_services_converter_notices extends external_services_converter {
 		}
 	}
 	
-	function convert_batch_to_php_array_assoc($notices_to_convert, $target_charset='iso-8859-1') {
+	public function convert_batch_to_php_array_assoc($notices_to_convert, $target_charset='iso-8859-1') {
 		global $charset;
 		if (!$notices_to_convert) //Rien à faire? On fait rien
 			return;
@@ -393,10 +429,19 @@ class external_services_converter_notices extends external_services_converter {
 							//La classe export exporte ses données dans la charset de la base.
 							//Convertissons si besoin
 							$value = $as["value"];
-							if ($charset!='utf-8' && $target_charset == 'utf-8')
-								$value = utf8_encode($value);
-							else if ($charset=='utf-8' && $target_charset != 'utf-8')
-								$value = utf8_decode($value);
+							if ($charset!='utf-8' && $target_charset == 'utf-8'){
+								if(function_exists("mb_convert_encoding")){
+									$value = mb_convert_encoding($value,"UTF-8","Windows-1252");
+								}else{
+									$value = utf8_encode($value);
+								}
+							}else if ($charset=='utf-8' && $target_charset != 'utf-8'){
+								if(function_exists("mb_convert_encoding")){
+									$value = mb_convert_encoding($value,"Windows-1252","UTF-8");
+								}else{
+									$value = utf8_decode($value);
+								}
+							}
 							if (isset($arf[$as["c"]]) && !is_array($arf[$as["c"]]))
 								$arf[$as["c"]] = array($arf[$as["c"]]);
 							if (isset($arf[$as["c"]]) && is_array($arf[$as["c"]]))
@@ -418,7 +463,7 @@ class external_services_converter_notices extends external_services_converter {
 	}
 	
 	
-	function apply_xsl_to_xml($xml, $xsl, $params) {
+	public function apply_xsl_to_xml($xml, $xsl, $params) {
 		global $charset;
 		$xh = xslt_create();
 		xslt_set_encoding($xh, $charset);
@@ -431,7 +476,7 @@ class external_services_converter_notices extends external_services_converter {
 		return $result;		
 	}
 
-	function convert_batch_to_dublin_core($notices_to_convert, $target_charset,$xsl_pmbxmlunimarc_to_dc = "") {
+	public function convert_batch_to_dublin_core($notices_to_convert, $target_charset,$xsl_pmbxmlunimarc_to_dc = "") {
 		global $base_path, $opac_url_base;
 		if (!$notices_to_convert) //Rien à faire? On fait rien
 			return;
@@ -453,15 +498,19 @@ class external_services_converter_notices extends external_services_converter {
 
 			
 			//Cette conversion sort de l'utf-8
-			if ($target_charset != 'utf-8')
-				$converted_version = utf8_decode($converted_version);
-
+			if ($target_charset != 'utf-8'){
+				if(function_exists("mb_convert_encoding")){
+					$converted_version = mb_convert_encoding($converted_version,"Windows-1252","UTF-8");
+				}else{
+					$converted_version = utf8_decode($converted_version);
+				}
+			}
 			$this->results[$anotice_id] = $converted_version;
 		}
 	}
 	
 	//Utilise les fonctions de admin/convert pour faire une conversion perso
-	function convert_batch_to_adminconvert_script($notices_to_convert, $the_conversion, $target_charset) {
+	public function convert_batch_to_adminconvert_script($notices_to_convert, $the_conversion, $target_charset) {
 		global $base_path, $charset, $opac_url_base;
 		if (!$notices_to_convert) //Rien à faire? On fait rien
 			return;
@@ -477,15 +526,24 @@ class external_services_converter_notices extends external_services_converter {
 			$conv->prepared_notice = $xml_header.$this->results[$anotice_id];
 			$converted_version = $conv->transform(true);
 			
-			if ($the_conversion["output_charset"] == 'utf-8' && $target_charset != 'utf-8')
-				$converted_version = utf8_decode($converted_version);
-			if ($the_conversion["output_charset"] != 'utf-8' && $target_charset == 'utf-8')
-				$converted_version = utf8_encode($converted_version);
+			if ($the_conversion["output_charset"] == 'utf-8' && $target_charset != 'utf-8'){
+				if(function_exists("mb_convert_encoding")){
+					$converted_version = mb_convert_encoding($converted_version,"Windows-1252","UTF-8");
+				}else{
+					$converted_version = utf8_decode($converted_version);
+				}
+			} else if ($the_conversion["output_charset"] != 'utf-8' && $target_charset == 'utf-8'){
+				if(function_exists("mb_convert_encoding")){
+					$converted_version = mb_convert_encoding($converted_version,"UTF-8","Windows-1252");
+				}else{
+					$converted_version = utf8_encode($converted_version);
+				}
+			}
 			$this->results[$anotice_id] = $converted_version;
 		}
 	}
 
-	function convert_batch_to_header($notices_to_convert, $target_charset) {
+	public function convert_batch_to_header($notices_to_convert, $target_charset) {
 		global $charset,$include_path,$base_path,$msg;
 		if (!$notices_to_convert) //Rien à faire? On fait rien
 			return;
@@ -494,14 +552,23 @@ class external_services_converter_notices extends external_services_converter {
 			$monod = new mono_display($anotice_id, 0, '', 0, '', '', '', 0, 1, 0, 0, '', 0, true, false, 0);
 			$this->results[$anotice_id] = $monod->header;
 			
-			if ($charset!='utf-8' && $target_charset == 'utf-8')
-				$this->results[$anotice_id] = utf8_encode($this->results[$anotice_id]);
-			else if ($charset=='utf-8' && $target_charset != 'utf-8')
-				$this->results[$anotice_id] = utf8_decode($this->results[$anotice_id]);
+			if ($charset!='utf-8' && $target_charset == 'utf-8'){
+				if(function_exists("mb_convert_encoding")){
+					$this->results[$anotice_id] = mb_convert_encoding($this->results[$anotice_id],"UTF-8","Windows-1252");
+				}else{
+					$this->results[$anotice_id] = utf8_encode($this->results[$anotice_id]);
+				}
+			}else if ($charset=='utf-8' && $target_charset != 'utf-8'){
+				if(function_exists("mb_convert_encoding")){
+					$this->results[$anotice_id] = mb_convert_encoding($this->results[$anotice_id],"Windows-1252","UTF-8");
+				}else{
+					$this->results[$anotice_id] = utf8_decode($this->results[$anotice_id]);
+				}
+			}
 		}
 	}
 	
-	function convert_batch_to_isbd($notices_to_convert, $target_charset) {
+	public function convert_batch_to_isbd($notices_to_convert, $target_charset) {
 		global $charset,$include_path,$base_path,$msg;
 		if (!$notices_to_convert) //Rien à faire? On fait rien
 			return;
@@ -510,14 +577,23 @@ class external_services_converter_notices extends external_services_converter {
 			$monod = new mono_display($anotice_id, 1, '', 0, '', '', '', 0, 1, 0, 0, '', 0, true, false, 0);
 			$this->results[$anotice_id] = $monod->isbd;
 			
-			if ($charset!='utf-8' && $target_charset == 'utf-8')
-				$this->results[$anotice_id] = utf8_encode($this->results[$anotice_id]);
-			else if ($charset=='utf-8' && $target_charset != 'utf-8')
-				$this->results[$anotice_id] = utf8_decode($this->results[$anotice_id]);
+			if ($charset!='utf-8' && $target_charset == 'utf-8'){
+				if(function_exists("mb_convert_encoding")){
+					$this->results[$anotice_id] = mb_convert_encoding($this->results[$anotice_id],"UTF-8","Windows-1252");
+				}else{
+					$this->results[$anotice_id] = utf8_encode($this->results[$anotice_id]);
+				}
+			}else if ($charset=='utf-8' && $target_charset != 'utf-8'){
+				if(function_exists("mb_convert_encoding")){
+					$this->results[$anotice_id] = mb_convert_encoding($this->results[$anotice_id],"Windows-1252","UTF-8");
+				}else{
+					$this->results[$anotice_id] = utf8_decode($this->results[$anotice_id]);
+				}
+			}
 		}
 	}
 	
-	function convert_batch_to_isbd_suite($notices_to_convert, $target_charset) {
+	public function convert_batch_to_isbd_suite($notices_to_convert, $target_charset) {
 		global $charset,$include_path,$base_path,$msg;
 		if (!$notices_to_convert) //Rien à faire? On fait rien
 			return;
@@ -526,14 +602,23 @@ class external_services_converter_notices extends external_services_converter {
 			$monod = new mono_display($anotice_id, 6, '', 0, '', '', '', 0, 1, 0, 0, '', 0, true, false, 0);
 			$this->results[$anotice_id] = $monod->isbd;
 			
-			if ($charset!='utf-8' && $target_charset == 'utf-8')
-				$this->results[$anotice_id] = utf8_encode($this->results[$anotice_id]);
-			else if ($charset=='utf-8' && $target_charset != 'utf-8')
-				$this->results[$anotice_id] = utf8_decode($this->results[$anotice_id]);
+			if ($charset!='utf-8' && $target_charset == 'utf-8'){
+				if(function_exists("mb_convert_encoding")){
+					$this->results[$anotice_id] = mb_convert_encoding($this->results[$anotice_id],"UTF-8","Windows-1252");
+				}else{
+					$this->results[$anotice_id] = utf8_encode($this->results[$anotice_id]);
+				}
+			}else if ($charset=='utf-8' && $target_charset != 'utf-8'){
+				if(function_exists("mb_convert_encoding")){
+					$this->results[$anotice_id] = mb_convert_encoding($this->results[$anotice_id],"Windows-1252","UTF-8");
+				}else{
+					$this->results[$anotice_id] = utf8_decode($this->results[$anotice_id]);
+				}
+			}
 		}
 	}
 	
-	function convert_batch_to_personnal_xslt($notices_to_convert, $target_charset,$xslt) {
+	public function convert_batch_to_personnal_xslt($notices_to_convert, $target_charset,$xslt) {
 		global $base_path, $charset, $opac_url_base;
 		if (!$notices_to_convert || !$xslt) //Rien à faire? On fait rien
 			return;
@@ -548,14 +633,19 @@ class external_services_converter_notices extends external_services_converter {
 			$converted_version = preg_replace('/^<\?xml[^>]*\?>/', "", $converted_version);
 
 			//Cette conversion sort de l'utf-8
-			if ($target_charset != 'utf-8')
-				$converted_version = utf8_decode($converted_version);
+			if ($target_charset != 'utf-8'){
+				if(function_exists("mb_convert_encoding")){
+					$converted_version = mb_convert_encoding($converted_version,"Windows-1252","UTF-8");
+				}else{
+					$converted_version = utf8_decode($converted_version);
+				}
+			}
 
 			$this->results[$anotice_id] = $converted_version;
 		}
 	}
 	
-	function convert_uncachednotices($format, $format_ref, $target_charset='iso-8859-1',$xslt="") {
+	public function convert_uncachednotices($format, $format_ref, $target_charset='iso-8859-1',$xslt="") {
 		$notices_to_convert=array();
 
 		foreach ($this->results as $notice_id => $aresult) {
@@ -564,7 +654,7 @@ class external_services_converter_notices extends external_services_converter {
 			}
 		}	
 
-		if (substr($format, 0, 8) == "convert:") {
+		if ((substr($format, 0, 8) == "convert:")||(substr($format, 0, 8) == "convert_")) {
 			//C'est une conversion par script admin/convert
 			$convert_path = substr($format, 8);
 			
@@ -647,7 +737,7 @@ class external_services_converter_notices extends external_services_converter {
 	}
 	
 	//Cette fonction parse les différents catalogues de admin/convert et liste les conversions qui exportent en xml
-	static function get_export_possibilities($only_xml=true) {
+	public static function get_export_possibilities($only_xml=true) {
 		global $base_path;
 		$result = array();
 		if (file_exists($base_path."/admin/convert/imports/catalog_subst.xml")) {
@@ -660,7 +750,7 @@ class external_services_converter_notices extends external_services_converter {
 		//Parsons le catalogue
 		if (isset($catalog["CATALOG"][0]["ITEM"]))
 			foreach ($catalog["CATALOG"][0]["ITEM"] as $aconverttype) {
-				if ($aconverttype["EXPORT"] == "yes") {
+				if (isset($aconverttype["EXPORT"]) && $aconverttype["EXPORT"] == "yes") {
 					$path = $aconverttype["PATH"];
 					if ($path) {
 						//Regardons si cette conversion sort du xml
@@ -689,7 +779,7 @@ class external_services_converter_notices extends external_services_converter {
 
 class external_services_converter_external_notices extends external_services_converter {
 	
-	function convert_batch($objects, $format, $target_charset='iso-8859-1') {
+	public function convert_batch($objects, $format, $target_charset='iso-8859-1') {
 		if (!$objects)
 			return array();
 		//Va chercher dans le cache les notices encore bonnes
@@ -700,7 +790,7 @@ class external_services_converter_external_notices extends external_services_con
 		return $this->results;
 	}
 
-	function get_notice_unimarc_array($notice_id) {
+	public function get_notice_unimarc_array($notice_id) {
 		global $dbh;
 		$requete = "SELECT source_id FROM external_count WHERE rid=".addslashes($notice_id);
 		$myQuery = pmb_mysql_query($requete, $dbh);
@@ -750,7 +840,7 @@ class external_services_converter_external_notices extends external_services_con
 		return $unimarc;
 	}
 		
-	function convert_batch_to_php_array($notices_to_convert, $target_charset='iso-8859-1') {
+	public function convert_batch_to_php_array($notices_to_convert, $target_charset='iso-8859-1') {
 		global $charset;
 		if (!$notices_to_convert) //Rien à faire? On fait rien
 			return;
@@ -786,10 +876,19 @@ class external_services_converter_external_notices extends external_services_con
 					$as["c"] = isset($as["c"]) ? $as["c"] : "";
 					//La classe export exporte ses données dans la charset de la base.
 					//Convertissons si besoin
-					if ($charset!='utf-8' && $target_charset == 'utf-8')
-						$as["value"] = utf8_encode($as["value"]);
-					else if ($charset=='utf-8' && $target_charset != 'utf-8')
-						$as["value"] = utf8_decode($as["value"]);
+					if ($charset!='utf-8' && $target_charset == 'utf-8'){
+						if(function_exists("mb_convert_encoding")){
+							$as["value"] = mb_convert_encoding($as["value"],"UTF-8","Windows-1252");
+						}else{
+							$as["value"] = utf8_encode($as["value"]);
+						}
+					}else if ($charset=='utf-8' && $target_charset != 'utf-8'){
+						if(function_exists("mb_convert_encoding")){
+							$as["value"] = mb_convert_encoding($as["value"],"Windows-1252","UTF-8");
+						}else{
+							$as["value"] = utf8_decode($as["value"]);
+						}
+					}
 				}
 
 			}
@@ -797,7 +896,7 @@ class external_services_converter_external_notices extends external_services_con
 		}
 	}
 	
-	function convert_batch_to_php_array_assoc($notices_to_convert, $target_charset='iso-8859-1') {
+	public function convert_batch_to_php_array_assoc($notices_to_convert, $target_charset='iso-8859-1') {
 		global $charset;
 		if (!$notices_to_convert) //Rien à faire? On fait rien
 			return;
@@ -836,10 +935,19 @@ class external_services_converter_external_notices extends external_services_con
 						//La classe export exporte ses données dans la charset de la base.
 						//Convertissons si besoin
 						$value = $as["value"];
-						if ($charset!='utf-8' && $target_charset == 'utf-8')
-							$value = utf8_encode($value);
-						else if ($charset=='utf-8' && $target_charset != 'utf-8')
-							$value = utf8_decode($value);
+						if ($charset!='utf-8' && $target_charset == 'utf-8'){
+							if(function_exists("mb_convert_encoding")){
+								$value = mb_convert_encoding($value,"UTF-8","Windows-1252");
+							}else{
+								$value = utf8_encode($value);
+							}
+						}else if ($charset=='utf-8' && $target_charset != 'utf-8'){
+							if(function_exists("mb_convert_encoding")){
+								$value = mb_convert_encoding($value,"Windows-1252","UTF-8");
+							}else{
+								$value = utf8_decode($value);
+							}
+						}
 						if (isset($arf[$as["c"]]) && !is_array($arf[$as["c"]]))
 							$arf[$as["c"]] = array($arf[$as["c"]]);
 						if (isset($arf[$as["c"]]) && is_array($arf[$as["c"]]))
@@ -858,33 +966,33 @@ class external_services_converter_external_notices extends external_services_con
 		}
 	}
 	
-	function convert_batch_to_serialized($notices_to_convert, $target_charset='iso-8859-1') {
+	public function convert_batch_to_serialized($notices_to_convert, $target_charset='iso-8859-1') {
 			$this->convert_batch_to_php_array($notices_to_convert, $target_charset);
 		foreach ($notices_to_convert as $anotice_id) {
 			$this->results[$anotice_id] = serialize($this->results[$anotice_id]);
 		}
 	}
 	
-	function convert_batch_to_serialized_assoc($notices_to_convert, $target_charset='iso-8859-1') {
+	public function convert_batch_to_serialized_assoc($notices_to_convert, $target_charset='iso-8859-1') {
 		$this->convert_batch_to_php_array_assoc($notices_to_convert, $target_charset);
 		foreach ($notices_to_convert as $anotice_id) {
 			$this->results[$anotice_id] = serialize($this->results[$anotice_id]);
 		}
 	}	
 	
-	function convert_batch_to_json($notices_to_convert, $target_charset='iso-8859-1') {
+	public function convert_batch_to_json($notices_to_convert, $target_charset='iso-8859-1') {
 		$this->convert_batch_to_php_array($notices_to_convert, $target_charset);
 		foreach ($notices_to_convert as $anotice_id)
 			$this->results[$anotice_id] = json_encode($this->results[$anotice_id]);
 	}
 
-	function convert_batch_to_json_assoc($notices_to_convert, $target_charset='iso-8859-1') {
+	public function convert_batch_to_json_assoc($notices_to_convert, $target_charset='iso-8859-1') {
 		$this->convert_batch_to_php_array_assoc($notices_to_convert, $target_charset);
 		foreach ($notices_to_convert as $anotice_id)
 			$this->results[$anotice_id] = json_encode($this->results[$anotice_id]);
 	}
 	
-	function convert_uncachednotices($format, $format_ref, $target_charset='iso-8859-1') {
+	public function convert_uncachednotices($format, $format_ref, $target_charset='iso-8859-1') {
 		$notices_to_convert=array();
 		foreach ($this->results as $notice_id => $aresult) {
 			if (!$aresult && $notice_id) {

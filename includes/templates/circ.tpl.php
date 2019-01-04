@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: circ.tpl.php,v 1.45 2015-03-30 07:14:50 jpermanne Exp $
+// $Id: circ.tpl.php,v 1.54 2018-07-13 06:58:05 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -24,22 +24,23 @@ if ((SESSrights & RESTRICTCIRC_AUTH) && ($categ!="pret") && ($categ!="pretrestri
 		<li id='circ_menu_msg15'><a href='./circ.php?categ=empr_create'>$msg[15]</a></li>
 		<li id='circ_menu_msg17'><a href='./circ.php?categ=serialcirc'>".$msg["serialcirc_circ_menu"]."</a></li>
 		$menu_groupexpl
+		<li id='circ_menu_search_perso'><a href='./circ.php?categ=search_perso'>".$msg["search_perso_menu"]."</a></li>
 	</ul>";
 	if ($empr_show_caddie) {
-		$circ_menu.="<h3 onclick='menuHide(this,event)'>$msg[empr_caddie_menu]</h3>
+		$circ_menu.="<h3 onclick='menuHide(this,event)'>".$msg['empr_caddie_menu']."</h3>
 			<ul>
-				<li><a href='./circ.php?categ=caddie&sub=gestion&quoi=panier'>$msg[empr_caddie_menu_gestion]</a></li>
-				<li><a href='./circ.php?categ=caddie&sub=gestion&quoi=barcode'>$msg[empr_caddie_menu_collecte]</a></li>
-				<li><a href='./circ.php?categ=caddie&sub=gestion&quoi=pointagebarcode'>$msg[empr_caddie_menu_pointage]</a></li>
-				<li><a href='./circ.php?categ=caddie&sub=action'>$msg[empr_caddie_menu_action]</a></li>
+				<li><a href='./circ.php?categ=caddie&sub=gestion&quoi=panier'>".$msg['empr_caddie_menu_gestion']."</a></li>
+				<li><a href='./circ.php?categ=caddie&sub=gestion&quoi=barcode'>".$msg['empr_caddie_menu_collecte']."</a></li>
+				<li><a href='./circ.php?categ=caddie&sub=gestion&quoi=pointagebarcode'>".$msg['empr_caddie_menu_pointage']."</a></li>
+				<li><a href='./circ.php?categ=caddie&sub=action'>".$msg['empr_caddie_menu_action']."</a></li>
 			</ul>
 			";
 		}
 	$circ_menu.="
-	<h3 onclick='menuHide(this,event)'>$msg[show]</h3>
+	<h3 onclick='menuHide(this,event)'>".$msg['show']."</h3>
 	<ul>
 		<li id='circ_menu_voir_exemplaire'><a href='./circ.php?categ=visu_ex'>".$msg["voir_exemplaire"]."</a></li>
-		<li id='circ_menu_voir_document'><a href='./circ.php?categ=visu_rech'>".$msg[voir_document]."</a></li>
+		<li id='circ_menu_voir_document'><a href='./circ.php?categ=visu_rech'>".$msg['voir_document']."</a></li>
 	</ul>";
 
 	if ($pmb_rfid_activate==1 && $pmb_rfid_serveur_url ) {
@@ -83,28 +84,37 @@ if ((SESSrights & RESTRICTCIRC_AUTH) && ($categ!="pret") && ($categ!="pretrestri
 				<ul>";
 		if($transferts_regroupement_depart){
 			$circ_menu .= "
-					<li><a href='./circ.php?categ=trans&sub=recep'>$msg[transferts_circ_menu_reception]</a></li>
-					<li><a href='./circ.php?categ=trans&sub=departs'>$msg[transferts_circ_menu_departs]</a></li>
-					<li><a href='./circ.php?categ=trans&sub=refus'>$msg[transferts_circ_menu_refuse]</a></li>
-					<li><a href='./circ.php?categ=trans&sub=reset'>$msg[transferts_circ_menu_reset]</a></li>
+					<li><a href='./circ.php?categ=trans&sub=recep'>".$msg['transferts_circ_menu_reception']."</a></li>
+					<li><a href='./circ.php?categ=trans&sub=departs'>".$msg['transferts_circ_menu_departs']."</a></li>
+					<li><a href='./circ.php?categ=trans&sub=refus'>".$msg['transferts_circ_menu_refuse']."</a></li>
+					<li><a href='./circ.php?categ=trans&sub=reset'>".$msg['transferts_circ_menu_reset']."</a></li>
 				</ul>";
 		}else{
 			if ($transferts_validation_actif=="1")
 				$circ_menu .= "
-						<li><a href='./circ.php?categ=trans&sub=valid'>$msg[transferts_circ_menu_validation]</a></li>
+						<li><a href='./circ.php?categ=trans&sub=valid'>".$msg['transferts_circ_menu_validation']."</a></li>
 						";
 
 			$circ_menu .= "
-				<li><a href='./circ.php?categ=trans&sub=envoi'>$msg[transferts_circ_menu_envoi]</a></li>
-					<li><a href='./circ.php?categ=trans&sub=recep'>$msg[transferts_circ_menu_reception]</a></li>
-					<li><a href='./circ.php?categ=trans&sub=retour'>$msg[transferts_circ_menu_retour]</a></li>
-					<li><a href='./circ.php?categ=trans&sub=refus'>$msg[transferts_circ_menu_refuse]</a></li>
-					<li><a href='./circ.php?categ=trans&sub=reset'>$msg[transferts_circ_menu_reset]</a></li>
+				<li><a href='./circ.php?categ=trans&sub=envoi'>".$msg['transferts_circ_menu_envoi']."</a></li>
+					<li><a href='./circ.php?categ=trans&sub=recep'>".$msg['transferts_circ_menu_reception']."</a></li>
+					<li><a href='./circ.php?categ=trans&sub=retour'>".$msg['transferts_circ_menu_retour']."</a></li>
+					<li><a href='./circ.php?categ=trans&sub=refus'>".$msg['transferts_circ_menu_refuse']."</a></li>
+					<li><a href='./circ.php?categ=trans&sub=reset'>".$msg['transferts_circ_menu_reset']."</a></li>
 				</ul>";
 		}
 	}
-	$circ_menu.="
-	<div id='div_alert' class='erreur'>$aff_alerte</div>
+	if($pmb_scan_request_activate){
+		$circ_menu.='<h3 onclick="menuHide(this,event)">'.$msg['admin_menu_scan_request'].'</h3>
+				 <ul>
+				 	<li><a href="./circ.php?categ=scan_request&sub=request&action=edit">'.$msg['circ_scan_request_create_label'].'</a></li>
+				 	<li><a href="./circ.php?categ=scan_request&sub=list&action=clean_filters">'.$msg['circ_scan_request_see_label'].'</a></li>
+				 </ul>';
+	}
+	
+	$plugins = plugins::get_instance();
+	$circ_menu.= $plugins->get_menu('circ')."
+	<div id='div_alert' class='erreur'></div>
 	</div>";
 }
 
@@ -147,6 +157,9 @@ $empr_menu_panier_pointage = "
 	</span>
 	<span".ongletSelect("categ=caddie&sub=gestion&quoi=pointage").">
 		<a title='$msg[empr_caddie_menu_pointage_selection]' href='./circ.php?categ=caddie&sub=gestion&quoi=pointage'>$msg[empr_caddie_menu_pointage_selection]</a>
+	</span>
+	<span".ongletSelect("categ=caddie&sub=gestion&quoi=pointagepanier").">
+		<a title='$msg[empr_caddie_menu_pointage_panier]' href='./circ.php?categ=caddie&sub=gestion&quoi=pointagepanier'>$msg[empr_caddie_menu_pointage_panier]</a>
 	</span>
 	<span".ongletSelect("categ=caddie&sub=gestion&quoi=razpointage").">
 		<a title='$msg[empr_caddie_menu_pointage_raz]' href='./circ.php?categ=caddie&sub=gestion&quoi=razpointage'>$msg[empr_caddie_menu_pointage_raz]</a>

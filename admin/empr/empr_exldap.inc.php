@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // ? 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr_exldap.inc.php,v 1.7 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: empr_exldap.inc.php,v 1.10 2017-11-21 12:01:00 dgoron Exp $
 
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
@@ -77,21 +77,21 @@ function show_exldap_users($uu,$pag,$npp) {
 	
 	$npp_ctrl="
 	<input type='text' class='saisie-4emc' name='npp' value='$npp' />
-	<input type='image' src='./images/tick.gif' border='0' alt='$msg[708]' hspace='0' align='middle' title='$msg[708]'  class='bouton-nav' name='btsubmit' value='=' />
+	<input type='image' src='".get_url_icon('tick.gif')."' border='0' alt='$msg[708]' hspace='0' title='$msg[708]'  class='align_middle bouton-nav' name='btsubmit' value='=' />
 	";
 
 	if($precp > 0){
-		$nav_barL = "<input type='image' src='./images/left.gif' border='0' alt='$msg[48]' hspace='0' align='middle' title='$msg[48]' class='bouton-nav' name='btsubmit' value='<' />";
+		$nav_barL = "<input type='image' src='".get_url_icon('left.gif')."' border='0' alt='$msg[48]' hspace='0' title='$msg[48]' class='align_middle bouton-nav' name='btsubmit' value='<' />";
 	}else{
-		$nav_barL = "<input  disabled type='image' src='./images/left.gif' border='0' alt='$msg[48]' hspace='0' align='middle' title='$msg[48]' class='bouton-nav' name='btsubmit' value='<' />";
+		$nav_barL = "<input  disabled type='image' src='".get_url_icon('left.gif')."' border='0' alt='$msg[48]' hspace='0' title='$msg[48]' class='align_middle bouton-nav' name='btsubmit' value='<' />";
 	}
 
 	$nav_barC = "$pag/$npag";
 
 	if($nextp<=$npag) {
-		$nav_barR .= "<input type='image' src='./images/right.gif' border='0' alt='$msg[49]' hspace='0' align='middle' title='$msg[48]'  class='bouton-nav' name='btsubmit' value='>' />";
+		$nav_barR .= "<input type='image' src='".get_url_icon('right.gif')."' border='0' alt='$msg[49]' hspace='0' title='$msg[48]'  class='align_middle bouton-nav' name='btsubmit' value='>' />";
 	}else{
-		$nav_barR = "<input disabled type='image' src='./images/right.gif' border='0' alt='$msg[49]' hspace='0' align='middle' title='$msg[48]'  class='bouton-nav' name='btsubmit' value='>' /> ";
+		$nav_barR = "<input disabled type='image' src='".get_url_icon('right.gif')."' border='0' alt='$msg[49]' hspace='0' title='$msg[48]'  class='align_middle bouton-nav' name='btsubmit' value='>' /> ";
 	}
 
 
@@ -104,17 +104,17 @@ function show_exldap_users($uu,$pag,$npp) {
 		$cc=explode('|',$auu[$k]);
 		if ($cc[0]){
 			$usr_entry="
-				<td valign='top'><input type='checkbox' id='id_to_del$r' name='usrdel[]' value='$cc[0]'/></td>
-				<td valign='top'>$cc[1]</td>
-				<td valign='top'>$cc[2]</td>
-				<td valign='top'>$cc[3]</td>";
+				<td style='vertical-align:top'><input type='checkbox' id='id_to_del$r' name='usrdel[]' value='$cc[0]'/></td>
+				<td style='vertical-align:top'>$cc[1]</td>
+				<td style='vertical-align:top'>$cc[2]</td>
+				<td style='vertical-align:top'>$cc[3]</td>";
 
 			if ($k % 2) $pair_impair = "even"; else	$pair_impair = "odd";
 		
 			$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"setCheckboxColumn('id_to_del$r')\" ";
 
 			$usr_list .= "<tr class='$pair_impair' $tr_javascript style='cursor: pointer'>
-						<td valign='top'>$usr_entry</td>
+						<td style='vertical-align:top'>$usr_entry</td>
 						</tr>";
 			}
 

@@ -2,29 +2,29 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: PDFMetadata.class.php,v 1.3 2013-04-23 13:06:18 apetithomme Exp $
+// $Id: PDFMetadata.class.php,v 1.5 2017-07-03 09:07:10 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 class PDFMetadata {
-	var $pdf;					//Document PDF
-	var $metadatas = array();	//Tableau des metadatas
-	var $title;					//Titre
-	var $author;				//Author
-	var $creator;				
-	var $producer;
-	var $creation_date;			//Date de création
-	var $tagged;
-	var $nb_pages;				//Nombre de pages
-	var $encrypted;
-	var $page_size;				//Taille des pages l x h pts
-	var $file_size;				//Taille du fichier
-	var $optimized;
-	var $version;				//Numéro de version PDF
-	var $bookmarks = array();	//Tableau des bookmarks
-	var $pagesSizes = array();
+	public $pdf;					//Document PDF
+	public $metadatas = array();	//Tableau des metadatas
+	public $title;					//Titre
+	public $author;				//Author
+	public $creator;				
+	public $producer;
+	public $creation_date;			//Date de création
+	public $tagged;
+	public $nb_pages;				//Nombre de pages
+	public $encrypted;
+	public $page_size;				//Taille des pages l x h pts
+	public $file_size;				//Taille du fichier
+	public $optimized;
+	public $version;				//Numéro de version PDF
+	public $bookmarks = array();	//Tableau des bookmarks
+	public $pagesSizes = array();
 	
-	function PDFMetadata($pdf){
+	public function __construct($pdf){
 		$this->pdf = $pdf;
 		$this->setMetadatas();
 		$this->title = $this->metadatas["Title"];
@@ -33,7 +33,7 @@ class PDFMetadata {
 		$this->producer = $this->metadatas["Producer"];
 		$this->creation_date = $this->metadatas["CreationDate"];
 		$this->tagged = $this->metadatas["Tagged"];
-		$this->nb_pages = $this->metadatas["Pages"];
+		$this->nb_pages = $this->metadatas["Pages"]*1;
 		$this->encrypted = $this->metadatas["Encrypted"];
 		$this->page_size = $this->metadatas["Page size"];
 		$this->file_size = $this->metadatas["File size"];
@@ -42,7 +42,7 @@ class PDFMetadata {
 		$this->getPagesSizes();
 	}
 	
-	function getPagesSizes(){
+	public function getPagesSizes(){
 		if(!count($this->pagesSizes)){
 			exec("pdfinfo -f 1 -l ".$this->nb_pages." ".$this->pdf , $output);
 			for ($i = 0; $i < count($output); $i++) {
@@ -58,7 +58,7 @@ class PDFMetadata {
 		}
 	}
 	
-	function setMetadatas(){
+	public function setMetadatas(){
 		$output = array();
 		exec("pdfinfo ".$this->pdf , $output);
 		for ($i = 0; $i < count($output); $i++) {
@@ -67,7 +67,7 @@ class PDFMetadata {
 		}
 	}
 	
-	function getBookmarks(){
+	public function getBookmarks(){
 		$output = array();
 		exec("pdftk ".$this->pdf." dump_data" , $output);
 		for ($i = 0; $i < count($output); $i++) {

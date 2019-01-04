@@ -6,6 +6,7 @@
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+global $class_path; //Nécessaire pour certaines inclusions
 require_once($class_path."/thesaurus.class.php");
 require_once($class_path."/categories.class.php");
 require_once($class_path."/lender.class.php");

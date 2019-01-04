@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expand_ajax.inc.php,v 1.7 2015-04-18 13:12:36 dgoron Exp $
+// $Id: expand_ajax.inc.php,v 1.9 2017-01-31 16:25:45 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -17,35 +17,52 @@ if($opac_notice_affichage_class == "") $opac_notice_affichage_class = "notice_af
 $display = new $opac_notice_affichage_class($param['id'], $param['aj_liens'], $param['aj_cart'], $param['aj_to_print'], $param['aj_header_only'], !$param['aj_no_header']);
 //$display->do_header_without_html();
 if($param['aj_nodocnum']) $display->docnum_allowed = 0;
+$flag_no_onglet_perso = 0;
 $type_aff=$param['aj_type_aff'];
 switch ($type_aff) {
 	case AFF_ETA_NOTICES_ISBD :
 		$display->do_isbd();
 		$display->genere_simple(0, 'ISBD') ;
+		$retour_aff=$display->result;
 		break;
 	case AFF_ETA_NOTICES_PUBLIC :
 		$display->do_public();
 		$display->genere_simple(0, 'PUBLIC') ;
+		$retour_aff=$display->result;
 		break;
 	case AFF_ETA_NOTICES_BOTH :
 		$display->do_isbd();
 		$display->do_public();
 		$display->genere_double(0, 'PUBLIC') ;
+		$retour_aff=$display->result;
 		break ;
 	case AFF_ETA_NOTICES_BOTH_ISBD_FIRST :
 		$display->do_isbd();
 		$display->do_public();
 		$display->genere_double(0, 'ISBD') ;
+		$retour_aff=$display->result;
 		break ;
+	case AFF_ETA_NOTICES_TEMPLATE_DJANGO :
+		$retour_aff="";
+		if (!$opac_notices_format_django_directory) $opac_notices_format_django_directory = "common";
+		if (!$record_css_already_included) {
+			if (file_exists($include_path."/templates/record/".$opac_notices_format_django_directory."/styles/style.css")) {
+				$retour_aff .= "<link type='text/css' href='./includes/templates/record/".$opac_notices_format_django_directory."/styles/style.css' rel='stylesheet'></link>";
+			}
+			$record_css_already_included = true;
+		}
+		$retour_aff .= record_display::get_display_extended($param['id']);
+		break;
 	default:
 		$display->do_isbd();
 		$display->do_public();		
 		$display->genere_double(0, 'autre') ;
 		$flag_no_onglet_perso=1;
+		$retour_aff=$display->result;
 		break ;
 					
 }
-$html=$display->result;
+$html=$retour_aff;
 if(!$flag_no_onglet_perso){
 	$onglet_perso=new notice_onglets();
 	$html=$onglet_perso->insert_onglets($param['id'],$html);

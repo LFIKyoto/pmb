@@ -2,56 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expdocnum.inc.php,v 1.3.12.1 2015-12-11 14:36:54 jpermanne Exp $
+// $Id: expdocnum.inc.php,v 1.7 2017-06-29 13:08:47 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once ("$include_path/explnum.inc.php");  
 
-if($idcaddie) {
-	$myCart= new caddie($idcaddie);
-	print pmb_bidi(aff_cart_titre ($myCart));
-	switch ($action) {
-		case 'choix_quoi':
-			print aff_cart_nb_items ($myCart) ;
-			print aff_choix_quoi ("./catalog.php?categ=caddie&sub=action&quelle=expdocnum&action=export&idcaddie=$idcaddie", "./catalog.php?categ=caddie&sub=action&quelle=expdocnum&action=&idcaddie=0", $msg["caddie_choix_expdocnum"], $msg["caddie_expdocnum_export"], "return confirm('$msg[caddie_confirm_export]')");
-			break;
-		case 'export':
-			print "<br /><h3>$msg[caddie_situation_exportdocnum]</h3>";
-			print aff_cart_nb_items ($myCart) ;
-	
-			// vérifier et/ou créer le répertoire $chemin
-			$chemin_export_doc_num=$base_path."/temp/cart".$idcaddie."/";
-			$handledir = @opendir($chemin_export_doc_num);
-			if (!$handledir) {
-				if (!mkdir($chemin_export_doc_num)) die ("Unsufficient privileges on temp directory");
-			} else closedir($handledir);
-			
-			$res_aff_exp_doc_num="";
-			if ($elt_flag) {
-				$liste = $myCart->get_cart("FLAG", $elt_flag_inconnu) ;
-				while(list($cle, $object) = each($liste)) {
-					$res_aff_exp_doc_num.=$myCart->export_doc_num ($object,$chemin_export_doc_num) ;
-				}
-			}
-			if ($elt_no_flag) {
-				$liste = $myCart->get_cart("NOFLAG", $elt_no_flag_inconnu) ;
-				while(list($cle, $object) = each($liste)) {
-					$res_aff_exp_doc_num.=$myCart->export_doc_num ($object,$chemin_export_doc_num) ;
-				}
-			}
-			if ($res_aff_exp_doc_num) {
-				print "<br /><h3>$msg[caddie_res_expdocnum]</h3>";
-				print $res_aff_exp_doc_num;
-			} else print "<br /><h3>$msg[caddie_res_expdocnum_nodocnum]</h3>";
-			break;
-		default:
-			break;
-		}
-
-	} else aff_paniers($idcaddie, "NOTI", "./catalog.php?categ=caddie&sub=action&quelle=expdocnum", "choix_quoi", $msg["caddie_select_expdocnum"], "", 0, 0, 0);
-
-	
+caddie_controller::proceed_expdocnum($idcaddie);
 	
 /*
  *     explnumid_idnotice_idbulletin_indicedocnum_nomdoc.extention

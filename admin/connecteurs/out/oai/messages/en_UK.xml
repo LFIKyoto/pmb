@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: en_UK.xml,v 1.1 2015-06-15 12:55:34 pmbs Exp $ -->
+$Id: en_UK.xml,v 1.4 2016-11-18 09:32:12 jpermanne Exp $ -->
 
 <XMLlist>
 	<entry code="illegal_verb">Illegal Verb</entry>
@@ -35,4 +35,14 @@ $Id: en_UK.xml,v 1.1 2015-06-15 12:55:34 pmbs Exp $ -->
 	<entry code="include_items">Keep the informations of the copies in the zone 995</entry>
 	<entry code='feuille_xslt'>Customized XSLT sheet for the Dublin Core</entry>
 	<entry code='suppr_feuille_xslt'>Delete this sheet</entry>
+	<entry code='deletion_management'>Mode de gestion des suppressions des enregistrements</entry>
+	<entry code='deletion_management_none'>Aucune</entry>
+	<entry code='deletion_management_transient'>Transitoire</entry>
+	<entry code='deletion_management_transient_duration'>durée (secondes) :</entry>
+	<entry code='deletion_management_persistent'>Persistant</entry>
+	<entry code='if_none_status_to_deletion'>(Si aucun statut lié)</entry>
+	<entry code="use_items_update_date">Use items update date</entry>
+	<entry code="badArgument">Bad Argument</entry>
+	<entry code="noSetHierarchy">Set introuvable</entry>
+	<entry code="oai_pmh_valid">Validité OAI-PMH</entry>
 </XMLlist>

@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: liste_lecture.js,v 1.3 2009-10-26 13:35:36 kantin Exp $
+// $Id: liste_lecture.js,v 1.7 2016-03-18 14:02:03 dgoron Exp $
 
 /*
  * Création du formulaire de saisie d'envoi d'une demande
@@ -77,4 +77,32 @@ function send_mail(id){
 	}
 }
 
+function liste_lecture_add_empr(id_liste, id_empr){
+	if(id_liste && id_empr) {
+		var action = new http_request();
+		var url = './ajax.php?module=ajax&categ=liste_lecture&id='+id_liste+'&id_empr_to_added='+id_empr+'&quoifaire=add_empr';
+		action.request(url);
+		if(action.get_status() == 0){
+			document.getElementById('inscrit_list').innerHTML = action.get_text();
+		}
+	}
+}
 
+function liste_lecture_add_notice(id_liste, id_notice){
+	if(id_liste && id_notice) {
+		var action = new http_request();
+		var url = './ajax.php?module=ajax&categ=liste_lecture&id='+id_liste+'&id_notice='+id_notice+'&quoifaire=add_notice';
+		action.request(url);
+		if(action.get_text() == '1'){
+			require(["dojo/_base/declare", "dojo/topic"], function(declare, topic){
+				topic.publish('dGrowl', msg_notice_title_liste_lecture_added);
+			});
+			return true;
+		} else {
+			require(["dojo/_base/declare", "dojo/topic"], function(declare, topic){
+				topic.publish('dGrowl', msg_notice_title_liste_lecture_failed, {'channel':'error'});
+			});
+			return false;
+		}
+	}
+}

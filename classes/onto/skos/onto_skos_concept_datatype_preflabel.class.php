@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_skos_concept_datatype_preflabel.class.php,v 1.7 2015-06-18 12:36:22 apetithomme Exp $
+// $Id: onto_skos_concept_datatype_preflabel.class.php,v 1.13 2018-12-04 10:26:44 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -25,9 +25,8 @@ class onto_skos_concept_datatype_preflabel extends onto_common_datatype{
 		$datatypes = array();
 		$var_name = $instance_name."_".$property->pmb_name;
 		
-		global $$var_name;
-
-		if ($$var_name && count($$var_name)) {
+		global ${$var_name};
+		if (${$var_name} && count(${$var_name})) {
 			global ${$var_name."_is_composed"};
 			if (!${$var_name."_is_composed"}) {
 				// Ce n'est pas une vedette composée
@@ -42,7 +41,7 @@ class onto_skos_concept_datatype_preflabel extends onto_common_datatype{
 				}
 				
 				// On va chercher les valeurs actuelles
-				foreach ($$var_name as $order => $data) {
+				foreach (${$var_name} as $order => $data) {
 					$data=stripslashes_array($data);
 					if ($data["value"]) {
 						$data_properties = array();
@@ -54,7 +53,7 @@ class onto_skos_concept_datatype_preflabel extends onto_common_datatype{
 						} else {
 							$data_properties["type"] = "uri";
 						}
-						if ($data["display_label"]) {
+						if (!empty($data["display_label"])) {
 							$data_properties["display_label"] = $data["display_label"];
 						}
 						$class_name = get_called_class();
@@ -68,7 +67,7 @@ class onto_skos_concept_datatype_preflabel extends onto_common_datatype{
 					$data=stripslashes_array($data);
 					
 					if ($data["elements"]) {
-						$vedette_composee = new vedette_composee($data["id"]);
+						$vedette_composee = new vedette_composee($data["id"], $data["grammar"]);
 						if ($data["value"]) {
 							$vedette_composee->set_label($data["value"]);
 						}
@@ -83,12 +82,14 @@ class onto_skos_concept_datatype_preflabel extends onto_common_datatype{
 								foreach ($elements_order as $position => $num_element) {
 									if ($elements[$num_element]["id"] && $elements[$num_element]["label"]) {
 										$velement = $elements[$num_element]["type"];
-										$available_field_class_name = $vedette_composee->get_at_available_field_class_name($velement);
-										if($available_field_class_name['params']){
-											$vedette_element = new $velement($available_field_class_name['params'],$available_field_class_name["num"],$elements[$num_element]["id"], $elements[$num_element]["label"]);
-										}else{
-											$vedette_element = new $velement($available_field_class_name["num"],$elements[$num_element]["id"], $elements[$num_element]["label"]);
+										if(strpos($velement,"vedette_ontologies") === 0){
+											$velement = "vedette_ontologies";
 										}
+										$available_field_class_name = $vedette_composee->get_at_available_field_num($elements[$num_element]["available_field_num"]);
+										if(empty($available_field_class_name['params'])){
+											$available_field_class_name['params'] = array();
+										}
+										$vedette_element = new $velement($elements[$num_element]["available_field_num"], $elements[$num_element]["id"], $elements[$num_element]["label"], $available_field_class_name['params']);
 										$vedette_composee->add_element($vedette_element, $subdivision, $position);
 									}
 								}

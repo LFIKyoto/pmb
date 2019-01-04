@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: categ_browser.php,v 1.9 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: categ_browser.php,v 1.11 2017-11-22 11:07:34 dgoron Exp $
 
 // affichage du browser de catégories
 
@@ -28,14 +28,15 @@ function select() {
 	return "window.parent.document.location='../../../../catalog.php?categ=search&mode=1&aut_id=!!id!!&aut_type=categ&etat=aut_search&no_rec_history=1'; return(false);";
 }
 
-$up_folder = "<img src='../../../../images/folderup.gif' />";
-$closed_folder = "<img src='../../../../images/folderclosed.gif' />";
-$open_folder = "<img src='../../../../images/folderopen.gif' />";
-$document = "<img src='../../../../images/doc.gif' hspace='3' />";
-$see = "<img src='../../../../images/see.gif' />";
+$up_folder = "<img src='".get_url_icon('folderup.gif')."' />";
+$closed_folder = "<img src='".get_url_icon('folderclosed.gif')."' />";
+$open_folder = "<img src='".get_url_icon('folderopen.gif')."' />";
+$document = "<img src='".get_url_icon('doc.gif')."' hspace='3' />";
+$see = "<img src='".get_url_icon('see.gif')."' />";
 
 
 if ($id_thes != -1) {
+	if(!isset($parent)) $parent = 0;
 	if($parent) {
 		// affichage du browser pour le parent concerné
 		$myBrowser = new categ_browser(	$parent, "<a href='./categ_browser.php?parent=!!id!!'>", "<a href='#' onClick=\"".select()."\">", $id_thes);

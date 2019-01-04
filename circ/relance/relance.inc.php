@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: relance.inc.php,v 1.81.2.1 2015-09-15 07:26:28 jpermanne Exp $
+// $Id: relance.inc.php,v 1.96 2018-01-17 09:12:22 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($act)) $act = '';
 
 require_once($include_path."/mail.inc.php") ;
 require_once ($include_path."/mailing.inc.php");
@@ -22,7 +24,7 @@ function get_action($id_empr,$niveau,$niveau_normal) {
 	$action="<input type='hidden' name='empr[]' value='".$id_empr."'>
 	<select name='action_".$id_empr."'>
 	";
-	$action.="<option value='0'>".$msg["relance_do_nothing"]."</option>\n";
+	$action.="<option value='-1'>".$msg["relance_do_nothing"]."</option>\n";
 
 	//if ((($niveau==$niveau_normal)||(($niveau==3)&&($niveau_normal==4)))&&($niveau!=0)) {
 	//	$action.="<option value='edit'>Editer la lettre</option>";
@@ -55,8 +57,8 @@ function do_action($id_empr) {
 	global $pmb_gestion_amende, $lang, $include_path;
 	global $finance_recouvrement_lecteur_statut;
 	$action="action_".$id_empr;
-	global $$action,$msg,$charset,$finance_statut_perdu;
-	$act=$$action;
+	global ${$action},$msg,$charset,$finance_statut_perdu;
+	$act=${$action};
 	
 	//Récupération du solde du compte
 	$frais_relance=0;
@@ -69,9 +71,9 @@ function do_action($id_empr) {
 		} else $frais_relance=0;
 	}
 	
-	//Si action différent de zéro, alors changement
+	//Si action différent de -1, alors changement
 	$quatre=false;
-	if ($act!=0) {
+	if ($act!=-1) {
 		//Récupération de la liste des prêts
 		$amende=new amende($id_empr);
 		// on efface le cache pour qu'il soit remis à jour au prochain accès
@@ -156,7 +158,9 @@ function do_action($id_empr) {
 						$resultat=pmb_mysql_query($requete);
 						$prix=0;
 						if($r=pmb_mysql_fetch_object($resultat)) {
-							if(!$prix=1*($r->expl_prix)) $prix=1*($r->prix); 			
+							$tmp_expl_prix = str_replace(',','.',$r->expl_prix);
+							$tmp_prix = str_replace(',','.',$r->prix);
+							if(!$prix=1*($tmp_expl_prix)) $prix=1*($tmp_prix); 			
 						}
 						$requete="insert into recouvrements set empr_id=$id_empr, id_expl=".$params["id_expl"].", date_rec=now(), libelle='', recouvr_type=1, montant='$prix' $req_pret_date $req_date_relance";
 						pmb_mysql_query($requete);
@@ -199,8 +203,8 @@ function do_action($id_empr) {
 		$the_frais = 0;
 		if ($pmb_gestion_amende == 1) {
 			$frais="finance_relance_".$niveau_min;
-			global $$frais;
-			$the_frais = $$frais;						
+			global ${$frais};
+			$the_frais = ${$frais};						
 		}
 		else {
 			$quota_name = "";
@@ -236,30 +240,32 @@ function do_action($id_empr) {
 function send_mail($id_empr, $relance) {
 	global $pmb_gestion_devise,$msg,$charset;
 	global $biblio_name,$biblio_email,$biblio_phone, $PMBuseremailbcc;
+	global $mailretard_hide_fine; 
+	
 	// l'objet du mail
 	$var = "mailretard_".$relance."objet";
-	global $$var;
-	eval ("\$objet=\"".$$var."\";");
+	global ${$var};
+	eval ("\$objet=\"".${$var}."\";");
 
 	// la formule de politesse du bas (le signataire)
 	$var = "mailretard_".$relance."fdp";
-	global $$var;
-	eval ("\$fdp=\"".$$var."\";");
+	global ${$var};
+	eval ("\$fdp=\"".${$var}."\";");
 
 	// le texte après la liste des ouvrages en retard
 	$var = "mailretard_".$relance."after_list";
-	global $$var;
-	eval ("\$after_list=\"".$$var."\";");
+	global ${$var};
+	eval ("\$after_list=\"".${$var}."\";");
 
 	// le texte avant la liste des ouvrges en retard
 	$var = "mailretard_".$relance."before_list";
-	global $$var;
-	eval ("\$before_list=\"".$$var."\";");
+	global ${$var};
+	eval ("\$before_list=\"".${$var}."\";");
 
 	// le "Madame, Monsieur," ou tout autre truc du genre "Cher adhérent,"
 	$var = "mailretard_".$relance."madame_monsieur";
-	global $$var;
-	eval ("\$madame_monsieur=\"".$$var."\";");
+	global ${$var};
+	eval ("\$madame_monsieur=\"".${$var}."\";");
 
 	if($madame_monsieur) $texte_mail.=$madame_monsieur."\r\n\r\n";
 	if($before_list) $texte_mail.=$before_list."\r\n\r\n";
@@ -303,23 +309,7 @@ function send_mail($id_empr, $relance) {
 		$responsabilites=array() ;
 		$header_aut = "" ;
 		$responsabilites = get_notice_authors(($expl->m_id+$expl->s_id)) ;
-		$as = array_search ("0", $responsabilites["responsabilites"]) ;
-			if ($as!== FALSE && $as!== NULL) {
-			$auteur_0 = $responsabilites["auteurs"][$as] ;
-			$auteur = new auteur($auteur_0["id"]);
-			$header_aut .= $auteur->isbd_entry;
-			} else {
-				$aut1_libelle=array();
-				$as = array_keys ($responsabilites["responsabilites"], "1" ) ;
-					for ($i = 0 ; $i < count($as) ; $i++) {
-						$indice = $as[$i] ;
-						$auteur_1 = $responsabilites["auteurs"][$indice] ;
-						$auteur = new auteur($auteur_1["id"]);
-						$aut1_libelle[]= $auteur->isbd_entry;
-					}
-				
-				$header_aut .= implode (", ",$aut1_libelle) ;
-			}
+		$header_aut = gen_authors_header($responsabilites);
 		$header_aut ? $auteur=" / ".$header_aut : $auteur="";
 
 		// récupération du titre de série
@@ -336,51 +326,67 @@ function send_mail($id_empr, $relance) {
 
 		$texte_mail.=$expl->tit.$auteur."\r\n";
 		$texte_mail.="    -".sprintf($msg["relance_mail_retard_dates"],$expl->aff_pret_date,$expl->aff_pret_retour);
-		if ($valeur) $texte_mail.=" ".sprintf($msg["relance_mail_retard_amende"],comptes::format_simple($valeur));
+		if ($valeur && !$mailretard_hide_fine) $texte_mail.=" ".sprintf($msg["relance_mail_retard_amende"],comptes::format_simple($valeur));
 		$texte_mail.="\r\n";
 		$i++;
 	}
-	if ($total_amendes) $texte_mail.="\r\n".sprintf($msg["relance_mail_retard_total_amendes"],comptes::format_simple($total_amendes));
-	
-	if ($frais_relance) $texte_mail.="\r\n".$msg["relance_lettre_retard_frais_relance"].comptes::format_simple($frais_relance);
-	
-	if (($frais_relance)&&($total_amendes)) $texte_mail.="\r\n".$msg["relance_lettre_retard_total_du"].comptes::format_simple($total_amendes+$frais_relance);
+	if (!$mailretard_hide_fine) {
+		if ($total_amendes) $texte_mail.="\r\n".sprintf($msg["relance_mail_retard_total_amendes"],comptes::format_simple($total_amendes));
+		
+		if ($frais_relance) $texte_mail.="\r\n".$msg["relance_lettre_retard_frais_relance"].comptes::format_simple($frais_relance);
+		
+		if (($frais_relance)&&($total_amendes)) $texte_mail.="\r\n".$msg["relance_lettre_retard_total_du"].comptes::format_simple($total_amendes+$frais_relance);
+	}
 
 	$texte_mail.="\r\n\r\n";
 	if($after_list) $texte_mail.=$after_list."\r\n\r\n";
 	if($fdp) $texte_mail.=$fdp."\r\n\r\n";
 	$texte_mail.=mail_bloc_adresse();
-
-	//Si mail de rappel affecté au responsable du groupe
-	$requete="select id_groupe,resp_groupe from groupe,empr_groupe where id_groupe=groupe_id and empr_id=$id_empr and resp_groupe and mail_rappel limit 1";
-	$res=pmb_mysql_query($requete);
-	/* Récupération du nom, prénom et mail du lecteur destinataire */
-	if(pmb_mysql_num_rows($res) > 0) {
-		$requete="select id_empr, empr_mail, empr_nom, empr_prenom from empr where id_empr='".pmb_mysql_result($res, 0,1)."'";
-		$result=pmb_mysql_query($requete);
-		$coords_dest=pmb_mysql_fetch_object($result);
-	} else {
-		$requete="select id_empr, empr_mail, empr_nom, empr_prenom from empr where id_empr=$id_empr";
-		$res=pmb_mysql_query($requete);
-		$coords_dest=pmb_mysql_fetch_object($res);
-	}
-
+	
+	//Tableau contenant le destinataire (emprunteur) ou les destinataires (tous les responsables de groupe dont l'emprunteur est membre)
+	$to_nom = array();
+	$to_mail = array();
+	
 	/* Récupération du nom, prénom et mail du lecteur concerné */
 	$requete="select id_empr, empr_mail, empr_nom, empr_prenom, empr_cb from empr where id_empr=$id_empr";
 	$res=pmb_mysql_query($requete);
 	$coords=pmb_mysql_fetch_object($res);
+	$to_nom[0] = $coords->empr_prenom." ".$coords->empr_nom;
+	$to_mail[0] = $coords->empr_mail;
 	
+	//Si mail de rappel affecté au responsable du groupe : on envoie à tous les responsables des groupes (concernés par l'emprunteur)
+	$requete="select id_groupe,resp_groupe from groupe,empr_groupe where id_groupe=groupe_id and empr_id=$id_empr and resp_groupe and mail_rappel";
+	$res=pmb_mysql_query($requete);
+	if(pmb_mysql_num_rows($res) > 0) {
+		$qt_to = 0;
+		while ($row = pmb_mysql_fetch_object($res)) {
+			$requete="select id_empr, empr_mail, empr_nom, empr_prenom from empr where id_empr='".$row->resp_groupe."'";
+			$result=pmb_mysql_query($requete);
+			$coords_dest=pmb_mysql_fetch_object($result);
+			$to_nom[$qt_to] = $coords_dest->empr_prenom." ".$coords_dest->empr_nom;
+			$to_mail[$qt_to] = $coords_dest->empr_mail;
+			$qt_to++;
+		}
+	}
+		
 	//remplacement nom et prenom
 	$texte_mail=str_replace("!!empr_name!!", $coords->empr_nom,$texte_mail); 
 	$texte_mail=str_replace("!!empr_first_name!!", $coords->empr_prenom,$texte_mail); 
 
 	// function mailpmb($to_nom="", $to_mail, $obj="", $corps="", $from_name="", $from_mail, $headers, $copie_CC="", $copie_BCC="", $faire_nl2br=0, $pieces_jointes=array()) {
-	$res_envoi=mailpmb($coords_dest->empr_prenom." ".$coords_dest->empr_nom, $coords_dest->empr_mail,$objet." : ".$coords->empr_prenom." ".mb_strtoupper($coords->empr_nom,$charset)." (".$coords->empr_cb.")",$texte_mail,$biblio_name, $biblio_email,"Content-Type: text/plain; charset=\"$charset\"\n", "", $PMBuseremailbcc, 1);
-	return $res_envoi;
+	$flag_res = false;
+	//On boucle si plusieurs destinataires
+	foreach ($to_nom as $key=>$dummy_value) {
+		if(mailpmb($to_nom[$key], $to_mail[$key], $objet." : ".$coords->empr_prenom." ".mb_strtoupper($coords->empr_nom,$charset)." (".$coords->empr_cb.")",$texte_mail,$biblio_name, $biblio_email,"Content-Type: text/plain; charset=\"$charset\"\n", "", $PMBuseremailbcc, 1)){
+			$flag_res = true;
+		}
+	}
+	//Il faut au moins un email bien envoyé pour retourner true.
+	return $flag_res;
 }
 
 function print_relance($id_empr,$mail=true) {
-	global $mailretard_priorite_email, $mailretard_priorite_email_3;
+	global $mailretard_priorite_email, $mailretard_priorite_email_2, $mailretard_priorite_email_3;
 	global $dbh,$charset, $msg, $pmb_gestion_financiere, $pmb_gestion_amende;
 	global $mail_sended;
 	
@@ -415,7 +421,17 @@ function print_relance($id_empr,$mail=true) {
 	
 	if ($niveau_min) {
 		//Si c'est un mail
+		//JP 05/06/2017 : je passe par un flag car l'imbrication de conditions se complique...
+		$flag_print=false;
 		if (((($mailretard_priorite_email==1)||($mailretard_priorite_email==2))&&($empr_mail))&&( ($niveau_min<3)||($mailretard_priorite_email_3) )&&($mail)) {
+			$flag_print=true;
+			if (($niveau_min==2) && ($mailretard_priorite_email==1) && ($mailretard_priorite_email_2==1)) {
+				//On force en lettre
+				$flag_print=false;
+			}
+		}
+		
+		if ($flag_print) {
 			if (send_mail($id_empr,$niveau_min)) {
 				$requete="update pret set printed=1 where pret_idexpl=".$id_expl;
 				pmb_mysql_query($requete,$dbh);		
@@ -425,16 +441,6 @@ function print_relance($id_empr,$mail=true) {
 			$requete="update pret set printed=2 where pret_idexpl=".$id_expl;
 			pmb_mysql_query($requete,$dbh);
 			$not_mail=1;
-			//Débit du compte lecteur
-			/*$frais="finance_relance_".$niveau_min;
-			global $$frais;
-			if ($$frais) {
-				$id_compte=comptes::get_compte_id_from_empr($id_empr,2);
-				if ($id_compte) {
-					$cpte=new comptes($id_compte);
-					$cpte->record_transaction("",$$frais,-1,sprintf($msg["relance_frais_relance_level"],$niveau_min));
-				}
-			}*/
 		}
 	}
 	$req="delete from cache_amendes where id_empr=".$id_empr;
@@ -639,7 +645,7 @@ switch ($act) {
 			for ($i=0; $i<count($not_all_mail); $i++) {
 				print "<input type='hidden' name='empr_print[]' value='".$not_all_mail[$i]."'/>";
 			}	
-			print "	<script>openPopUp('','lettre', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes');
+			print "	<script>openPopUp('','lettre');
 				document.print_empr_ids.submit();
 				</script>
 			</form>
@@ -668,7 +674,7 @@ switch ($act) {
 		
 		print "
 		<form name='print_empr_ids' action='./circ/relance/relance_export.php';' target='lettre' method='post'>
-			<script>openPopUp('','lettre', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes');
+			<script>openPopUp('','lettre');
 			document.print_empr_ids.submit();
 			</script>
 		</form>";
@@ -718,11 +724,6 @@ $requete.= "and pret_retour<CURDATE() and pret_idempr=id_empr and pret_idexpl=ex
 if (($empr_sort_rows)||($empr_show_rows)||($empr_filter_rows)) {
 	require_once($class_path."/filter_list.class.php");
 	if ($pmb_lecteurs_localises) $localisation=",l";
-	if($pmb_transferts_actif){
-		$loc_expl=",13";
-	}else{
-		$loc_expl="";
-	}
 	$p_perso=new pret_parametres_perso("pret");
 	$filter_p_perso = "";
 	if(count($p_perso->t_fields)) {
@@ -732,14 +733,14 @@ if (($empr_sort_rows)||($empr_show_rows)||($empr_filter_rows)) {
 			}
 		}
 	}
-	$filter=new filter_list("empr","empr_list","b,n,c,cs,g","b,n,c,g".$localisation.",2,3,cs".$loc_expl.$filter_p_perso,"n,g");
+	$filter=new filter_list("empr","empr_list","b,n,c,cs,g","c".$localisation.",13,2,3".$filter_p_perso.($empr_filter_relance_rows?",".$empr_filter_relance_rows:""),"n,g");
 	if ($pmb_lecteurs_localises) {
 		$lo="f".$filter->fixedfields["l"]["ID"];
-		global $$lo;
-		if (!$$lo) {
+		global ${$lo};
+		if (!${$lo}) {
 			$tableau=array();
 			$tableau[0]=$deflt2docs_location;
-			$$lo=$tableau;
+			${$lo}=$tableau;
 		}
 	}
 	$filter->fixedcolumns="b,n,c";
@@ -757,11 +758,11 @@ if (($empr_sort_rows)||($empr_show_rows)||($empr_filter_rows)) {
 	$filter->activate_filters();
 	if (!$filter->error) {
 		$aff_filters="<script type='text/javascript' src='./javascript/tablist.js'></script><form class='form-$current_module' id='form_filters' name='form_filters' method='post' action='".$PHP_SELF."?categ=relance&sub=todo'><h3>".$msg["filters_tris"]."</h3>";
-		$aff_filters.="<div class='form-contenu'><div id=\"el1Parent\" class=\"notice-parent\"><img src=\"./images/plus.gif\" name=\"imEx\" class=\"img_plus\" id=\"el1Img\" title=\"".$msg['admin_param_detail']."\" border=\"0\" onClick=\"expandBase('el1', true); return false;\">
+		$aff_filters.="<div class='form-contenu'><div id=\"el1Parent\" class=\"notice-parent\"><img src=\"".get_url_icon('plus.gif')."\" name=\"imEx\" class=\"img_plus\" id=\"el1Img\" title=\"".$msg['admin_param_detail']."\" border=\"0\" onClick=\"expandBase('el1', true); return false;\">
    								<b>".$msg["filters"]."</b></div>
 						<div id=\"el1Child\" style=\"margin-left:7px;display:none;\">";
 		$aff_filters.=$filter->display_filters();
-		$aff_filters.="</div><div class='row'></div><div id=\"el2Parent\" class=\"notice-parent\"><img src=\"./images/plus.gif\" name=\"imEx\" class=\"img_plus\" id=\"el2Img\" title=\"".$msg['admin_param_detail']."\" border=\"0\" onClick=\"expandBase('el2', true); return false;\">
+		$aff_filters.="</div><div class='row'></div><div id=\"el2Parent\" class=\"notice-parent\"><img src=\"".get_url_icon('plus.gif')."\" name=\"imEx\" class=\"img_plus\" id=\"el2Img\" title=\"".$msg['admin_param_detail']."\" border=\"0\" onClick=\"expandBase('el2', true); return false;\">
 							<b>".$msg["tris_dispos"]."</b></div>
 							<div id=\"el2Child\" style=\"margin-left:7px;display:none;\">";
 		$aff_filters.=$filter->display_sort();
@@ -813,13 +814,15 @@ echo "<form name='relance_action' action='./circ.php?categ=relance&sub=todo' met
 <input type='hidden' name='printed_cd' value=''/>";
 
 echo "<script type='text/javascript' src='./javascript/sorttable.js'></script>
-	<table width='100%' class='sortable'>";
+	<table style='width:100%' class='sortable'>";
 echo "<tr>".$colonnes."<th>".$msg["relance_nb_retard"]."</th><th>".$msg["relance_dernier_niveau"]."</th><th>".$msg["relance_date_derniere"]."</th><th>".$msg["relance_imprime"]."</th><th>".$msg["relance_niveau_suppose"]."</th><th>".$msg["relance_action_prochaine"]."</th><th>&nbsp;</th></tr>";
 
 $resultat=pmb_mysql_query($requete);
 $pair=false;
 //Nombre de relances à faire
 $nb_relances = 0;
+$list_dates_sort = array();
+$list_dates_relance = array();
 while ($r=pmb_mysql_fetch_array($resultat)) {
 	if (!$pair) $pair_impair = "odd"; else $pair_impair = "even";
 	$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" ";
@@ -830,7 +833,7 @@ while ($r=pmb_mysql_fetch_array($resultat)) {
 	}
 	if (($level["level_normal"])||($level["level_min"])) {
 		$pair=!$pair;
-		print "<tr class='$pair_impair' $tr_javascript>";
+		print "<tr id='relance_empr_".$r["id_empr"]."' class='$pair_impair' $tr_javascript>";
 		print "<td>".htmlentities($r["empr_cb"],ENT_QUOTES,$charset)."</td>";
 		print "<td><a href='./circ.php?categ=pret&id_empr=".$r["id_empr"]."'>".htmlentities($r["empr_nom"]." ".$r["empr_prenom"],ENT_QUOTES,$charset)."</a></td>";
 		print "<td>".htmlentities($r["libelle_categ"],ENT_QUOTES,$charset)."</td>";
@@ -857,7 +860,7 @@ while ($r=pmb_mysql_fetch_array($resultat)) {
 		print "<td>".($printed?"x":"")."</td>";
 		print "<td>$niveau_normal</td>";
 		print "<td>".get_action($r["id_empr"],$niveau_min,$niveau_normal)."</td>";
-		print "<td><input type='button' class='bouton_small' value='".$msg["relance_row_valid"]."' onClick=\"this.form.act.value='solo'; this.form.relance_solo.value='".$r["id_empr"]."'; $script\"/>&nbsp;";
+		print "<td><input type='button' class='bouton_small' value='".$msg["relance_row_valid"]."' onClick=\"this.form.action = this.form.action + '#relance_empr_".$r["id_empr"]."'; this.form.act.value='solo'; this.form.relance_solo.value='".$r["id_empr"]."'; $script\"/>&nbsp;";
 		
 		//Si mail de rappel affecté au responsable du groupe
 		$requete="select id_groupe,resp_groupe from groupe,empr_groupe where id_groupe=groupe_id and empr_id=".$r["id_empr"]." and resp_groupe and mail_rappel limit 1";
@@ -871,9 +874,18 @@ while ($r=pmb_mysql_fetch_array($resultat)) {
 		}
 
 		if ($niveau_min) {
-			print "<input type='button' class='bouton_small' value='".$msg["relance_row_print"]."' onClick=\"openPopUp('pdf.php?pdfdoc=lettre_retard&id_empr=".$r["id_empr"]."&niveau=".$niveau_min."','lettre', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes'); this.form.act.value='solo_print'; this.form.relance_solo.value='".$r["id_empr"]."'; $script\"/>";
-			if (((($mailretard_priorite_email==1)||($mailretard_priorite_email==2))&&($has_mail))&&(($niveau_min<3)||($mailretard_priorite_email_3==1 && $niveau_min>=3))) 
-				print "<input type='button' class='bouton_small' value='".$msg["relance_row_mail"]."' onClick=\"this.form.act.value='solo_mail'; this.form.relance_solo.value='".$r["id_empr"]."'; $script\"/>";
+			print "<input type='button' class='bouton_small' value='".$msg["relance_row_print"]."' onClick=\"openPopUp('pdf.php?pdfdoc=lettre_retard&id_empr=".$r["id_empr"]."&niveau=".$niveau_min."','lettre'); this.form.act.value='solo_print'; this.form.relance_solo.value='".$r["id_empr"]."'; $script\"/>";
+			$flag_mail=false;
+			if (((($mailretard_priorite_email==1)||($mailretard_priorite_email==2))&&($has_mail))&&(($niveau_min<3)||($mailretard_priorite_email_3==1 && $niveau_min>=3))) {
+				$flag_mail=true;
+				if (($niveau_min==2) && ($mailretard_priorite_email==1) && ($mailretard_priorite_email_2==1)) {
+					//On force en lettre
+					$flag_mail=false;
+				}
+			}			
+			if ($flag_mail) {
+				print "<input type='button' class='bouton_small' value='".$msg["relance_row_mail"]."' onClick=\"this.form.action = this.form.action + '#relance_empr_".$r["id_empr"]."'; this.form.act.value='solo_mail'; this.form.relance_solo.value='".$r["id_empr"]."'; $script\"/>";
+			}
 		}
 		print "</td>";
 		print "</tr>\n";

@@ -2,12 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: isbn.inc.php,v 1.21 2015-06-18 13:55:50 jpermanne Exp $
+// $Id: isbn.inc.php,v 1.26 2017-11-27 10:37:27 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+require_once($class_path."/cache_factory.class.php");
+
 if ((!isset($array_isbn_ranges))||(!is_array($array_isbn_ranges))||(!count($array_isbn_ranges))) {
-	require_once ($includes_path."parser.inc.php") ;
+	require_once ($include_path."/parser.inc.php") ;
 	$array_isbn_ranges = load_isbn_ranges();
 }
 
@@ -21,22 +23,23 @@ function isISBN($isbn) {
 
 	$isbn = preg_replace('/-|\.| /', '', $isbn);
 	
-	$key = $isbn[strlen($isbn) - 1];
+	$strlen_isbn = strlen($isbn);
+	$key = $isbn[$strlen_isbn - 1];
 	
-	if (strlen($isbn)==10) {
+	if ($strlen_isbn==10) {
 		if($key == 'X')
 			$key = 10;
-		$isbn = substr($isbn, 0, strlen($isbn) - 1);
+		$isbn = substr($isbn, 0, $strlen_isbn - 1);
 	
 		// vérification de la clé
-		for($i = 0; $i < strlen($isbn) ; $i++) {
+		for($i = 0; $i < strlen($isbn) ; $i++) {			
 			$checksum += (10 - $i) * $isbn[$i];
 		}
 		$checksum += $key;
 		
 		if (($checksum%11) == 0) return TRUE ;
 			else return FALSE ;
-	} else if (strlen($isbn)==13) {
+	} else if ($strlen_isbn==13) {
 		if ((substr($isbn,0,3)=="978")||(substr($isbn,0,3)=="979")) {
 			//Vérification de la clé
 			$p=1;
@@ -171,7 +174,7 @@ function formatISBN($isbn,$taille="") {
 }
 
 function load_isbn_ranges() {
-	global $include_path,$base_path,$charset;
+	global $include_path,$base_path,$charset, $KEY_CACHE_FILE_XML;
 
 	$array_isbn_ranges = array();
 	
@@ -183,8 +186,25 @@ function load_isbn_ranges() {
 	}
 	$fileInfo = pathinfo($xmlFile);
 	$tempFile = $base_path."/temp/XML".preg_replace("/[^a-z0-9]/i","",$fileInfo['dirname'].$fileInfo['filename'].$charset).".tmp";
+	$dejaParse=false;
 	
-	if (!file_exists($tempFile) || filemtime($xmlFile) > filemtime($tempFile)) {
+	$cache_php=cache_factory::getCache();
+	$key_file="";
+	if($cache_php){
+		$key_file=getcwd().$xmlFile.filemtime($xmlFile);
+		if($xmlFile_subst && file_exists($xmlFile_subst)){
+			$key_file.=filemtime($xmlFile_subst);
+		}
+		$key_file=$KEY_CACHE_FILE_XML.md5($key_file);
+		
+		if($tmp_key = $cache_php->getFromCache($key_file)){
+			if($array_isbn_ranges = $cache_php->getFromCache($tmp_key)){
+				$dejaParse = true;
+			}
+		}
+	}
+	
+	if (!$dejaParse &&  (!file_exists($tempFile) || (filemtime($xmlFile) > filemtime($tempFile)))) {
 		//Le fichier XML original a-t-il été modifié ultérieurement ?
 			//on va re-générer le pseudo-cache
 			if(file_exists($tempFile)){
@@ -203,9 +223,16 @@ function load_isbn_ranges() {
 					}
 				}
 			}
-			$tmp = fopen($tempFile, "wb");
-			fwrite($tmp,serialize($array_isbn_ranges));
-			fclose($tmp);
+			
+			if($cache_php){
+				$key_file_content=$KEY_CACHE_FILE_XML.md5(serialize($array_isbn_ranges));
+				$cache_php->setInCache($key_file_content, $array_isbn_ranges);
+				$cache_php->setInCache($key_file,$key_file_content);
+			}else{
+				$tmp = fopen($tempFile, "wb");
+				fwrite($tmp,serialize($array_isbn_ranges));
+				fclose($tmp);
+			}
 	} else if (file_exists($tempFile)){
 		$tmp = fopen($tempFile, "r");
 		$array_isbn_ranges = unserialize(fread($tmp,filesize($tempFile)));

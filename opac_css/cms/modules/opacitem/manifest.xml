@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1" standalone="yes"?>
 
 <manifest>
-	<name>Eléments de l'opac</name>
+	<name lang="fr_FR">Eléments de l'opac</name>
+	<name lang="en_UK">Elements of the OPAC</name>
 	<author>
 		<name>Adrien BACARISSE</name>
 		<organisation>PMB Services</organisation>

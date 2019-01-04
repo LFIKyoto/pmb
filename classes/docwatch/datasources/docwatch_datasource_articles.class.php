@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_datasource_articles.class.php,v 1.5 2015-05-21 15:43:05 dgoron Exp $
+// $Id: docwatch_datasource_articles.class.php,v 1.9 2018-06-18 09:41:38 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -41,18 +41,26 @@ class docwatch_datasource_articles extends docwatch_datasource{
 				$article_instance = new cms_article($id);
 				$article_data = $article_instance->format_datas();
 				$article = array();
+				$article['type'] = 'article';
 				$article['num_article'] = $article_data['id'];
 				$article['title'] = $article_data['title'];
 				$article['summary'] = $article_data['resume'];
 				$article['content'] = $article_data['content'];
 				if($article_data['start_date'] == ""){
-					$article['publication_date'] = $article_data['create_date'];
+					$article['publication_date'] = extraitdate($article_data['create_date']);
 				}
 				else{
-					$article['publication_date'] = $article_data['start_date'];
+					$article['publication_date'] = extraitdate($article_data['start_date']);
 				}
 				$article['logo_url'] = $article_data['logo']['large'];
 				$article['url'] = $this->get_constructed_link("article", $article_data['id']);
+				if(count($article_data['descriptors'])){
+				    $descriptors = array();
+				    for($i=0 ; $i<count($article_data['descriptors']) ; $i++){
+				        $descriptors[]  = array('id' => $article_data['descriptors'][$i]['id']);
+				    }
+				    $article['descriptors'] = $descriptors;
+				}
 				$articles_retour[] = $article;
 			}
 		}

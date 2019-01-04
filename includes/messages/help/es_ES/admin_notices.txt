@@ -1,4 +1,4 @@
-<h1>Administraci&oacute;n de los registros</h1>
+<h2>Administraci&oacute;n de los registros</h2>
 
 <p>La secci&oacute;n <b>administraci&oacute;n de los registros</b> permite definir los par&aacute;metros de la aplicaci&oacute;n para los registros.
 <ul>

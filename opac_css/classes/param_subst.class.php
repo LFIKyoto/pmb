@@ -2,25 +2,25 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: param_subst.class.php,v 1.4 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: param_subst.class.php,v 1.7 2018-01-26 16:14:23 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 class param_subst {
-	var $values = array();
-	var $subst_param = array();
-	var $type;	
-	var $module;
-	var $module_num;
+	public $values = array();
+	public $subst_param = array();
+	public $type;	
+	public $module;
+	public $module_num;
 	
-	function param_subst($type, $module, $module_num) {
+	public function __construct($type, $module, $module_num) {
 		$this->type = $type;// opac, acquisition...
 		$this->module = $module;// opac_view
 		$this->module_num = $module_num;// pour évolution...
 		$this->fetch_data();
 	}
 
-	function fetch_data() {
+	public function fetch_data() {
 		global $dbh;
 
 		$this->subst_param=array();
@@ -32,13 +32,24 @@ class param_subst {
 		}
 	}
 
-	function set_parameters() {
+	public function set_parameters() {
 		foreach($this->subst_param as $param){
 			$subst_param_name = $param["subst_type_param"]."_".$param["subst_sstype_param"];
-			global $$subst_param_name;
-			$$subst_param_name=$param["subst_valeur_param"];
+			global ${$subst_param_name};
+			${$subst_param_name}=$param["subst_valeur_param"];
 			
 		}
+	}
+	
+	public function get_parameter_value($type_param, $sstype_param) {
+		$parameter_value = '';
+		foreach($this->subst_param as $param){
+			if($param["subst_type_param"] == $type_param && $param["subst_sstype_param"] == $sstype_param) {
+				$parameter_value = $param["subst_valeur_param"];
+				break;
+			}
+		}
+		return $parameter_value;
 	}
 }
 ?>

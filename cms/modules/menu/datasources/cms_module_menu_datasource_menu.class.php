@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_menu_datasource_menu.class.php,v 1.7 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: cms_module_menu_datasource_menu.class.php,v 1.8 2016-09-20 10:25:41 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -19,15 +19,16 @@ class cms_module_menu_datasource_menu extends cms_module_common_datasource{
 			"cms_module_menu_selector_menu"
 		);
 	}
-
+	
 	/*
 	 * Récupération des données de la source...
 	 */
 	public function get_datas(){
+		global $dbh;
 		$selector = $this->get_selected_selector();
 		if($selector){
-			$query = "select managed_module_box from cms_managed_modules join cms_cadres on id_cadre = ".$this->cadre_parent." and cadre_object = managed_module_name";
-			$result = pmb_mysql_query($query);
+			$query = "select managed_module_box from cms_managed_modules join cms_cadres on id_cadre = '".($this->cadre_parent*1)."' and cadre_object = managed_module_name";
+			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				$box = pmb_mysql_result($result,0,0);
 				$infos =unserialize($box);

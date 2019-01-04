@@ -2,19 +2,22 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.inc.php,v 1.13 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: search.inc.php,v 1.16 2018-03-12 14:43:14 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+if(!isset($issn)) $issn = '';
+if(!isset($isbn)) $isbn = '';
+
 print "<h1>$msg[z3950_recherche]</h1>";
 
-$crit1 = $_COOKIE['PMB-Z3950-criterion1'];
-$crit2 = $_COOKIE['PMB-Z3950-criterion2'];
-$bool1 = $_COOKIE['PMB-Z3950-boolean'];
-$clause = $_COOKIE['PMB-Z3950-clause'];
+$crit1 = (isset($_COOKIE['PMB-Z3950-criterion1']) ? $_COOKIE['PMB-Z3950-criterion1'] : '');
+$crit2 = (isset($_COOKIE['PMB-Z3950-criterion2']) ? $_COOKIE['PMB-Z3950-criterion2'] : '');
+$bool1 = (isset($_COOKIE['PMB-Z3950-boolean']) ? $_COOKIE['PMB-Z3950-boolean'] : '');
+$clause = (isset($_COOKIE['PMB-Z3950-clause']) ? $_COOKIE['PMB-Z3950-clause'] : '');
 
 /* default values */
-if ($crit1 == '') $crit1 = 'isbn';
+if (($crit1 == '') || $isbn) $crit1 = 'isbn';
 if ($bool1 == '') $bool1 = 'ET';
 
 if($issn){

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl_owner.inc.php,v 1.13 2015-06-14 11:46:16 Alexandre Exp $
+// $Id: expl_owner.inc.php,v 1.21 2017-11-21 12:01:00 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -67,24 +67,20 @@ $sql.= "WHERE expl_typdoc = idtyp_doc and idsection = expl_section and expl_owne
 $sql = $sql.$critere_requete;
 switch($dest) {
 	case "TABLEAU":
-		$fichier_temp_nom=str_replace(" ","",microtime());
-		$fichier_temp_nom=str_replace("0.","",$fichier_temp_nom);
-		$fname = tempnam("./temp", $fichier_temp_nom.".xls");
-		$workbook = new writeexcel_workbook($fname);
-		$worksheet = &$workbook->addworksheet();
+		$worksheet = new spreadsheet();
 		$row=0;
 		$col=0;
 		break;
 	case "TABLEAUHTML":
 		echo "<h1>".$msg[1110]."&nbsp;:&nbsp;".$msg[1113]."</h1>";  
 		echo "<table class='fiche-lecteur' width=100%>";
- 		echo "<tr><td class='jauge' colspan='2'>".$msg[circ_preteur]."</td><td class='jauge'>".$msg[296]."</td><td class='jauge'>".$msg[circ_CB]."</td><td class='jauge'>".$msg[233]."</td><td class='jauge'>".$msg[234]."</td></tr>"; 
+ 		echo "<tr><td class='jauge' colspan='2'>".$msg['circ_preteur']."</td><td class='jauge'>".$msg[296]."</td><td class='jauge'>".$msg['circ_CB']."</td><td class='jauge'>".$msg[233]."</td><td class='jauge'>".$msg[234]."</td></tr>"; 
 		break;
 	default:
 		$sql = $sql." LIMIT ".$limite_mysql.", ".$limite_page; 
 		echo "<h1>".$msg[1110]."&nbsp;:&nbsp;".$msg[1113]."</h1>";  
 		echo "<table class='fiche-lecteur' width=100%>";
- 		echo "<tr><td class='jauge' colspan='2'>".$msg[circ_preteur]."</td><td class='jauge'>".$msg[296]."</td><td class='jauge'>".$msg[circ_CB]."</td><td class='jauge'>".$msg[233]."</td><td class='jauge'>".$msg[234]."</td></tr>"; 
+ 		echo "<tr><td class='jauge' colspan='2'>".$msg['circ_preteur']."</td><td class='jauge'>".$msg[296]."</td><td class='jauge'>".$msg['circ_CB']."</td><td class='jauge'>".$msg[233]."</td><td class='jauge'>".$msg[234]."</td></tr>"; 
 		break;
 	}
 	
@@ -96,23 +92,7 @@ $odd_even=0;
 while ($data = pmb_mysql_fetch_array($req)) { 
 	
 	$responsabilites = get_notice_authors(($data['m_id']+$data['s_id'])) ;
-	$as = array_search ("0", $responsabilites["responsabilites"]) ;
-	if ($as!== FALSE && $as!== NULL) {
-		$auteur_0 = $responsabilites["auteurs"][$as] ;
-		$auteur = new auteur($auteur_0["id"]);
-		$header_aut .= $auteur->isbd_entry;
-		} else {
-			$aut1_libelle=array();
-			$as = array_keys ($responsabilites["responsabilites"], "1" ) ;
-			for ($i = 0 ; $i < count($as) ; $i++) {
-				$indice = $as[$i] ;
-				$auteur_1 = $responsabilites["auteurs"][$indice] ;
-				$auteur = new auteur($auteur_1["id"]);
-				$aut1_libelle[]= $auteur->isbd_entry;
-				}
-			
-			$header_aut .= implode (", ",$aut1_libelle) ;
-			}
+	$header_aut = gen_authors_header($responsabilites);
 	
 	$header_aut ? $auteur=$header_aut : $auteur="";
 		
@@ -120,12 +100,12 @@ while ($data = pmb_mysql_fetch_array($req)) {
 	switch($dest) {
 		case "TABLEAU":
 			$row++;
-			$worksheet->write($row,1,$data['idlender']);
-			$worksheet->write($row,2,$data['lender_libelle']);
-			$worksheet->write($row,3,$data['expl_cote']);
-			$worksheet->write($row,4,$data['expl_cb']);
-			$worksheet->write($row,5,$data['tit']);
-			$worksheet->write($row,6,$auteur);
+			$worksheet->write_string($row,1,$data['idlender']);
+			$worksheet->write_string($row,2,$data['lender_libelle']);
+			$worksheet->write_string($row,3,$data['expl_cote']);
+			$worksheet->write_string($row,4,$data['expl_cb']);
+			$worksheet->write_string($row,5,$data['tit']);
+			$worksheet->write_string($row,6,$auteur);
 			break;
 		case "TABLEAUHTML":
 			if ($odd_even==0) {
@@ -166,12 +146,7 @@ while ($data = pmb_mysql_fetch_array($req)) {
 
 switch($dest) {
 	case "TABLEAU":
-		$workbook->close();
-		header("Content-Type: application/x-msexcel; name=\""."expl_owner.xls"."\"");
-		header("Content-Disposition: inline; filename=\""."expl_owner.xls"."\"");
-		$fh=fopen($fname, "rb");
-		fpassthru($fh);
-		unlink($fname);
+		$worksheet->download('expl_owner.xls');
 		break;
 	case "TABLEAUHTML":
 		echo "</table>";
@@ -199,7 +174,7 @@ switch($dest) {
  					print '">< '.$msg[48].'</a>'; // retour page précédente
 					}
 		
-		echo "<p align=left size='-3' class='pn-normal'>
+		echo "<p class='align_left pn-normal' size='-3'>
 		<form class='form-$current_module' action='$page' method='post'>
 		<input type='hidden' name='limite_page'  value='$limite_page' />
 		<input type='hidden' name='numero_page'  value='$numero_page' />
@@ -207,10 +182,10 @@ switch($dest) {
 		<input type='hidden' name='categ'  value='$categ' />
 		<input type='hidden' name='sub' value='$sub' />
 		<input type='hidden' name='dest' value='' />
- 		".$msg[circ_afficher]." <input type='text' name='limite_page_saisie' size='4' value='$limite_page' class='petit' /> ".$msg[1905]."
-		<input type='submit' class='bouton' value='".$msg['actualiser']."' onClick=\"this.form.limite_page.value=this.form.limite_page_saisie.value;\" /><font size='4'>&nbsp;&nbsp;|&nbsp;&nbsp;</font>
-		<input type='image' src='./images/tableur.gif' border='0' onClick=\"this.form.dest.value='TABLEAU';\" alt='Export tableau EXCEL' title='Export tableau EXCEL' /><font size='4'>&nbsp;&nbsp;|&nbsp;&nbsp;</font>
-		<input type='image' src='./images/tableur_html.gif' border='0' onClick=\"this.form.dest.value='TABLEAUHTML';\" alt='Export tableau HTML' title='Export tableau HTML' />
+ 		<input type='text' name='limite_page_saisie' size='4' value='$limite_page' class='petit' /> ".$msg[1905]."
+		<input type='submit' class='bouton' value='".$msg['actualiser']."' onClick=\"this.form.limite_page.value=this.form.limite_page_saisie.value;\" />&nbsp;&nbsp;|&nbsp;&nbsp;
+		<input type='image' src='".get_url_icon('tableur.gif')."' style='border:0px' onClick=\"this.form.dest.value='TABLEAU';\" alt='".$msg['export_tableur']."' title='".$msg['export_tableur']."' />&nbsp;&nbsp;|&nbsp;&nbsp;
+		<input type='image' src='".get_url_icon('tableur_html.gif')."' style='border:0px' onClick=\"this.form.dest.value='TABLEAUHTML';\" alt='".$msg['export_tableau_html']."' title='".$msg['export_tableau_html']."' />
 		</form></p>";
 		break;
 	}

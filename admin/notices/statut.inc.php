@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: statut.inc.php,v 1.15 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: statut.inc.php,v 1.19 2018-10-12 14:44:49 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+require_once($class_path."/list/configuration/notices/list_configuration_notices_statut_ui.class.php");
 
 // gestion des codes statut exemplaires
 ?>
@@ -22,60 +24,10 @@ function test_form(form)
 
 <?php
 function show_statut($dbh) {
-	global $msg;
+	print list_configuration_notices_statut_ui::get_instance()->get_display_list();
+}
 
-	print "<table>
-	<tr>
-		<th colspan=2>".$msg["noti_statut_gestion"]."</th>
-		<th colspan=4>".$msg["noti_statut_opac"]."</th>
-	</tr><tr>
-		<th>".$msg["noti_statut_libelle"]."</th>
-		<th>".$msg["noti_statut_visu_gestion"]."</th>
-		<th>".$msg["noti_statut_libelle"]."</th>
-		<th>".$msg["noti_statut_visu_opac"]."</th>
-		<th>".$msg["noti_statut_visu_expl"]."</th>
-		<th>".$msg["noti_statut_visu_explnum"]."</th>
-	</tr>";
-
-	// affichage du tableau des statuts
-	$requete = "SELECT id_notice_statut, gestion_libelle, opac_libelle, ";
-	$requete .= "notice_visible_opac, notice_visible_gestion, notice_visible_opac_abon,";
-	$requete .= "expl_visible_opac, expl_visible_opac_abon, ";
-	$requete .= "explnum_visible_opac, explnum_visible_opac_abon, ";
-	$requete .= "class_html FROM notice_statut ORDER BY gestion_libelle ";
-	$res = pmb_mysql_query($requete, $dbh);
-	$nbr = pmb_mysql_num_rows($res);
-
-	$parity=1;
-	for($i=0;$i<$nbr;$i++) {
-		$row=pmb_mysql_fetch_object($res);
-		if ($parity % 2) {
-			$pair_impair = "even";
-			} else {
-				$pair_impair = "odd";
-				}
-		$parity += 1;
-		$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./admin.php?categ=notices&sub=statut&action=modif&id=$row->id_notice_statut';\" ";
-		print pmb_bidi("<tr class='$pair_impair' $tr_javascript style='cursor: pointer'>");
-		print pmb_bidi("<td><span class='$row->class_html'  style='margin-right: 3px;'><img src='./images/spacer.gif' width='10' height='10' /></span>") ;
-		if ($row->id_notice_statut<3) print pmb_bidi("<strong>$row->gestion_libelle</strong></td>"); 
-		else print pmb_bidi("$row->gestion_libelle</td>"); 
-		if($row->notice_visible_gestion) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-		print "<td>$row->opac_libelle</td>"; 
-		if($row->notice_visible_opac) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-		if($row->expl_visible_opac) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-		if($row->explnum_visible_opac) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-		print "</tr>";
-		}
-	print "</table>
-		<input class='bouton' type='button' value=' $msg[115] ' onClick=\"document.location='./admin.php?categ=notices&sub=statut&action=add'\" />";
-	}
-
-function statut_form($id=0, $gestion_libelle="", $opac_libelle="", $visible_opac=1, $visible_gestion=1, $expl_visible_opac=1, $class_html='', $visible_opac_abon=0, $expl_visible_opac_abon=0, $explnum_visible_opac=1, $explnum_visible_opac_abon=0) {
+function statut_form($id=0, $gestion_libelle="", $opac_libelle="", $visible_opac=1, $visible_gestion=1, $expl_visible_opac=1, $class_html='', $visible_opac_abon=0, $expl_visible_opac_abon=0, $explnum_visible_opac=1, $explnum_visible_opac_abon=0, $scan_request_opac=0, $scan_request_opac_abon=0) {
 
 	global $msg;
 	global $admin_notice_statut_form;
@@ -114,11 +66,17 @@ function statut_form($id=0, $gestion_libelle="", $opac_libelle="", $visible_opac
 
 	if ($explnum_visible_opac_abon) $checkbox="checked"; else $checkbox="";
 	$admin_notice_statut_form = str_replace('!!checkbox_explnum_visu_abon!!', $checkbox, $admin_notice_statut_form);
+
+	if ($scan_request_opac) $checkbox="checked"; else $checkbox="";
+	$admin_notice_statut_form = str_replace('!!checkbox_scan_request_opac!!', $checkbox, $admin_notice_statut_form);
+
+	if ($scan_request_opac_abon) $checkbox="checked"; else $checkbox="";
+	$admin_notice_statut_form = str_replace('!!checkbox_scan_request_opac_abon!!', $checkbox, $admin_notice_statut_form);
 	
 	for ($i=1;$i<=20; $i++) {
 		if ($class_html=="statutnot".$i) $checked = "checked";
 			else $checked = "";
-		$couleur[$i]="<span for='statutnot".$i."' class='statutnot".$i."' style='margin: 7px;'><img src='./images/spacer.gif' width='10' height='10' />
+		$couleur[$i]="<span for='statutnot".$i."' class='statutnot".$i."' style='margin: 7px;'><img src='".get_url_icon('spacer.gif')."' width='10' height='10' />
 					<input id='statutnot".$i."' type=radio name='form_class_html' value='statutnot".$i."' $checked class='checkbox' /></span>";
 		if ($i==10) $couleur[10].="<br />";
 		elseif ($i!=20) $couleur[$i].="<b>|</b>";
@@ -135,12 +93,12 @@ function statut_form($id=0, $gestion_libelle="", $opac_libelle="", $visible_opac
 switch($action) {
 	case 'update':
 		if ($id) {
-			if ($id==1) $visu=", notice_visible_gestion=1, notice_visible_opac='$form_visible_opac', expl_visible_opac='$form_visu_expl', notice_visible_opac_abon='$form_visu_abon', expl_visible_opac_abon='$form_expl_visu_abon', explnum_visible_opac='$form_explnum_visu', explnum_visible_opac_abon='$form_explnum_visu_abon' ";
-				else $visu=", notice_visible_gestion='$form_visible_gestion', notice_visible_opac='$form_visible_opac', expl_visible_opac='$form_visu_expl', notice_visible_opac_abon='$form_visu_abon', expl_visible_opac_abon='$form_expl_visu_abon', explnum_visible_opac='$form_explnum_visu', explnum_visible_opac_abon='$form_explnum_visu_abon' "; 
+			if ($id==1) $visu=", notice_visible_gestion=1, notice_visible_opac='$form_visible_opac', expl_visible_opac='$form_visu_expl', notice_visible_opac_abon='$form_visu_abon', expl_visible_opac_abon='$form_expl_visu_abon', explnum_visible_opac='$form_explnum_visu', explnum_visible_opac_abon='$form_explnum_visu_abon', notice_scan_request_opac='".$form_scan_request_opac."', notice_scan_request_opac_abon='".$form_scan_request_opac_abon."' ";
+				else $visu=", notice_visible_gestion='$form_visible_gestion', notice_visible_opac='$form_visible_opac', expl_visible_opac='$form_visu_expl', notice_visible_opac_abon='$form_visu_abon', expl_visible_opac_abon='$form_expl_visu_abon', explnum_visible_opac='$form_explnum_visu', explnum_visible_opac_abon='$form_explnum_visu_abon', notice_scan_request_opac='".$form_scan_request_opac."', notice_scan_request_opac_abon='".$form_scan_request_opac_abon."' "; 
 			$requete = "UPDATE notice_statut SET gestion_libelle='$form_gestion_libelle', opac_libelle='$form_opac_libelle', class_html='$form_class_html' $visu WHERE id_notice_statut='$id' ";
 			$res = pmb_mysql_query($requete, $dbh);
 		} else {
-			$requete = "INSERT INTO notice_statut SET gestion_libelle='$form_gestion_libelle',notice_visible_gestion='$form_visible_gestion',opac_libelle='$form_opac_libelle', notice_visible_opac='$form_visible_opac', expl_visible_opac='$form_visu_expl', class_html='$form_class_html', notice_visible_opac_abon='$form_visu_abon', expl_visible_opac_abon='$form_expl_visu_abon', explnum_visible_opac='$form_explnum_visu', explnum_visible_opac_abon='$form_explnum_visu_abon' ";
+			$requete = "INSERT INTO notice_statut SET gestion_libelle='$form_gestion_libelle',notice_visible_gestion='$form_visible_gestion',opac_libelle='$form_opac_libelle', notice_visible_opac='$form_visible_opac', expl_visible_opac='$form_visu_expl', class_html='$form_class_html', notice_visible_opac_abon='$form_visu_abon', expl_visible_opac_abon='$form_expl_visu_abon', explnum_visible_opac='$form_explnum_visu', explnum_visible_opac_abon='$form_explnum_visu_abon', notice_scan_request_opac='".$form_scan_request_opac."', notice_scan_request_opac_abon='".$form_scan_request_opac_abon."' ";
 			$res = pmb_mysql_query($requete, $dbh);
 		}
 		show_statut($dbh);
@@ -151,11 +109,11 @@ switch($action) {
 		break;
 	case 'modif':
 		if ($id) {
-			$requete = "SELECT id_notice_statut, gestion_libelle, opac_libelle, notice_visible_opac, notice_visible_gestion, expl_visible_opac, class_html, notice_visible_opac_abon, expl_visible_opac_abon, explnum_visible_opac, explnum_visible_opac_abon FROM notice_statut WHERE id_notice_statut='$id'";
+			$requete = "SELECT id_notice_statut, gestion_libelle, opac_libelle, notice_visible_opac, notice_visible_gestion, expl_visible_opac, class_html, notice_visible_opac_abon, expl_visible_opac_abon, explnum_visible_opac, explnum_visible_opac_abon, notice_scan_request_opac, notice_scan_request_opac_abon FROM notice_statut WHERE id_notice_statut='$id'";
 			$res = pmb_mysql_query($requete, $dbh);
 			if(pmb_mysql_num_rows($res)) {
 				$row=pmb_mysql_fetch_object($res);
-				statut_form($row->id_notice_statut, $row->gestion_libelle, $row->opac_libelle, $row->notice_visible_opac, $row->notice_visible_gestion, $row->expl_visible_opac, $row->class_html, $row->notice_visible_opac_abon, $row->expl_visible_opac_abon, $row->explnum_visible_opac, $row->explnum_visible_opac_abon );
+				statut_form($row->id_notice_statut, $row->gestion_libelle, $row->opac_libelle, $row->notice_visible_opac, $row->notice_visible_gestion, $row->expl_visible_opac, $row->class_html, $row->notice_visible_opac_abon, $row->expl_visible_opac_abon, $row->explnum_visible_opac, $row->explnum_visible_opac_abon, $row->notice_scan_request_opac, $row->notice_scan_request_opac_abon );
 			} else {
 				show_statut($dbh);
 			}

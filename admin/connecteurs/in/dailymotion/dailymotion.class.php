@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dailymotion.class.php,v 1.3 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: dailymotion.class.php,v 1.7 2017-09-18 13:20:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,33 +13,20 @@ require_once("sdk/Dailymotion.php");
 
 class dailymotion extends connector {
 	
-    function dailymotion($connector_path="") {
-    	parent::connector($connector_path);
+    public function __construct($connector_path="") {
+    	parent::__construct($connector_path);
     }
     
-    function get_id() {
+    public function get_id() {
     	return "dailymotion";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 2;
 	}
     
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-    
-    function get_libelle($message) {
-    	if (substr($message,0,4)=="msg:") return $this->msg[substr($message,4)]; else return $message;
-    }
-    
-    function source_get_property_form($source_id) {
+    public function source_get_property_form($source_id) {
 		global $charset;
 		global $pmb_url_base;
 		global $code;
@@ -49,8 +36,8 @@ class dailymotion extends connector {
 //			//Affichage du formulaire avec $params["PARAMETERS"]
 //			$vars=unserialize($params["PARAMETERS"]);
 //			foreach ($vars as $key=>$val) {
-//				global $$key;
-//				$$key=$val;
+//				global ${$key};
+//				${$key}=$val;
 //			}	
 //		}
 //
@@ -104,48 +91,18 @@ class dailymotion extends connector {
 //		<div class='row'>&nbsp;</div>";
 		return $form;
     }
-    
-    function make_serialized_source_properties($source_id) {
-//  	global $api_key,$secret_key,$code_saved;
-    	$t =array();
-//    	$t["api_key"]=$api_key;
-//    	$t["secret_key"]=$secret_key;
-//    	$t["code_saved"]=$code_saved;  	
-    	$this->sources[$source_id]["PARAMETERS"]=serialize($t);
-	}
-	
-	//Récupération  des proriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
-		$this->timeout=5;
-		$this->repository=2;
-		$this->retry=3;
-		$this->ttl=1800;
-		$this->parameters="";
-	}
-	
-	 //Formulaire des propriétés générales
-	function get_property_form() {
-		return "";
-	}
-    
-    function make_serialized_properties() {
-    	global $accesskey, $secretkey;
-		//Mise en forme des paramètres à partir de variables globales (mettre le résultat dans $this->parameters)
-		$keys = array();
-		$this->parameters = serialize($keys);
-	}
 
-	function enrichment_is_allow(){
+	public function enrichment_is_allow(){
 		return true;
 	}
 	
-	function getEnrichmentHeader(){
+	public function getEnrichmentHeader(){
 		$header= array();
 		$header[]= "<!-- Script d'enrichissement pour Dailymotion-->";
 		return $header;
 	}
 	
-	function getTypeOfEnrichment($source_id){
+	public function getTypeOfEnrichment($source_id){
 		$type['type'] = array(
 			array(
 				'code' => "dailymotion",
@@ -157,7 +114,7 @@ class dailymotion extends connector {
 		return $type;
 	}
 	
-	function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array(),$page=1){
+	public function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array(),$page=1){
 		global $lang;
 		
 		$this->noticeToEnrich= $notice_id;
@@ -167,8 +124,8 @@ class dailymotion extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		$enrichment= array();
@@ -204,7 +161,7 @@ class dailymotion extends connector {
 		return $enrichment;
 	}
 
-	function get_notice_infos(){
+	public function get_notice_infos(){
 		$infos = array();
 		//on va chercher le titre de la notice...
 		$query = "select tit1 from notices where notice_id = ".$this->noticeToEnrich;
@@ -218,7 +175,7 @@ class dailymotion extends connector {
 		if(pmb_mysql_num_rows($result)){
 			$author_id = pmb_mysql_result($result,0,0);
 			$author = new auteur($author_id);
-			$infos['author'] = $author->isbd_entry;
+			$infos['author'] = $author->get_isbd();
 		}
 		return $infos; 		
 	}

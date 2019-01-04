@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: Statut.php,v 1.4 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: Statut.php,v 1.5 2016-01-26 15:36:15 dgoron Exp $
 namespace Sabre\PMB;
 
 class Statut extends Collection {
@@ -21,12 +21,7 @@ class Statut extends Collection {
 	}
 
 	function getName() {
-		global $charset;
-		if($charset != "utf-8"){
-			return utf8_encode($this->statut_libelle." (S".$this->statut_id.")");
-		}else{
-			return $this->statut_libelle." (S".$this->statut_id.")";
-		}
+		return $this->format_name($this->statut_libelle." (S".$this->statut_id.")");
 	}
 	
 	function getNotices(){

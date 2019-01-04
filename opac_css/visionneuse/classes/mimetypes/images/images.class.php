@@ -2,19 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: images.class.php,v 1.11 2015-05-28 12:09:01 apetithomme Exp $
+// $Id: images.class.php,v 1.12 2017-07-03 09:07:10 dgoron Exp $
 
 require_once($visionneuse_path."/classes/mimetypes/affichage.class.php");
 
 class images extends affichage{
-	var $doc;				//le document numérique à afficher
-	var $driver;			//class driver de la visionneuse
-	var $params;			//paramètres éventuels
-	var $toDisplay= array();//tableau des infos à afficher
-	var $tabParam = array();	//tableau décrivant les paramètres de la classe
-	var $parameters = array();	//tableau des paramètres de la classe
+	public $doc;				//le document numérique à afficher
+	public $driver;			//class driver de la visionneuse
+	public $params;			//paramètres éventuels
+	public $toDisplay= array();//tableau des infos à afficher
+	public $tabParam = array();	//tableau décrivant les paramètres de la classe
+	public $parameters = array();	//tableau des paramètres de la classe
 	
-    function images($doc="") {
+    public function __construct($doc="") {
       	if($doc){
     		$this->doc = $doc; 
     		$this->driver = $doc->driver;
@@ -23,7 +23,7 @@ class images extends affichage{
     	}
     }
     
-    function fetchDisplay(){
+    public function fetchDisplay(){
     	global $base_path;
     	//le titre
     	$this->toDisplay["titre"] = $this->doc->titre;
@@ -35,12 +35,12 @@ class images extends affichage{
 		return $this->toDisplay; 	
     }   
     
-    function render(){
+    public function render(){
     	header("Content-Type: image/png");
     	$this->resizeToDisplay();
     }
     
-    function resizeToDisplay(){
+    public function resizeToDisplay(){
 
     	$src_img = imagecreatefromstring($this->driver->openCurrentDoc());
 
@@ -139,7 +139,7 @@ class images extends affichage{
 		}
     }
      
-    function getTabParam(){
+    public function getTabParam(){
 		$this->tabParam = array(
 			"size_x"=>array("type"=>"text","name"=>"size_x","value"=>$this->parameters['size_x'],"desc"=>"Largeur maximale de l'image"),
 			"size_y"=>array("type"=>"text","name"=>"size_y","value"=>$this->parameters['size_y'],"desc"=>"Hauteur maximale de l'image"),
@@ -149,7 +149,7 @@ class images extends affichage{
        	return $this->tabParam;
     }
     
-	function getParamsPerso(){
+	public function getParamsPerso(){
 		$params = $this->driver->getClassParam('images');
 		$this->unserializeParams($params);
 		if($this->parameters['size_x'] == 0) $this->parameters['size_x'] = $this->driver->getParam("maxX");
@@ -157,12 +157,12 @@ class images extends affichage{
 		if($this->parameters['transparence'] == 0) $this->parameters['transparence'] = 10;
 	}
 	
-	function unserializeParams($paramsToUnserialized){
+	public function unserializeParams($paramsToUnserialized){
 		$this->parameters = unserialize($paramsToUnserialized);
 		return $this->parameters;
 	}
 	
-	function serializeParams($paramsToSerialized){
+	public function serializeParams($paramsToSerialized){
 		$this->parameters =$paramsToSerialized;
 		return addslashes(serialize($paramsToSerialized));
 	}

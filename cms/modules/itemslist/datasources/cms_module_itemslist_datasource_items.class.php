@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_itemslist_datasource_items.class.php,v 1.3 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: cms_module_itemslist_datasource_items.class.php,v 1.5 2017-06-05 10:13:38 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -47,16 +47,16 @@ class cms_module_itemslist_datasource_items extends cms_module_common_datasource
 			$return = array();
 			if (count($selector->get_value()) > 0) {
 				foreach ($selector->get_value() as $value) {
-					$return[] = $value;
+					$return[] = $value*1;
 				}
 			}
 			
 			if(count($return)){
 				$itemslist = array();
-				$query = "select id_item from docwatch_items where id_item in (".implode(",",$return).")";
+				$query = "select id_item from docwatch_items where id_item in ('".implode("','",$return)."')";
 				if ($this->parameters["sort_by"] != "") {
-					$query .= " order by ".$this->parameters["sort_by"];
-					if ($this->parameters["sort_order"] != "") $query .= " ".$this->parameters["sort_order"];
+					$query .= " order by ".addslashes($this->parameters["sort_by"]);
+					if ($this->parameters["sort_order"] != "") $query .= " ".addslashes($this->parameters["sort_order"]);
 				}
 				$result = pmb_mysql_query($query,$dbh);
 				if ($result) {
@@ -67,6 +67,7 @@ class cms_module_itemslist_datasource_items extends cms_module_common_datasource
 						}
 					}
 				}
+				$itemslist = $this->filter_datas('items', $itemslist);
 				if ($this->parameters["nb_max_elements"] > 0) $itemslist = array_slice($itemslist, 0, $this->parameters["nb_max_elements"]);
 				return array('items' => $itemslist);
 			}

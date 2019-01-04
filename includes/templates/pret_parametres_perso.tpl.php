@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pret_parametres_perso.tpl.php,v 1.1 2015-06-26 13:15:14 dgoron Exp $
+// $Id: pret_parametres_perso.tpl.php,v 1.4 2018-04-25 09:12:24 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -24,8 +24,14 @@ $form_loan_edit="<form class='form-$current_module' name='formulaire' action='!!
 		<label class='etiquette' for='titre'>".$msg['parperso_field_title']."</label>
 	</div>
 	<div class='row'>
-		<input class='saisie-30em' id='titre' type='text' name='titre' value='!!titre!!'/>
+		<input class='saisie-30em' id='titre' type='text' name='titre' value='!!titre!!' data-translation-fieldname='titre'/>
+	</div>	
+	<div class='row'>
+		<label class='etiquette' for='comment'>".$msg[707]."</label>
 	</div>
+	<div class='row'>
+		<textarea class='saisie-80em' id='comment' wrap='virtual' rows='1' name='comment' />!!comment!!</textarea>
+	</div>	
 	<div class='row'>
 		<label class='etiquette' for='type'>".$msg['parperso_input_type']."</label>
 	</div>

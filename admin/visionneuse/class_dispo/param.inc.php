@@ -2,19 +2,21 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: param.inc.php,v 1.6 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: param.inc.php,v 1.10 2018-05-17 08:16:38 dgoron Exp $
 
-require_once($visionneuse_path."/classes/mimetypes/$quoi/$quoi.class.php");	
+if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+require_once($visionneuse_path."/classes/mimetypes/".$quoi."/".$quoi.".class.php");	
 
 $current_class = new $quoi();
 
 switch($action){
 	case "" :
-		$submenu.=show_form();
+		$submenu.= show_form();
 		break;
 	case "update" :
 		if ($form_actif) update_params();
-		$submenu.=show_form($action);
+		$submenu.= show_form($action);
 		break;
 }
 
@@ -23,19 +25,22 @@ function show_form($action=''){
 	global $current_class;
 	
 	$i = 0;
-	if($action=="update") $message="<div class='erreur'>".$msg["visionneuse_admin_update"]."</div>";
+	$message = '';
+	if($action=="update") {
+		$message = "<div class='erreur'>".$msg["visionneuse_admin_update"]."</div>";
+	}
 	
 	//on récup les infos déjà existantes
-	$params = array();
-	$rqt = "SELECT visionneuse_params_parameters FROM visionneuse_params WHERE visionneuse_params_class LIKE '$quoi'";
-	if($res=pmb_mysql_query($rqt)){
-		if(pmb_mysql_num_rows($res))
-		$paramToUnserialize= htmlspecialchars_decode(pmb_mysql_result($res,0,0));
-		$params_values=$current_class->unserializeParams($paramToUnserialize);
+	$params = $params_values = array();
+	$rqt = "SELECT visionneuse_params_parameters FROM visionneuse_params WHERE visionneuse_params_class LIKE '".$quoi."'";
+	if($res = pmb_mysql_query($rqt)){
+		if(pmb_mysql_num_rows($res)) {
+			$paramToUnserialize = htmlspecialchars_decode(pmb_mysql_result($res, 0, 0));
+			$params_values = $current_class->unserializeParams($paramToUnserialize);
+		}
 		$current_class->getTabParam();
 	}
-	$form="
-		$message
+	$form = $message."
 		<form class='form-admin' name='".$quoi."Param' method='POST' action='./admin.php?categ=visionneuse&sub=class&quoi=$quoi&vue=param&action=update' >
 			<h3>$quoi</h3>
 			<table>
@@ -56,7 +61,7 @@ function show_form($action=''){
 			$form.="</td>";
 		} else {
 			$form.="
-					<td><input type='".$tabParam['type']."' name='".$tabParam['name']."' id='".$tabParam['name']."' value='".$tabParam['value']."' style='width:98%' ".($tabParam['type'] == "checkbox" ? ($params_values[$key] == 1 ? "checked='checked'" : ""): "")."/></td>";
+					<td><input type='".$tabParam['type']."' name='".$tabParam['name']."' id='".$tabParam['name']."' value='".$tabParam['value']."' ".($tabParam['type'] == "checkbox" ? ($params_values[$key] == 1 ? "checked='checked'" : ""): "")."/></td>";
 		}
 			$form.="
 					<td>".$tabParam['desc']."</td>

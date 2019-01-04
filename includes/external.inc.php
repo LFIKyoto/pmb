@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: external.inc.php,v 1.12 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: external.inc.php,v 1.14 2018-09-26 12:09:55 dgoron Exp $
 
 //Fonctions pour les recherches externes
 
@@ -24,11 +24,6 @@ function entrepot_to_unimarc($recid) {
 		$unimarc->is_utf8 = true;
 	}
 	$field_order=-1;
-	$field=$r->ufield;
-	$field_ind= $r->field_ind;
-	while(strlen($field_ind)<2){
-		$field_ind.= ' ';
-	}
 	$sfields=array();
 	
 	while ($r=pmb_mysql_fetch_object($resultat)) {
@@ -50,6 +45,12 @@ function entrepot_to_unimarc($recid) {
 				break;
 			case "ru":
 				$unimarc->set_ru($r->value);
+				break;
+			case "ser":
+				$unimarc->add_field($r->ufield,$r->field_ind);
+				break;
+			case "aut":
+				$unimarc->add_field($r->ufield,$r->field_ind);
 				break;
 			case "001":
 				$unimarc->add_field("001",'  ',$r->value);

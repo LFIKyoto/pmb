@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: enrichment.js,v 1.15.2.1 2015-11-03 16:00:50 jpermanne Exp $
+// $Id: enrichment.js,v 1.19 2018-11-19 16:25:17 dgoron Exp $
 
 function getEnrichment(notice_id){
 	var ul = findNoticeElement(notice_id);
@@ -125,12 +125,13 @@ function findNoticeElement(id){
 	} else{
 		var li = document.getElementById("onglet_isbd"+id);
 		if(!li) var li = document.getElementById("onglet_public"+id);
+		if(!li) var li = document.getElementById("onglet_detail"+id);
 		if(li) var ul = li.parentNode;
 	}
 	return ul;
 }
 
-// la méthode show_what... mais en mieux...
+// la mï¿½thode show_what... mais en mieux...
 function show_what(quoi, id) {
 	switch(quoi){
 		case "EXPL_LOC" :
@@ -151,13 +152,15 @@ function show_what(quoi, id) {
 			if (ul) {
 				var items  = ul.getElementsByTagName('li');
 				for (var i=0 ; i<items.length ; i++){
-					if(items[i].getAttribute("id") == "onglet_"+quoi+id){
-						items[i].className = "isbd_public_active";
-						document.getElementById("div_"+quoi+id).style.display = "block";
-					}else{
-						if(items[i].className != "onglet_tags" && items[i].className != "onglet_avis" && items[i].className != "onglet_sugg" && items[i].className != "onglet_basket"){
-							items[i].className = "isbd_public_inactive";	
-							document.getElementById(items[i].getAttribute("id").replace("onglet","div")).style.display = "none";
+					if(items[i].getAttribute('id')){
+						if(items[i].getAttribute("id") == "onglet_"+quoi+id){
+							items[i].className = "isbd_public_active";
+							document.getElementById("div_"+quoi+id).style.display = "block";
+						}else{
+							if(items[i].className != "onglet_tags" && items[i].className != "onglet_avis" && items[i].className != "onglet_sugg" && items[i].className != "onglet_basket" && items[i].className != "onglet_liste_lecture"){
+								items[i].className = "isbd_public_inactive";	
+								document.getElementById(items[i].getAttribute("id").replace("onglet","div")).style.display = "none";
+							}
 						}
 					}
 				}			
@@ -167,7 +170,7 @@ function show_what(quoi, id) {
 }
 
 function display_tab(a, quoi, notice_id) {
-	//on supprime une éventuelle autre image de chargement
+	//on supprime une ï¿½ventuelle autre image de chargement
 	var img = document.getElementById('patience'+notice_id);
 	if(img) img.parentNode.removeChild(img);
 	

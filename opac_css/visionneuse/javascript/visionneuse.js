@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: visionneuse.js,v 1.19 2014-09-25 12:35:13 arenou Exp $
+// $Id: visionneuse.js,v 1.21 2017-07-21 12:39:33 vtouchard Exp $
 
 function open_visionneuse(callbackFunction,explnum_id){
 	callback = function(){
@@ -21,12 +21,17 @@ function open_visionneuse(callbackFunction,explnum_id){
 	visionneuse.appendChild(background);
 	
 	var iframe = document.createElement('iframe');
-	iframe.setAttribute('style','overflow:hidden;background-color:white;position:absolute;z-index:9002;left:2%;top:2%');		
+	iframe.setAttribute('style','overflow:hidden;background-color:white;position:absolute;z-index:9002;left:2%;top:2%;background-image:url("images/ajax-loader.gif");background-repeat:no-repeat;background-position:center center;');		
 	iframe.setAttribute("width","96%");
 	iframe.setAttribute("height","96%");
 	iframe.setAttribute('name','visionneuse');
 	iframe.setAttribute('id','visionneuseIframe');
 	iframe.setAttribute('src','');
+	iframe.addEventListener('load', function(e){
+		if(this.contentWindow.location.href != 'about:blank'){
+			this.setAttribute('style','overflow:hidden;background-color:white;position:absolute;z-index:9002;left:2%;top:2%;background-image:none;background-repeat:no-repeat;background-position:center center;');	
+		}
+	});
 	visionneuse.appendChild(iframe);
 	
 	visionneuse.parentNode.style.overflow = "hidden";
@@ -38,7 +43,6 @@ function open_visionneuse(callbackFunction,explnum_id){
 }
 
 function open_alertbox(opac_visionneuse_alert) {
-	 
 	var alertbox = document.createElement('div');
 	alertbox.setAttribute('id','alertbox');
 	alertbox.setAttribute('style','background-color:white;position:absolute;');

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_main.inc.php,v 1.24.2.2 2015-10-14 08:55:14 jpermanne Exp $
+// $Id: ajax_main.inc.php,v 1.38 2018-06-05 08:31:02 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -11,13 +11,13 @@ if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 switch($categ):
 	case 'misc':
 		include('./ajax/misc/misc.inc.php');
-	break;
+		break;
 	case 'liste_lecture' :
 		include('./ajax/ajax_liste_lecture.inc.php');
-	break;
+		break;
 	case 'demandes' :
 		include('./ajax/ajax_demandes.inc.php');
-	break;
+		break;
 	case "enrichment" :
 		include("./ajax/ajax_enrichment.inc.php"); 
 		break;
@@ -39,12 +39,15 @@ switch($categ):
 	case "expl_voisin" :
 		include("./ajax/expl_voisin.inc.php"); 
 		break;
-	case 'facette':
+	case 'facettes':
 		include('./ajax/facette.inc.php');
-	break;
+		break;
+	case 'facettes_external':
+		include('./ajax/facettes_external.inc.php');
+		break;
 	case 'print_docnum':
 		include('./ajax/print_docnum.inc.php');
-	break;
+		break;
 	case 'explnum_associate':
 		include('./ajax/explnum_associate.inc.php');
 		break;
@@ -74,6 +77,9 @@ switch($categ):
 	case 'messages':
 		include('./ajax/misc/messages.inc.php');
 		break;
+	case 'images':
+		include('./ajax/misc/images.inc.php');
+		break;
 	case 'storage' :
 		include('./ajax/storage.inc.php');
 		break;
@@ -83,6 +89,41 @@ switch($categ):
 	case 'log':
 		include('./ajax/log.inc.php');
 		break;
+	case 'sugg':
+		include('./ajax/sugg.inc.php');
+		break;
+	case 'scan_requests':
+		if($_SESSION['id_empr_session'] && $opac_scan_request_activate && $allow_scan_request) {
+			include('./ajax/ajax_scan_requests.inc.php');
+		}
+		break;
+	case 'contact_form':
+		include('./ajax/ajax_contact_form.inc.php');
+		break;
+	case 'extended_search':
+		require_once('./ajax/ajax_extended_search.inc.php');
+		break;
+	case 'grid':
+		require_once('./ajax/ajax_grid.inc.php');
+		break;
+	case 'contribution':
+		require_once('./ajax/ajax_contribution.inc.php');
+		break;
+	case 'cart':
+		require_once('./ajax/cart.inc.php');
+		break;
+	case 'entity_graph':
+		include('./ajax/entity_graph.inc.php');
+		break;
+	case 'explnum':
+		include('./ajax/explnum.inc.php');
+		break;
+	case 'search_universes':
+		include('./ajax/search_universes.inc.php');
+		break;
+	case 'pnb':
+		include('./ajax/pnb.inc.php');
+		break;
 	default:
-	break;		
-endswitch;	
+		break;
+endswitch;

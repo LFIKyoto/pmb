@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_modules_parser.class.php,v 1.12 2015-06-15 15:52:15 apetithomme Exp $
+// $Id: cms_modules_parser.class.php,v 1.14 2018-11-28 15:53:50 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -47,12 +47,13 @@ class cms_modules_parser {
 				if(class_exists($module_class_name)){
 					//une histoire de hash dans les formulaires...
 					$hash_var = $module_class_name."_hash";
-					global $$hash_var;
-					$size = count($$hash_var);
+					global ${$hash_var};
+					$size = (is_array(${$hash_var}) ? count(${$hash_var}) : 0);
 					self::$modules_list[$module_name] = $module_class_name::get_informations();
 					//c'est la même histoire...
-					if($size!= count($$hash_var)){
-						array_unshift($$hash_var,$module->get_hash());
+					$other_size = (is_array(${$hash_var}) ? count(${$hash_var}) : 0);
+					if($size!= $other_size){
+						array_unshift(${$hash_var},$module->get_hash());
 					}
 					$tri[$module_name]=self::$modules_list[$module_name]['name'];
 				}

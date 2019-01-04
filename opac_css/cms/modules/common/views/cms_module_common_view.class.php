@@ -2,15 +2,18 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view.class.php,v 1.12.4.1 2015-08-26 10:08:14 jpermanne Exp $
+// $Id: cms_module_common_view.class.php,v 1.19 2016-10-05 09:15:55 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+require_once($class_path."/cms/cms_toolkits.class.php");
 
 class cms_module_common_view extends cms_module_root{
 	protected $use_jquery = false;
 	protected $use_dojo = false;
 	protected $cadre_parent;
 	private $dojo_theme="tundra";
+	protected $cadre_name = "";
 	
 	public function __construct($id=0){
 		$this->id = $id+0;
@@ -21,7 +24,7 @@ class cms_module_common_view extends cms_module_root{
 		global $dbh;
 		if($this->id){
 		//on commence par aller chercher ses infos
-			$query = " select id_cadre_content, cadre_content_hash, cadre_content_num_cadre, cadre_content_data from cms_cadre_content where id_cadre_content = ".$this->id;
+			$query = " select id_cadre_content, cadre_content_hash, cadre_content_num_cadre, cadre_content_data from cms_cadre_content where id_cadre_content = '".$this->id."'";
 			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				$row = pmb_mysql_fetch_object($result);
@@ -47,7 +50,7 @@ class cms_module_common_view extends cms_module_root{
 			cadre_content_hash = '".$this->hash."',
 			cadre_content_type = 'view',
 			cadre_content_object = '".$this->class_name."',".
-			($this->cadre_parent ? "cadre_content_num_cadre = ".$this->cadre_parent."," : "")."		
+			($this->cadre_parent ? "cadre_content_num_cadre = '".$this->cadre_parent."'," : "")."		
 			cadre_content_data = '".addslashes($this->serialize())."'
 			".$clause;
 		$result = pmb_mysql_query($query,$dbh);
@@ -56,7 +59,7 @@ class cms_module_common_view extends cms_module_root{
 				$this->id = pmb_mysql_insert_id();
 			}
 			//on supprime les anciennes vues...
-			$query = "delete from cms_cadre_content where id_cadre_content != ".$this->id." and cadre_content_type='view' and cadre_content_num_cadre = ".$this->cadre_parent;
+			$query = "delete from cms_cadre_content where id_cadre_content != '".$this->id."' and cadre_content_type='view' and cadre_content_num_cadre = '".$this->cadre_parent."'";
 			pmb_mysql_query($query,$dbh);
 			
 			return true; 
@@ -75,7 +78,7 @@ class cms_module_common_view extends cms_module_root{
 		global $dbh;
 		if($this->id){
 			//on commence par éliminer les sous-éléments associé (sait-on jamais...)
-			$query = "select id_cadre_content,cadre_content_object from cms_cadre_content where cadre_content_num_cadre_content = ".$this->id;
+			$query = "select id_cadre_content,cadre_content_object from cms_cadre_content where cadre_content_num_cadre_content = '".$this->id."'";
 			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				while($row = pmb_mysql_fetch_object($result)){
@@ -88,7 +91,7 @@ class cms_module_common_view extends cms_module_root{
 				}
 			}
 			//on est tout seul, éliminons-nous !
-			$query = "delete from cms_cadre_content where id_cadre_content = ".$this->id;
+			$query = "delete from cms_cadre_content where id_cadre_content = '".$this->id."'";
 			$result = pmb_mysql_query($query,$dbh);
 			if($result){
 				$this->delete_hash();
@@ -109,10 +112,20 @@ class cms_module_common_view extends cms_module_root{
 	
 	public function get_headers($datas=array()){
 		global $lang;
+		global $cms_active_toolkits;
 		$headers = array();
 		if($this->use_jquery){
-			$headers[] = "<!-- Inclusion JQuery pour le portail-->";
-			$headers[] = "<script type='text/javascript' src='./cms/modules/common/includes/javascript/jquery-2.1.1.min.js"."'></script>";
+			if(!$cms_active_toolkits || !cms_toolkits::is_active('jquery')) {
+				$headers[] = "<!-- Inclusion JQuery pour le portail-->";
+				//$headers[] = "<script type='text/javascript' src='./cms/modules/common/includes/javascript/jquery-2.1.1.min.js"."'></script>";
+				$headers[] = "<!--[if (!IE)|(gt IE 8)]><!-->
+  <script type='text/javascript' src='./cms/modules/common/includes/javascript/jquery-2.1.1.min.js'></script>
+<!--<![endif]-->
+
+<!--[if lte IE 8]>
+  <script type='text/javascript' src='./cms/modules/common/includes/javascript/jquery-1.9.1.min.js'></script>
+<![endif]-->";
+			}
 		}
 
 		$headers[]= "
@@ -136,14 +149,23 @@ class cms_module_common_view extends cms_module_root{
 		parent::fetch_managed_datas($type);
 	}
 	
-	protected function get_exported_datas(){
+	public function get_exported_datas(){
 		$infos = parent::get_exported_datas();
-		$infos['type'] = "view";
+		$infos['cadre_name'] = $this->cadre_name;
+		$infos['cadre_parent'] = $this->cadre_parent;		
 		return $infos;
 	}
 	
-	
 	public function get_format_data_structure(){
 		return array();
+	}
+	
+	public function set_cadre_name($name){
+		$this->cadre_name = $name;
+	}
+	
+	public function get_human_description($context_name){
+		$description = "<span class = 'cms_module_common_view_name_human_description'>".$context_name."</span>";
+		return $description;
 	}
 }

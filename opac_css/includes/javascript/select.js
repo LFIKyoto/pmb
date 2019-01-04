@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: select.js,v 1.5 2015-04-08 13:25:02 jpermanne Exp $
+// $Id: select.js,v 1.6 2017-04-11 09:13:55 ngantier Exp $
 
 function insertatcursor(myField, myValue) {
 	if (document.selection) {
@@ -145,6 +145,7 @@ function show_layer() {
 	div_view.style.left=posx+"px";
 	div_view.style.top=posy+"px";
 	div_view.style.visibility="visible";
+	div_view.style.zIndex="500";
 	
 	if (document.getElementById("container")) document.getElementById("container").onmousedown=clic_layer; 
 }
@@ -177,6 +178,10 @@ function clic_layer(e){
 
 function kill_frame(block_name) {
 	var notice_view=document.getElementById(block_name);
-	if (notice_view)
+	if (notice_view) {
+		dojo.forEach(dijit.findWidgets(dojo.byId(block_name)), function(w) {
+		    w.destroyRecursive();
+		});
 		notice_view.parentNode.removeChild(notice_view);
+	}
 }

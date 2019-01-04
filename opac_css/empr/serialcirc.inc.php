@@ -2,14 +2,16 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc.inc.php,v 1.6 2012-02-01 10:15:51 arenou Exp $
+// $Id: serialcirc.inc.php,v 1.8 2018-11-20 12:36:40 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($actions_form_submit)) $actions_form_submit = '';
+if(!isset($action)) $action = '';
 
 require_once($class_path."/serialcirc_empr.class.php");
 require_once($class_path."/serialcirc_diff.class.php");
 require_once($include_path."/serialcirc.inc.php");
-
 
 $serialcirc_empr = new serialcirc_empr();
 switch ($lvl){
@@ -61,7 +63,8 @@ switch ($lvl){
 		break;
 	case "ask" :
 		if($action == "subscribe"){
-			$serialcirc_empr->ask_subscription($serial_id);
+			$subscribed = $serialcirc_empr->ask_subscription($serial_id);
+			print $serialcirc_empr->get_display_save_notification($subscribed);
 		}
 		print $serialcirc_empr->resume_ask();
 		break;
@@ -70,11 +73,12 @@ switch ($lvl){
 		print "<h3><span>".htmlentities($msg["serialcirc_list_abo"],ENT_QUOTES,$charset)."</span></h3>";
 		//si une action vient d'être faites...
 		if($action == "unsubscribe"){
-			$serialcirc_empr->unsubscribe($unsubscribe_list);
+			$unsubscribed = $serialcirc_empr->unsubscribe($unsubscribe_list);
+			print $serialcirc_empr->get_display_save_notification($unsubscribed);
 		}else if($actions_form_submit == 1){
 			$serialcirc_empr->process_actions($id_serialcirc,$expl_id,$subscription,$ask_transmission,$report_late,$trans_accepted,$trans_doc_accepted,$ret_accepted);
 		}
 		$serialcirc_empr->get_my_circ_list();
 		print $serialcirc_empr->get_tab_circ_list();
-		break;	
+		break;
 }

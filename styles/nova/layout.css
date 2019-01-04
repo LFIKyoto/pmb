@@ -1,7 +1,7 @@
 /* +--------------------------------------------------------------------------+
 // � 2002-2008 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: layout.css,v 1.53 2014-03-25 10:19:21 apetithomme Exp $
+// $Id: layout.css,v 1.58 2017-10-30 16:13:50 mramage Exp $
 */
 
 /* ---------------------------------------------------------------------------*/
@@ -20,6 +20,10 @@ body{
 	background:#ede9e3;
 	margin:0;
 	padding:0;
+}
+
+input, select {
+	font-family: Arial,Helvetica,sans-serif;
 }
 
 iframe{
@@ -78,7 +82,10 @@ select,input{
 	border-radius:3px;
 }
 
-#att{position:absolute;}
+#att{
+	position:absolute;
+	width:100%;
+}
 
 /* ---------------------------------------------------------------------------*/
 /*                         BARRE DE NAGIVATION                                */
@@ -126,6 +133,7 @@ select,input{
 	 * Le sprite trouve son utilite pour la mise en cache d'une seule image 
 	 * <=> pas de chargement sur le :hover
 	*/
+	#navbar-semantic,
 	#navbar-dashboard,
 	#navbar-opac,
 	#navbar-index,
@@ -149,6 +157,7 @@ select,input{
 		background-position:top right;
 		height:27px;
 	}
+		ul>#navbar-semantic,
 		ul>#navbar-dashboard,
 		ul>#navbar-opac,
 		ul>#navbar-index,
@@ -170,6 +179,7 @@ select,input{
 	/*
 	 * Habillage des li:hover
 	*/
+	#navbar-semantic:hover,
 	#navbar-dashboard:hover,
 	#navbar-opac:hover,
 	#navbar-index:hover,
@@ -190,6 +200,7 @@ select,input{
 		/* Gestion des png transparents (multi-niveaux) sous IE5.5 et 6 */
 		behavior:url('styles/nova/iepngfix.htc');
 	}
+	ul>#navbar-semantic:hover,
 	ul>#navbar-dashboard:hover,
 	ul>#navbar-opac:hover,
 	ul>#navbar-index:hover,
@@ -210,6 +221,7 @@ select,input{
 	/*
 	* Habillage des li.current
 	*/	
+	#navbar-semantic.current,
 	#navbar-dashboard.current,
 	#navbar-opac.current,	
 	#navbar-index.current,	
@@ -230,6 +242,7 @@ select,input{
 		/* Gestion des png transparents (multi-niveaux) sous IE5.5 et 6 */
 		behavior:url('styles/nova/iepngfix.htc');
 	}
+	ul>#navbar-semantic.current,
 	ul>#navbar-dashboard.current,
 	ul>#navbar-opac.current,	
 	ul>#navbar-index.current,	
@@ -250,6 +263,7 @@ select,input{
 		/* 
 		* Habillage des liens a 
 		*/
+		#navbar-semantic a,
 		#navbar-dashboard a,
 		#navbar-opac a,
 		#navbar-index a,
@@ -272,6 +286,7 @@ select,input{
 			background-image:url('images/navbar_bord.png');
 			background-repeat:no-repeat;	
 		}
+		#navbar-semantic>a,
 		#navbar-dashboard>a,
 		#navbar-opac>a,
 		#navbar-index>a,
@@ -292,6 +307,7 @@ select,input{
 		/* 
 		* Habillage des liens a.current
 		*/
+		#navbar-semantic>a:hover,
 		#navbar-dashboard>a:hover,
 		#navbar-index>a:hover,
 		#navbar-opac>a:hover,
@@ -313,6 +329,7 @@ select,input{
 			behavior:url('styles/nova/iepngfix.htc');
 		}
 		
+		#navbar-semantic a.current,
 		#navbar-dashboard a.current,
 		#navbar-index a.current,
 		#navbar-opac a.current,
@@ -332,6 +349,7 @@ select,input{
 			/* Gestion des png transparents (multi-niveaux) sous IE5.5 et 6 */
 			behavior:url('styles/nova/iepngfix.htc');
 		}
+		#navbar-semantic>a.current,
 		#navbar-dashboard>a.current,
 		#navbar-index>a.current,
 		#navbar-opac>a.current,
@@ -982,7 +1000,7 @@ select,input{
 		background-position:0px -77px;
 	}
 
-.bulletins-perio{
+.bulletins-perio, .elts-list-tabs{
 	border: 1px solid #aaa;
 	-moz-border-radius:6px;
 	-webkit-border-radius:6px;
@@ -1358,7 +1376,12 @@ ul.sel_navbar li.sel_navbar_current a {
 	width:99%;
 	border:1px solid;
 }
-
+.form-acquisition .in_cell, 
+.form-acquisition .in_cell_nb, 
+.form-acquisition .in_cell_ro, 
+.form-acquisition .in_cell_nb_ro {
+    width: 70%;
+}
 .in_cell_nb,
 .in_cell_nb_ro {
 	text-align:right;

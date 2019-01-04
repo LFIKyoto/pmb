@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_record_formation.js,v 1.13 2015-02-09 16:08:09 dgoron Exp $
+// $Id: nomenclature_record_formation.js,v 1.18 2016-06-23 15:18:55 dgoron Exp $
 
 define(["dojo/_base/declare", "apps/nomenclature/nomenclature_nomenclature", "dijit/registry", "apps/nomenclature/nomenclature_nomenclature_voices"], function(declare, Nomenclature, registry, Nomenclature_voices){
 	/*
@@ -15,17 +15,25 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_nomenclature", "di
 		  	label:null,
 		  	type:null,
 		  	hash:null,
+		  	id: 0,
+		  	order: 0,
+		  	note:null,
+		  	exotic_instruments:null,
 		  	
 		    constructor: function(formation, num_record, order, params){
 		    	this.set_formation(formation);
 		    	if(params){
+		    		this.set_id(params.id);
 		    		this.set_record(params.num_record);
 		    		this.init_hash(order);
 		    		this.set_label(params.label);
 		    		this.set_type(this.formation.get_type_from_id(params.num_type));
+		    		this.set_order(order);
+		    		this.set_note(params.notes);
+		    		this.set_exotic_instruments_note(params.exotic_instruments_note);
 		    		switch(formation.get_nature()){
 		    		case 0:
-		    			var nomenclature_param = new Nomenclature(params.abbreviation, registry.byId('nomenclature_datastore').get_families_datastore(), null, params.workshops, params.instruments, this);
+		    			var nomenclature_param = new Nomenclature(params.abbreviation, registry.byId('nomenclature_datastore').get_families_datastore(), null, params.workshops, params.instruments, this, params.families_notes);
 		    			this.set_nomenclature(nomenclature_param);
 		    			break;
 		    		case 1:
@@ -40,6 +48,9 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_nomenclature", "di
 		    		this.set_label("");
 		    		this.set_record(num_record);
 		    		this.init_hash(order);
+		    		this.set_order(order);
+		    		this.set_note("");
+		    		this.set_exotic_instruments_note("");
 		    		switch(formation.get_nature()){
 		    		case 0:
 		    			var nomenclature_std = new Nomenclature(this.get_empty_abbr_instruments(), registry.byId('nomenclature_datastore').get_families_datastore(), null, [], [] ,this);
@@ -123,7 +134,7 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_nomenclature", "di
 							empty_abbr+=".";
 					}
 					if(i<(families_tree.length-1))
-						empty_abbr+="-";
+						empty_abbr+=" - ";
 				}
 				return empty_abbr;
 			},
@@ -138,6 +149,30 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_nomenclature", "di
 					return this.get_hash()+'['+name+']';
 				else
 					return this.get_hash();
+			},
+			set_id: function(id){
+				this.id = id;
+			},
+			get_id: function(){
+				return this.id;
+			},
+			set_order: function(order){
+				this.order = order;
+			},
+			get_order: function(){
+				return this.order;
+			},
+			set_note: function(note){
+				this.note = note;
+			},
+			get_note: function(){
+				return this.note;
+			},
+			set_exotic_instruments_note: function(exotic_instruments_note){
+				this.exotic_instruments_note = exotic_instruments_note;
+			},
+			get_exotic_instruments_note: function(){
+				return this.exotic_instruments_note;
 			},
 	    });
 	});

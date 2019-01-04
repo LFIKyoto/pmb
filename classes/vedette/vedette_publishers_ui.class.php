@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_publishers_ui.class.php,v 1.3 2014-10-07 10:34:17 arenou Exp $
+// $Id: vedette_publishers_ui.class.php,v 1.4 2015-12-10 11:18:08 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -29,7 +29,11 @@ class vedette_publishers_ui extends vedette_element_ui{
 	 */
 	public static function get_create_box_js($params = array()){
 		global $vedette_publishers_tpl;
-		return $vedette_publishers_tpl["vedette_publishers_script"];
+		if(!in_array('vedette_publishers_script', parent::$created_boxes)){
+			array_push(parent::$created_boxes, 'vedette_publishers_script');
+			return $vedette_publishers_tpl["vedette_publishers_script"];
+		}
+		return '';
 	}
 	
 	/**

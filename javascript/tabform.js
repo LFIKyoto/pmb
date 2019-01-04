@@ -1,12 +1,20 @@
 // gestion des forms "collapsibles" en Javascript
-// $Id: tabform.js,v 1.9 2015-01-27 16:17:10 vtouchard Exp $
+// $Id: tabform.js,v 1.13 2017-12-15 11:39:01 dgoron Exp $
 
-// tabCreate() : crée un objet form et affecte les méthodes et propriétés
+// tabCreate() : crï¿½e un objet form et affecte les mï¿½thodes et propriï¿½tï¿½s
 
 var imgOpened = new Image();
-imgOpened.src = './images/minus.gif';
+if(typeof pmb_img_minus != 'undefined') {
+	imgOpened.src = pmb_img_minus;
+} else {
+	imgOpened.src = base_path+'/images/minus.gif';
+}
 var imgClosed = new Image();
-imgClosed.src = './images/plus.gif';
+if(typeof pmb_img_plus != 'undefined') {
+	imgClosed.src = pmb_img_plus;
+} else {
+	imgOpened.src = base_path+'/images/plus.gif';
+}
 var expandedDb = 'el0Child';
 
 // on regarde si le client est DOM-compliant
@@ -22,11 +30,16 @@ if(isDOM && typeof(navigator.userAgent) != 'undefined') {
 }
 
 function expandAll() {
-  var tempColl    = document.getElementsByTagName('DIV');
+  var tempCollNoticeChild = document.querySelectorAll('div[class~="notice-child"]');
+  var tempCollChild = document.querySelectorAll('div[class~="child"]');
+  var tempColl = Array.prototype.slice.call(tempCollNoticeChild).concat(Array.prototype.slice.call(tempCollChild));
   var tempCollCnt = tempColl.length;
+
   for (var i = 0; i < tempCollCnt; i++) {
-     if((tempColl[i].className == 'child')&&(tempColl[i].getAttribute("hide")!="yes"))
-     tempColl[i].style.display = 'block';
+     if(tempColl[i].getAttribute("hide")!="yes"){
+    	 tempColl[i].style.display = 'block';
+     }
+     
      var callback = tempColl[i].getAttribute("callback");
      if(callback){
    	  window[callback]();
@@ -35,28 +48,26 @@ function expandAll() {
    	  ajax_resize_elements();
      }
   }
-  tempColl    = document.getElementsByTagName('IMG');
+  tempColl    = document.querySelectorAll('img[name="imEx"]');
   tempCollCnt = tempColl.length;
   for (var i = 0; i < tempCollCnt; i++) {
-     if(tempColl[i].name == 'imEx') {
-       tempColl[i].src = imgOpened.src;
-     }
+	  tempColl[i].src = imgOpened.src;
   }
 }
 
-function collapseAll() {
-  var tempColl    = document.getElementsByTagName('DIV');
+function collapseAll() { 
+  var tempColl = document.querySelectorAll('div[class~="child"]');
   var tempCollCnt = tempColl.length;
   for (var i = 0; i < tempCollCnt; i++) {
-     if((tempColl[i].className == 'child')&&(tempColl[i].getAttribute("hide")!="yes"))
-     tempColl[i].style.display = 'none';
+     if(tempColl[i].getAttribute("hide")!="yes"){
+    	 tempColl[i].style.display = 'none';	 
+     }
+     
   }
-  tempColl    = document.getElementsByTagName('IMG');
+  tempColl    = document.querySelectorAll('img[name="imEx"]');
   tempCollCnt = tempColl.length;
   for (var i = 0; i < tempCollCnt; i++) {
-     if(tempColl[i].name == 'imEx') {
-       tempColl[i].src = imgClosed.src;
-     }
+	  tempColl[i].src = imgClosed.src;
   }
 }
 
@@ -70,9 +81,9 @@ function initIt()
   var tempColl    = document.getElementsByTagName('DIV');
   var tempCollCnt = tempColl.length;
   for (var i = 0; i < tempCollCnt; i++) {
-    if (((tempColl[i].id == expandedDb)&&(document.getElementById("elbulChild")==null))||(tempColl[i].id=="elbulChild"))
+    if ((((tempColl[i].id == expandedDb)&&(document.getElementById("elbulChild")==null))||(tempColl[i].id=="elbulChild")) && !(tempColl[i].getAttribute("startOpen")=="yes" || tempColl[i].getAttribute("startOpen")=="no")){
     	tempColl[i].style.display = 'block';
-    else if (tempColl[i].className == 'child'){
+    }else if (tempColl[i].className == 'child' && !(tempColl[i].getAttribute("startOpen")=="yes" || tempColl[i].getAttribute("startOpen")=="no") ){
     	 tempColl[i].style.display = 'none';
     	 
     	 //On recharge l'onglet on met plus dans l'image
@@ -80,12 +91,12 @@ function initIt()
     	 chaine=chaine.replace('Child', 'Parent');
     	 var tempCollparent = document.getElementById(chaine);
     	 
-    	 //On parcourt tous les fils de l'élément parent
+    	 //On parcourt tous les fils de l'ï¿½lï¿½ment parent
     	 if(tempCollparent!=null){
 	    	 for(var j=0;j<tempCollparent.childNodes.length;j++){
 	    		 if(tempCollparent.childNodes[j].nodeType == 1){
 	    			 if(tempCollparent.childNodes[j].nodeName == 'H3'){
-	    				 //on récupère tous les fils de H3
+	    				 //on rï¿½cupï¿½re tous les fils de H3
 	    				 var tab = tempCollparent.childNodes[j].childNodes;
 	    			 }
 	    		 }
@@ -95,7 +106,59 @@ function initIt()
     	 if(tab!=null){
     		 for (var k=0;k<tab.length;k++){
     			 if(tab[k].nodeName == 'IMG' && tab[k].name == 'imEx'){
-    				//si un fils de H3 est une image qui a pour nom imEx on le met à plus
+    				//si un fils de H3 est une image qui a pour nom imEx on le met ï¿½ plus
+    				tab[k].src = imgClosed.src;
+    			 }
+    		 }
+    	 }
+     }else if(tempColl[i].getAttribute("startOpen")=="yes"){
+    	 tempColl[i].style.display = 'block';    	 
+       	 //On recharge l'onglet on met - dans l'image
+    	 var chaine= new String(tempColl[i].id);
+    	 chaine=chaine.replace('Child', 'Parent');
+    	 var tempCollparent = document.getElementById(chaine);
+    	 
+    	 //On parcourt tous les fils de l'ï¿½lï¿½ment parent
+    	 if(tempCollparent!=null){
+	    	 for(var j=0;j<tempCollparent.childNodes.length;j++){
+	    		 if(tempCollparent.childNodes[j].nodeType == 1){
+	    			 if(tempCollparent.childNodes[j].nodeName == 'H3'){
+	    				 //on rï¿½cupï¿½re tous les fils de H3
+	    				 var tab = tempCollparent.childNodes[j].childNodes;
+	    			 }
+	    		 }
+	    	 } 
+	     }    	 
+    	 if(tab!=null){
+    		 for (var k=0;k<tab.length;k++){
+    			 if(tab[k].nodeName == 'IMG' && tab[k].name == 'imEx'){
+    				//si un fils de H3 est une image qui a pour nom imEx on le met ï¿½ plus
+    				tab[k].src = imgOpened.src;
+    			 }
+    		 }
+    	 }
+     }else if(tempColl[i].getAttribute("startOpen")=="no"){
+    	 tempColl[i].style.display = 'none';    	 
+       	 //On recharge l'onglet on met - dans l'image
+    	 var chaine= new String(tempColl[i].id);
+    	 chaine=chaine.replace('Child', 'Parent');
+    	 var tempCollparent = document.getElementById(chaine);
+    	 
+    	 //On parcourt tous les fils de l'ï¿½lï¿½ment parent
+    	 if(tempCollparent!=null){
+	    	 for(var j=0;j<tempCollparent.childNodes.length;j++){
+	    		 if(tempCollparent.childNodes[j].nodeType == 1){
+	    			 if(tempCollparent.childNodes[j].nodeName == 'H3'){
+	    				 //on rï¿½cupï¿½re tous les fils de H3
+	    				 var tab = tempCollparent.childNodes[j].childNodes;
+	    			 }
+	    		 }
+	    	 } 
+	     }    	 
+    	 if(tab!=null){
+    		 for (var k=0;k<tab.length;k++){
+    			 if(tab[k].nodeName == 'IMG' && tab[k].name == 'imEx'){
+    				//si un fils de H3 est une image qui a pour nom imEx on le met ï¿½ plus
     				tab[k].src = imgClosed.src;
     			 }
     		 }
@@ -140,7 +203,7 @@ function expandBase(el, unexpand)
 onload = initIt;
 
 /*	CSS functions
-		empruntées de la DHTML Kitchen :
+		empruntï¿½es de la DHTML Kitchen :
 		http://dhtmlkitchen.com/js/utilities/setStyle/index.jsp	*/
 function getRef(obj)
 {

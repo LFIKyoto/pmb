@@ -1,4 +1,4 @@
-<h1>Conversions/Exportacions</h1>
+<h2>Conversions/Exportacions</h2>
 <p>Aquest apartat permet generar les conversions de diversos formats
 d'arxius de registres/exemplars en altres formats per tal d'exportar la base 
 de dades PMB en forma de registres.</p>

@@ -4,10 +4,11 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.1 2013-01-23 11:30:08 apetithomme Exp $ -->
+$Id: manifest.xml,v 1.2 2016-09-20 10:25:41 apetithomme Exp $ -->
 
 <manifest>
-	<name>Liste d'étagères</name>
+	<name lang="fr_FR">Liste d'étagères</name>
+	<name lang="en_UK">List of shelves</name>
 	<author>
 		<name>Alexis PETITHOMME</name>
 		<organisation>PMB Services</organisation>

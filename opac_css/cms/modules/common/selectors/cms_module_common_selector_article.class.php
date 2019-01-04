@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_article.class.php,v 1.4 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: cms_module_common_selector_article.class.php,v 1.5 2017-02-09 16:12:00 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 //require_once($base_path."/cms/modules/common/selectors/cms_module_selector.class.php");
@@ -34,7 +34,7 @@ class cms_module_common_selector_article extends cms_module_common_selector{
 	
 	protected function gen_select(){
 		//pour le moment, on ne regarde pas le statut de publication
-		$query= "select id_article, article_title from cms_articles";// where article_publication_state = 1 ";
+		$query= "select id_article, article_title from cms_articles order by article_title";// where article_publication_state = 1 ";
 		$result = pmb_mysql_query($query);
 		$select = "
 					<select name='".$this->get_form_value_name("id_article")."'>";

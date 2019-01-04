@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesOPACStats.class.php,v 1.2 2015-04-03 11:16:27 jpermanne Exp $
+// $Id: pmbesOPACStats.class.php,v 1.3 2017-06-22 08:49:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,22 +10,20 @@ require_once($class_path."/external_services.class.php");
 require_once($class_path."/consolidation.class.php");
 
 class pmbesOPACStats extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	
-	function listView($OPACUserId=-1) {
+	public function listView($OPACUserId=-1) {
 		global $dbh;
 
 		if (SESSrights & ADMINISTRATION_AUTH) {
@@ -49,7 +47,7 @@ class pmbesOPACStats extends external_services_api_class {
 		}
 	}
 	
-	function getView($id_view) {
+	public function getView($id_view) {
 		global $dbh;
 		global $msg;
 		$result = array();
@@ -76,7 +74,7 @@ class pmbesOPACStats extends external_services_api_class {
 		}
 	}
 	
-	function getStatopacView($id_view) {
+	public function getStatopacView($id_view) {
 		global $dbh;
 
 		if (SESSrights & ADMINISTRATION_AUTH) {
@@ -95,7 +93,7 @@ class pmbesOPACStats extends external_services_api_class {
 		}			
 	}
 	
-	function makeConsolidation($conso,$date_deb,$date_fin,$date_ech, $list_ck) {
+	public function makeConsolidation($conso,$date_deb,$date_fin,$date_ech, $list_ck) {
 		
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$consolidation = new consolidation($conso,$date_deb,$date_fin,$date_ech, $list_ck);

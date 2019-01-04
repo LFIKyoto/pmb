@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax.inc.php,v 1.7 2012-09-06 09:29:46 ngantier Exp $
+// $Id: ajax.inc.php,v 1.8 2017-11-29 11:18:17 mbertin Exp $
 
 /***********************************************
  *function ajax_http_send_response
@@ -41,19 +41,21 @@ function ajax_http_send_error($error='404 Not Found',$ack=''){
 }
 
 function array2xml($buffer) {
-global $charset;
-  $xml = "<?xml version='1.0' encoding='iso-8859-1'?>";	
-  $xml.= "<pmb_services version=\"1.0\">\n";		
-	foreach($buffer as $val) {
-		$xml .= "<param>\n";       
-		foreach ($val as $key => $value) {
-			if(!is_array($value)) {
-				$value=htmlspecialchars($value,ENT_QUOTES,$charset);
-			    $xml .= "<$key>".$value."</$key>\n";
-			}    
-		}       
-		$xml .= "</param>\n";
-    }
-    $xml .= "</pmb_services>"; 
-    return $xml;
+	global $charset;
+	$xml = "<?xml version='1.0' encoding='iso-8859-1'?>";
+	$xml.= "<pmb_services version=\"1.0\">\n";
+	if(isset($buffer) && is_array($buffer) && count($buffer)){
+		foreach($buffer as $val) {
+			$xml .= "<param>\n";
+			foreach ($val as $key => $value) {
+				if(!is_array($value)) {
+					$value=htmlspecialchars($value,ENT_QUOTES,$charset);
+				    $xml .= "<$key>".$value."</$key>\n";
+				}
+			}
+			$xml .= "</param>\n";
+	    }
+	}
+	$xml .= "</pmb_services>";
+	return $xml;
 }

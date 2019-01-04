@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_editorial_publications_states.class.php,v 1.7 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: cms_editorial_publications_states.class.php,v 1.11 2018-05-26 07:27:43 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -40,7 +40,8 @@ class cms_editorial_publications_states {
 					'id' => $row->id_publication_state,
 					'label' => $row->editorial_publication_state_label,
 					'opac_show' => $row->editorial_publication_state_opac_show,
-					'auth_opac_show' => $row->editorial_publication_state_auth_opac_show
+					'auth_opac_show' => $row->editorial_publication_state_auth_opac_show,
+					'class_html' => $row->editorial_publication_state_class_html
 				);
 			}
 		}
@@ -55,6 +56,11 @@ class cms_editorial_publications_states {
 
 	public function get_selector_options($selected=0){
 		global $charset;
+		global $deflt_cms_article_statut;
+		
+		if(!$selected){
+			$selected=$deflt_cms_article_statut;
+		}		
 		$options = "";
 		$this->get_publications_states();
 		for($i=0 ; $i<count($this->publications_states) ; $i++){
@@ -78,8 +84,10 @@ class cms_editorial_publications_states {
 		for($i=0 ; $i<count($this->publications_states) ; $i++){
 			$class = ($i%2 ? "odd":"even");
 			$table.= "
-			<tr class='".($i%2 ? "odd":"even")."' onclick='document.location=\"".$form_link."&id=".$this->publications_states[$i]['id']."\"' onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\">
-				<td>".htmlentities($this->publications_states[$i]['label'],ENT_QUOTES,$charset)."</td>
+			<tr class='".($i%2 ? "odd":"even")."' onclick='document.location=\"".$form_link."&id=".$this->publications_states[$i]['id']."\"' onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='".($i%2 ? "odd":"even")."'\">
+				<td><span class='".$this->publications_states[$i]['class_html']."'  style='margin-right: 3px;'><img src='".get_url_icon('spacer.gif')."' width='10' height='10' /></span>
+					".htmlentities($this->publications_states[$i]['label'],ENT_QUOTES,$charset)."
+				</td>
 				<td>".($this->publications_states[$i]['opac_show'] ? "X" : "")."</td>
 				<td>".($this->publications_states[$i]['auth_opac_show'] ? "X" : "")."</td>
 			</tr>";
@@ -123,12 +131,24 @@ class cms_editorial_publications_states {
 			$form = str_replace("!!id!!",0,$form);
 			$form = str_replace("!!bouton_supprimer!!","",$form);
 		}
+		for ($i=1;$i<=20; $i++) {
+			if ($publication_state['class_html']=="statutnot".$i) $checked = "checked";
+			else $checked = "";
+			$couleur[$i]="<span for='statutnot".$i."' class='statutnot".$i."' style='margin: 7px;'><img src='".get_url_icon('spacer.gif')."' width='10' height='10' />
+					<input id='statutnot".$i."' type=radio name='cms_editorial_publication_state_class_html' value='statutnot".$i."' $checked class='checkbox' /></span>";
+			if ($i==10) $couleur[10].="<br />";
+			elseif ($i!=20) $couleur[$i].="<b>|</b>";
+		}
+		$couleurs=implode("",$couleur);
+		$form = str_replace('!!class_html!!', $couleurs, $form);
 		
 		return $form;
 	}
 	
 	public function save(){
+		global $dbh;
 		global $cms_editorial_publication_state_label,$cms_editorial_publication_state_visible,$cms_editorial_publication_state_visible_abo,$cms_editorial_publication_state_id;
+		global $cms_editorial_publication_state_class_html;
 		if($cms_editorial_publication_state_id){
 			$cms_editorial_publication_state_id+=0;
 			$query = "update cms_editorial_publications_states set ";
@@ -140,7 +160,8 @@ class cms_editorial_publications_states {
 		$query.= "
 			editorial_publication_state_label = '".$cms_editorial_publication_state_label."',
 			editorial_publication_state_opac_show = ".($cms_editorial_publication_state_visible ? 1 : 0).",
-			editorial_publication_state_auth_opac_show = ".($cms_editorial_publication_state_visible_abo ? 1 : 0);
+			editorial_publication_state_auth_opac_show = ".($cms_editorial_publication_state_visible_abo ? 1 : 0).",
+			editorial_publication_state_class_html = '".$cms_editorial_publication_state_class_html."'";
 		$query.= " ".$clause;
 		pmb_mysql_query($query);
 	}

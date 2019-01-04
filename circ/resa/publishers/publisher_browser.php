@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: publisher_browser.php,v 1.9 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: publisher_browser.php,v 1.12 2017-11-22 11:07:34 dgoron Exp $
 
 // page d'affichage du browser de collections
 
@@ -11,6 +11,9 @@ $base_path="../../..";
 $base_auth = "CIRCULATION_AUTH";
 $base_title = "\$msg[6]";
 require_once ("$base_path/includes/init.inc.php");
+
+if(!isset($coll_parent)) $coll_parent = 0; else $coll_parent += 0;
+if(!isset($ed_parent)) $ed_parent = 0; else $ed_parent += 0;
 
 // javascript pour retrouver l'offset dans la liste éditeurs
 $j_offset = "
@@ -32,7 +35,7 @@ function jump_anchor(anc) {
 	}
 }
 // -->
-jump_anchor('$ancre');
+jump_anchor('".(isset($ancre) ? $ancre : '')."');
 </script>
 ";
 
@@ -41,10 +44,10 @@ jump_anchor('$ancre');
 $browser_url = "./publisher_browser.php?id_empr=$id_empr&groupID=$groupID";
 
 // définition de variables
-$open_folder = "<img src=\"../../../images/folderopen.gif\" border=\"0\" align=\"top\" hspace='3'>";
-$closed_folder = "<img src=\"../../../images/folderclosed.gif\" border=\"0\" align=\"top\" hspace='3'>";
-$up_folder = "<img src=\"../../../images/folderup.gif\" border=\"0\" align=\"top\" hspace='3'>";
-$document = "<img src=\"../../../images/doc.gif\" border=\"0\" align=\"top\" hspace='3'>";
+$open_folder = "<img src='".get_url_icon('folderopen.gif')."' border=\"0\" class='align_top' hspace='3'>";
+$closed_folder = "<img src='".get_url_icon('folderclosed.gif')."' border=\"0\" class='align_top' hspace='3'>";
+$up_folder = "<img src='".get_url_icon('folderup.gif')."' border=\"0\" class='align_top' hspace='3'>";
+$document = "<img src='".get_url_icon('doc.gif')."' border=\"0\" class='align_top' hspace='3'>";
 
 // affichage de l'entête
 print "<div id='contenu-frame'>";
@@ -105,9 +108,11 @@ if($coll_parent) {
 			print pmb_bidi("<div style='margin-left:18px'>".$image."<a href='#' onClick=\"".select('collection', $item->collection_id)."\">".$item->collection_name.'</a></div>');
 		}
 	} else {
-		if ($limite_affichage=="")
+		if (!isset($limite_affichage) || $limite_affichage=="") {
 			$restriction = " limit 0,30 ";
-			else $restriction = "";
+		} else {
+			$restriction = "";
+		}
 		
 		print "<a href='$browser_url&limite_affichage=ALL'>$msg[tout_afficher]</a><br />";
 		
@@ -124,7 +129,7 @@ if($coll_parent) {
 				else $image = $document;
 			print pmb_bidi($image."<a name='a".$editeur->ed_id."' href='#' onClick=\"".select('publisher', $editeur->ed_id)."\">".$editeur->ed_name."</a><br />\n");
 		}
-		if($ancre)
+		if(isset($ancre) && $ancre)
 			print pmb_bidi($j_offset);
 
 	} // fin clause ed_parent

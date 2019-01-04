@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_piwik_datasource_piwik.class.php,v 1.2 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: cms_module_piwik_datasource_piwik.class.php,v 1.4 2016-09-20 10:25:42 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -35,7 +35,7 @@ class cms_module_piwik_datasource_piwik extends cms_module_common_datasource{
 		if(!$this->datas){
 			$selector = $this->get_selected_selector();
 			if($selector){
-				$query = "select managed_module_box from cms_managed_modules join cms_cadres on id_cadre = ".$this->cadre_parent." and cadre_object = managed_module_name";
+				$query = "select managed_module_box from cms_managed_modules join cms_cadres on id_cadre = '".($this->cadre_parent*1)."' and cadre_object = managed_module_name";
 				$result = pmb_mysql_query($query);
 				if(pmb_mysql_num_rows($result)){
 					$box = pmb_mysql_result($result,0,0);
@@ -48,7 +48,7 @@ class cms_module_piwik_datasource_piwik extends cms_module_common_datasource{
 				$server['page']['subtype'] = cms_module_common_datasource_typepage_opac::get_label($ss_type_page);
 				if($_SESSION['id_empr_session']){
 					//récupération des informations liés au lecteur
-					$query = "select empr_year, empr_sexe, empr_categ.libelle as categ, empr_codestat.libelle as codestat, location_libelle as location , empr_ville from empr join empr_categ on id_categ_empr = empr_categ join empr_codestat on idcode = empr_codestat join docs_location on idlocation = empr_location where id_empr = ".$_SESSION['id_empr_session'];
+					$query = "select empr_year, empr_sexe, empr_categ.libelle as categ, empr_codestat.libelle as codestat, location_libelle as location , empr_ville from empr join empr_categ on id_categ_empr = empr_categ join empr_codestat on idcode = empr_codestat join docs_location on idlocation = empr_location where id_empr = '".($_SESSION['id_empr_session']*1)."'";
 					$result = pmb_mysql_query($query,$dbh);
 					if(pmb_mysql_num_rows($result)){
 						while($row = pmb_mysql_fetch_object($result)){
@@ -122,7 +122,6 @@ class cms_module_piwik_datasource_piwik extends cms_module_common_datasource{
 								case "302":
 								default :
 									if(isset($user_query) && $user_query && !isset($_GET['page']) && !isset($_POST['page'])){
-										var_dump($user_query);
 										if(!$_SESSION['level1'.$_SESSION['nb_queries']]){
 											$server['search']['user_query'] = $user_query;
 											$server['search']['type'] = $_SESSION['search_type'];

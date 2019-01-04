@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_record.class.php,v 1.4 2014-11-17 17:00:52 arenou Exp $
+// $Id: cms_module_common_view_record.class.php,v 1.8 2017-07-26 07:57:50 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -19,6 +19,7 @@ class cms_module_common_view_record extends cms_module_common_view_django{
 	}
 	
 	public function get_form(){
+		if(!isset($this->parameters['used_template'])) $this->parameters['used_template'] = '';
 		$form = parent::get_form();
 		$form.="
 			<div class='row'>
@@ -44,6 +45,11 @@ class cms_module_common_view_record extends cms_module_common_view_django{
 	
 	public function render($datas){
 		global $opac_notice_affichage_class;
+		global $opac_url_base;
+		global $include_path;
+		global $opac_notices_format, $opac_notices_format_django_directory;
+		global $record_css_already_included; // Pour pas inclure la css 10 fois
+	
 		if(!$opac_notice_affichage_class){
 			$opac_notice_affichage_class ="notice_affichage";
 		}
@@ -56,9 +62,9 @@ class cms_module_common_view_record extends cms_module_common_view_django{
 			$notice_class = new $opac_notice_affichage_class($notice);
 			$notice_class->do_header();
 			if($notice_class->notice->niveau_biblio != "b"){
-				$permalink = "index.php?lvl=notice_display&id=".$notice_class->notice_id;
+				$permalink = $opac_url_base."index.php?lvl=notice_display&id=".$notice_class->notice_id;
 			}else {
-				$permalink = "index.php?lvl=bulletin_display&id=".$notice_class->bulletin_id;
+				$permalink = $opac_url_base."index.php?lvl=bulletin_display&id=".$notice_class->bulletin_id;
 			}
 			
 			$infos = array(
@@ -66,11 +72,22 @@ class cms_module_common_view_record extends cms_module_common_view_django{
 				'link' => $permalink
 			);
 			if($this->parameters['used_template']){
-				$tpl = new notice_tpl_gen($this->parameters['used_template']);
+				$tpl = notice_tpl_gen::get_instance($this->parameters['used_template']);
 				$infos['content'] = $tpl->build_notice($notice);
 			}else{
-				$notice_class->do_isbd();
-				$infos['content'] = $notice_class->notice_isbd;
+				if($opac_notices_format == AFF_ETA_NOTICES_TEMPLATE_DJANGO){						
+					if (!$opac_notices_format_django_directory) $opac_notices_format_django_directory = "common";						
+					if (!$record_css_already_included) {
+						if (file_exists($include_path."/templates/record/".$opac_notices_format_django_directory."/styles/style.css")) {
+							$infos['content'] .= "<link type='text/css' href='./includes/templates/record/".$opac_notices_format_django_directory."/styles/style.css' rel='stylesheet'></link>";
+						}
+						$record_css_already_included = true;
+					}
+					$infos['content'] .= record_display::get_display_extended($notice_class->notice_id);
+				}else {
+					$notice_class->do_isbd();
+					$infos['content'] = $notice_class->notice_isbd;
+				}
 			}
 			$render_datas['record']=$infos;
 		}

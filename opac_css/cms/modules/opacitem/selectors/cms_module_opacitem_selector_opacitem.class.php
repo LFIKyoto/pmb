@@ -1,4 +1,8 @@
 <?php
+// +-------------------------------------------------+
+// © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// +-------------------------------------------------+
+// $Id: cms_module_opacitem_selector_opacitem.class.php,v 1.9 2017-07-10 13:01:34 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,7 +14,7 @@ class cms_module_opacitem_selector_opacitem extends cms_module_common_selector{
 
 	public function get_form(){
 		$form = parent::get_form();
-		$form = "
+		$form.= "
 			<div class='row'>
 				<div class='colonne3'>
 					<label for='".$this->get_form_value_name("opacitem")."'>".$this->format_text($this->msg['cms_module_opacitem_selector_opacitem_choose'])."</label>
@@ -76,14 +80,15 @@ class cms_module_opacitem_selector_opacitem extends cms_module_common_selector{
 	public function execute_ajax(){
 		global $opacitem;
 		
+		$response = array();
 		if($opacitem){
-			
 			//ici surcharger les globals
+			$response['content'] = "";
 			foreach($this->opacitem_globals_list($opacitem) as $globalName=>$globalValue){
 				$response['content'].="
-				<div class='row' title='".$this->format_text($globalValue['comment_param'])."'>
+				<div class='row' title='".(isset($globalValue['comment_param']) ? $this->format_text($globalValue['comment_param']) : '')."'>
 					<div class='colonne3'>";
-				if($globalValue['sstype_param']){
+				if(isset($globalValue['sstype_param']) && $globalValue['sstype_param']){
 					$response['content'].="<label>".$this->format_text($globalValue['sstype_param'])."</label>";
 				}else{
 					$response['content'].="<label>".$this->format_text($globalName)."</label>";
@@ -280,13 +285,17 @@ class cms_module_opacitem_selector_opacitem extends cms_module_common_selector{
 					$globals_list['opac_show_rss_browser']['value']=$opac_show_rss_browser;
 					$globals_list['opac_curl_available']['value']=$opac_curl_available;
 					break;
+				case 'cms_module_opacitem_item_contact_form':
+					break;
+				case 'cms_module_opacitem_item_collstate_bulletins_display':
+					break;
 			}
 		}
 		
 		$query='SELECT type_param,sstype_param,comment_param FROM parametres WHERE CONCAT(type_param,"_",sstype_param) IN ("'.implode('","', array_keys($globals_list)).'")';
 		$result=pmb_mysql_query($query);
 		if(!pmb_mysql_error() && pmb_mysql_num_rows($result)){
-			while($param=pmb_mysql_fetch_array($result,MYSQL_ASSOC)){
+			while($param=pmb_mysql_fetch_array($result,PMB_MYSQL_ASSOC)){
 				if(sizeof($globals_list[$param['type_param'].'_'.$param['sstype_param']])){
 					$globals_list[$param['type_param'].'_'.$param['sstype_param']]+=$param;
 				}

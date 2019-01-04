@@ -1,9 +1,9 @@
-<h1>Mòdul d'administració</h1>
+<h2>Mòdul d'administració</h2>
 <p>Acabes d'accedir al mòdul d'administració de PMB. Les accions portades a terme 
 en aquest mòdul afectaran de manera substancial al bon funcionament del programa. 
 Els creadors d'aquest programa et conviden a utilitzar les funcions aquí previstes amb molt de compte.
 Abans de qualsevol acció, tingues en compte l'impacte que tindrà a les teves dades.  
-Si tens qualsevol dubte, envia'ns un missatge a <a href="mailto:pmb.user@sigb.net"><b>pmb.user@sigb.net</b></a>.  
+Si tens qualsevol dubte, envia'ns un missatge a <a href="https://pmb.community/">https://pmb.community</a>.  
 Amb molt de gust t'atendrem.</p>
 
 <h2>Exemplar, registres</h2>

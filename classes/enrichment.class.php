@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: enrichment.class.php,v 1.7 2015-06-09 09:39:20 pmbs Exp $
+// $Id: enrichment.class.php,v 1.10 2018-02-26 16:06:33 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,27 +12,27 @@ require_once($include_path."/templates/enrichment.tpl.php");
 require_once($class_path."/search.class.php");
 
 class enrichment {
-	var $enhancer = array();
-	var $active = array();
-	var $catalog;
+	public $enhancer = array();
+	public $active = array();
+	public $catalog;
 	
 	protected $params = array();
 	
 	protected $types_names = array();
 
-    function enrichment() {
+    public function __construct() {
     	global $base_path;
     	$this->fetch_sources();
     	$this->fetch_data();
     }
     
 	//On récupère la liste des sources dispos pour enrichir
-    function fetch_sources(){
+    public function fetch_sources(){
   		global $base_path, $msg;
 		
   		$this->parseType();
  		
-  		$connectors = new connecteurs();
+  		$connectors = connecteurs::get_instance();
   		$this->catalog = $connectors->catalog;
     	foreach ($this->catalog as $id=>$prop) {
 			$comment=$prop['COMMENT'];
@@ -77,7 +77,7 @@ class enrichment {
     }
     
      //Récupération des données existantes
-	function fetch_data(){
+	public function fetch_data(){
     	$rqt = "select * from sources_enrichment";
     	$res = pmb_mysql_query($rqt);
     	if(pmb_mysql_num_rows($res)){
@@ -89,7 +89,7 @@ class enrichment {
     }
 
      //Affichage du formulaire
-	function show_form(){
+	public function show_form(){
     	global $msg;
     	global $admin_enrichment_form;
     	
@@ -100,28 +100,12 @@ class enrichment {
 				$select.="<option value='".$source['id']."'>".$source['name']."</option>";
     		}  		
 
-    		$typnoti = array('m'=>$msg['type_mono'],'s'=>$msg['type_serial'],'a'=>$msg['type_art'],'b'=>$msg['type_bull'], 'n'=>$msg['type_aut']);
+    		$typnoti = array('m'=>$msg['type_mono'],'s'=>$msg['type_serial'],'a'=>$msg['type_art'],'b'=>$msg['type_bull']);
     		//pour chaque type de document...
     		$typdoc = new marc_list("doctype");
     		$form_content=$this->generateSelectorScript();
     		foreach($typnoti as $tnoti => $notice){
-    			if ($notice == 'Auteur'){
-    				$content ="
-					<div class='row'>
-						<table class='quadrille'>
-							<tr>
-								<th colspan='2'>".$msg['admin_connecteurs_enrichment_default_value_form']."</th>
-							</tr>
-							<tr>
-								<td colspan='2'>
-								  ".$this->generateSelector($tnoti)."
-								</td>
-							</tr>
-							
-		    			</table>
-					</div>";
-    			}
-    			else{$content ="
+				$content ="
 				<div class='row'>
 					<table class='quadrille'>
 						<tr>
@@ -151,7 +135,6 @@ class enrichment {
     			$content.="
 					</table>
 				</div>";
-    			}
     			$form_content .= gen_plus("enrichment_".$tnoti,$typnoti[$tnoti],$content);
     		}
 			$form = str_replace("!!table!!",$form_content,$admin_enrichment_form);
@@ -163,7 +146,7 @@ class enrichment {
 
 
 	//Sauvegarde dans la BDD 
-	function update(){
+	public function update(){
    		global $msg; 		
  		global $enrichment_select_source;
  		
@@ -206,14 +189,14 @@ class enrichment {
 	protected function generateSelector($type, $default_value=0) {
 		global $msg;
 		
-		$selector .= "<div style='width:200px;float: left;'><h3>".$msg['admin_connecteurs_enrichment_available_sources']."</h3>";
+		$selector = "<div style='width:200px;float: left;'><h3>".$msg['admin_connecteurs_enrichment_available_sources']."</h3>";
 		$selector .="<select name='enrichment_select_source[$type][sources][]' id='enrichment_select_source_$type' multiple type='".$type."' size='5'>";
-		if ($default_value) $selector .="<option id='enrichment_select_source_".$type."_0' value='0' ".(!$this->active[$type] ? "selected" : "").">".$msg["admin_connecteurs_enrichment_enhancer_default"]."</option>
+		if ($default_value) $selector .="<option id='enrichment_select_source_".$type."_0' value='0' ".(!isset($this->active[$type]) ? "selected" : "").">".$msg["admin_connecteurs_enrichment_enhancer_default"]."</option>
 				<script type='text/javascript'>
 					document.getElementById('enrichment_select_source_".$type."_0').addEventListener('click', update_selected_sources_default, true);
 				</script>";
 		foreach($this->enhancer as $source){
-			$selector.="<option id='enrichment_select_source_".$type."_".$source['id']."' value='".$source['id']."' ".($this->active[$type] && in_array($source['id'],$this->active[$type]) ? "selected" : "").">".$source['name']."</option>
+			$selector.="<option id='enrichment_select_source_".$type."_".$source['id']."' value='".$source['id']."' ".(isset($this->active[$type]) && in_array($source['id'],$this->active[$type]) ? "selected" : "").">".$source['name']."</option>
 				<script type='text/javascript'>
 					document.getElementById('enrichment_select_source_".$type."_".$source['id']."').addEventListener('click', update_selected_sources, true);
 				</script>";
@@ -224,7 +207,7 @@ class enrichment {
 				<h3>".$msg['admin_connecteurs_enrichment_default_display']."</h3>";
 		$selector .= "<ul id='enrichment_selected_sources_".$type."'>";
 
-		if (!$default_value || $this->active[$type]) { // Si défaut est sélectionné, on n'affiche rien
+		if (!$default_value || isset($this->active[$type])) { // Si défaut est sélectionné, on n'affiche rien
 			$order = 0;
 			$sorted_enrichments = $this->get_sorted_enrichments($type);
 			foreach ($sorted_enrichments as $enrichment_type) {
@@ -411,7 +394,7 @@ class enrichment {
 	private function get_sorted_enrichments($type) {
 		$sorted_enrichments = array();
 		foreach ($this->enhancer as $source) {
-			if ($this->active[$type] && in_array($source['id'],$this->active[$type])) {
+			if (isset($this->active[$type]) && in_array($source['id'],$this->active[$type])) {
 				foreach ($source['enrichment_types'] as $enrichment_type) {
 					$order = (isset($this->params[$type][$source['id']][$enrichment_type['code']]['order']) ? $this->params[$type][$source['id']][$enrichment_type['code']]['order'] : 0);
 					$sorted_enrichments[$order] = array(
@@ -427,13 +410,13 @@ class enrichment {
 	}
 	
 	//retourne les éléments à rajouter dans le head, les calculs aux besoins;
-	function getHeaders(){
+	public function getHeaders(){
 		if(!$this->enrichmentsTabHeaders) $this->generateHeaders();
 		return implode("\n",$this->enrichmentsTabHeaders);
 	}
 	
 	//Méthode qui génère les éléments à insérer dans le header pour le bon fonctionnement des enrichissements
-	function generateHeaders(){
+	public function generateHeaders(){
 		global $base_path;
 
 		$this->enrichmentsTabHeaders =array();
@@ -459,12 +442,12 @@ class enrichment {
 		}
 	}
 	
-	function getEnrichment($notice_id,$tnoti,$tdoc){
+	public function getEnrichment($notice_id,$tnoti,$tdoc){
 		global $base_path;
 		$infos = array();
 		if($this->active[$tnoti.$tdoc]) $type = $tnoti.$tdoc;
 		else $type = $tnoti;
-		if($this->active[$type]){
+		if(isset($this->active[$type])){
 			foreach($this->active[$type] as $source_id){
 				//on récupère les infos de la source nécessaires pour l'instancier
 				$name = connecteurs::get_class_name($source_id);	

@@ -2,24 +2,23 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fiche.class.php,v 1.14 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: fiche.class.php,v 1.19 2018-07-24 14:16:37 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($include_path."/templates/fiche.tpl.php");
 require_once($class_path."/parametres_perso.class.php");
-require_once ("$class_path/writeexcel/class.writeexcel_workbook.inc.php");
-require_once ("$class_path/writeexcel/class.writeexcel_worksheet.inc.php");
+require_once ($class_path."/spreadsheet.class.php");
 
 class fiche{
 
-	var $id_fiche = 0;
-	var $p_perso = "";
-	var $liste_ids =array();
+	public $id_fiche = 0;
+	public $p_perso = "";
+	public $liste_ids =array();
 
-	function fiche($id=0){
+	public function __construct($id=0){
 		global $prefix;
-		$this->id_fiche = $id;
+		$this->id_fiche = $id+0;
 
 		$this->p_perso = new parametres_perso($prefix);
 	}
@@ -27,7 +26,7 @@ class fiche{
 	/*
 	 * Formulaire d'édition d'une fiche
 	 */
-	function show_edit_form(){
+	public function show_edit_form(){
 
 		global $form_edit_fiche,$msg, $charset, $act,$base_path;
 		global $perso_word,$page,$nb_per_page,$i_search;
@@ -44,7 +43,7 @@ class fiche{
 			for ($i=0; $i<count($perso_['FIELDS']); $i++) {
 				$p=$perso_['FIELDS'][$i];
 				$perso.="<div id='pperso_".$p['NAME']."'  title=\"".htmlentities($p['TITRE'],ENT_QUOTES, $charset)."\">
-							<div class='row'><label for='".$p['NAME']."' class='etiquette'>".htmlentities($p['TITRE'],ENT_QUOTES, $charset)."</label></div>
+							<div class='row'><label for='".$p['NAME']."' class='etiquette'>".htmlentities($p['TITRE'],ENT_QUOTES, $charset)." </label>".$p["COMMENT_DISPLAY"]."</div>
 							<div class='row'>".$p['AFF']."</div>
 						 </div>";
 			}
@@ -81,7 +80,7 @@ class fiche{
 	/*
 	 * Affiche le formulaire de consultation d'une fiche
 	 */
-	function show_fiche_form(){
+	public function show_fiche_form(){
 
 		global $form_edit_fiche,$msg,$charset;
 		global $perso_word,$page;
@@ -145,7 +144,7 @@ class fiche{
 	 * id fiche suivante
 	 * page du retour à la liste, et du retour sur effacement
 	 */
-	function get_info_navigation(){
+	public function get_info_navigation(){
 		global $dbh,$perso_word;
 		global $i_search;
 		global $nb_per_page_search,$nb_per_page;
@@ -189,7 +188,7 @@ class fiche{
 	/*
 	 * Enregistrement d'une fiche
 	 */
-	function save(){
+	public function save(){
 		global $prefix, $dbh,$msg,$charset;
 
 		if(!$this->id_fiche){
@@ -212,7 +211,7 @@ class fiche{
 	/*
 	 * suppression d'une fiche
 	 */
-	function delete(){
+	public function delete(){
 		global $dbh;
 		$req = "delete from fiche where id_fiche = ".$this->id_fiche;
 		pmb_mysql_query($req,$dbh);
@@ -223,9 +222,11 @@ class fiche{
 	/*
 	 * Mis à jour de l'index d'une fiche
 	 */
-	function update_global_index($id){
+	public function update_global_index($id){
 		global $dbh, $prefix;
 
+		$infos_global = '';
+		$infos_global_index = '';
 		$mots_perso=$this->p_perso->get_fields_recherche($id);
 		if($mots_perso) {
 			$infos_global.= $mots_perso.' ';
@@ -238,7 +239,7 @@ class fiche{
 	/*
 	 * Reindexation globale
 	 */
-	function reindex_all(){
+	public function reindex_all(){
 		global $dbh;
 
 		$req = "select id_fiche from fiche";
@@ -251,7 +252,7 @@ class fiche{
 	/*
 	 * Affiche le formulaire de reindexation
 	 */
-	function show_reindex_form(){
+	public function show_reindex_form(){
 		global $form_reindex;
 
 		print $form_reindex;
@@ -260,7 +261,7 @@ class fiche{
 	/*
 	 * Affiche le formulaire/tableau résultat de recherche dans les champs persos
 	 */
-	function show_search_list($action='',$url_base='',$page=1){
+	public function show_search_list($action='',$url_base='',$page=1){
 		global $form_search, $fichier_menu_display, $perso_word, $prefix;
 		global $dbh, $msg,$charset;
 		global $nb_per_page_search,$nb_per_page;
@@ -308,7 +309,7 @@ class fiche{
 	/*
 	 * On récupère les valeurs des champs visibles correspondant à la fiche
 	 */
-	function get_values($id_fiche,$visible=0){
+	public function get_values($id_fiche,$visible=0){
 		global $dbh,$charset;
 		$values=array();
 		
@@ -321,7 +322,7 @@ class fiche{
 		return $values;
 	}
 
-	function display_results_tableau($liste_result,$back_url="",$i_search_deb=0,$export = false){
+	public function display_results_tableau($liste_result,$back_url="",$i_search_deb=0,$export = false){
 
 		global $dbh, $charset, $msg;
 		global $perso_word,$page;
@@ -329,12 +330,13 @@ class fiche{
 		$req = "select * from ".$this->p_perso->prefix."_custom where multiple=1 order by ordre";//where multiple=1";
 		$res = pmb_mysql_query($req,$dbh);
 		if($export){
-			$display = "<table id='result_table' width='100%'><tr>";
+			$display = "<table id='result_table' style='width:100%'><tr>";
 		}else{
-			$display = "<script type='text/javascript' src='./javascript/sorttable.js'></script>\n<table id='result_table' width='100%' class=\"sortable\"><tr>";
+			$display = "<script type='text/javascript' src='./javascript/sorttable.js'></script>\n<table id='result_table' style='width:100%' class=\"sortable\"><tr>";
 		}
 		
 		$nb_field=0;
+		$field_id=array();
 		while($champ = pmb_mysql_fetch_object($res)){
 			$field_id[]=$champ->idchamp;
 			if($champ->multiple)$display .= "<th>".htmlentities($champ->titre,ENT_QUOTES,$charset)."</th>";
@@ -380,13 +382,15 @@ class fiche{
 		return $display;
 	}
 
-	function print_results_tableau($liste_result){
-		global $base_path,$msg,$dbh;
-		$fichier_temp_nom=str_replace(" ","",microtime());
-		$fichier_temp_nom=str_replace("0.","",$fichier_temp_nom);
-		$fname = tempnam($base_path."/temp", $fichier_temp_nom.".xls");
-		$workbook = new writeexcel_workbook($fname);
-		$worksheet = &$workbook->addworksheet();
+	public function print_results_tableau($liste_result){
+		global $dbh, $charset;
+		
+		$worksheet = new spreadsheet();
+		$bold = array(
+				'font'  => array(
+						'bold'  => true
+				)
+		);
 		
 		$req = "select * from ".$this->p_perso->prefix."_custom where multiple=1 order by ordre";
 		$res = pmb_mysql_query($req,$dbh);
@@ -395,7 +399,7 @@ class fiche{
 		$field_id=array();
 		while($champ = pmb_mysql_fetch_object($res)){
 			$field_id[]=$champ->idchamp;
-			$worksheet->write($num_ligne,$num_col,$champ->titre);
+			$worksheet->write($num_ligne,$num_col,$champ->titre,$bold);
 			$num_col++;
 		}
 		$num_ligne++;
@@ -409,17 +413,12 @@ class fiche{
 						$val.= $valeur;
 					}
 				}
-				$worksheet->write($num_ligne,$num_col,$val);
+				$worksheet->write($num_ligne,$num_col,html_entity_decode($val, ENT_QUOTES, $charset));
 			 	$num_col++;
 			}
 			$num_ligne++;
 		}
 	
-		$workbook->close();
-		header("Content-Type: application/x-msexcel; name=\"Tableau.xls\"");
-		header("Content-Disposition: inline; filename=\"Tableau.xls\"");
-		$fh=fopen($fname, "rb");
-		fpassthru($fh);
-		unlink($fname);
+		$worksheet->download('Tableau.xls');
 	}
 }

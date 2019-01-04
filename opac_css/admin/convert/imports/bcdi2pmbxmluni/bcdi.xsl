@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
-<!-- $Id: bcdi.xsl,v 1.2 2006-04-28 05:35:04 touraine37 Exp $ -->
+<!-- $Id: bcdi.xsl,v 1.3 2018-01-29 15:17:15 jpermanne Exp $ -->
 <!DOCTYPE stylesheet [
 	<!ENTITY MAJUSCULE "ABCDEFGHIJKLMNOPQRSTUVWXYZ">
 	<!ENTITY MINUSCULE "abcdefghijklmnopqrstuvwxyz">
@@ -39,8 +39,12 @@
 		<!-- Numéro de référence -->
 		<xsl:call-template name="ref"/>
 		<!-- ISBN/PRIX-->
-		<xsl:call-template name="isbn"/>
-		<xsl:call-template name="issn"/>
+		<xsl:call-template name="isbn">
+			<xsl:with-param name="noeud" select="./TYPE_NOTICE_N"/>
+		</xsl:call-template>
+		<xsl:call-template name="issn">
+			<xsl:with-param name="noeud" select="./TYPE_NOTICE_N"/>
+		</xsl:call-template>
 		<!-- Langue -->
 		<xsl:call-template name="langue"/>
 		<!-- Titres -->
@@ -340,34 +344,48 @@
 
 <!-- ISBN -->
 <xsl:template name="isbn">
-	<xsl:if test="DOCUMENTS/ISBN_D">
-		<xsl:element name="f">
-			<xsl:attribute name="c">010</xsl:attribute>
-			<xsl:element name="s">
-				<xsl:attribute name="c">a</xsl:attribute>
-				<xsl:value-of select="normalize-space(translate(DOCUMENTS/ISBN_D,'/',''))"/>
-			</xsl:element>
-			<xsl:if test="DOCUMENTS/COUT_D_D">
-				<xsl:element name="s">
-					<xsl:attribute name="c">d</xsl:attribute>
-					<xsl:value-of select="DOCUMENTS/COUT_D_D"/>
+	<xsl:param name="noeud"/>
+	<xsl:choose>
+		<xsl:when test="$noeud='Notice générale'">
+			<xsl:if test="DOCUMENTS/ISBN_D | DOCUMENTS/COUT_D_D">
+				<xsl:element name="f">
+					<xsl:attribute name="c">010</xsl:attribute>
+					<xsl:if test="DOCUMENTS/ISBN_D">
+						<xsl:element name="s">
+							<xsl:attribute name="c">a</xsl:attribute>
+							<xsl:value-of select="normalize-space(translate(DOCUMENTS/ISBN_D,'/',''))"/>
+						</xsl:element>
+					</xsl:if>
+					<xsl:if test="DOCUMENTS/COUT_D_D">
+						<xsl:element name="s">
+							<xsl:attribute name="c">d</xsl:attribute>
+							<xsl:value-of select="DOCUMENTS/COUT_D_D"/>
+						</xsl:element>
+					</xsl:if>			
 				</xsl:element>
-			</xsl:if>			
-		</xsl:element>
-	</xsl:if>
+			</xsl:if>
+		</xsl:when>
+		<xsl:otherwise />
+	</xsl:choose>
 </xsl:template>
 
 <!-- ISSN -->
 <xsl:template name="issn">
-	<xsl:if test="DOCUMENTS/ISSN_D">
-		<xsl:element name="f">
-			<xsl:attribute name="c">011</xsl:attribute>
-			<xsl:element name="s">
-				<xsl:attribute name="c">a</xsl:attribute>
-				<xsl:value-of select="normalize-space(translate(DOCUMENTS/ISSN_D,'/',''))"/>
-			</xsl:element>			
-		</xsl:element>
-	</xsl:if>
+	<xsl:param name="noeud"/>
+	<xsl:choose>
+		<xsl:when test="$noeud='Notice générale'">
+			<xsl:if test="DOCUMENTS/ISSN_D">
+				<xsl:element name="f">
+					<xsl:attribute name="c">011</xsl:attribute>
+					<xsl:element name="s">
+						<xsl:attribute name="c">a</xsl:attribute>
+						<xsl:value-of select="normalize-space(translate(DOCUMENTS/ISSN_D,'/',''))"/>
+					</xsl:element>			
+				</xsl:element>
+			</xsl:if>
+		</xsl:when>
+		<xsl:otherwise />
+	</xsl:choose>
 </xsl:template>
 
 <!-- Mention d'édition -->

@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: func_livrjeun.inc.php,v 1.5 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: func_livrjeun.inc.php,v 1.6 2017-07-12 15:15:00 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -123,9 +123,9 @@ function traite_categories_from_form() {
 	$categories = array () ;
 	for ($i=0; $i< $max_categ ; $i++) {
 		$var_categ = "f_categ_id$i" ;
-		global $$var_categ ;
-		if ($$var_categ) 
-			$categories[] = array('categ_id' => $$var_categ );
+		global ${$var_categ} ;
+		if (${$var_categ}) 
+			$categories[] = array('categ_id' => ${$var_categ} );
 	}
 	return $categories ;
 }

@@ -4,7 +4,7 @@
 // © 2006 mental works / www.mental-works.com contact@mental-works.com
 // 	repris et corrigé par PMB Services 
 // +-------------------------------------------------+
-// $Id: tags.class.php,v 1.6 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: tags.class.php,v 1.7 2017-06-30 14:32:20 dgoron Exp $
 
 // définition de la classe d'affichage des 'tags'
 
@@ -15,14 +15,14 @@ class tags {
 	// ---------------------------------------------------------------
 	//		propriétés de la classe
 	// ---------------------------------------------------------------
-	var $search_tag=''; 
+	public $search_tag=''; 
 	// ---------------------------------------------------------------
 	//		constructeur
 	// ---------------------------------------------------------------
-	function tags() {		
+	public function __construct() {		
 	}
 	
-	function get_array($start='', $pos_cursor=0){
+	public function get_array($start='', $pos_cursor=0){
 		global $dbh;
 		global $pmb_keyword_sep;
 		
@@ -71,7 +71,7 @@ class tags {
 	}
 	
 	
-	function get_taille_search(){
+	public function get_taille_search(){
 		return strlen($this->search_tag);
 	}
 	

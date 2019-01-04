@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_records.class.php,v 1.16 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: cms_module_common_datasource_records.class.php,v 1.18 2016-09-21 13:09:44 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -40,7 +40,7 @@ class cms_module_common_datasource_records extends cms_module_common_datasource_
 			$shelves = $selector->get_value();
 			if(is_array($shelves) && count($shelves)){
 				foreach ($shelves as $shelve_id){
-					$query = "select id_tri from etagere where idetagere =".$shelve_id;
+					$query = "select id_tri from etagere where idetagere ='".($shelve_id*1)."'";
 					$result = pmb_mysql_query($query);
 					$records = $notices = array();
 					if($result && pmb_mysql_num_rows($result)){
@@ -54,7 +54,9 @@ class cms_module_common_datasource_records extends cms_module_common_datasource_
 				}
 			}
 			$records = $this->filter_datas("notices",$records);
-			$records = array_slice($records, 0, $this->parameters['nb_max_elements']);
+			if($this->parameters['nb_max_elements'] > 0){
+				$records = array_slice($records, 0, $this->parameters['nb_max_elements']);
+			}
 			$return = array(
 					'title'=> 'Liste de Notices',
 					'records' => $records

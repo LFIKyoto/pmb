@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: opac_views.class.php,v 1.2 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: opac_views.class.php,v 1.4 2017-03-30 13:57:48 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -20,7 +20,7 @@ class opac_views  extends quota {
 	
 	//formulaire d'un champ de quota...
 	public function get_quota_form($prefix,$value){
-		global $msg;
+		global $msg, $charset;
 		
 		$value= unserialize($value);
 		if(!is_array($value)){
@@ -75,5 +75,24 @@ class opac_views  extends quota {
 	
 	function get_storable_value($value){
 		return addslashes(serialize($value));
+	}
+	
+	public static function get_selector($name, $selected = array()) {
+		global $msg, $charset;
+		
+		$query = "SELECT opac_view_id,opac_view_name FROM opac_views order by opac_view_name";
+		$result = pmb_mysql_query($query);
+		$select_view = "<select id='".$name."' name='".$name."[]' multiple>";
+		if (pmb_mysql_num_rows($result)) {
+			$select_view .="<option id='opac_view_num_all' value='' ".(!count($selected) ? "selected" : "").">".htmlentities($msg["admin_opac_facette_opac_view_select"],ENT_QUOTES,$charset)."</option>";
+			$select_view .="<option id='opac_view_num_0' value='0' ".(in_array(0,$selected) ? "selected" : "").">".htmlentities($msg["opac_view_classic_opac"],ENT_QUOTES,$charset)."</option>";
+			while($row = pmb_mysql_fetch_object($result)) {
+				$select_view .="<option id='opac_view_num_".$row->opac_view_id."' value='".$row->opac_view_id."' ".(in_array($row->opac_view_id,$selected) ? "selected" : "").">".htmlentities($row->opac_view_name,ENT_QUOTES,$charset)."</option>";
+			}
+		} else {
+			$select_view .="<option id='opac_view_num_empty' value=''>".htmlentities($msg["admin_opac_facette_opac_view_empty"],ENT_QUOTES,$charset)."</option>";
+		}
+		$select_view .= "</select>";
+		return $select_view;
 	}
 }

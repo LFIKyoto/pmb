@@ -5,7 +5,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cbgen.tpl.php,v 1.5 2009-05-16 11:19:55 dbellamy Exp $
+// $Id: cbgen.tpl.php,v 1.6 2017-11-07 15:33:07 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -36,7 +36,7 @@ $cbgen_menu = "
 $cbgen_layout = "
 <div id='contenu'><table class='document' border='0'>
 	<tr>
-	<td valign='top'>
+	<td style='vertical-align:top'>
 	<!-- side-bar -->
 		<table border='0'>
 			<tr>
@@ -51,7 +51,7 @@ $cbgen_layout = "
 			</tr>
 		</table>
 	</td>
-	<td valign='top'>
+	<td style='vertical-align:top'>
 ";
 
 //	----------------------------------

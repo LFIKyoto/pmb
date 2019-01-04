@@ -2,11 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rss.inc.php,v 1.9 2014-04-03 15:23:24 dgoron Exp $
+// $Id: rss.inc.php,v 1.11 2017-08-23 07:31:23 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-print "<h1>".$msg[dsi_rss_titre]."</h1>" ;
+if(!isset($suite)) $suite = '';
+if(!isset($form_cb)) $form_cb = '';
+if(!isset($id_rss_flux)) $id_rss_flux = 0;
+
+print "<h1>".$msg['dsi_rss_titre']."</h1>" ;
 switch($suite) {
     case 'acces':
     	$flux = new rss_flux($id_rss_flux) ;
@@ -19,7 +23,7 @@ switch($suite) {
     case 'delete':
     	$flux = new rss_flux($id_rss_flux) ;
     	print $flux->delete();  
-        print get_flux ($msg[dsi_flux_search], $msg[dsi_flux_search_nom], './dsi.php?categ=fluxrss&sub=', stripslashes($form_cb));
+        print get_flux ($msg['dsi_flux_search'], $msg['dsi_flux_search_nom'], './dsi.php?categ=fluxrss&sub=', stripslashes($form_cb));
 		print pmb_bidi(dsi_list_flux_info($form_cb, 0)) ;
 		break;
     case 'update':
@@ -60,22 +64,22 @@ switch($suite) {
 				break;
 		}
 		
-		if (!$paniers) $paniers = array();
-		if (!$bannettes) $bannettes = array();
+		if (!isset($paniers) || !$paniers) $paniers = array();
+		if (!isset($bannettes) || !$bannettes) $bannettes = array();
     	$temp->num_paniers=			$paniers;
     	$temp->num_bannettes=		$bannettes;
 		$flux->update($temp); 
 
-    	print get_flux ($msg[dsi_flux_search], $msg[dsi_flux_search_nom], './dsi.php?categ=fluxrss&sub=', stripslashes($nom_rss_flux));
+    	print get_flux ($msg['dsi_flux_search'], $msg['dsi_flux_search_nom'], './dsi.php?categ=fluxrss&sub=', stripslashes($nom_rss_flux));
 		print pmb_bidi(dsi_list_flux_info($form_cb, $id_rss_flux)) ;
         break;
     case 'search':
-        print get_flux ($msg[dsi_flux_search], $msg[dsi_flux_search_nom], './dsi.php?categ=fluxrss&sub=', stripslashes($form_cb));
+        print get_flux ($msg['dsi_flux_search'], $msg['dsi_flux_search_nom'], './dsi.php?categ=fluxrss&sub=', stripslashes($form_cb));
 		print pmb_bidi(dsi_list_flux_info($form_cb, $id_rss_flux)) ;
 		break;
     default:
-		echo window_title($database_window_title.$msg[dsi_menu_flux]);
-		print get_flux ($msg[dsi_flux_search], $msg[dsi_flux_search_nom], './dsi.php?categ=fluxrss&sub=', stripslashes($form_cb));
+		echo window_title($database_window_title.$msg['dsi_menu_flux']);
+		print get_flux ($msg['dsi_flux_search'], $msg['dsi_flux_search_nom'], './dsi.php?categ=fluxrss&sub=', stripslashes($form_cb));
 		print pmb_bidi(dsi_list_flux_info($form_cb, $id_rss_flux)) ;
         break;
     }

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pdf_factory.class.php,v 1.4 2013-01-17 15:49:08 jpermanne Exp $
+// $Id: pdf_factory.class.php,v 1.5 2017-06-30 14:08:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,11 +11,11 @@ require_once("$class_path/ufpdf.class.php");
 
 class pmb2FPDF extends FPDF {
 
-	var $footer_type=0;
-	var $y_footer;
-	var $fs_footer;
-	var $msg_footer = '';
-	var $npage = 1;
+	public $footer_type=0;
+	public $y_footer;
+	public $fs_footer;
+	public $msg_footer = '';
+	public $npage = 1;
 	
 	function Footer() {
 		
@@ -47,11 +47,11 @@ class pmb2FPDF extends FPDF {
 
 class pmb2UFPDF extends UFPDF {
 	
-	var $footer_type=0;
-	var $y_footer;
-	var $fs_footer;
-	var $msg_footer = '';
-	var $npage = 1;
+	public $footer_type=0;
+	public $y_footer;
+	public $fs_footer;
+	public $msg_footer = '';
+	public $npage = 1;
 	
 	function Footer() {
 		

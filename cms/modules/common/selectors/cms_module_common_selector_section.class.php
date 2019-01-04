@@ -2,10 +2,10 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_section.class.php,v 1.7 2015-04-03 11:16:18 jpermanne Exp $
+// $Id: cms_module_common_selector_section.class.php,v 1.9 2016-09-21 13:09:44 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
-//require_once($base_path."/cms/modules/common/selectors/cms_module_selector.class.php");
+
 class cms_module_common_selector_section extends cms_module_common_selector{
 	
 	public function __construct($id=0){
@@ -32,20 +32,29 @@ class cms_module_common_selector_section extends cms_module_common_selector{
 		return parent ::save_form();
 	}
 	
+	protected function _recurse_parent_select($parent=0,$lvl=0){
+		$opts = "";
+		$rqt = "select id_section, section_title from cms_sections where section_num_parent = '".($parent*1)."'";
+		$res = pmb_mysql_query($rqt);
+		if(pmb_mysql_num_rows($res)){
+			while($row = pmb_mysql_fetch_object($res)){
+				$opts.="
+				<option value='".$row->id_section."' ".($this->parameters == $row->id_section ? "selected='selected'" : "").">".str_repeat("&nbsp;&nbsp;",$lvl).$this->format_text($row->section_title)."</option>";
+				$opts.=$this->_recurse_parent_select($row->id_section,$lvl+1);
+			}
+		} else {
+			if($lvl ==0) {
+				$opts.= "
+				<option value ='0'>".$this->format_text($this->msg['cms_module_common_selector_section_no_section'])."</option>";
+			}
+		}
+		return $opts;
+	}
+	
 	protected function gen_select(){
-		$query= "select id_section, section_title from cms_sections";// where section_publication_state = 1";
-		$result = pmb_mysql_query($query);
 		$select = "
 					<select name='".$this->get_form_value_name("id_section")."'>";
-		if(pmb_mysql_num_rows($result)){
-			while($row = pmb_mysql_fetch_object($result)){
-				$select.="
-						<option value='".$row->id_section."' ".($this->parameters == $row->id_section ? "selected='selected'" : "").">".$this->format_text($row->section_title)."</option>";
-			}
-		}else{
-			$select.= "
-						<option value ='0'>".$this->format_text($this->msg['cms_module_common_selector_section_no_section'])."</option>";
-		}
+		$select.= $this->_recurse_parent_select();
 		$select.= "
 					</select>";
 		return $select;

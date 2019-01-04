@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: param_subst.tpl.php,v 1.1 2011-04-20 06:37:35 ngantier Exp $
+// $Id: param_subst.tpl.php,v 1.3 2017-11-07 15:34:41 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -21,9 +21,9 @@ $tpl_param_table = "
 ";
 $tpl_param_table_line = "
 		<tr class='!!odd_even!!' onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='!!odd_even!!'\" onmousedown=\"document.location='!!link_edit!!'\" style=\"cursor: pointer;\">
-			<td valign='top'>!!name!!</td>
+			<td style='vertical-align:top'>!!name!!</td>
 			<td class='ligne_data'>!!value!!</td>	
-			<td valign='top'>!!comment!!</td>
+			<td style='vertical-align:top'>!!comment!!</td>
 		</tr>	
 ";
 
@@ -41,11 +41,11 @@ $tpl_param_subst_table = "
 ";
 $tpl_param_subst_table_line = "
 		<tr class='!!odd_even!!' onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='!!odd_even!!'\" onmousedown=\"document.location='!!link_edit!!'\" style=\"!!style!!\">
-			<td valign='top'>!!name!!</td>
+			<td style='vertical-align:top'>!!name!!</td>
 			<td class='ligne_data'>!!value!!</td>
 			<td class='ligne_data'>!!origin_value!!</td>	
-			<td valign='top'>!!comment!!</td>	
-			<td valign='top'><input type='button' class='bouton_small' value='X' onclick=\"document.location='!!link_suppr!!'\" /></td>
+			<td style='vertical-align:top'>!!comment!!</td>	
+			<td style='vertical-align:top'><input type='button' class='bouton_small' value='X' onclick=\"document.location='!!link_suppr!!'\" /></td>
 		</tr>	
 ";
 
@@ -54,7 +54,7 @@ $tpl_param_subst_form = "
 <h3><span onclick='menuHide(this,event)'>!!form_title!!</span></h3>
 <div class='form-contenu'>
 	<div class='row'>
-		<div class='colonne5' align='right'>
+		<div class='colonne5 align_right'>
 				<label class='etiquette'>$msg[1602] &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>
@@ -63,7 +63,7 @@ $tpl_param_subst_form = "
 		</div>
 	<div class='row'>&nbsp;</div>
 	<div class='row'>
-		<div class='colonne5' align='right'>
+		<div class='colonne5 align_right'>
 				<label class='etiquette'>$msg[1603] &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>
@@ -72,7 +72,7 @@ $tpl_param_subst_form = "
 		</div>
 	<div class='row'>&nbsp;</div>
 	<div class='row'>
-		<div class='colonne5' align='right'>
+		<div class='colonne5 align_right'>
 				<label class='etiquette'>$msg[1604] &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>
@@ -81,7 +81,7 @@ $tpl_param_subst_form = "
 		</div>
 	<div class='row'>&nbsp;</div>
 	<div class='row'>
-		<div class='colonne5' align='right'>
+		<div class='colonne5 align_right'>
 				<label class='etiquette'>".$msg['param_explication']." &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>

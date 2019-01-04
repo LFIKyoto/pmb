@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: fr_FR.xml,v 1.7 2015-06-26 07:48:01 pmbs Exp $ -->
+$Id: fr_FR.xml,v 1.8 2018-01-23 15:13:18 shamel Exp $ -->
 
 <!DOCTYPE XMLlist SYSTEM "../../../includes/XMLlist.dtd" >
 <XMLlist>
@@ -170,5 +170,19 @@ fetchNoticesAdministrative
 	<entry code="fetchNoticesAdministrative_list_result">Les informations de gestion de la notice</entry>
 	<entry code="fetchNoticesAdministrative_results_noticeId">L'id de la notice</entry>
 	<entry code="fetchNoticesAdministrative_results_administrative">Les informations de gestion d'une notice</entry>
+
+<!--
+deleteNotices
+-->
+	<entry code="deleteNotices_description">Supprime la liste des notices</entry>
+	<entry code="deleteNotices_states">Identifiant de la notice</entry>
+	<entry code="deleteNotices_state">Etat de la suppression : 0->Ok, 1->Droits insuffisants, 2->Echec de la suppression</entry>
+
+<!--
+check_del_notice
+-->
+	<entry code="check_del_notice_description">On vérifie que la notice peut être supprimer</entry>
 	
+
+		
 </XMLlist>

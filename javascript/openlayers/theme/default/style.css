@@ -1,4 +1,5 @@
 div.olMap {
+	max-width: 100%;
     z-index: 0;
     padding: 0 !important;
     margin: 0 !important;

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: acces.tpl.php,v 1.7 2013-06-17 08:24:45 dbellamy Exp $
+// $Id: acces.tpl.php,v 1.8 2017-11-30 10:00:36 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -32,7 +32,7 @@ $dom_view_form="
 	<h3><span id='pbar_ini_msg' >".htmlentities($msg['dom_ini'],ENT_QUOTES,$charset)."</span><span id='pbar_end_msg' style='display:none;'>".htmlentities($msg['dom_end'],ENT_QUOTES,$charset)."</span></h3>
 	<div class='pbar_frame' >
 		<div class='row' >".htmlentities($msg['pbar_progress'],ENT_QUOTES,$charset)."<span id='pbar_percent'>0%</span></div>
-		<div class='pbar_gauge'><img id='pbar_img' src='images/jauge.png' width='0%'/></div>
+		<div class='pbar_gauge'><img id='pbar_img' src='".get_url_icon('jauge.png')."' width='0%'/></div>
 	</div>
 </div>
 <div class='row'>

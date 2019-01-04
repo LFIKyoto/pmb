@@ -1,4 +1,4 @@
-<h1>Gestione finanziaria dei lettori</h1>
+<h2>Gestione finanziaria dei lettori</h2>
 <p>La gestione finanziaria dei lettori permette di amministrare i movimenti finanziari legati ai lettori:
 </p>
 <ul>

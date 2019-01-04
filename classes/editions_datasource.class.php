@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: editions_datasource.class.php,v 1.4 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: editions_datasource.class.php,v 1.7 2018-11-07 13:28:27 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -36,43 +36,45 @@ class editions_datasource {
 					break;
 				}
 			}
-			$this->table = $datasource->getElementsByTagName('table')->item(0)->nodeValue;
-			$fields = $datasource->getElementsByTagName("field");
-			for($i=0 ; $i<$fields->length ; $i++){
-				$id = $fields->item($i)->getAttribute('id');
-				$this->struct_format[$id] = array(
-					'field' => $fields->item($i)->getAttribute('field'),
-					'id' => $id,
-					'label' => $this->get_label($fields->item($i)->getAttribute('label')),
-					'type' => $fields->item($i)->getAttribute('type'),
-					'repeat' => $fields->item($i)->getAttribute('repeat'),
-					'field_alias' => $fields->item($i)->getAttribute('field_alias'),
-					'input' => $fields->item($i)->getAttribute('input')
-				);
-				$join = $fields->item($i)->getElementsByTagName("join");
-				if($join->length){
-					$this->struct_format[$id]['join'] = $join->item(0)->nodeValue;
-					$this->struct_format[$id]['field_join'] = $join->item(0)->getAttribute('field_join');
-					$this->struct_format[$id]['field_group'] = $join->item(0)->getAttribute('field_group');
-					$this->struct_format[$id]['authorized_null'] = $join->item(0)->getAttribute('authorized_null');
-				}
-				$before_joins = $fields->item($i)->getElementsByTagName("before_joins");
-				if($before_joins->length){
-					for($j=0 ; $j<$before_joins->length ; $j++){
-						$this->struct_format[$id]['before_joins'][] = $before_joins->item($j)->nodeValue;
+			if(isset($datasource)) {
+				$this->table = $datasource->getElementsByTagName('table')->item(0)->nodeValue;
+				$fields = $datasource->getElementsByTagName("field");
+				for($i=0 ; $i<$fields->length ; $i++){
+					$id = $fields->item($i)->getAttribute('id');
+					$this->struct_format[$id] = array(
+						'field' => $fields->item($i)->getAttribute('field'),
+						'id' => $id,
+						'label' => $this->get_label($fields->item($i)->getAttribute('label')),
+						'type' => $fields->item($i)->getAttribute('type'),
+						'repeat' => $fields->item($i)->getAttribute('repeat'),
+						'field_alias' => $fields->item($i)->getAttribute('field_alias'),
+						'input' => $fields->item($i)->getAttribute('input')
+					);
+					$join = $fields->item($i)->getElementsByTagName("join");
+					if($join->length){
+						$this->struct_format[$id]['join'] = $join->item(0)->nodeValue;
+						$this->struct_format[$id]['field_join'] = $join->item(0)->getAttribute('field_join');
+						$this->struct_format[$id]['field_group'] = $join->item(0)->getAttribute('field_group');
+						$this->struct_format[$id]['authorized_null'] = $join->item(0)->getAttribute('authorized_null');
 					}
-				}
-				$vals = $fields->item($i)->getElementsByTagName("values");
-				if($vals->length){
-					$this->struct_format[$id]['value_type']=$vals->item(0)->getAttribute('type');
-					$this->struct_format[$id]['value_object']=$vals;
+					$before_joins = $fields->item($i)->getElementsByTagName("before_joins");
+					if($before_joins->length){
+						for($j=0 ; $j<$before_joins->length ; $j++){
+							$this->struct_format[$id]['before_joins'][] = $before_joins->item($j)->nodeValue;
+						}
+					}
+					$vals = $fields->item($i)->getElementsByTagName("values");
+					if($vals->length){
+						$this->struct_format[$id]['value_type']=$vals->item(0)->getAttribute('type');
+						$this->struct_format[$id]['value_object']=$vals;
+					}
 				}
 			}
 		}
 	}
 	
 	public function redo_values($fields){
-		if($this->struct_format[$fields]['value_type'] && !$this->struct_format[$fields]['value']){
+		if($this->struct_format[$fields]['value_type'] && empty($this->struct_format[$fields]['value'])){
 			$methode="get_list_".$this->struct_format[$fields]['value_type'];
 			$vals=$this->struct_format[$fields]['value_object'];
 			$this->struct_format[$fields]['value']=call_user_func(array($this,$methode),$vals);
@@ -146,7 +148,7 @@ class editions_datasource {
 					if(!$params['fields']['content'][$i]){
 						//Si le champs des résultats ne fait pas partie des champs à afficher je ne le mets pas dans les résultats 
 						//(passe ici pour le cas où on filtre sur un champ avec un alias)
-					}elseif($this->struct_format[$params['fields']['content'][$i]]['value_type'] && $this->struct_format[$params['fields']['content'][$i]]['value_type'] != "query"){
+					}elseif(isset($this->struct_format[$params['fields']['content'][$i]]['value_type']) && $this->struct_format[$params['fields']['content'][$i]]['value_type'] && $this->struct_format[$params['fields']['content'][$i]]['value_type'] != "query"){
 						if($tmp=$this->struct_format[$params['fields']['content'][$i]]['value'][$val]){//Si j'ai la correspondance
 							$values[] =  $tmp;
 						}else{
@@ -162,7 +164,7 @@ class editions_datasource {
 								$values[] =  $val;
 							}
 						}
-					}elseif($this->struct_format[$params['fields']['content'][$i]]['type'] == "date"){
+					}elseif(isset($this->struct_format[$params['fields']['content'][$i]]['type']) && $this->struct_format[$params['fields']['content'][$i]]['type'] == "date"){
 						$values[] = formatdate($val);
 					}else{
 						$values[] = $val;
@@ -182,15 +184,15 @@ class editions_datasource {
 			foreach($params['fields']['content'] as $field){
 				$select[]= $this->struct_format[$field]['field'];
 				
-				if($tmp=$this->struct_format[$field]['before_joins']){
+				if(isset($this->struct_format[$field]['before_joins']) && $tmp=$this->struct_format[$field]['before_joins']){
 					foreach ( $tmp as $value ) {
        					$joins[]=$value;
 					}
 				}
-				if($tmp=$this->struct_format[$field]['join']){
+				if(isset($this->struct_format[$field]['join']) && $tmp=$this->struct_format[$field]['join']){
 					$joins[]=$tmp;
 				}
-				if($tmp=$this->struct_format[$field]['field_group']){
+				if(isset($this->struct_format[$field]['field_group']) && $tmp=$this->struct_format[$field]['field_group']){
 					$group[]=$tmp;
 				}
 			}
@@ -217,7 +219,7 @@ class editions_datasource {
 							if($where) $where.=" and ";
 							$where.= $condition; 
 						}
-						if($tmp=$this->struct_format[$field]['before_joins']){
+						if(isset($this->struct_format[$field]['before_joins']) && $tmp=$this->struct_format[$field]['before_joins']){
 							foreach ( $tmp as $value ) {
 		       					$joins[]=$value;
 							}
@@ -225,7 +227,7 @@ class editions_datasource {
 						if($this->struct_format[$field]['join']){
 							$joins[]= $this->struct_format[$field]['join'];
 						}
-						if($tmp=$this->struct_format[$field]['field_group']){
+						if(isset($this->struct_format[$field]['field_group']) && $tmp=$this->struct_format[$field]['field_group']){
 							$group[]=$tmp;
 						}
 					}

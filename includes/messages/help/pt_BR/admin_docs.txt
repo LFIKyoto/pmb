@@ -1,4 +1,4 @@
-<h1>Gerenciamento de exemplares e itens</h1>
+<h2>Gerenciamento de exemplares e itens</h2>
 <p>Esta seção permite definir as configurações para <b>empréstimos e estatísticas</b>.
 <ul>
 <li><b>Tipos de mídia</b> permite configurar várias opções de empréstimos, incluindo o período autorizado.</li>

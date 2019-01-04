@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: impr_cote.inc.php,v 1.5 2009-10-26 17:56:24 dbellamy Exp $
+// $Id: impr_cote.inc.php,v 1.8 2018-08-10 08:54:15 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+require_once($class_path."/sticks_sheet/sticks_sheets.class.php");
 
 if ($pmb_label_construct_script) {
 	require_once ("./catalog/caddie/".$pmb_label_construct_script);
@@ -33,7 +35,7 @@ function aff_choix_quoi_impr_cote($action = "", $action_redo="", $action_cancel 
 
 	//Lecture des formats de planches d'étiquettes
 	$label_fmt_sel = "";
-	$label_fmt_sel .= "<label class='etiquette'>" . htmlentities($msg[label_format], ENT_QUOTES, $charset) . "</label>&nbsp;";
+	$label_fmt_sel .= "<label class='etiquette'>" . htmlentities($msg['label_format'], ENT_QUOTES, $charset) . "</label>&nbsp;";
 	$label_fmt_sel .= "<select id='label_id' name='label_id' onchange=\"document.forms['maj_proc'].setAttribute('action', '".$action_redo."');document.forms['maj_proc'].submit(); \">";
 
 	//Formats disponibles
@@ -44,8 +46,10 @@ function aff_choix_quoi_impr_cote($action = "", $action_redo="", $action_cancel 
 			$label_fmt_sel .= "selected='selected' ";
 			$label_id = $key;
 		}
-		$label_fmt_sel .= ">" .htmlentities($value[label_name], ENT_QUOTES, $charset) . "</option>";
+		$label_fmt_sel .= ">" .htmlentities($value['label_name'], ENT_QUOTES, $charset) . "</option>";
 	}
+	$sticks_sheets = new sticks_sheets();
+	$label_fmt_sel .= $sticks_sheets->get_display_options_selector($label_id);
 	$label_fmt_sel .= "</select>";
 	$cart_choix_quoi_impr_cote = str_replace("<!--label_fmt_sel-->", $label_fmt_sel, $cart_choix_quoi_impr_cote);
 
@@ -72,12 +76,12 @@ function aff_choix_quoi_impr_cote($action = "", $action_redo="", $action_cancel 
 
 if ($idcaddie) {
 	$myCart = new caddie($idcaddie);
-	print aff_cart_titre($myCart);
+	print $myCart->aff_cart_titre();
 	switch ($action) {
 
 		case 'choix_quoi' :
-			print aff_cart_nb_items($myCart);
-			print aff_choix_quoi_impr_cote("./catalog/caddie/action/impr_cote_suite.php?idcaddie=$idcaddie", "./catalog.php?categ=caddie&sub=action&quelle=impr_cote&action=choix_quoi&object_type=EXPL&idcaddie=".$idcaddie, "./catalog.php?categ=caddie&sub=action&quelle=impr_cote&action=&idcaddie=0", $msg[caddie_choix_panier_impr_cote], $msg[caddie_act_panier_impr_cote], "");
+			print $myCart->aff_cart_nb_items();
+			print aff_choix_quoi_impr_cote("./catalog/caddie/action/impr_cote_suite.php?idcaddie=$idcaddie", "./catalog.php?categ=caddie&sub=action&quelle=impr_cote&action=choix_quoi&object_type=EXPL&idcaddie=".$idcaddie, "./catalog.php?categ=caddie&sub=action&quelle=impr_cote&action=&idcaddie=0", $msg['caddie_choix_panier_impr_cote'], $msg['caddie_act_panier_impr_cote'], "");
 			break;
 
 		default :
@@ -85,4 +89,4 @@ if ($idcaddie) {
 	}
 
 } else
-	aff_paniers($idcaddie, "EXPL", "./catalog.php?categ=caddie&sub=action&quelle=impr_cote", "choix_quoi", $msg[caddie_select_panier_impr_cote], "EXPL", 0, 0, 0);
+	aff_paniers($idcaddie, "EXPL", "./catalog.php?categ=caddie&sub=action&quelle=impr_cote", "choix_quoi", $msg['caddie_select_panier_impr_cote'], "EXPL", 0, 0, 0);

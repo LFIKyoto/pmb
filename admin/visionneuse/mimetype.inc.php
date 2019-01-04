@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mimetype.inc.php,v 1.5 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: mimetype.inc.php,v 1.6 2017-07-21 12:41:38 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -21,9 +21,11 @@ function show_form($action =''){
 	global $class_param;
 	global $mimetypeConf,$mimetypeConfByDefault;
 	
-	if($action=="update") $message="<div class='erreur'>".$msg["visionneuse_admin_update"]."</div>";
-	$form = "
-	$message
+	$message = '';
+	if($action=="update") {
+		$message="<div class='erreur'>".$msg["visionneuse_admin_update"]."</div>";
+	}
+	$form = $message."
 	<form class='form-admin' name='modifParam' method='post' action='./admin.php?categ=visionneuse&sub=mimetype&action=update'>
 		<h3>".$msg["visionneuse_admin_mimetype"]."</h3>
 		<table>

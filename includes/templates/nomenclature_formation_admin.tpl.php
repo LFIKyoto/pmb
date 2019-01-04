@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_formation_admin.tpl.php,v 1.6 2015-02-05 09:48:18 ngantier Exp $
+// $Id: nomenclature_formation_admin.tpl.php,v 1.8 2017-11-07 15:34:41 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -29,20 +29,20 @@ $nomenclature_formation_list_tpl="
 
 $nomenclature_formation_list_line_tpl="
 <tr  class='!!odd_even!!' onmouseout=\"this.className='!!odd_even!!'\" onmouseover=\"this.className='surbrillance'\">	
-	<td valign='top'>				
+	<td style='vertical-align:top'>				
 		<input class='bouton_small' type='button' onclick=\"document.location='./admin.php?categ=formation&sub=formation&action=up&id=!!id!!'\" value='-'>
 		<input class='bouton_small' type='button' onclick=\"document.location='./admin.php?categ=formation&sub=formation&action=down&id=!!id!!'\" value='+'>
 	</td> 
-	<td valign='top' style=\"cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=formation&sub=formation&action=form&id=!!id!!';\" >				
+	<td style=\"vertical-align:top; cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=formation&sub=formation&action=form&id=!!id!!';\" >				
 		!!name!!
 	</td> 
-	<td valign='top' style=\"cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=formation&sub=formation&action=form&id=!!id!!';\">				
+	<td style=\"vertical-align:top; cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=formation&sub=formation&action=form&id=!!id!!';\">				
 		!!types_display!!
 	</td>  
-	<td valign='top' style=\"cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=formation&sub=formation&action=form&id=!!id!!';\">				
+	<td style=\"vertical-align:top; cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=formation&sub=formation&action=form&id=!!id!!';\">				
 		!!nature!!
 	</td> 
-	<td valign='top' style=\"cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=formation&sub=formation&action=form&id=!!id!!';\">				
+	<td style='vertical-align:top'>				
 		<input type='button' class='bouton' value='".$msg['admin_nomenclature_type_edition']."'  
 			onclick=\"document.location='./admin.php?categ=formation&sub=formation&action=type_list&id=!!id!!'\"  />
 	</td> 	
@@ -131,11 +131,11 @@ $nomenclature_formation_type_list_tpl="
 
 $nomenclature_formation_type_list_line_tpl="
 <tr  class='!!odd_even!!' onmouseout=\"this.className='!!odd_even!!'\" onmouseover=\"this.className='surbrillance'\">	
-	<td valign='top'>				
+	<td style='vertical-align:top'>				
 		<input class='bouton_small' type='button' onclick=\"document.location='./admin.php?categ=formation&sub=formation&action=type_up&id=!!id!!&id_type=!!id_type!!'\" value='-'>
 		<input class='bouton_small' type='button' onclick=\"document.location='./admin.php?categ=formation&sub=formation&action=type_down&id=!!id!!&id_type=!!id_type!!'\" value='+'>
 	</td> 
-	<td valign='top' style=\"cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=formation&sub=formation&action=type_form&id=!!id!!&id_type=!!id_type!!';\" >				
+	<td style=\"vertical-align:top; cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=formation&sub=formation&action=type_form&id=!!id!!&id_type=!!id_type!!';\" >				
 		!!name!!
 	</td> 
 </tr> 	

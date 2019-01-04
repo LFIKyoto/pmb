@@ -2,11 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: XMLlist.class.php,v 1.32 2015-06-12 15:40:22 apetithomme Exp $
+// $Id: XMLlist.class.php,v 1.45 2018-11-26 12:51:14 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 // classe de gestion des documents XML
+require_once($class_path."/cache_factory.class.php");
 
 if ( ! defined( 'XML_LIST_CLASS' ) ) {
   define( 'XML_LIST_CLASS', 1 );
@@ -26,27 +27,42 @@ class XMLlist {
 	public $flag_order;
 	public $order;
 	public $js_group;
-
+	public $attributesToParse=array();
+	public $attributes=array();
+	public static $ignore_subst_file = false;
+	
 	// constructeur
-	function XMLlist($fichier, $s=1) {
+	public function __construct($fichier, $s=1) {
 		$this->fichierXml = $fichier;
-		$this->fichierXmlSubst = str_replace(".xml", "", $fichier)."_subst.xml" ;
+		if(static::$ignore_subst_file) {
+			$this->fichierXmlSubst = $fichier ;
+		} else {
+			$this->fichierXmlSubst = str_replace(".xml", "", $fichier)."_subst.xml" ;
+		}
 		$this->s = $s;
-		$this->flag_order = false;		
+		$this->flag_order = false;
 	}
 		                
 
 	//Méthodes
-	function debutBalise($parser, $nom, $attributs) {
+	public function debutBalise($parser, $nom, $attributs) {
 		global $_starttag; $_starttag=true;
 		if($nom == 'ENTRY' && $attributs['CODE'])
 			$this->current = $attributs['CODE'];
-		if($nom == 'ENTRY' && $attributs['ORDER']) {
+		if($nom == 'ENTRY' && isset($attributs['ORDER'])) {
 			$this->flag_order = true;
 			$this->order[$attributs['CODE']] =  $attributs['ORDER'];
 		}	
-		if($nom == 'ENTRY' && $attributs['JS']){
+		if($nom == 'ENTRY' && isset($attributs['JS'])){
 			$this->js_group = $attributs['JS'];
+		}
+		foreach ($this->attributesToParse as $attribute){
+			if ($nom == 'ENTRY' && isset($attribute['default_value'])) {
+				$this->attributes[$attributs['CODE']][$attribute['name']] = $attribute['default_value'];
+			}
+			if ($nom == 'ENTRY' && isset($attributs[$attribute['name']])){
+				$this->attributes[$attributs['CODE']][$attribute['name']]=$attributs[$attribute['name']];
+			}
 		}
 		if($nom == 'XMLlist') {
 			$this->table = array();
@@ -54,46 +70,70 @@ class XMLlist {
 		}
 	}
 	
+	/**
+	 * Définit une série d'attributs supplémentaires à parser
+	 * @param array $attributes array('name','default_value')
+	 */
+	public function setAttributesToParse($attributes=array()){
+		$this->attributesToParse=$attributes;
+	}
+
+	public function getAttributes(){
+		return $this->attributes;
+	}
+	  
 	//Méthodes
-	function debutBaliseSubst($parser, $nom, $attributs) {
+	public function debutBaliseSubst($parser, $nom, $attributs) {
 		global $_starttag; $_starttag=true;
 		if($nom == 'ENTRY' && $attributs['CODE']) {
 			$this->flag_elt = false ;
 			$this->current = $attributs['CODE'];
 		}
-		if($nom == 'ENTRY' && $attributs['ORDER']) {
+		if($nom == 'ENTRY' && isset($attributs['ORDER'])) {
 			$this->flag_order = true;
 			$this->order[$attributs['CODE']] =  $attributs['ORDER'];
 		}
-		if($nom == 'ENTRY' && $attributs['JS']){
+		if($nom == 'ENTRY' && isset($attributs['JS'])){
 			$this->js_group = $attributs['JS'];
 		}
-		if($nom == 'ENTRY' && $attributs['FAV']) {
+		foreach ($this->attributesToParse as $attribute){
+			if ($nom == 'ENTRY' && isset($attribute['default_value'])) {
+				$this->attributes[$attributs['CODE']][$attribute['name']] = $attribute['default_value'];
+			}
+			if ($nom == 'ENTRY' && isset($attributs[$attribute['name']]) && $attributs[$attribute['name']]) {
+				$this->attributes[$attributs['CODE']][$attribute['name']] = $attributs[$attribute['name']];
+			}
+		}
+		if($nom == 'ENTRY' && isset($attributs['FAV'])) {
 			$this->flag_fav =  $attributs['FAV'];
 		}
 	}
 	
-	function finBalise($parser, $nom) {
+	public function finBalise($parser, $nom) {
 		// ICI pour affichage des codes des messages en dur 
-		if ($_COOKIE[SESSname."-CHECK-MESSAGES"]==1 && strpos($this->fichierXml, "messages")) {
-			$this->table[$this->current] = "__".$this->current."**".$this->table[$this->current];
-		} 
+		if(defined('SESSname') && isset($_COOKIE[SESSname."-CHECK-MESSAGES"])) {
+			if ($_COOKIE[SESSname."-CHECK-MESSAGES"]==1 && strpos($this->fichierXml, "messages")) {
+				$this->table[$this->current] = "__".$this->current."**".$this->table[$this->current];
+			}
+		}
 		$this->current = '';
 		$this->js_group = "";
 		}
 
-	function finBaliseSubst($parser, $nom) {
-		// ICI pour affichage des codes des messages en dur 
-		if ($_COOKIE[SESSname."-CHECK-MESSAGES"]==1 && strpos($this->fichierXml, "messages")) {
-			$this->table[$this->current] = "__".$this->current."**".$this->table[$this->current];
-		} 
+	public function finBaliseSubst($parser, $nom) {
+		// ICI pour affichage des codes des messages en dur
+		if(defined(SESSname) && isset($_COOKIE[SESSname."-CHECK-MESSAGES"])) {
+			if ($_COOKIE[SESSname."-CHECK-MESSAGES"]==1 && strpos($this->fichierXml, "messages")) {
+				$this->table[$this->current] = "__".$this->current."**".$this->table[$this->current];
+			}
+		}
 		if ((!$this->flag_elt) && ($nom=='ENTRY')) unset($this->table[$this->current]) ;
 		$this->current = '';
 		$this->js_group = "";
 		$this->flag_fav =  false;
 		}
 	
-	function texte($parser, $data) {
+	public function texte($parser, $data) {
 		global $_starttag; 
 		if($this->current)
 			if ($_starttag) {
@@ -112,7 +152,7 @@ class XMLlist {
 			}
 		}
 
-	function texteSubst($parser, $data) {
+	public function texteSubst($parser, $data) {
 		global $_starttag; 
 		$this->flag_elt = true ;
 		if ($this->current) {
@@ -136,60 +176,87 @@ class XMLlist {
 	
 
  // Modif Armelle Nedelec recherche de l'encodage du fichier xml et transformation en charset'
- 	function analyser() 
+ 	public function analyser() 
  	{
  		global $charset;
- 		global $base_path;
+ 		global $base_path, $class_path, $KEY_CACHE_FILE_XML;
 		if (!($fp = @fopen($this->fichierXml, "r"))) {
 			die("impossible d'ouvrir le fichier XML $this->fichierXml");
 		}
  		//vérification fichier pseudo-cache dans les temporaires
 		$fileInfo = pathinfo($this->fichierXml);
+		$fileName = preg_replace("/[^a-z0-9]/i","",$fileInfo['dirname'].$fileInfo['filename'].$charset);
 		if($this->fichierXmlSubst && file_exists($this->fichierXmlSubst)){
-			$tempFile = $base_path."/temp/XMLWithSubst".preg_replace("/[^a-z0-9]/i","",$fileInfo['dirname'].$fileInfo['filename'].$charset).".tmp";
+			$tempFile = $base_path."/temp/XMLWithSubst".$fileName.".tmp";
 			$with_subst=true;
 		}else{
-			$tempFile = $base_path."/temp/XML".preg_replace("/[^a-z0-9]/i","",$fileInfo['dirname'].$fileInfo['filename'].$charset).".tmp";
+			$tempFile = $base_path."/temp/XML".$fileName.".tmp";
 			$with_subst=false;
 		}
-		
 		$dejaParse = false;
-		if(file_exists($tempFile)){
-			//Le fichier XML original a-t-il été modifié ultérieurement ?
-			if(filemtime($this->fichierXml)>filemtime($tempFile)){
-				//on va re-générer le pseudo-cache
-				unlink($tempFile);
-			} else {
-				//On regarde aussi si le fichier subst à été modifié après le fichier temp
-				if($with_subst){
-					if(filemtime($this->fichierXmlSubst)>filemtime($tempFile)){
-						//on va re-générer le pseudo-cache
-						unlink($tempFile);
-					} else {
+
+		$cache_php=cache_factory::getCache();
+		$key_file="";
+		if ($cache_php) {
+			$key_file=getcwd().$fileName.filemtime($this->fichierXml);
+			if($this->fichierXmlSubst && file_exists($this->fichierXmlSubst)){
+				$key_file.=filemtime($this->fichierXmlSubst);
+			}
+			$key_file=$KEY_CACHE_FILE_XML.md5($key_file);
+			if($tmp_key = $cache_php->getFromCache($key_file)){
+				if($tables = $cache_php->getFromCache($tmp_key)){
+					if(count($tables) == 4){
+						fclose($fp);
+						$this->table = $tables[0];
+						$this->table_js = $tables[1];
+						$this->tablefav = $tables[2];
+						$this->attributes = $tables[3];
 						$dejaParse = true;
 					}
+				}
+			}
+		}else{
+			if(file_exists($tempFile)){
+				//Le fichier XML original a-t-il été modifié ultérieurement ?
+				if(filemtime($this->fichierXml)>filemtime($tempFile)){
+					//on va re-générer le pseudo-cache
+					unlink($tempFile);
+				} else {
+					//On regarde aussi si le fichier subst à été modifié après le fichier temp
+					if($with_subst){
+						if(filemtime($this->fichierXmlSubst)>filemtime($tempFile)){
+							//on va re-générer le pseudo-cache
+							unlink($tempFile);
+						} else {
+							$dejaParse = true;
+						}
+					}else{
+						$dejaParse = true;
+					}
+				}
+			}
+			if($dejaParse){
+				$tmp = fopen($tempFile, "r");
+				$tables = unserialize(fread($tmp,filesize($tempFile)));
+				fclose($tmp);
+				if(count($tables) == 4){
+					fclose($fp);
+					$this->table = $tables[0];
+					$this->table_js = $tables[1];
+					$this->tablefav = $tables[2];
+					$this->attributes = $tables[3];
 				}else{
-					$dejaParse = true;
+					unlink($tempFile);
+					$dejaParse = false;
 				}
 			}
 		}
-		if($dejaParse){
-			fclose($fp);
-			$tmp = fopen($tempFile, "r");
-			$tables = unserialize(fread($tmp,filesize($tempFile)));
-			if(count($tables)!= 3){
-				unlink($tempFile);
-				$this->analyser();
-				return;
-			}
-			$this->table = $tables[0];
-			$this->table_js = $tables[1];
-			$this->tablefav = $tables[2];
-			fclose($tmp);
-		} else {
+		
+		if(!$dejaParse){
 			$this->table = array();
 			$this->table_js = array();
 			$this->tablefav = array();
+			$this->attributes = array();
 			$file_size=filesize ($this->fichierXml);
 			$data = fread ($fp, $file_size);
 	
@@ -247,7 +314,15 @@ class XMLlist {
 				}
 				$this->table=$tmp;
 			}
-			if ($this->s && is_array($this->table_js)) {
+			if(!static::$ignore_subst_file) {
+				require_once($class_path.'/misc/files/misc_file_list.class.php');
+				$path = substr($this->fichierXml, 0, strrpos($this->fichierXml, '/'));
+				$filename = substr($this->fichierXml, strrpos($this->fichierXml, '/')+1);
+				$misc_file_list = new misc_file_list($path, $filename);
+				$this->table = $misc_file_list->apply_substitution($this->table);
+			}
+			//MB: La table "table_js" est composé de sous table, elle ne peut donc pas être triée avec "strtoupper"
+			/*if ($this->s && is_array($this->table_js)) {
 				reset($this->table_js);
 				$tmp=array();
 				$tmp=array_map("convert_diacrit",$this->table_js);//On enlève les accents
@@ -257,7 +332,7 @@ class XMLlist {
 					$tmp[$key]=$this->table_js[$key];//On reprend les bons couples clé / libellé
 				}
 				$this->table_js=$tmp;
-			}
+			}*/
 			if ($this->s && is_array($this->tablefav) && count($this->tablefav)) {
 				reset($this->tablefav);
 				$tmp=array();
@@ -269,21 +344,39 @@ class XMLlist {
 				}
 				$this->tablefav=$tmp;
 			}
+			if ($this->s && is_array($this->attributes)) {
+				reset($this->attributes);
+				$tmp=array();				
+				foreach ( $this->attributes as  $key => $attributes ) {		
+					$tmp_attributes=array();		
+					$tmp_attributes=array_map("convert_diacrit",$attributes);//On enlève les accents
+					$tmp_attributes=array_map("strtoupper",$tmp_attributes);//On met en majuscule
+					asort($tmp);
+					$tmp[$key]=$tmp_attributes;
+				}
+				$this->attributes=$tmp;				
+			}			
 			if($this->flag_order == true){
 				$table_tmp = array();
 				asort($this->order);
 				foreach ($this->order as $key =>$value){
-					$table_tmp[$key] = $this->table[$key];
-					unset($this->table[$key]);
+					if($this->table[$key]) {
+						$table_tmp[$key] = $this->table[$key];
+						unset($this->table[$key]);
+					}
 				}
 				$this->table = $table_tmp + $this->table;//array_merge réécrivait les clés numériques donc problème.
-				$table_tmp = array();
-				asort($this->order);
-				foreach ($this->order as $key =>$value){
-					$table_tmp[$key] = $this->table_js[$key];
-					unset($this->table_js[$key]);
+				if (count($this->table_js)) {
+					$table_tmp = array();
+					asort($this->order);
+					foreach ($this->order as $key =>$value){
+						if (isset($this->table_js[$key])) {
+							$table_tmp[$key] = $this->table_js[$key];
+							unset($this->table_js[$key]);
+						}
+					}
+					$this->table_js = $table_tmp + $this->table_js;//array_merge réécrivait les clés numériques donc problème.
 				}
-				$this->table_js = $table_tmp + $this->table_js;//array_merge réécrivait les clés numériques donc problème.
 				if (count($this->tablefav)) {
 					$table_tmp = array();
 					asort($this->order);
@@ -295,12 +388,29 @@ class XMLlist {
 					}
 					$this->tablefav = $table_tmp + $this->tablefav;//array_merge réécrivait les clés numériques donc problème.
 				}
+				if (count($this->attributes)) {
+					$table_tmp = array();
+					asort($this->order);
+					foreach ($this->order as $key =>$value){
+						if (isset($this->attributes[$key])) {
+							$table_tmp[$key] = $this->attributes[$key];
+							unset($this->attributes[$key]);
+						}
+					}
+					$this->attributes = $table_tmp + $this->attributes;//array_merge réécrivait les clés numériques donc problème.
+				}
 			}
 			
 			//on écrit le temporaire
-			$tmp = fopen($tempFile, "wb");
-			fwrite($tmp,serialize(array($this->table,$this->table_js,$this->tablefav)));
-			fclose($tmp);
+			if ($key_file) {
+				$key_file_content=$KEY_CACHE_FILE_XML.md5(serialize(array($this->table,$this->table_js,$this->tablefav,$this->attributes)));
+				$cache_php->setInCache($key_file_content, array($this->table,$this->table_js,$this->tablefav,$this->attributes));
+				$cache_php->setInCache($key_file,$key_file_content);
+			}else{
+				$tmp = fopen($tempFile, "wb");
+				fwrite($tmp,serialize(array($this->table,$this->table_js,$this->tablefav,$this->attributes)));
+				fclose($tmp);
+			}
 		}
 	}
 }

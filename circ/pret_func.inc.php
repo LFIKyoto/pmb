@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pret_func.inc.php,v 1.55 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: pret_func.inc.php,v 1.67 2018-10-19 15:06:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -13,11 +13,11 @@ require_once("$class_path/amende.class.php");
 require_once("$class_path/calendar.class.php");
 require_once("$class_path/audit.class.php");
 require_once("$class_path/transfert.class.php");
+require_once($class_path.'/audit.class.php');
+require_once($class_path.'/pret.class.php');
 
 // effectue les opérations de retour et mise en stat
 function do_retour($stuff,$confirmed=1) {
-
-	global $dbh;
 	global $msg;
 	global $alert_sound_list,$pmb_play_pret_sound;
 	global $pmb_gestion_amende,$pmb_gestion_financiere,$pmb_blocage_retard, $pmb_blocage_max, $pmb_blocage_delai, $pmb_blocage_coef;
@@ -38,7 +38,7 @@ function do_retour($stuff,$confirmed=1) {
 	$query .= " AND s.idsection=".$stuff->expl_section;
 	$query .= " LIMIT 1";
 
-	$result = pmb_mysql_query($query, $dbh);
+	$result = pmb_mysql_query($query);
 	$info_doc = pmb_mysql_fetch_object($result);
 	
 
@@ -55,7 +55,7 @@ function do_retour($stuff,$confirmed=1) {
 	} elseif ($stuff->pret_idempr) {
 			print "
 				<div class='right'>
-					<font color='RED'><b>$msg[retour_ok]</b></font>
+					<span style='color:RED'><b>$msg[retour_ok]</b></span>
 				</div>";	
 	}
 	print "</div>";
@@ -74,43 +74,12 @@ function do_retour($stuff,$confirmed=1) {
 		$perso_=$p_perso->show_fields($stuff->expl_id);
 		for ($i=0; $i<count($perso_["FIELDS"]); $i++) {
 			$p=$perso_["FIELDS"][$i];
-			if ($p["AFF"]) $perso_aff .="<br />".$p["TITRE"]." ".$p["AFF"];
+			if ($p["AFF"] !== '') $perso_aff .="<br />".$p["TITRE"]." ".$p["AFF"];
 		}
 	}
 	if ($perso_aff) print "<div class='row'>".$perso_aff."</div>" ;
 
-
-$script_magnetique="
-<script language='javascript' type='text/javascript'>
-var requete = null;
-
-function creerRequette(){
-	if(window.XMLHttpRequest) // Firefox
-		requete = new XMLHttpRequest();
-	else if(window.ActiveXObject) // Internet Explorer
-  		requete = new ActiveXObject('Microsoft.XMLHTTP');
-	else { // XMLHttpRequest non supporté par le navigateur
-   		alert('Votre navigateur ne supporte pas les objets XMLHTTPRequest...');
-    	return;
-	}
-}
-
-function magnetise(commande){
-	creerRequette();
-	if(netscape.security.PrivilegeManager)netscape.security.PrivilegeManager.enablePrivilege('UniversalBrowserRead');	
-	requete.open('GET', 'http://localhost:30000/?send_value='+commande+'&command=Send', false);
-	requete.send(null);
-	if(requete.readyState != 4) alert('Requête antivol non effectuée !');
-}
-
-";
-	global $pmb_antivol;
-	if($pmb_antivol>0) {
-		if($stuff->type_antivol ==1)// c'est un support non magnétique (livre, revue...)
-			print "$script_magnetique"."magnetise('RRR');</script>";
-		if($stuff->type_antivol ==2)//c'est un support magnétique (cassette)	
-			print "$script_magnetique"."magnetise('SSS');</script>";
-	}
+	print pret::get_display_antivol($stuff->expl_id);
 	
 	//si le retour se passe sur un site différent de ce lui de l'exemplaire	
 	global $pmb_transferts_actif;
@@ -306,6 +275,13 @@ function enregLoc(obj) {
 
 	if ($stuff->pret_idempr) {
 		
+		//choix du mode de calcul
+		$loc_calendar = 0;
+		global $pmb_utiliser_calendrier, $pmb_utiliser_calendrier_location;
+		if (($pmb_utiliser_calendrier==1) && $pmb_utiliser_calendrier_location) {
+			$loc_calendar = $stuff->expl_location;
+		}
+		
 		// l'exemplaire était effectivement emprunté
 		// calcul du retard éventuel
 		$rqt_date = "select ((TO_DAYS(CURDATE()) - TO_DAYS('$stuff->pret_retour'))) as retard ";
@@ -315,7 +291,7 @@ function enregLoc(obj) {
 		if($retard > 0) {
 			//Calcul du vrai nombre de jours
 			$date_debut=explode("-",$stuff->pret_retour);
-			$ndays=calendar::get_open_days($date_debut[2],$date_debut[1],$date_debut[0],date("d"),date("m"),date("Y"));
+			$ndays=calendar::get_open_days($date_debut[2],$date_debut[1],$date_debut[0],date("d"),date("m"),date("Y"),$loc_calendar);
 			if ($ndays>0) {
 				$retard = (int)$ndays;
 				print "<br /><div class='erreur'>".$msg[369]."&nbsp;: ".$retard." ".$msg[370]."</div>";
@@ -325,18 +301,24 @@ function enregLoc(obj) {
 		//Calcul du blocage
 		if ($pmb_blocage_retard) {
 			$date_debut=explode("-",$stuff->pret_retour);
-			$ndays=calendar::get_open_days($date_debut[2],$date_debut[1],$date_debut[0],date("d"),date("m"),date("Y"));
+			$ndays=calendar::get_open_days($date_debut[2],$date_debut[1],$date_debut[0],date("d"),date("m"),date("Y"),$loc_calendar);
 			if ($ndays>$pmb_blocage_delai) {
 				$ndays=$ndays*$pmb_blocage_coef;
 				if (($ndays>$pmb_blocage_max)&&($pmb_blocage_max!=0)) {
-					$ndays=$pmb_blocage_max;
+					if ($pmb_blocage_max!=-1) {
+						$ndays=$pmb_blocage_max;
+					}
 				}
 			} else $ndays=0;
 			if ($ndays>0) {
 				//Le lecteur est-il déjà bloqué ?
 				$date_fin_blocage_empr = pmb_mysql_result(pmb_mysql_query("select date_fin_blocage from empr where id_empr='".$stuff->pret_idempr."'"),0,0);
 				//Calcul de la date de fin
-				$date_fin=calendar::add_days(date("d"),date("m"),date("Y"),$ndays);
+				if ($pmb_blocage_max!=-1) {
+					$date_fin=calendar::add_days(date("d"),date("m"),date("Y"),$ndays,$loc_calendar);
+				} else {
+					$date_fin=calendar::add_days(date("d"),date("m"),date("Y"),0,$loc_calendar);
+				}
 				if ($date_fin > $date_fin_blocage_empr) {
 					//Mise à jour
 					pmb_mysql_query("update empr set date_fin_blocage='".$date_fin."' where id_empr='".$stuff->pret_idempr."'");
@@ -361,7 +343,7 @@ function enregLoc(obj) {
 				if ($compte_id) {
 					$cpte=new comptes($compte_id);
 					if ($cpte->id_compte) {
-						$cpte->record_transaction("",$amende_t["valeur"],-1,sprintf($msg["finance_retour_amende_expl"],$stuff->pret_idexpl),0);
+						$cpte->record_transaction("",$amende_t["valeur"],-1,sprintf($msg["finance_retour_amende_expl"],$stuff->expl_cb),0);
 						print " ".$msg["finance_retour_amende_recorded"];
 						}
 					}
@@ -407,7 +389,7 @@ function enregLoc(obj) {
 						$query .= "empr_prenom, empr_nom, empr_cb ";  
 						$query .= "from (((resa LEFT JOIN notices AS notices_m ON resa_idnotice = notices_m.notice_id ) LEFT JOIN bulletins ON resa_idbulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id), empr ";
 						$query .= "where id_resa in (".$affect.") and resa_idempr=id_empr";
-						$result = pmb_mysql_query($query, $dbh);		
+						$result = pmb_mysql_query($query);		
 						$empr=@pmb_mysql_fetch_object($result);
 						
 						print pmb_bidi("<div class='message_important'>$msg[352]</div>
@@ -429,13 +411,13 @@ function enregLoc(obj) {
 	} else {
 		print "<div class='erreur'>${msg[605]}</div>";
 		$alert_sound_list[]="critique";
-		}
+	}
 // show_report($stuff); // this stands for debugging
 }
 
 // mise en table stat des infos du prêt
 function stat_stuff ($stuff) {
-	global $dbh, $empr_archivage_prets, $empr_archivage_prets_purge; 
+	global $empr_archivage_prets, $empr_archivage_prets_purge; 
 
 	if(!is_object($stuff)) die ("Pb in ./circ/pret_func.inc.php [stat_stuff()].");
 	$query = "insert into pret_archive set ";
@@ -467,9 +449,10 @@ function stat_stuff ($stuff) {
 	$query .= "arc_date_relance='".		$stuff->date_relance    			."', ";
 	$query .= "arc_printed='".			$stuff->printed    				."', ";
 	$query .= "arc_cpt_prolongation='".	$stuff->cpt_prolongation 		."', ";
-	$query .= "arc_short_loan_flag='".	$stuff->short_loan_flag 		."' ";
+	$query .= "arc_short_loan_flag='".	$stuff->short_loan_flag 		."', ";
+	$query .= "arc_pnb_flag='".	        $stuff->pnb_flag 		        ."' ";
 
-	$res = pmb_mysql_query($query, $dbh);
+	$res = pmb_mysql_query($query);
 	$id_arc_insere = pmb_mysql_insert_id() ;
 	// purge des vieux trucs
 	if ($empr_archivage_prets_purge) {
@@ -481,11 +464,11 @@ function stat_stuff ($stuff) {
 	}
 
 	return $id_arc_insere ;
-	}
+}
 
 // mise à jour des stat des infos du prêt
 function maj_stat_pret ($stuff) {
-	global $dbh, $empr_archivage_prets, $empr_archivage_prets_purge; 
+	global $empr_archivage_prets, $empr_archivage_prets_purge; 
 
 	if(!is_object($stuff)) die ("Pb in ./circ/pret_func.inc.php [maj_stat_pret()].");
 
@@ -519,7 +502,7 @@ function maj_stat_pret ($stuff) {
 	$query .= "arc_cpt_prolongation='".	$stuff->cpt_prolongation 		."', ";	
 	$query .= "arc_short_loan_flag='".	$stuff->short_loan_flag 		."' ";
 	$query .= " where arc_id='".$stuff->pret_arc_id."' ";
-	$res = pmb_mysql_query($query, $dbh);
+	$res = pmb_mysql_query($query);
 
 	audit::insert_modif (AUDIT_PRET, $stuff->pret_arc_id) ;
 
@@ -533,34 +516,30 @@ function maj_stat_pret ($stuff) {
 	}
 	
 	return $res ;
-	}
+}
 
 // suppression du prêt (table prêt)
 function del_pret($stuff) {
-	global $dbh; 
-
 	//return 1 ; // debug mode ;-)
 	if(!is_object($stuff))
 		die("serious application error occured in ./circ/retour.inc [del_pret()]. Please contact developpment team");
 	$query = "delete from pret where pret_idexpl=".$stuff->expl_id;
-	if (!pmb_mysql_query($query, $dbh)) return 0 ;
+	if (!pmb_mysql_query($query)) return 0 ;
 	
 	$query = "update empr set last_loan_date=sysdate() where id_empr='".$stuff->pret_idempr."' ";
-	@pmb_mysql_query($query, $dbh);
+	@pmb_mysql_query($query);
 	
 	$query = "update exemplaires set expl_lastempr='".$stuff->pret_idempr."', last_loan_date=sysdate() where expl_id='".$stuff->expl_id."' ";
-	if (!pmb_mysql_query($query, $dbh)) return 0 ;
+	if (!pmb_mysql_query($query)) return 0 ;
 		else return 1 ;
-	}
+}
 
 // teste l'existence de l'exemplaire et le cas échéant,
 // retourne les infos exemplaire sous forme d'objet
 function check_barcode($cb) {
-
-	global $dbh;
 	$expl->expl_cb = $cb ;
 	$query = "select * from exemplaires where expl_cb='$cb' ";
-	$result = pmb_mysql_query($query, $dbh);
+	$result = pmb_mysql_query($query);
 	$expl = pmb_mysql_fetch_object($result);
 	if(!$expl->expl_id) {
 		// exemplaire inconnu
@@ -577,7 +556,7 @@ function check_barcode($cb) {
 		if ($expl->expl_lastempr) {
 			// récupération des infos emprunteur
 			$query_last_empr = "select empr_cb, empr_nom, empr_prenom from empr where id_empr='".$expl->expl_lastempr."' ";
-			$result_last_empr = pmb_mysql_query($query_last_empr, $dbh);
+			$result_last_empr = pmb_mysql_query($query_last_empr);
 			if(pmb_mysql_num_rows($result_last_empr)) {
 				$last_empr = pmb_mysql_fetch_object($result_last_empr);
 				$expl->lastempr_cb = $last_empr->empr_cb;
@@ -590,31 +569,27 @@ function check_barcode($cb) {
 }
 
 function pret_construit_infos_stat ($id_expl) {
-		
-	global $dbh;
-	
 	$query = "select * from exemplaires where expl_id='$id_expl' ";
-	$result = pmb_mysql_query($query, $dbh);
+	$result = pmb_mysql_query($query);
 	$stuff = pmb_mysql_fetch_object($result);
 	if(!$stuff->expl_id) {
 		// exemplaire inconnu
 		return FALSE;
-		}
+	}
 	$stuff = check_pret($stuff);
 	$stuff = check_resa($stuff);
 	return $stuff ;
-	}
-
-function insert_in_stat($stuf) {
-	}
+}
 
 // envoi d'un mail de ticket de prêt
 // reçoit : id_empr et éventuellement cb_doc 
 function electronic_ticket($id_empr, $cb_doc="") {
-	global $dbh, $msg, $charset ;
+	global $msg, $charset ;
 	global $PMBusernom;
 	global $PMBuserprenom;
 	global $PMBuseremail,$PMBuseremailbcc;
+	
+	$id_empr += 0;
 	
 	$headers  = "MIME-Version: 1.0\n";
 	$headers .= "Content-type: text/html; charset=".$charset."\n";
@@ -666,7 +641,7 @@ function electronic_ticket($id_empr, $cb_doc="") {
 	$empr_electronic_loan_ticket_msg = str_replace("!!all_loans!!", $message_prets, $empr_electronic_loan_ticket_msg) ;
 	
 	$requete = "select id_empr, empr_mail, empr_nom, empr_prenom from empr where id_empr='$id_empr' ";
-	$res = pmb_mysql_query($requete, $dbh);
+	$res = pmb_mysql_query($requete);
 	$empr=pmb_mysql_fetch_object($res);
 	
 	//remplacement nom et prenom
@@ -679,8 +654,66 @@ function electronic_ticket($id_empr, $cb_doc="") {
 	}
 }
 
+// envoi d'un mail de ticket de prêt de groupe
+function electronic_ticket_groupe($id_groupe) {
+	global $msg, $charset ;
+	global $PMBusernom;
+	global $PMBuserprenom;
+	global $PMBuseremail,$PMBuseremailbcc;
+	
+	$id_groupe += 0;
+
+	$headers  = "MIME-Version: 1.0\n";
+	$headers .= "Content-type: text/html; charset=".$charset."\n";
+
+	// info site
+	global $biblio_name, $biblio_logo, $biblio_adr1, $biblio_adr2, $biblio_cp, $biblio_town, $biblio_state, $biblio_country, $biblio_phone, $biblio_email, $biblio_website, $biblio_commentaire ;
+	global $empr_electronic_loan_ticket_obj, $empr_electronic_loan_ticket_msg ;
+	$empr_electronic_loan_ticket_obj = str_replace("!!biblio_name!!", $biblio_name, $empr_electronic_loan_ticket_obj) ;
+	$empr_electronic_loan_ticket_obj = str_replace("!!date!!", formatdate(today()), $empr_electronic_loan_ticket_obj) ;
+
+	$empr_electronic_loan_ticket_msg = str_replace("!!biblio_name!!", $biblio_name, $empr_electronic_loan_ticket_msg) ;
+	$empr_electronic_loan_ticket_msg = str_replace("!!date!!", formatdate(today()), $empr_electronic_loan_ticket_msg) ;
+	$empr_electronic_loan_ticket_msg = str_replace("!!biblio_website!!", $biblio_website, $empr_electronic_loan_ticket_msg) ;
+	$empr_electronic_loan_ticket_msg = str_replace("!!biblio_phone!!", $biblio_phone, $empr_electronic_loan_ticket_msg) ;
+	$empr_electronic_loan_ticket_msg = str_replace("!!biblio_adr1!!", $biblio_adr1, $empr_electronic_loan_ticket_msg) ;
+	$empr_electronic_loan_ticket_msg = str_replace("!!biblio_adr2!!", $biblio_adr2, $empr_electronic_loan_ticket_msg) ;
+	$empr_electronic_loan_ticket_msg = str_replace("!!biblio_cp!!", $biblio_cp, $empr_electronic_loan_ticket_msg) ;
+	$empr_electronic_loan_ticket_msg = str_replace("!!biblio_town!!", $biblio_town, $empr_electronic_loan_ticket_msg) ;
+	$empr_electronic_loan_ticket_msg = str_replace("!!biblio_email!!", $biblio_email, $empr_electronic_loan_ticket_msg) ;
+	$empr_electronic_loan_ticket_msg = str_replace("!!biblio_commentaire!!", $biblio_commentaire, $empr_electronic_loan_ticket_msg) ;
+
+	$message_resas = "";
+	$message_prets = $msg["prets_en_cours"];
+
+	$rqt1 = "select empr_id from empr_groupe, empr, pret where groupe_id='".$id_groupe."' and empr_groupe.empr_id=empr.id_empr and pret.pret_idempr=empr_groupe.empr_id group by empr_id order by empr_nom, empr_prenom";
+	$req1 = pmb_mysql_query($rqt1);
+	while ($data1=pmb_mysql_fetch_array($req1)) {
+		$empr = new emprunteur($data1['empr_id']);
+		$message_prets .= "<br />".$empr->nom." ".$empr->prenom;
+		$rqt = "select expl_cb from pret, exemplaires where pret_idempr='".$empr->id."' and pret_idexpl=expl_id order by pret_date " ;	
+		$req = pmb_mysql_query($rqt);
+		while ($data = pmb_mysql_fetch_array($req)) {
+			$message_prets .= electronic_loan_ticket_expl_info ($data['expl_cb']);
+		}
+	}
+
+	$empr_electronic_loan_ticket_msg = str_replace("!!all_reservations!!", $message_resas, $empr_electronic_loan_ticket_msg) ;
+	$empr_electronic_loan_ticket_msg = str_replace("!!all_loans!!", $message_prets, $empr_electronic_loan_ticket_msg) ;
+
+	$myGroup = new group($id_groupe);
+
+	//remplacement nom et prenom
+	$empr_electronic_loan_ticket_msg=str_replace("!!empr_name!!", $myGroup->libelle_resp,$empr_electronic_loan_ticket_msg);
+	$empr_electronic_loan_ticket_msg=str_replace("!!empr_first_name!!", "",$empr_electronic_loan_ticket_msg);
+
+	if ($myGroup->mail_resp) {
+		$res_envoi=@mailpmb($myGroup->libelle_resp, $myGroup->mail_resp,$empr_electronic_loan_ticket_obj,$empr_electronic_loan_ticket_msg, $PMBuserprenom." ".$PMBusernom, $PMBuseremail, $headers, "", $PMBuseremailbcc, 1, "");
+	}
+}
+
 function electronic_loan_ticket_expl_info($cb_doc) {
-	global $msg, $dbh ;
+	global $msg ;
 	
 	$requete = "SELECT notices_m.notice_id as m_id, notices_s.notice_id as s_id, expl_cb, expl_cote, pret_date, pret_retour, tdoc_libelle, section_libelle, location_libelle, trim(concat(ifnull(notices_m.tit1,''),ifnull(notices_s.tit1,''),' ',ifnull(bulletin_numero,''), if (mention_date, concat(' (',mention_date,')') ,''))) as tit, ";
 	$requete.= " date_format(pret_date, '".$msg["format_date"]."') as aff_pret_date, ";
@@ -689,27 +722,11 @@ function electronic_loan_ticket_expl_info($cb_doc) {
 	$requete.= " FROM (((exemplaires LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id), docs_type, docs_section, docs_location, pret ";
 	$requete.= " WHERE expl_cb='".addslashes($cb_doc)."' and expl_typdoc = idtyp_doc and expl_section = idsection and expl_location = idlocation and pret_idexpl = expl_id  ";
 
-	$res = pmb_mysql_query($requete, $dbh) or die ("<br />".pmb_mysql_error());
+	$res = pmb_mysql_query($requete) or die ("<br />".pmb_mysql_error());
 	$expl = pmb_mysql_fetch_object($res);
 	
 	$responsabilites = get_notice_authors(($expl->m_id+$expl->s_id)) ;
-	$as = array_search ("0", $responsabilites["responsabilites"]) ;
-	if ($as!== FALSE && $as!== NULL) {
-		$auteur_0 = $responsabilites["auteurs"][$as] ;
-		$auteur = new auteur($auteur_0["id"]);
-		$header_aut .= $auteur->isbd_entry;
-		} else {
-			$aut1_libelle=array();
-			$as = array_keys ($responsabilites["responsabilites"], "1" ) ;
-			for ($i = 0 ; $i < count($as) ; $i++) {
-				$indice = $as[$i] ;
-				$auteur_1 = $responsabilites["auteurs"][$indice] ;
-				$auteur = new auteur($auteur_1["id"]);
-				$aut1_libelle[]= $auteur->isbd_entry;
-				}
-			
-			$header_aut .= implode (", ",$aut1_libelle) ;
-			}
+	$header_aut = gen_authors_header($responsabilites);
 	$header_aut ? $auteur=" / ".$header_aut : $auteur="";
 	
 	// récupération du titre de série
@@ -725,15 +742,18 @@ function electronic_loan_ticket_expl_info($cb_doc) {
 
 	$ret = "<ul><li><b>".$expl->tit." (".$expl->tdoc_libelle.")</b> ".$auteur."<blockquote>" ;
 	$ret .= $msg['fpdf_date_pret']." ".$expl->aff_pret_date ;
-	$ret .= "&nbsp;<em><font color=red>".$msg['fpdf_retour_prevu']." ".$expl->aff_pret_retour."</font></em>";
+	$ret .= "&nbsp;<em><span style='color:red'>".$msg['fpdf_retour_prevu']." ".$expl->aff_pret_retour."</span></em>";
 	$ret .= "<br /><i>".$expl->location_libelle.": ".$expl->section_libelle.": ".$expl->expl_cote." (".$expl->expl_cb.")</i></blockquote></li></ul>";
 	return $ret ;
 
-	} /* fin electronic_loan_ticket_expl_info */
+} /* fin electronic_loan_ticket_expl_info */
 
 function electronic_loan_ticket_not_bull_info_resa ($id_empr, $notice, $bulletin) {
-	global $msg, $dbh;
+	global $msg;
 	
+	$id_empr += 0;
+	$notice += 0;
+	$bulletin += 0;
 	$dates_resa_sql = "date_format(resa_date, '".$msg["format_date"]."') as date_pose_resa, IF(resa_date_fin>sysdate() or resa_date_fin='0000-00-00',0,1) as perimee, if(resa_date_debut='0000-00-00', '', date_format(resa_date_debut, '".$msg["format_date"]."')) as aff_resa_date_debut, if(resa_date_fin='0000-00-00', '', date_format(resa_date_fin, '".$msg["format_date"]."')) as aff_resa_date_fin " ;
 	if ($notice) {
 		$requete = "SELECT resa_cb, notice_id, resa_date, resa_idempr, tit1 as tit, ".$dates_resa_sql;
@@ -744,30 +764,14 @@ function electronic_loan_ticket_not_bull_info_resa ($id_empr, $notice, $bulletin
 			$requete.= "FROM bulletins, resa, notices ";
 			$requete.= "WHERE resa_idbulletin='$bulletin' and resa_idbulletin = bulletins.bulletin_id and bulletin_notice = notice_id order by resa_date ";
 			}
-	$res = pmb_mysql_query($requete, $dbh) or die ("<br />".pmb_mysql_error());
+	$res = pmb_mysql_query($requete) or die ("<br />".pmb_mysql_error());
 	$nb_resa = pmb_mysql_num_rows($res) ;
 	
 	for ($j=0 ; $j<$nb_resa ; $j++ ) {
 		$resa = pmb_mysql_fetch_object($res);
 		if ($resa->resa_idempr == $id_empr) {
 			$responsabilites = get_notice_authors($resa->notice_id) ;
-			$as = array_search ("0", $responsabilites["responsabilites"]) ;
-			if ($as!== FALSE && $as!== NULL) {
-				$auteur_0 = $responsabilites["auteurs"][$as] ;
-				$auteur = new auteur($auteur_0["id"]);
-				$header_aut .= $auteur->isbd_entry;
-				} else {
-					$aut1_libelle=array();
-					$as = array_keys ($responsabilites["responsabilites"], "1" ) ;
-					for ($i = 0 ; $i < count($as) ; $i++) {
-						$indice = $as[$i] ;
-						$auteur_1 = $responsabilites["auteurs"][$indice] ;
-						$auteur = new auteur($auteur_1["id"]);
-						$aut1_libelle[]= $auteur->isbd_entry;
-						}
-					
-					$header_aut .= implode (", ",$aut1_libelle) ;
-					}
+			$header_aut = gen_authors_header($responsabilites);
 			$header_aut ? $auteur=" / ".$header_aut : $auteur="";
 			
 			$ret .= "<ul><li><b>".$resa->tit."</b> ".$auteur."<blockquote>" ;
@@ -776,7 +780,7 @@ function electronic_loan_ticket_not_bull_info_resa ($id_empr, $notice, $bulletin
 				$requete_expl = "SELECT expl_cb, tdoc_libelle, section_libelle, location_libelle " ; 
 				$requete_expl.= " FROM exemplaires, docs_type, docs_section, docs_location ";
 				$requete_expl.= " WHERE expl_cb='".addslashes($resa->resa_cb)."' and expl_typdoc = idtyp_doc and expl_section = idsection and expl_location = idlocation ";
-				$res_expl = pmb_mysql_query($requete_expl, $dbh) or die ("<br />".pmb_mysql_error());
+				$res_expl = pmb_mysql_query($requete_expl) or die ("<br />".pmb_mysql_error());
 				$expl = pmb_mysql_fetch_object($res_expl);
 				$tmpmsg_res .= "<br /><em>".$expl->location_libelle."</em>: ".$expl->section_libelle;
 				} else {
@@ -787,42 +791,4 @@ function electronic_loan_ticket_not_bull_info_resa ($id_empr, $notice, $bulletin
 			}
 		} // fin for
 	return $ret ;
-	} /* fin electronic_loan_ticket_not_bull_info_resa */
-
-
-function show_report($stuff) {
-
-	// à utiliser pour le débogage
-
-	print '<br />expl_id = '.$stuff->expl_id;
-	print '<br />expl_cb = '.$stuff->expl_cb;
-	print '<br />expl_notice = '.$stuff->expl_notice;
-	print '<br />expl_bulletin = '.$stuff->expl_bulletin;
-	print '<br />expl_typdoc = '.$stuff->expl_typdoc;
-	print '<br />expl_section = '.$stuff->expl_section;
-	print '<br />expl_cote = '.$stuff->expl_cote;
-	print '<br />expl_statut = '.$stuff->expl_statut;
-	print '<br />expl_location = '.$stuff->expl_location;
-	print '<br />expl_codestat = '.$stuff->expl_codestat;
-	print '<br />expl_note = '.$stuff->expl_note;
-	print '<br />expl_comment = '.$stuff->expl_comment;
-	print '<br />expl_prix = '.$stuff->expl_prix;
-	print '<br />libelle = '.$stuff->libelle;
-	print '<br />pret_idempr = '.$stuff->pret_idempr;
-	print '<br />pret_idexpl = '.$stuff->pret_idexpl;
-	print '<br />pret_date = '.$stuff->pret_date;
-	print '<br />pret_retour = '.$stuff->pret_retour;
-	print '<br />empr_cb = '.$stuff->empr_cb;
-	print '<br />empr_nom = '.$stuff->empr_nom;
-	print '<br />empr_prenom = '.$stuff->empr_prenom;
-	print '<br />id_empr = '.$stuff->id_empr;
-	print '<br />id_resa = '.$stuff->id_resa;
-	print '<br />resa_idempr = '.$stuff->resa_idempr;
-	print '<br />resa_idnotice = '.$stuff->resa_idnotice;
-	print '<br />resa_idbulletin = '.$stuff->resa_idbulletin;
-	print '<br />resa_date = '.$stuff->resa_date;
-	print '<br />cb_reservataire = '.$stuff->cb_reservataire;
-	print '<br />nom_reservataire = '.$stuff->nom_reservataire;
-	print '<br />prenom_reservataire = '.$stuff->prenom_reservataire;
-	print '<br />id_reservataire = '.$stuff->id_reservataire;
-	}
+} /* fin electronic_loan_ticket_not_bull_info_resa */

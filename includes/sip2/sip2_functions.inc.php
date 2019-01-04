@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sip2_functions.inc.php,v 1.20.4.2 2015-11-24 16:47:00 mbertin Exp $
+// $Id: sip2_functions.inc.php,v 1.25 2018-12-12 09:08:19 mbertin Exp $
 
 require_once($class_path."/emprunteur.class.php");
 require_once("$class_path/mono_display.class.php");
@@ -47,7 +47,11 @@ function _acs_status_($values) {
 	if ($resultat) {
 		$ret["LIBRARY_NAME"][0]=pmb_mysql_result($resultat,0,0);
 	}
-	$ret["SUPPORTED_MESSAGES"][0]="YYYYYYNYYNYYYYNN";
+	if($opac_pret_prolongation){//Modification de l'avant dernier champ BX à Y si prolongation possible ->3M
+		$ret["SUPPORTED_MESSAGES"][0]="YYYYYYNYYNYYYYYN";
+	}else{
+		$ret["SUPPORTED_MESSAGES"][0]="YYYYYYNYYNYYYYNN";
+	}
 	return $ret;
 }
 
@@ -99,6 +103,9 @@ function _patron_information_response_($values) {
 			$nb_resa_non_confirmes=pmb_mysql_result($rqt_resas,0,0);
 		else $nb_resa_non_confirmes=0;
 		$ret["HOLD_ITEMS_COUNT"]=str_pad($nb_total_resa-$nb_resa_non_confirmes,4,"0",STR_PAD_LEFT);
+		if($nb_total_resa-$nb_resa_non_confirmes){// En test avec 3M
+			$ret["SCREEN_MESSAGE"][0]=$msg["selfservice_resa_dispo"];
+		}
 		if ($empr->nb_amendes) $ret["FINE_ITEMS_COUNT"]=str_pad($empr->nb_amendes,4,"0",STR_PAD_LEFT); else $ret["FINE_ITEMS_COUNT"]="    ";
 		$ret["RECALL_ITEMS_COUNT"]="    ";
 		$ret["UNAVAILABLE_HOLDS_COUNT"]=str_pad($nb_resa_non_confirmes,4,"0",STR_PAD_LEFT);
@@ -217,6 +224,23 @@ function _patron_information_response_($values) {
 		$ret["SCREEN_MESSAGE"][0]=$selfservice_pret_carte_invalide_msg;
 	}
 	$ret["PATRON_STATUS"]=$patron_status;
+/*
+patron réponse: (14 caractères) Vu avec 3M
+1er si Y -> Pas d'emprunt (Dans PMB cela ce fait au niveau du prêt)
+2ème si Y -> Pas de prolongation
+3ème -> Toujours à vide
+4éme si Y -> Réservation
+5ème -> Toujours à vide
+6ème -> Toujours à vide
+7éme à Y si trop de retard
+8ème -> Toujours à vide
+9éme à Y si trop de retard
+10ème  -> Toujours à vide
+11éme à Y si trop d'amande
+12éme à Y si pas payé abonnement
+13ème  -> Toujours à vide
+14ème  -> Toujours à vide
+*/
 	$ret["LANGUAGE"]=$rep_lang;
 	$ret["TRANSACTION_DATE"]=date("Ymd    His",time());
 	$ret["INSTITUTION_ID"][0]=$localisation;
@@ -365,10 +389,10 @@ function _item_information_response_($values) {
 		$ret["ITEM_IDENTIFIER"][0]=$expl_cb;
 		if ($expl->expl_bulletin) {
 			$isbd = new bulletinage_display($expl->expl_bulletin);
-			$ret["TITLE_IDENTIFIER"][0]=$isbd->display;
+			$ret["TITLE_IDENTIFIER"][0]=pmb_substr($isbd->display,0,150);
 		} else {
 			$isbd= new mono_display($expl->expl_notice, 1);
-			$ret["TITLE_IDENTIFIER"][0]= $isbd->header_texte;
+			$ret["TITLE_IDENTIFIER"][0]=pmb_substr($isbd->header_texte,0,150);
 		}
 	} else {
 		$ret["CIRCULATION_STATUS"]="01";
@@ -406,7 +430,7 @@ function _checkout_response_($values) {
 	$cancel=($values["CANCEL"][0]=="Y"?true:false);
 	
 	$magnetic="N";
-	$desensitize="N";
+	$desensitize="N";//Pour demande de désactiver l'antivole
 	$titre=$expl_cb;
 	$due_date="";
 	
@@ -446,10 +470,10 @@ function _checkout_response_($values) {
 				if ($expl->pret_flag) {
 					if ($expl->expl_bulletin) {
 						$isbd = new bulletinage_display($expl->expl_bulletin);
-						$titre=$isbd->display;
+						$titre=pmb_substr($isbd->display,0,150);
 					} else {
 						$isbd= new mono_display($expl->expl_notice, 1);
-						$titre= $isbd->header_texte;
+						$titre=pmb_substr($isbd->header_texte,0,150);
 					}
 					if($expl->pret_retour) {
 						$error=true;
@@ -466,15 +490,17 @@ function _checkout_response_($values) {
 						} else {
 							//On fait le prêt
 							$pret=new do_pret();
-							$pret->check_pieges($empr_cb, 0,$expl_cb, 0,0);
+							$pret->check_pieges($empr_cb, $id_empr,$expl_cb,$expl->expl_id,0);
 							if (!$pret->status) {
 								$ok=1;
+								$desensitize="Y";//Pour demander de désactiver l'antivole
 								$pret->confirm_pret($id_empr, $expl->expl_id);
 								//Recherche de la date de retour
 								$requete="select date_format(pret_retour, '".$msg["format_date"]."') as retour from pret where pret_idexpl=".$expl->expl_id;
 								$resultat=pmb_mysql_query($requete);
 								$error=true;
-								$error_message=$titre." / retour le : ".@pmb_mysql_result($resultat,0,0);
+								//Modification vu avec 3M -> Si on laisse le $error_message alors le titre est présent 2 fois
+								//$error_message=$titre." / retour le : ".@pmb_mysql_result($resultat,0,0);
 								$due_date=@pmb_mysql_result($resultat,0,0);
 							} else {
 								$ok=0;
@@ -542,10 +568,10 @@ function _checkin_response_($values) {
 		$empr_cb=$expl->empr_cb;
 		if ($expl->expl_bulletin) {
 			$isbd = new bulletinage_display($expl->expl_bulletin);
-			$titre=$isbd->display;
+			$titre=pmb_substr($isbd->display,0,150);
 		} else {
 			$isbd= new mono_display($expl->expl_notice, 1);
-			$titre= $isbd->header_texte;
+			$titre=pmb_substr($isbd->header_texte,0,150);
 		}
 		
 		if ($pmb_antivol) {
@@ -571,17 +597,19 @@ function _checkin_response_($values) {
 		$ret["SCREEN_MESSAGE"][3]=$retour->message_amende;
 		*/		
  		if($retour->message_loc || $retour->message_resa || $retour->message_retard || $retour->message_amende || $retour->message_blocage){
-			$ret["SCREEN_MESSAGE"][0]=$retour->message_loc." ".$retour->message_resa." ".$retour->message_retard." ".$retour->message_amende." ".$retour->message_blocage;
+			$ret["SCREEN_MESSAGE"][0]=trim($retour->message_loc." ".$retour->message_resa." ".$retour->message_retard." ".$retour->message_amende." ".$retour->message_blocage);
  			//$ok=0;
 			//Attention, pour les deux lignes suivantes, cela dépend d'un paramètre NEDAP ou IDENT
-			if($protocol_prolonge){
+			if($protocol_prolonge == "3M" || $protocol_prolonge == "Ident"){
+				//On ne change pas le statut
+			}elseif($protocol_prolonge){
 				$ok=0;
 			}
  		}
  		
  		if($retour->message_loc){
  			$ret["SORT_BIN"][0]=1;
- 		}elseif($retour->message_resa){
+ 		}elseif($retour->message_resa){//Attention il peut n'y avoir qu'un espace dans ce champ pour passer ici mais sans message
  			$ret["SORT_BIN"][0]=2;
  		}elseif($retour->message_retard){
  			$ret["SORT_BIN"][0]=3;
@@ -639,6 +667,15 @@ function _renew_response_($values) {
 			$expl_id=$expl->expl_id;
 			$id_empr=$expl->id_empr;	
 			
+			//On récupère le titre
+			if ($expl->expl_bulletin) {
+				$isbd = new bulletinage_display($expl->expl_bulletin);
+				$titre=pmb_substr($isbd->display,0,150);
+			} else {
+				$isbd= new mono_display($expl->expl_notice, 1);
+				$titre=pmb_substr($isbd->header_texte,0,150);
+			}
+					
 			//on recupere les informations du pret 
 			$query = "select cpt_prolongation, retour_initial, pret_date, pret_retour from pret where pret_idexpl=".$expl_id." limit 1";
 			$result = pmb_mysql_query($query, $dbh);
@@ -667,7 +704,9 @@ function _renew_response_($values) {
 					$struct["EXPL"] = $expl_id;						
 					$pret_nombre_prolongation=$qt -> get_quota_value($struct);		
 
-					if($cpt_prolongation>$pret_nombre_prolongation) $prolongation=FALSE;
+					if($cpt_prolongation>$pret_nombre_prolongation){
+						$prolongation=FALSE;
+					}
 
 					//Initialisation des quotas la durée de prolongations
 					$qt = new quota("PROLONG_TIME_QUOTA");
@@ -698,8 +737,14 @@ function _renew_response_($values) {
 				$query = "update pret set cpt_prolongation='".$cpt_prolongation."', pret_retour='".$date_prolongation."' where pret_idexpl=".$expl_id;
 				$result = pmb_mysql_query($query, $dbh);
 				$due_date=$date_prolongation;
-				$due_date=sql_value("select date_format('$date_prolongation', '".$msg["format_date"]."')");
+				$due_date=sql_value("select date_format('".$date_prolongation."', '".$msg["format_date"]."')");
 				//$due_date=@pmb_mysql_result($resultat,0,0);
+				// Memorisation de la nouvelle date de prolongation dans la table d'archive
+				$res_arc=pmb_mysql_query("select pret_arc_id from pret where pret_idexpl=".$expl_id."",$dbh);
+				if($res_arc && pmb_mysql_num_rows($res_arc)){
+					$query = "update pret_archive set arc_cpt_prolongation='".$cpt_prolongation."', arc_fin='".$date_prolongation."' where arc_id = ".pmb_mysql_result($res_arc,0,0);
+					pmb_mysql_query($query,$dbh);
+				}
 			} else {
 				$error_message="$selfservice_pret_prolonge_non_msg";						
 			}
@@ -708,10 +753,13 @@ function _renew_response_($values) {
 	} else{		
 		$error_message="Prolongation non activée";					
 	}
-	
 	if ($error_message) {
-		//Attention, pour les deux lignes suivantes, cela dépend d'un paramètre NEDAP ou IDENT 
-		if($protocol_prolonge){
+		//Attention, pour les deux lignes suivantes, cela dépend d'un paramètre NEDAP ou IDENT ou 3M
+		//Vu pour 3M et Ident (Bibliotheca): il faut ok=0 pour avoir le message et indiquer l'échec de la prolongation
+		if($protocol_prolonge == "3M" || $protocol_prolonge == "Ident"){
+			$ok=0;
+			$prolonge="N";
+		}elseif($protocol_prolonge){
 			$ok=0;
 			$prolonge="N";
 		}
@@ -735,4 +783,3 @@ function sql_value($rqt) {
 	}	
 	return '';
 }
-?>

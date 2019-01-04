@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: end_import.php,v 1.14 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: end_import.php,v 1.19 2017-11-22 11:07:33 dgoron Exp $
 
 //Fin de la conversion
 $base_path = "../..";
@@ -11,26 +11,27 @@ $base_title = "\$msg[ie_import_running]";
 require ($base_path."/includes/init.inc.php");
 
 $percent=100;
-echo "<center><h3>$msg[admin_conversion_end1] $import_type_l $msg[admin_conversion_end2].</h3></center><br />\n";
+echo "<h3>$msg[admin_conversion_end1] $import_type_l $msg[admin_conversion_end2].</h3><br />\n";
 
 print "
-<table align=center width=100%>
+<table class='center' width=100%>
    <tr>
       <td style='border-width:1px;border-style:solid;border-color:#000;'>
-         <img src='$base_path/images/jauge.png' width='".$percent."%' height='16'>
+	  	<div class='jauge'><img src='".get_url_icon('jauge.png')."' width='".$percent."%' height='16'></div>
       </td></tr>
    <tr>
-      <td align=center>".round($percent)."%</td>
+      <td class='center'>".round($percent)."%</td>
       </tr>
 </table>";
 
-print "<center>".$n_current." ".$msg["admin_conversion_end3"];
+print $n_current." ".$msg["admin_conversion_end3"];
 
 if ($n_errors!=0) {
     print ", ".$n_errors." ".$msg["admin_conversion_end4"];
     $requete="select error_text from error_log where error_origin='convert.log ".$origine."'";
     $resultat=pmb_mysql_query($requete);
-     while (list($err_)=pmb_mysql_fetch_row($resultat)) {
+    $errors_msg = '';
+	while (list($err_)=pmb_mysql_fetch_row($resultat)) {
         $errors_msg.=$err_;
     }
 }

@@ -2,13 +2,30 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_link.class.php,v 1.1 2015-06-18 12:36:22 apetithomme Exp $
+// $Id: vedette_link.class.php,v 1.8 2017-06-26 15:13:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-if(!defined(TYPE_CONCEPT_PREFLABEL)){
-	define(TYPE_CONCEPT_PREFLABEL, 1);
+if(!defined('TYPE_CONCEPT_PREFLABEL')){
+	define('TYPE_CONCEPT_PREFLABEL', 1);
 }
+if(!defined('TYPE_TU_RESPONSABILITY')){
+	define('TYPE_TU_RESPONSABILITY', 2);
+}
+if(!defined('TYPE_NOTICE_RESPONSABILITY_PRINCIPAL')){
+	define('TYPE_NOTICE_RESPONSABILITY_PRINCIPAL', 3);
+}
+if(!defined('TYPE_NOTICE_RESPONSABILITY_AUTRE')){
+	define('TYPE_NOTICE_RESPONSABILITY_AUTRE', 4);
+}
+if(!defined('TYPE_NOTICE_RESPONSABILITY_SECONDAIRE')){
+	define('TYPE_NOTICE_RESPONSABILITY_SECONDAIRE', 5);
+}
+if(!defined('TYPE_TU_RESPONSABILITY_INTERPRETER')){
+	define('TYPE_TU_RESPONSABILITY_INTERPRETER', 6);
+}
+
+require_once($class_path."/concept.class.php");
 
 class vedette_link {
 
@@ -18,7 +35,7 @@ class vedette_link {
 	 * @param vedette_composee $vedette Vedette liée
 	 */
 	static public function update_objects_linked_with_vedette(vedette_composee $vedette) {
-		global $dbh, $class_path;
+		global $dbh;
 	
 		$query = "select num_object, type_object from vedette_link where num_vedette = ".$vedette->get_id();
 		$result = pmb_mysql_query($query, $dbh);
@@ -27,7 +44,6 @@ class vedette_link {
 				// On appelle les fonctions de mise à jour des différents objets
 				switch ($object->type_object) {
 					case TYPE_CONCEPT_PREFLABEL :
-						require_once($class_path."/concept.class.php");
 						$concept = new concept($object->num_object);
 						$concept->update_display_label($vedette->get_label());
 						break;
@@ -54,12 +70,16 @@ class vedette_link {
 	 * @param vedette_composee $vedette Vedette liée
 	 * @param int $object_id Identifiant en base de l'objet
 	 * @param int $object_type Type de l'objet
+	 * @return int Identifiant de la vedette liée
 	 */
 	static public function delete_vedette_link_from_object(vedette_composee $vedette, $object_id, $object_type) {
 		global $dbh;
 		
+		$id_vedette=self::get_vedette_id_from_object($object_id, $object_type);
+		
 		$query = "delete from vedette_link where num_object = ".$object_id." and type_object = ".$object_type;
 		pmb_mysql_query($query, $dbh);
+		return $id_vedette;
 	}
 	
 	/**

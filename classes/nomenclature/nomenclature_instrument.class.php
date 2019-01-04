@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_instrument.class.php,v 1.10 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: nomenclature_instrument.class.php,v 1.13 2016-06-01 08:19:25 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+require_once($class_path."/encoding_normalize.class.php");
+require_once($include_path."/templates/nomenclature_instrument.tpl.php");
 
 /**
  * class nomenclature_instrument
@@ -420,6 +423,69 @@ class nomenclature_instrument{
 				'name' => $this->get_name()
 		);
 		return $tree;
+	}
+	
+	public static function get_dialog_form(){
+		global $nomenclature_instrument_dialog_tpl, $msg;
+		
+		$form = $nomenclature_instrument_dialog_tpl;
+		
+		$query = "select id_musicstand, concat(musicstand_name,' ( ',family_name,' )')as label from nomenclature_musicstands,nomenclature_families where musicstand_famille_num=id_family order by musicstand_name";
+		$musicstand = gen_liste($query, "id_musicstand", "label", "id_musicstand", "", "", 0,encoding_normalize::utf8_normalize($msg["admin_nomenclature_instrument_form_musicstand_no"]), 0, encoding_normalize::utf8_normalize($msg["admin_nomenclature_instrument_form_musicstand_no_sel"]));
+		$form = str_replace('!!musicstand!!', $musicstand, $form);
+		
+		return $form;
+	}
+	
+	public static function create(){
+		global $msg;
+		global $code, $name, $id_musicstand, $standard;
+		
+		$return = array();
+		$id_musicstand += 0;
+		$standard +=0;
+		if($code && $name) {
+			$query = "select * from nomenclature_instruments where instrument_code='".$code."'";
+			$result = pmb_mysql_query($query);
+			if (!pmb_mysql_num_rows($result)) {
+				$query = "INSERT INTO nomenclature_instruments 
+					SET instrument_code='".$code."',
+					instrument_name='".$name."',
+					instrument_musicstand_num='".$id_musicstand."',
+					instrument_standard='".$standard."' ";
+				pmb_mysql_query($query);
+				$return = array(
+					'code' => $code,
+					'id' => pmb_mysql_insert_id(),
+					'musicstand_num' => $id_musicstand,
+					'name' => $name,
+					'standard' => $standard,
+					'state' => true
+				);
+			} else {
+				$return['error_message'] = $msg['admin_nomenclature_instrument_already_exists'];
+				$return['state'] = false;
+			}
+		} else {
+			if(!$code) {
+				$return['error_message'] = $msg['admin_nomenclature_instrument_form_code_error'];
+			} elseif(!$name) {
+				$return['error_message'] = $msg['admin_nomenclature_instrument_form_name_error'];
+			}
+			$return['state'] = false;
+		}
+		return $return;
+	}
+	
+	public static function get_instrument_name_from_code($code) {
+		$instrument_name = '';
+		$query = "select instrument_name from nomenclature_instruments where instrument_code='".$code."'";
+		$result = pmb_mysql_query($query);
+		if (pmb_mysql_num_rows($result)) {
+			$row = pmb_mysql_fetch_object($result);
+			$instrument_name = $row->instrument_name;
+		}
+		return $instrument_name;
 	}
 	
 } // end of nomenclature_instrument

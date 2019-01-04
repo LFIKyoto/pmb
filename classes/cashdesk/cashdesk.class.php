@@ -2,21 +2,22 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cashdesk.class.php,v 1.9 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: cashdesk.class.php,v 1.13 2017-07-12 15:14:59 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($include_path."/templates/cashdesk/cashdesk.tpl.php");
 require_once("$base_path/classes/comptes.class.php");
 require_once($class_path."/transaction/transaction.class.php");
-
+require_once($class_path."/users.class.php");
 
 class cashdesk  {
-	var $id = 0;				// identifiant de la caisse
-	var $name = "";				// Libellé de la caisse
-	var $affectation = array();	// affectation de la caisse  key=>id location, val => id section
-	var $autorisations = "";	// utilisateurs autorisés à utiliser la caisse
-	var $transactypes = "";		// Types de transaction  autorisés à la caisse
+	public $id = 0;				// identifiant de la caisse
+	public $name = "";				// Libellé de la caisse
+	public $affectation = array();	// affectation de la caisse  key=>id location, val => id section
+	public $autorisations = "";	// utilisateurs autorisés à utiliser la caisse
+	public $transactypes = "";		// Types de transaction  autorisés à la caisse
+	public $cashbox = 0;
 	
 	public function __construct($id=0){		
 		$this->id=$id+0;		
@@ -82,7 +83,7 @@ class cashdesk  {
 		$form = str_replace('!!titre!!', $titre, $form);
 		$form = str_replace('!!name!!', htmlentities($this->name,ENT_QUOTES, $charset), $form);
 		
-		$form = str_replace('!!autorisations_users!!', $this->get_form_autorisations($this->autorisations,1), $form);
+		$form = str_replace('!!autorisations_users!!', users::get_form_autorisations($this->autorisations,1), $form);
 		$form = str_replace('!!transactypes!!', $this->get_form_transactypes($this->transactypes), $form);
 		
 		$form = str_replace('!!action!!', "./admin.php?categ=finance&sub=cashdesk&action=save&id=!!id!!", $form);
@@ -95,7 +96,7 @@ class cashdesk  {
 		return $form; 
 	}
 	
-	function get_form_transactypes ($param_autorisations="1") {
+	public function get_form_transactypes ($param_autorisations="1") {
 		global $dbh;
 		global $msg;
 	
@@ -134,20 +135,21 @@ class cashdesk  {
 		global $deflt_docs_section;
 		global $deflt_docs_location;
 		
-		if (!$this->section_id) $this->section_id=$deflt_docs_section ;
-		if (!$this->location_id) $this->location_id=$deflt_docs_location;
+		if (!isset($this->section_id) || !$this->section_id) $this->section_id=$deflt_docs_section ;
+		if (!isset($this->location_id) || !$this->location_id) $this->location_id=$deflt_docs_location;
 		
 		$rqtloc = "SELECT * FROM docs_location order by location_libelle";
 		$resloc = pmb_mysql_query($rqtloc, $dbh);		
-		$form.="<table>
+		$form = "<table>
 		<tr>
 			<th>".$msg["cashdesk_form_locations"]."</th>
 			<th>".$msg["cashdesk_form_sections"]."</th>
 		</tr>
 		";
+		$parity = 0;
 		while (($loc=pmb_mysql_fetch_object($resloc))) {
 			if ($parity++ % 2)	$pair_impair = "even"; else $pair_impair = "odd";
-			if(is_array($this->affectation[$loc->idlocation]))$checked=" checked='checked' "; else $checked="";
+			if(isset($this->affectation[$loc->idlocation]) && is_array($this->affectation[$loc->idlocation]))$checked=" checked='checked' "; else $checked="";
 			$form.="<tr class='$pair_impair' >";
 			$form.="<td>";
 			$form.="<input class='checkbox' type='checkbox' $checked value='".$loc->idlocation."' name='f_locations[]'>".htmlentities($loc->location_libelle,ENT_QUOTES, $charset)."<br/>";
@@ -156,8 +158,12 @@ class cashdesk  {
 			$result = pmb_mysql_query($requete, $dbh);
 			$form.="<td>";
 			if ( pmb_mysql_num_rows($result)) {
-				while (($section = pmb_mysql_fetch_object($result))) {
-					if($this->affectation[$loc->idlocation][$section->idsection])$checked=" checked='checked' "; else $checked="";
+				while ($section = pmb_mysql_fetch_object($result)) {
+					if(isset($this->affectation[$loc->idlocation][$section->idsection]) && $this->affectation[$loc->idlocation][$section->idsection]) {
+						$checked=" checked='checked' ";
+					} else {
+						$checked="";
+					}
 					$form.="<input class='checkbox' type='checkbox' $checked value='".$section->idsection."' name='f_sections_".$loc->idlocation."[]'>".$section->section_libelle."<br/>  ";						
 				}
 			}
@@ -166,41 +172,6 @@ class cashdesk  {
 		}		
 		$form.="</table>";
 		return $form;		
-	}	
-	
-	function get_form_autorisations ($param_autorisations="1", $creation_cart="1") {
-		global $dbh;
-		global $msg;
-		global $PMBuserid;
-	
-		$requete_users = "SELECT userid, username FROM users order by username ";
-		$res_users = pmb_mysql_query($requete_users, $dbh);
-		$all_users=array();
-		while (list($all_userid,$all_username)=pmb_mysql_fetch_row($res_users)) {
-			$all_users[]=array($all_userid,$all_username);
-		}
-		if ($creation_cart) $param_autorisations.=" ".$PMBuserid ;
-	
-		$autorisations_donnees=explode(" ",$param_autorisations);
-	
-		for ($i=0 ; $i<count($all_users) ; $i++) {
-			if (array_search ($all_users[$i][0], $autorisations_donnees)!==FALSE) $autorisation[$i][0]=1;
-			else $autorisation[$i][0]=0;
-			$autorisation[$i][1]= $all_users[$i][0];
-			$autorisation[$i][2]= $all_users[$i][1];
-		}
-		$autorisations_users="";
-		$id_check_list='';
-		while (list($row_number, $row_data) = each($autorisation)) {
-			$id_check="auto_".$row_data[1];
-			if($id_check_list)$id_check_list.='|';
-			$id_check_list.=$id_check;
-			if ($row_data[1]==1) $autorisations_users.="<span class='usercheckbox'><input type='checkbox' name='autorisations[]' id='$id_check' value='".$row_data[1]."' checked class='checkbox' readonly /><label for='$id_check' class='normlabel'>&nbsp;".$row_data[2]."</label></span>&nbsp;";
-			elseif ($row_data[0]) $autorisations_users.="<span class='usercheckbox'><input type='checkbox' name='autorisations[]' id='$id_check' value='".$row_data[1]."' checked class='checkbox' /><label for='$id_check' class='normlabel'>&nbsp;".$row_data[2]."</label></span>&nbsp;";
-			else $autorisations_users.="<span class='usercheckbox'><input type='checkbox' name='autorisations[]' id='$id_check' value='".$row_data[1]."' class='checkbox' /><label for='$id_check' class='normlabel'>&nbsp;".$row_data[2]."</label></span>&nbsp;";
-		}
-		$autorisations_users.="<input type='hidden' id='auto_id_list' name='auto_id_list' value='$id_check_list' >";
-		return $autorisations_users;
 	}
 	
 	public function summarize( $date_begin="",$date_end="", $transactype=0,$encaissement=0 ){
@@ -271,16 +242,27 @@ class cashdesk  {
 			$compte["montant"]='';
 			$compte["unit_price"]='';
 			$compte["realisee_no"]='';
-			//Validée
+
+			// Non Validée
 			$requete="select SUM(montant)as cash from transactions,  comptes where cashdesk_num=".$this->id."
-			and encaissement=0 and type_compte_id=1 and id_compte =compte_id $all_filter
+			and encaissement=0 and realisee=0 and type_compte_id=1 and id_compte =compte_id $all_filter
 			";
 			$res_sum=pmb_mysql_query($requete);
 			if($row_sum= pmb_mysql_fetch_object($res_sum)){
-				if($row_sum->cash)$aff_flag=1;	
-				$compte["encaissement_no"]=$row_sum->cash;
-			}else $compte["encaissement_no"]="";
-			
+			if($row_sum->cash)$aff_flag=1;
+			$compte["realisee_no"]=$row_sum->cash;
+			}else $compte["realisee_no"]="";
+
+			//Validée
+			$requete="select SUM(montant)as cash from transactions,  comptes where cashdesk_num=".$this->id."
+			and encaissement=0 and realisee=1 and type_compte_id=1 and id_compte =compte_id $all_filter
+			";
+			$res_sum=pmb_mysql_query($requete);
+			if($row_sum= pmb_mysql_fetch_object($res_sum)){
+			if($row_sum->cash)$aff_flag=1;
+			$compte["realisee"]=$row_sum->cash;
+			}else $compte["realisee"]="";
+		
 			//Ecaissé
 			$requete="select SUM(montant)as cash from transactions,  comptes where cashdesk_num=".$this->id."
 			and encaissement=1 and type_compte_id=1 and id_compte =compte_id $all_filter
@@ -290,7 +272,10 @@ class cashdesk  {
 				if($row_sum->cash)$aff_flag=1;	
 				$compte["encaissement"]=$row_sum->cash;
 			}else $compte["encaissement"]="";
-		
+			
+			$compte["encaissement_no"] = -($compte["encaissement"] - $compte["realisee"]);
+			if(!$compte["encaissement_no"])	$compte["encaissement_no"]='';
+			
 			if($aff_flag){
 				$data[$i]=$compte;
 				$i++;
@@ -304,15 +289,26 @@ class cashdesk  {
 			$compte["name"]=$msg["finance_solde_amende"];
 			$compte["montant"]='';
 			$compte["unit_price"]='';
-			//Validée
-			$requete="select SUM(montant)as cash from transactions,  comptes where cashdesk_num=".$this->id." 
-			and encaissement=0 and type_compte_id=2 and id_compte =compte_id $all_filter
+			
+			// Non Validée
+			$requete="select SUM(montant)as cash from transactions,  comptes where cashdesk_num=".$this->id."
+			and encaissement=0 and realisee=0 and type_compte_id=2 and id_compte =compte_id $all_filter
 			";
 			$res_sum=pmb_mysql_query($requete);
 			if($row_sum= pmb_mysql_fetch_object($res_sum)){
-				if($row_sum->cash)$aff_flag=1;
-				$compte["encaissement_no"]=$row_sum->cash;
-			}else $compte["encaissement_no"]="";
+			if($row_sum->cash)$aff_flag=1;
+			$compte["realisee_no"]=$row_sum->cash;
+			}else $compte["realisee_no"]="";
+
+			//Validée
+			$requete="select SUM(montant)as cash from transactions,  comptes where cashdesk_num=".$this->id."
+			and encaissement=0 and realisee=1 and type_compte_id=2 and id_compte =compte_id $all_filter
+			";
+			$res_sum=pmb_mysql_query($requete);
+			if($row_sum= pmb_mysql_fetch_object($res_sum)){
+			if($row_sum->cash)$aff_flag=1;
+			$compte["realisee"]=$row_sum->cash;
+			}else $compte["realisee"]="";
 			
 			//Ecaissé
 			$requete="select SUM(montant)as cash from transactions,  comptes where cashdesk_num=".$this->id."
@@ -323,6 +319,9 @@ class cashdesk  {
 				if($row_sum->cash)$aff_flag=1;	
 				$compte["encaissement"]=$row_sum->cash;
 			}else $compte["encaissement"]="";
+			
+			$compte["encaissement_no"] = -($compte["encaissement"] - $compte["realisee"]);
+			if(!$compte["encaissement_no"])	$compte["encaissement_no"]='';
 			
 			if($aff_flag){
 				$data[$i]=$compte;
@@ -337,16 +336,27 @@ class cashdesk  {
 			$compte["name"]=$msg["finance_solde_pret"];
 			$compte["montant"]='';
 			$compte["unit_price"]='';
-			//Validée
-			$requete="select SUM(montant)as cash from transactions,  comptes where cashdesk_num=".$this->id." 
-			and encaissement=0 and type_compte_id=3 and id_compte =compte_id $all_filter
+
+			// Non Validée
+			$requete="select SUM(montant)as cash from transactions,  comptes where cashdesk_num=".$this->id."
+			and encaissement=0 and realisee=0 and type_compte_id=3 and id_compte =compte_id $all_filter
 			";
 			$res_sum=pmb_mysql_query($requete);
 			if($row_sum= pmb_mysql_fetch_object($res_sum)){
-				if($row_sum->cash)$aff_flag=1;
-				$compte["encaissement_no"]=$row_sum->cash;
-			}else $compte["encaissement_no"]="";
-			
+			if($row_sum->cash)$aff_flag=1;
+			$compte["realisee_no"]=$row_sum->cash;
+			}else $compte["realisee_no"]="";
+
+			//Validée
+			$requete="select SUM(montant)as cash from transactions,  comptes where cashdesk_num=".$this->id."
+			and encaissement=0 and realisee=1 and type_compte_id=3 and id_compte =compte_id $all_filter
+			";
+			$res_sum=pmb_mysql_query($requete);
+			if($row_sum= pmb_mysql_fetch_object($res_sum)){
+			if($row_sum->cash)$aff_flag=1;
+			$compte["realisee"]=$row_sum->cash;
+			}else $compte["realisee"]="";
+		
 			//Ecaissé
 			$requete="select SUM(montant)as cash from transactions,  comptes where cashdesk_num=".$this->id."
 			and encaissement=1 and type_compte_id=3 and id_compte =compte_id $all_filter
@@ -357,6 +367,9 @@ class cashdesk  {
 				$compte["encaissement"]=$row_sum->cash;
 			}else $compte["encaissement"]="";
 		
+			$compte["encaissement_no"] = -($compte["encaissement"] - $compte["realisee"]);
+			if(!$compte["encaissement_no"])	$compte["encaissement_no"]='';
+			
 			if($aff_flag){
 				$data[$i]=$compte;
 				$i++;
@@ -383,8 +396,8 @@ class cashdesk  {
 			$id_location+=0;
 			$this->affectation[$id_location]=array();
 			$section_name="f_sections_".$id_location;;
-			global $$section_name;
-			$sections= $$section_name;
+			global ${$section_name};
+			$sections= ${$section_name};
 			
 			if(is_array($sections))
 			foreach ($sections as $id_section){

@@ -1,4 +1,4 @@
-<h1>Amministrazione delle schede bibliografiche</h1>
+<h2>Amministrazione delle schede bibliografiche</h2>
 
 <p>La sezione <b>amministrazione delle schede</b> permette di definire i parametri del programma per le schede bibliografiche.
 <ul>

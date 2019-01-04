@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_item.class.php,v 1.53 2014-10-08 14:13:19 arenou Exp $
+// $Id: onto_common_item.class.php,v 1.71 2018-10-12 14:16:04 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -29,20 +29,26 @@ class onto_common_item {
 	 * @access protected
 	 * @var onto_common_class
 	 */
-	protected $onto_class;
+	public $onto_class;
 
 	/**
 	 * 
 	 * @access private
 	 */
-	private $uri;
+	protected $uri;
+	
+	/**
+	 * Identifiant
+	 * @var int
+	 */
+	protected $id;
 
 	/**
 	 * Tableau associatif de tableau des valeurs avec les URIs de propriétés comme
 	 * étiquettes.
 	 * @access private
 	 */
-	private $datatypes;
+	protected $datatypes;
 
 
 	/**
@@ -50,6 +56,12 @@ class onto_common_item {
 	 * @access private
 	 */
 	private $checking_errors;
+	
+	
+	/**
+	 * Parametrage du framework
+	 */
+	protected $framework_params;
 	
 	/**
 	 * 
@@ -61,7 +73,7 @@ class onto_common_item {
 	 * @return void
 	 * @access public
 	 */
-	public function __construct($onto_class, $uri) {	
+	public function __construct($onto_class, $uri) {
 		$this->onto_class=$onto_class;
 		$this->uri=$uri;
 		if(!$this->uri){
@@ -71,7 +83,7 @@ class onto_common_item {
 	} // end of member function __construct
 
 	
-	private function order_datatypes(){
+	protected function order_datatypes(){
 		//on ordonne les datatypes
 		$temp_datatype_tab=array();
 		if(sizeof($this->datatypes)){
@@ -104,37 +116,55 @@ class onto_common_item {
 	 */
 	public function get_form($prefix_url="",$flag="",$action="save") {
 		global $msg,$charset,$ontology_tpl;
-		
 		$temp_datatype_tab=$this->order_datatypes();
 		$form=$ontology_tpl['form_body'];
-		$form=str_replace("!!uri!!",$this->uri,$form);
+		$form=str_replace("!!uri!!",$this->uri,$form);		
 		$form=str_replace("!!onto_form_scripts!!",$ontology_tpl['form_scripts'], $form);
 		$form=str_replace("!!caller!!",rawurlencode(onto_common_uri::get_name_from_uri($this->uri, $this->onto_class->pmb_name)), $form);
 		
 		$form=str_replace("!!onto_form_id!!",onto_common_uri::get_name_from_uri($this->uri, $this->onto_class->pmb_name) , $form);
 		$form=str_replace("!!onto_form_action!!",$prefix_url."&action=".$action, $form);
 		$form=str_replace("!!onto_form_title!!",htmlentities($this->onto_class->label ,ENT_QUOTES,$charset) , $form);
-	
+		
 		$content='';
 		$valid_js = "";
 		if(sizeof($this->onto_class->get_properties())){
+			$index = 0;
 			foreach($this->onto_class->get_properties() as $uri_property){
 				$property=$this->onto_class->get_property($uri_property);
-				if(!$flag || (in_array($flag,$property->flags))){
-					$datatype_class_name=$this->resolve_datatype_class_name($property);
+				$property->set_framework_params($this->framework_params);
+				
+				if((!$flag || (in_array($flag,$property->flags))) && (!$property->is_undisplayed())) {
+					$datatype_class_name =$this->resolve_datatype_class_name($property);
 					$datatype_ui_class_name=$this->resolve_datatype_ui_class_name($datatype_class_name,$property,$this->onto_class->get_restriction($uri_property));
-					$content.=$datatype_ui_class_name::get_form($this->uri,$property,$this->onto_class->get_restriction($uri_property),$temp_datatype_tab[$uri_property][$datatype_ui_class_name],onto_common_uri::get_name_from_uri($this->uri, $this->onto_class->pmb_name),$flag);
+					
+					$temp_class_name = isset($temp_datatype_tab[$uri_property][$datatype_ui_class_name]) ? $temp_datatype_tab[$uri_property][$datatype_ui_class_name] : null;
+					// On encapsule dans des divs movables pour l'édition de la grille de saisie
+					$movable_div = $ontology_tpl['form_movable_div'];
+					$movable_div = str_replace('!!movable_index!!', $index, $movable_div);
+					$movable_div = str_replace('!!movable_property_label!!', htmlentities($property->label, ENT_QUOTES, $charset), $movable_div);
+					$movable_div = str_replace('!!datatype_ui_form!!', $datatype_ui_class_name::get_form($this->uri,$property,$this->onto_class->get_restriction($uri_property),$temp_class_name,onto_common_uri::get_name_from_uri($this->uri, $this->onto_class->pmb_name),$flag), $movable_div);
+					$content .= $movable_div;
 					if($valid_js){
 						$valid_js.= ",";
 					}
-					$valid_js.= $datatype_ui_class_name::get_validation_js($this->uri,$property,$this->onto_class->get_restriction($uri_property),$temp_datatype_tab[$uri_property][$datatype_ui_class_name],onto_common_uri::get_name_from_uri($this->uri, $this->onto_class->pmb_name),$flag);
+					$valid_js.= $datatype_ui_class_name::get_validation_js($this->uri,$property,$this->onto_class->get_restriction($uri_property),$temp_class_name,onto_common_uri::get_name_from_uri($this->uri, $this->onto_class->pmb_name),$flag);
+					$index++;
 				}
 			}
 		}
+		if (substr_count(onto_common_uri::get_name_from_uri($this->uri, $this->onto_class->pmb_name), "conceptscheme")) {
+			$form = str_replace("!!onto_form_save_and_create_concept!!", 
+					'<input type="button" class="bouton" id="btsubmit" onclick=" submit_onto_form(true);" 
+					value="'.htmlentities($msg['save_and_continue_concept'],ENT_QUOTES,$charset).'"/>', $form);
+		} else {
+			$form = str_replace("!!onto_form_save_and_create_concept!!", '', $form);
+		}
 		$form=str_replace("!!onto_form_content!!",$content , $form);
 		
-		$form=str_replace("!!onto_form_submit!!",'<input type="button" class="bouton" onclick="submit_onto_form();" value="'.htmlentities($msg['77'],ENT_QUOTES,$charset).'"/>' , $form);
-		$form=str_replace("!!onto_form_history!!",'<input type="button" class="bouton" onclick="history.go(-1);" value="'.htmlentities($msg['76'],ENT_QUOTES,$charset).'"/>' , $form);
+		$form=str_replace("!!onto_form_submit!!",'<input type="button" class="bouton" id="btsubmit" onclick="submit_onto_form();" value="'.htmlentities($msg['77'],ENT_QUOTES,$charset).'"/>' , $form);
+		$form=str_replace("!!onto_form_submit_continue!!",'<input type="button" class="bouton" id="btsubmit" onclick="submit_onto_form(true);" value="'.htmlentities($msg['save_and_continue'],ENT_QUOTES,$charset).'"/>' , $form);
+		$form=str_replace("!!onto_form_history!!",'<input type="button" class="bouton" id="btcancel" onclick="history.go(-1);" value="'.htmlentities($msg['76'],ENT_QUOTES,$charset).'"/>' , $form);
 		
 		if(!onto_common_uri::is_temp_uri($this->uri)){
 			$script="
@@ -148,6 +178,7 @@ class onto_common_item {
 			$form=str_replace("!!onto_form_del_script!!",'' , $form);
 			$form=str_replace("!!onto_form_delete!!",'' , $form);
 		}
+		$form = str_replace('!!document_title!!', addslashes($this->onto_class->label), $form);
 		
 		$valid_js = "var validations = [".$valid_js."];";
 		$form=str_replace("!!onto_datasource_validation!!",$valid_js , $form);
@@ -185,7 +216,6 @@ class onto_common_item {
 	} // end of member function get_display
 	
 	
-	
 	/**
 	 * Instancie les datatypes à partir des données postées du formulaire
 	 *
@@ -199,6 +229,7 @@ class onto_common_item {
 		if(sizeof($this->onto_class->get_properties())){
 			foreach($this->onto_class->get_properties() as $uri_property){
 				$property=$this->onto_class->get_property($uri_property);
+				$property->set_framework_params($this->framework_params);
 				$datatype_class_name = $this->resolve_datatype_class_name($property);
 				$this->datatypes = array_merge($this->datatypes, $datatype_class_name::get_values_from_form($prefix, $property, $this->uri));
 			}
@@ -216,19 +247,19 @@ class onto_common_item {
 	 */
 	public function set_assertions($assertions) {
 		/* @var $assertion onto_assertion */
+		
 		foreach ($assertions as $assertion) {
 			$range = $this->onto_class->get_property_range($assertion->get_predicate());
-			
-			if (count($range) && in_array($assertion->get_object_type(), $range)) {
+			if (count($range) && (in_array($assertion->get_object_type(), $range) || $assertion->get_object_type() == "http://www.w3.org/2000/01/rdf-schema#range") ) {
 				$property = $this->onto_class->get_property($assertion->get_predicate());
 				$datatype_class_name=$this->resolve_datatype_class_name($property);
+				
 				$datatype=new $datatype_class_name($assertion->get_object(), $assertion->get_object_type(), $assertion->get_object_properties());
 				$datatype_ui_class_name=$this->resolve_datatype_ui_class_name($datatype_class_name,$property,$this->onto_class->get_restriction($assertion->get_predicate()));
 				$datatype->set_datatype_ui_class_name($datatype_ui_class_name,$this->onto_class->get_restriction($assertion->get_predicate()));
 				$this->datatypes[$assertion->get_predicate()][]=$datatype;
 			}
 		}
-		
 		return true;
 	} // end of member function set_assertions
 
@@ -242,7 +273,7 @@ class onto_common_item {
 		$assertions = array();
 		
 		// On construit manuellement l'assertion type
-		$assertions[] = new onto_assertion($this->uri, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", $this->onto_class->uri, "", array('type'=>"uri"));			
+		$assertions[] = new onto_assertion($this->uri, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", $this->onto_class->uri, "", array('type'=>"uri"));
 		foreach ($this->datatypes as $property => $datatypes) {
 			/* @var $datatype onto_common_datatype */
 			foreach ($datatypes as $datatype) {
@@ -312,9 +343,16 @@ class onto_common_item {
 				}
 				//comptage des valeurs pour les cardinalités
 				if($datatype->get_value() != ""){
-					if ($lang = $datatype->get_lang()) {
+					$lang = $datatype->get_lang();
+					if ($lang) {
+						if (empty($nb_values[$property_uri][$lang])) {
+							$nb_values[$property_uri][$lang] = 0;
+						}
 						$nb_values[$property_uri][$lang]++;
 					} else {
+						if (empty($nb_values[$property_uri]['default'])) {
+							$nb_values[$property_uri]['default'] = 0;
+						}
 						$nb_values[$property_uri]['default']++;
 					}
 				}
@@ -327,7 +365,7 @@ class onto_common_item {
 			$max = $restriction->get_max();
 			
 			// comptage des valeurs en prenant en compte les langues
-			if (count($nb_values[$property_uri])) {
+			if (!empty($nb_values[$property_uri])) {
 				$strict_nb_value = max($nb_values[$property_uri]);
 			} else {
 				$strict_nb_value = 0;
@@ -349,7 +387,6 @@ class onto_common_item {
 				break;
 			}
 		}
-		
 		return $valid;
 	} // end of member function check_values
 
@@ -379,7 +416,7 @@ class onto_common_item {
 	 * @return string
 	 */
 	public function resolve_datatype_class_name($property){
-		return $this->search_datatype_class_name($property,$this->onto_class->onto_name);
+		return self::search_datatype_class_name($property,$this->onto_class->pmb_name,$this->onto_class->onto_name);
 	}
 	
 	/**
@@ -389,40 +426,38 @@ class onto_common_item {
 	 * @param onto_common_property $property
 	 * @param string $pmb_datatype
 	 */
-	protected function search_datatype_class_name($property,$onto_name='common'){
+	public static function search_datatype_class_name($property,$owl_class_name,$onto_name='common'){
 		$suffix = substr($property->pmb_datatype,strpos($property->pmb_datatype,"#")+1);
 		
 		//on regarde le cas propriété pour la classe de l'ontologie...
-		//(ex : onto_skos_concept_datatype_preflabel) 
-		$class_name = "onto_".$onto_name."_".$this->onto_class->pmb_name."_datatype_".$property->pmb_name;
-// 		var_dump($class_name);
- 		if(!class_exists($class_name)){
- 			//loupé, on regarde si la proprité est définie pour l'ontologie
- 			//(ex : onto_skos_datatype_preflabel)
- 			$class_name = "onto_".$onto_name."_datatype_".$property->pmb_name;
-//  			var_dump($class_name);
- 			if(!class_exists($class_name)){
- 				//loupé, on regarde si le pmb_datatype est dérivé pour la classe
- 				//(ex : onto_skos_concept_datatype_preflabel)
- 				$class_name = "onto_".$onto_name."_".$this->onto_class->pmb_name."_datatype_".$suffix;
-//  				var_dump($class_name);
- 				if(!class_exists($class_name)){
-	 				//loupé, on regarde si le pmb_datatype est dérivé pour l'ontologie
- 					//(ex : onto_skos_concept_datatype_preflabel)
- 					$class_name = "onto_".$onto_name."_datatype_".$suffix;
-// 	 				var_dump($class_name);
-	 				if(!class_exists($class_name)){
-	 					//loupé, heu là on regarde dans le common...
-	 					if($onto_name == "common"){
-	 						//le datatype n'est pas codé...
-		 					return false;
-	 					}else{
-							$class_name = $this->search_datatype_class_name($property);	 						
-	 					}
-	 				}
- 				}
- 			}
- 		}
+		//(ex : onto_skos_concept_datatype_preflabel)
+		$class_name = "onto_".$onto_name."_".$owl_class_name."_datatype_".$property->pmb_name;
+		
+		if(!class_exists($class_name)){
+			//loupé, on regarde si la proprité est définie pour l'ontologie
+			//(ex : onto_skos_datatype_preflabel)
+			$class_name = "onto_".$onto_name."_datatype_".$property->pmb_name;
+			if(!class_exists($class_name)){
+				//loupé, on regarde si le pmb_datatype est dérivé pour la classe
+				//(ex : onto_skos_concept_datatype_preflabel)
+				$class_name = "onto_".$onto_name."_".$owl_class_name."_datatype_".$suffix;
+				
+				if(!class_exists($class_name)){
+					//loupé, on regarde si le pmb_datatype est dérivé pour l'ontologie
+					//(ex : onto_skos_concept_datatype_preflabel)
+					$class_name = "onto_".$onto_name."_datatype_".$suffix;
+					if(!class_exists($class_name)){
+						//loupé, heu là on regarde dans le common...
+						if($onto_name == "common"){
+							//le datatype n'est pas codé...on renvoit un datatype ultra basique...
+							$class_name = "onto_common_datatype_small_text";
+						}else{
+							$class_name = self::search_datatype_class_name($property,$owl_class_name);
+						}
+					}
+				}
+			}
+		}
 		return $class_name;
 	}
 	
@@ -433,7 +468,7 @@ class onto_common_item {
 	 * @return string
 	 */
 	public function resolve_datatype_ui_class_name($datatype_class_name,$property,$restriction=NULL){
-		return $this->search_datatype_ui_class_name($datatype_class_name,$property,$restriction,$property->onto_name);
+		return self::search_datatype_ui_class_name($datatype_class_name,$this->onto_class->pmb_name, $property, $restriction, $property->onto_name);
 	}
 	
 	/**
@@ -443,7 +478,7 @@ class onto_common_item {
 	 * @param onto_common_property $property
 	 * @param string $pmb_datatype
 	 */
-	protected function search_datatype_ui_class_name($datatype_class_name,$property,$restriction=NULL,$onto_name='common'){
+	public static function search_datatype_ui_class_name($datatype_class_name, $owl_class_name, $property,$restriction=NULL,$onto_name='common'){
 		$pmb_datatype = substr($property->pmb_datatype,strpos($property->pmb_datatype,"#")+1);
 		$suffix = "_ui";
 		$pmb_datatype_suffix = $suffix;
@@ -452,17 +487,17 @@ class onto_common_item {
 		}
 		
 		//(ex : onto_skos_concept_datatype_preflabel_ui)
-		$class_name = "onto_".$onto_name."_".$this->onto_class->pmb_name."_datatype_".$property->pmb_name.$suffix;
+		$class_name = "onto_".$onto_name."_".$owl_class_name."_datatype_".$property->pmb_name.$suffix;
 // 		var_dump($class_name);
 		if(!class_exists($class_name)){
 			//loupé, on regarde si la proprité est définie pour l'ontologie
 			//(ex : onto_skos_datatype_preflabel)
-			$class_name = "onto_".$onto_name."_datatype_".$property->pmb_name.$suffix;
+			$class_name = "onto_".$onto_name."_datatype_".$property->pmb_name.$suffix;		
 // 			var_dump($class_name);
 			if(!class_exists($class_name)){
 				//loupé, on regarde si le pmb_datatype est dérivé pour la classe
 				//(ex : onto_skos_concept_datatype_preflabel)
-				$class_name = "onto_".$onto_name."_".$this->onto_class->pmb_name."_datatype_".$pmb_datatype.$pmb_datatype_suffix;
+				$class_name = "onto_".$onto_name."_".$owl_class_name."_datatype_".$pmb_datatype.$pmb_datatype_suffix;
 // 				var_dump($class_name);
 				if(!class_exists($class_name)){
 					//loupé, on regarde si le pmb_datatype est dérivé pour l'ontologie
@@ -470,48 +505,19 @@ class onto_common_item {
 					$class_name = "onto_".$onto_name."_datatype_".$pmb_datatype.$pmb_datatype_suffix;
 // 					var_dump($class_name);
 					if(!class_exists($class_name)){
-						//loupé, heu là on regarde dans le common...
-						if($onto_name == "common"){
-							//le datatype n'est pas codé...
-							return false;
-						}else{
-							$class_name = $this->search_datatype_ui_class_name($datatype_class_name,$property,$restriction);
+						$class_name = "onto_".$onto_name."_datatype_".$pmb_datatype."_ui";
+						if(!class_exists($class_name)){							
+							//loupé, heu là on regarde dans le common...
+							if($onto_name == "common"){
+								$class_name = "onto_common_datatype_small_text_ui";
+							}else{
+								$class_name = self::search_datatype_ui_class_name($datatype_class_name, $owl_class_name, $property,$restriction);
+							}
 						}
 					}
 				}
 			}
 		}
-		
-		
-		
-		
-// 		if ($restriction && $restriction->get_max() != -1) {
-			// 			$suffixe = "_card_ui";
-			// 		} else {
-			// 			$suffixe = "_ui";
-			// 		}
-			// 		//Le datatype ui a le même nom que le datatype
-			// 		//ex : onto_skos_datatype_text<=>onto_skos_datatype_text_ui
-			// 		if(class_exists($datatype_class_name.$suffixe)){
-			// 			return $datatype_class_name.$suffixe;
-			// 		}else{
-			// 			//On ne trouve pas le datatype exact, on remonte dans le common pour prendre le datatype ui qui correspond au type de champ.
-			// 			//ex : onto_skos_datatype_text<=>onto_common_datatype_text_ui
-			// 			$datatype_ui_class_name='';
-			// 			$datatype_ui_class_name=preg_replace('/^[a-z]+_[a-z]+_/','onto_common_',$datatype_class_name).$suffixe;
-			//
-			// 			if(class_exists($datatype_ui_class_name)){
-			// 				return $datatype_ui_class_name;
-			// 			}else{
-			// 				if (class_exists('onto_common_datatype'.$suffixe)) {
-			// 					//Pas de datatype_ui correspondant dans le common au datatype... on renvoie onto_common_datatype_ui
-			// 					return 'onto_common_datatype'.$suffixe;
-			// 				} else {
-			// 					return 'onto_common_datatype_ui';
-			// 				}
-			// 			}
-			// 		}
-			// 		return false;
 		
 		return $class_name;
 	}
@@ -541,5 +547,31 @@ class onto_common_item {
 		return $label;
 	}
 	
-
+	public function get_id() {
+		if (isset($this->id)) {
+			return $this->id;
+		}
+		$this->id = onto_common_uri::get_id($this->uri);
+		return $this->id;
+	}
+	
+	public function get_framework_params(){
+		return $this->framework_params;
+	}
+	
+	public function set_framework_params($framework_params){
+		if(!isset($this->framework_params)){
+			$this->framework_params = $framework_params;
+		}
+	}
+	
+	public function set_uri($uri){
+		$this->uri = $uri;
+		$this->id = onto_common_uri::get_id($this->uri);
+		return $this;
+	}
+	
+	public function get_onto_class(){
+		return $this->onto_class;
+	}
 } // end of onto_common_item

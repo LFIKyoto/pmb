@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: z3950.tpl.php,v 1.7.10.1 2015-11-22 17:59:16 Alexandre Exp $
+// $Id: z3950.tpl.php,v 1.8 2015-11-22 18:32:16 Alexandre Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 

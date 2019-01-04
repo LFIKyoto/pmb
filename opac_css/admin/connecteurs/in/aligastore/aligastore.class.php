@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: aligastore.class.php,v 1.9.4.1 2015-09-11 08:53:13 jpermanne Exp $
+// $Id: aligastore.class.php,v 1.14 2017-07-12 15:15:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,28 +16,12 @@ if (version_compare(PHP_VERSION,'5','>=') && extension_loaded('xsl')) {
 	require_once($include_path.'/xslt-php4-to-php5.inc.php');
 }
 
-if (!function_exists('file_put_contents')) {
-    function file_put_contents($filename, $data) {
-        $f = @fopen($filename, 'w');
-        if (!$f) {
-            return false;
-        } else {
-            $bytes = fwrite($f, $data);
-            fclose($f);
-            return $bytes;
-        }
-    }
-}
-
-
 //Voici un array_unique qui marche aussi avec des objects et des arrays.
-function array_unique_more($array, $keep_key_assoc = false)
-{
+function array_unique_more($array, $keep_key_assoc = false){
     $duplicate_keys = array();
     $tmp         = array();       
 
-    foreach ($array as $key=>$val)
-    {
+    foreach ($array as $key=>$val){
         // convert objects to arrays, in_array() does not support objects
         if (is_object($val))
             $val = (array)$val;
@@ -56,53 +40,37 @@ function array_unique_more($array, $keep_key_assoc = false)
 
 class aligastore extends connector {
 	//Variables internes pour la progression de la récupération des notices
-	var $callback_progress;		//Nom de la fonction de callback progression passée par l'appellant
-	var $current_set;			//Set en cours de synchronisation
-	var $total_sets;			//Nombre total de sets sélectionnés
-	var $metadata_prefix;		//Préfixe du format de données courant
-	var $source_id;				//Numéro de la source en cours de synchro
-	var $search_id;
-	var $xslt_transform;		//Feuille xslt transmise
-	var $sets_names;			//Nom des sets pour faire plus joli !!
-	var $del_old;				//Supression ou non des notices dejà existantes
-	var $url;
-	var $username;
-	var $password;
-	var $blank_image;
-	var $image_thumb_url;
-	var $image_front;
-	var $image_back;
-	var $image_folder;
-	var $image_folder_url;
-	var $fetchimages;
+	public $current_set;			//Set en cours de synchronisation
+	public $total_sets;			//Nombre total de sets sélectionnés
+	public $metadata_prefix;		//Préfixe du format de données courant
+	public $search_id;
+	public $xslt_transform;		//Feuille xslt transmise
+	public $sets_names;			//Nom des sets pour faire plus joli !!
+	public $url;
+	public $username;
+	public $password;
+	public $blank_image;
+	public $image_thumb_url;
+	public $image_front;
+	public $image_back;
+	public $image_folder;
+	public $image_folder_url;
+	public $fetchimages;
 	
-	//Résultat de la synchro
-	var $error;					//Y-a-t-il eu une erreur	
-	var $error_message;			//Si oui, message correspondant
-	
-    function aligastore($connector_path="") {
-    	parent::connector($connector_path);
+	public function __construct($connector_path="") {
+    	parent::__construct($connector_path);
     }
     
-    function get_id() {
+    public function get_id() {
     	return "aligastore";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 3;
 	}
     
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-    
-    function source_get_property_form($source_id) {
+    public function source_get_property_form($source_id) {
     	global $charset;
     	
     	$params=$this->get_source_params($source_id);
@@ -110,8 +78,8 @@ class aligastore extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		//URL
@@ -231,12 +199,12 @@ class aligastore extends connector {
 		";
 
 		$form.="
-	<div class='row'></div>
-";
+			<div class='row'></div>
+			";
 		return $form;
     }
     
-    function make_serialized_source_properties($source_id) {
+    public function make_serialized_source_properties($source_id) {
     	global $url,$username, $password, $fetch_images, $image_folder, $image_thumb_url, $image_front, $image_back, $image_folder_public;
     	$t["url"]=stripslashes($url);
     	$t["username"]=stripslashes($username);
@@ -252,26 +220,13 @@ class aligastore extends connector {
 	}
 	
 	//Récupération  des proriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
-		$this->timeout=5;
+	public function fetch_default_global_values() {
+		parent::fetch_default_global_values();
 		$this->repository=1;
-		$this->retry=3;
-		$this->ttl=1800;
-		$this->parameters="";
 	}
 	
-	//Formulaire des propriétés générales
-	function get_property_form() {
-		$this->fetch_global_properties();
-		return "";
-	}
-	
-	function make_serialized_properties() {
-		$this->parameters="";
-	}
-	
-	function rec_record($record, $source_id, $search_id) {
-		global $charset,$base_path;
+	public function rec_record($record, $source_id, $search_id) {
+		global $charset;
 		if (!trim($record))
 			return;
 		//On a un enregistrement unimarc, on l'enregistre
@@ -300,14 +255,12 @@ class aligastore extends connector {
 			if ($ref) {
 				//Si conservation des anciennes notices, on regarde si elle existe
 				if (!$this->del_old) {
-					$requete="select count(*) from entrepot_source_".$source_id." where ref='".addslashes($ref)."'";
-					$rref=pmb_mysql_query($requete);
-					if ($rref) $ref_exists=pmb_mysql_result($rref,0,0);
+					$ref_exists = $this->has_ref($source_id, $ref);
 				}
 				//Si pas de conservation des anciennes notices, on supprime
 				if ($this->del_old) {
-					$requete="delete from entrepot_source_".$source_id." where ref='".addslashes($ref)."'";
-					pmb_mysql_query($requete);
+					$this->delete_from_entrepot($source_id, $ref);
+					$this->delete_from_external_count($source_id, $ref);
 				}
 				$ref_exists = false;
 				//Si pas de conservation ou refï¿½rence inexistante
@@ -320,16 +273,11 @@ class aligastore extends connector {
 					$n_header["hl"]=$rec_uni_dom->get_value("unimarc/notice/hl");
 					$n_header["dt"]=$rec_uni_dom->get_value("unimarc/notice/dt");
 					
-					//Rï¿½cupï¿½ration d'un ID
-					$requete="insert into external_count (recid, source_id) values('".addslashes($this->get_id()." ".$source_id." ".$ref)."', ".$source_id.")";
-					$rid=pmb_mysql_query($requete);
-					if ($rid) $recid=pmb_mysql_insert_id();
+					//Récupération d'un ID
+					$recid = $this->insert_into_external_count($source_id, $ref);
 					
 					foreach($n_header as $hc=>$code) {
-						$requete="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid, search_id) values(
-						'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
-						'".$hc."','',-1,0,'".addslashes($code)."','',$recid, '$search_id')";
-						pmb_mysql_query($requete);
+						$this->insert_header_into_entrepot($source_id, $ref, $date_import, $hc, $code, $recid, $search_id);
 					}
 					if ($fs)
 					for ($i=0; $i<count($fs); $i++) {
@@ -341,36 +289,21 @@ class aligastore extends connector {
 								$usubfield=$ss[$j]["ATTRIBS"]["c"];
 								$value=$rec_uni_dom->get_datas($ss[$j]);
 								$subfield_order=$j;
-								$requete="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid, search_id) values(
-								'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
-								'".addslashes($ufield)."','".addslashes($usubfield)."',".$field_order.",".$subfield_order.",'".addslashes($value)."',
-								' ".addslashes(strip_empty_words($value))." ',$recid, '$search_id')";
-								pmb_mysql_query($requete);
+								$this->insert_content_into_entrepot($source_id, $ref, $date_import, $ufield, $usubfield, $field_order, $subfield_order, $value, $recid, $search_id);
 							}
 						} else {
 							$value=$rec_uni_dom->get_datas($fs[$i]);
-							$requete="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid, search_id) values(
-							'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
-							'".addslashes($ufield)."','".addslashes($usubfield)."',".$field_order.",".$subfield_order.",'".addslashes($value)."',
-							' ".addslashes(strip_empty_words($value))." ',$recid, '$search_id')";
-							pmb_mysql_query($requete);
+							$this->insert_content_into_entrepot($source_id, $ref, $date_import, $ufield, $usubfield, $field_order, 0, $value, $recid, $search_id);
 						}
 					}
+					$this->rec_isbd_record($source_id, $ref, $recid);
 				}
 				$this->n_recu++;
 			}
 		}
 	}
-		
-	function cancel_maj($source_id) {
-		return false;
-	}
 	
-	function break_maj($source_id) {
-		return false;
-	}
-	
-	function get_image_information($isbn, $download_images) {
+	public function get_image_information($isbn, $download_images) {
 		global $charset;
 		//Récupération et traitement des images et des zones associées.
 		$bypass_testvalidity = true;
@@ -433,7 +366,7 @@ class aligastore extends connector {
 		return $image_information;
 	}
 	
-	function fetch_and_record_notice($isbn, $xsl) {
+	public function fetch_and_record_notice($isbn, $xsl) {
 		if (!$isbn)
 			return;
 	
@@ -462,7 +395,7 @@ class aligastore extends connector {
 		}
 	}
 	
-	function fetch_and_record_images($isbn) {
+	public function fetch_and_record_images($isbn) {
 		if (!is_dir($this->image_folder))
 			return;
 
@@ -480,8 +413,8 @@ class aligastore extends connector {
 		
 		if (!file_exists($folder."/".$isbn."_thumb.jpg")) {
 			$url = str_replace("!!isbn!!", $isbn, $this->image_thumb_url);
-			configurer_proxy_curl($ch,$url);
 			curl_setopt($ch, CURLOPT_URL, $url);
+			configurer_proxy_curl($ch,$url);
 			$buffer = curl_exec($ch);
 			if (!curl_error($ch)) {
 				file_put_contents($folder."/".$isbn."_thumb.jpg", $buffer);
@@ -493,8 +426,8 @@ class aligastore extends connector {
 		
 		if (!file_exists($folder."/".$isbn."_front.jpg")) {
 			$url = str_replace("!!isbn!!", $isbn, $this->image_front);
-			configurer_proxy_curl($ch,$url);
 			curl_setopt($ch, CURLOPT_URL, $url);
+			configurer_proxy_curl($ch,$url);
 			$buffer = curl_exec($ch);
 			if (!curl_error($ch)) {
 				file_put_contents($folder."/".$isbn."_front.jpg", $buffer);
@@ -507,8 +440,8 @@ class aligastore extends connector {
 
 		if (!file_exists($folder."/".$isbn."_back.jpg")) {
 			$url = str_replace("!!isbn!!", $isbn, $this->image_back);
-			configurer_proxy_curl($ch,$url);
 			curl_setopt($ch, CURLOPT_URL, $url);
+			configurer_proxy_curl($ch,$url);
 			$buffer = curl_exec($ch);
 			if (!curl_error($ch)) {
 				file_put_contents($folder."/".$isbn."_back.jpg", $buffer);
@@ -522,7 +455,7 @@ class aligastore extends connector {
 		return $result;
 	}
 	
-	function get_blank_image($url_thumb) {
+	public function get_blank_image($url_thumb) {
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_HEADER, 0);
 		curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
@@ -533,7 +466,7 @@ class aligastore extends connector {
 		return $buffer;
 	}
 	
-	function test_image_validity($isbn, $url) {
+	public function test_image_validity($isbn, $url) {
 		if (!$this->blank_image) {
 			$this->blank_image = $this->get_blank_image($url);
 		}
@@ -549,62 +482,11 @@ class aligastore extends connector {
 		return !($image == $this->blank_image);
 	}
 	
-
-	function apply_xsl_to_xml($xml, $xsl) {
-		global $charset;
-		$xh = xslt_create();
-		xslt_set_encoding($xh, $charset);
-		$arguments = array(
-	   	  '/_xml' => $xml,
-	   	  '/_xsl' => $xsl
-		);
-		$result = xslt_process($xh, 'arg:/_xml', 'arg:/_xsl', NULL, $arguments);
-		xslt_free($xh);
-		return $result;		
-	}
-	
 	//Fonction de recherche
-	function search($source_id,$query,$search_id) {
-		$params=$this->get_source_params($source_id);
-		$this->fetch_global_properties();
-		if ($params["PARAMETERS"]) {
-			//Affichage du formulaire avec $params["PARAMETERS"]
-			$vars=unserialize($params["PARAMETERS"]);
-			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
-			}	
-		}
-		if (!isset($url))
-			$url = "";
-		if (!isset($username))
-			$username = "";
-		if (!isset($password))
-			$password = "";
-		if (!isset($fetch_images))
-			$fetch_images = 0;
-		if (!isset($image_folder))
-			$image_folder = 0;
-		if (!isset($image_folder_public))
-			$image_folder_public = 0;
-		if (!isset($image_thumb_url))
-			$image_thumb_url = 0;
-		if (!isset($image_front))
-			$image_front = 0;
-		if (!isset($image_back))
-			$image_back = 0;
-
-		$this->url = $url;
-		$this->username = $username;
-		$this->password = $password;
-		$this->source_id = $source_id;
-		$this->search_id = 0;
-		$this->image_thumb_url = $image_thumb_url;
-		$this->image_front = $image_front;
-		$this->image_back = $image_back;
-		$this->image_folder = $image_folder;
-		$this->image_folder_url = $image_folder_public;
-		$this->fetchimages = $fetch_images;
+	public function search($source_id,$query,$search_id) {
+		global $base_path;
+		
+		$this->initSource($source_id);
 
 		$isbns = array();
 		foreach($query as $amterm) {
@@ -612,10 +494,7 @@ class aligastore extends connector {
 				$isbns[] = $amterm->values[0];
 			}
 		}
-		
-		global $base_path;
 		$xsl_transform = file_get_contents($base_path."/admin/connecteurs/in/aligastore/xslt/aligatopmbunimarx.xsl");
-		
 		foreach($isbns as $isbn) {
 			//Si on veut des images, il nous faut un isbn 13
 			$isbn = formatISBN($isbn, 13);
@@ -623,20 +502,19 @@ class aligastore extends connector {
 			
 			$this->fetch_and_record_notice($isbn, $xsl_transform);
 		}
-
 	}
 	
-	function enrichment_is_allow(){
+	public function enrichment_is_allow(){
 		return true;
 	}
 	
-	function getEnrichmentHeader($source_id){
+	public function getEnrichmentHeader($source_id){
 		$header= array();
 		$header[]= "<!-- Script d'enrichissement pour Alligastore-->";
 		return $header;
 	}
 	
-	function getTypeOfEnrichment($notice_id,$source_id){
+	public function getTypeOfEnrichment($notice_id,$source_id){
 		$type['type'] = array(
 			"resume",
 			"sommaire",
@@ -646,7 +524,7 @@ class aligastore extends connector {
 		return $type;		
 	}
 	
-	function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array(),$page=1){
+	public function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array(),$page=1){
 		$enrichment= array();
 		$infos = $this->getNoticeInfos($notice_id,$source_id);
 		//on renvoi ce qui est demandé... si on demande rien, on renvoi tout..
@@ -677,7 +555,7 @@ class aligastore extends connector {
 		return $enrichment;
 	}
 	
-	function getNoticeInfos($notice_id,$source_id){
+	public function getNoticeInfos($notice_id,$source_id){
 		global $base_path,$charset;
 		$this->initSource($source_id);
 		$return = array();
@@ -710,15 +588,15 @@ class aligastore extends connector {
 		return $return;
 	}
 	
-	function initSource($source_id){
+	public function initSource($source_id){
 		$params=$this->get_source_params($source_id);
 		$this->fetch_global_properties();
 		if ($params["PARAMETERS"]) {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		if (!isset($url))

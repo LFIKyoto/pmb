@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: RootNode.php,v 1.10 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: RootNode.php,v 1.14 2017-10-05 11:02:10 jpermanne Exp $
 namespace Sabre\PMB;
 
 class RootNode extends Collection {
@@ -30,7 +30,7 @@ class RootNode extends Collection {
 		
 		//construction de la notice standard en fonction des métadonnées
 		$entry=array();
-		$entry=self::buildEntry(self::getMetadata($filename, $name));
+		$entry=self::buildEntry(self::getMetadata($filename, $name),$name);
 		$entry['statut']=$this->config['default_statut'];
 		
 		switch($entry['niveau_biblio'].$entry['niveau_hierar']){
@@ -150,7 +150,7 @@ class RootNode extends Collection {
 	 *)
 	 *	 
 	 */
-	static function buildEntry($metas){
+	static function buildEntry($metas,$name){
 		global $pmb_keyword_sep;
 		
 		$entry=array();
@@ -346,7 +346,7 @@ class RootNode extends Collection {
 		
 		if($mimetype == "application/epub+zip"){
 			//récupération de l'image
-			$epub = new \epubData(realpath($filename));
+			$epub = new \epub_Data(realpath($filename));
 			//TODO : Vérifier la récupération des métadonnées d'un epub avec \extract_metas(), sinon rétablir les commentaires ici et le else plus bas
 // 			$tmp=array();
 // 			$tmp=$epub->metas;
@@ -443,8 +443,7 @@ class RootNode extends Collection {
 		
 		if($entry['niveau_biblio'].$entry['niveau_hierar']=="b2"){
 			//Si la notice récupéré est un bulletin, on fait le lien entre la notice et le périodique
-			$query='REPLACE INTO notices_relations (num_notice,linked_notice,relation_type,rank) VALUES ('.$entry['notice_id'].','.$entry['periodique']['notice_id'].',"b",1)';
-			pmb_mysql_query($query) or die('Echec d\'execution de la requete '.$query.'  : '.pmb_mysql_error());
+			\notice_relations::replace($entry['notice_id'], $entry['periodique']['notice_id'], 'b', 1);
 			
 			//et on donne le champ num_notice au bulletin en vue de l'ajout qui suis
 			$query='UPDATE bulletins SET num_notice='.$entry['notice_id'].' WHERE bulletin_id='.$entry['bulletin']['bulletin_id'];
@@ -519,7 +518,7 @@ class RootNode extends Collection {
 		
 		if(pmb_mysql_num_rows($result)){
 			// La notice existe
-			$entry=array_merge(pmb_mysql_fetch_array($result,MYSQL_ASSOC),$entry);
+			$entry=array_merge(pmb_mysql_fetch_array($result,PMB_MYSQL_ASSOC),$entry);
 			//TODO : A vérifier
 			$first=true;
 			$query='UPDATE notices SET ';

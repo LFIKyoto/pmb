@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_bannette_view_bannette.class.php,v 1.1.2.3 2015-10-06 15:36:18 dgoron Exp $
+// $Id: cms_module_bannette_view_bannette.class.php,v 1.4 2018-06-19 13:43:38 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -51,7 +51,9 @@ class cms_module_bannette_view_bannette extends cms_module_common_view_django{
 	}
 	
 	public function get_form(){
-
+		if(!isset($this->parameters['used_template'])) $this->parameters['used_template'] = '';
+		if(!isset($this->parameters['nb_notices'])) $this->parameters['nb_notices'] = '';
+		
 		$form = parent::get_form()
 				."
 		<div class='row'>
@@ -99,6 +101,9 @@ class cms_module_bannette_view_bannette extends cms_module_common_view_django{
 			$datas['info']['header'] = $info_header;
 			$bannette->notice_tpl = $this->parameters['used_template'];
 			$bannette->document_notice_tpl = $this->parameters['used_template'];
+			if(!empty($this->parameters['nb_notices'])) {
+				$bannette->nb_notices_diff = $this->parameters['nb_notices'];
+			}
 			$bannette->get_datas_content();
 			$datas = array_merge($datas,$bannette->data_document);
 		}

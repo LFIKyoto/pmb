@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: print_acquisition.php,v 1.1.4.2 2015-08-13 08:05:16 jpermanne Exp $
+// $Id: print_acquisition.php,v 1.2 2015-08-13 08:06:36 jpermanne Exp $
 
 
 // définition du minimum nécéssaire 

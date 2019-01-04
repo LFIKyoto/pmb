@@ -2,8 +2,8 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sip2.php,v 1.4.14.1 2015-11-24 16:42:47 mbertin Exp $
-
+// $Id: sip2.php,v 1.7 2017-02-16 09:23:09 mbertin Exp $
+$time_log_start=microtime(true);
 // définition du minimum nécéssaire 
 $base_path=".";                            
 $base_auth = "CIRCULATION_AUTH";  
@@ -16,10 +16,9 @@ $message=stripslashes($message);
 
 $protocol=new sip2_protocol("$include_path/sip2/protocol.xml",$charset);
 
-if($debug) $fp_debug=fopen("temp/messages.log","a+");
-if($fp_debug){
-	fwrite($fp_debug,$message."\n");
-}
+if($debug) $fp_debug_rfid=fopen("temp/messages.log","a+");
+$info_debug_rfid="Date (".$automate."): ".date("Y-m-d H:i:s")."\n";
+$info_debug_rfid.="Trame recue: ".$message."\n";
 
 //Analyse de la trame
 $trame=new sip2_trame($message,$protocol);
@@ -29,6 +28,7 @@ $message_pair="";
 
 //Si il y a une erreur ?
 if ($trame->error) {
+	$info_debug_rfid.="Erreur trame reçue: ".$tramer->error_message."\n";
 	print $trame->error_message;
 	//Si c'est une erreur on redemande le message
 	$message_pair=96;
@@ -42,6 +42,7 @@ if ($trame->error) {
 		if ($_SESSION[$id]["ltrame"]) {
 			//Si dernier message pas vide
 			$last_trame=$_SESSION[$id]["ltrame"];
+			$info_debug_rfid.="Trame reponse session: ".$_SESSION[$id]["ltrame"]."\n";
 			print $_SESSION[$id]["ltrame"];
 			$message_pair="";
 		} else {
@@ -62,6 +63,8 @@ if ($message_pair) {
 	$tramer->set_message_values($values);
 	//Si il y a une erreur, erreur définitive !
 	if ($tramer->error) {
+		$info_debug_rfid.="Function: ".$func_response."\n";
+		$info_debug_rfid.="Erreur trame n1: ".$tramer->error_message."\n";
 		print $tramer->error_message;
 	  	print "exit";
 	} else {
@@ -69,22 +72,27 @@ if ($message_pair) {
 	    $tramer->make_trame();
 	    //Si il y a une erreur
 	    if ($tramer->error) {
+	    	$info_debug_rfid.="Erreur trame n2: ".$tramer->error_message."\n";
 	    	print $tramer->error_message;
 	    	print "exit";
 	    } else {
 			if($rtim){
 				$tramer->trame=rtrim($tramer->trame);
 			}
+			$info_debug_rfid.="Trame reponse: ".$tramer->trame."\n";
 			print $tramer->trame;
-	    	if($fp_debug){
-	    		fwrite($fp_debug,$tramer->trame."\n");
-	    	}
 	    	$last_trame=$tramer->trame;
 	    }
 	}
 }
-if($fp_debug){
-	fclose($fp_debug);	    		
+if($fp_debug_rfid){
+	$time_log_end=microtime(true);
+	$duree=number_format(($time_log_end-$time_log_start), 3);
+	if($duree > 15){
+		$info_debug_rfid.="Lenteur traitement\n";
+	}
+	$info_debug_rfid.="Script execute en: ".$duree." sec\n\n";
+	fwrite($fp_debug_rfid,$info_debug_rfid);
+	fclose($fp_debug_rfid);
 }
 $_SESSION[$id]["ltrame"]=$last_trame;
-?>

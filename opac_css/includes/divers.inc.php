@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: divers.inc.php,v 1.16.4.1 2015-08-26 13:10:58 jpermanne Exp $
+// $Id: divers.inc.php,v 1.18 2017-12-28 16:14:23 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -150,6 +150,15 @@ function getDatePattern($format="long"){
 		}
 	}	
 	return "#".implode($pattern,".")."#";
+}
+
+function getDojoPattern($date) {
+	$formatted_date = str_replace (array("%d", "%M", "%Y"),array("dd","MMMM","yyyy"),$date);
+	if(strpos($formatted_date, '%') !== false) {
+		return '';
+	} else {
+		return $formatted_date;
+	}
 }
 
 // verif_date permet de vérifier si une date saisie est valide

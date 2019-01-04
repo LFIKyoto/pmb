@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: editions_state.class.php,v 1.5 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: editions_state.class.php,v 1.7 2018-11-07 13:28:27 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -176,7 +176,7 @@ class editions_state {
 		//commentaire 
 		$form = str_replace('!!comment!!', htmlentities($this->comment,ENT_QUOTES, $charset), $form);
 		//classement
-		$combo_clas= gen_liste ("SELECT idproc_classement,libproc_classement FROM procs_classements ORDER BY libproc_classement ", "idproc_classement", "libproc_classement", "editions_state_classement", "", $this->classement, 0, $msg[proc_clas_aucun],0, $msg[proc_clas_aucun]) ;
+		$combo_clas= gen_liste ("SELECT idproc_classement,libproc_classement FROM procs_classements ORDER BY libproc_classement ", "idproc_classement", "libproc_classement", "editions_state_classement", "", $this->classement, 0, $msg['proc_clas_aucun'],0, $msg['proc_clas_aucun']) ;
 		$form = str_replace('!!classement!!', $combo_clas, $form);
 		
 		//source de données
@@ -192,7 +192,7 @@ class editions_state {
 //			<option value='editions_datasource_loans' ".($this->used_datasource == "editions_datasource_loans" ? "selected='selected'":"").">Prêts</option>";
 		$form = str_replace('!!datasource_options!!', $datasource_options, $form);
 		
-		if(count($this->state_fields_list['filters']['content']) || count($this->state_fields_list['fields']['content'])){
+		if((isset($this->state_fields_list['filters']['content']) && count($this->state_fields_list['filters']['content'])) || (isset($this->state_fields_list['fields']['content']) && count($this->state_fields_list['fields']['content']))){
 			//J'ai commencé à créer un état je ne peux donc pas changer de source
 			$form = str_replace('!!datasource_readonly!!', "disabled='disabled'", $form);
 			$form = str_replace('<!--editions_state_datasource-->', "<input type='hidden' name='editions_state_datasource' id='editions_state_datasource' value='".$this->used_datasource."'/>", $form);
@@ -377,7 +377,7 @@ class editions_state {
 	public function get_filter(){
 		global $class_path;
 		global $editions_state_filters_content_fields;
-		if(is_array($this->state_fields_list['filters']['content']) && count($this->state_fields_list['filters']['content'])){//Si les filtres sont présent dans la variable
+		if(isset($this->state_fields_list['filters']['content']) && is_array($this->state_fields_list['filters']['content']) && count($this->state_fields_list['filters']['content'])){//Si les filtres sont présent dans la variable
 			foreach($this->state_fields_list['filters']['content'] as $field){
 				$class = $this->get_filter_class($field);
 				require_once($class_path."/".$class.".class.php");

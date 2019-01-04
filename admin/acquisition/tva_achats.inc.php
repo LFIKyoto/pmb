@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: tva_achats.inc.php,v 1.13 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: tva_achats.inc.php,v 1.14 2017-04-19 12:37:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -17,8 +17,8 @@ function show_list_tva() {
 	print "<table>
 	<tr>
 		<th>".htmlentities($msg[103], ENT_QUOTES, $charset)."</th>
-		<th>".htmlentities($msg[acquisition_tva_taux], ENT_QUOTES, $charset)."</th>
-		<th>".htmlentities($msg[acquisition_num_cp_compta], ENT_QUOTES, $charset)."</th>
+		<th>".htmlentities($msg['acquisition_tva_taux'], ENT_QUOTES, $charset)."</th>
+		<th>".htmlentities($msg['acquisition_num_cp_compta'], ENT_QUOTES, $charset)."</th>
 	</tr>";
 
 	$q = tva_achats::listTva();
@@ -39,7 +39,7 @@ function show_list_tva() {
 			print "</tr>";
 	}
 	print "</table>
-		<input class='bouton' type='button' value=' ".$msg[acquisition_ajout_tva]." ' onClick=\"document.location='./admin.php?categ=acquisition&sub=tva&action=add'\" />";
+		<input class='bouton' type='button' value=' ".$msg['acquisition_ajout_tva']." ' onClick=\"document.location='./admin.php?categ=acquisition&sub=tva&action=add'\" />";
 
 }
 
@@ -55,7 +55,7 @@ function show_tva_form($id=0) {
 	
 	if(!$id) {
 		
-		$tva_form = str_replace('!!form_title!!', htmlentities($msg[acquisition_ajout_tva],ENT_QUOTES,$charset), $tva_form);
+		$tva_form = str_replace('!!form_title!!', htmlentities($msg['acquisition_ajout_tva'],ENT_QUOTES,$charset), $tva_form);
 		$tva_form = str_replace('!!libelle!!', '', $tva_form);
 		$tva_form = str_replace('!!taux_tva!!', '', $tva_form);
 		$tva_form = str_replace('!!cp_compta!!', '', $tva_form);
@@ -63,7 +63,7 @@ function show_tva_form($id=0) {
 	} else {
 		
 		$tva = new tva_achats($id);
-		$tva_form = str_replace('!!form_title!!', htmlentities($msg[acquisition_modif_tva],ENT_QUOTES, $charset), $tva_form);
+		$tva_form = str_replace('!!form_title!!', htmlentities($msg['acquisition_modif_tva'],ENT_QUOTES, $charset), $tva_form);
 		$tva_form = str_replace('!!libelle!!', htmlentities($tva->libelle, ENT_QUOTES, $charset), $tva_form);
 		$tva_form = str_replace('!!taux_tva!!', $tva->taux_tva, $tva_form);
 		$tva_form = str_replace('!!cp_compta!!', $tva->num_cp_compta, $tva_form);
@@ -94,7 +94,7 @@ $tva_form = "
 	</div>
 
 	<div class='row'>
-		<label class='etiquette' for='taux_tva'>".htmlentities($msg[acquisition_tva_taux],ENT_QUOTES,$charset)."</label>
+		<label class='etiquette' for='taux_tva'>".htmlentities($msg['acquisition_tva_taux'],ENT_QUOTES,$charset)."</label>
 	</div>
 	<div class='row'>
 		<input type='text' id='taux_tva' name='taux_tva' value=\"!!taux_tva!!\" class='saisie-10em' />&nbsp;
@@ -102,7 +102,7 @@ $tva_form = "
 	</div>
 
 	<div class='row'>
-		<label class='etiquette' for='cp_compta'>".htmlentities($msg[acquisition_num_cp_compta],ENT_QUOTES,$charset)."</label>
+		<label class='etiquette' for='cp_compta'>".htmlentities($msg['acquisition_num_cp_compta'],ENT_QUOTES,$charset)."</label>
 	</div>
 	<div class='row'>
 		<input type='text' id='cp_compta' name='cp_compta' value=\"!!cp_compta!!\" class='saisie-20em' />
@@ -130,7 +130,7 @@ $tva_form = "
 
 ";
 
-$ptab = "<input class='bouton' type='button' value=' ".$msg[supprimer]." ' onClick=\"javascript:confirmation_delete('!!id!!', '!!libelle_suppr!!')\" />";
+$ptab = "<input class='bouton' type='button' value=' ".$msg['supprimer']." ' onClick=\"javascript:confirmation_delete('!!id!!', '!!libelle_suppr!!')\" />";
 
 ?>
 
@@ -200,9 +200,9 @@ switch($action) {
 				tva_achats::delete($id);
 				show_list_tva();
 			} else {
-				$msg_suppr_err = $msg[acquisition_tva_used] ;
-				if ($total1) $msg_suppr_err .= "<br />- ".$msg[acquisition_tva_used_type] ;
-				if ($total2) $msg_suppr_err .= "<br />- ".$msg[acquisition_tva_used_frais] ;
+				$msg_suppr_err = $msg['acquisition_tva_used'] ;
+				if ($total1) $msg_suppr_err .= "<br />- ".$msg['acquisition_tva_used_type'] ;
+				if ($total2) $msg_suppr_err .= "<br />- ".$msg['acquisition_tva_used_frais'] ;
 
 				error_message($msg[321], $msg_suppr_err, 1, 'admin.php?categ=acquisition&sub=tva');
 			}

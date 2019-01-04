@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.16 2014-03-07 11:12:31 dgoron Exp $
+// $Id: main.inc.php,v 1.17 2017-01-26 15:36:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($id_thes)) $id_thes = 0;
+if(!isset($no_rec_history)) $no_rec_history = '';
 
 // page de switch recherche sujets
 require_once($class_path."/searcher.class.php");

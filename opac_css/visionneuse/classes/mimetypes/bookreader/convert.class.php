@@ -3,23 +3,23 @@
 require_once("classes/fpdf.class.php");
 
 class convert extends fpdf{
-	var $logoUrl;	//url du logo déposé sur chaque page...
-	var $header;	//header de page...
-	var $footers;	//pied de page du document...
-	var $resolution;
+	public $logoUrl;	//url du logo déposé sur chaque page...
+	public $header;	//header de page...
+	public $footers;	//pied de page du document...
+	public $resolution;
 	
-	var $outlines=array();
-	var $OutlineRoot;
+	public $outlines=array();
+	public $OutlineRoot;
 	
 	
-	function convert($params=array()){
-		parent::FPDF();
+	public function __construct($params=array()){
+		parent::__construct();
 		$this->footers = $params['footers'];
 		$this->setCreator(utf8_decode($params['creator']));
 		$this->SetTextColor(0);	
 	}
 
-	function getSize($dimension,$resolution){
+	public function getSize($dimension,$resolution){
 		$this->resolution = $resolution;
 		$dimension = explode(",",$dimension);
 		$resolution = explode(",",$resolution);
@@ -31,11 +31,11 @@ class convert extends fpdf{
 		return $size;
 	}
 	
-	function convertPxToMm($px,$dpi=0){
+	public function convertPxToMm($px,$dpi=0){
 		return ($px*25.4)/($dpi ? $dpi : $this->resolution);
 	}
 		
-	function Footer(){
+	public function Footer(){
 		if ($this->logoUrl !="") $this->Image($this->logoUrl,10,8,20);
 		if ($this->header) {
 			$this->SetFont('Arial',"",14);
@@ -65,7 +65,7 @@ class convert extends fpdf{
 		}
 	}
 	
-	function Error($msg){
+	public function Error($msg){
 		//erreur sur la classe FDPF, on la log avant d'arreter la génération...
 		logMsg($msg);	
 		//Fatal error
@@ -78,7 +78,7 @@ class convert extends fpdf{
 	 *  Modifié par Arnaud RENOU (prise en compte d'un numéro de page        *
 	 *************************************************************************/
 	
-	function Bookmark($txt, $page=-1, $level=0, $y=0)	{
+	public function Bookmark($txt, $page=-1, $level=0, $y=0)	{
 		if($y==-1)
 			$y=$this->GetY();
 		if($page == -1){
@@ -86,11 +86,11 @@ class convert extends fpdf{
 		}
 		$this->outlines[]=array('t'=>$txt, 'l'=>$level, 'y'=>($this->h-$y)*$this->k, 'p'=>$page);
 	}
-	function BookmarkUTF8($txt,$page=-1, $level=0, $y=0){
+	public function BookmarkUTF8($txt,$page=-1, $level=0, $y=0){
 		$this->Bookmark($this->_UTF8toUTF16($txt),$page, $level,$y);
 	}
 	
-	function _putbookmarks(){
+	public function _putbookmarks(){
 		$nb=count($this->outlines);
 		if($nb==0)
 			return;
@@ -149,12 +149,12 @@ class convert extends fpdf{
 		$this->_out('endobj');
 	}
 	
-	function _putresources(){
+	public function _putresources(){
 		parent::_putresources();
 		$this->_putbookmarks();
 	}
 	
-	function _putcatalog(){
+	public function _putcatalog(){
 		parent::_putcatalog();
 		if(count($this->outlines)>0)
 		{

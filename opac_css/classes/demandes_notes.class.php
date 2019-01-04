@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes_notes.class.php,v 1.12.4.1 2015-09-24 15:48:16 dgoron Exp $
+// $Id: demandes_notes.class.php,v 1.15 2017-02-20 19:04:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,44 +12,39 @@ require_once("$include_path/templates/demandes_notes.tpl.php");
 
 class demandes_notes {
 	
-	var $id_note = 0;
-	var $date_note = '0000-00-00';
-	var $contenu = '';
-	var $prive = 0;
-	var $rapport = 0;
-	var $num_note_parent = 0;
-	var $num_action = 0;
-	var $num_demande = 0;
-	var $libelle_action = '';
-	var $libelle_demande = '';
-	var $notes_num_user = 0;
-	var $notes_type_user = 0;
-	var $createur_note = '';
-	var $notes_read_gestion = 0; // flag gestion sur la lecture de la note par l'utilisateur
-	var $notes_read_opac = 0; // flag opac sur la lecture de la note par le lecteur
+	public $id_note = 0;
+	public $date_note = '0000-00-00';
+	public $contenu = '';
+	public $prive = 0;
+	public $rapport = 0;
+	public $num_note_parent = 0;
+	public $num_action = 0;
+	public $num_demande = 0;
+	public $libelle_action = '';
+	public $libelle_demande = '';
+	public $notes_num_user = 0;
+	public $notes_type_user = 0;
+	public $createur_note = '';
+	public $notes_read_gestion = 0; // flag gestion sur la lecture de la note par l'utilisateur
+	public $notes_read_opac = 0; // flag opac sur la lecture de la note par le lecteur
 	
-	function demandes_notes($id_note=0,$id_action=0){
-		global $dbh;
-		
-		$this->fetch_data($id_note,$id_action);
+	public function __construct($id_note=0,$id_action=0){
+		$this->id_note = $id_note+0;
+		$this->num_action = $id_action+0;
+		$this->fetch_data();
 	}
 	
-	function fetch_data($id_note=0,$id_action=0){
-		
-		global $dbh;
-		
-		if($this->id_note && !$id_note){
-			$id_note=$this->id_note;
-		}elseif(!$this->id_note && $id_note){
-			$this->id_note=$id_note;
-		}
-		
-		if($this->num_action && !$id_action){
-			$id_action=$this->num_action;
-		}elseif(!$this->num_action && $id_action){
-			$this->num_action=$id_action;
-		}
-		
+	public function fetch_data(){
+		$this->date_note = '0000-00-00 00:00:00';
+		$this->contenu = '';
+		$this->rapport = 0;
+		$this->prive = 0;
+		$this->num_note_parent = 0;
+		$this->num_action = 0;
+		$this->notes_num_user = 0;
+		$this->notes_type_user = 0;
+		$this->notes_read_gestion = 0;
+		$this->notes_read_opac = 0;
 		if($this->id_note){
 			$req = "select id_note, prive, rapport,contenu,date_note, sujet_action, id_demande, titre_demande, notes_num_user, notes_type_user, 
 					num_action, num_note_parent, notes_read_gestion, notes_read_opac  
@@ -57,7 +52,7 @@ class demandes_notes {
 			join demandes_actions on num_action=id_action
 			join demandes on num_demande=id_demande
 			where id_note='".$this->id_note."'";
-			$res = pmb_mysql_query($req,$dbh);
+			$res = pmb_mysql_query($req);
 			if(pmb_mysql_num_rows($res)){
 				$obj = pmb_mysql_fetch_object($res);
 				$this->date_note = $obj->date_note;
@@ -73,28 +68,7 @@ class demandes_notes {
 				$this->notes_type_user = $obj->notes_type_user;
 				$this->notes_read_gestion = $obj->notes_read_gestion;
 				$this->notes_read_opac = $obj->notes_read_opac;
-			} else {
-				$this->date_note = '0000-00-00 00:00:00';
-				$this->contenu = '';
-				$this->rapport = 0;
-				$this->prive = 0;
-				$this->num_note_parent = 0;
-				$this->num_action = 0;
-				$this->notes_num_user = 0;
-				$this->notes_type_user = 0;
-				$this->notes_read_gestion = 0;
-				$this->notes_read_opac = 0;
 			}
-		} else {
-			$this->date_note = '0000-00-00 00:00:00';
-			$this->contenu = '';
-			$this->rapport = 0;
-			$this->prive = 0;
-			$this->num_note_parent = 0;
-			$this->notes_num_user = 0;
-			$this->notes_type_user = 0;
-			$this->notes_read_gestion = 0;
-			$this->notes_read_opac = 0;
 		}
 		
 		if($this->num_action){
@@ -117,7 +91,7 @@ class demandes_notes {
 	/*
 	 * Formulaire d'ajout/modification
 	 */
-	function show_modif_form($reply=false){
+	public function show_modif_form($reply=false){
 		global $form_modif_note, $msg, $charset, $demandes_include_note;
 		
 		$act_cancel = "document.location='./demandes.php?categ=action&act=see&idaction=$this->num_action#fin'";
@@ -193,7 +167,7 @@ class demandes_notes {
 		print $form_modif_note;
 	}
 	
-	static function get_values_from_form(&$note){
+	public static function get_values_from_form(&$note){
 		global $contenu_note, $idaction,$idnote ,$iddemande , $iduser,$id_empr,$typeuser;
 		global $date_note, $ck_rapport, $ck_prive, $ck_vue,$id_note_parent, $PMBuserid;
 		
@@ -232,7 +206,7 @@ class demandes_notes {
 	/*
 	 * Création/Modification d'une note
 	 */
-	static function save(&$note){
+	public static function save(&$note){
 	
 		global $dbh; 
 		global $demandes_email_demandes, $pmb_type_audit;
@@ -285,7 +259,7 @@ class demandes_notes {
 	/*
 	 * Suppression d'une note
 	 */
-	static function delete($note){
+	public static function delete($note){
 		global $dbh;
 		if($note->id_note){
 			$req = "delete from demandes_notes where id_note='".$note->id_note."'";
@@ -296,7 +270,7 @@ class demandes_notes {
 		}
 	}
 	
-	static function show_dialog($notes,$num_action,$num_demande,$redirect_to='demandes_actions-show_consultation_form'){
+	public static function show_dialog($notes,$num_action,$num_demande,$redirect_to='demandes_actions-show_consultation_form'){
 		global $form_dialog_note, $dbh, $msg, $charset,$id_empr;
 		
 		$form_dialog_note = str_replace('!!redirectto!!',$redirect_to,$form_dialog_note);
@@ -352,7 +326,7 @@ class demandes_notes {
 	 * Inutile depuis la refonte
 	 * Affichage de la liste des notes associées à une action
 	 */
-	function show_list_notes($idaction=0){
+	public function show_list_notes($idaction=0){
 		
 		global $form_table_note, $dbh, $msg, $charset;
 		
@@ -367,13 +341,13 @@ class demandes_notes {
 				$contenu = "
 					<div class='row'>
 						<div class='left'>
-							<input type='image' src='./images/email_go.png' alt='".htmlentities($msg['demandes_note_reply_icon'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['demandes_note_reply_icon'],ENT_QUOTES,$charset)."' 
+							<input type='image' src='".get_url_icon('email_go.png')."' alt='".htmlentities($msg['demandes_note_reply_icon'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['demandes_note_reply_icon'],ENT_QUOTES,$charset)."' 
 								onclick='document.forms[\"modif_notes\"].act.value=\"reponse\";document.forms[\"modif_notes\"].idnote.value=\"$note->id_note\";' />
-							<input type='image' src='./images/b_edit.png' alt='".htmlentities($msg['demandes_note_modif_icon'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['demandes_note_modif_icon'],ENT_QUOTES,$charset)."' 
+							<input type='image' src='".get_url_icon('b_edit.png')."' alt='".htmlentities($msg['demandes_note_modif_icon'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['demandes_note_modif_icon'],ENT_QUOTES,$charset)."' 
 								onclick='document.forms[\"modif_notes\"].act.value=\"modif_note\";document.forms[\"modif_notes\"].idnote.value=\"$note->id_note\";' />
-							<input type='image' src='./images/cross.png' alt='".htmlentities($msg['demandes_note_suppression'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['demandes_note_suppression'],ENT_QUOTES,$charset)."' 
+							<input type='image' src='".get_url_icon('cross.png')."' alt='".htmlentities($msg['demandes_note_suppression'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['demandes_note_suppression'],ENT_QUOTES,$charset)."' 
 								onclick='document.forms[\"modif_notes\"].act.value=\"suppr_note\";document.forms[\"modif_notes\"].idnote.value=\"$note->id_note\";' />
-					</div>
+						</div>
 					</div>
 					<div class='row'>
 						<label class='etiquette'>".$msg['demandes_note_privacy']." : </label>&nbsp;
@@ -407,7 +381,7 @@ class demandes_notes {
 	 * Inutile depuis la refonte
 	 * Affichage des notes enfants
 	 */
-	function getChilds($id_note){
+	public function getChilds($id_note){
 		global $dbh, $charset, $msg;
 		
 		$req = "select id_note, CONCAT(SUBSTRING(contenu,1,50),'','...') as titre, contenu, date_note, prive, rapport, notes_num_user,notes_type_user 
@@ -420,13 +394,13 @@ class demandes_notes {
 				$contenu = "
 					<div class='row'>
 						<div class='left'>
-							<input type='image' src='./images/email_go.png' alt='".htmlentities($msg['demandes_note_reply_icon'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['demandes_note_reply_icon'],ENT_QUOTES,$charset)."' 
+							<input type='image' src='".get_url_icon('email_go.png')."' alt='".htmlentities($msg['demandes_note_reply_icon'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['demandes_note_reply_icon'],ENT_QUOTES,$charset)."' 
 										onclick='document.forms[\"modif_notes\"].act.value=\"reponse\";document.forms[\"modif_notes\"].idnote.value=\"$fille->id_note\";' />
-							<input type='image' src='./images/b_edit.png' alt='".htmlentities($msg['demandes_note_modif_icon'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['demandes_note_modif_icon'],ENT_QUOTES,$charset)."' 
+							<input type='image' src='".get_url_icon('b_edit.png')."' alt='".htmlentities($msg['demandes_note_modif_icon'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['demandes_note_modif_icon'],ENT_QUOTES,$charset)."' 
 										onclick='document.forms[\"modif_notes\"].act.value=\"modif_note\";document.forms[\"modif_notes\"].idnote.value=\"$fille->id_note\";' />
-							<input type='image' src='./images/cross.png' alt='".htmlentities($msg['demandes_note_suppression'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['demandes_note_suppression'],ENT_QUOTES,$charset)."' 
+							<input type='image' src='".get_url_icon('cross.png')."' alt='".htmlentities($msg['demandes_note_suppression'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['demandes_note_suppression'],ENT_QUOTES,$charset)."' 
 										onclick='document.forms[\"modif_notes\"].act.value=\"suppr_note\";document.forms[\"modif_notes\"].idnote.value=\"$fille->id_note\";' />
-					</div>
+						</div>
 					</div>
 					<div class='row'>
 						<label class='etiquette'>".$msg['demandes_note_privacy']." : </label>&nbsp;
@@ -455,7 +429,7 @@ class demandes_notes {
 	/*
 	 * Alerte par mail
 	 */	
-	function send_alert_by_mail($idsender,$note){
+	public function send_alert_by_mail($idsender,$note){
 		
 		global $msg, $empr_nom, $empr_prenom, $empr_mail, $dbh,$opac_url_base,$pmb_url_base,$demandes_email_generic;
 		
@@ -494,7 +468,7 @@ class demandes_notes {
 	/*
 	 * Retourne le nom de celui qui a créé l'action
 	 */
-	function getCreateur($id_createur,$type_createur=0){
+	public function getCreateur($id_createur,$type_createur=0){
 		global $dbh;
 		
 		if(!$type_createur)
@@ -514,12 +488,14 @@ class demandes_notes {
 	/*
 	 * Met à jour les alertes sur l'action et la demande en gestion dont dépend la note
 	*/
-	static function note_majParent($id_note,$id_action,$id_demande,$side="_opac"){
+	public static function note_majParent($id_note,$id_action,$id_demande,$side="_opac"){
 		global $dbh;
-	
+		
+		$id_note += 0;
+		$id_action += 0;
+		$id_demande += 0;
 		$ok = false;
 		if($id_note){
-				
 			$select = "SELECT notes_read".$side." FROM demandes_notes WHERE id_note=".$id_note;
 			$result  = pmb_mysql_query($select,$dbh);
 			$read = pmb_mysql_result($result,0,0);
@@ -557,9 +533,8 @@ class demandes_notes {
 	/*
 	 * Met à jour les alertes sur l'action et la demande dont dépend la note
 	*/
-	static function note_read($id_note,$booleen=true,$side="_opac"){
-		global $dbh;
-		
+	public static function note_read($id_note,$booleen=true,$side="_opac"){
+		$id_note += 0;
 		$value = "";
 		if($booleen){
 			$value = 0;
@@ -567,7 +542,7 @@ class demandes_notes {
 			$value = 1;
 		}
 		$query = "UPDATE demandes_notes SET notes_read".$side."=".$value." WHERE id_note=".$id_note;
-		pmb_mysql_query($query,$dbh);		
+		pmb_mysql_query($query);
 	}
 }
 ?>

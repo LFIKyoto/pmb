@@ -538,7 +538,7 @@
         <field name="transfert_statut_origine" id="345-368" desc="Statut d'origine d'un exemplaire avant transfert" type="SMALLINT" length="5" precision="" unsigned="1" autoincrement="" enum="" defval="'0'"/>
         <field name="expl_comment" id="345-369" desc="Commentaire non bloquant" type="TEXT" length="" precision="" unsigned="" autoincrement="" enum="" defval=""/>
         <field name="expl_nbparts" id="345-370" desc="Nombre de partie sur un exemplaire RFID" type="INTEGER" length="8" precision="" unsigned="1" autoincrement="" enum="" defval="'1'"/>
-        <field name="expl_retloc" id="345-371" desc="Exemplaire à problème dans la localisation qui fait le retour" type="SMALLINT" length="5" precision="" unsigned="1" autoincrement="" enum="" defval="'0'"/>
+        <field name="expl_retloc" id="345-371" desc="Identifiant de la localisation où le document est présent physiquement, et a un traitement non effectué" type="SMALLINT" length="5" precision="" unsigned="1" autoincrement="" enum="" defval="'0'"/>
         <field name="expl_abt_num" id="345-375" desc="Identifiant de l'abonnement d'où provient l'exemplaire" type="INTEGER" length="10" precision="" unsigned="1" autoincrement="" enum="" defval="'0'"/>
         <field name="transfert_section_origine" id="345-376" desc="Identifiant de la section d'origine" type="SMALLINT" length="5" precision="" unsigned="" autoincrement="" enum="" defval="'0'"/>
       </fields>

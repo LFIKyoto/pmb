@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: receptions_frame.tpl.php,v 1.9 2014-09-18 16:01:16 dgoron Exp $
+// $Id: receptions_frame.tpl.php,v 1.12 2017-11-22 11:07:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -60,8 +60,8 @@ $recept_deliv_form = "
 							<table>
 								<tr>
 									<td width='20%' >".htmlentities($msg['acquisition_comment_lg'],ENT_QUOTES,$charset)."
-										<img style='padding-left:5px;cursor:pointer;width:10px;vertical-align:middle;' src='./../../../images/b_edit.png' onclick=\"recept_mod_comment('comment_lg_!!id_lig!!');\" >
-										<img style='padding-left:5px;cursor:pointer;width:10px;vertical-align:middle;' src='./../../../images/cross.png' onclick=\"recept_del_comment('comment_lg_!!id_lig!!');\">
+										<img style='padding-left:5px;cursor:pointer;width:10px;vertical-align:middle;' src='".get_url_icon('b_edit.png')."' onclick=\"recept_mod_comment('comment_lg_!!id_lig!!');\" >
+										<img style='padding-left:5px;cursor:pointer;width:10px;vertical-align:middle;' src='".get_url_icon('cross.png')."' onclick=\"recept_del_comment('comment_lg_!!id_lig!!');\">
 									</td>
 									<td width='30%'>
 										<div id='comment_lg_!!id_lig!!'>!!comment_lg!!</div>
@@ -72,8 +72,8 @@ $recept_deliv_form = "
 										</div>
 									</td>
 									<td width='20%'>".htmlentities($msg['acquisition_comment_lo'],ENT_QUOTES,$charset)."
-										<img style='padding-left:5px;cursor:pointer;width:10px;vertical-align:middle;' src='./../../../images/b_edit.png' onclick=\"recept_mod_comment('comment_lo_!!id_lig!!');\" >
-										<img style='padding-left:5px;cursor:pointer;width:10px;vertical-align:middle;' src='./../../../images/cross.png' onclick=\"recept_del_comment('comment_lo_!!id_lig!!');\">
+										<img style='padding-left:5px;cursor:pointer;width:10px;vertical-align:middle;' src='".get_url_icon('b_edit.png')."' onclick=\"recept_mod_comment('comment_lo_!!id_lig!!');\" >
+										<img style='padding-left:5px;cursor:pointer;width:10px;vertical-align:middle;' src='".get_url_icon('cross.png')."' onclick=\"recept_del_comment('comment_lo_!!id_lig!!');\">
 									</td>
 									<td width='30%'>
 										<div id='comment_lo_!!id_lig!!'>!!comment_lo!!</div>
@@ -84,6 +84,7 @@ $recept_deliv_form = "
 										</div>
 									</td>
 								</tr>
+								!!applicants_tr!!
 							</table>
 						</td>
 					</tr>
@@ -107,6 +108,13 @@ $recept_deliv_form_bull ="
 		<hr />!!bulletin!!
 ";
 
+$applicants_tpl = "<tr>
+					<td colspan='2'>".htmlentities($msg['acquisition_applicants'],ENT_QUOTES,$charset)."</td>
+					<td colspan='2'>
+						!!std_applicants!!
+					</td>
+				   </tr>";		
+
 		
 if ($pmb_rfid_activate==1 && $pmb_rfid_serveur_url ) {
 
@@ -120,78 +128,19 @@ if ($pmb_rfid_activate==1 && $pmb_rfid_serveur_url ) {
 			flag_program_rfid_ask=0;
 			setTimeout(\"init_rfid_read_cb(0,f_expl);\",0);;
 			nb_part_readed=0;
-			function f_expl(cb) {
-				nb_part_readed=cb.length;
-				if(flag_program_rfid_ask==1) {
-					program_rfid();
-					flag_cb_rfid=0; 
-					return;
-				}
-				if(cb.length==0) {
-					flag_cb_rfid=1;
-					return;
-				} 
-				if(!cb[0]) {
-					flag_cb_rfid=0; 
-					return;
-				}
-				if(document.getElementById('f_ex_cb').value	== cb[0]) flag_cb_rfid=1;
-				else  flag_cb_rfid=0;
-				if(document.getElementById('f_ex_cb').value	== '') {	
-					flag_cb_rfid=0;				
-					document.getElementById('f_ex_cb').value=cb[0];
-				}
-			}
-
-			function script_rfid_encode() {
-				if(!flag_cb_rfid && flag_rfid_active) {
-				    var confirmed = confirm(\"".addslashes($msg['rfid_programmation_confirmation'])."\");
-				    if (confirmed) {
-						return false;
-				    } 
-				}
-			}
 			
-			function program_rfid_ask() {
-				if (flag_semaphore_rfid_read==1) {
-					flag_program_rfid_ask=1;
-				} else {
-					program_rfid();
-				}
-			}
+			var msg_rfid_programmation_confirmation = '".addslashes($msg['rfid_programmation_confirmation'])."';
+			var msg_rfid_etiquette_programmee_message = '".addslashes($msg['rfid_etiquette_programmee_message'])."';
 
 			function program_rfid() {
 				flag_semaphore_rfid=1;
 				flag_program_rfid_ask=0; 
 				var nbparts=1; 
-				//var nbparts = document.getElementById('f_ex_nbparts').value;	
-				//if(nb_part_readed!= nbparts) {
-				//	flag_semaphore_rfid=0;
-				//	alert(\"".addslashes($msg['rfid_programmation_nbpart_error'])."\");
-				//	return;
-				//}
+				
 				$script_erase
 			}
-			
-			function rfid_ack_erase(ack) {
-				var cb = document.getElementById('f_ex_cb').value;
-				var nbparts=1; 
-				//var nbparts = document.getElementById('f_ex_nbparts').value;	
-				if(!nbparts)nbparts=1;
-				init_rfid_write_etiquette(cb,nbparts,rfid_ack_write);
-				
-			}
-
-			function rfid_ack_write(ack) {				
-				init_rfid_antivol_all(1,rfid_ack_antivol_actif);				
-			}
-			
-			function rfid_ack_antivol_actif(ack) {
-				alert (\"".addslashes($msg['rfid_etiquette_programmee_message'])."\");
-				flag_semaphore_rfid=0;
-			}			
-
 		</script>
+		<script type='text/javascript' src='".$base_path."/javascript/rfid.js'></script>
 ";
 	$rfid_program_button="<input  type=button class='bouton' value=' ". $msg['rfid_configure_etiquette_button']." ' onClick=\"program_rfid_ask();\" />";	
 }else {	

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms.tpl.php,v 1.5 2013-07-04 12:55:50 arenou Exp $
+// $Id: cms.tpl.php,v 1.6 2017-03-30 14:48:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
@@ -21,6 +21,12 @@ $cms_build_menu_tpl = "
 
 $cms_pages_menu_tpl = "
 	<h1>".$msg["cms_menu_pages"]." <span>!!menu_sous_rub!!</span></h1>
+	<div class='hmenu'>
+	</div>
+";
+
+$cms_frbr_pages_menu_tpl = "
+	<h1>".$msg["frbr_pages_menu"]." <span>!!menu_sous_rub!!</span></h1>
 	<div class='hmenu'>
 	</div>
 ";

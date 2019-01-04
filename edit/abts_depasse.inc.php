@@ -2,11 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: abts_depasse.inc.php,v 1.3 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: abts_depasse.inc.php,v 1.4 2018-01-29 14:52:30 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // Impression PDF des abonnements dont la date est dépassée
+
+require_once($class_path."/abts_status.class.php");
 
 function bulletinage_abt($fiche, $x, $y, $link, $short=0, $longmax=99999) {
 	global $ourPDF;
@@ -57,10 +59,16 @@ $nb_par_page = 41;
 $nb_1ere_page = 39;
 $taille_bloc = 5;
 
+$abts_status_where = '';
+$abts_status_ids = abts_status::get_ids_bulletinage_active();
+if(count($abts_status_ids)) {
+	$abts_status_where = " and abt_status in(".implode(',', $abts_status_ids).") ";
+}
+
 $requete = "SELECT abt_id,abt_name,tit1,num_notice, date_fin
 			FROM abts_abts,notices
 			WHERE date_fin < CURDATE()
-			and notice_id= num_notice";
+			and notice_id= num_notice ".$abts_status_where;
 if ($location_view) $requete .= " and location_id='$location_view'";
 $requete .= " ORDER BY date_fin,abt_name";		
 $resultat = pmb_mysql_query($requete);

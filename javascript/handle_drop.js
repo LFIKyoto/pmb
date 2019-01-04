@@ -1,7 +1,7 @@
 /* +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: handle_drop.js,v 1.6 2013-04-12 09:25:31 mbertin Exp $ */
+// $Id: handle_drop.js,v 1.9 2017-10-04 14:52:33 jpermanne Exp $ */
 
 requete=new Array();
 
@@ -103,7 +103,7 @@ function hide_carts(t,e,r) {
 
 function notice_caddie(dragged,target) {
 	// alert(dragged.getAttribute("id"));
-	var url= "./ajax.php?module=catalog&categ=caddie_add&caddie="+target.getAttribute("id")+"&object="+dragged.getAttribute("id");
+	var url= "./ajax.php?module=catalog&categ=caddie&caddie="+target.getAttribute("id")+"&object="+dragged.getAttribute("id");
 	var ajout_caddie = new http_request();	
 	retour_ajout = ajout_caddie.request(url);
 	message_ajout=ajout_caddie.get_text();
@@ -138,13 +138,13 @@ function affichage_clignotant(objet,cpt){
 
 /**********************************
  *								  *				
- *      Tri des notices filles    *
+ *      Tri des notices liées     *
  *                                * 
  **********************************/
 /*
  * Fonction pour trier les filles
  */
-function daughter_daughter(dragged,target){
+function link_link(dragged,target){
 	
 	var pere_id = dragged.getAttribute("pere");
 	var pere_cible_id = target.getAttribute("pere");
@@ -168,31 +168,50 @@ function daughter_daughter(dragged,target){
 	update_order(dragged,target);
 }
 
+function parents_parents(dragged,target) {
+	link_link(dragged,target);
+}
+
+function pairs_pairs(dragged,target) {
+	link_link(dragged,target);
+}
+
+function childs_childs(dragged,target) {
+	link_link(dragged,target);
+}
 
 /*
  * Mis à jour de l'ordre
  */
 function update_order(source,cible){
-	var src_order =  source.getAttribute("order");
-	var target_order = cible.getAttribute("order");
-	var pere = source.parentNode;
-	
+	var pere = source.parentNode.parentNode;
 	
 	var index = 0;
-	var tab_fille = new Array();
+	var notices_relations_ids = new Array();
 	for(var i=0;i<pere.childNodes.length;i++){
 		if(pere.childNodes[i].nodeType == 1){
 			pere.childNodes[i].setAttribute("order",index);
-			if(pere.childNodes[i].getAttribute("fille")){
-				tab_fille[index] = pere.childNodes[i].getAttribute("fille");
+			if(pere.childNodes[i].getAttribute("notice_relation_id")){
+				notices_relations_ids[index] = pere.childNodes[i].getAttribute("notice_relation_id");
 			}
 			index++;
+		}
+		if (pere.childNodes[i].childNodes.length) {
+			for(var j=0;j<pere.childNodes[i].childNodes.length;j++){
+				if(pere.childNodes[i].childNodes[j].nodeType == 1){
+					pere.childNodes[i].childNodes[j].setAttribute("order",index);
+					if(pere.childNodes[i].childNodes[j].getAttribute("notice_relation_id")){
+						notices_relations_ids[index] = pere.childNodes[i].childNodes[j].getAttribute("notice_relation_id");
+					}
+					index++;
+				}
+			}
 		}
 	}
 	
 	var url= "./ajax.php?module=ajax&categ=tri&quoifaire=up_order";
 	var action = new http_request();
-	action.request(url,true,"idpere="+source.getAttribute("pere")+"&type_rel="+source.getAttribute("type_rel")+"&tablo_fille="+tab_fille.join(","));
+	action.request(url,true,"notices_relations_ids="+notices_relations_ids.join(","));
 }
 
 

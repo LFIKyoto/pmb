@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rubriques.class.php,v 1.24 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: rubriques.class.php,v 1.27 2017-07-10 12:17:03 dgoron Exp $
 
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
@@ -12,34 +12,28 @@ require_once("$base_path/acquisition/achats/func_achats.inc.php");
 
 class rubriques{
 	
-	
-	var $id_rubrique = 0;						//Identifiant de rubrique	
-	var $num_budget = 0;						//Identifiant du budget auquel appartient la rubrique
-	var $num_parent = 0;						//Identifiant de la rubrique parent (0 si rubrique de tête)
-	var $libelle = '';							//Libellé de rubrique
-	var $commentaires = '';						//Commentaires sur la rubrique
-	var $montant = '000000.00';					//Montant affecté à la rubrique
-	var $num_cp_compta = '';					//Numéro de compte comptable pour affectation
-	var $autorisations = '';					//Autorisations d'accès à la rubrique
+	public $id_rubrique = 0;						//Identifiant de rubrique	
+	public $num_budget = 0;						//Identifiant du budget auquel appartient la rubrique
+	public $num_parent = 0;						//Identifiant de la rubrique parent (0 si rubrique de tête)
+	public $libelle = '';							//Libellé de rubrique
+	public $commentaires = '';						//Commentaires sur la rubrique
+	public $montant = '000000.00';					//Montant affecté à la rubrique
+	public $num_cp_compta = '';					//Numéro de compte comptable pour affectation
+	public $autorisations = '';					//Autorisations d'accès à la rubrique
 
 	 
 	//Constructeur.	 
-	function rubriques($id_rubrique= 0) {
-		
-		if ($id_rubrique) {
-			$this->id_rubrique = $id_rubrique;
+	public function __construct($id_rubrique= 0) {
+		$this->id_rubrique = $id_rubrique+0;
+		if ($this->id_rubrique) {
 			$this->load();	
 		}
 	}
-
 	
 	// charge une rubrique à partir de la base.
-	function load(){
-	
-		global $dbh;
-		
+	public function load(){
 		$q = "select * from rubriques where id_rubrique = '".$this->id_rubrique."' ";
-		$r = pmb_mysql_query($q, $dbh) ;
+		$r = pmb_mysql_query($q) ;
 		$obj = pmb_mysql_fetch_object($r);
 		$this->num_budget = $obj->num_budget;
 		$this->num_parent = $obj->num_parent;
@@ -48,15 +42,10 @@ class rubriques{
 		$this->montant = $obj->montant;
 		$this->num_cp_compta = $obj->num_cp_compta;
 		$this->autorisations = $obj->autorisations;
-
 	}
-
 	
 	// enregistre une rubrique en base.
-	function save(){
-		
-		global $dbh;
-		
+	public function save(){
 		if ($this->libelle == '' || !$this->num_budget) die("Erreur de création rubriques");
 	
 		if ($this->id_rubrique) {
@@ -64,38 +53,30 @@ class rubriques{
 			$q = "update rubriques set num_budget = '".$this->num_budget."', num_parent = '".$this->num_parent."', libelle = '".$this->libelle."', ";
 			$q.= "commentaires = '".$this->commentaires."', montant = '".$this->montant."', num_cp_compta = '".$this->num_cp_compta."', autorisations = '".$this->autorisations."' ";
 			$q.= "where id_rubrique = '".$this->id_rubrique."' ";
-			$r = pmb_mysql_query($q, $dbh);
+			$r = pmb_mysql_query($q);
 			
 		} else {
 			
 			$q = "insert into rubriques set num_budget = '".$this->num_budget."', num_parent = '".$this->num_parent."', libelle = '".$this->libelle."', ";
 			$q.= "commentaires = '".$this->commentaires."', montant = '".$this->montant."', num_cp_compta = '".$this->num_cp_compta."', autorisations = '".$this->autorisations."' ";
-			$r = pmb_mysql_query($q, $dbh);
-			$this->id_rubrique = pmb_mysql_insert_id($dbh);
+			$r = pmb_mysql_query($q);
+			$this->id_rubrique = pmb_mysql_insert_id();
 			
 		}
 
 	}
 
-
 	//supprime un rubrique de la base
-	static function delete($id_rubrique= 0) {
-		
-		global $dbh;
-
+	public static function delete($id_rubrique= 0) {
 		if(!$id_rubrique) return; 	
 
 		$q = "delete from rubriques where id_rubrique = '".$id_rubrique."' ";
-		$r = pmb_mysql_query($q, $dbh);
-				
+		$r = pmb_mysql_query($q);
 	}
-
 	
 	//calcule le montant engagé pour une rubrique budgétaire
-	static function calcEngagement($id_rubrique= 0) {
-		
-		global $dbh;	
-
+	public static function calcEngagement($id_rubrique= 0) {
+		$id_rubrique += 0;
 		//	Montant Total engagé pour une rubrique =
 		//	Somme des Montants engagés non facturés pour une rubrique par ligne de commande		(nb_commandé-nb_facturé)*prix_commande*(1-remise_commande)
 		//+ Somme des Montants engagés pour une rubrique par ligne de facture					(nb_facturé)*prix_facture*(1-remise_facture)
@@ -105,10 +86,10 @@ class rubriques{
 		$q1.= "from actes, lignes_actes ";
 		$q1.= "where ";
 		$q1.= "lignes_actes.num_rubrique = '".$id_rubrique."' ";
-		$q1.= "and actes.type_acte = '".TYP_ACT_CDE."' ";
+		$q1.= "and (actes.type_acte = '".TYP_ACT_CDE."' or actes.type_acte = '".TYP_ACT_RENT_ACC."') ";
 		$q1.= "and actes.statut > '".STA_ACT_AVA."' and ( (actes.statut & ".STA_ACT_FAC.") != ".STA_ACT_FAC.") ";
 		$q1.= "and actes.id_acte = lignes_actes.num_acte ";
-		$r1 = pmb_mysql_query($q1, $dbh);
+		$r1 = pmb_mysql_query($q1);
 
 		$tab_cde = array();
 		while($row1 = pmb_mysql_fetch_object($r1)) {
@@ -125,10 +106,10 @@ class rubriques{
 		$q2.= "from actes, lignes_actes ";
 		$q2.= "where ";
 		$q2.= "lignes_actes.num_rubrique = '".$id_rubrique."' ";
-		$q2.= "and actes.type_acte = '".TYP_ACT_FAC."' ";
+		$q2.= "and (actes.type_acte = '".TYP_ACT_FAC."' or actes.type_acte = '".TYP_ACT_RENT_INV."') ";
 		$q2.= "and actes.id_acte = lignes_actes.num_acte ";
 		$q2.= "group by lignes_actes.lig_ref ";
-		$r2 = pmb_mysql_query($q2, $dbh);	
+		$r2 = pmb_mysql_query($q2);	
 
 		while($row2 = pmb_mysql_fetch_object($r2)) {
 			if(array_key_exists($row2->lig_ref,$tab_cde)) {
@@ -141,9 +122,9 @@ class rubriques{
 		$q3.= "from actes, lignes_actes ";
 		$q3.= "where ";
 		$q3.= "lignes_actes.num_rubrique = '".$id_rubrique."' ";
-		$q3.= "and actes.type_acte = '".TYP_ACT_FAC."' ";
+		$q3.= "and (actes.type_acte = '".TYP_ACT_FAC."' or actes.type_acte = '".TYP_ACT_RENT_INV."') ";
 		$q3.= "and actes.id_acte = lignes_actes.num_acte ";
-		$r3 = pmb_mysql_query($q3, $dbh);
+		$r3 = pmb_mysql_query($q3);
 
 		$tab_fac = array();
 		while($row3 = pmb_mysql_fetch_object($r3)) {
@@ -172,10 +153,8 @@ class rubriques{
 	//['ht']=montant ht
 	//['ttc']=montant ttc
 	//['tva']=montant tva
-	static function calcEngage($id_rubrique= 0, $wc=TRUE) {
-		
-		global $dbh;
-
+	public static function calcEngage($id_rubrique= 0, $wc=TRUE) {
+		$id_rubrique += 0;
 		//	Montant Total engagé pour une rubrique =
 		//	Somme des Montants engagés non facturés pour une rubrique par ligne de commande		(nb_commandé-nb_facturé)*prix_commande*(1-remise_commande)
 		//+ Somme des Montants engagés pour une rubrique par ligne de facture					(nb_facturé)*prix_facture*(1-remise_facture)
@@ -191,10 +170,10 @@ class rubriques{
 		$q1.= "from actes, lignes_actes ";
 		$q1.= "where ";
 		$q1.= "lignes_actes.num_rubrique in('".$id_rubrique."') ";
-		$q1.= "and actes.type_acte = '".TYP_ACT_CDE."' ";
+		$q1.= "and (actes.type_acte = '".TYP_ACT_CDE."' or actes.type_acte = '".TYP_ACT_RENT_ACC."') ";
 		$q1.= "and actes.statut > '".STA_ACT_AVA."' and ( (actes.statut & ".STA_ACT_FAC.") != ".STA_ACT_FAC.") ";
 		$q1.= "and actes.id_acte = lignes_actes.num_acte ";
-		$r1 = pmb_mysql_query($q1, $dbh);
+		$r1 = pmb_mysql_query($q1);
 
 		$tab_cde = array();
 		while($row1 = pmb_mysql_fetch_object($r1)) {
@@ -212,10 +191,10 @@ class rubriques{
 		$q2.= "from actes, lignes_actes ";
 		$q2.= "where ";
 		$q2.= "lignes_actes.num_rubrique in('".$id_rubrique."') ";
-		$q2.= "and actes.type_acte = '".TYP_ACT_FAC."' ";
+		$q2.= "and (actes.type_acte = '".TYP_ACT_FAC."' or actes.type_acte = '".TYP_ACT_RENT_INV."' )";
 		$q2.= "and actes.id_acte = lignes_actes.num_acte ";
 		$q2.= "group by lignes_actes.lig_ref ";
-		$r2 = pmb_mysql_query($q2, $dbh);	
+		$r2 = pmb_mysql_query($q2);	
 
 		while($row2 = pmb_mysql_fetch_object($r2)) {
 			if(array_key_exists($row2->lig_ref,$tab_cde)) {
@@ -229,9 +208,9 @@ class rubriques{
 		$q3.= "from actes, lignes_actes ";
 		$q3.= "where ";
 		$q3.= "lignes_actes.num_rubrique in('".$id_rubrique."') ";
-		$q3.= "and actes.type_acte = '".TYP_ACT_FAC."' ";
+		$q3.= "and (actes.type_acte = '".TYP_ACT_FAC."' or actes.type_acte = '".TYP_ACT_RENT_INV."' )";
 		$q3.= "and actes.id_acte = lignes_actes.num_acte ";
-		$r3 = pmb_mysql_query($q3, $dbh);
+		$r3 = pmb_mysql_query($q3);
 
 		$tab_fac = array();
 		while($row3 = pmb_mysql_fetch_object($r3)) {
@@ -256,10 +235,8 @@ class rubriques{
 	//['ht']=montant ht
 	//['ttc']=montant ttc
 	//['tva']=montant tva
-	static function calcAValider($id_rubrique= 0,$wc=TRUE) {
-		
-		global $dbh;
-
+	public static function calcAValider($id_rubrique= 0,$wc=TRUE) {
+		$id_rubrique += 0;
 		//	Montant A valider pour une rubrique =
 		//	Somme des Montants pour les commandes non encore validees 
 		
@@ -276,11 +253,11 @@ class rubriques{
 		$q.= "lignes_actes.tva as tva, lignes_actes.remise as rem, lignes_actes.debit_tva  ";
 		$q.= "from actes, lignes_actes ";
 		$q.= "where 1 ";
-		$q.= "and actes.type_acte = '".TYP_ACT_CDE."' ";
+		$q.= "and (actes.type_acte = '".TYP_ACT_CDE."' or actes.type_acte = '".TYP_ACT_RENT_ACC."') ";
 		$q.= "and ((actes.statut & '".STA_ACT_AVA."')= '".STA_ACT_AVA."') ";
 		$q.= "and lignes_actes.num_rubrique in('".$id_rubrique."') ";
 		$q.= "and actes.id_acte = lignes_actes.num_acte ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		$i=0;
 		$lg=array();
 		while($row = pmb_mysql_fetch_object($r)) {
@@ -295,7 +272,6 @@ class rubriques{
 		$tot_rub = calc($lg,2);
 		return $tot_rub;
 	}	
-
 	
 	//calcule le montant facture pour une rubrique budgétaire
 	//$ws=avec rubriques filles
@@ -303,10 +279,8 @@ class rubriques{
 	//['ht']=montant ht
 	//['ttc']=montant ttc
 	//['tva']=montant tva
-	static function calcFacture($id_rubrique= 0,$wc=TRUE) {
-		
-		global $dbh;	
-
+	public static function calcFacture($id_rubrique= 0,$wc=TRUE) {
+		$id_rubrique += 0;
 		//	Montant A valider pour une rubrique =
 		//	Somme des Montants pour les factures 
 		
@@ -322,11 +296,11 @@ class rubriques{
 		$q.= "lignes_actes.nb as nb, lignes_actes.prix as prix, ";
 		$q.= "lignes_actes.tva as tva, lignes_actes.remise as rem, lignes_actes.debit_tva  ";
 		$q.= "from actes, lignes_actes ";
-		$q.= "where 1 ";
-		$q.= "and actes.type_acte = '".TYP_ACT_FAC."' ";
+		$q.= "where 1 ";		
+		$q.= "and (actes.type_acte = '".TYP_ACT_FAC."' or actes.type_acte = '".TYP_ACT_RENT_INV."' )";
 		$q.= "and lignes_actes.num_rubrique in('".$id_rubrique."') ";
 		$q.= "and actes.id_acte = lignes_actes.num_acte ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		$i=0;
 		$lg=array();
 		while($row = pmb_mysql_fetch_object($r)) {
@@ -349,10 +323,8 @@ class rubriques{
 	//['ht']=montant ht
 	//['ttc']=montant ttc
 	//['tva']=montant tva
-	static function calcPaye($id_rubrique= 0,$wc=TRUE) {
-		
-		global $dbh;	
-
+	public static function calcPaye($id_rubrique= 0,$wc=TRUE) {
+		$id_rubrique += 0;
 		//	Montant A valider pour une rubrique =
 		//	Somme des Montants pour les factures 
 		
@@ -369,11 +341,11 @@ class rubriques{
 		$q.= "lignes_actes.tva as tva, lignes_actes.remise as rem, lignes_actes.debit_tva  ";
 		$q.= "from actes, lignes_actes ";
 		$q.= "where 1 ";
-		$q.= "and actes.type_acte = '".TYP_ACT_FAC."' ";
+		$q.= "and (actes.type_acte = '".TYP_ACT_FAC."' or actes.type_acte = '".TYP_ACT_RENT_INV."' )";
 		$q.= "and ((actes.statut & '".STA_ACT_PAY."') = '".STA_ACT_PAY."') ";
 		$q.= "and lignes_actes.num_rubrique in('".$id_rubrique."') ";
 		$q.= "and actes.id_acte = lignes_actes.num_acte ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		$i=0;
 		$lg=array();
 		while($row = pmb_mysql_fetch_object($r)) {
@@ -387,32 +359,24 @@ class rubriques{
 		$tot_rub = calc($lg,2);
 		return $tot_rub;
 	}	
-	
 
 	//compte le nb d'enfants directs d'une rubrique
-	static function countChilds($id_rubrique=0) {
-		
-		global $dbh;
-		
+	public static function countChilds($id_rubrique=0) {
+		$id_rubrique += 0;
 		$q = "select count(1) from rubriques where num_parent ='".$id_rubrique."' ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		return pmb_mysql_result($r, 0, 0);
 	}		
 
 	
 	//retourne la liste des descendants d'une rubrique sous forme de tableau
 	//[id_rubrique]=1
-	static function getChilds($id_rubrique=0) {
-		
-		global $dbh;
-		
-		if (!$id_rubrique) {
-			$id_rubrique=$this->id_rubrique;
-		}
+	public static function getChilds($id_rubrique=0) {
+		$id_rubrique += 0;
 		$tab_childs=array();
 		
 		$q="select id_rubrique from rubriques where num_parent='".$id_rubrique."' ";
-		$r=pmb_mysql_query($q, $dbh);
+		$r=pmb_mysql_query($q);
 		while($row=pmb_mysql_fetch_object($r)){
 			if (!array_key_exists($row->id_rubrique, $tab_childs)) {
 				$tab_childs=$tab_childs + rubriques::getChilds($row->id_rubrique);
@@ -422,17 +386,14 @@ class rubriques{
 		return $tab_childs;
 	}
 	
-	
 	//Liste les ancetres d'une rubrique et les retourne sous forme d'un tableau 
 	//[index][niveau][0]=id_rubrique 
 	//[index][niveau][1]=libelle
 	//[index][niveau][2]=num_parent
-	static function listAncetres($id_rub=0, $inclus=FALSE) {
-		
-		global $dbh;
-		
+	public static function listAncetres($id_rub=0, $inclus=FALSE) {
+		$id_rub += 0;
 		$q = "select id_rubrique, libelle, num_parent from rubriques where id_rubrique = '".$id_rub."' limit 1";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		$row = pmb_mysql_fetch_object($r);
 		$rub_list = array();
 
@@ -445,7 +406,7 @@ class rubriques{
 		}
 		while ($row->num_parent){
 			$q = "select id_rubrique, libelle, num_parent from rubriques where id_rubrique = '".$row->num_parent."' limit 1";
-			$r = pmb_mysql_query($q, $dbh);
+			$r = pmb_mysql_query($q);
 			$row = pmb_mysql_fetch_object($r);
 			$rub_list[$i][0] = $row->id_rubrique;
 			$rub_list[$i][1] = $row->libelle;
@@ -456,31 +417,22 @@ class rubriques{
 		return $rub_list;		
 	}	
 
-
 	//Compte le nb de lignes d'actes affectées à une rubrique budgetaire			
-	static function hasLignes($id_rubrique=0){
-		
-		global $dbh;
-
+	public static function hasLignes($id_rubrique=0){
+		$id_rubrique += 0;
 		if (!$id_rubrique) return 0;
 
 		$q = "select count(1) from lignes_actes where num_rubrique = '".$id_rubrique."' ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		return pmb_mysql_result($r, 0, 0);
-		
 	}	
 
-
 	//Recalcul des montants des rubriques parent et raz des numéros de compte comptable et autorisations
-	static function maj($num_parent=0, $calcul=TRUE ) {
-		
-		global $dbh;
-		
+	public static function maj($num_parent=0, $calcul=TRUE ) {
 		if ($calcul) {
-
 			if($num_parent) {
 				$q = "select sum(montant) from rubriques where num_parent = '".$num_parent."' ";
-				$r = pmb_mysql_query($q, $dbh);
+				$r = pmb_mysql_query($q);
 				$total = pmb_mysql_result($r,0,0);
 			
 				$parent = new rubriques($num_parent);	
@@ -491,9 +443,7 @@ class rubriques{
 			
 				rubriques::maj($parent->num_parent);
 			}
-
 		} else {
-
 			if($num_parent) {
 				$parent = new rubriques($num_parent);	
 				$parent->num_cp_compta = '';
@@ -504,35 +454,24 @@ class rubriques{
 			
 		}
 	}
-
 	
 	//
-	static function getAutorisations($id_rubrique, $id_user) {
-		
-		global $dbh;
-		
+	public static function getAutorisations($id_rubrique, $id_user) {
+		$id_rubrique += 0;
 		$q = "select count(1) from rubriques where id_rubrique = '".$id_rubrique."' and autorisations like('% ".$id_user." %') ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		return pmb_mysql_result($r, 0, 0);
-		
 	}
 	
 	//optimization de la table rubriques
-	function optimize() {
-		
-		global $dbh;
-		
-		$opt = pmb_mysql_query('OPTIMIZE TABLE rubriques', $dbh);
+	public function optimize() {
+		$opt = pmb_mysql_query('OPTIMIZE TABLE rubriques');
 		return $opt;
-				
 	}
-
 	
 	//Retourne un tableau (id_rubrique=>libelle) a partir d'un tableau d'id 
 	//si id_bibli et id_exer, userid sont précisés, limite les resultats aux rubriques par bibliotheque, exercice, utilisateur
-	static function getLibelle($tab=array(),$id_bibli=0,$id_exer=0,$userid=0) {
-		
-		global $dbh;
+	public static function getLibelle($tab=array(),$id_bibli=0,$id_exer=0,$userid=0) {
 		$res=array();
 		if(is_array($tab) && count($tab)) {
 			$q = "select id_rubrique, rubriques.libelle from rubriques ";
@@ -544,14 +483,12 @@ class rubriques{
 			if($id_exer) $q.= " and num_exercice='".$id_exer."' ";
 			if($userid) $q.= " and autorisations like '% ".$userid." %' ";
 			$q.= "and id_rubrique in ('".implode("','", $tab)."') ";
-			$r = pmb_mysql_query($q,$dbh);
+			$r = pmb_mysql_query($q);
 			while($row=pmb_mysql_fetch_object($r)) {
 				$res[$row->id_rubrique]=$row->libelle;
 			}
 		}
 		return $res;
 	}
-	
-				
 }
 ?>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.4 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: main.inc.php,v 1.5 2017-09-21 14:52:32 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -13,7 +13,7 @@ $empr_grille_location+=0;
 
 //champs persos
 $nb_cp=0;
-$q_cp = "select name from empr_custom order by ordre ";
+$q_cp = "select name, idchamp from empr_custom order by ordre ";
 $r_cp = pmb_mysql_query($q_cp, $dbh);
 if (!pmb_mysql_errno($dbh)) {
 	$nb_cp = pmb_mysql_num_rows($r_cp);
@@ -21,52 +21,49 @@ if (!pmb_mysql_errno($dbh)) {
 
 $empr_grille_default="
 <formpage relative='yes'>
-  <etirable id='g0_r0' visible='yes' parent='g0' />
-  <etirable id='g0_r1' visible='yes' parent='g0' />
-  <etirable id='g0_r2' visible='yes' parent='g0' />
-  <etirable id='g0_r3' visible='yes' parent='g0' />
-  <etirable id='g1_r0' visible='yes' parent='g1' />
-  <etirable id='g2_r0' visible='yes' parent='g2' />
-  <etirable id='g3_r0' visible='yes' parent='g3' />
-  <etirable id='g4_r0' visible='yes' parent='g4' />
-  <etirable id='g4_r1' visible='yes' parent='g4' />
-  <etirable id='g5_r0' visible='yes' parent='g5' />";
+  <etirable id='g0' visible='yes' />
+  <etirable id='g1' visible='yes' />
+  <etirable id='g2' visible='yes' />
+  <etirable id='g3' visible='yes' />
+  <etirable id='g4' visible='yes' />
+  <etirable id='g5' visible='yes' />";
 if ($nb_cp) {
   	$empr_grille_default.= "	
-  <etirable id='g6_r0' visible='yes' parent='g6' />";
+  <etirable id='g6' visible='yes' />";
 }
 $empr_grille_default.= "  
-  <etirable id='g7_r0' visible='yes' parent='g7' />
-  <movable id='g0_r0_f0' visible='yes' parent='g0_r0' width='33%'/>
-  <movable id='g0_r0_f1' visible='yes' parent='g0_r0' width='33%'/>
-  <movable id='g0_r0_f2' visible='yes' parent='g0_r0'/>
-  <movable id='g0_r1_f0' visible='yes' parent='g0_r1' width='50%'/>
-  <movable id='g0_r1_f1' visible='yes' parent='g0_r1' width='10%'/>
-  <movable id='g0_r1_f2' visible='yes' parent='g0_r1'/>
-  <movable id='g0_r2_f0' visible='yes' parent='g0_r2' width='50%'/>
-  <movable id='g0_r2_f1' visible='yes' parent='g0_r2'/>
-  <movable id='g0_r3_f0' visible='yes' parent='g0_r3' width='25%'/>
-  <movable id='g0_r3_f1' visible='yes' parent='g0_r3' width='25%'/>
-  <movable id='g0_r3_f2' visible='yes' parent='g0_r3'/>
-  <movable id='g1_r0_f0' visible='yes' parent='g1_r0' width='25%'/>
-  <movable id='g1_r0_f1' visible='yes' parent='g1_r0' width='25%'/>
-  <movable id='g1_r0_f2' visible='yes' parent='g1_r0'/>
-  <movable id='g2_r0_f0' visible='yes' parent='g2_r0' width='25%'/>
-  <movable id='g2_r0_f1' visible='yes' parent='g2_r0' width='25%'/>
-  <movable id='g2_r0_f2' visible='yes' parent='g2_r0'/>
-  <movable id='g2_r1_f0' visible='yes' parent='g2_r1'/>
-  <movable id='g3_r0_f0' visible='yes' parent='g3_r0' width='25%'/>
-  <movable id='g3_r0_f1' visible='yes' parent='g3_r0' width='25%'/>
-  <movable id='g3_r0_f2' visible='yes' parent='g3_r0'/>
-  <movable id='g4_r0_f0' visible='yes' parent='g4_r0' width='25%'/>
-  <movable id='g4_r0_f1' visible='yes' parent='g4_r0' width='25%'/>
-  <movable id='g4_r0_f2' visible='yes' parent='g4_r0'/>
-  <movable id='g4_r1_f0' visible='yes' parent='g4_r1'/>
-  <movable id='g5_r0_f0' visible='yes' parent='g5_r0'/>";
+  <etirable id='g7' visible='yes' />
+		
+  <movable id='g0_r0_f0' visible='yes' parent='g0' width='33%'/>
+  <movable id='g0_r0_f1' visible='yes' parent='g0' width='33%'/>
+  <movable id='g0_r0_f2' visible='yes' parent='g0'/>
+  <movable id='g0_r0_f3' visible='yes' parent='g0'/>
+  <movable id='g0_r1_f0' visible='yes' parent='g0' width='50%'/>
+  <movable id='g0_r1_f1' visible='yes' parent='g0' width='10%'/>
+  <movable id='g0_r1_f2' visible='yes' parent='g0'/>
+  <movable id='g0_r2_f0' visible='yes' parent='g0' width='50%'/>
+  <movable id='g0_r2_f1' visible='yes' parent='g0'/>
+  <movable id='g0_r3_f0' visible='yes' parent='g0' width='25%'/>
+  <movable id='g0_r3_f1' visible='yes' parent='g0' width='25%'/>
+  <movable id='g0_r3_f2' visible='yes' parent='g0'/>
+  <movable id='g1_r0_f0' visible='yes' parent='g1' width='25%'/>
+  <movable id='g1_r0_f1' visible='yes' parent='g1' width='25%'/>
+  <movable id='g1_r0_f2' visible='yes' parent='g1'/>
+  <movable id='g2_r0_f0' visible='yes' parent='g2' width='25%'/>
+  <movable id='g2_r0_f1' visible='yes' parent='g2' width='25%'/>
+  <movable id='g2_r0_f2' visible='yes' parent='g2'/>
+  <movable id='g2_r1_f0' visible='yes' parent='g2'/>
+  <movable id='g3_r0_f0' visible='yes' parent='g3' width='25%'/>
+  <movable id='g3_r0_f1' visible='yes' parent='g3' width='25%'/>
+  <movable id='g3_r0_f2' visible='yes' parent='g3'/>
+  <movable id='g4_r0_f0' visible='yes' parent='g4' width='25%'/>
+  <movable id='g4_r0_f1' visible='yes' parent='g4' width='25%'/>
+  <movable id='g4_r0_f2' visible='yes' parent='g4'/>
+  <movable id='g4_r1_f0' visible='yes' parent='g4'/>
+  <movable id='g5_r0_f0' visible='yes' parent='g5'/>";
 if ($nb_cp) {
-	for($i=0;$i<$nb_cp;$i++) {
-		$empr_grille_default.= "<movable id='g6_r0_f".$i."' visible='yes' parent='g6_r0'/>";
-	}
+	while ($champ=pmb_mysql_fetch_object($r_cp))
+		$empr_grille_default.="  <movable id='g6_r0_f".$champ->idchamp."' visible='yes' parent='g6'/>\n";
 }
 $empr_grille_default.= "  
 </formpage>";

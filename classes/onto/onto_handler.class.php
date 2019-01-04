@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_handler.class.php,v 1.37 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: onto_handler.class.php,v 1.59 2018-11-22 13:33:52 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -51,11 +51,19 @@ class onto_handler {
 	
 	private $nb_elements =array();
 
+	private static $display_labels = array();
+	
+	/**
+	 * 
+	 * @var onto_common_index
+	 */
+	protected $onto_index;
+	
 	/**
 	 * 
 	 *
 	 * @param string ontology_filepath 
-	 * @param string onto_store_type nom de la classe store à utiliser pour l'ontologie
+	 * @param string onto_store nom ou instance de la classe store à utiliser pour l'ontologie
 	 * @param array() onto_store_config Configuration du store pour l'ontologie
 	 * @param string data_store_type Nom de la classe à utiliser pour le store data
 	 * @param Array() data_store_config Configuration du store data
@@ -64,20 +72,29 @@ class onto_handler {
 	 * 
 	 * @access public
 	 */
-	public function __construct( $ontology_filepath,  $onto_store_type,  $onto_store_config,  $data_store_type,  $data_store_config,$tab_namespaces ,$default_display_label) {
-			
-		//on récupère les stores...
-		$onto_store_class = "onto_store_".$onto_store_type;
-		$this->onto_store = new $onto_store_class($onto_store_config);
-		$this->onto_store->set_namespaces($tab_namespaces);
-		//chargement de l'ontologie dans son store
-		$this->onto_store->load($ontology_filepath);
-		$data_store_class = "onto_store_".$data_store_type;
-		$this->data_store = new $data_store_class($data_store_config);
-		$this->data_store->set_namespaces($tab_namespaces);
+	public function __construct( $ontology_filepath,  $onto_store,  $onto_store_config,  $data_store,  $data_store_config,$tab_namespaces ,$default_display_label) {
+		
+		if (is_object($onto_store)) {
+			$this->onto_store = $onto_store;
+		} else {
+			//on récupère les stores...
+			$onto_store_class = "onto_store_".$onto_store;
+			$this->onto_store = new $onto_store_class($onto_store_config);
+			$this->onto_store->set_namespaces($tab_namespaces);
+			//chargement de l'ontologie dans son store
+			if($ontology_filepath){
+				$this->onto_store->load($ontology_filepath);
+			}
+		}
+		if (is_object($data_store)) {
+			$this->data_store = $data_store;
+		} else {
+			$data_store_class = "onto_store_".$data_store;
+			$this->data_store = new $data_store_class($data_store_config);
+			$this->data_store->set_namespaces($tab_namespaces);
+		}
 		
 		$this->default_display_label=$default_display_label;
-		
 	} // end of member function __construct
 
 	/**
@@ -111,12 +128,23 @@ class onto_handler {
 			if($object_properties['type'] == "literal"){
 				$type = "http://www.w3.org/2000/01/rdf-schema#Literal";
 			}else{
-				$type = $assertion->type;
+				$type = (!empty($assertion->type) ? $assertion->type : "");
 				if(!$type){
-					$type = "";
+					$tmp = $this->ontology->get_property_pmb_datatype($assertion->predicate);
+					if($tmp == 'http://www.pmbservices.fr/ontology#resource_pmb_selector'){
+						$type = substr($assertion->object,0,strrpos($assertion->object,'_'));
+					}else if($tmp == 'http://www.pmbservices.fr/ontology#marclist'){
+						$type = $this->ontology->get_property_pmb_datatype($assertion->predicate);
+					}else{
+						$type = $assertion->predicate;
+					}
 				}else{
-					$displayLabel=$this->get_display_label($class_uri);
-						
+					/**
+					 * TODO: Récupérer le display label dans le cas dun resource pmb selector + 
+					 * Affichage correct au niveau du datatype UI (Autre chose que l'uri de la propriété)
+					 * @var unknown
+					 */
+					$displayLabel = $this->get_display_label($assertion->type);
 					$query="select ?display_label where {
 						<".$assertion->object."> <".$displayLabel."> ?display_label
 					}";
@@ -124,6 +152,15 @@ class onto_handler {
 					if($this->data_store->num_rows()){
 						$result = $this->data_store->get_result();
 						$object_properties['display_label'] = $result[0]->display_label;
+					} else {//cas particulier pour les assertions qui auraient directement un displayLabel
+						$query="select ?display_label where {
+									<".$assertion->object."> pmb:displayLabel ?display_label
+								}";
+						$this->data_store->query($query);
+						if($this->data_store->num_rows()){
+							$result = $this->data_store->get_result();
+							$object_properties['display_label'] = $result[0]->display_label;
+						}
 					}
 				}
 			}
@@ -194,7 +231,7 @@ class onto_handler {
 		if($this->data_store->num_rows()){
 			$results = $this->data_store->get_result();
 			foreach($results as $key=>$result){
-				if($result->label_lang==substr($lang,0,2)){
+				if(isset($result->label_lang) && $result->label_lang==substr($lang,0,2)){
 					return $result->label;
 				}
 			}
@@ -209,21 +246,22 @@ class onto_handler {
 	
 	public function get_nb_elements($class_uri,$more=""){
 		
-		if(!$this->nb_elements[$class_uri.$more]){
+		if(!isset($this->nb_elements[$class_uri.$more]) || !$this->nb_elements[$class_uri.$more]){
 			$query="";
-			$query.="select distinct ?elem where {
-				?elem rdf:type <".$class_uri."> .";
+			$query.="select count(?elem) as ?nb_elem where {
+				?elem rdf:type <".$class_uri.">";
 			if($more){
-				$query.=$more;
+				if(substr(trim($more),0,1) == '.'){
+					$query.=$more;
+				}else{
+					$query.=' . '.$more;
+				}
+				
 			}
 			$query.="}";
 			$this->data_store->query($query);
-			$this->nb_elements[$class_uri.$more] = $this->data_store->num_rows();
 			$results = $this->data_store->get_result();
-		
-	// 		foreach($results as $result){
-	// 			onto_common_uri::set_new_uri($result->elem);
-	// 		}
+			$this->nb_elements[$class_uri.$more] = $results[0]->nb_elem;
 		}
 		return $this->nb_elements[$class_uri.$more];
 	}
@@ -231,14 +269,15 @@ class onto_handler {
 
 	/**
 	 * Supprime et recrée les déclarations de l'instance passée en paramètre
+	 * @access public
 	 *
 	 * @param onto_common_item $item Instance à sauvegarder
-	 * 
+	 * @param array $kept_properties tableau des proprietes a conserver dans le store 
 	 * @return bool
-	 * 
-	 * @access public
 	 */
-	public function save( $item ) {
+	public function save( $item , $kept_properties = array()) {
+		global $opac_url_base, $area_id, $action;		
+		
 		if ($item->check_values()) {	
 			if(onto_common_uri::is_temp_uri($item->get_uri())){
 				$item->replace_temp_uri();
@@ -246,18 +285,30 @@ class onto_handler {
 			$assertions = $item->get_assertions();
 			$nb_assertions = count($assertions);
 			$i = 0;
-			
 			// On commence par supprimer ce qui existe
 			$query = "delete {
-				<".$item->get_uri()."> ?prop ?obj
-				}";
+				<".$item->get_uri()."> ?prop ?obj .";
+			if (count($kept_properties)) {
+			    $filter = "";
+			    foreach ($kept_properties as $kept_property) {
+			        if ($filter) {
+			            $filter .= " && ";
+			        }
+			        $filter .= " ?prop != ".$kept_property." ";
+			    }
+			    $query .= "} WHERE {
+			        <".$item->get_uri()."> ?prop ?obj .
+			        FILTER( ".$filter." )";
+			}
+			$query .= "}";
+			
 			$this->data_store->query($query);
 			
 			if ($errs = $this->data_store->get_errors()) {
 				print "<br>Erreurs: <br>";
 				print "<pre>";print_r($errs);print "</pre><br>";
 			}
-			
+				
 			// On peut y aller
 			$query = "insert into <pmb> {
 				";
@@ -265,29 +316,30 @@ class onto_handler {
 				if ($assertion->offset_get_object_property("type") == "literal"){
 					$object = "'".addslashes($assertion->get_object())."'";
 					$object_properties = $assertion->get_object_properties();
-					if($object_properties['lang']){
+					if(!empty($object_properties['lang'])){
 						$object.="@".$object_properties['lang'];
 					}
-				}else{
-					$object = "<".addslashes($assertion->get_object()).">";
+				} else {
+					$object = $assertion->get_object();
+					// On traite le cas où on récupère l'id
+					if ($object*1) {
+						$object = $object*1;
+						$object = onto_common_uri::get_uri($object);
+					}
+					$object = "<".addslashes($object).">";
 				}
-				
 				$query.= "<".addslashes($assertion->get_subject())."> <".addslashes($assertion->get_predicate())."> ".$object;
 				$i++;
 				if ($i < $nb_assertions) $query.=" .";
 				$query.="\n";
 			}
 			$query.="}";
-			
 			$this->data_store->query($query);
-			
 			if ($errs = $this->data_store->get_errors()) {
 				print "<br>Erreurs: <br>";
 				print "<pre>";print_r($errs);print "</pre><br>";
 			}else{
-				$index = new onto_index();
-				$index->set_handler($this);
-				$index->maj(0,$item->get_uri());				
+				indexation_stack::push($item->get_id(), TYPE_CONCEPT);
 			}
 		} else {
 			return $item->get_checking_errors();
@@ -295,6 +347,11 @@ class onto_handler {
 		return true;
 	} // end of member function save
 
+	
+	
+	
+	
+	
 	/**
 	 * Détruit une instance (l'ensemble de ses déclarations)
 	 *
@@ -320,6 +377,11 @@ class onto_handler {
 			$is_object_of[] = new onto_assertion($assertion->subject, $assertion->predicate, $item->get_uri());
 		}
 		
+		$query = "select uri_id from onto_uri where uri = '".$item->get_uri()."'";
+		$result = pmb_mysql_query($query, $dbh);
+		if(pmb_mysql_num_rows($result)){
+			$usage=aut_pperso::delete_pperso(AUT_TABLE_CONCEPT,  pmb_mysql_result($result, 0, 0) ,1) ;
+		}	
 		if ($force_delete || !count($is_object_of)) {
 			$query = "delete {
 				<".$item->get_uri()."> ?prop ?obj
@@ -340,13 +402,13 @@ class onto_handler {
 					print "<pre>";print_r($errs);print "</pre><br>";
 				}else{
 					// On met à jour l'index
-					$index = new onto_index();
-					$index->set_handler($this);
-					$index->maj(0,$item->get_uri());
+					$onto_index = onto_index::get_instance($this->get_onto_name());
+					$onto_index->set_handler($this);
+					$onto_index->maj(0,$item->get_uri());
 					
 					if (count($is_object_of)) {
 						foreach ($is_object_of as $object) {
-							$index->maj(0,$assertion->subject);
+							$onto_index->maj(0,$assertion->subject);
 						}
 					}
 					
@@ -479,6 +541,9 @@ class onto_handler {
 	 * @return string
 	 */
 	public function get_title(){
+		if (!isset($this->ontology)) {
+			$this->get_ontology();
+		}
 		return $this->ontology->title;
 	}
 	
@@ -488,6 +553,9 @@ class onto_handler {
 	 * @return string
 	 */
 	public function get_onto_name(){
+		if (!isset($this->ontology)) {
+			$this->get_ontology();
+		}
 		return $this->ontology->name;
 	}
 	
@@ -498,7 +566,7 @@ class onto_handler {
 	 * @return array
 	 */
 	public function get_labels(){
-		if(!$this->labels){		
+		if(!isset($this->labels) || !$this->labels){		
 			$this->labels = array();
 			$query="select * where {
 				?uri pmb:name ?name .
@@ -516,11 +584,11 @@ class onto_handler {
 				
 				$this->labels[$result->name]['name'] = $result->name;
 				
-				if($result->displayLabel){
+				if(isset($result->displayLabel) && $result->displayLabel){
 					$this->labels[$result->name]['displayLabel'] = $result->displayLabel;
 				}
 				
-				if($result->searchLabel){
+				if(isset($result->searchLabel) && $result->searchLabel){
 					$this->labels[$result->name]['searchLabel'] = $result->searchLabel;
 				}
 				
@@ -534,7 +602,10 @@ class onto_handler {
 	}
 
 	
-	public function get_display_label($class_uri){
+	public function get_display_label($class_uri,$recurse=true){
+		if(isset(self::$display_labels[$class_uri])){
+			return self::$display_labels[$class_uri];
+		}
 		$query = "select ?displayLabel where {
 			<".$class_uri."> pmb:displayLabel ?displayLabel
 		}";
@@ -543,8 +614,20 @@ class onto_handler {
 		if($this->onto_store->num_rows()){
 			$result = $this->onto_store->get_result();
 			$displayLabel = $result[0]->displayLabel;
+		}else{
+			$query = "select ?type where {
+				<".$class_uri."> rdf:type ?type .
+			}";
+			$this->data_store->query($query);
+			if($this->data_store->num_rows()){
+				$result = $this->data_store->get_result();
+				if($recurse){
+					$displayLabel = $this->get_display_label($result[0]->type,false);
+				}
+			}
 		}
-		return $displayLabel;
+		self::$display_labels[$class_uri] = $displayLabel;
+		return self::$display_labels[$class_uri];
 	}
 	
 	/**
@@ -557,7 +640,7 @@ class onto_handler {
 		$label= "";
 		
 		//@todo recherche SPARQL sur un libelle?
-		if(!$this->labels){
+		if(!isset($this->labels) || !$this->labels){
 			$this->get_labels();
 		}
 		
@@ -591,6 +674,9 @@ class onto_handler {
 	 * @return array
 	 */
 	public function get_onto_property_from_pmb_name($pmb_name) {
+		if (!isset($this->ontology)) {
+			$this->get_ontology();
+		}
 		$properties_uri = $this->ontology->get_properties();
 		foreach ($properties_uri as $uri => $info) {
 			if ($info->pmb_name == $pmb_name) {
@@ -611,6 +697,7 @@ class onto_handler {
 		if(!isset($this->ontology )){
 			$this->ontology = new onto_ontology($this->onto_store);
 		}
+		$this->ontology->set_data_store($this->data_store);
 		return $this->ontology;
 	} // end of member function get_ontology
 	
@@ -665,7 +752,53 @@ class onto_handler {
 	}
 	
 	/**
-	 * PARTIE ONTOLOGIE
+	 * Retourne vrai si la classe est une sous classe d'une indexation, faux sinon
+	 * @param string $class_uri URI d'une classe
 	 */
+	public function class_is_indexed($class_uri){
+		$query = "select ?subclass {
+				<".$class_uri."> <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?subclass .
+				?subclass rdf:type pmb:indexation }";
+		$this->onto_query($query);
+		if($this->onto_num_rows()){
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * 
+	 * @return onto_store
+	 */
+	public function get_data_store() {
+		return $this->data_store;
+	}
+	
+	/**
+	 * 
+	 * @return onto_common_index
+	 */
+	public function get_onto_index() {
+		if (empty($this->onto_index)) {
+			$onto_index_class_name = $this->search_index_class_name();
+			$this->onto_index = new $onto_index_class_name();			
+			$this->onto_index->set_handler($this);
+		}
+		return $this->onto_index;
+	}
+	
+	/**
+	 * 
+	 * @return string
+	 */
+	protected function search_index_class_name(){
+		$suffixe = "_index";
+		$prefix="onto_";
+		if(class_exists($prefix.$this->get_onto_name().$suffixe)){
+			return $prefix.$this->get_onto_name().$suffixe;
+		}else{
+			return 'onto_index';
+		}
+	}	
 	
 } // end of onto_handler

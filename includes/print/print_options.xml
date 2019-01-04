@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- $Id: print_options.xml,v 1.5 2018-06-29 13:19:03 dgoron Exp $ -->
 <!-- Liste des états des checkbox de la fenetre d'impression -->
 <XMLlist>
 	<entry code="all">1</entry>
 	<entry code="current_page">0</entry>
+	<entry code="selected_elements">0</entry>
 	<entry code="s1">1</entry>
 	<entry code="s0">0</entry>
 	<entry code="header">1</entry>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pdf_html.class.php,v 1.1 2011-07-29 12:32:11 dgoron Exp $
+// $Id: pdf_html.class.php,v 1.2 2017-07-03 09:07:10 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -37,21 +37,21 @@ function txtentities($html){
 
 class PDF_HTML extends FPDF {
 	//variables du parseur html
-	var $B;
-	var $I;
-	var $U;
-	var $HREF;
-	var $TH;
-	var $TD;
-	var $fontList;
-	var $issetfont;
-	var $issetcolor;
-//	var $lMargin;
-//	var $tMargin;
+	public $B;
+	public $I;
+	public $U;
+	public $HREF;
+	public $TH;
+	public $TD;
+	public $fontList;
+	public $issetfont;
+	public $issetcolor;
+//	public $lMargin;
+//	public $tMargin;
 	
-	function PDF_HTML($orientation='P', $unit='mm', $format='A4') {
+	public function __construct($orientation='P', $unit='mm', $format='A4') {
 	    //Appel au constructeur parent
-	    $this->FPDF($orientation,$unit,$format);
+	    parent::__construct($orientation,$unit,$format);
 	    //Initialisation
 	    $this->B=0;
 	    $this->I=0;
@@ -66,7 +66,7 @@ class PDF_HTML extends FPDF {
 	    $this->issetcolor=false;
 	}
 	
-	function WriteHTML($html) {
+	public function WriteHTML($html) {
 	    //Parseur HTML
 	    $html=strip_tags($html,"<b><u><i><a><img><p><br><strong><em><font><tr><blockquote><th><td>"); //supprime tous les tags sauf ceux reconnus
 	    $html=str_replace("\n",' ',$html); //remplace retour à la ligne par un espace
@@ -103,7 +103,7 @@ class PDF_HTML extends FPDF {
 	    }
 	}
 	
-	function OpenTag($tag, $attr) {
+	public function OpenTag($tag, $attr) {
 	    //Balise ouvrante
 	    switch($tag){
 	        case 'STRONG':
@@ -167,7 +167,7 @@ class PDF_HTML extends FPDF {
 	    }
 	}
 	
-	function CloseTag($tag) {
+	public function CloseTag($tag) {
 	    //Balise fermante
 	    if($tag=='STRONG')
 	        $tag='B';
@@ -188,7 +188,7 @@ class PDF_HTML extends FPDF {
 	    }
 	}
 	
-	function SetStyle($tag, $enable) {
+	public function SetStyle($tag, $enable) {
 	    //Modifie le style et sélectionne la police correspondante
 	    $this->$tag+=($enable ? 1 : -1);
 	    $style='';
@@ -199,7 +199,7 @@ class PDF_HTML extends FPDF {
 	    $this->SetFont('',$style);
 	}
 	
-	function PutLink($URL, $txt){
+	public function PutLink($URL, $txt){
 	    //Place un hyperlien
 	    $this->SetTextColor(0,0,255);
 	    $this->SetStyle('U',true);
@@ -208,7 +208,7 @@ class PDF_HTML extends FPDF {
 	    $this->SetTextColor(0);
 	}
 	
-	function PutCell($tag,$w,$h,$txt){
+	public function PutCell($tag,$w,$h,$txt){
 		global $largeur_page,$marge_page_droite,$marge_page_gauche;
 	    //Tab
 	    if ($tag == 'TH') 

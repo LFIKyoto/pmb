@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum.inc.php,v 1.88.2.2 2015-12-04 10:05:15 jpermanne Exp $
+// $Id: explnum.inc.php,v 1.123 2018-11-27 13:17:36 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -11,6 +11,8 @@ require_once("$class_path/indexation_docnum.class.php");
 require_once("$class_path/upload_folder.class.php");
 require_once("$class_path/explnum.class.php");
 require_once("$class_path/acces.class.php");
+require_once ($class_path."/map/map_locations_controler.class.php");
+require_once($class_path."/cache_factory.class.php");
 
 if (!function_exists('file_put_contents')) {
     function file_put_contents($filename, $data) {
@@ -29,23 +31,82 @@ if (!function_exists('file_put_contents')) {
 // charge le tableau des extensions/mimetypes, on en a besoin en maj comme en affichage
 function create_tableau_mimetype() {
 	
-	global $lang;
-	global $include_path;
+	global $lang, $charset, $KEY_CACHE_FILE_XML;
+	global $include_path,$base_path;
 	global $_mimetypes_bymimetype_, $_mimetypes_byext_ ;
 	
-	if (sizeof($_mimetypes_bymimetype_)) return;
+	if (!empty($_mimetypes_bymimetype_) && sizeof($_mimetypes_bymimetype_)) return;
 	$_mimetypes_bymimetype_ = array();
 	$_mimetypes_byext_ = array();
 
-	require_once ("$include_path/parser.inc.php") ;
-	
-	if (file_exists($include_path."/mime_types/".$lang."_subst.xml"))
+	if (file_exists($include_path."/mime_types/".$lang."_subst.xml")){
 		$fic_mime_types = $include_path."/mime_types/".$lang."_subst.xml";
-	else
+	}else{
 		$fic_mime_types = $include_path."/mime_types/".$lang.".xml";	
-
-	$fonction = array ("MIMETYPE" => "__mimetype__");
-	_parser_($fic_mime_types, $fonction, "MIMETYPELIST" ) ;
+	}
+	$fileInfo = pathinfo($fic_mime_types);
+	$fileName = preg_replace("/[^a-z0-9]/i","",$fileInfo['dirname'].$fileInfo['filename'].$charset);
+	$tempFile = $base_path."/temp/XML".$fileName.".tmp";
+	$dejaParse = false;
+	
+	$cache_php=cache_factory::getCache();
+	$key_file="";
+	if ($cache_php) {
+		$key_file=getcwd().$fileName.filemtime($fic_mime_types);
+		$key_file=$KEY_CACHE_FILE_XML.md5($key_file);
+		if($tmp_key = $cache_php->getFromCache($key_file)){
+			if($cache = $cache_php->getFromCache($tmp_key)){
+				if(count($cache) == 2){
+					$_mimetypes_bymimetype_= $cache[0];
+					$_mimetypes_byext_= $cache[1];
+					$dejaParse = true;
+				}
+			}
+		}
+			
+	}else{
+		if (file_exists($tempFile) ) {
+			//Le fichier XML original a-t-il été modifié ultérieurement ?
+			if (filemtime($fic_mime_types) > filemtime($tempFile)) {
+				//on va re-générer le pseudo-cache
+				unlink($tempFile);
+			} else {
+				$dejaParse = true;
+			}
+		}
+		if ($dejaParse) {
+			$tmp = fopen($tempFile, "r");
+			$cache = unserialize(fread($tmp,filesize($tempFile)));
+			fclose($tmp);
+			if(count($cache) == 2){
+				$_mimetypes_bymimetype_= $cache[0];
+				$_mimetypes_byext_= $cache[1];
+			}else{
+				//SOUCIS de cache...
+				unlink($tempFile);
+				$dejaParse=false;
+			}
+		}
+	}
+	
+	if(!$dejaParse){
+		require_once ("$include_path/parser.inc.php") ;
+		$fonction = array ("MIMETYPE" => "__mimetype__");
+		_parser_($fic_mime_types, $fonction, "MIMETYPELIST" ) ;
+		
+		if ($key_file) {
+			$key_file_content=$KEY_CACHE_FILE_XML.md5(serialize(array($_mimetypes_bymimetype_,$_mimetypes_byext_)));
+			$cache_php->setInCache($key_file_content, array($_mimetypes_bymimetype_,$_mimetypes_byext_));
+			$cache_php->setInCache($key_file,$key_file_content);
+		}else{
+			$tmp = fopen($tempFile, "wb");
+			fwrite($tmp,serialize(array(
+				$_mimetypes_bymimetype_,
+				$_mimetypes_byext_
+			)));
+			fclose($tmp);
+		}
+	}
 }
 
 
@@ -56,7 +117,7 @@ function __mimetype__($param) {
 	$mimetype_rec = array() ;
 	$mimetype_rec["plugin"] = $param["PLUGIN"] ;
 	$mimetype_rec["icon"] = $param["ICON"] ;
-	$mimetype_rec["label"] = $param["LABEL"] ;
+	$mimetype_rec["label"] = (isset($param["LABEL"]) ? $param["LABEL"] : '');
 	$mimetype_rec["embeded"] = $param["EMBEDED"] ;
 	
 	$_mimetypes_bymimetype_[$param["NAME"]] = $mimetype_rec ;
@@ -65,13 +126,12 @@ function __mimetype__($param) {
 		$mimetypeext_rec = array() ;
 		$mimetypeext_rec = $mimetype_rec ;
 		$mimetypeext_rec["mimetype"] = $param["NAME"] ;
-		if ($param["EXTENSION"][$i]["LABEL"]) {
+		if (isset($param["EXTENSION"][$i]["LABEL"])) {
 			$mimetypeext_rec["label"] =  $param["EXTENSION"][$i]["LABEL"] ;
 		}
 		$_mimetypes_byext_[$param["EXTENSION"][$i]["value"]] = $mimetypeext_rec ;
 	}
 }
-
 
 function extension_fichier($fichier) {
 	
@@ -80,17 +140,15 @@ function extension_fichier($fichier) {
 	return strtolower(strrev($ext));
 }
 
-
 function icone_mimetype ($mimetype, $ext) {
 	
 	global $_mimetypes_bymimetype_, $_mimetypes_byext_ ;
 	// trouve l'icone associee au mimetype
 	// sinon trouve l'icone associee a l'extension
-	if ($_mimetypes_bymimetype_[$mimetype]["icon"]) return $_mimetypes_bymimetype_[$mimetype]["icon"] ;
-	if ($_mimetypes_byext_[$ext]["icon"]) return $_mimetypes_byext_[$ext]["icon"] ;
+	if (isset($_mimetypes_bymimetype_[$mimetype]["icon"]) && $_mimetypes_bymimetype_[$mimetype]["icon"]) return $_mimetypes_bymimetype_[$mimetype]["icon"] ;
+	if (isset($_mimetypes_byext_[$ext]["icon"]) && $_mimetypes_byext_[$ext]["icon"]) return $_mimetypes_byext_[$ext]["icon"] ;
 	return "unknown.gif" ;
 }
-
 
 function trouve_mimetype ($fichier, $ext='') {
 	
@@ -107,33 +165,34 @@ function trouve_mimetype ($fichier, $ext='') {
 	return '';
 }
 
-
 function reduire_image ($userfile_name) {
-
-	global $pmb_vignette_x ;
-	global $pmb_vignette_y ;
+	global $pmb_vignette_x;
+	global $pmb_vignette_y;
 	global $base_path;
 	global $pmb_curl_available;
 	
-	if (!$pmb_vignette_x) $pmb_vignette_x=100 ;
-	if (!$pmb_vignette_y) $pmb_vignette_y=100 ;
-	$src_image='';
+	if (!$pmb_vignette_x) $pmb_vignette_x = 100 ;
+	if (!$pmb_vignette_y) $pmb_vignette_y = 100 ;
+	$src_image = '';
+	$fichier_tmp = '';
 	
 	if(file_exists("$base_path/temp/$userfile_name")){
 		$bidon = "$base_path/temp/$userfile_name";
-		$source_file = $bidon."[0]";
+		$source_file = realpath($bidon).'[0]';
 	} else {
 		$bidon = $userfile_name;
 		//Il s'agit d'une url, on copie le fichier en local
 		$nom_temp = session_id().microtime();
 		$nom_temp = str_replace(' ','_',$nom_temp);
 		$nom_temp = str_replace('.','_',$nom_temp);
-		$fichier_tmp = "$base_path/temp/".$nom_temp;
-		if ($pmb_curl_available) {
+		$fichier_tmp = $base_path."/temp/".$nom_temp;
+		if ($pmb_curl_available && !file_exists($userfile_name)) {
 			$aCurl = new Curl();
+			$aCurl->timeout=10;
+			$aCurl->set_option('CURLOPT_SSL_VERIFYPEER',false);
 			$aCurl->save_file_name=$fichier_tmp; 
 			$aCurl->get($userfile_name);
-		} else {
+		} else if(file_exists($userfile_name)) {
 			$handle = fopen($userfile_name, "rb");
 			$filecontent = stream_get_contents($handle);
 			fclose($handle);
@@ -141,8 +200,19 @@ function reduire_image ($userfile_name) {
 			fwrite($fd,$filecontent);
 			fclose($fd);
 		}
-		$source_file = $fichier_tmp."[0]";
+		$source_file = realpath($fichier_tmp);
+		if ($source_file) {
+		  $source_file.= '[0]';
+		} else {
+		    $source_file = '';
+		}
 	}
+	
+	if($source_file=='') {
+	    $contenu_vignette = '';
+	    return $contenu_vignette;
+	}
+	
 	$error = true;
 	if(extension_loaded('imagick')) {
 		mysql_set_wait_timeout(3600);
@@ -150,6 +220,10 @@ function reduire_image ($userfile_name) {
 		try {		
 			$img = new Imagick();
 			$img->readImage($source_file);
+			
+			$img->setImageBackgroundColor('white');
+			$img = $img->flattenImages();
+			
 			if(($img->getImageWidth() > $pmb_vignette_x) || ($img->getImageHeight() > $pmb_vignette_y)){// Si l'image est trop grande on la réduit
 				$img->thumbnailimage($pmb_vignette_x,$pmb_vignette_y,true);
 			}
@@ -160,7 +234,9 @@ function reduire_image ($userfile_name) {
 		} catch(Exception $ex) {
 			$error=true;
 		}		
-		unlink($fichier_tmp);
+		if($fichier_tmp && file_exists($fichier_tmp)){
+			unlink($fichier_tmp);
+		}
 	}
 	if ($error) {
 		$size =@getimagesize($bidon);
@@ -189,7 +265,7 @@ function reduire_image ($userfile_name) {
 				break;
 		}
 		$erreur_vignette = 0 ;
-		if ($src_img) {
+		if (!empty($src_img)) {
 			$rs=$pmb_vignette_x/$pmb_vignette_y;
 			$taillex=imagesx($src_img);
 			$tailley=imagesy($src_img);
@@ -246,8 +322,15 @@ function reduire_image ($userfile_name) {
 	return $contenu_vignette ;
 }
 
-
 function construire_vignette($vignette_name='', $userfile_name='', $url='') {
+	$contenu_vignette = "";
+	$eh = events_handler::get_instance();
+	$event = new event_explnum("explnum","contruire_vignette");
+	$eh->send($event);
+	$contenu_vignette = $event->get_contenu_vignette();
+	if($contenu_vignette) {
+		return $contenu_vignette;
+	}
 	if ($vignette_name) {
 		$contenu_vignette = reduire_image($vignette_name);
 	} elseif ($userfile_name) {
@@ -259,7 +342,6 @@ function construire_vignette($vignette_name='', $userfile_name='', $url='') {
 	}
 	return $contenu_vignette ;
 }
-
 
 function explnum_update($f_explnum_id, $f_notice, $f_bulletin, $f_nom, $f_url, $retour, $conservervignette=0, $f_statut_chk=0) {
 	
@@ -308,12 +390,12 @@ function explnum_update($f_explnum_id, $f_notice, $f_bulletin, $f_nom, $f_url, $
 					fwrite($fp,base64_decode($scanned_image));
 					$nf=1;
 					$part_name="scanned_image_".$nf;
-					global $$part_name;
-					while ($$part_name) {
-						fwrite($fp,base64_decode($$part_name));
+					global ${$part_name};
+					while (${$part_name}) {
+						fwrite($fp,base64_decode(${$part_name}));
 						$nf++;
 						$part_name="scanned_image_".$nf;
-						global $$part_name;
+						global ${$part_name};
 					}
 					fclose($fp);
 					$fic=1;
@@ -366,12 +448,12 @@ function explnum_update($f_explnum_id, $f_notice, $f_bulletin, $f_nom, $f_url, $
 				fwrite($fp,base64_decode($scanned_image));
 				$nf=1;
 				$part_name="scanned_image_".$nf;
-				global $$part_name;
-				while ($$part_name) {
-					fwrite($fp,base64_decode($$part_name));
+				global ${$part_name};
+				while (${$part_name}) {
+					fwrite($fp,base64_decode(${$part_name}));
 					$nf++;
 					$part_name="scanned_image_".$nf;
-					global $$part_name;
+					global ${$part_name};
 				}
 				fclose($fp);
 				$fic=1;
@@ -468,7 +550,7 @@ function explnum_update($f_explnum_id, $f_notice, $f_bulletin, $f_nom, $f_url, $
 			$requete .= ", explnum_vignette='".addslashes($contenu_vignette)."'";
 		}
 		if ($pmb_explnum_statut=='1') {
-			$requete.= ", explnum_statut='".$f_statut_chk."'";
+			$requete.= ", explnum_statut='".(($f_statut_chk)?$f_statut_chk:1)."'";
 		}	
 		$requete.= ", explnum_repertoire='".$id_rep."'";
 		$requete.= ", explnum_path='".$path."'";
@@ -546,7 +628,13 @@ function explnum_add_from_url($f_notice_id, $f_bulletin_id, $f_nom, $f_url, $ove
 	pmb_mysql_query($sql_delete, $dbh);
 	
 	$original_filename = basename($f_url);
-	$extension = substr($original_filename,strripos($original_filename,'.')*1+1);
+	if(strripos($original_filename,'.') !== false) {
+		$extension = substr($original_filename,strripos($original_filename,'.')*1+1);
+	} elseif(strripos($filename,'.') !== false) {
+		$extension = substr($filename,strripos($filename,'.')*1+1);
+	} else {
+		$extension = substr($f_nom,strripos($f_nom,'.')*1+1);
+	}
 	$tmp_filename = explnum::static_rename($extension);
 	if ($filename) {
 		$new_filename=$filename;
@@ -559,9 +647,10 @@ function explnum_add_from_url($f_notice_id, $f_bulletin_id, $f_nom, $f_url, $ove
 		$r = copy($f_url, $base_path.'/temp/'.$tmp_filename);
 	} else {	//url
 		$aCurl = new Curl();
+		$aCurl->set_option('CURLOPT_SSL_VERIFYPEER',false);
 		$content = $aCurl->get($f_url);
 		$content = $content->body;
-		$r = file_put_contents("$base_path/temp/".$tmp_filename, $content);
+		$r = file_put_contents($base_path."/temp/".$tmp_filename, $content);
 	}
 
 	if ($r) {
@@ -608,7 +697,7 @@ function explnum_add_from_url($f_notice_id, $f_bulletin_id, $f_nom, $f_url, $ove
 			$insert_sql .= "'".addslashes($vignette)."',";
 			$insert_sql .= "'".addslashes($rep_upload)."',";
 			$insert_sql .= "'".addslashes($path)."',";
-			$insert_sql .= $f_statut;
+			$insert_sql .= "'".(($f_statut)?$f_statut:1)."'";
 			$insert_sql .= ")";		
 		} else {			
 			$insert_sql = "INSERT INTO explnum (explnum_notice, explnum_bulletin, explnum_nom, explnum_nomfichier, explnum_mimetype, explnum_extfichier, explnum_data, explnum_vignette, explnum_docnum_statut) VALUES (";
@@ -620,7 +709,7 @@ function explnum_add_from_url($f_notice_id, $f_bulletin_id, $f_nom, $f_url, $ove
 			$insert_sql .= "'".addslashes($extension)."',";
 			$insert_sql .= "'".addslashes($content)."',";
 			$insert_sql .= "'".addslashes($vignette)."',";
-			$insert_sql .= $f_statut;
+			$insert_sql .= "'".(($f_statut)?$f_statut:1)."'";
 			$insert_sql .= ")";
 		}
 		if(pmb_mysql_query($insert_sql, $dbh)){
@@ -710,18 +799,18 @@ function explnum_add_url($f_notice_id, $f_bulletin_id, $f_nom, $f_url, $overwrit
 		$f_bulletin_id = 0;
 	}
 	if (!$overwrite) {
-		$sql_find = "SELECT count(*) FROM explnum WHERE explnum_notice = ".$f_notice_id." AND explnum_nom = ".addslashes($f_nom);
+		$sql_find = "SELECT count(*) FROM explnum WHERE explnum_notice = ".$f_notice_id." AND explnum_nom = '".addslashes($f_nom)."'";
 		$res = pmb_mysql_query($sql_find, $dbh);
 		$count = pmb_mysql_result($res, 0, 0);
 		if ($count)
 			return;		
 	}
-	$sql_delete = "DELETE FROM explnum WHERE explnum_notice = ".$f_notice_id." AND explnum_nom = ".addslashes($f_nom);
+	$sql_delete = "DELETE FROM explnum WHERE explnum_notice = ".$f_notice_id." AND explnum_nom = '".addslashes($f_nom)."'";
 	pmb_mysql_query($sql_delete, $dbh);
 	
 	$original_filename = basename($f_url);
 	$extension = strrchr($original_filename, '.');
-	$insert_sql = "INSERT INTO explnum (explnum_notice, explnum_bulletin, explnum_nom, explnum_nomfichier, explnum_url, explnum_mimetype, explnum_extfichier, explnum_docnum_statut) VALUES (";
+	$insert_sql = "INSERT INTO explnum (explnum_notice, explnum_bulletin, explnum_nom, explnum_nomfichier, explnum_url, explnum_mimetype, explnum_extfichier, explnum_docnum_statut, explnum_vignette) VALUES (";
 	$insert_sql .= $f_notice_id.",";
 	$insert_sql .= $f_bulletin_id.",";
 	$insert_sql .= "'".addslashes($f_nom)."',";
@@ -729,7 +818,8 @@ function explnum_add_url($f_notice_id, $f_bulletin_id, $f_nom, $f_url, $overwrit
 	$insert_sql .= "'".addslashes($f_url)."',";
 	$insert_sql .= "'"."URL"."',";
 	$insert_sql .= "'".addslashes($extension)."',";
-	$insert_sql .= $f_statut;
+	$insert_sql .= "'".(($f_statut)?$f_statut:1)."',";
+	$insert_sql .= "'".addslashes(construire_vignette('', '', $f_url))."'";
 	$insert_sql .= ")";
 	
 	if(pmb_mysql_query($insert_sql, $dbh)){
@@ -743,7 +833,7 @@ function explnum_add_url($f_notice_id, $f_bulletin_id, $f_nom, $f_url, $overwrit
 
 
 // fonction retournant les infos d'exemplaires numeriques pour une notice ou un bulletin donne
-function show_explnum_per_notice($no_notice, $no_bulletin, $link_expl='',$param_aff=array(),$return_count = false) {
+function show_explnum_per_notice($no_notice, $no_bulletin, $link_expl='',$param_aff=array(),$return_count = false, $context_dsi_id_bannette = 0) {
 	
 	// params :
 	// $link_expl= lien associe a l'exemplaire avec !!explnum_id!! a mettre a jour
@@ -751,6 +841,8 @@ function show_explnum_per_notice($no_notice, $no_bulletin, $link_expl='',$param_
 	global $charset;
 	global $use_dsi_diff_mode;
 	global $base_path,$msg;
+	global $pmb_map_activate;
+	global $pmb_explnum_order;
 	
 	if (!$no_notice && !$no_bulletin) return "";
 
@@ -771,18 +863,19 @@ function show_explnum_per_notice($no_notice, $no_bulletin, $link_expl='',$param_
 			FROM explnum, bulletins
 			WHERE bulletin_id = explnum_bulletin
 			AND bulletins.num_notice='".$no_notice."'";
-	$requete .= " order by explnum_mimetype, explnum_id ";
-	$res = pmb_mysql_query($requete, $dbh) or die ($requete." ".pmb_mysql_error());
+	if ($pmb_explnum_order) $requete .= " order by ".$pmb_explnum_order;
+	else $requete .= " order by explnum_mimetype, explnum_id ";
+	$res = pmb_mysql_query($requete);
 	$nb_ex = pmb_mysql_num_rows($res);
-	
 	if ($return_count) {
 		return $nb_ex;
 	}
+	$map_display = '';
 	if($nb_ex) {
 		// on recupere les donnees des exemplaires
 		$i = 1 ;
+		$ligne_finale = '';
 		while (($expl = pmb_mysql_fetch_object($res))) {
-			
 			// couleur de l'img en fonction du statut
 			if ($expl->explnum_docnum_statut) {
 				$rqt_st = "SELECT * FROM explnum_statut WHERE  id_explnum_statut='".$expl->explnum_docnum_statut."' ";
@@ -804,7 +897,8 @@ function show_explnum_per_notice($no_notice, $no_bulletin, $link_expl='',$param_
 				$txt = "" ;
 			}
 			
-			if ($i==1) $ligne="<tr><td class='docnum' width='25%'>!!1!!</td><td class='docnum' width='25%'>!!2!!</td><td class='docnum' width='25%'>!!3!!</td><td class='docnum' width='25%'>!!4!!</td></tr>" ;
+			if ($i==1) $ligne="<tr><td id='explnum_".$expl->explnum_id."' class='docnum center' width='25%'>!!1!!</td><td class='docnum center' width='25%'>!!2!!</td><td class='docnum center' width='25%'>!!3!!</td><td class='docnum center' width='25%'>!!4!!</td></tr>" ;
+			$tlink = '';
 			if ($link_expl) {
 				$tlink = str_replace("!!explnum_id!!", $expl->explnum_id, $link_expl);
 				$tlink = str_replace("!!notice_id!!", $expl->explnum_notice, $tlink);					
@@ -816,28 +910,38 @@ function show_explnum_per_notice($no_notice, $no_bulletin, $link_expl='',$param_
 			if ($prefix_url_image) $tmpprefix_url_image = $prefix_url_image; 
 				else $tmpprefix_url_image = "./" ;
 	
-			if ($expl->explnum_vignette) $obj="<img src='".$tmpprefix_url_image."vig_num.php?explnum_id=$expl->explnum_id' alt='$alt' title='$alt' border='0'>";
-				else // trouver l'icone correspondant au mime_type
+			if ($expl->explnum_vignette){
+				$obj="<img src='".$tmpprefix_url_image."vig_num.php?explnum_id=".$expl->explnum_id;
+				if ($context_dsi_id_bannette) {
+					$obj.= "&context_dsi_id_bannette=".$context_dsi_id_bannette;
+				}
+				$obj.="' alt='$alt' title='$alt' border='0'>";
+			} else { // trouver l'icone correspondant au mime_type
 				$obj="<img src='".$tmpprefix_url_image."images/mimetype/".icone_mimetype($expl->explnum_mimetype, $expl->explnum_extfichier)."' alt='$alt' title='$alt' border='0'>";
+			}
 				
 			$obj_suite="$statut_libelle_div
 				<a  href='#' onmouseout=\"z=document.getElementById('zoom_statut_docnum".$expl->explnum_id."'); z.style.display='none'; \" onmouseover=\"z=document.getElementById('zoom_statut_docnum".$expl->explnum_id."'); z.style.display=''; \">
-					<div class='vignette_doc_num' ><img $class_img width='10' height='10' src='./images/spacer.gif'></div>
+					<div class='vignette_doc_num' ><img $class_img width='10' height='10' src='".$tmpprefix_url_image."images/spacer.gif'></div>
 				</a>
 			";			
-			$expl_liste_obj = "<center>";
+			$expl_liste_obj = "<span class='center'>";
 			$expl_liste_obj .= "<a href='".$tmpprefix_url_image."doc_num.php?explnum_id=$expl->explnum_id' alt='$alt' title='$alt' target='_blank'>".$obj."</a>$obj_suite<br />" ;
 			
-			if ($_mimetypes_byext_[$expl->explnum_extfichier]["label"]) $explmime_nom = $_mimetypes_byext_[$expl->explnum_extfichier]["label"] ;
-			elseif ($_mimetypes_bymimetype_[$expl->explnum_mimetype]["label"]) $explmime_nom = $_mimetypes_bymimetype_[$expl->explnum_mimetype]["label"] ;
+			if (isset($_mimetypes_byext_[$expl->explnum_extfichier]["label"]) && $_mimetypes_byext_[$expl->explnum_extfichier]["label"]) $explmime_nom = $_mimetypes_byext_[$expl->explnum_extfichier]["label"] ;
+			elseif (isset($_mimetypes_bymimetype_[$expl->explnum_mimetype]["label"]) && $_mimetypes_bymimetype_[$expl->explnum_mimetype]["label"]) $explmime_nom = $_mimetypes_bymimetype_[$expl->explnum_mimetype]["label"] ;
 			else $explmime_nom = $expl->explnum_mimetype ;
-			if($param_aff["mine_type"]) $explmime_nom="";
+			if(isset($param_aff["mine_type"])) $explmime_nom="";
 			if ($tlink) {
-				$expl_liste_obj .= "<a href='$tlink'>";
-				$expl_liste_obj .= htmlentities($expl->explnum_nom,ENT_QUOTES, $charset)."</a><div class='explnum_type'>".htmlentities($explmime_nom,ENT_QUOTES, $charset)."</div>";
+				$expl_liste_obj .= "<a class='docnum_name_link' href='$tlink'>";
+				$expl_liste_obj .= htmlentities($expl->explnum_nom,ENT_QUOTES, $charset)."</a>";
 			} else {
-				$expl_liste_obj .= htmlentities($expl->explnum_nom,ENT_QUOTES, $charset)."<div class='explnum_type'>".htmlentities($explmime_nom,ENT_QUOTES, $charset)."</div>";
+				$expl_liste_obj .= htmlentities($expl->explnum_nom,ENT_QUOTES, $charset);
 			}
+			// Régime de licence
+			$expl_liste_obj.= explnum_licence::get_explnum_licence_picto($expl->explnum_id);
+			
+			$expl_liste_obj.= "<div class='explnum_type'>".htmlentities($explmime_nom,ENT_QUOTES, $charset)."</div>";
 			//recherche des concepts...
 			$query = "select num_concept,value from index_concept join skos_fields_global_index on num_concept = id_item and code_champ = 1  where num_object = ".$expl->explnum_id." and type_object = 11 order by order_concept";
 			$result = pmb_mysql_query($query,$dbh);
@@ -848,14 +952,14 @@ function show_explnum_per_notice($no_notice, $no_bulletin, $link_expl='',$param_
 						$concept.=" / ";
 					}
 					if (SESSrights & AUTORITES_AUTH){
-						$concept.="<a href='".$base_path."/autorites.php?categ=concepts&sub=concept&action=edit&id=".$row->num_concept."' title='".addslashes($msg['concept_menu'].": ".htmlentities($row->value,ENT_QUOTES,$charset))."'>".htmlentities($row->value,ENT_QUOTES,$charset)."</a>";
+						$concept.="<a href='".$base_path."/autorites.php?categ=see&sub=concept&id=".$row->num_concept."' title='".addslashes($msg['concept_menu'].": ".htmlentities($row->value,ENT_QUOTES,$charset))."'>".htmlentities($row->value,ENT_QUOTES,$charset)."</a>";
 					}else{
 						$concept.="<span title='".addslashes($msg['concept_menu'].": ".htmlentities($row->value,ENT_QUOTES,$charset))."'>".htmlentities($row->value,ENT_QUOTES,$charset)."</span>";
 					}
 				}
 			}
 			
-			$expl_liste_obj .= $concept."</center>";
+			$expl_liste_obj .= $concept."</span>";
 			$ligne = str_replace("!!$i!!", $expl_liste_obj, $ligne);
 			$i++;
 			if ($i==5) {
@@ -871,7 +975,7 @@ function show_explnum_per_notice($no_notice, $no_bulletin, $link_expl='',$param_
 		$ligne_finale = str_replace('!!4!!', "&nbsp;", $ligne_finale);
 		
 	} else return "";
-	$entry .= "<table class='docnum'>$ligne_finale</table>";
+	$entry = $map_display . "<table class='docnum'>$ligne_finale</table>";
 	return $entry;
 }
 
@@ -884,7 +988,7 @@ function extract_metas($filename,$mimetype,$tmp = false){
 		case "application/epub+zip" :
 			//Exiftool ne donnerait rien, mais un Epub contient toutes les infos qui nous faut !
 			require_once($class_path."/epubData.class.php");
-			$epub = new epubData($filename);
+			$epub = new epub_Data($filename);
 			$metas = $epub->metas;
 			break;
 		case "application/pdf" :
@@ -948,7 +1052,7 @@ function extract_metas($filename,$mimetype,$tmp = false){
 function explnum_allow_opac($no_notice, $no_bulletin) {
 	// params :
 	global $dbh;
-	global $gestion_acces_active,$gestion_acces_empr_notice;
+	global $gestion_acces_active,$gestion_acces_empr_notice,$opac_show_links_invisible_docnums;
 	
 	if (!$no_notice && !$no_bulletin) return false;
 	
@@ -976,7 +1080,7 @@ function explnum_allow_opac($no_notice, $no_bulletin) {
 		if(pmb_mysql_num_rows($myQuery)) {
 			$statut_temp = pmb_mysql_fetch_object($myQuery);
 			if(!$statut_temp->explnum_visible_opac)	$docnum_visible=false;
-			if($statut_temp->explnum_visible_opac_abon)	$docnum_visible=false;
+			if(($statut_temp->explnum_visible_opac_abon) && (!$opac_show_links_invisible_docnums))	$docnum_visible=false;
 		} else 	$docnum_visible=false;
 	}
 	return $docnum_visible;
@@ -1007,6 +1111,7 @@ function show_explnum_in_relation($no_notice, $link_expl='',$param_aff=array()) 
 	if($nb_ex) {
 		// on recupere les donnees des exemplaires
 		$i = 1 ;
+		$ligne_finale = '';
 		while (($expl = pmb_mysql_fetch_object($res))) {
 				
 			// couleur de l'img en fonction du statut
@@ -1030,6 +1135,7 @@ function show_explnum_in_relation($no_notice, $link_expl='',$param_aff=array()) 
 			}
 				
 			if ($i==1) $ligne="<tr><td class='docnum' width='25%'>!!1!!</td><td class='docnum' width='25%'>!!2!!</td><td class='docnum' width='25%'>!!3!!</td><td class='docnum' width='25%'>!!4!!</td></tr>" ;
+			$tlink = '';
 			if ($link_expl) {
 				$tlink = str_replace("!!explnum_id!!", $expl->explnum_id, $link_expl);
 				$tlink = str_replace("!!notice_id!!", $expl->explnum_notice, $tlink);
@@ -1046,16 +1152,16 @@ function show_explnum_in_relation($no_notice, $link_expl='',$param_aff=array()) 
 
 			$obj_suite="$statut_libelle_div
 			<a  href='#' onmouseout=\"z=document.getElementById('zoom_statut_docnum".$expl->explnum_id."'); z.style.display='none'; \" onmouseover=\"z=document.getElementById('zoom_statut_docnum".$expl->explnum_id."'); z.style.display=''; \">
-			<div class='vignette_doc_num' ><img $class_img width='10' height='10' src='./images/spacer.gif'></div>
+			<div class='vignette_doc_num' ><img $class_img width='10' height='10' src='".get_url_icon('spacer.gif')."'></div>
 			</a>
 			";
-			$expl_liste_obj = "<center>";
+			$expl_liste_obj = "";
 			$expl_liste_obj .= "<a href='".$tmpprefix_url_image."doc_num.php?explnum_id=$expl->explnum_id' alt='$alt' title='$alt' target='_blank'>".$obj."</a>$obj_suite<br />" ;
 					
 			if ($_mimetypes_byext_[$expl->explnum_extfichier]["label"]) $explmime_nom = $_mimetypes_byext_[$expl->explnum_extfichier]["label"] ;
 			elseif ($_mimetypes_bymimetype_[$expl->explnum_mimetype]["label"]) $explmime_nom = $_mimetypes_bymimetype_[$expl->explnum_mimetype]["label"] ;
 			else $explmime_nom = $expl->explnum_mimetype ;
-			if($param_aff["mine_type"]) $explmime_nom="";
+			if(isset($param_aff["mine_type"])) $explmime_nom="";
 			if ($tlink) {
 				$expl_liste_obj .= "<a href='$tlink'>";
 				$expl_liste_obj .= htmlentities($expl->explnum_nom,ENT_QUOTES, $charset)."</a><div class='explnum_type'>".htmlentities($explmime_nom,ENT_QUOTES, $charset)."</div>";
@@ -1072,14 +1178,14 @@ function show_explnum_in_relation($no_notice, $link_expl='',$param_aff=array()) 
 						$concept.=" / ";
 					}	
 					if (SESSrights & AUTORITES_AUTH){
-						$concept.="<a href='".$base_path."/autorites.php?categ=concepts&sub=concept&action=edit&id=".$row->num_concept."' title='".addslashes($msg['concept_menu'].": ".htmlentities($row->value,ENT_QUOTES,$charset))."'>".htmlentities($row->value,ENT_QUOTES,$charset)."</a>";
+						$concept.="<a href='".$base_path."/autorites.php?categ=see&sub=concept&id=".$row->num_concept."' title='".addslashes($msg['concept_menu'].": ".htmlentities($row->value,ENT_QUOTES,$charset))."'>".htmlentities($row->value,ENT_QUOTES,$charset)."</a>";
 					}else{
 						$concept.="<span title='".addslashes($msg['concept_menu'].": ".htmlentities($row->value,ENT_QUOTES,$charset))."'>".htmlentities($row->value,ENT_QUOTES,$charset)."</span>";
 					}
 				}
 			}	
 		
-			$expl_liste_obj .= $concept."</center>";
+			$expl_liste_obj .= $concept."";
 			$ligne = str_replace("!!$i!!", $expl_liste_obj, $ligne);
 			$i++;
 			if ($i==5) {
@@ -1095,7 +1201,7 @@ function show_explnum_in_relation($no_notice, $link_expl='',$param_aff=array()) 
 		$ligne_finale = str_replace('!!4!!', "&nbsp;", $ligne_finale);
 
 	} else return "";
-	$entry .= "<table class='docnum'>$ligne_finale</table>";
+	$entry = "<table class='docnum'>$ligne_finale</table>";
 	return $entry;
 }
 ?>

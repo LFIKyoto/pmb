@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: oai.class.php,v 1.10 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: oai.class.php,v 1.16 2018-10-19 09:49:20 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,43 +12,27 @@ require_once($base_path."/admin/connecteurs/in/oai/oai_protocol.class.php");
 
 class oai extends connector {
 	//Variables internes pour la progression de la récupération des notices
-	var $callback_progress;		//Nom de la fonction de callback progression passée par l'appellant
-	var $current_set;			//Set en cours de synchronisation
-	var $total_sets;			//Nombre total de sets sélectionnés
-	var $metadata_prefix;		//Préfixe du format de données courant
-	var $source_id;				//Numéro de la source en cours de synchro
-	var $n_recu;				//Nombre de notices reçues
-	var $xslt_transform;		//Feuille xslt transmise
-	var $sets_names;			//Nom des sets pour faire plus joli !!
-	var $del_old;				//Supression ou non des notices dejà existantes
+	public $current_set;			//Set en cours de synchronisation
+	public $total_sets;			//Nombre total de sets sélectionnés
+	public $metadata_prefix;		//Préfixe du format de données courant
+	public $n_recu;				//Nombre de notices reçues
+	public $xslt_transform;		//Feuille xslt transmise
+	public $sets_names;			//Nom des sets pour faire plus joli !!
 	
-	//Résultat de la synchro
-	var $error;					//Y-a-t-il eu une erreur	
-	var $error_message;			//Si oui, message correspondant
-	
-    function oai($connector_path="") {
-    	parent::connector($connector_path);
+    public function __construct($connector_path="") {
+    	parent::__construct($connector_path);
     }
     
-    function get_id() {
+    public function get_id() {
     	return "oai";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 1;
 	}
     
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-    
-    function source_get_property_form($source_id) {
+    public function source_get_property_form($source_id) {
     	global $charset;
     	
     	$params=$this->get_source_params($source_id);
@@ -56,8 +40,8 @@ class oai extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		$form="<div class='row'>
@@ -132,8 +116,8 @@ class oai extends connector {
 						if (count($oai_p->sets)<80) $combien = count($oai_p->sets);
 						else $combien=80; 
 						$form.="<select id='sets' name='sets[]' class='saisie-80em' multiple='yes' size='".$combien."'>";
-						foreach ($oai_p->sets as $set=>$setname) {
-							$form.="<option value='".htmlentities($set,ENT_QUOTES,$charset)."' alt='".htmlentities($setname,ENT_QUOTES,$charset)."' title='".htmlentities($setname,ENT_QUOTES,$charset)."' ".(@array_search($set,$sets)!==false?"selected":"").">".htmlentities($setname,ENT_QUOTES,$charset)."</option>\n";
+						foreach ($oai_p->sets as $code=>$set) {
+							$form.="<option value='".htmlentities($code,ENT_QUOTES,$charset)."' alt='".htmlentities($set['name'],ENT_QUOTES,$charset)."' ".($set['description'] ? "title='".htmlentities($set['description'],ENT_QUOTES,$charset)."'" : "")." ".(@array_search($code,$sets)!==false?"selected":"").">".htmlentities($set['name'],ENT_QUOTES,$charset)."</option>\n";
 						}
 						$form.="	</select>
 						</div>
@@ -173,7 +157,7 @@ class oai extends connector {
 		return $form;
     }
     
-    function make_serialized_source_properties($source_id) {
+    public function make_serialized_source_properties($source_id) {
     	global $url,$clean_base_url,$sets,$formats,$del_deleted,$del_xsl_transform;
     	$t["url"]=stripslashes($url);
     	$t["clean_base_url"]=$clean_base_url;
@@ -201,25 +185,12 @@ class oai extends connector {
 	}
 	
 	//Récupération  des proriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
-		$this->timeout=5;
+	public function fetch_default_global_values() {
+		parent::fetch_default_global_values();
 		$this->repository=1;
-		$this->retry=3;
-		$this->ttl=1800;
-		$this->parameters="";
 	}
 	
-	//Formulaire des propriétés générales
-	function get_property_form() {
-		$this->fetch_global_properties();
-		return "";
-	}
-	
-	function make_serialized_properties() {
-		$this->parameters="";
-	}
-	
-	function progress($query,$token) {
+	public function progress($query,$token) {
 		$callback_progress=$this->callback_progress;
 		if ($token["completeListSize"]) {
 			$percent=($this->current_set/$this->total_sets)+(($token["cursor"]/$token["completeListSize"])/$this->total_sets);
@@ -235,7 +206,7 @@ class oai extends connector {
 		$callback_progress($percent,$nlu,$ntotal);
 	}
 	
-	function rec_record($record) {
+	public function rec_record($record) {
 		global $charset,$base_path;
 		
 		$rec=new oai_record($record,$charset,$base_path."/admin/connecteurs/in/oai/xslt",$this->metadata_prefix,$this->xslt_transform,$this->sets_names);
@@ -265,14 +236,12 @@ class oai extends connector {
 				if ($ref) {
 					//Si conservation des anciennes notices, on regarde si elle existe
 					if (!$this->del_old) {
-						$requete="select count(*) from entrepot_source_".$this->source_id." where connector_id='".addslashes($this->get_id())."' and ref='".addslashes($ref)."'";
-						$rref=pmb_mysql_query($requete);
-						if ($rref) $ref_exists=pmb_mysql_result($rref,0,0);
+						$ref_exists = $this->has_ref($source_id, $ref);
 					}
 					//Si pas de conservation des anciennes notices, on supprime
 					if ($this->del_old) {
-						$requete="delete from entrepot_source_".$this->source_id." where connector_id='".addslashes($this->get_id())."' and ref='".addslashes($ref)."'";
-						pmb_mysql_query($requete);
+						$this->delete_from_entrepot($this->source_id, $ref);
+						$this->delete_from_external_count($this->source_id, $ref);
 					}
 					//Si pas de conservation ou reférence inexistante
 					if (($this->del_old)||((!$this->del_old)&&(!$ref_exists))) {
@@ -285,15 +254,10 @@ class oai extends connector {
 						$n_header["dt"]=$rec_uni_dom->get_value("unimarc/notice/dt");
 						
 						//Récupération d'un ID
-						$requete="insert into external_count (recid) values('".addslashes($this->get_id()." ".$this->source_id." ".$ref)."')";
-						$rid=pmb_mysql_query($requete);
-						if ($rid) $recid=pmb_mysql_insert_id();
+						$recid = $this->insert_into_external_count($this->source_id, $ref);
 						
 						foreach($n_header as $hc=>$code) {
-							$requete="insert into entrepot_source_".$this->source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid) values(
-							'".addslashes($this->get_id())."',".$this->source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
-							'".$hc."','',-1,0,'".addslashes($code)."','',$recid)";
-							pmb_mysql_query($requete);
+							$this->insert_header_into_entrepot($this->source_id, $ref, $date_import, $hc, $code, $recid);
 						}
 						
 						for ($i=0; $i<count($fs); $i++) {
@@ -304,38 +268,30 @@ class oai extends connector {
 								for ($j=0; $j<count($ss); $j++) {
 									$usubfield=$ss[$j]["ATTRIBS"]["c"];
 									$value=$rec_uni_dom->get_datas($ss[$j]);
+									if ($clean_html) {
+										$value = strip_tags(html_entity_decode($value,ENT_QUOTES,$charset));
+									}
 									$subfield_order=$j;
-									$requete="insert into entrepot_source_".$this->source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid) values(
-									'".addslashes($this->get_id())."',".$this->source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
-									'".addslashes($ufield)."','".addslashes($usubfield)."',".$field_order.",".$subfield_order.",'".addslashes($value)."',
-									' ".addslashes(strip_empty_words($value))." ',$recid)";
-									pmb_mysql_query($requete);
+									$this->insert_content_into_entrepot($this->source_id, $ref, $date_import, $ufield, $usubfield, $field_order, $subfield_order, $value, $recid);
 								}
 							} else {
 								$value=$rec_uni_dom->get_datas($fs[$i]);
-								$requete="insert into entrepot_source_".$this->source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid) values(
-								'".addslashes($this->get_id())."',".$this->source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
-								'".addslashes($ufield)."','".addslashes($usubfield)."',".$field_order.",".$subfield_order.",'".addslashes($value)."',
-								' ".addslashes(strip_empty_words($value))." ',$recid)";
-								pmb_mysql_query($requete);
+								if ($clean_html) {
+									$value = strip_tags(html_entity_decode($value,ENT_QUOTES,$charset));
+								}
+								$this->insert_content_into_entrepot($this->source_id, $ref, $date_import, $ufield, $usubfield, $field_order, $subfield_order, $value, $recid);
 							}
 						}
+						$this->insert_origine_into_entrepot($this->source_id, $ref, $date_import, $recid);
+						$this->rec_isbd_record($this->source_id, $ref, $recid);
 					}
 					$this->n_recu++;
 				}
 			}
 		}
 	}
-		
-	function cancel_maj($source_id) {
-		return false;
-	}
 	
-	function break_maj($source_id) {
-		return false;
-	}
-	
-	function maj_entrepot($source_id,$callback_progress="",$recover=false,$recover_env="") {
+	public function maj_entrepot($source_id,$callback_progress="",$recover=false,$recover_env="") {
 		global $charset;
 		$this->callback_progress=$callback_progress;
 		$params=$this->unserialize_source_params($source_id);
@@ -373,7 +329,11 @@ class oai extends connector {
 				//Affectation de la date de départ
 				$date_start=$last_date;
 				//Recherche des sets sélectionnés
-				$this->sets_names=$oai20->sets;
+				$sets_names = array();
+				foreach ($oai20->sets as $code=>$set) {
+					$sets_names[$code] = $set['name'];
+				}
+				$this->sets_names=$sets_names;
 				for ($i=0; $i<count($p["sets"]);$i++) {
 					if ($oai20->sets[$p["sets"][$i]]) {
 						$sets[]=$p["sets"][$i];

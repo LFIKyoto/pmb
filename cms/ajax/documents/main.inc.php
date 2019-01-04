@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.3 2014-11-18 14:24:22 arenou Exp $
+// $Id: main.inc.php,v 1.4 2018-01-05 16:26:06 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($caller)) $caller = '';
 
 require_once($class_path."/cms/cms_document.class.php");
 
@@ -36,6 +38,6 @@ switch($action){
 }
 
 if($response['content']){
-	if(!$response['content-type'])$response['content-type'] = "text/html";
+	if(empty($response['content-type']))$response['content-type'] = "text/html";
 	ajax_http_send_response($response['content'],$response['content-type']);
 }

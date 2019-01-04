@@ -1,7 +1,7 @@
 /* +--------------------------------------------------------------------------+
 // ? 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dashboard.css,v 1.5 2015-05-16 13:10:22 Alexandre Exp $ */
+// $Id: dashboard.css,v 1.6 2016-03-09 13:59:54 mbertin Exp $ */
 
 #extra2{
 	background: rgba(255,255,255,0.7);
@@ -63,6 +63,11 @@
 #dashboards .dashboard.cms h3{
 	background-color : #3187D9;
 	background: linear-gradient(to bottom, #b7dafa 0%,#a2cff9 30%,#6fb4f5 78%,#60adf5 100%);
+}
+#dashboards .dashboard.admin h3{
+	background: rgb(179,59,60);
+	background: -moz-linear-gradient(top,  rgba(179,59,60,1) 0%, rgba(167,51,51,1) 22%, rgba(151,37,37,1) 43%, rgba(131,21,20,1) 65%, rgba(114,8,8,1) 87%, rgba(107,3,2,1) 100%);
+	background: linear-gradient(to bottom,  rgba(179,59,60,1) 0%,rgba(167,51,51,1) 22%,rgba(151,37,37,1) 43%,rgba(131,21,20,1) 65%,rgba(114,8,8,1) 87%,rgba(107,3,2,1) 100%);
 }
 
 #dashboards .dashboard .alert {

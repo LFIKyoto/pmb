@@ -2,9 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: tache_rapport.tpl.php,v 1.2 2014-10-03 15:12:33 dgoron Exp $
+// $Id: tache_rapport.tpl.php,v 1.9 2018-09-18 11:33:29 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $report_task;
+global $task_report_details;
+global $report_error;
 
 	// Default Params
 	$param['font_face']		= 'Times New Roman, Verdana, Arial, Helvetica'; // Default font to use
@@ -33,61 +37,66 @@ $report_task = '<style type="text/css">
 //template report task
 $report_task .= '
 <div id="div_rapport_!!id!!" style="display:block; " class="rapportTop_!!id!!">
-	<div class="right"><a href="#" onClick="parent.kill_frame(\'frame_notice_preview\');return false;"><img src="'.$base_path.'/images/close.gif" border="0" align="right"></a></div>
+	<div class="right"><a href="#" onClick="parent.kill_frame(\'frame_notice_preview\');return false;"><img src="'.get_url_icon('close.gif').'" style="border:0px" class="align_right"></a></div>
+</div>
 <br />
 !!print_report!!
 <b>'.$msg['planificateur_type'].' :</b>
 <span class="header_title">!!type_tache_name!!</span>
 <br />
 <br />
+!!details!!
+';
 
-<table>
-	<tr>
-		<td class="cols2header">!!planificateur_task_name!! :</td>
-		<td class="cols2header2">!!libelle_task!!</td>
-	</tr>
-	<tr>
-		<td class="cols_header">!!libelle_date_generation!! :</td>
-		<td class="cols_header2">!!date_mysql!!</td>
-	</tr>
-	<tr>
-		<td class="cols2header">!!libelle_date_derniere_exec!! :</td>
-		<td class="cols2header2">!!date_dern_exec!!</td>
-	</tr>
-	<tr>
-		<td class="cols_header">!!libelle_heure_derniere_exec!! :</td>
-		<td class="cols_header2">!!heure_dern_exec!!</td>
-	</tr>
-	<tr>
-		<td class="cols2header">!!libelle_date_fin_exec!! :</td>
-		<td class="cols2header2">!!date_fin_exec!!</td>
-	</tr>
-	<tr>
-		<td class="cols_header">!!libelle_heure_fin_exec!! :</td>
-		<td class="cols_header2">!!heure_fin_exec!!</td>
-	</tr>
-	<tr>
-		<td class="cols2header">!!libelle_statut_exec!! :</td>
-		<td class="cols2header2">!!status!! (!!percent!!%)</td>
-	</tr>
-</table>
+$task_report_details = '
+<div class="scheduler_task_details">
+	<table class="scheduler_task_details_infos">
+		<tr>
+			<td class="cols2header">'.htmlentities($msg["planificateur_task_name"], ENT_QUOTES, $charset).' :</td>
+			<td class="cols2header2">!!libelle_task!!</td>
+		</tr>
+		<tr>
+			<td class="cols_header">'.htmlentities($msg["tache_date_generation"], ENT_QUOTES, $charset).' :</td>
+			<td class="cols_header2">!!date_mysql!!</td>
+		</tr>
+		<tr>
+			<td class="cols2header">'.htmlentities($msg["tache_date_dern_exec"], ENT_QUOTES, $charset).' :</td>
+			<td class="cols2header2">!!date_dern_exec!!</td>
+		</tr>
+		<tr>
+			<td class="cols_header">'.htmlentities($msg["tache_heure_dern_exec"], ENT_QUOTES, $charset).' :</td>
+			<td class="cols_header2">!!heure_dern_exec!!</td>
+		</tr>
+		<tr>
+			<td class="cols2header">'.htmlentities($msg["tache_date_fin_exec"], ENT_QUOTES, $charset).' :</td>
+			<td class="cols2header2">!!date_fin_exec!!</td>
+		</tr>
+		<tr>
+			<td class="cols_header">'.htmlentities($msg["tache_heure_fin_exec"], ENT_QUOTES, $charset).' :</td>
+			<td class="cols_header2">!!heure_fin_exec!!</td>
+		</tr>
+		<tr>
+			<td class="cols2header">'.htmlentities($msg["tache_statut"], ENT_QUOTES, $charset).' :</td>
+			<td class="cols2header2">!!status!! (!!percent!!%)</td>
+		</tr>
+	</table>
 </div>
 <div class="row">
-	<div align="center"><label for="space"/>&nbsp;</label></div>
+	<div class="center"><label for="space">&nbsp;</label></div>
 </div>
 <div class="row">
-	<div align="left" class="rapportExec">
+	<div class="align_left rapportExec">
 		<table id="tache_report">
-			<tr width="80%" align=center>
-				<th>!!report_execution!!</th>
+			<tr width="100%" class="center">
+				<th>'.htmlentities($msg["tache_report_execution"], ENT_QUOTES, $charset).'</th>
 			</tr>
 		</table>
 	</div>
-	<div align="left" class="rapportTache_!!id!!"  style="overflow:auto; height:200px;">
+	<div class="align_left rapportTache_!!id!!">
 		!!rapport!!
+		!!log_errors!!
 	</div>
-</div>
-';
+</div>';
 
 //template report task
 $report_error= '
@@ -95,6 +104,6 @@ $report_error= '
 	<br />
 	<br />
 	<div class="row">
-		<div align="center"><h2>'.$msg["planificateur_report_error"].'</h2></div>
+		<div class="center"><h2>'.$msg["planificateur_report_error"].'</h2></div>
 	</div>
 </div>';

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.9 2014-09-19 09:19:12 ngantier Exp $
+// $Id: main.inc.php,v 1.14 2017-12-21 15:18:41 jpermanne Exp $
 
 
 if (stristr ( $_SERVER ['REQUEST_URI'], ".inc.php" ))
@@ -54,7 +54,7 @@ $tab_param_general = array (
 											"valeur" => "0", 
 											"lib" => $msg ["admin_transferts_lib_statut_validation_pas_chg"] ), 
 										array (
-											"liste" => "SELECT idstatut, statut_libelle FROM docs_statut",
+											"liste" => "SELECT idstatut, statut_libelle FROM docs_statut order by statut_libelle",
 											"affichage" => "SELECT statut_libelle FROM docs_statut WHERE idstatut=!!id!!" )
 									), 
 						), 
@@ -77,12 +77,57 @@ $tab_param_general = array (
 							"type" => "select", 
 							"val" => array (
 										array(
-											"liste" => "SELECT idstatut, statut_libelle FROM docs_statut",
+											"liste" => "SELECT idstatut, statut_libelle FROM docs_statut order by statut_libelle",
 											"affichage" => "SELECT statut_libelle FROM docs_statut WHERE idstatut=!!id!!"
 											)
 									),
 							
-						) 
+						),
+						array (
+								"prefix" => "transferts",
+								"nom" => "ghost_expl_enable",
+								"lib" => $msg ["admin_transferts_lib_activate_ghost_expl"],
+								"champ" => "adminTransActivateGhostExpl",
+								"type" => "select",
+								"val" => array (
+										array ("valeur" => "0", "lib" => $msg ["39"] ), 
+										array ("valeur" => "1", "lib" => $msg ["40"] ) 
+								) 
+						),
+						array (
+								"prefix" => "transferts",
+								"nom" => "ghost_expl_gen_script",
+								"lib" => $msg ["admin_transferts_lib_ghost_expl_gen_script"],
+								"champ" => "adminTransGhostExplGenScript",
+								"type" => "text", 
+								"params" => "size='30' maxlength='60'"
+									
+						),
+						array (
+								"prefix" => "transferts",
+								"nom" => "ghost_statut_expl_transferts",
+								"lib" => $msg ["admin_transferts_lib_statut_ghost_transfert"],
+								"champ" => "adminTransStatGhostTransfert",
+								"type" => "select",
+								"val" => array (
+										array(
+												"liste" => "SELECT idstatut, statut_libelle FROM docs_statut order by statut_libelle",
+												"affichage" => "SELECT statut_libelle FROM docs_statut WHERE idstatut=!!id!!"
+										)
+								),
+									
+						),
+						array (
+								"prefix" => "transferts",
+								"nom" => "edition_show_all_colls",
+								"lib" => $msg ["admin_transferts_lib_edition_show_all_colls"],
+								"champ" => "adminTransEditionShowAllColls",
+								"type" => "select",
+								"val" => array (
+										array ("valeur" => "0", "lib" => $msg ["39"] ), 
+										array ("valeur" => "1", "lib" => $msg ["40"] ) 
+								) 
+						),
 					);
 
 //description des parametres en circulation
@@ -308,21 +353,26 @@ switch ( $sub) {
 			
 			case "modif" :
 				//on est en modification
-				echo admin_modif_params ( $sub, $$tab_params, $transferts_admin_tableau_modif, $transferts_admin_ligne_modif, $transferts_admin_ligne_separateur );
+				echo admin_modif_params ( $sub, ${$tab_params}, $transferts_admin_tableau_modif, $transferts_admin_ligne_modif, $transferts_admin_ligne_separateur );
 			break;
 			
 			case "enregistre" :
 				//on enregistre les modifications
-				if($form_actif)transfert::admin_enregistre_params ( $$tab_params );
+				if ($form_actif) {
+					if ($sub == 'opac') { //Cas particulier quand on bascule d'une valeur à une autre du sélecteur
+						transfert::check_loc_retrait_resas($adminTransOpac);
+					}
+					transfert::admin_enregistre_params ( ${$tab_params} );
+				}
 				//puis on affiche le tableau
-				//echo admin_affiche_params ( $sub, $$tab_params, $transferts_admin_tableau_affiche, $transferts_admin_ligne_affiche, $transferts_admin_ligne_separateur );
-				echo admin_modif_params ( $sub, $$tab_params, $transferts_admin_tableau_modif, $transferts_admin_ligne_modif, $transferts_admin_ligne_separateur );
+				//echo admin_affiche_params ( $sub, ${$tab_params}, $transferts_admin_tableau_affiche, $transferts_admin_ligne_affiche, $transferts_admin_ligne_separateur );
+				echo admin_modif_params ( $sub, ${$tab_params}, $transferts_admin_tableau_modif, $transferts_admin_ligne_modif, $transferts_admin_ligne_separateur );
 				break;
 			
 			default :
 				//on affiche le tableau
-				echo admin_modif_params ( $sub, $$tab_params, $transferts_admin_tableau_modif, $transferts_admin_ligne_modif, $transferts_admin_ligne_separateur );
-				//echo admin_affiche_params ( $sub, $$tab_params, $transferts_admin_tableau_affiche, $transferts_admin_ligne_affiche, $transferts_admin_ligne_separateur );
+				echo admin_modif_params ( $sub, ${$tab_params}, $transferts_admin_tableau_modif, $transferts_admin_ligne_modif, $transferts_admin_ligne_separateur );
+				//echo admin_affiche_params ( $sub, ${$tab_params}, $transferts_admin_tableau_affiche, $transferts_admin_ligne_affiche, $transferts_admin_ligne_separateur );
 			break;
 		
 		}
@@ -412,4 +462,5 @@ switch ( $sub) {
 	
 	break;
 }
+
 ?>

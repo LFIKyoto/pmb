@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: history_functions.inc.php,v 1.4 2014-12-18 08:21:15 ngantier Exp $
+// $Id: history_functions.inc.php,v 1.7 2018-06-08 15:05:19 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -12,7 +12,7 @@ if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 
 function suppr_histo($id_suppr,$tableau_suppr) {
-	if (!$tableau_suppr[$id_suppr]) {
+	if (!isset($tableau_suppr[$id_suppr]) || !$tableau_suppr[$id_suppr]) {
 		for ($i=1;$i<=$_SESSION["nb_queries"];$i++) {
 			if ($_SESSION["search_type".$i]=="extended_search") {
 				get_history($i);
@@ -21,8 +21,8 @@ function suppr_histo($id_suppr,$tableau_suppr) {
 				for ($j=0;$j<=count($search);$j++) {
 					if ($search[$j]=="s_1") {
 						$field_="field_0_".$search[$j];
-    					global $$field_;
-    					$field=$$field_;
+    					global ${$field_};
+    					$field=${$field_};
     					if ($field[0]==$id_suppr) {
 							$tableau_suppr[$i]=0;
 							suppr_histo($i,$tableau_suppr);
@@ -66,6 +66,7 @@ function reorg_tableau_suppr($tableau_suppr) {
 	       	$_SESSION["look_INDEXINT".(string)$i]="";
 	       	$_SESSION["look_KEYWORDS".(string)$i]="";
 	       	$_SESSION["look_ABSTRACT".(string)$i]="";
+	       	$_SESSION["look_CONCEPT".(string)$i]="";
 	       	$_SESSION["look_CONTENT".(string)$i]="";
 	       	$_SESSION["look_ALL".(string)$i]="";
 	       	$_SESSION["l_typdoc".(string)$i]="";	

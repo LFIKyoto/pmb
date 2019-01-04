@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_watcheslist_view_django_by_categories.class.php,v 1.5.4.1 2015-10-09 13:31:42 dgoron Exp $
+// $Id: cms_module_watcheslist_view_django_by_categories.class.php,v 1.7 2016-09-20 10:25:42 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -82,7 +82,7 @@ class cms_module_watcheslist_view_django_by_categories extends cms_module_common
 		$categories = array();		
 		for($i=0 ; $i<count($datas['watches']) ; $i++){
 			if($datas['watches'][$i]['category']){
-				$categories[] = $datas['watches'][$i]['category']['id'];
+				$categories[] = $datas['watches'][$i]['category']['id']*1;
 			}else{
 				$newdatas['watches'][]=$datas['watches'][$i];
 			}
@@ -128,7 +128,7 @@ class cms_module_watcheslist_view_django_by_categories extends cms_module_common
 	protected function get_parent($categories){
 		global $dbh;
 		if(is_array($categories) && count($categories)){
-			$query = "select id_category, category_title, category_num_parent from docwatch_categories where id_category in (".implode(",",$categories).") order by category_title";
+			$query = "select id_category, category_title, category_num_parent from docwatch_categories where id_category in ('".implode("','",$categories)."') order by category_title";
 			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				while($row = pmb_mysql_fetch_object($result)){

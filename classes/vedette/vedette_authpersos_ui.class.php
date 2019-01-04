@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_authpersos_ui.class.php,v 1.1 2014-10-07 10:34:17 arenou Exp $
+// $Id: vedette_authpersos_ui.class.php,v 1.2 2015-12-10 11:18:08 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -32,10 +32,11 @@ class vedette_authpersos_ui extends vedette_element_ui{
 	 */
 	public static function get_create_box_js($params= array()){
 		global $vedette_authpersos_tpl;
-		$tpl = $vedette_authpersos_tpl["vedette_authpersos_script"];
-		$tpl = str_replace("!!authperso_label!!", $params['label'],$tpl);
-		$tpl = str_replace("!!authperso_id!!", $params['id_authority'],$tpl);
-		return $tpl;
+		if(!in_array('vedette_authpersos_script', parent::$created_boxes)){
+			array_push(parent::$created_boxes, 'vedette_authpersos_script');
+			return $vedette_authpersos_tpl["vedette_authpersos_script"];;
+		}
+		return '';
 	}
 	
 	/**

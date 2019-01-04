@@ -3,13 +3,14 @@
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // | creator : Emmanuel PACAUD < emmanuel.pacaud@univ-poitiers.fr>            |
 // +-------------------------------------------------+
-// $Id: z3950_notice.class.php,v 1.173.2.1 2015-08-20 14:15:05 jpermanne Exp $
+// $Id: z3950_notice.class.php,v 1.211 2018-12-26 10:36:59 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/parametres_perso.class.php");
 require_once($class_path."/notice.class.php");
 require_once($base_path."/catalog/z3950/manual_categorisation.inc.php");
+global $pmb_indexation_lang;
 if ($pmb_indexation_lang) {
 	require_once("$include_path/marc_tables/$pmb_indexation_lang/empty_words");
 }
@@ -35,197 +36,214 @@ require_once($class_path."/synchro_rdf.class.php");
 require_once("$class_path/docs_section.class.php");
 require_once("$class_path/docs_codestat.class.php");
 require_once("$class_path/docs_type.class.php");
+require_once($class_path."/notice_relations.class.php");
+require_once($class_path."/thumbnail.class.php");
+require_once($class_path."/indexation_stack.class.php");
+
+global $categ, $action, $notice_org;
+if ($categ == 'z3950' && $action == 'import' && $notice_org) {
+	$requete="select z_marc,fichier_func from z_notices, z_bib where znotices_id='".$notice_org."' and znotices_bib_id=bib_id";
+	$resultat=pmb_mysql_query($requete);
+	$notice_org=@pmb_mysql_result($resultat,0,0);
+	$z_bib_fichier_func=@pmb_mysql_result($resultat,0,1);
+}
 
 //Recherche de la fonction auxiliaire d'intégration
-if(!$modele) {
+if(!isset($z_bib_fichier_func) || !$z_bib_fichier_func) {
+	global $z3950_import_modele;
 	if ($z3950_import_modele) {
 		if (file_exists($base_path."/catalog/z3950/".$z3950_import_modele)) {
 			require_once($base_path."/catalog/z3950/".$z3950_import_modele);			
-		} else {
-        	error_message("", sprintf($msg["admin_error_file_import_modele_z3950"],$z3950_import_modele), 1, "./admin.php?categ=param");
+		} else if ($categ != 'param') { // On n'affiche pas l'erreur sur la page de paramètres sinon on tourne en rond !
+        	error_message("", sprintf($msg["admin_error_file_import_modele_z3950"],$z3950_import_modele), 1, "./admin.php?categ=param&form_type_param=z3950&form_sstype_param=import_modele#justmodified");
         	exit;
         }
 	} else require_once($base_path."/catalog/z3950/func_other.inc.php");
 } else {
-	require_once($base_path."/catalog/z3950/".$modele);
+	require_once($base_path."/catalog/z3950/".$z_bib_fichier_func);
 }
 
 class z3950_notice {
-	var $bibliographic_level;
-	var $hierarchic_level;
+	public $bibliographic_level;
+	public $hierarchic_level;
 
-	var $titles;
-	var $serie;
-	var $serie_200;
-	var $nbr_in_serie;
+	public $titles;
+	public $serie;
+	public $serie_200;
+	public $nbr_in_serie;
 	
-	var $authors;
-	var $author_functions;
+	public $authors;
+	public $author_functions;
 	
-	var $editors;
-	var $collection;
-	var $subcollection;
-	var $nbr_in_collection;
-	var $mention_edition;	// mention d'édition (1ère, deuxième...)
-	var $isbn;
+	public $editors;
+	public $collection;
+	public $subcollection;
+	public $nbr_in_collection;
+	public $mention_edition;	// mention d'édition (1ère, deuxième...)
+	public $isbn;
 
-	var $page_nbr;
-	var $illustration;
-	var $size;
-	var $prix;
-	var $accompagnement;
+	public $page_nbr;
+	public $illustration;
+	public $size;
+	public $prix;
+	public $accompagnement;
 
-	var $general_note;
-	var $content_note;
-	var $abstract_note;
+	public $general_note;
+	public $content_note;
+	public $abstract_note;
 
-	var $internal_index;
+	public $internal_index;
 	
-	var $dewey ;
-	var $free_index;
-	var $matieres_index;
+	public $dewey ;
+	public $free_index;
+	public $matieres_index;
 
-	var $link_url;
-	var $link_format;
+	public $link_url;
+	public $link_format;
 
-	var $language_code;
-	var $original_language_code;
+	public $language_code;
+	public $original_language_code;
 
-	var $action;
+	public $action;
 	
-	var $origine_notice = array() ;
-	var $orinot_id = 1 ;
+	public $origine_notice = array() ;
+	public $orinot_id = 1 ;
 	
-	var $aut_array = array(); // tableau des auteurs
-	var $categories =	array();// les categories
-	var $categorisation_type = "categorisation_auto";
+	public $aut_array = array(); // tableau des auteurs
+	public $categories =	array();// les categories
+	public $categorisation_type = "categorisation_auto";
 
-	var $info_600_3 = array() ;
-	var $info_600_a = array() ;
-	var $info_600_b = array() ;
-	var $info_600_c = array() ;
-	var $info_600_d = array() ;	
-	var $info_600_f = array() ;
-	var $info_600_g = array() ;
-	var $info_600_j = array() ;
-	var $info_600_p = array() ;
-	var $info_600_t = array() ;
-	var $info_600_x = array() ;
-	var $info_600_y = array() ;
-	var $info_600_z = array() ;
+	public $info_600_3 = array() ;
+	public $info_600_a = array() ;
+	public $info_600_b = array() ;
+	public $info_600_c = array() ;
+	public $info_600_d = array() ;	
+	public $info_600_f = array() ;
+	public $info_600_g = array() ;
+	public $info_600_j = array() ;
+	public $info_600_p = array() ;
+	public $info_600_t = array() ;
+	public $info_600_x = array() ;
+	public $info_600_y = array() ;
+	public $info_600_z = array() ;
 	
-	var $info_601_3 = array() ;
-	var $info_601_a = array() ;
-	var $info_601_b = array() ;
-	var $info_601_c = array() ;
-	var $info_601_d = array() ;
-	var $info_601_e = array() ;
-	var $info_601_f = array() ;
-	var $info_601_g = array() ;
-	var $info_601_h = array() ;
-	var $info_601_j = array() ;
-	var $info_601_t = array() ;
-	var $info_601_x = array() ;
-	var $info_601_y = array() ;
-	var $info_601_z = array() ;
+	public $info_601_3 = array() ;
+	public $info_601_a = array() ;
+	public $info_601_b = array() ;
+	public $info_601_c = array() ;
+	public $info_601_d = array() ;
+	public $info_601_e = array() ;
+	public $info_601_f = array() ;
+	public $info_601_g = array() ;
+	public $info_601_h = array() ;
+	public $info_601_j = array() ;
+	public $info_601_t = array() ;
+	public $info_601_x = array() ;
+	public $info_601_y = array() ;
+	public $info_601_z = array() ;
 	
-	var $info_602_3 = array() ;
-	var $info_602_a = array() ;
-	var $info_602_f = array() ;
-	var $info_602_j = array() ;
-	var $info_602_t = array() ;
-	var $info_602_x = array() ;
-	var $info_602_y = array() ;
-	var $info_602_z = array() ;
+	public $info_602_3 = array() ;
+	public $info_602_a = array() ;
+	public $info_602_f = array() ;
+	public $info_602_j = array() ;
+	public $info_602_t = array() ;
+	public $info_602_x = array() ;
+	public $info_602_y = array() ;
+	public $info_602_z = array() ;
 	
-	var $info_604_3 = array() ;
-	var $info_604_a = array() ;
-	var $info_604_h = array() ;
-	var $info_604_i = array() ;
-	var $info_604_j = array() ;
-	var $info_604_k = array() ;
-	var $info_604_l = array() ;
-	var $info_604_x = array() ;
-	var $info_604_y = array() ;
-	var $info_604_z = array() ;
+	public $info_604_3 = array() ;
+	public $info_604_a = array() ;
+	public $info_604_h = array() ;
+	public $info_604_i = array() ;
+	public $info_604_j = array() ;
+	public $info_604_k = array() ;
+	public $info_604_l = array() ;
+	public $info_604_x = array() ;
+	public $info_604_y = array() ;
+	public $info_604_z = array() ;
 	
-	var $info_605_3 = array() ;
-	var $info_605_a = array() ;
-	var $info_605_h = array() ;
-	var $info_605_i = array() ;
-	var $info_605_k = array() ;
-	var $info_605_l = array() ;
-	var $info_605_m = array() ;
-	var $info_605_n = array() ;
-	var $info_605_q = array() ;
-	var $info_605_r = array() ;
-	var $info_605_s = array() ;
-	var $info_605_u = array() ;
-	var $info_605_w = array() ;
-	var $info_605_j = array() ;
-	var $info_605_x = array() ;
-	var $info_605_y = array() ;
-	var $info_605_z = array() ;
+	public $info_605_3 = array() ;
+	public $info_605_a = array() ;
+	public $info_605_h = array() ;
+	public $info_605_i = array() ;
+	public $info_605_k = array() ;
+	public $info_605_l = array() ;
+	public $info_605_m = array() ;
+	public $info_605_n = array() ;
+	public $info_605_q = array() ;
+	public $info_605_r = array() ;
+	public $info_605_s = array() ;
+	public $info_605_u = array() ;
+	public $info_605_w = array() ;
+	public $info_605_j = array() ;
+	public $info_605_x = array() ;
+	public $info_605_y = array() ;
+	public $info_605_z = array() ;
 	
-	var $info_606_3 = array() ;
-	var $info_606_a = array() ;
-	var $info_606_j = array() ;
-	var $info_606_x = array() ;
-	var $info_606_y = array() ;
-	var $info_606_z = array() ;	
+	public $info_606_3 = array() ;
+	public $info_606_a = array() ;
+	public $info_606_j = array() ;
+	public $info_606_x = array() ;
+	public $info_606_y = array() ;
+	public $info_606_z = array() ;	
 	
-	var $info_607_3 = array() ;
-	var $info_607_a = array() ;
-	var $info_607_j = array() ;
-	var $info_607_x = array() ;
-	var $info_607_y = array() ;
-	var $info_607_z = array() ;
+	public $info_607_3 = array() ;
+	public $info_607_a = array() ;
+	public $info_607_j = array() ;
+	public $info_607_x = array() ;
+	public $info_607_y = array() ;
+	public $info_607_z = array() ;
 	
-	var $info_608_3 = array() ;
-	var $info_608_a = array() ;
-	var $info_608_j = array() ;
-	var $info_608_x = array() ;
-	var $info_608_y = array() ;
-	var $info_608_z = array() ;
+	public $info_608_3 = array() ;
+	public $info_608_a = array() ;
+	public $info_608_j = array() ;
+	public $info_608_x = array() ;
+	public $info_608_y = array() ;
+	public $info_608_z = array() ;
 	
-	var $tu_500 = array();
-	var $tu_500_i = array();
-	var $tu_500_j = array();
-	var $tu_500_l = array();
-	var $tu_500_n = array();
-	var $tu_500_r = array();
-	var $tu_500_s = array();
+	public $tu_500 = array();
+	public $tu_500_i = array();
+	public $tu_500_j = array();
+	public $tu_500_l = array();
+	public $tu_500_n = array();
+	public $tu_500_r = array();
+	public $tu_500_s = array();
 
-	var $info_503 = array();
-	var $info_503_d = array();
-	var $info_503_j = array();
+	public $info_503 = array();
+	public $info_503_d = array();
+	public $info_503_j = array();
 	
 	//bulletin
-	var $bull_id;
-	var $bull_num;
-	var $bull_date;
-	var $bull_mention;
-	var $bull_titre;
+	public $bull_id;
+	public $bull_num;
+	public $bull_date;
+	public $bull_mention;
+	public $bull_titre;
 	//perio
-	var $perio_titre;
-	var $perio_issn;
-	var $perio_id;
+	public $perio_titre;
+	public $perio_issn;
+	public $perio_id;
 	
-	var $thumbnail_url = "";
-	var $doc_nums = array();
-	var $exemplaires = array();
+	public $thumbnail_url = "";
+	public $doc_nums = array();
+	public $exemplaires = array();
 	
-	var $message_retour="";
-	var $notice="";
+	public $message_retour="";
+	public $notice="";
 	
-	var $bt_integr_value = '';
-	var $bt_undo_value = '';
-	var $bt_undo_action='';
+	public $bt_integr_value = '';
+	public $bt_undo_value = '';
+	public $bt_undo_action='';
 	
 	//upload_vignette
-	var $flag_upload_vignette="";
+	public $flag_upload_vignette="";
 	
-	function z3950_notice ($type, $marc = NULL, $source_id=0) {
+	public $notice_is_new=0;
+	public $commentaire_gestion="";
+	public $indexation_lang="";
+	protected static $long_maxi_code;
+	
+	public function __construct($type, $marc = NULL, $source_id=0) {
 		
 		$type = strtolower ($type);
 		switch ($type) {
@@ -252,30 +270,31 @@ class z3950_notice {
 		}
 	}
 				
-	static function substitute ($tag, $value, &$string) {
+	public static function substitute ($tag, $value, &$string) {
 		global $charset;
 		$string = str_replace ("!!$tag!!", htmlentities($value,ENT_QUOTES, $charset), $string);
 	}
 
-	function insert_in_database ($addslashes = false) {
+	public function insert_in_database ($addslashes = false) {
 		global $dbh ;
 		global $class_path;
 		global $gestion_acces_active, $gestion_acces_user_notice, $gestion_acces_empr_notice;
 		global $res_prf, $chk_rights;
 		global $pmb_synchro_rdf;
 		global $opac_url_base,$pmb_notice_img_folder_id;
-		
+		global $xmlta_doctype_serial;
+		global $thesaurus_concepts_active;
 		
 		if($this->bibliographic_level=="s" && $this->hierarchic_level=="2"){
 			$this->bibliographic_level = "b";
 		}
 			
-		
-		
 		$new_notice = 0;
 		$notice_retour = 0;
-		$long_maxi = pmb_mysql_field_len(pmb_mysql_query("SELECT code FROM notices limit 1") ,0);
-		$isbn = rtrim (substr ($this->isbn, 0, $long_maxi));
+		if(!isset(static::$long_maxi_code)) {
+			static::$long_maxi_code = pmb_mysql_field_len(pmb_mysql_query("SELECT code FROM notices limit 1") ,0);
+		}
+		$isbn = rtrim (substr ($this->isbn, 0, static::$long_maxi_code));
 		if ($isbn != "") {
 			if (isISBN($isbn)) {
 				if (strlen($isbn)==13) {
@@ -303,8 +322,9 @@ class z3950_notice {
 			return $retour;
 		}
 
+		$editor_ids = array();
 		for ($i = 0; $i < 2; $i++) {
-			if ($this->editors[$i]['id']) {
+			if (isset($this->editors[$i]['id']) && $this->editors[$i]['id']) {
 				$editor_ids[$i] = $this->editors[$i]['id'];
 			} else {
 				$editor_ids[$i] = editeur::import ($this->editors[$i]);
@@ -312,13 +332,13 @@ class z3950_notice {
 		}
 		
 		$this->collection['parent'] = $editor_ids[0];
-		if ($this->collection["id"]) {
+		if (isset($this->collection["id"]) && $this->collection["id"]) {
 			$collection_id = $this->collection["id"];
 		} else { 
 			$collection_id = collection::import ($this->collection);
 		}
 		$this->subcollection['coll_parent'] = $collection_id;
-		if ($this->subcollection["id"]) {
+		if (isset($this->subcollection["id"]) && $this->subcollection["id"]) {
 			$subcollection_id = $this->subcollection["id"];
 		} else { 
 			$subcollection_id = subcollection::import ($this->subcollection);
@@ -326,12 +346,12 @@ class z3950_notice {
 		$serie_id = serie::import(stripslashes($this->serie));
 
 		/* traitement de Dewey */
-		if (!$this->internal_index) {
-			if (!$this->dewey["new_comment"])
+		if (!isset($this->internal_index) || !$this->internal_index) {
+			if (!isset($this->dewey["new_comment"]) || !$this->dewey["new_comment"])
 				$this->dewey["new_comment"] = "";
-			if (!$this->dewey["new_pclass"])
+			if (!isset($this->dewey["new_pclass"]) || !$this->dewey["new_pclass"])
 				$this->dewey["new_pclass"] = "";			
-			$this->internal_index = indexint::import(clean_string($this->dewey[0]), clean_string($this->dewey["new_comment"]), clean_string($this->dewey["new_pclass"]));
+			$this->internal_index = indexint::import((isset($this->dewey[0]) ? clean_string($this->dewey[0]) : ''), clean_string($this->dewey["new_comment"]), clean_string($this->dewey["new_pclass"]));
 		} 
 		
 		$date_parution_z3950 = notice::get_date_parution($this->year);
@@ -410,7 +430,8 @@ class z3950_notice {
 			prix,
 			create_date,
 			date_parution,
-			indexation_lang
+			indexation_lang,
+			notice_is_new
 			) values (
 			'".$this->document_type."',	
 			'".$this->isbn."',	
@@ -448,7 +469,8 @@ class z3950_notice {
 			'".$this->prix."',
 			sysdate(),
 			'".$date_parution_z3950."',
-			'".$this->indexation_lang."'
+			'".$this->indexation_lang."',
+			'".$this->notice_is_new."'
 		 )";
 		$sql_result_ins = pmb_mysql_query($sql_ins) or die ("Couldn't insert into table notices : ".$sql_ins);
 		$notice_retour = pmb_mysql_insert_id();
@@ -480,14 +502,14 @@ class z3950_notice {
 			$aut['rejete']=clean_string($this->aut_array[$i]['rejete']);
 			$aut['date']=clean_string($this->aut_array[$i]['date']);
 			$aut['type']=$this->aut_array[$i]['type_auteur'];
-			$aut['subdivision']=clean_string($this->aut_array[$i]['subdivision']);
-			$aut['numero']=clean_string($this->aut_array[$i]['numero']);
-			$aut['lieu']=clean_string($this->aut_array[$i]['lieu']);
-			$aut['ville']=clean_string($this->aut_array[$i]['ville']);
-			$aut['pays']=clean_string($this->aut_array[$i]['pays']);
-			$aut['web']=clean_string($this->aut_array[$i]['web']);
-			$aut['author_comment']=clean_string($this->aut_array[$i]['author_comment']);
-			$aut['authority_number']=clean_string($this->aut_array[$i]['authority_number']);			
+			$aut['subdivision']=(isset($this->aut_array[$i]['subdivision']) ? clean_string($this->aut_array[$i]['subdivision']) : '');
+			$aut['numero']=(isset($this->aut_array[$i]['numero']) ? clean_string($this->aut_array[$i]['numero']) : '');
+			$aut['lieu']=(isset($this->aut_array[$i]['lieu']) ? clean_string($this->aut_array[$i]['lieu']) : '');
+			$aut['ville']=(isset($this->aut_array[$i]['ville']) ? clean_string($this->aut_array[$i]['ville']) : '');
+			$aut['pays']=(isset($this->aut_array[$i]['pays']) ? clean_string($this->aut_array[$i]['pays']) : '');
+			$aut['web']=(isset($this->aut_array[$i]['web']) ? clean_string($this->aut_array[$i]['web']) : '');
+			$aut['author_comment']=(isset($this->aut_array[$i]['author_comment']) ? clean_string($this->aut_array[$i]['author_comment']) : '');
+			$aut['authority_number']=(isset($this->aut_array[$i]['authority_number']) ? clean_string($this->aut_array[$i]['authority_number']) : '');			
 			
 			/* Origine de l'autorité : on reprend les infos d'origine de la notice pour les attribuées aux origines des autorités */
 			$id_origine_auth=0;
@@ -507,9 +529,11 @@ class z3950_notice {
 		// traitement des titres uniformes	
 		global $pmb_use_uniform_title;
 		if ($pmb_use_uniform_title) {
-			if(count($this->titres_uniformes)) {
-				$ntu=new tu_notice($notice_retour);
-				$ntu->update($this->titres_uniformes);
+			if(isset($this->titres_uniformes)) {
+				if(count($this->titres_uniformes)) {
+					$ntu=new tu_notice($notice_retour);
+					$ntu->update($this->titres_uniformes);
+				}
 			}
 		}
 
@@ -558,6 +582,12 @@ class z3950_notice {
 			$res_ins = @pmb_mysql_query($rqt_ins, $dbh);
 		}
 		
+		// traitement des concepts
+		if($thesaurus_concepts_active == 1){
+			$index_concept = new index_concept($notice_retour, TYPE_NOTICE);
+			$index_concept->save();
+		}
+		
 		//Traitement des champs personnalisés (du formulaire !!!)
 		$p_perso=new parametres_perso("notices");
 		$nberrors=$p_perso->check_submited_fields();
@@ -590,18 +620,25 @@ class z3950_notice {
 			//le fichier
 			if (file_exists($rep->repertoire_path.$this->flag_upload_vignette)) {
 				rename($rep->repertoire_path.$this->flag_upload_vignette,$rep->repertoire_path."img_".$notice_retour);
+				//On détruit l'image si elle est en cache
+				global $pmb_img_cache_folder;
+				$manag_cache = getimage_cache($notice_retour);
+				if($manag_cache["location"] && preg_match("#^".$pmb_img_cache_folder."(.+)$#",$manag_cache["location"])){
+					unlink($manag_cache["location"]);
+					global $opac_img_cache_folder;
+					if($opac_img_cache_folder && file_exists(str_replace($pmb_img_cache_folder, $opac_img_cache_folder, $manag_cache["location"]))){
+						unlink(str_replace($pmb_img_cache_folder, $opac_img_cache_folder, $manag_cache["location"]));
+					}
+				}
 			}
 			//le champ
 			$rqt_upd = "UPDATE notices SET thumbnail_url='".addslashes($opac_url_base."getimage.php?noticecode=&vigurl=&notice_id=".$notice_retour)."' WHERE notice_id=".$notice_retour;
 			$res_ins = @pmb_mysql_query($rqt_upd, $dbh);
 		}
 		
-		// Mise à jour des index de la notice
-		notice::majNotices($notice_retour);
-		// Mise à jour de la table notices_global_index
-		notice::majNoticesGlobalIndex($notice_retour);
-		// Mise à jour de la table notices_mots_global_index
-		notice::majNoticesMotsGlobalIndex($notice_retour);
+	
+		indexation_stack::push($notice_retour, TYPE_NOTICE);
+		
 		//Calcul de la signature
 		$sign= new notice_doublon();
 		$val= $sign->gen_signature($notice_retour);
@@ -624,6 +661,7 @@ class z3950_notice {
 				$values['code'] = $this->perio_issn;
 				$values['niveau_biblio'] = "s";
 				$values['niveau_hierar'] = "1";
+				$values['typdoc'] = $xmlta_doctype_serial;
 				$this->perio_id = $new_perio->update($values);
 				//synchro_rdf
 				if($pmb_synchro_rdf){
@@ -655,6 +693,14 @@ class z3950_notice {
 					$synchro_rdf->addRdf(0,$this->bull_id);
 				}
 			}
+			//MAJ de la date de parution de l'article
+			$date_parution = '0000-00-00';
+			$bulletin = new bulletinage($this->bull_id);
+			$date_parution = $bulletin->date_date;
+			if ($date_parution && $date_parution!='0000-00-00') {
+				$req_art = "update notices set date_parution='".$date_parution."' where notice_id='".$notice_retour."'";
+				pmb_mysql_query($req_art,$dbh);
+			}
 		}else if($biblio_notice == "bull"){
 			//Perios
 			if(!$this->perio_id){
@@ -664,6 +710,7 @@ class z3950_notice {
 				$values['code'] = $this->perio_issn;
 				$values['niveau_biblio'] = "s";
 				$values['niveau_hierar'] = "1";
+				$values['typdoc'] = $xmlta_doctype_serial;
 				$this->perio_id = $new_perio->update($values);
 				//synchro_rdf
 				if($pmb_synchro_rdf){
@@ -698,9 +745,7 @@ class z3950_notice {
 			pmb_mysql_query($req,$dbh);
 			
 			//Insertion dans la table notices_relation, ajout de la relatioin entre la notice de bulletin et la notice de perio
-			$req = "insert into notices_relations (num_notice, linked_notice, relation_type,rank) values('".$notice_retour."', '".$this->perio_id."', 'b','1')";
-			pmb_mysql_query($req,$dbh);
-			
+			notice_relations::insert($notice_retour, $this->perio_id, 'b', 1, 'up', false);
 		}
 		
 		//file_put_contents('php://stderr', print_r($notice_retour."\n", true));
@@ -771,7 +816,7 @@ class z3950_notice {
 					
 					$expl['statut'] = $deflt_docs_statut;
 			
-					if ($info_expl['a']) {
+					if (is_numeric($info_expl['a'])) {
 						$expl['location'] = $info_expl['a'];
 					} else {
 						$expl['location'] = $deflt_docs_location;
@@ -820,13 +865,21 @@ class z3950_notice {
 			$synchro_rdf->addRdf($notice_retour,0);
 		}
 		
+		//Traitement import perso
+		global $notice_id;
+		if (function_exists('z_import_new_notice_fin')) {
+			$notice_id=$notice_retour;
+			z_import_new_notice_fin();
+		}
+		
 		$retour = array ($new_notice, $notice_retour);	
 		return $retour;
 	} 
 
-	function update_in_database ($id_notice=0) {
+	public function update_in_database ($id_notice=0) {
 		global $dbh ;
 		global $pmb_synchro_rdf;
+		global $thesaurus_concepts_active;
 		
 		$new_notice = 2;
 		$notice_retour = $id_notice;
@@ -850,6 +903,7 @@ class z3950_notice {
 			}
 		}
 			
+		$editor_ids = array();
 		for ($i = 0; $i < 2; $i++) {
 			if ($this->editors[$i]['id'])
 				$editor_ids[$i] = $this->editors[$i]['id'];
@@ -875,9 +929,9 @@ class z3950_notice {
 
 		/* traitement de Dewey */
 		if (!$this->internal_index) {
-			if (!$this->dewey["new_comment"])
+			if (!isset($this->dewey["new_comment"]) || !$this->dewey["new_comment"])
 				$this->dewey["new_comment"] = "";
-			if (!$this->dewey["new_pclass"])
+			if (!isset($this->dewey["new_pclass"]) || !$this->dewey["new_pclass"])
 				$this->dewey["new_pclass"] = "";			
 			$this->internal_index = indexint::import(clean_string($this->dewey[0]), clean_string($this->dewey["new_comment"]), clean_string($this->dewey["new_pclass"]));
 		}
@@ -943,19 +997,19 @@ class z3950_notice {
 			}
 		$rqt_ins = "insert into responsability (responsability_author, responsability_notice, responsability_fonction, responsability_type, responsability_ordre) VALUES ";
 		for ($i=0 ; $i<sizeof($this->aut_array) ; $i++ ){
-			$aut['id']=clean_string($this->aut_array[$i]['id']);
-			$aut['name']=clean_string($this->aut_array[$i]['entree']);
-			$aut['rejete']=clean_string($this->aut_array[$i]['rejete']);
-			$aut['date']=clean_string($this->aut_array[$i]['date']);
-			$aut['type']=$this->aut_array[$i]['type_auteur'];
-			$aut['subdivision']=clean_string($this->aut_array[$i]['subdivision']);
-			$aut['numero']=clean_string($this->aut_array[$i]['numero']);
-			$aut['lieu']=clean_string($this->aut_array[$i]['lieu']);
-			$aut['ville']=clean_string($this->aut_array[$i]['ville']);
-			$aut['pays']=clean_string($this->aut_array[$i]['pays']);
-			$aut['web']=clean_string($this->aut_array[$i]['web']);
-			$aut['author_comment']=clean_string($this->aut_array[$i]['author_comment']);
-			$aut['authority_number']=clean_string($this->aut_array[$i]['authority_number']);
+			$aut['id'] = clean_string($this->aut_array[$i]['id']);
+			$aut['name'] = (isset($this->aut_array[$i]['entree']) ? clean_string($this->aut_array[$i]['entree']) : '');
+			$aut['rejete'] = (isset($this->aut_array[$i]['rejete']) ? clean_string($this->aut_array[$i]['rejete']) : '');
+			$aut['date'] = (isset($this->aut_array[$i]['date']) ? clean_string($this->aut_array[$i]['date']) : '');
+			$aut['type'] = (isset($this->aut_array[$i]['type_auteur']) ? $this->aut_array[$i]['type_auteur'] : '');
+			$aut['subdivision'] = (isset($this->aut_array[$i]['subdivision']) ? clean_string($this->aut_array[$i]['subdivision']) : '');
+			$aut['numero'] = (isset($this->aut_array[$i]['numero']) ? clean_string($this->aut_array[$i]['numero']) : '');
+			$aut['lieu'] = (isset($this->aut_array[$i]['lieu']) ? clean_string($this->aut_array[$i]['lieu']) : '');
+			$aut['ville'] = (isset($this->aut_array[$i]['ville']) ? clean_string($this->aut_array[$i]['ville']) : '');
+			$aut['pays'] = (isset($this->aut_array[$i]['pays']) ? clean_string($this->aut_array[$i]['pays']) : '');
+			$aut['web'] = (isset($this->aut_array[$i]['web']) ? clean_string($this->aut_array[$i]['web']) : '');
+			$aut['author_comment'] = (isset($this->aut_array[$i]['author_comment']) ? clean_string($this->aut_array[$i]['author_comment']) : '');
+			$aut['authority_number'] = (isset($this->aut_array[$i]['authority_number']) ? clean_string($this->aut_array[$i]['authority_number']) : '');
 			
 			/* Origine de l'autorité : on reprend les infos d'origine de la notice pour les attribuées aux origines des autorités */
 			$id_origine_auth=0;
@@ -994,6 +1048,12 @@ class z3950_notice {
 			$res_ins = @pmb_mysql_query($rqt_ins, $dbh);
 		}
 		
+		// traitement des concepts
+		if($thesaurus_concepts_active == 1){
+			$index_concept = new index_concept($notice_retour, TYPE_NOTICE);
+			$index_concept->save();
+		}
+				
 		// traitement des langues
 		// langues de la publication
 		$rqt_del = "delete from notices_langues where num_notice='$notice_retour' ";
@@ -1024,7 +1084,7 @@ class z3950_notice {
 		
 		//Traitement import perso
 		global $notice_id,$notice_org,$notice_type_org;
-		if (function_exists('z_recup_noticeunimarc_suite') && function_exists('recup_noticeunimarc_suite')) {
+		if (function_exists('z_recup_noticeunimarc_suite') && function_exists('z_import_new_notice_suite')) {
 			//Suppression des champs persos
 			$requete="delete from notices_custom_values where notices_custom_origine=".$notice_retour;
 			@pmb_mysql_query($requete);
@@ -1056,13 +1116,14 @@ class z3950_notice {
 		return $retour;
 	} 
 
-	function get_form ($action, $id_notice=0,$retour='link',$article=false) {
+	public function get_form ($action, $id_notice=0,$retour='link',$article=false) {
 		// construit le formulaire de catalogage pré-rempli
 		global $msg, $dbh, $charset, $current_module ;
 		global $include_path;
 		global $base_path;
 		global $znotices_id;
 		global $item;
+		global $thesaurus_concepts_active;
 		
 		$fonction = new marc_list('function');
 
@@ -1088,6 +1149,8 @@ class z3950_notice {
 		// constitution de la mention de responsabilité
 		$nb_autres_auteurs = 0 ;
 		$nb_auteurs_secondaires = 0 ;//print "<pre>";print_r($this->aut_array);print "</pre>";
+		$auteurs_secondaires = '';
+		$autres_auteurs = '';
 		for ($as = 0 ; $as < sizeof($this->aut_array) ; $as++ ){
 			if ($this->aut_array[$as]["responsabilite"]===0) {
 				$numrows = 0;
@@ -1122,14 +1185,14 @@ class z3950_notice {
 				z3950_notice::substitute ("author_date_0", $this->aut_array[$as]["date"], $ptab[1]);
 				z3950_notice::substitute ("author_function_0", $this->aut_array[$as]["fonction"], $ptab[1]);
 				z3950_notice::substitute ("author_function_label_0", $fonction->table[$this->aut_array[$as]["fonction"]], $ptab[1]);
-				z3950_notice::substitute ("author_lieu_0", $this->aut_array[$as]["lieu"], $ptab[1]);
-				z3950_notice::substitute ("author_pays_0", $this->aut_array[$as]["pays"], $ptab[1]);
-				z3950_notice::substitute ("author_comment_0", $this->aut_array[$as]["author_comment"], $ptab[1]);
-				z3950_notice::substitute ("author_ville_0", $this->aut_array[$as]["ville"], $ptab[1]);
-				z3950_notice::substitute ("author_subdivision_0", $this->aut_array[$as]["subdivision"], $ptab[1]);
-				z3950_notice::substitute ("author_numero_0", $this->aut_array[$as]["numero"], $ptab[1]);
-				z3950_notice::substitute ("author_web_0", $this->aut_array[$as]["web"], $ptab[1]);
-				z3950_notice::substitute ("authority_number_0", $this->aut_array[$as]["authority_number"], $ptab[1]);
+				z3950_notice::substitute ("author_lieu_0", (!empty($this->aut_array[$as]["lieu"]) ? $this->aut_array[$as]["lieu"] : ''), $ptab[1]);
+				z3950_notice::substitute ("author_pays_0", (!empty($this->aut_array[$as]["pays"]) ? $this->aut_array[$as]["pays"] : ''), $ptab[1]);
+				z3950_notice::substitute ("author_comment_0", (!empty($this->aut_array[$as]["author_comment"]) ? $this->aut_array[$as]["author_comment"] : ''), $ptab[1]);
+				z3950_notice::substitute ("author_ville_0", (!empty($this->aut_array[$as]["ville"]) ? $this->aut_array[$as]["ville"] : ''), $ptab[1]);
+				z3950_notice::substitute ("author_subdivision_0", (!empty($this->aut_array[$as]["subdivision"]) ? $this->aut_array[$as]["subdivision"] : ''), $ptab[1]);
+				z3950_notice::substitute ("author_numero_0", (!empty($this->aut_array[$as]["numero"]) ? $this->aut_array[$as]["numero"] : ''), $ptab[1]);
+				z3950_notice::substitute ("author_web_0", (!empty($this->aut_array[$as]["web"]) ? $this->aut_array[$as]["web"] : ''), $ptab[1]);
+				z3950_notice::substitute ("authority_number_0", (!empty($this->aut_array[$as]["authority_number"]) ? $this->aut_array[$as]["authority_number"] : ''), $ptab[1]);
 				
 				for ($type = 70; $type <= 72; $type++) {
 					if ($this->aut_array[$as]["type_auteur"] == $type) 
@@ -1291,6 +1354,7 @@ class z3950_notice {
 		$form_notice = str_replace('!!tab1!!', $ptab[1], $form_notice);
 		
 		//Editeur 1
+		$existing_publisher_id = 0;
 		//On tente avec toutes les infos
 		if ($this->editors[0]['name'] && $this->editors[0]['ville']) {
 			$sql_find_publisher = "SELECT ed_id,ed_ville,ed_name FROM publishers WHERE ed_name = '".addslashes($this->editors[0]['name'])."' AND ed_ville = '".addslashes($this->editors[0]['ville'])."'";
@@ -1341,6 +1405,7 @@ class z3950_notice {
 		z3950_notice::substitute ("editor_ville_0", $this->editors[0]['ville'], $ptab[2]);
 		
 		//Editeur 2
+		$existing_publisher_id2 = 0;
 		//On tente avec toutes les infos
 		if ($this->editors[1]['name'] && $this->editors[1]['ville']) {
 			$sql_find_publisher2 = "SELECT ed_id,ed_ville,ed_name FROM publishers WHERE ed_name = '".addslashes($this->editors[1]['name'])."' AND ed_ville = '".addslashes($this->editors[1]['ville'])."'";
@@ -1542,13 +1607,17 @@ class z3950_notice {
 		if (!$pmb_keyword_sep) $sep="' '";
 		if(ord($pmb_keyword_sep)==0xa || ord($pmb_keyword_sep)==0xd) $sep=$msg['catalogue_saut_de_ligne'];
 		$ptab[6]= str_replace("!!sep!!", htmlentities($sep,ENT_QUOTES, $charset), $ptab[6]);
-
 		$form_notice = str_replace('!!tab6!!', $ptab[6], $form_notice);
 			
-		// Gestion des titres uniformes 	
+		// Gestion des titres uniformes
+		$value_tu = array();
+		$ntu_data = array();
 		$nb_tu=sizeof($this->tu_500);
 		for ($i=0 ; $i<$nb_tu ; $i++ ) {
 			$value_tu[$i]['name'] = $this->tu_500[$i]['a'];
+			$ntu_data[$i] = new stdClass();
+			$ntu_data[$i]->tu = new stdClass();
+			
 			$ntu_data[$i]->tu->name = $this->tu_500[$i]['a'];			
 			$value_tu[$i]['tonalite'] = $this->tu_500[$i]['u'];
 			
@@ -1598,6 +1667,7 @@ class z3950_notice {
 
 		// mise à jour de l'onglet 7 : langues
 		// langues répétables
+		$lang_repetables = '';
 		$lang = new marc_list('lang');
 		if (sizeof($this->language_code)==0) $max_lang = 1 ;
 			else $max_lang = sizeof($this->language_code) ; 
@@ -1617,6 +1687,7 @@ class z3950_notice {
 		$ptab[7] = str_replace('!!langues_repetables!!', $lang_repetables, $ptab[7]);
 
 		// langues originales répétables
+		$langorg_repetables = '';
 		if (sizeof($this->original_language_code)==0) $max_langorg = 1 ;
 			else $max_langorg = sizeof($this->original_language_code) ; 
 		for ($i = 0 ; $i < $max_langorg ; $i++) {
@@ -1628,9 +1699,9 @@ class z3950_notice {
 				} else {
 					$ptab_lang = str_replace('!!langorg_code!!', $this->original_language_code[$i], $ptab_lang);
 					$ptab_lang = str_replace('!!langorg!!',htmlentities($lang->table[$this->original_language_code[$i]],ENT_QUOTES, $charset), $ptab_lang);
-					}
+				}
 			$langorg_repetables .= $ptab_lang ;
-			}
+		}
 		$ptab[7] = str_replace('!!max_langorg!!', $max_langorg, $ptab[7]);
 		$ptab[7] = str_replace('!!languesorg_repetables!!', $langorg_repetables, $ptab[7]);
 
@@ -1677,13 +1748,14 @@ class z3950_notice {
 			$date_date_formatee = '';
 			$date_date_hid = '';
 		}
-		$date_clic = "onClick=\"openPopUp('./select.php?what=calendrier&caller=notice&date_caller=&param1=f_bull_new_date&param2=date_date_lib&auto_submit=NO&date_anterieure=YES', 'date_date', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\"  ";
+		$date_clic = "onClick=\"openPopUp('./select.php?what=calendrier&caller=notice&date_caller=&param1=f_bull_new_date&param2=date_date_lib&auto_submit=NO&date_anterieure=YES', 'calendar')\"  ";
 		$date_date = "<input type='hidden' id='f_bull_new_date' name='f_bull_new_date' value='$date_date_hid' />
 			<input class='saisie-10em' type='text' name='date_date_lib' value='".$date_date_formatee."' placeholder='".$msg["format_date_input_placeholder"]."' />
 			<input class='bouton' type='button' name='date_date_lib_bouton' value='".$msg["bouton_calendrier"]."' ".$date_clic." />";
 		$zone_article_form = str_replace("!!date_date!!",$date_date,$zone_article_form);
 		
 		//On cherche si le perio existe
+		$num_rows_perio = 0;
 		if($this->perio_titre[0] && $this->perio_issn[0]){
 			$req="select notice_id, tit1 from notices where niveau_biblio='s' and niveau_hierar='1' 
 					and tit1='".addslashes($this->perio_titre[0])."'
@@ -1780,8 +1852,8 @@ class z3950_notice {
 			$form_notice = str_replace('!!notice_entrepot!!', "<input type='hidden' name='item' value='$item' />", $form_notice);
 		} else $form_notice = str_replace('!!notice_entrepot!!', "", $form_notice);
 		
-		$form_notice = str_replace('!!orinot_nom!!', $this->origine_notice[nom], $form_notice);
-		$form_notice = str_replace('!!orinot_pays!!', $this->origine_notice[pays], $form_notice);
+		$form_notice = str_replace('!!orinot_nom!!', $this->origine_notice['nom'], $form_notice);
+		$form_notice = str_replace('!!orinot_pays!!', $this->origine_notice['pays'], $form_notice);
 		//Traitement du 503 "titre de forme" pour le Musée des beaux arts de Nantes 
 		global $tableau_503;
 		$tableau_503 = array( 	"info_503" => $this->info_503,
@@ -1881,23 +1953,65 @@ class z3950_notice {
 								"info_608_z" => $this->info_608_z);
 			
 		
-		// catégories
-		$max_categ = 1;
-		$ptab_categ = str_replace('!!icateg!!', 0, $ptab[60]) ;
-		$ptab_categ = str_replace('!!categ_id!!', 0, $ptab_categ);
-		$ptab_categ = str_replace('!!categ_libelle!!', '', $ptab_categ);		
-		$ptab[6] = str_replace("!!categories_repetables!!", $ptab_categ, $ptab[6]);	
-		$ptab[6] = str_replace('!!tab_categ_order!!', "", $ptab[6]);
 		
-		$traitement_rameau=traite_categories_for_form($tableau_600,$tableau_601,$tableau_602,$tableau_605,$tableau_606,$tableau_607,$tableau_608);
-		if (!is_array($traitement_rameau)) {
-			$traitement_rameau = array("form" => $traitement_rameau, "message" => "");
-		}
-		$form_notice = str_replace('!!message_rameau!!', $traitement_rameau["message"], $form_notice);
-		$form_notice = str_replace('!!traitement_rameau!!', $traitement_rameau["form"], $form_notice);
+		// Indexation concept
+		if($thesaurus_concepts_active == 1){
+			$index_concept = new index_concept(0, TYPE_NOTICE);
+			
+			$concepts_not_found = "";
+			if(function_exists('traite_concepts_for_form')) {
+				$concept_labels = traite_concepts_for_form($tableau_606);
+					
+				foreach (explode(" @@@ ", $concept_labels["message"]) as $concept_label) {
+					if ($concept_label) {
+						$id = concept::get_concept_id_from_label(html_entity_decode($concept_label,ENT_QUOTES, $charset));
+						if ($id) {
+							$index_concept->add_concept(new concept($id));
+						} else {
+							if ($concepts_not_found) {
+								$concepts_not_found .= "<br/>";
+							}
+							$concepts_not_found .= "<em>".$concept_label."</em>";
+						}
+					}
+				}
+			}
+			$index_concepts_form = $index_concept->get_form("notice");
+			
+			if ($concepts_not_found) {
+				$index_concepts_form .= "<div>".$msg["notice_integre_concepts_not_found"]." :<br/>".$concepts_not_found."</div>"; 
+			}
 
-		$manual_categorisation_form = get_manual_categorisation_form($tableau_600,$tableau_601,$tableau_602,$tableau_604,$tableau_605,$tableau_606,$tableau_607,$tableau_608);
-		$form_notice = str_replace('!!manual_categorisation!!', $manual_categorisation_form, $form_notice);
+			$form_notice = str_replace('!!index_concept_form!!', $index_concepts_form, $form_notice);
+			$form_notice = str_replace('!!message_rameau!!', "", $form_notice);
+			$form_notice = str_replace('!!traitement_rameau!!', "", $form_notice);				
+			$form_notice = str_replace('!!manual_categorisation!!', "", $form_notice);				
+			$form_notice = str_replace('!!zone_categ_form!!', "", $form_notice);				
+				
+		}else{
+			$form_notice = str_replace('!!index_concept_form!!', "", $form_notice);	
+			// catégories		
+			$form_notice = str_replace('!!zone_categ_form!!', $zone_categ_form, $form_notice);	
+			$max_categ = 1;
+			$ptab_categ = str_replace('!!icateg!!', 0, $ptab[60]) ;
+			$ptab_categ = str_replace('!!categ_id!!', 0, $ptab_categ);
+			$ptab_categ = str_replace('!!categ_libelle!!', '', $ptab_categ);
+			$ptab[6] = str_replace("!!categories_repetables!!", $ptab_categ, $ptab[6]);
+			$ptab[6] = str_replace('!!tab_categ_order!!', "", $ptab[6]);			
+			
+			
+			$traitement_rameau=traite_categories_for_form($tableau_600,$tableau_601,$tableau_602,$tableau_605,$tableau_606,$tableau_607,$tableau_608);
+			if (!is_array($traitement_rameau)) {
+				$traitement_rameau = array("form" => $traitement_rameau, "message" => "");
+			}
+			$form_notice = str_replace('!!message_rameau!!', $traitement_rameau["message"], $form_notice);
+			$form_notice = str_replace('!!traitement_rameau!!', $traitement_rameau["form"], $form_notice);
+			
+			$manual_categorisation_form = get_manual_categorisation_form($tableau_600,$tableau_601,$tableau_602,$tableau_604,$tableau_605,$tableau_606,$tableau_607,$tableau_608);
+			$form_notice = str_replace('!!manual_categorisation!!', $manual_categorisation_form, $form_notice);
+		}
+		
+	
 
 		//Mise à jour de l'onglet 9
 		$p_perso=new parametres_perso("notices");
@@ -1906,10 +2020,10 @@ class z3950_notice {
 		}
 		
 		//pour Pubmed et DOI, on regarde si on peut remplir un champ résolveur...
-		if(count($this->others_ids)>0){
+		if(!empty($this->others_ids)){
 			foreach($p_perso->t_fields as $key => $t_field){
 				if($t_field['TYPE']  =="resolve"){
-					$field_options = _parser_text_no_function_("<?xml version='1.0' encoding='".$charset."'?>\n".$t_field['OPTIONS'], "OPTIONS");
+					$field_options = $t_field['OPTIONS'][0];
 					foreach($field_options['RESOLVE'] as $resolve){
 						//pubmed = 1 | DOI = 2
 						foreach($this->others_ids as $other_id){
@@ -1932,7 +2046,7 @@ class z3950_notice {
 			for ($i=0; $i<count($perso_["FIELDS"]); $i++) {
 				$p=$perso_["FIELDS"][$i];
 				$perso.="<div class='row'>
-					<label for='".$p["NAME"]."' class='etiquette'>".$p["TITRE"]."</label>
+					<label for='".$p["NAME"]."' class='etiquette'>".$p["TITRE"]." </label>".$p["COMMENT_DISPLAY"]."
 					</div>
 					<div class='row'>
 					".$p["AFF"]."
@@ -1946,37 +2060,11 @@ class z3950_notice {
 		$form_notice = str_replace('!!tab9!!', $ptab[9], $form_notice);
 
 		// champs de gestion
-		global $pmb_notice_img_folder_id;
-		$message_folder="";
-		if($pmb_notice_img_folder_id){
-			$req = "select repertoire_path from upload_repertoire where repertoire_id ='".$pmb_notice_img_folder_id."'";
-			$res = pmb_mysql_query($req);
-			if(pmb_mysql_num_rows($res)){
-				$rep=pmb_mysql_fetch_object($res);
-				if(!is_dir($rep->repertoire_path)){
-					$notice_img_folder_error=1;
-				}
-			}else $notice_img_folder_error=1;
-			if($notice_img_folder_error){
-				if (SESSrights & ADMINISTRATION_AUTH){
-					$requete = "select * from parametres where gestion=0 and type_param='pmb' and sstype_param='notice_img_folder_id' ";
-					$res = pmb_mysql_query($requete);
-					$i=0;
-					if($param=pmb_mysql_fetch_object($res)) {
-						$message_folder=" <a class='erreur' href='./admin.php?categ=param&action=modif&id_param=".$param->id_param."' >".$msg['notice_img_folder_admin_no_access']."</a> ";
-					}
-				}else{
-					$message_folder=$msg['notice_img_folder_no_access'];
-				}
-			}
-		}
-		$ptab[10] = str_replace('!!message_folder!!',$message_folder, $ptab[10]);
+		$ptab[10] = str_replace('!!message_folder!!',thumbnail::get_message_folder(), $ptab[10]);
 		
 		// langue de la notice
 		global $lang,$xmlta_indexation_lang;
-		$user_lang=$this->indexation_lang;
-		if(!$user_lang)$user_lang=$xmlta_indexation_lang;
-		//	if(!$user_lang) $user_lang="fr_FR";
+		$user_lang = (!empty($this->indexation_lang) ? $this->indexation_lang : $xmlta_indexation_lang);
 		$langues = new XMLlist("$include_path/messages/languages.xml");
 		$langues->analyser();
 		$clang = $langues->table;
@@ -2005,8 +2093,20 @@ class z3950_notice {
 				$select_statut = gen_liste_multiple ("select id_notice_statut, gestion_libelle from notice_statut order by 2", "id_notice_statut", "gestion_libelle", "id_notice_statut", "form_notice_statut", "", $deflt_integration_notice_statut, "", "","","",0) ;
 			}
 		$ptab[10] = str_replace('!!notice_statut!!', $select_statut, $ptab[10]);
-		$ptab[10] = str_replace('!!commentaire_gestion!!',htmlentities($this->commentaire_gestion,ENT_QUOTES, $charset), $ptab[10]);
+		$ptab[10] = str_replace('!!commentaire_gestion!!', (!empty($this->commentaire_gestion) ? htmlentities($this->commentaire_gestion, ENT_QUOTES, $charset) : ''), $ptab[10]);
 		$ptab[10] = str_replace('!!thumbnail_url!!',htmlentities($this->thumbnail_url,ENT_QUOTES, $charset), $ptab[10]);
+		
+		global $deflt_notice_is_new;
+		if ($deflt_notice_is_new) {
+			$notice_is_new_checked_no = '';
+			$notice_is_new_checked_yes = 'checked = "checked"';
+		} else {
+			$notice_is_new_checked_no = 'checked = "checked"';
+			$notice_is_new_checked_yes = '';
+		}
+		$ptab[10] = str_replace('!!notice_is_new_checked_no!!', $notice_is_new_checked_no, $ptab[10]);
+		$ptab[10] = str_replace('!!notice_is_new_checked_yes!!', $notice_is_new_checked_yes, $ptab[10]);
+		
 		$form_notice = str_replace('!!tab10!!', $ptab[10], $form_notice);
 		
 		// Documents Numériques
@@ -2045,7 +2145,7 @@ class z3950_notice {
 		
 		
 		$aac=explode('&',$action);
-		$retact='&'.$aac[2].'&'.$aac[5].'&'.$aac[6];
+		$retact = (!empty($aac[2]) ? '&'.$aac[2] : '').(!empty($aac[5]) ? '&'.$aac[5] : '').(!empty($aac[6]) ? '&'.$aac[6] : '');
 		global $force;
 		$retares='';
 		switch ($retour) {
@@ -2090,7 +2190,7 @@ class z3950_notice {
 	}
 
 	// Traitement retour du formulaire
-	function from_form () {
+	public function from_form () {
 		global $typdoc, $b_level, $h_level, $f_title_0, $f_title_1, $f_title_2, $f_title_3, $f_serie, $f_nbr_in_serie ;
 		global $f_editor_name_0, $f_editor_ville_0, $f_editor_name_1, $f_editor_ville_1, $f_collection_name, $f_collection_issn, $f_subcollection_name, $f_subcollection_issn,
 			$f_nbr_in_collection, $f_year, $f_mention_edition, $f_cb, $f_page_nbr, $f_illustration, $f_size, $f_prix, $f_accompagnement,
@@ -2099,9 +2199,10 @@ class z3950_notice {
 			$f_language_code, $f_original_language_code,
 			$f_link_url, $f_link_format,
 			$f_orinot_nom, $f_orinot_pays,
-			$form_notice_statut, $f_commentaire_gestion, $f_thumbnail_url ;
+			$form_notice_statut, $f_commentaire_gestion, $f_thumbnail_url,
+			$f_notice_is_new ;
 		global $categ_pas_trouvee, $pmb_keyword_sep, $categorisation_type,$indexation_lang; 
-		global $pmb_notice_img_folder_id,$opac_url_base,$item;
+		global $opac_url_base,$item;
 
 		global $pmb_use_uniform_title;
 		if ($pmb_use_uniform_title) {
@@ -2120,27 +2221,27 @@ class z3950_notice {
 					$var_ntu_langue = "ntu_langue$i" ;
 					$var_ntu_version = "ntu_version$i" ;
 					$var_ntu_mention = "ntu_mention$i" ;
-					global $$var_tu_id,$$var_tu_titre,$$var_ntu_titre,$$var_ntu_date,$$var_ntu_sous_vedette,$$var_ntu_langue,$$var_ntu_version,$$var_ntu_mention;
+					global ${$var_tu_id},${$var_tu_titre},${$var_ntu_titre},${$var_ntu_date},${$var_ntu_sous_vedette},${$var_ntu_langue},${$var_ntu_version},${$var_ntu_mention};
 					
-					if($$var_tu_titre) {
+					if(${$var_tu_titre}) {
 						// on crée un nouveau titre uniforme si un id et un titre différent, ou si pas d'id
-						if($$var_tu_id && ($$var_tu_titre != $value_tu[$i]["name"] ) || (!$$var_tu_id)) {
-							$value_tu[$i]["name"]=$$var_tu_titre;
+						if(${$var_tu_id} && (${$var_tu_titre} != $value_tu[$i]["name"] ) || (!${$var_tu_id})) {
+							$value_tu[$i]["name"]=${$var_tu_titre};
 							$tu_id=titre_uniforme::import($value_tu[$i],1);
 						} else {
-							$tu_id=$$var_tu_id;
+							$tu_id=${$var_tu_id};
 						}
 						// il est soit existant, soit créé
 						if($tu_id) {
 							$this->titres_uniformes[] = array (
-								'tu_titre' => $$var_tu_titre,
+								'tu_titre' => ${$var_tu_titre},
 								'num_tu' => $tu_id,
-								'ntu_titre' => $$var_ntu_titre,
-								'ntu_date' => $$var_ntu_date,
-								'ntu_sous_vedette' => $$var_ntu_sous_vedette,
-								'ntu_langue' => $$var_ntu_langue,
-								'ntu_version' => $$var_ntu_version,
-								'ntu_mention' => $$var_ntu_mention )
+								'ntu_titre' => ${$var_ntu_titre},
+								'ntu_date' => ${$var_ntu_date},
+								'ntu_sous_vedette' => ${$var_ntu_sous_vedette},
+								'ntu_langue' => ${$var_ntu_langue},
+								'ntu_version' => ${$var_ntu_version},
+								'ntu_mention' => ${$var_ntu_mention} )
 							;
 						}	
 					}				
@@ -2212,37 +2313,37 @@ class z3950_notice {
 			$var_aut_web = "f_author_web_1$i" ;
 			$var_aut_number = "f_authority_number_1$i" ;
 			
-			global $$var_aut_name, $$var_aut_rejete, $$var_aut_date, $$var_aut_type_auteur, $$var_aut_function, $$var_auth_type_use, $$var_aut_lieu, $$var_aut_pays, $$var_aut_comment, $$var_aut_ville, $$var_aut_subdivision, $$var_aut_numero, $$var_aut_web, $$var_aut_number;
-			if ($$var_auth_type_use == "use_existing") {
+			global ${$var_aut_name}, ${$var_aut_rejete}, ${$var_aut_date}, ${$var_aut_type_auteur}, ${$var_aut_function}, ${$var_auth_type_use}, ${$var_aut_lieu}, ${$var_aut_pays}, ${$var_aut_comment}, ${$var_aut_ville}, ${$var_aut_subdivision}, ${$var_aut_numero}, ${$var_aut_web}, ${$var_aut_number};
+			if (${$var_auth_type_use} == "use_existing") {
 				$a_id = "f_aut1_id$i";
 				$a_code = "f_f1_code$i";
 				// si auteur existe, on récupère quand même le numéro d'autorité de l'auteur en cours d'import
 				// il sera intégré si la source de l'autorité n'existe pas encore en base
 				$a_aut_to_compare = "f_auth_number_to_compare_1$i";
-				global $$a_code, $$a_id, $$a_aut_to_compare;
-				if ($$a_id)
+				global ${$a_code}, ${$a_id}, ${$a_aut_to_compare};
+				if (${$a_id})
 					$this->aut_array[] = array(
-						'fonction' => $$a_code,
-						'id' => $$a_id,
+						'fonction' => ${$a_code},
+						'id' => ${$a_id},
 						'responsabilite' => 1,
-						'authority_number' => $$a_aut_to_compare );
-			} else if ($$var_aut_name) 
+						'authority_number' => ${$a_aut_to_compare} );
+			} else if (${$var_aut_name}) 
 				$this->aut_array[] = array(
-					'entree' => stripslashes($$var_aut_name),
-					'rejete' => stripslashes($$var_aut_rejete),
-					'date' => stripslashes($$var_aut_date),
-					'type_auteur' => $$var_aut_type_auteur,
-					'fonction' => $$var_aut_function,
+					'entree' => stripslashes(${$var_aut_name}),
+					'rejete' => stripslashes(${$var_aut_rejete}),
+					'date' => stripslashes(${$var_aut_date}),
+					'type_auteur' => ${$var_aut_type_auteur},
+					'fonction' => ${$var_aut_function},
 					'id' => 0,
 					'responsabilite' => 1,
-					'lieu' => $$var_aut_lieu,
-					'pays' => $$var_aut_pays,
-					'author_comment' => $$var_aut_comment,
-					'ville' => $$var_aut_ville,
-					'subdivision' => $$var_aut_subdivision,
-					'numero' => $$var_aut_numero,
-					'web' => $$var_aut_web,
-					'authority_number' => $$var_aut_number );
+					'lieu' => ${$var_aut_lieu},
+					'pays' => ${$var_aut_pays},
+					'author_comment' => ${$var_aut_comment},
+					'ville' => ${$var_aut_ville},
+					'subdivision' => ${$var_aut_subdivision},
+					'numero' => ${$var_aut_numero},
+					'web' => ${$var_aut_web},
+					'authority_number' => ${$var_aut_number} );
 			}
 		// auteurs secondaires
 		for ($i=0; $i< $max_aut2 ; $i++) {
@@ -2260,39 +2361,39 @@ class z3950_notice {
 			$var_aut_numero = "f_author_numero_2$i" ;
 			$var_aut_web = "f_author_web_2$i" ;
 			$var_aut_number = "f_authority_number_2$i" ;
-			global $$var_aut_name, $$var_aut_rejete, $$var_aut_date, $$var_aut_type_auteur, $$var_aut_function, $$var_auth_type_use, $$var_aut_lieu, $$var_aut_pays, $$var_aut_comment, $$var_aut_ville, $$var_aut_subdivision, $$var_aut_numero, $$var_aut_web, $$var_aut_number;
+			global ${$var_aut_name}, ${$var_aut_rejete}, ${$var_aut_date}, ${$var_aut_type_auteur}, ${$var_aut_function}, ${$var_auth_type_use}, ${$var_aut_lieu}, ${$var_aut_pays}, ${$var_aut_comment}, ${$var_aut_ville}, ${$var_aut_subdivision}, ${$var_aut_numero}, ${$var_aut_web}, ${$var_aut_number};
 
-			if ($$var_auth_type_use == "use_existing") {
+			if (${$var_auth_type_use} == "use_existing") {
 				$a_id = "f_aut2_id$i";
 				$a_code = "f_f2_code$i";
 				// si auteur existe, on récupère quand même le numéro d'autorité de l'auteur en cours d'import
 				// il sera intégré si la source de l'autorité n'existe pas encore en base
 				$a_aut_to_compare = "f_auth_number_to_compare_2$i";
-				global $$a_code, $$a_id, $$a_aut_to_compare;
-				if ($$a_id)
+				global ${$a_code}, ${$a_id}, ${$a_aut_to_compare};
+				if (${$a_id})
 					$this->aut_array[] = array(
-						'fonction' => $$a_code,
-						'id' => $$a_id,
+						'fonction' => ${$a_code},
+						'id' => ${$a_id},
 						'responsabilite' => 2,
-						'authority_number' => $$a_aut_to_compare );
+						'authority_number' => ${$a_aut_to_compare} );
 			}
-			else if ($$var_aut_name) 
+			else if (${$var_aut_name}) 
 				$this->aut_array[] = array(
-					'entree' => stripslashes($$var_aut_name),
-					'rejete' => stripslashes($$var_aut_rejete),
-					'date' => stripslashes($$var_aut_date),
-					'type_auteur' => $$var_aut_type_auteur,
-					'fonction' => $$var_aut_function,
+					'entree' => stripslashes(${$var_aut_name}),
+					'rejete' => stripslashes(${$var_aut_rejete}),
+					'date' => stripslashes(${$var_aut_date}),
+					'type_auteur' => ${$var_aut_type_auteur},
+					'fonction' => ${$var_aut_function},
 					'id' => 0,
 					'responsabilite' => 2,
-					'lieu' => $$var_aut_lieu,
-					'pays' => $$var_aut_pays,
-					'author_comment' => $$var_aut_comment,
-					'ville' => $$var_aut_ville,
-					'subdivision' => $$var_aut_subdivision,
-					'numero' => $$var_aut_numero,
-					'web' => $$var_aut_web,
-					'authority_number' => $$var_aut_number );			
+					'lieu' => ${$var_aut_lieu},
+					'pays' => ${$var_aut_pays},
+					'author_comment' => ${$var_aut_comment},
+					'ville' => ${$var_aut_ville},
+					'subdivision' => ${$var_aut_subdivision},
+					'numero' => ${$var_aut_numero},
+					'web' => ${$var_aut_web},
+					'authority_number' => ${$var_aut_number} );			
 			}
 
 		global $editor_type, $f_ed1_id;
@@ -2381,11 +2482,11 @@ class z3950_notice {
 			$categories = array();
 			for($i=0, $count=$max_categ; $i<$count; $i++) {
 				$a_categ_id_name = "f_categ_id".$i;
-				global $$a_categ_id_name;
+				global ${$a_categ_id_name};
 				
-				if (!$$a_categ_id_name)
+				if (!${$a_categ_id_name})
 					continue;
-				$acategory = array("categ_id" => $$a_categ_id_name);
+				$acategory = array("categ_id" => ${$a_categ_id_name});
 				
 				$categories[] = $acategory;
 			}
@@ -2410,6 +2511,7 @@ class z3950_notice {
 		//		mots clés pas présents dans $this->categories mais à conserver en zone libre
 
 		if (!isset($categ_pas_trouvee)) $categ_pas_trouvee=array();
+		$categ_pas_trouvee_pasvide = array();
 		for ($i=0;$i<count($categ_pas_trouvee);$i++) 
 			if (trim($categ_pas_trouvee[$i])) 
 				$categ_pas_trouvee_pasvide[]=addslashes(trim($categ_pas_trouvee[$i]));
@@ -2431,9 +2533,9 @@ class z3950_notice {
 		$this->language_code = array();
 		for ($i=0; $i< $max_lang ; $i++) {
 			$var_langcode = "f_lang_code$i" ;
-			global $$var_langcode ;
-			if ($$var_langcode) {
-				$this->language_code[$j] =  $$var_langcode;
+			global ${$var_langcode} ;
+			if (${$var_langcode}) {
+				$this->language_code[$j] =  ${$var_langcode};
 				$j++;	
 			}
 		}
@@ -2442,9 +2544,9 @@ class z3950_notice {
 		$this->original_language_code = array();
 		for ($i=0; $i< $max_langorg ; $i++) {
 			$var_langorgcode = "f_langorg_code$i" ;
-			global $$var_langorgcode;
-			if ($$var_langorgcode) {
-				$this->original_language_code[$j] =  $$var_langorgcode;
+			global ${$var_langorgcode};
+			if (${$var_langorgcode}) {
+				$this->original_language_code[$j] =  ${$var_langorgcode};
 				$j++;
 			}
 		}
@@ -2452,8 +2554,8 @@ class z3950_notice {
 		$this->link_url = clean_string ($f_link_url);
 		$this->link_format = clean_string ($f_link_format);
 
-		$this->origine_notice[nom] = clean_string ($f_orinot_nom);
-		$this->origine_notice[pays] = clean_string ($f_orinot_pays);
+		$this->origine_notice['nom'] = clean_string ($f_orinot_nom);
+		$this->origine_notice['pays'] = clean_string ($f_orinot_pays);
 
 		$this->statut = $form_notice_statut ;
 		$this->commentaire_gestion  = $f_commentaire_gestion ;
@@ -2461,89 +2563,34 @@ class z3950_notice {
 		$this->thumbnail_url		= $f_thumbnail_url;
 		
 		// vignette de la notice uploadé dans un répertoire
-		if($_FILES['f_img_load']['name'] && $pmb_notice_img_folder_id){
-			$poids_fichier_max=1024*1024;//Limite la taille de l'image à 1 Mo
-			$req = "select repertoire_path from upload_repertoire where repertoire_id ='".$pmb_notice_img_folder_id."'";
-			$res = pmb_mysql_query($req,$dbh);
-			if(pmb_mysql_num_rows($res)){
-				$rep=pmb_mysql_fetch_object($res);
-				$filename_output=$rep->repertoire_path."img_es_".$item;
-			}
-			if (($fp=@fopen($_FILES['f_img_load']['tmp_name'], "rb")) && $filename_output) {
-				$image="";
-				$size=0;
-				$flag=true;
-				while (!feof($fp)) {
-					$image.=fread($fp,4096);
-					$size=strlen($image);
-					if ($size>$poids_fichier_max) {
-						$flag=false;
-						break;
-					}
-				}
-				if ($flag) {
-					if ($img=imagecreatefromstring($image)) {
-						if(!($pmb_notice_img_pics_max_size*1)) $pmb_notice_img_pics_max_size=100;
-						$redim=false;
-						if (imagesx($img) >= imagesy($img)) {
-							if(imagesx($img) <= $pmb_notice_img_pics_max_size){
-								$largeur=imagesx($img);
-								$hauteur=imagesy($img);
-							}else{
-								$redim=true;
-								$largeur=$pmb_notice_img_pics_max_size;
-								$hauteur = ($largeur*imagesy($img))/imagesx($img);
-							}
-						} else {
-							if(imagesy($img) <= $pmb_notice_img_pics_max_size){
-								$hauteur=imagesy($img);
-								$largeur=imagesx($img);
-							}else{
-								$redim=true;
-								$hauteur=$pmb_notice_img_pics_max_size;
-								$largeur = ($hauteur*imagesx($img))/imagesy($img);
-							}
-						}
-						if($redim){
-							$dest = imagecreatetruecolor($largeur,$hauteur);
-							imagecopyresampled($dest, $img, 0, 0, 0, 0, $largeur, $hauteur,imagesx($img),imagesy($img));
-							imagepng($dest,$filename_output);
-							imagedestroy($dest);
-						}else{
-							imagepng($img,$filename_output);
-						}
-						imagedestroy($img);
-						$thumbnail_url=$opac_url_base."getimage.php?noticecode=&vigurl=&notice_id=es_".$item;
-		
-						$this->thumbnail_url = $thumbnail_url;
-						$this->flag_upload_vignette = "img_es_".$item;
-					}
-				}
-			}
+		$uploaded_thumbnail_url = thumbnail::create("es_".$item);
+		if($uploaded_thumbnail_url) {
+			$this->thumbnail_url = $uploaded_thumbnail_url; 
+			$this->flag_upload_vignette = "img_es_".$item;
 		}
 		
 		//Document Numérique
 		global $doc_num_count;
 		for ($i=0; $i<$doc_num_count; $i++) {
 			$include_cb_name = "include_doc_num".$i;
-			global $$include_cb_name;
-			if ($$include_cb_name) {
+			global ${$include_cb_name};
+			if (${$include_cb_name}) {
 				$docnum_filename_name = "doc_num_filename".$i;
-				global $$docnum_filename_name;
+				global ${$docnum_filename_name};
 				$docnum_caption_name = "doc_num_caption".$i;
-				global $$docnum_caption_name;
+				global ${$docnum_caption_name};
 				$docnum_url_name = "doc_num_url".$i;
-				global $$docnum_url_name;
+				global ${$docnum_url_name};
 				$docnum_statut_name = "doc_num_statut".$i;
-				global $$docnum_statut_name;
+				global ${$docnum_statut_name};
 				$docnum_nodownload_name = "doc_num_nodownload".$i;
-				global $$docnum_nodownload_name;
-				if ($$docnum_nodownload_name)
+				global ${$docnum_nodownload_name};
+				if (${$docnum_nodownload_name})
 					$nodownload = 1;
 				else
 					$nodownload = 0;
 									
-				$this->doc_nums[] = array("a" => $$docnum_url_name, "b" => $$docnum_caption_name, "f" => $$docnum_filename_name, "__nodownload__" => $nodownload, "s" => $$docnum_statut_name);
+				$this->doc_nums[] = array("a" => ${$docnum_url_name}, "b" => ${$docnum_caption_name}, "f" => ${$docnum_filename_name}, "__nodownload__" => $nodownload, "s" => ${$docnum_statut_name});
 			}
 		}
 		
@@ -2563,15 +2610,17 @@ class z3950_notice {
 			global $f_bull_existing_id;
 			$this->bull_id = $f_bull_existing_id;			
 		} else {
-			global $f_bull_new_num, $f_bull_new_titre, $f_bull_new_date, $f_bull_new_mention;
+			global $f_bull_new_num, $f_bull_new_titre, $f_bull_new_mention,$date_date_lib;
 			$this->bull_num = clean_string ($f_bull_new_num);
 			$this->bull_titre = clean_string ($f_bull_new_titre);
-			$this->bull_date = clean_string ($f_bull_new_date);
+			$this->bull_date = extraitdate(clean_string($date_date_lib));
 			$this->bull_mention = clean_string ($f_bull_new_mention);
 		}
+		
+		$this->notice_is_new = $f_notice_is_new;
 	}
 
-	function process_isbn ($isbn) {
+	public function process_isbn ($isbn) {
 		/* We've got everything, let's have a look if ISBN already exists in notices table */
 		$isbn_nettoye = preg_replace('/-|\.| |\(|\)|\[|\]|\:|\;|[A-WY-Z]/i', '', $isbn);
 		$isbn_nettoye_13 = substr($isbn_nettoye,0,13);
@@ -2590,7 +2639,7 @@ class z3950_notice {
 		return $isbn_OK;
 	}
 		
-	function process_author ($name, $rejete, $type, $date) {
+	public function process_author ($name, $rejete, $type, $date) {
 		if (!$rejete) {
 			$field = explode (',', $name, 2);
 			$name = $field[0];
@@ -2608,12 +2657,12 @@ class z3950_notice {
 		return $author;
 	}
 		
-	function clean_field ($field) {
+	public function clean_field ($field) {
 		return preg_replace('/-$| $|\($|\)$|\[$|\]$|\:$|\;$|\/$\|\$|([^ ].)\.$|,$/', '$1', trim ($field));
 	}
 	
 	// fonction d'intégration de l'origine de l'autorité (pratiquement identique à keep_authority_infos dans pmb/admin/import/import.finc.php)
-	function insert_authority_infos($authority_number,$type,$id_origin_authority,$authority_infos=array()){
+	public function insert_authority_infos($authority_number,$type,$id_origin_authority,$authority_infos=array()){
 		global $opac_enrichment_bnf_sparql;
 		
 		//on a un numéro d'autorité, on regarde si on l'a déjà rencontré
@@ -2672,10 +2721,10 @@ class z3950_notice {
 		return $num_authority;
 	}
 
-	function from_usmarc ($record) {
-		$this->document_type = $record->inner_guide[dt];
-		$this->bibliographic_level = $record->inner_guide[bl];
-		$this->hierarchic_level = $record->inner_guide[hl];
+	public function from_usmarc ($record) {
+		$this->document_type = $record->inner_guide['dt'];
+		$this->bibliographic_level = $record->inner_guide['bl'];
+		$this->hierarchic_level = $record->inner_guide['hl'];
 
 		if ($this->hierarchic_level=="") {
 			if ($this->bibliographic_level=="s") $this->hierarchic_level="1";
@@ -2795,7 +2844,7 @@ class z3950_notice {
 		$nb_repet_711=sizeof($aut_711);
 
 		/* renseignement de aut0 */
-		if ($aut_100[0][a]!="") { /* auteur principal en 100 ? */
+		if ($aut_100[0]['a']!="") { /* auteur principal en 100 ? */
 				
 			$author=$this->process_author($aut_100[0]['a'],$aut_100[0]['b'],'','');
 			
@@ -2866,13 +2915,13 @@ class z3950_notice {
 			}
 		
 		/* Editors */
-		$this->year = preg_replace ("/[^0-9\[\]()]/", "", $editor[0][c]);
+		$this->year = preg_replace ("/[^0-9\[\]()]/", "", $editor[0]['c']);
 
 		$this->editors[0]['name'] = $this->clean_field ($editor[0][b]);
-		$this->editors[0]['ville'] = $this->clean_field ($editor[0][a]);
+		$this->editors[0]['ville'] = $this->clean_field ($editor[0]['a']);
 
 		$this->editors[1]['name'] = $this->clean_field ($editor[1][b]);
-		$this->editors[1]['ville'] = $this->clean_field ($editor[1][a]);
+		$this->editors[1]['ville'] = $this->clean_field ($editor[1]['a']);
 		
 		/* ici traitement des collections */
 		$coll_name = "";
@@ -2882,26 +2931,26 @@ class z3950_notice {
 		$nocoll = "";
 
 		/* traitement de 222$a, si rien alors 440$a pour la collection */
-		if ($collection_222[0][a]!="") {
-			$coll_name = $this->clean_field($collection_222[0][a]);
-			$coll_issn = $collection_022[0][a];
-		} elseif ($collection_440[0][a]!="") {
-			$coll_name = $this->clean_field($collection_440[0][a]);
-			$coll_issn = $collection_440[0][x];
+		if ($collection_222[0]['a']!="") {
+			$coll_name = $this->clean_field($collection_222[0]['a']);
+			$coll_issn = $collection_022[0]['a'];
+		} elseif ($collection_440[0]['a']!="") {
+			$coll_name = $this->clean_field($collection_440[0]['a']);
+			$coll_issn = $collection_440[0]['x'];
 		}
 
 		/* traitement de 222 1, si rien alors 440 1 pour la sous-collection */
-		if ($collection_222[1][a]!="") {
-			$subcoll_name = $this->clean_field($collection_222[1][a]);
-			$subcoll_issn = $collection_022[1][a];
-		} elseif ($collection_440[1][a]!="") {
-			$subcoll_name = $this->clean_field($collection_440[1][a]);
-			$subsubcoll_issn = $collection_440[1][x];
+		if ($collection_222[1]['a']!="") {
+			$subcoll_name = $this->clean_field($collection_222[1]['a']);
+			$subcoll_issn = $collection_022[1]['a'];
+		} elseif ($collection_440[1]['a']!="") {
+			$subcoll_name = $this->clean_field($collection_440[1]['a']);
+			$subsubcoll_issn = $collection_440[1]['x'];
 		}
 
 		/* gaffe au nocoll, en principe en 440$v */
-		if ($collection_440[0][v]!="") {
-			$this->nbr_in_collection = $collection_440[0][v];
+		if ($collection_440[0]['v']!="") {
+			$this->nbr_in_collection = $collection_440[0]['v'];
 		} else 
 		$this->nbr_in_collection = "";
 
@@ -2920,9 +2969,9 @@ class z3950_notice {
 		$this->link_format = $ressource[0]["2"];
 
 		/* traitement des titres */
-		$this->titles[0] = preg_replace('/-$| $|\||\($|\)$|\[$|\]$|\:$|\;$|\/$|\\$|\.+$/', '', trim($tit[0][a]));
-		$this->titles[1] = preg_replace('/-$| $|\||\($|\)$|\[$|\]$|\:$|\;$|\/$\|\$|\.+$/', '', trim($tit_sup[0][a]));
-		$this->titles[2] = preg_replace('/-$| $|\||\($|\)$|\[$|\]$|\:$|\;$|\/$\|\$|\.+$/', '', trim($tit_for[0][a]));
+		$this->titles[0] = preg_replace('/-$| $|\||\($|\)$|\[$|\]$|\:$|\;$|\/$|\\$|\.+$/', '', trim($tit[0]['a']));
+		$this->titles[1] = preg_replace('/-$| $|\||\($|\)$|\[$|\]$|\:$|\;$|\/$\|\$|\.+$/', '', trim($tit_sup[0]['a']));
+		$this->titles[2] = preg_replace('/-$| $|\||\($|\)$|\[$|\]$|\:$|\;$|\/$\|\$|\.+$/', '', trim($tit_for[0]['a']));
 		$this->titles[3] = preg_replace('/-$| $|\||\($|\)$|\[$|\]$|\:$|\;$|\/$\|\$|\.+$/', '', trim($tit[0][b]));
 
 		$this->general_note = "";
@@ -2949,10 +2998,10 @@ class z3950_notice {
 	
 	}
 
-	function from_unimarc ($record) {
-		$this->document_type = $record->inner_guide[dt];
-		$this->bibliographic_level = $record->inner_guide[bl];
-		$this->hierarchic_level = $record->inner_guide[hl];
+	public function from_unimarc ($record) {
+		$this->document_type = $record->inner_guide['dt'];
+		$this->bibliographic_level = $record->inner_guide['bl'];
+		$this->hierarchic_level = $record->inner_guide['hl'];
 
 		if ($this->hierarchic_level=="") {
 			if ($this->bibliographic_level=="s") $this->hierarchic_level="1";
@@ -2960,6 +3009,31 @@ class z3950_notice {
 		}
 		if(function_exists("param_perso_prepare"))  param_perso_prepare($record);
 		$indicateur = array();
+		$isbn = '';
+		$cb = '';
+		$tit = '';
+		$editeur_lieu = '';
+		$editeur_nom = '';
+		$editeur_date = '';
+		$editeur_date_machine = '';
+		$collection_225 = '';
+		$general_note = '';
+		$content_note = '';
+		$abstract_note = '';
+		$EAN = '';
+		$collection_411 = '';
+		$bulletin_463 = '';
+		$perio530a = '';
+		$index_sujets = '';
+		$aut_700 = array();
+		$aut_701 = array();
+		$aut_702 = array();
+		$aut_710 = array();
+		$aut_711 = array();
+		$aut_712 = array();
+		$origine_notice = '';
+		$ressource = '';
+		$info_995 = '';
 		for ($i=0;$i<count($record->inner_directory);$i++) {
 			$cle=$record->inner_directory[$i]['label'];
 			$indicateur[$cle][]=substr($record->inner_data[$i]['content'],0,2);
@@ -2967,7 +3041,7 @@ class z3950_notice {
 				case "010": /* isbn */
 					$isbn = $record->get_subfield($cle,'a');
 					$subfield = $record->get_subfield($cle,"d");
-					$this->prix = $subfield[0];
+					$this->prix = (!empty($subfield) ? $subfield[0] : '');
 				case "011": /* isbn */
 					$isbn = $record->get_subfield($cle,'a');	
 					break;
@@ -3007,25 +3081,25 @@ class z3950_notice {
 					break;
 				case "215": /* description */
 					$subfield = $record->get_subfield($cle,"a");
-					$this->page_nbr = $subfield[0];
+					$this->page_nbr = (!empty($subfield) ? $subfield[0] : '');
 					$subfield = $record->get_subfield($cle,"c");
-					$this->illustration = $subfield[0];
+					$this->illustration = (!empty($subfield) ? $subfield[0] : '');
 					$subfield = $record->get_subfield($cle,"d");
-					$this->size = $subfield[0];
+					$this->size = (!empty($subfield) ? $subfield[0] : '');
 					$subfield = $record->get_subfield($cle,"e");
-					$this->accompagnement = $subfield[0];
+					$this->accompagnement = (!empty($subfield) ? $subfield[0] : '');
 					break;
 				case "225": /* collection */
 					$collection_225 = $record->get_subfield($cle,"a","i","v","x");
 					break;
 				case "300": /* inside */
-					$general_note = $record->get_subfield($cle,"a");
+					$general_note = $record->get_subfield_array($cle,"a");
 					break;
 				case "327": /* inside */
 					$content_note=$record->get_subfield_array($cle,"a");
 					break;
 				case "330": /* abstract */
-					$abstract_note = $record->get_subfield($cle,"a");
+					$abstract_note = $record->get_subfield_array($cle,"a");
 					break;
 				case "345": /* EAN */
 					$EAN=$record->get_subfield($cle,"b");
@@ -3044,7 +3118,9 @@ class z3950_notice {
 						if($record->get_subfield_array($cle,"v")) $this->bull_num = $record->get_subfield_array($cle,"v");
 						if($record->get_subfield_array($cle,"d")) $this->bull_date = $record->get_subfield_array($cle,"d");
 						if($record->get_subfield_array($cle,"e")) $this->bull_mention = $record->get_subfield_array($cle,"e");
-					} else $serie = $record->get_subfield($cle,"t","v");
+					} else {
+						$serie = $record->get_subfield($cle,"t","v");
+					}
 					break;
 				case "463":/* Bulletins */
 					$bulletin_463 = $record->get_subfield($cle,"t","v","d","e");
@@ -3220,10 +3296,15 @@ class z3950_notice {
 			} /* end of switch */
 
 		} /* end of for */
-
+		
+		//Traitement import perso
+		if (function_exists('param_perso_prepare_fin')) {
+			param_perso_prepare_fin($this->notice,$this->exemplaires);
+		}
+		
 		//Récupération des catégories en lien avec le fichier xml
 		category_auto::get_info_categ($record);
-		$this->isbn = $this->process_isbn ($isbn[0]);
+		$this->isbn = (!empty($isbn[0]) ? $this->process_isbn ($isbn[0]) : '');
 		if (function_exists("traite_categories_from_unimarc")) {
 			$this->categories = traite_categories_from_unimarc($this);
 		}
@@ -3243,7 +3324,7 @@ class z3950_notice {
 		$nb_repet_712=sizeof($aut_712);
 
 		/* renseignement de aut0 */
-		if ($aut_700[0][a]!="") { /* auteur principal en 700 ? */
+		if (isset($aut_700[0]['a']) && $aut_700[0]['a']!="") { /* auteur principal en 700 ? */
 			$this->aut_array[] = array(
 				"entree" => $aut_700[0]['a'],
 				"rejete" => $aut_700[0]['b'],
@@ -3255,7 +3336,7 @@ class z3950_notice {
 				"responsabilite" => 0 ,
 				"ordre" => 0 ,
 				"authority_number" => $aut_700[0][3]) ;
-		} elseif ($aut_710[0]['a']!="") { /* auteur principal en 710 ? */
+		} elseif (isset($aut_710[0]['a']) && $aut_710[0]['a']!="") { /* auteur principal en 710 ? */
 			if(substr($indicateur["710"][0],0,1)=="1")	$type_auteur="72";
 			else $type_auteur="71";
 			
@@ -3359,8 +3440,8 @@ class z3950_notice {
 		/*  Added for some italian z39.50 server 
 		Some adjustment to clean the values from symbol like << and others */
 		for ($i=0 ; $i < $nb_repet_701+$nb_repet_711+$nb_repet_702 +$nb_repet_712+1 ; $i++) {
-			$this->aut_array[$i]['entree']=del_more_garbage($this->aut_array[$i]['entree']);
-			$this->aut_array[$i]['rejete']=del_more_garbage($this->aut_array[$i]['rejete']);
+			$this->aut_array[$i]['entree']=(!empty($this->aut_array[$i]['entree']) ? del_more_garbage($this->aut_array[$i]['entree']) : '');
+			$this->aut_array[$i]['rejete']=(!empty($this->aut_array[$i]['rejete']) ? del_more_garbage($this->aut_array[$i]['rejete']) : '');
 		}
 		
 		/* traitement des éditeurs */
@@ -3371,7 +3452,7 @@ class z3950_notice {
 					$mon_ed=array();
 					$mon_ed["c"]=$nom2;
 			
-					if($editeur_lieu[$key_nom1][$key_nom2]){
+					if(!empty($editeur_lieu) && !empty($editeur_lieu[$key_nom1]) && !empty($editeur_lieu[$key_nom1][$key_nom2])){
 						$mon_ed["a"]=$editeur_lieu[$key_nom1][$key_nom2];
 					}
 	
@@ -3379,13 +3460,13 @@ class z3950_notice {
 				}
 			}
 		}
-		$this->year=clean_string($editeur_date[0]);
+		$this->year=(!empty($editeur_date[0]) ? clean_string($editeur_date[0]) : '');
 
-		$this->editors[0]['name']=clean_string($editor[0][c]);
-		$this->editors[0]['ville']=clean_string($editor[0][a]);
-
-		$this->editors[1]['name']=clean_string($editor[1][c]);
-		$this->editors[1]['ville']=clean_string($editor[1][a]);
+		$this->editors[0]['name'] = ((!empty($editor[0]) && !empty($editor[0]['c'])) ? clean_string($editor[0]['c']) : '');
+		$this->editors[0]['ville'] = ((!empty($editor[0]) && !empty($editor[0]['a'])) ? clean_string($editor[0]['a']) : '');
+	
+		$this->editors[1]['name'] = ((!empty($editor[1]) && !empty($editor[1]['c'])) ? clean_string($editor[1]['c']) : '');
+		$this->editors[1]['ville'] = ((!empty($editor[1]) && !empty($editor[1]['a'])) ? clean_string($editor[1]['a']) : '');
 		
 		/*  Added for some italian z39.50 server 
 		Some adjustment to clean the values from symbol like << and others */
@@ -3400,23 +3481,23 @@ class z3950_notice {
 		$nocoll_ins="";
 
 		// Collection : traitement de 225 et 410, préférence donnée au 410
-		if ($collection_410[0][t]) $coll_name=$collection_410[0][t];
-		elseif ($collection_225[0][a]!="") $coll_name=$collection_225[0][a];
+		if (isset($collection_410[0]['t']) && $collection_410[0]['t']) $coll_name=$collection_410[0]['t'];
+		elseif (isset($collection_225[0]['a']) && $collection_225[0]['a']!="") $coll_name=$collection_225[0]['a'];
 		
-		if ($collection_410[0][x]) $coll_issn=$collection_410[0][x];
-		elseif ($collection_225[0][x]!="") $coll_issn=$collection_225[0][x];
+		if (isset($collection_410[0]['x']) && $collection_410[0]['x']) $coll_issn=$collection_410[0]['x'];
+		elseif (isset($collection_225[0]['x']) && $collection_225[0]['x']!="") $coll_issn=$collection_225[0]['x'];
 		
 		
 		// Sous-collection : traitement de 225$i et 411, préférence donnée au 411
-		if ($collection_411[0][t]) $subcoll_name=$collection_411[0][t];
-		elseif ($collection_225[0][i]!="") $subcoll_name=$collection_225[0][i];
+		if (isset($collection_411[0]['t']) && $collection_411[0]['t']) $subcoll_name=$collection_411[0]['t'];
+		elseif (isset($collection_225[0]['i']) && $collection_225[0]['i']!="") $subcoll_name=$collection_225[0]['i'];
 		
-		if ($collection_411[0][x]) $subcoll_issn=$collection_411[0][x];
+		if (isset($collection_411[0]['x']) && $collection_411[0]['x']) $subcoll_issn=$collection_411[0]['x'];
 
 		// Numéro dans la collection, présent en 411$v, sinon en 410$v et enfin en 225$v
-		if     ($collection_411[0][v]!="") $this->nbr_in_collection = $collection_411[0][v];
-		elseif ($collection_410[0][v]!="") $this->nbr_in_collection = $collection_410[0][v];
-		elseif ($collection_225[0][v]!="") $this->nbr_in_collection = $collection_225[0][v];
+		if     (isset($collection_411[0]['v']) && $collection_411[0]['v']!="") $this->nbr_in_collection = $collection_411[0]['v'];
+		elseif (isset($collection_410[0]['v']) && $collection_410[0]['v']!="") $this->nbr_in_collection = $collection_410[0]['v'];
+		elseif (isset($collection_225[0]['v']) && $collection_225[0]['v']!="") $this->nbr_in_collection = $collection_225[0]['v'];
 		else $this->nbr_in_collection = "";
 
 		$this->collection['name']=clean_string($coll_name);
@@ -3460,7 +3541,7 @@ class z3950_notice {
 		
 		
 		/* Series  TODO: Check if it's Ok */
-		$this->serie = clean_string ($serie[0]['t']);
+		$this->serie = ((!empty($serie) && !empty($serie[0]) && !empty($serie[0]['t'])) ? clean_string($serie[0]['t']) : '');
 		if ($this->serie){
 			$this->nbr_in_serie = $serie[0]['v'];
 		}else{
@@ -3486,8 +3567,8 @@ class z3950_notice {
 		$this->content_note= implode("\n",$content_note);
 	
 		/* traitement ressources */
-		$this->link_url = $ressource[0]["u"];
-		$this->link_format = $ressource[0]["q"];
+		$this->link_url = (isset($ressource[0]["u"]) ? $ressource[0]["u"] : "");
+		$this->link_format = (isset($ressource[0]["q"]) ? $ressource[0]["q"] : "");
 
 		/* Titles processing */
 		if (!$tit_200a) $tit_200a=array();
@@ -3499,10 +3580,10 @@ class z3950_notice {
 		$tit[0]['d'] = implode (" ; ",$tit_200d);
 		$tit[0]['e'] = implode (" ; ",$tit_200e);
 	
-		$this->titles[0] = clean_string($tit[0][a]);
-		$this->titles[1] = clean_string($tit[0][c]);
-		$this->titles[2] = clean_string($tit[0][d]);
-		$this->titles[3] = clean_string($tit[0][e]);
+		$this->titles[0] = clean_string($tit[0]['a']);
+		$this->titles[1] = clean_string($tit[0]['c']);
+		$this->titles[2] = clean_string($tit[0]['d']);
+		$this->titles[3] = clean_string($tit[0]['e']);
 		
 		/*  Added for some italian z39.50 server 
 		Some adjustment to clean the values from symbol like << and others */
@@ -3516,12 +3597,20 @@ class z3950_notice {
 		if (is_array($index_sujets)) $this->free_index = implode ($pmb_keyword_sep,$index_sujets);
 			else $this->free_index = $index_sujets;
 			
-		$this->origine_notice['nom']=clean_string($origine_notice[0]['b']);
-		$this->origine_notice['pays']=clean_string($origine_notice[0]['a']);
+		if(isset($origine_notice[0]['b'])){
+			$this->origine_notice['nom']=clean_string($origine_notice[0]['b']);
+		}else{
+			$this->origine_notice['nom']="";
+		}
+		if(isset($origine_notice[0]['a'])){
+			$this->origine_notice['pays']=clean_string($origine_notice[0]['a']);
+		}else{
+			$this->origine_notice['pays']="";
+		}
 		
 	}
 
-	function get_isbd_display () {
+	public function get_isbd_display () {
 		$tdoc = new marc_list('doctype');
 
 		if ($this->aut_array[0]['rejete'])
@@ -3541,7 +3630,7 @@ class z3950_notice {
 			$this->subcollection['name']." ; ".
 			$this->nbr_in_collection.").<br />".
 			$this->isbn.
-			"<br /><font size='1'>".$this->abstract_note."</font>";
+			"<br />".$this->abstract_note;
 		
 		return array ($this->isbn, $this->titles[0], $author, $display);
 	}
@@ -3549,7 +3638,7 @@ class z3950_notice {
 	/*
 	 * Transforme les variables de classe comme si elles étaient postées
 	 */
-	function var_to_post($no_download='1'){
+	public function var_to_post($no_download='1'){
 		
 		global $dbh, $deflt_integration_notice_statut;
 		
@@ -3559,17 +3648,12 @@ class z3950_notice {
 		$this->titles[1] = addslashes($this->titles[1]); 
 		$this->titles[2] = addslashes($this->titles[2]); 
 		$this->titles[3] = addslashes($this->titles[3]); 
-		$serie_id = addslashes($serie_id) ;
 		$this->nbr_in_serie = addslashes($this->nbr_in_serie); 
-		$editor_ids[0] = addslashes($editor_ids[0]);
-		$editor_ids[1] = addslashes($editor_ids[1]);
 		$this->year = addslashes($this->year) ;
 		$this->page_nbr = addslashes($this->page_nbr) ;
 		$this->illustration = addslashes($this->illustration) ;
 		$this->size = addslashes($this->size) ;
 		$this->accompagnement = addslashes($this->accompagnement) ;
-		$collection_id = addslashes($collection_id);
-		$subcollection_id =	addslashes($subcollection_id);
 		$this->nbr_in_collection = addslashes($this->nbr_in_collection);
 		$this->mention_edition = addslashes($this->mention_edition); 
 		$this->general_note = addslashes($this->general_note) ;
@@ -3588,6 +3672,9 @@ class z3950_notice {
 		$this->orinot_id = addslashes($this->orinot_id) ;
 		$this->prix = addslashes($this->prix);
 		
+		global $biblio_notice;
+		$biblio_notice = "";
+		
 		if($this->bibliographic_level == 'a' && $this->hierarchic_level=='2'){
 			//Pério et bulletin
 			$this->perio_titre = addslashes($this->perio_titre[0]);
@@ -3598,6 +3685,7 @@ class z3950_notice {
 			$this->bull_num = addslashes($this->bull_num[0]);
 			
 			//On cherche si le perio existe
+			$num_rows_perio = 0;
 			if($this->perio_titre && $this->perio_issn){			
 				$req="select notice_id, tit1, code from notices where niveau_biblio='s' and niveau_hierar='1' 
 						and tit1='".$this->perio_titre."'
@@ -3631,34 +3719,34 @@ class z3950_notice {
 			//On cherche si le bulletin existe
 			$num_rows_bull=0;
 			if($this->bull_num && $this->perio_id){
-				$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre from bulletins where bulletin_notice='".$this->perio_id."' and  bulletin_numero like '%".$this->bull_num."%' ";
+				$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre from bulletins where bulletin_notice='".$this->perio_id."' and  bulletin_numero like '%".$this->bull_num."%' order by date_date desc, bulletin_id desc ";
 				$res_bull = pmb_mysql_query($req,$dbh);
 				$num_rows_bull = pmb_mysql_num_rows($res_bull);
 			}
 			if(!$num_rows_bull && $this->bull_date && $this->perio_id){
-				$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre from bulletins where bulletin_notice='".$this->perio_id."' and date_date='".$this->bull_date."' ";
+				$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre from bulletins where bulletin_notice='".$this->perio_id."' and date_date='".$this->bull_date."' order by date_date desc, bulletin_id desc ";
 				$res_bull = pmb_mysql_query($req,$dbh);
 				$num_rows_bull = pmb_mysql_num_rows($res_bull);
 			}elseif(($num_rows_bull > 1) && $this->bull_date && $this->perio_id){
-				$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre from bulletins where bulletin_notice='".$this->perio_id."' and date_date='".$this->bull_date."' and  bulletin_numero like '%".$this->bull_num."%' ";
+				$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre from bulletins where bulletin_notice='".$this->perio_id."' and date_date='".$this->bull_date."' and  bulletin_numero like '%".$this->bull_num."%' order by date_date desc, bulletin_id desc ";
 				$res_bull = pmb_mysql_query($req,$dbh);
 				$num_rows_bull = pmb_mysql_num_rows($res_bull);
 			}
-			if(!$num_rows_bull && $this->bull_mention && $this->perio_id){
-				$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre from bulletins where bulletin_notice='".$this->perio_id."' and mention_date='".$this->bull_mention."' ";
+			if(!$num_rows_bull && $this->bull_mention && $this->bull_num && $this->perio_id){
+				$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre from bulletins where bulletin_notice='".$this->perio_id."' and mention_date='".$this->bull_mention."' and  bulletin_numero like '%".$this->bull_num."%' order by date_date desc, bulletin_id desc ";
 				$res_bull = pmb_mysql_query($req,$dbh);
 				$num_rows_bull = pmb_mysql_num_rows($res_bull);
-			}elseif(($num_rows_bull > 1) && $this->bull_mention[0] && $idperio){
+			}elseif(($num_rows_bull > 1) && $this->bull_mention && $this->perio_id){
 				if($this->bull_date[0]){
-					$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre from bulletins where bulletin_notice='".$this->perio_id."' and date_date='".$this->bull_date."' and mention_date='".$this->bull_mention."' ";
+					$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre from bulletins where bulletin_notice='".$this->perio_id."' and date_date='".$this->bull_date."' and mention_date='".$this->bull_mention."' order by date_date desc, bulletin_id desc ";
 				}else{
-					$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre from bulletins where bulletin_notice='".$this->perio_id."' and mention_date='".$this->bull_mention."' and  bulletin_numero like '%".$this->bull_num."%' ";
+					$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre from bulletins where bulletin_notice='".$this->perio_id."' and mention_date='".$this->bull_mention."' and  bulletin_numero like '%".$this->bull_num."%' order by date_date desc, bulletin_id desc ";
 				}
 				$res_bull = pmb_mysql_query($req,$dbh);
 				$num_rows_bull = pmb_mysql_num_rows($res_bull);
 			}
 		
-			if ($num_rows_bull == 1) {
+			if ($num_rows_bull) { //Il peut y en avoir +sieurs mais on prend le plus récent
 				$bull_found = pmb_mysql_fetch_object($res_bull);
 				$this->bull_titre = addslashes($bull_found->bulletin_titre);
 				$this->bull_date = addslashes($bull_found->date_date);
@@ -3667,7 +3755,6 @@ class z3950_notice {
 				$this->bull_id = $bull_found->bulletin_id;
 			}
 			
-			global $biblio_notice;
 			$biblio_notice = "art";
 		} 
 
@@ -3716,35 +3803,34 @@ class z3950_notice {
 			//On cherche si le bulletin existe
 			$num_rows_bull=0;
 			if($this->bull_num && $this->perio_id){
-				$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre, num_notice from bulletins where bulletin_notice='".$this->perio_id."' and  bulletin_numero like '%".$this->bull_num."%' ";
+				$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre, num_notice from bulletins where bulletin_notice='".$this->perio_id."' and  bulletin_numero like '%".$this->bull_num."%' order by date_date desc, bulletin_id desc ";
 				$res_bull = pmb_mysql_query($req,$dbh);
 				$num_rows_bull = pmb_mysql_num_rows($res_bull);
 			}
 			if(!$num_rows_bull && $this->bull_date && $this->perio_id){
-				$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre, num_notice from bulletins where bulletin_notice='".$this->perio_id."' and date_date='".$this->bull_date."' ";
+				$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre, num_notice from bulletins where bulletin_notice='".$this->perio_id."' and date_date='".$this->bull_date."' order by date_date desc, bulletin_id desc ";
 				$res_bull = pmb_mysql_query($req,$dbh);
 				$num_rows_bull = pmb_mysql_num_rows($res_bull);
-				//file_put_contents('php://stderr', print_r("ibn date periodid", true));
 			}elseif(($num_rows_bull > 1) && $this->bull_date && $this->perio_id){
-				$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre, num_notice from bulletins where bulletin_notice='".$this->perio_id."' and date_date='".$this->bull_date."' and  bulletin_numero like '%".$this->bull_num."%' ";
+				$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre, num_notice from bulletins where bulletin_notice='".$this->perio_id."' and date_date='".$this->bull_date."' and  bulletin_numero like '%".$this->bull_num."%' order by date_date desc, bulletin_id desc ";
 				$res_bull = pmb_mysql_query($req,$dbh);
 				$num_rows_bull = pmb_mysql_num_rows($res_bull);
 			}
-			if(!$num_rows_bull && $this->bull_mention && $this->perio_id){
-				$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre, num_notice from bulletins where bulletin_notice='".$this->perio_id."' and mention_date='".$this->bull_mention."' ";
+			if(!$num_rows_bull && $this->bull_mention && $this->bull_num && $this->perio_id){
+				$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre, num_notice from bulletins where bulletin_notice='".$this->perio_id."' and mention_date='".$this->bull_mention."' and  bulletin_numero like '%".$this->bull_num."%' order by date_date desc, bulletin_id desc ";
 				$res_bull = pmb_mysql_query($req,$dbh);
 				$num_rows_bull = pmb_mysql_num_rows($res_bull);
-			}elseif(($num_rows_bull > 1) && $this->bull_mention[0] && $idperio){
+			}elseif(($num_rows_bull > 1) && $this->bull_mention && $this->perio_id){
 				if($this->bull_date[0]){
-					$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre, num_notice from bulletins where bulletin_notice='".$this->perio_id."' and date_date='".$this->bull_date."' and mention_date='".$this->bull_mention."' ";
+					$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre, num_notice from bulletins where bulletin_notice='".$this->perio_id."' and date_date='".$this->bull_date."' and mention_date='".$this->bull_mention."' order by date_date desc, bulletin_id desc ";
 				}else{
-					$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre, num_notice from bulletins where bulletin_notice='".$this->perio_id."' and mention_date='".$this->bull_mention."' and  bulletin_numero like '%".$this->bull_num."%' ";
+					$req="select bulletin_id, bulletin_numero, date_date, mention_date, bulletin_titre, num_notice from bulletins where bulletin_notice='".$this->perio_id."' and mention_date='".$this->bull_mention."' and  bulletin_numero like '%".$this->bull_num."%' order by date_date desc, bulletin_id desc ";
 				}
 				$res_bull = pmb_mysql_query($req,$dbh);
 				$num_rows_bull = pmb_mysql_num_rows($res_bull);
 			}
 		
-			if ($num_rows_bull == 1) {
+			if ($num_rows_bull) { //Il peut y en avoir +sieurs mais on prend le plus récent
 				$bull_found = pmb_mysql_fetch_object($res_bull);
 				$this->bull_titre = addslashes($bull_found->bulletin_titre);
 				$this->bull_date = addslashes($bull_found->date_date);
@@ -3756,7 +3842,6 @@ class z3950_notice {
 				//file_put_contents('php://stderr', print_r("bulletin trouve", true));
 			}
 			
-			global $biblio_notice;
 			$biblio_notice = "bull";
 			
 		}

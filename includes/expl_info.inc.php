@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl_info.inc.php,v 1.56 2015-05-07 10:21:31 jpermanne Exp $
+// $Id: expl_info.inc.php,v 1.64 2018-07-04 09:50:33 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once("$class_path/audit.class.php");
 require_once($class_path."/sur_location.class.php");
+require_once($class_path."/encoding_normalize.class.php");
 
 // affichage des infos exemplaires
 function print_info ($expl, $mode_affichage = 0, $affichage_emprunteurs = 1, $affichage_zone_notes = 1) {
@@ -28,7 +29,7 @@ function print_info ($expl, $mode_affichage = 0, $affichage_emprunteurs = 1, $af
 		case '0':
 			$temp= "
 				<div id='el!!id!!Parent' class='notice-parent'>
-	    			<img src='./images/plus.gif' class='img_plus' name='imEx' id='el!!id!!Img' title='".$msg['admin_param_detail']."' border='0' onClick=\"expandBase('el!!id!!', true); return false;\" hspace='3'>
+	    			<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='el!!id!!Img' title='".$msg['admin_param_detail']."' border='0' onClick=\"expandBase('el!!id!!', true); return false;\" hspace='3'>
 	    			<span class='notice-heada'>!!heada!!</span>
 	    			<br />
 				</div>
@@ -44,18 +45,18 @@ function print_info ($expl, $mode_affichage = 0, $affichage_emprunteurs = 1, $af
 				if (SESSrights & CATALOGAGE_AUTH) $heada = "<a href='./catalog.php?categ=edit_expl&id=".$expl->expl_notice."&expl_id=".$expl->expl_id."'>".$msg[376]."&nbsp;".$expl->expl_cb."</a> / ".$expl->aff_reduit ;
 				else $heada = "<a href='./circ.php?categ=visu_ex&form_cb_expl=".rawurlencode($expl->expl_cb)."'>".$msg[376]."&nbsp;".$expl->expl_cb."</a> / ".$expl->aff_reduit ;
 			}
+			if(!isset($expl->lien_suppr_cart)) $expl->lien_suppr_cart = '';
 			$temp = str_replace('!!heada!!', $expl->lien_suppr_cart.$heada, $temp);
 			break;
 		case '1':
-			$selector_prop = "toolbar=no, dependent=yes, resizable=yes, scrollbars=yes";
-			$cart_click_expl = "onClick=\"openPopUp('./cart.php?object_type=EXPL&item=".$expl->expl_id."', 'cart', 600, 700, -2, -2, '$selector_prop')\"";
-			$cart_click_expl = "<img src='./images/basket_small_20x20.gif' align='middle' alt='basket' title=\"${msg[400]}\" $cart_click_expl>" ;
+			$cart_click_expl = "onClick=\"openPopUp('./cart.php?object_type=EXPL&item=".$expl->expl_id."', 'cart')\"";
+			$cart_click_expl = "<img src='".get_url_icon('basket_small_20x20.gif')."' class='align_middle' alt='basket' title=\"${msg[400]}\" $cart_click_expl>" ;
 			if ($expl->expl_notice) {
-				$cart_click_isbd = "onClick=\"openPopUp('./cart.php?object_type=NOTI&item=$expl->expl_notice', 'cart', 600, 700, -2, -2, '$selector_prop')\"";
+				$cart_click_isbd = "onClick=\"openPopUp('./cart.php?object_type=NOTI&item=$expl->expl_notice', 'cart')\"";
 			} elseif ($expl->expl_bulletin) {
-				$cart_click_isbd = "onClick=\"openPopUp('./cart.php?object_type=BULL&item=".$expl->expl_bulletin."', 'cart', 600, 700, -2, -2, '$selector_prop')\"";
+				$cart_click_isbd = "onClick=\"openPopUp('./cart.php?object_type=BULL&item=".$expl->expl_bulletin."', 'cart')\"";
 			} 
-			$cart_click_isbd = "<img src='./images/basket_small_20x20.gif' align='middle' alt='basket' title=\"${msg[400]}\" $cart_click_isbd>" ;
+			$cart_click_isbd = "<img src='".get_url_icon('basket_small_20x20.gif')."' class='align_middle' alt='basket' title=\"${msg[400]}\" $cart_click_isbd>" ;
 			if (SESSrights & CATALOGAGE_AUTH) {
 				$link_cb_not="<a href='./catalog.php?categ=edit_expl&id=".$expl->expl_notice."&expl_id=".$expl->expl_id."'>";
 				$link_cb_bull="<a href='./catalog.php?categ=serials&sub=bulletinage&action=expl_form&bul_id=".$expl->expl_bulletin."&expl_id=".$expl->expl_id."'>";
@@ -78,12 +79,79 @@ function print_info ($expl, $mode_affichage = 0, $affichage_emprunteurs = 1, $af
 		}
 	
 	// isbd complet
-	$__isbd.= "<div class=\"row\">";
+	$__isbd = "<div class=\"row\">";
 	$__isbd.= $expl->aff_reduit ;
 	$__isbd.= "</div>";
+	$__modif_cb = '';
+	if(SESSrights & (CATALOGAGE_AUTH + CATAL_MODIF_CB_EXPL_AUTH)){
+		$__modif_cb.= "<hr /><div class='row'><input type='button' id='button_edit_cb' class='bouton' value='$msg[circ_edit_cb]'/><br/>";
+		$__modif_cb.= "<input type='text' id='input_edit_cb' style='display:none;'/>";
+		$__modif_cb.= "<input type='button' class='bouton' value='".$msg['transferts_popup_btValider']."' id='button_send_edit' style='display:none;'/>";
+		$__modif_cb.= "</div>";
+		$__modif_cb.="<script>
+						var editButton = document.getElementById('button_edit_cb');
+						var callbackEnter = function(evt){
+							var key = evt.which || evt.keyCode;
+							if (key === 13) { 
+								if(evt.target.value.replace(/^\s+$/g,'').length == 0) {
+									alert('$msg[326]');
+									evt.target.focus();
+									return false;
+								}else{
+									launchUpdateRequest();
+								}
+							}
+						}
+						
+						var launchUpdateRequest = function(){
+							var request = new http_request();
+							var inputCb = document.getElementById('input_edit_cb');
+							var callback = function(response){
+								response = JSON.parse(response);
+								if(response.status == 1){
+									document.location.href = './circ.php?categ=visu_ex&form_cb_expl=' + encode_URL(inputCb.value);
+								}else{ //Print message derreur
+									alert(response.message);
+								}
+							}
+							request.request('./ajax.php?module=circ&categ=expl&sub=update_cb&old_cb=".rawurlencode(encoding_normalize::utf8_normalize($expl->expl_cb))."&new_cb='+encodeURIComponent(inputCb.value), false,'', true, callback);
+						}
+						
+						var callbackButton = function(evt){
+							var inputCb = document.getElementById('input_edit_cb');
+							if(inputCb.value.replace(/^\s+$/g,'').length == 0) {
+								alert('$msg[326]');
+								inputCb.focus();
+								return false;
+							}else{
+								launchUpdateRequest();
+							}
+						}
+						var showCbInput = function(evt){
+							var inputCb = document.getElementById('input_edit_cb');
+							var buttonValid = document.getElementById('button_send_edit');
+							if(inputCb.style.display == 'none' && buttonValid.style.display == 'none'){
+								inputCb.style.display = '';
+								inputCb.addEventListener('keypress', callbackEnter, true);
+								inputCb.focus();
+											
+								buttonValid.style.display = '';
+								buttonValid.addEventListener('click', callbackButton, true);
+								
+							}else{
+								inputCb.removeEventListener('keypress', callbackEnter, false);
+								inputCb.style.display = 'none';
+								
+								buttonValid.removeEventListener('click', callbackButton, false);
+								buttonValid.style.display = 'none';
+							}
+						}
+						editButton.addEventListener('click', showCbInput, false);					
+					  </script>";
+	}
 	
 	// informations de localisation
-	$__local.= "<hr /><div class=\"row\">";
+	$__local = "<hr /><div class=\"row\">";
 	if($pmb_sur_location_activate){
 		$__local.= $msg["sur_location_expl"].":&nbsp;<b>".$expl->sur_loc_libelle."</b>&nbsp;&nbsp;";
 	}
@@ -105,6 +173,7 @@ function print_info ($expl, $mode_affichage = 0, $affichage_emprunteurs = 1, $af
 	
 	$__local.= "</div>";
 
+	$__empr = "";
 	if ($affichage_emprunteurs) {
 		// zone de l'emprunteur
 		if($expl->pret_idempr) {
@@ -124,13 +193,14 @@ function print_info ($expl, $mode_affichage = 0, $affichage_emprunteurs = 1, $af
 			$__empr.= "</div>";
 		}
 	}
+	$__note = "";
 	if ($affichage_zone_notes) {
 		// zone du message exemplaire
 		$__note = "<hr /><div class='row'>";
 		$__note.= "<b>${msg[377]}</b><br />";
 		if ($expl->expl_note) $__note.= "<div class='message_important'>".$expl->expl_note."</div>";
 		if ($expl->expl_comment) {
-			$__note.= "<b>${msg[expl_zone_comment]}</b><br />";
+			$__note.= "<b>".$msg['expl_zone_comment']."</b><br />";
 			$__note.= "<div class='expl_comment'>".$expl->expl_comment."</div>";
 		}
 		$__note.= "<br /><input type='button' class='bouton' value='$msg[378]' onclick=\"document.location='./circ.php?categ=note_ex&cb=".rawurlencode($expl->expl_cb)."&id=".$expl->expl_id."'\" />";
@@ -154,11 +224,11 @@ function print_info ($expl, $mode_affichage = 0, $affichage_emprunteurs = 1, $af
 	}
 	switch($mode_affichage) {
 		case '0':
-			$temp = str_replace('!!contenu!!', $__isbd.$__local.$__empr.$__note.$__resa.$__resa_planning, $temp);
+			$temp = str_replace('!!contenu!!', $__isbd.$__modif_cb.$__local.$__empr.$__note.$__resa.$__resa_planning, $temp);
 			break;
 		case '1':
 			$temp = str_replace('!!contenu!!', "", $temp);
-			$temp .= $__local.$__empr.$__note.$__resa.$__resa_planning ;
+			$temp .= $__modif_cb.$__local.$__empr.$__note.$__resa.$__resa_planning ;
 			break;
 		case '2':
 			$temp = str_replace('!!contenu!!', "", $temp);
@@ -202,12 +272,19 @@ function get_expl_info($id, $lien_notice=1) {
 			$expl->lastempr_nom = $lastempr->nom;
 			$expl->lastempr_prenom = $lastempr->prenom;
 			$expl->lastempr_cb = $lastempr->cb;
+		} else {
+			$expl->lastempr_nom = '';
+			$expl->lastempr_prenom = '';
+			$expl->lastempr_cb = '';
 		}
 		if($pmb_sur_location_activate){
 			$sur_loc= sur_location::get_info_surloc_from_location($expl->expl_location);
 			$expl->sur_loc_libelle=$sur_loc->libelle;
 			$expl->sur_loc_id=$sur_loc->id;
-		}		
+		} else {
+			$expl->sur_loc_libelle='';
+			$expl->sur_loc_id=0;
+		}
 		return $expl;
 	} else {
 		return FALSE;
@@ -224,11 +301,12 @@ function check_resa_liste($expl) {
 	if(!$expl || !is_object($expl))
 		return '';
 	
+	$resa_list = '';
 	$requete = "select empr_nom, empr_prenom, empr_cb, resa_date, resa_date_debut, resa_date_fin, IF(resa_date_fin>sysdate(),0,1) as perimee, date_format(resa_date, '".$msg["format_date"]."') as aff_resa_date from empr, resa";
 	if($expl->expl_notice) $requete .= " where resa.resa_idnotice=".$expl->expl_notice;
 	elseif($expl->expl_bulletin) $requete .= " where resa.resa_idbulletin=".$expl->expl_bulletin;
 	$requete .= " and empr.id_empr=resa.resa_idempr";
-	$requete .= " and (resa.resa_cb = '".$expl->expl_cb."' or resa.resa_cb='')";
+	$requete .= " and (resa.resa_cb = '".addslashes($expl->expl_cb)."' or resa.resa_cb='')";
 	$requete .= " order by resa.resa_date";
 	$query = @pmb_mysql_query($requete, $dbh);
 	if(pmb_mysql_num_rows($query)) {
@@ -257,7 +335,21 @@ function check_resa($expl) {
 	
 	if(!is_object($expl))
 		die("serious application error occured in ./circ/retour.inc [check_resa()]. Please contact developpment team");
-
+	
+	$expl->id_resa = '';
+	$expl->resa_idempr = '';
+	$expl->resa_idnotice = '';
+	$expl->resa_idbulletin = '';
+	$expl->resa_date = '';
+	$expl->resa_date_fin = '';
+	$expl->aff_resa_date = '';
+	$expl->aff_resa_date_fin = '';
+	$expl->resa_cb = '';
+	$expl->cb_reservataire = '';
+	$expl->nom_reservataire = '';
+	$expl->prenom_reservataire = '';
+	$expl->id_reservataire = '';
+	
 	if (!$expl->expl_notice) $expl->expl_notice=0;
 	if (!$expl->expl_bulletin) $expl->expl_bulletin=0 ;
 	$rqt = "select *, IF(resa_date_fin>sysdate(),0,1) as perimee, date_format(resa_date_fin, '".$msg["format_date"]."') as aff_resa_date_fin, date_format(resa_date, '".$msg["format_date"]."') as aff_resa_date from resa where resa_idnotice='".$expl->expl_notice."' and resa_idbulletin='".$expl->expl_bulletin."' order by resa_date limit 1 ";
@@ -333,7 +425,20 @@ function check_resa_planning($expl) {
 	
 	if(!is_object($expl))
 		die("serious application error occured in ./circ/retour.inc [check_resa_planning()]. Please contact developpment team");
-
+	
+	$expl->id_resa = '';
+	$expl->resa_idempr = '';
+	$expl->resa_idnotice = '';
+	$expl->resa_date = '';
+	$expl->resa_date_fin = '';
+	$expl->aff_resa_date = '';
+	$expl->aff_resa_date_fin = '';
+	$expl->resa_cb = '';
+	$expl->cb_reservataire = '';
+	$expl->nom_reservataire = '';
+	$expl->prenom_reservataire = '';
+	$expl->id_reservataire = '';
+	
 	if (!$expl->expl_notice) $expl->expl_notice=0;
 	$rqt = "select *, IF(resa_date_fin>sysdate(),0,1) as perimee, date_format(resa_date_fin, '".$msg["format_date"]."') as aff_resa_date_fin, date_format(resa_date, '".$msg["format_date"]."') as aff_resa_date from resa_planning where resa_idnotice='".$expl->expl_notice."' order by resa_date limit 1 ";
 	
@@ -376,7 +481,36 @@ function check_pret($expl) {
 	
 	if(!is_object($expl))
 		die("serious application error occured in ./circ/retour.inc [check_pret()]. Please contact developpment team");
-
+	$expl->pret_idempr = '';
+	$expl->pret_idexpl = '';
+	$expl->pret_date = '';
+	$expl->pret_retour = '';
+	$expl->aff_pret_date = '';
+	$expl->aff_pret_retour = '';
+	$expl->pret_arc_id = '';
+	$expl->niveau_relance = '';
+	$expl->date_relance = '';
+	$expl->printed = '';
+	$expl->cpt_prolongation  = '';
+	$expl->short_loan_flag = '';
+	$expl->empr_cb = '';
+	$expl->id_empr = '';
+	$expl->empr_nom = '';
+	$expl->empr_prenom = '';
+	$expl->id_empr = '';
+	$expl->empr_cp = '';
+	$expl->empr_ville = '';
+	$expl->empr_pays = '';
+	$expl->empr_prof = '';
+	$expl->empr_year = '';
+	$expl->empr_categ = '';
+	$expl->empr_codestat = '';
+	$expl->empr_sexe = '';
+	$expl->empr_statut = '';
+	$expl->empr_location = '';
+	$expl->type_abt = '';
+	$expl->empr_msg = '';
+	$expl->groupes = '';
 	// récupération des infos du prêt
 	$query = "select *, date_format(pret_date, '".$msg["format_date"]."') as aff_pret_date, date_format(pret_retour, '".$msg["format_date"]."') as aff_pret_retour, IF(pret_retour>sysdate(),0,1) as retard from pret where pret_idexpl=".$expl->expl_id." limit 1";
 	$result = pmb_mysql_query($query, $dbh);

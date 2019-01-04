@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: harvest.class.php,v 1.4 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: harvest.class.php,v 1.8 2018-07-13 09:26:03 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,17 +14,17 @@ require_once($class_path."/search.class.php");
 require_once($class_path."/facette_search_opac.class.php");
 
 class harvest {
-	var $id=0;
-	var $info=array();
-	var $fields_id=array();
-	var $fields=array();
+	public $id=0;
+	public $info=array();
+	public $fields_id=array();
+	public $fields=array();
 	
-	function harvest($id=0) {
+	public function __construct($id=0) {
 		$this->id=$id+0;
 		$this->fetch_data();
 	}
 	
-	function fetch_data() {
+	public function fetch_data() {
 		global $include_path;
 		
 		$this->info=array();
@@ -91,30 +91,32 @@ class harvest {
     		$this->info['connector'][$source->source_id]=$source->name;     
     	}
     	$this->info['champ_base']=array(); 		
-    	$facette=new facette_search();
+    	$facette=new facette_search_opac();
     //	printr($facette->fields_array["FIELD"][24]);
-    	foreach($facette->fields_array["FIELD"] as $f){    		
-    		$id_field=$f['ID']+0;
-    		if($id_field==100) continue;
-    		$this->info['champ_base'][$id_field]['libelle']=$f['NAME'];    		
-    		$this->info['champ_base'][$id_field]['id']=$id_field;    		
-    		$this->info['champ_base'][$id_field]['table']='';
-    		$this->info['champ_base'][$id_field]['tabfield']=$f['TABLE'][0]['TABLEFIELD'][0]['value'];
-    		if($f['EXTERNAL']){
-    			$this->info['champ_base'][$id_field]['table']=$f['TABLE'][0]['NAME'];    			
-    			$this->info['champ_base'][$id_field]['key']=$f['TABLE'][0]['TABLEKEY'][0]['value'];
-    			$this->info['champ_base'][$id_field]['link']=$f['TABLE'][0]['LINK'][0]['REFERENCEFIELD'][0]['value'];    			
-    			$this->info['champ_base'][$id_field]['extable']=$f['TABLE'][0]['LINK'][0]['TABLE'][0]['value'];  			
-    			$this->info['champ_base'][$id_field]['exfield']=$f['TABLE'][0]['LINK'][0]['EXTERNALFIELD'][0]['value'];
-
-	    		foreach($f['TABLE'][0]['TABLEFIELD'] as $ss_f){
-	    			$id_ss_field=$ss_f['ID']+0;   		
-    				$this->info['champ_base'][$id_field]['ss_field'][$id_ss_field]['id']=$id_ss_field; 
-    				$this->info['champ_base'][$id_field]['ss_field'][$id_ss_field]['id_parent']=$id_field;    	
-	    			$this->info['champ_base'][$id_field]['ss_field'][$id_ss_field]['tabfield']=$ss_f['value'];
-	    			$this->info['champ_base'][$id_field]['ss_field'][$id_ss_field]['libelle']=$ss_f['NAME'];
-	    		}
-    		}	    		
+    	if(is_array($facette->fields_array["FIELD"])) {
+	    	foreach($facette->fields_array["FIELD"] as $f){    		
+	    		$id_field=$f['ID']+0;
+	    		if($id_field==100) continue;
+	    		$this->info['champ_base'][$id_field]['libelle']=$f['NAME'];    		
+	    		$this->info['champ_base'][$id_field]['id']=$id_field;    		
+	    		$this->info['champ_base'][$id_field]['table']='';
+	    		$this->info['champ_base'][$id_field]['tabfield']=$f['TABLE'][0]['TABLEFIELD'][0]['value'];
+	    		if($f['EXTERNAL']){
+	    			$this->info['champ_base'][$id_field]['table']=$f['TABLE'][0]['NAME'];    			
+	    			$this->info['champ_base'][$id_field]['key']=$f['TABLE'][0]['TABLEKEY'][0]['value'];
+	    			$this->info['champ_base'][$id_field]['link']=$f['TABLE'][0]['LINK'][0]['REFERENCEFIELD'][0]['value'];    			
+	    			$this->info['champ_base'][$id_field]['extable']=$f['TABLE'][0]['LINK'][0]['TABLE'][0]['value'];  			
+	    			$this->info['champ_base'][$id_field]['exfield']=$f['TABLE'][0]['LINK'][0]['EXTERNALFIELD'][0]['value'];
+	
+		    		foreach($f['TABLE'][0]['TABLEFIELD'] as $ss_f){
+		    			$id_ss_field=$ss_f['ID']+0;   		
+	    				$this->info['champ_base'][$id_field]['ss_field'][$id_ss_field]['id']=$id_ss_field; 
+	    				$this->info['champ_base'][$id_field]['ss_field'][$id_ss_field]['id_parent']=$id_field;    	
+		    			$this->info['champ_base'][$id_field]['ss_field'][$id_ss_field]['tabfield']=$ss_f['value'];
+		    			$this->info['champ_base'][$id_field]['ss_field'][$id_ss_field]['libelle']=$ss_f['NAME'];
+		    		}
+	    		}	    		
+	    	}
     	}
     	
 		$requete="SELECT * from harvest_search_field where num_harvest_profil=". $this->id;
@@ -129,7 +131,7 @@ class harvest {
 	// printr($this->info['champ_base'][28]);
 	}
     
-    function get_code($num_source,$notice_id){
+    public function get_code($num_source,$notice_id){
     	$field=$this->info['search_field'][$num_source]['field'];
     	$ss_field=$this->info['search_field'][$num_source]['ss_field'];
     	$data=$this->info['champ_base'][$field];
@@ -149,7 +151,7 @@ class harvest {
     	return '';
     }
     
-    function havest_notice($isbn="",$notice_id=0){
+    public function havest_notice($isbn="",$notice_id=0){
     	global $charset, $class_path,$include_path,$base_path; 
 		global $dbh,$msg;
 		
@@ -260,7 +262,7 @@ class harvest {
 	    
     }
     
-	function get_form() {
+	public function get_form() {
 		global $harvest_form_tpl, $harvest_form_elt_tpl,$msg,$charset;
 		global $harvest_form_elt_ajax_tpl,$harvest_form_elt_src_tpl;
 		
@@ -331,11 +333,11 @@ class harvest {
 		return $tpl;
 	}
 	
-	function build_memo_field($elt,$field,$data_field,$nb){	
+	public function build_memo_field($elt,$field,$data_field,$nb){	
 		// 	!!unimarcfield!! !!subfield!! !!sources!! !!pmb_unimarc_select!!		
 		$elt=str_replace('!!unimarcfield!!',$this->build_unimarcfield($field["ID"],$nb,$data_field["unimacfield"]),$elt);
 
-		if($field["UNIMARCSUBFIELD"]) $elt=str_replace("!!subfield!!",$this->build_unimarcsubfield($field["ID"],$nb,$data_field["unimacsubfield"]),$elt);
+		if(isset($field["UNIMARCSUBFIELD"]) && $field["UNIMARCSUBFIELD"]) $elt=str_replace("!!subfield!!",$this->build_unimarcsubfield($field["ID"],$nb,$data_field["unimacsubfield"]),$elt);
 		else $elt=str_replace("!!subfield!!","",$elt);
 	
 		$elt=str_replace('!!sources!!',$this->build_sources($field["ID"],$nb,$data_field["num_source"]),$elt);
@@ -345,11 +347,11 @@ class harvest {
 		return 	$elt;	
 	}
 	
-	function build_new_field($elt,$field,$nb){
+	public function build_new_field($elt,$field,$nb){
 		// 	!!unimarcfield!! !!subfield!! !!sources!! !!pmb_unimarc_select!!
 		$elt=str_replace('!!unimarcfield!!',$this->build_unimarcfield($field["ID"],$nb,$field["UNIMARCFIELD"]),$elt);
 
-		if($field["UNIMARCSUBFIELD"]) $elt=str_replace("!!subfield!!",$this->build_unimarcsubfield($field["ID"],$nb,$field["UNIMARCSUBFIELD"]),$elt);
+		if(isset($field["UNIMARCSUBFIELD"]) && $field["UNIMARCSUBFIELD"]) $elt=str_replace("!!subfield!!",$this->build_unimarcsubfield($field["ID"],$nb,$field["UNIMARCSUBFIELD"]),$elt);
 		else $elt=str_replace("!!subfield!!","",$elt);
 	
 		$elt=str_replace('!!sources!!',$this->build_sources($field["ID"],$nb,''),$elt);
@@ -358,24 +360,24 @@ class harvest {
 		$elt=str_replace('!!onlylastempty!!',$this->build_lastempty($field["ID"],$nb,1),$elt);	
 		return 	$elt;	
 	}
-	function build_sources($id,$nb,$val){
+	public function build_sources($id,$nb,$val){
 		global $msg,$charset;
 		$field=$this->get_sources_sel($id,$nb,$val);
 		return $field;
 	}
-	function build_unimarcfield($id,$nb,$val){
+	public function build_unimarcfield($id,$nb,$val){
 		global $msg,$charset;
 		$tab=explode(',',$val);
 		$field="<input type='text' size='3' name='unimarcfield_".$id."_".$nb."' value='".$tab[0]."' />";
 		return $field;
 	}	
-	function build_unimarcsubfield($id,$nb,$val){
+	public function build_unimarcsubfield($id,$nb,$val){
 		global $msg,$charset;
 		$field="<input type='text' size='1' name='unimarcsubfield_".$id."_".$nb."' id='unimarcsubfield_".$id."_".$nb."' value='".$val."'/> ";
 		
 		return $field;
 	}
-	function build_pmbunimarcfield($id,$nb,$unimacfields,$val){
+	public function build_pmbunimarcfield($id,$nb,$unimacfields,$val){
 		global $msg,$charset;
 				
 		$tab=explode(',',$unimacfields);
@@ -395,14 +397,14 @@ class harvest {
 		}
 		return $sel_unimac;
 	}
-	function build_lastempty($id,$nb,$val){
+	public function build_lastempty($id,$nb,$val){
 		global $msg,$charset;
 		if($val) $checked=" checked='checked' ";
 		$field="<input type='checkbox'  name='onlylastempty_".$id."_".$nb."' id='onlylastempty_".$id."_".$nb."' $checked value='1' /> ".$msg['admin_harvest_build_form_onlylastempty']."";
 		return $field;
 	}
 
-	function save($data) {
+	public function save($data) {
 		global $dbh;
 		if(!$this->id){ // Ajout
 			$req="INSERT INTO harvest_profil SET 
@@ -429,8 +431,8 @@ class harvest {
 		$cpt_fields=0;
 		foreach($this->fields as $field ){
 			$var="firstfound_".$field["ID"];
-			global $$var;
-    		$first_flag=$$var+0;
+			global ${$var};
+    		$first_flag=${$var}+0;
     		
 			$req="INSERT INTO harvest_field SET 
 				num_harvest_profil=".$this->id.",
@@ -442,29 +444,29 @@ class harvest {
 			$harvest_field_id = pmb_mysql_insert_id($dbh);	
 			
 			$var="unimarcfieldnumber_".$field["ID"];
-			global $$var;
-    		$nb_srce=$$var;
+			global ${$var};
+    		$nb_srce=${$var};
     		$cpt=0;
     		for($i=0;$i<=$nb_srce;$i++){    					
 	    		$var="unimarcfield_".$field["ID"]."_".$i;
-	    		global $$var;
-	    		$unimarcfield=$$var;
+	    		global ${$var};
+	    		$unimarcfield=${$var};
 	    		if($unimarcfield){ 
 	    			$var="unimarcsubfield_".$field["ID"]."_".$i;
-		    		global $$var;
-		    		$unimarcsubfield=$$var;
+		    		global ${$var};
+		    		$unimarcsubfield=${$var};
 		    		
 	    			$var="source_".$field["ID"]."_".$i;
-		    		global $$var;
-		    		$source=$$var+0;				
+		    		global ${$var};
+		    		$source=${$var}+0;				
 		    			
 		    		$var="pmb_unimarc_".$field["ID"]."_".$i;
-		    		global $$var;
-		    		$pmb_unimarc=$$var;
+		    		global ${$var};
+		    		$pmb_unimarc=${$var};
 		    		
 		    		$var="onlylastempty_".$field["ID"]."_".$i;
-		    		global $$var;
-		    		$rec_flag=$$var+0;
+		    		global ${$var};
+		    		$rec_flag=${$var}+0;
 		    		
 		    		$req="INSERT INTO harvest_src SET 
 					num_harvest_field=".$harvest_field_id.",
@@ -482,11 +484,11 @@ class harvest {
 		}
 		foreach($this->info['connector'] as $source=> $name){
 			$var="list_crit_".$source;
-			global $$var;
-    		$field=$$var+0;
+			global ${$var};
+    		$field=${$var}+0;
 			$var="list_ss_champs_".$source;
-			global $$var;
-    		$ss_field=$$var+0;
+			global ${$var};
+    		$ss_field=${$var}+0;
     		if($field){
     			$req="INSERT INTO harvest_search_field SET 
 					num_harvest_profil=".$this->id.",
@@ -500,7 +502,7 @@ class harvest {
 		$this->fetch_data();
 	}	
 	
-	function delete() {
+	public function delete() {
 		global $dbh;
 		foreach($this->info['fields'] as $harvest_field){				
 			$req="DELETE from harvest_src WHERE num_harvest_field=".$harvest_field['id'];	
@@ -516,7 +518,7 @@ class harvest {
 		$this->fetch_data();	
 	}	
 	
-    function get_sources_sel($id_field,$nb,$value) {
+    public function get_sources_sel($id_field,$nb,$value) {
     	global $msg,$charset;
     	
     	//Recherche des sources
@@ -543,7 +545,7 @@ class harvest {
     	return $r;
     }
 
-	function create_list_fields($array,$source_id=0,$id_selected=0,$ss_field=0){
+	public function create_list_fields($array,$source_id=0,$id_selected=0,$ss_field=0){
 		global $msg;
 		
 		$select ="<select id='"."list_crit_".$source_id."' name='list_crit_".$source_id."' onchange=\"load_subfields('".$source_id."',0)\">";		
@@ -565,7 +567,7 @@ class harvest {
 		return $select;
 	}
 	
-    function get_src_list() {
+    public function get_src_list() {
     	global $msg,$charset;
     	
     	$r="
@@ -592,7 +594,7 @@ class harvest {
     	$current_categ=0;
     	$count = 0;
     	
-    	$facette=new facette_search();
+    	$facette=new facette_search_opac();
     	
     	while ($source=pmb_mysql_fetch_object($resultat)) {
     		$r.="
@@ -601,7 +603,7 @@ class harvest {
     				htmlentities($source->name.($source->comment?" : ".$source->comment:""),ENT_QUOTES,$charset)."
     				</td>
     				<td>".
-    				$this->create_list_fields($facette->array_sort(),$source->source_id,$this->info['search_field'][$source->source_id]['field'], $this->info['search_field'][$source->source_id]['ss_field'])."
+    				$this->create_list_fields($facette->fields_sort(),$source->source_id,(isset($this->info['search_field']) ? $this->info['search_field'][$source->source_id]['field'] : ''), (isset($this->info['search_field']) ? $this->info['search_field'][$source->source_id]['ss_field'] : ''))."
     				</td>
     			</tr>";    			
     	}
@@ -619,13 +621,13 @@ class harvest {
 
 
 class harvests {	
-	var $info=array();
+	public $info=array();
 	
-	function harvests() {
+	public function __construct() {
 		$this->fetch_data();
 	}
 	
-	function fetch_data() {
+	public function fetch_data() {
 		$this->info=array();
 		$i=0;
 		$req="select * from harvest_profil ";
@@ -639,7 +641,7 @@ class harvests {
 		}	
 	}
 		
-	function get_list() {
+	public function get_list() {
 		global $harvest_list_tpl,$harvest_list_line_tpl,$msg;
 		
 		$tpl=$harvest_list_tpl;
@@ -658,7 +660,7 @@ class harvests {
 		return $tpl;
 	}	
 	
-	function get_sel($sel_name,$sel_id=0) {
+	public function get_sel($sel_name,$sel_id=0) {
 		global $harvest_list_tpl,$harvest_list_line_tpl,$msg;
 		$tpl="<select name='$sel_name' >";
 				

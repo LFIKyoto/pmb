@@ -2,26 +2,26 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: param_subst.class.php,v 1.4 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: param_subst.class.php,v 1.6 2017-06-30 14:08:17 dgoron Exp $
 
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once("$include_path/templates/param_subst.tpl.php");
-
 require_once($include_path."/parser.inc.php");
+require_once($base_path.'/admin/param/param_func.inc.php');
 
 class param_subst {
-	var $values = array();
+	public $values = array();
 	
-	function param_subst($type, $module, $module_num) {
+	public function __construct($type, $module, $module_num) {
 		$this->type = $type;// opac, acquisition...
 		$this->module = $module;// opac_view
 		$this->module_num = $module_num;// pour évolution...
 		$this->fetch_data();
 	}
 	
-	function fetch_data() {
+	public function fetch_data() {
 		global $dbh,$lang,$include_path;
 		
 		if (file_exists($include_path."/section_param/$lang.xml")) {
@@ -55,7 +55,7 @@ class param_subst {
 	}
 
 	
-	function get_form_list($link_modif_param) {
+	public function get_form_list($link_modif_param) {
 		global $charset,$msg;
 		global $tpl_param_subst_table,$tpl_param_subst_table_line;
 		global $tpl_param_table,$tpl_param_table_line;
@@ -112,7 +112,7 @@ class param_subst {
 		return($form.$form_subst_param.$form_param);
 	}
 	
-	function exec_param_form($link_modif_param) {
+	public function exec_param_form($link_modif_param) {
 		global $msg;
 		global $tpl_param_subst_form;
 		global $param_subst;		
@@ -156,7 +156,7 @@ class param_subst {
 		return $form;	
 	}
 	
-	function save_param_form() {
+	public function save_param_form() {
 		global $msg, $dbh;
 		global $form_sstype_param, $form_valeur_param, $comment_param;
 		
@@ -196,7 +196,7 @@ class param_subst {
 	}
 	
 	
-	function save_param($sstype_param,$valeur_param,$comment_param="") {
+	public function save_param($sstype_param,$valeur_param,$comment_param="") {
 		global $msg, $dbh;
 		
 		$found_subst=0;
@@ -234,16 +234,10 @@ class param_subst {
 		return "";
 	}
 	
-	function delete_param_value($sstype_param,$valeur_param) {
+	public function delete_param_value($sstype_param,$valeur_param) {
 		global $msg, $dbh;
 		$req="DELETE from param_subst where subst_type_param='".$this->type."' and	subst_module_param='".$this->module."' and subst_sstype_param='$sstype_param' and	subst_valeur_param='".$valeur_param."' ";
 		$erreur=pmb_mysql_query($req, $dbh);
 	}
-}
-
-function _section_($param) {
-	global $section_table;	
-	$section_table[$param["NAME"]]["LIB"]=$param["value"];
-	$section_table[$param["NAME"]]["ORDER"]=$param["ORDER"];
 }
 ?>

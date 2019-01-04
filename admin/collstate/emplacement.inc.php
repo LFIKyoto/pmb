@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: emplacement.inc.php,v 1.2 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: emplacement.inc.php,v 1.3 2018-10-12 11:59:35 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+require_once($class_path."/list/configuration/collstate/list_configuration_collstate_emplacement_ui.class.php");
 
 // gestion des prêteurs de documents
 ?>
@@ -22,34 +24,7 @@ function test_form(form)
 </script>
 <?php
 function show_emplacement($dbh) {
-	global $msg;
-
-	print "<table>
-	<tr>
-		<th>".$msg["admin_collstate_emplacement_nom"]."</th>
-	</tr>";
-
-	// affichage du tableau des emplacements
-
-	$requete = "SELECT * FROM arch_emplacement ORDER BY archempla_libelle ";
-	$res = pmb_mysql_query($requete, $dbh);
-
-	$nbr = pmb_mysql_num_rows($res);
-
-	$parity=1;
-	for($i=0;$i<$nbr;$i++) {
-		$row=pmb_mysql_fetch_object($res);
-		if ($parity % 2) {
-			$pair_impair = "even";
-		} else {
-			$pair_impair = "odd";
-		}
-		$parity += 1;
-		$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./admin.php?categ=collstate&sub=emplacement&action=modif&id=$row->archempla_id';\" ";
-        	print pmb_bidi("<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td>$row->archempla_libelle</td></tr>");
-	}
-	print "</table>
-		<input class='bouton' type='button' value=\"".$msg["admin_collstate_add_emplacement"]." \" onClick=\"document.location='./admin.php?categ=collstate&sub=emplacement&action=add'\" />";
+	print list_configuration_collstate_emplacement_ui::get_instance()->get_display_list();
 }
 
 function emplacement_form($libelle="", $id=0) {

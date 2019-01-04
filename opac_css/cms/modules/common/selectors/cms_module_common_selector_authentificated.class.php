@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_authentificated.class.php,v 1.3 2012-11-09 14:12:45 arenou Exp $
+// $Id: cms_module_common_selector_authentificated.class.php,v 1.4 2016-07-15 10:09:59 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 //require_once($base_path."/cms/modules/common/selectors/cms_module_selector.class.php");
@@ -43,5 +43,14 @@ class cms_module_common_selector_authentificated extends cms_module_common_selec
 			$this->value = $this->parameters;
 		}
 		return $this->value;
+	}
+	
+	public function get_human_description_selector(){
+		if($this->parameters){
+			$description = $this->format_text($this->msg['cms_module_common_selector_authentificated_yes']);
+		}else{
+			$description = $this->format_text($this->msg['cms_module_common_selector_authentificated_no']);
+		}		
+		return $description;
 	}
 }

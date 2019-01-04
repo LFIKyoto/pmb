@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_tagcloud_datasource_tagcloud_records.class.php,v 1.2 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: cms_module_tagcloud_datasource_tagcloud_records.class.php,v 1.7 2018-11-26 14:32:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -156,7 +156,7 @@ class cms_module_tagcloud_datasource_tagcloud_records extends cms_module_tagclou
 			<a href='".$base_path."/cms.php?categ=manage&sub=".str_replace("cms_module_","",$this->module_class_name)."&quoi=datasources&elem=".$this->class_name."&tagcloud=!!tagcloud!!&action=get_form'>!!tagcloud_name!!</a>
 			&nbsp;
 			<a href='".$base_path."/cms.php?categ=manage&sub=".str_replace("cms_module_","",$this->module_class_name)."&quoi=datasources&elem=".$this->class_name."&cms_store_delete=".$key."&action=save_form' onclick='return confirm(\"".$this->format_text($this->msg['cms_module_common_view_django_delete_store'])."\")'>
-				<img src='".$base_path."/images/trash.png' alt='".$this->format_text($this->msg['cms_module_root_delete'])."' title='".$this->format_text($this->msg['cms_module_root_delete'])."'/>
+				<img src='".get_url_icon('trash.png')."' alt='".$this->format_text($this->msg['cms_module_root_delete'])."' title='".$this->format_text($this->msg['cms_module_root_delete'])."'/>
 			</a>
 		</p>
 		";
@@ -352,9 +352,9 @@ class cms_module_tagcloud_datasource_tagcloud_records extends cms_module_tagclou
 				<div class='colonne-suite'>
 					!!liste1!!
 				</div>
-				<div class='colonne3'>&nbsp</div>
-				<div id='liste2' class='colonne-suite'>&nbsp</div>				
-				<div class='colonne3'>&nbsp</div>
+				<div class='colonne3'>&nbsp;</div>
+				<div id='liste2' class='colonne-suite'>&nbsp;</div>				
+				<div class='colonne3'>&nbsp;</div>
 				<div id='liste2' class='colonne-suite'><input class='bouton' type='button' value='".$this->format_text($this->msg['cms_module_tagcloud_datasource_admin_facette_add'])."' onClick=\"add_facette();return false;\"/></div>
 				
 			</div>		
@@ -415,8 +415,8 @@ class cms_module_tagcloud_datasource_tagcloud_records extends cms_module_tagclou
 					$critere=$criteres[0];
 					$ss_critere=$criteres[1];
 					$search_type_field="search_type_".$critere."_".$ss_critere;
-					global $$search_type_field;
-					$search_type=$$search_type_field;
+					global ${$search_type_field};
+					$search_type=${$search_type_field};
 					
 					$infos['criteres'][$i]['critere']=$critere;
 					$infos['criteres'][$i]['ss_critere']=$ss_critere;
@@ -447,7 +447,7 @@ class cms_module_tagcloud_datasource_tagcloud_records extends cms_module_tagclou
 		$url=$pmb_opac_url."includes/messages/$lang.xml";
 		$fichier_xml=$base_path."/temp/opac_lang.xml";
 	
-		$this->curl_load_file($url,$fichier_xml);
+		static::curl_load_file($url,$fichier_xml);
 		$messages = new XMLlist("$base_path/temp/opac_lang.xml", 0);
 		$messages->analyser();
 		$msg = $messages->table;
@@ -455,7 +455,7 @@ class cms_module_tagcloud_datasource_tagcloud_records extends cms_module_tagclou
 		$url=$pmb_opac_url."includes/search_queries/search_fields.xml";
 		$fichier_xml="$base_path/temp/search_fields_opac.xml";
 	
-		$this->curl_load_file($url,$fichier_xml);
+		static::curl_load_file($url,$fichier_xml);
 		$my_search=new search(false,"search_fields_opac","$base_path/temp/");
 		$form= $my_search->show_form("./admin.php?categ=opac&sub=search_persopac&section=liste&action=build",
 				"","","./cms.php?categ=manage&sub=tagcloud&quoi=datasources&elem=cms_module_tagcloud_datasource_tagcloud_records&cms_store=new&action=get_form&type=rmc");
@@ -464,7 +464,7 @@ class cms_module_tagcloud_datasource_tagcloud_records extends cms_module_tagclou
 		return $form;
 	}
 	
-	protected function curl_load_file($url, $filename) {
+	protected static function curl_load_file($url, $filename) {
 		global $opac_curl_available, $msg ;
 		if (!$opac_curl_available) die("PHP Curl must be available");
 		//Calcul du subst
@@ -516,7 +516,7 @@ class cms_module_tagcloud_datasource_tagcloud_records extends cms_module_tagclou
 				$xml=fread($fp,filesize($file));
 			}
 			fclose($fp);
-			$champ_base=_parser_text_no_function_($xml,"INDEXATION");
+			$champ_base=_parser_text_no_function_($xml,"INDEXATION",$file);
 		}
 		return $champ_base;
 	}	

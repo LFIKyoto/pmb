@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: form.inc.php,v 1.5 2007-03-10 10:05:51 touraine37 Exp $
+// $Id: form.inc.php,v 1.7 2017-02-07 12:00:24 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -15,18 +15,18 @@ define( 'FORM_INC', 1 );
 // Constantes
 // ----------------------------------------------------
 
-define(ALLOW_ALL,       0);
-define(DENY_EMPTY,      1);
-define(DENY_ALPHA,      2);
-define(DENY_NUM,        4);
-define(SUPPRESS_SPACES, 8);
+define('ALLOW_ALL',       0);
+define('DENY_EMPTY',      1);
+define('DENY_ALPHA',      2);
+define('DENY_NUM',        4);
+define('SUPPRESS_SPACES', 8);
 
-define(GREATER,         0);
-define(GREATER_STRICT,  1);
-define(LESSER,          2);
-define(LESSER_STRICT,   3);
-define(EQUAL,           4);
-define(DIFFERENT,       5);
+define('GREATER',         0);
+define('GREATER_STRICT',  1);
+define('LESSER',          2);
+define('LESSER_STRICT',   3);
+define('EQUAL',           4);
+define('DIFFERENT',       5);
 
 // ----------------------------------------------------
 // Squelette de la fonction test_form
@@ -49,22 +49,22 @@ $script_test_form = "
 function test_field_value_comp($form, $el1, $condition, $val, $message) {
 	$script = "";
 	switch ($condition) {
-		case GREATER:
+		case 'GREATER':
 			$symbol = ">";
 			break;
-		case GREATER_EQUAL:
+		case 'GREATER_EQUAL':
 			$symbol = ">=";
 			break;
-		case LESSER:
+		case 'LESSER':
 			$symbol = "<";
 			break;
-		case LESSER_EQUAL:
+		case 'LESSER_EQUAL':
 			$symbol = "<=";
 			break;
-		case EQUAL:
+		case 'EQUAL':
 			$symbol = "==";
 			break;
-		case DIFFERENT:
+		case 'DIFFERENT':
 			$symbol = "!=";
 			break;
 		default:
@@ -88,22 +88,22 @@ function test_field_value_comp($form, $el1, $condition, $val, $message) {
 function test_field_el_comp($form, $el1, $condition, $el2, $message) {
 	$script = "";
 	switch ($condition) {
-		case GREATER:
+		case 'GREATER':
 			$symbol = ">";
 			break;
-		case GREATER_EQUAL:
+		case 'GREATER_EQUAL':
 			$symbol = ">=";
 			break;
-		case LESSER:
+		case 'LESSER':
 			$symbol = "<";
 			break;
-		case LESSER_EQUAL:
+		case 'LESSER_EQUAL':
 			$symbol = "<=";
 			break;
-		case EQUAL:
+		case 'EQUAL':
 			$symbol = "==";
 			break;
-		case DIFFERENT:
+		case 'DIFFERENT':
 			$symbol = "!=";
 			break;
 		default:
@@ -160,6 +160,7 @@ function test_field($form, $element, $field_name, $restrictions=ALLOW_ALL) {
 		}";
 	}
 
+	if(!defined('SUPPPRESS_SPACES')) define('SUPPPRESS_SPACES', 0);
 	if ($restrictions & SUPPPRESS_SPACES)
 	{
 		$script .= "

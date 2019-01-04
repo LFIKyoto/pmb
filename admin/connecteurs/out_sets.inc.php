@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: out_sets.inc.php,v 1.3 2013-04-10 09:42:28 dbellamy Exp $
+// $Id: out_sets.inc.php,v 1.4 2017-10-20 14:27:31 ngantier Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($class_path."/connecteurs_out_sets.class.php");
@@ -40,7 +40,7 @@ function list_out_sets() {
 		print "<td>".htmlentities($aset->get_third_column_info() ,ENT_QUOTES, $charset)."</td>";
 		$date_caption = strtotime($aset->cache->last_updated_date) ? formatdate($aset->cache->last_updated_date, 1) : $msg["admin_connecteurs_setcateg_latestcacheupdate_never"];
 		print "<td>".htmlentities($date_caption ,ENT_QUOTES, $charset)."</td>";
-		print "<td align=\"center\">"."<input type='button' class='bouton_small' value='".htmlentities($msg["admin_connecteurs_setcateg_updatemanually"] ,ENT_QUOTES, $charset)."' onClick='document.location=\"admin.php?categ=connecteurs&sub=out_sets&action=manual_update&id=$aset->id\"'/>"."</td>";
+		print "<td class='center'>"."<input type='button' class='bouton_small' value='".htmlentities($msg["admin_connecteurs_setcateg_updatemanually"] ,ENT_QUOTES, $charset)."' onClick='document.location=\"admin.php?categ=connecteurs&sub=out_sets&action=manual_update&id=$aset->id\"'/>"."</td>";
 		print "</tr>";
 	}
 	

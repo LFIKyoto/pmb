@@ -555,7 +555,7 @@ function _buildDateTimeRE(tokens, bundle, options, pattern){
 			case 'E':
 			case 'e':
 			case 'c':
-				s = '\\S+';
+				s = '.+?'; // match anything including spaces until the first pattern delimiter is found such as a comma or space
 				break;
 			case 'h': //hour (1-12)
 				s = '1[0-2]|'+p2+'[1-9]';
@@ -602,6 +602,7 @@ function _buildDateTimeRE(tokens, bundle, options, pattern){
 }
 
 var _customFormats = [];
+var _cachedGregorianBundles = {};
 exports.addCustomFormats = function(/*String*/ packageName, /*String*/ bundleName){
 	// summary:
 	//		Add a reference to a bundle containing localized custom formats to be
@@ -615,15 +616,19 @@ exports.addCustomFormats = function(/*String*/ packageName, /*String*/ bundleNam
 	//		The resources must be loaded by dojo.requireLocalization() prior to use
 
 	_customFormats.push({pkg:packageName,name:bundleName});
+	_cachedGregorianBundles = {};
 };
 
 exports._getGregorianBundle = function(/*String*/ locale){
+	if(_cachedGregorianBundles[locale]){
+		return _cachedGregorianBundles[locale];
+	}
 	var gregorian = {};
 	array.forEach(_customFormats, function(desc){
 		var bundle = i18n.getLocalization(desc.pkg, desc.name, locale);
 		gregorian = lang.mixin(gregorian, bundle);
 	}, this);
-	return gregorian; /*Object*/
+	return _cachedGregorianBundles[locale] = gregorian; /*Object*/
 };
 
 exports.addCustomFormats(module.id.replace(/\/date\/locale$/, ".cldr"),"gregorian");

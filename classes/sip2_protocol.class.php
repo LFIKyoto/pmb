@@ -13,18 +13,18 @@
  * \ingroup sip2_protocol
  */
 class sip2_protocol {
-	var $error=false;
-	var $error_message="";
-	var $charset;
-    var $version="";
-    var $messages=array();
-    var $fields=array();
-    var $idenditifers=array();
-    var $cur_id="";
-    var $cur_elt;
-    var $in_messages=false;
+	public $error=false;
+	public $error_message="";
+	public $charset;
+    public $version="";
+    public $messages=array();
+    public $fields=array();
+    public $idenditifers=array();
+    public $cur_id="";
+    public $cur_elt;
+    public $in_messages=false;
     
-    function startElement($parser,$name,$attribs) {
+    public function startElement($parser,$name,$attribs) {
     	$this->cur_elt=$name;
     	switch ($name) {
     		case "SIP":
@@ -58,7 +58,7 @@ class sip2_protocol {
     	}
     }
     
-    function endElement($parser,$name) {
+    public function endElement($parser,$name) {
     	$this->cur_elt="";
     	switch ($name) {
     		case "MESSAGE":
@@ -82,7 +82,7 @@ class sip2_protocol {
     	}
     }
     
-    function charElement($parser,$char) {
+    public function charElement($parser,$char) {
     	switch ($this->cur_elt) {
     		case "FIXEDFIELDS":
     			$fixedfields=explode(",",$char);
@@ -101,7 +101,7 @@ class sip2_protocol {
     	}
     }
     
-    function sip2_protocol($file,$charset="iso-8859-1") {
+    public function __construct($file,$charset="iso-8859-1") {
     	$this->charset=$charset;
     	
     	//Lecture du fichier

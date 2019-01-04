@@ -1,4 +1,4 @@
-<h1>Conversiones/Exportaciones</h1>
+<h2>Conversiones/Exportaciones</h2>
 <p>Este m&oacute;dulo permite generar conversiones de diversos formatos de archivos de registros/ejemplares a otros formatos 
 para exportar la base de datos PMB bajo forma de registros.</p>
 <p>El procedimiento de conversi&oacute;n permite a partir de un formato entrante UNIMARC, USMARC, BCDI o XML PMB convertir 

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: create_form.inc.php,v 1.13 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: create_form.inc.php,v 1.15 2017-08-08 14:06:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -11,7 +11,7 @@ if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 // affichage du form de création/modification d'une notice
 
 // dédoublonnage par le code-barre ou l'ISBN
-if($saisieISBN) {
+if(isset($saisieISBN) && $saisieISBN) {
 	if(isEAN($saisieISBN)) {
 		// la saisie est un EAN -> on tente de le formater en ISBN
 		$code = EANtoISBN($saisieISBN);
@@ -38,6 +38,9 @@ if($saisieISBN) {
 	$requete = "SELECT notice_id FROM notices WHERE (".($code?"code='$code'":"").(($code&&$code10)?" or ":"").($code10?"code='$code10'":"").")";
 	$myQuery = pmb_mysql_query($requete, $dbh);
 	$temp_nb_notice = pmb_mysql_num_rows($myQuery) ;
+} else {
+	$code = '';
+	$temp_nb_notice = 0;
 }
 
 

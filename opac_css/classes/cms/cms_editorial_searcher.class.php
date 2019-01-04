@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_editorial_searcher.class.php,v 1.5.4.1 2015-10-27 14:17:02 apetithomme Exp $
+// $Id: cms_editorial_searcher.class.php,v 1.12 2018-07-04 09:09:14 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -61,13 +61,15 @@ class cms_editorial_searcher extends searcher {
 	public function get_sorted_result($sort = "pert",$sort_order="desc",$limit=20){
 		$this->get_result();
 		
-		
 		$query = $this->_get_pert(false,true);
-		
+
 		if ($sort != 'pert') {
 			$query = "select uni.*,$sort from (".$query.") as uni join cms_".$this->type_obj."s on id_".$this->type_obj." = num_obj ";
 		}
-		
+		if(!$query) {
+			$this->result = array();
+			return $this->result;
+		}
 		$query.= " order by ".$sort." ".$sort_order;
 		if($limit>0){
 			$query.= " limit ".$limit;
@@ -84,9 +86,9 @@ class cms_editorial_searcher extends searcher {
 	
 	public function _get_pert($with_explnum=false, $return_query=false){
 		global $opac_allow_term_troncat_search;
-		global $empty_word;
+		global $opac_exclude_fields;
 
-		
+		$empty_word = get_empty_words();
 		$with_explnum = false;
 		$query_pert_explnum = "";
 		$troncat = "";
@@ -96,13 +98,16 @@ class cms_editorial_searcher extends searcher {
 		$terms = $this->aq->get_positive_terms_obj($this->aq->tree);
 		$words = array();
 		$literals = array();
-		$queries = array();		
+		$queries = array();	
+		$query = '';
 		if($this->notices_ids){
-			foreach($terms as $term){
-				if(!$term->literal){
-					if(!in_array($term,$words))
-						$words[]=$term;
-				}else $literals[] = $term;
+			if (is_array($terms)) {
+				foreach($terms as $term){
+					if(!$term->literal){
+						if(!in_array($term,$words))
+							$words[]=$term;
+					}else $literals[] = $term;
+				}
 			}
 			if($this->aq->input !== "*"){
 				$query_pert_explnum = "";
@@ -154,7 +159,7 @@ class cms_editorial_searcher extends searcher {
 						$crit = str_replace("%%","%",$crit);
 						$pert_query_literals = str_replace("!!pert!!","((".$crit.") * pond *".$term->pound.")+!!pert!!",$pert_query_literals);
 					}
-					$where.= (count($restrict) > 0? " and ".$this->aq->get_field_restrict($restrict,$neg_restrict) : "");
+ 					$where.= (count($restrict) > 0? " and ".$this->aq->get_field_restrict($restrict,$neg_restrict) : "");
 					$pert_query_literals = str_replace("!!pert!!",0,$pert_query_literals);
 					if($all_fields && $opac_exclude_fields!= ""){
 						$where.=" and code_champ not in (".$opac_exclude_fields.")";
@@ -162,15 +167,15 @@ class cms_editorial_searcher extends searcher {
 					$queries[]= $pert_query_literals.$where." group by num_obj ";
 				}
 				$query = "select distinct num_obj, sum(pert) as pert from ((".implode(") union all (",$queries).")) as uni where num_obj in (".$this->notices_ids.") group by num_obj";
-			}else{
+			} else {
 				$query = "select id_".$this->type_obj." as num_obj, 100 as pert from cms_".$this->type_obj."s where id_".$this->type_obj." in (".$this->notices_ids.")";
 			}
 		}
 
 		if($return_query){
-			return $query;	
+			return $query;
 		}else{
-			$table = "search_result".md5(microtime(true));
+			$table = $this->get_temporary_table_name();
 			$rqt = "create temporary table ".$table." $query";
 			$res = pmb_mysql_query($rqt)or die (pmb_mysql_error());
 			pmb_mysql_query("alter table ".$table." add index i_id(num_obj)");

@@ -2,42 +2,16 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_view.php,v 1.11.4.1 2015-11-03 16:00:50 jpermanne Exp $
+// $Id: notice_view.php,v 1.19 2018-11-19 16:25:17 dgoron Exp $
 
 $base_path=".";
 //Affichage d'une notice
 require_once($base_path."/includes/init.inc.php");
-require_once($base_path."/includes/error_report.inc.php") ;
-require_once($base_path."/includes/global_vars.inc.php");
-require_once($base_path.'/includes/opac_config.inc.php');
 
-// récupération paramètres MySQL et connection à la base
-require_once($base_path.'/includes/opac_db_param.inc.php');
-require_once($base_path.'/includes/opac_mysql_connect.inc.php');
-$dbh = connection_mysql();
-
-require_once($base_path."/includes/misc.inc.php");
-
-//Sessions !! Attention, ce doit être impérativement le premer include (à cause des cookies)
-require_once($base_path."/includes/session.inc.php");
-require_once($base_path.'/includes/start.inc.php');
-
-require_once($base_path."/includes/notice_authors.inc.php");
-require_once($base_path."/includes/notice_categories.inc.php");
-
-require_once($base_path."/includes/check_session_time.inc.php");
-
-// récupération localisation
-require_once($base_path.'/includes/localisation.inc.php');
-
-// version actuelle de l'opac
-require_once($base_path.'/includes/opac_version.inc.php');
-
-// fonctions de gestion de formulaire
-require_once($base_path.'/includes/javascript/form.inc.php');
+//fichiers nécessaires au bon fonctionnement de l'environnement
+require_once($base_path."/includes/common_includes.inc.php");
 
 require_once($base_path.'/includes/templates/common.tpl.php');
-require_once($base_path.'/includes/divers.inc.php');
 
 // classe de gestion des catégories
 require_once($base_path.'/classes/categorie.class.php');
@@ -64,8 +38,9 @@ if (file_exists($base_path.'/includes/ext_auth.inc.php')) require_once($base_pat
 
 // paramétrage de base
 $templates = "
-	<html>
+	<html xmlns='http://www.w3.org/1999/xhtml' charset='".$charset."'>
 		<head>
+			<meta http-equiv='content-type' content='text/html; charset=".$charset."' />
 			!!styles!!
 			!!scripts!!
 		</head>
@@ -89,6 +64,7 @@ if ($opac_notice_enrichment == 0) {
 			} else{
 				var li = document.getElementById('onglet_isbd'+id);
 				if(!li) var li = document.getElementById('onglet_public'+id);
+				if(!li) var li = document.getElementById('onglet_detail'+id);
 				if(li) var ul = li.parentNode;
 			}
 			return ul;
@@ -113,13 +89,15 @@ if ($opac_notice_enrichment == 0) {
 						if (ul) {
 							var items  = ul.getElementsByTagName('li');
 							for (var i=0 ; i<items.length ; i++){
-								if(items[i].getAttribute('id') == 'onglet_'+quoi+id){
-									items[i].className = 'isbd_public_active';
-									document.getElementById('div_'+quoi+id).style.display = 'block';
-								}else{
-									if(items[i].className != 'onglet_tags' && items[i].className != 'onglet_avis' && items[i].className != 'onglet_sugg' && items[i].className != 'onglet_basket'){
-										items[i].className = 'isbd_public_inactive';	
-										document.getElementById(items[i].getAttribute('id').replace('onglet','div')).style.display = 'none';
+								if(items[i].getAttribute('id')){
+									if(items[i].getAttribute('id') == 'onglet_'+quoi+id){
+										items[i].className = 'isbd_public_active';
+										document.getElementById('div_'+quoi+id).style.display = 'block';
+									}else{
+										if(items[i].className != 'onglet_tags' && items[i].className != 'onglet_avis' && items[i].className != 'onglet_sugg' && items[i].className != 'onglet_basket' && items[i].className != 'onglet_liste_lecture'){
+											items[i].className = 'isbd_public_inactive';	
+											document.getElementById(items[i].getAttribute('id').replace('onglet','div')).style.display = 'none';
+										}
 									}
 								}
 							}			
@@ -129,7 +107,7 @@ if ($opac_notice_enrichment == 0) {
 			}	  	
 		</script>";
 }
-$templates .= "<!--<div id='bouton_fermer_notice_preview' class='right'><a href='#' onClick='parent.kill_frame();return false;'>X</a></div>//-->
+$templates .= "<!--<div id='bouton_fermer_notice_preview' class='right'><a href='#' class='panel-close' onClick='parent.kill_frame();return false;'><i alt='".$msg["notice_preview_close"]."' class='fa fa-times' aria-hidden='true'></i></a></div>//-->
 			<div id='notice'>
 				#FILES
 			</div>

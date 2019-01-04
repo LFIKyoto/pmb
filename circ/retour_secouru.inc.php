@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: retour_secouru.inc.php,v 1.28 2015-06-26 13:15:12 dgoron Exp $
+// $Id: retour_secouru.inc.php,v 1.35 2018-08-03 10:28:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -11,6 +11,8 @@ require_once("$class_path/serial_display.class.php");
 require_once("$include_path/resa.inc.php");
 require_once("$class_path/expl_to_do.class.php");
 require_once("$class_path/pret_parametres_perso.class.php");
+require_once($class_path.'/event/events/event_loan.class.php');
+require_once($class_path.'/audit.class.php');
 
 // define pour différent flags de situation document
 define ('EX_OK', 1);
@@ -66,7 +68,7 @@ if (!$do) {
 	$line=fgets($fp);
 	$nline=1;
 	if ($line===false) { 
-		print "<div class='erreur'>Fichier non valide !</div>";
+		print "<div class='erreur'>".$msg['secouru_invalid_file']."</div>";
 		fclose($fp);
 	} else {		
 		$etat="attente";
@@ -77,7 +79,7 @@ if (!$do) {
 				case "attente":
 					if (($line!="RETOUR SECOURU")&&($line!="PRET SECOURU")) {
 						$error=true;
-						$error_message="PRET SECOURU ou RETOUR SECOURU attendu";
+						$error_message=$msg['secouru_error_file_intro'];
 						$etat="stop";
 					} else {
 						if ($line=="PRET SECOURU") $etat="debut_pret"; else {
@@ -95,7 +97,7 @@ if (!$do) {
 							$etat="pret";
 						} else {
 							$error=true;
-							$error_message="Un code barre lecteur est attendu";
+							$error_message=$msg['secouru_error_file_empr'];
 							$etat="stop";
 						}
 					}
@@ -109,7 +111,7 @@ if (!$do) {
 						} else {
 							if (!is_cb_ex($line)) {
 								$error=true;
-								$error_message="Un code barre exemplaire est attendu";
+								$error_message=$msg['secouru_error_file_expl'];
 								$etat="stop";	
 							} else $etat="pret";
 						} 
@@ -125,7 +127,7 @@ if (!$do) {
 						} else {
 							if (!is_cb_ex($line)) {
 								$error=true;
-								$error_message="Un code barre exemplaire est attendu";
+								$error_message=$msg['secouru_error_file_expl'];
 								$etat="stop";	
 							} else $etat="debut_retour";
 						}
@@ -135,10 +137,10 @@ if (!$do) {
 		}
 		fclose($fp);
 		if ($error) {
-			print "<div class='erreur'>Erreur à la ligne ".$nline." : ".$error_message."</div>";
-			print "<center><input type='button' value='Lancer quand même la récupération' onClick=\"document.location='./circ.php?categ=retour_secouru_int&file=".rawurlencode($file)."&do=1'\" class='bouton'>&nbsp;<input type='button' value='Annuler' onClick=\"document.location='./circ.php?categ=retour_secouru';\" class='bouton'></center>";
+			print "<div class='erreur'>".$msg['secouru_error_file_line']." ".$nline." : ".$error_message."</div>";
+			print "<input type='button' value='".$msg['secouru_force_recup']."' onClick=\"document.location='./circ.php?categ=retour_secouru_int&file=".rawurlencode($file)."&do=1'\" class='bouton'>&nbsp;<input type='button' value='".$msg['76']."' onClick=\"document.location='./circ.php?categ=retour_secouru';\" class='bouton'>";
 		} else {
-			print "<div class='erreur'>Fichier valide : lancement de la récupération...</div>";
+			print "<div class='erreur'>".$msg['secouru_valid_file']."</div>";
 			print "<script>document.location=\"./circ.php?categ=retour_secouru_int&file=".rawurlencode($file)."&do=1\";</script>";
 		}
 	}
@@ -151,7 +153,7 @@ if ($do==1) {
 	$line=fgets($fp);
 	$nline=1;
 	if ($line===false) { 
-		print "<div class='erreur'>Fichier non valide !</div>";
+		print "<div class='erreur'>".$msg['secouru_invalid_file']."</div>";
 		fclose($fp);
 	} else {		
 		$etat="attente";
@@ -162,11 +164,11 @@ if ($do==1) {
 				case "attente":
 					if (($line!="RETOUR SECOURU")&&($line!="PRET SECOURU")) {
 						$error=true;
-						$error_message="PRET SECOURU ou RETOUR SECOURU attendu";
+						$error_message=$msg['secouru_error_file_intro'];
 						$etat="stop";
 					} else {
 						if ($line=="PRET SECOURU") $etat="debut_pret"; else {
-							print "<b>Retour</b><blockquote>";
+							print "<b>".$msg['secouru_retour']."</b><blockquote>";
 							$etat="debut_retour";
 						}
 					}
@@ -178,11 +180,11 @@ if ($do==1) {
 					} else {
 						if (is_reader($line)) {
 							$reader=$line;
-							print "<b>Prêt</b><blockquote>";
+							print "<b>".$msg['secouru_pret']."</b><blockquote>";
 							$etat="pret";
 						} else {
 							$error=true;
-							$error_message="Un code barre lecteur est attendu";
+							$error_message=$msg['secouru_error_file_empr'];
 							$etat="stop";
 						}
 					}
@@ -219,23 +221,11 @@ if ($do==1) {
 			}
 		}
 		if ($error) 
-			print "<div class='erreur'>Erreur à la ligne ".$nline." : ".$error_message."</div>"; 
+			print "<div class='erreur'>".$msg['secouru_error_file_line']." ".$nline." : ".$error_message."</div>"; 
 		else
-			print "<div class='erreur'>Récupération terminée</div>";
+			print "<div class='erreur'>".$msg['secouru_recup_ok']."</div>";
 		fclose($fp);
 	}
-}
-
-// <-------------- check_empr_secouru --------------->
-// teste l'id_empr passée en paramètre (check si l'emprunteur existe)
-function check_empr_secouru($id) {
-	global $dbh;
-	if (!$id)
-		return FALSE;
-	$query = "select count(1) as qte from empr where id_empr='$id' ";
-	$result = pmb_mysql_query($query, $dbh);
-	return pmb_mysql_result($result, 0, 0);
-
 }
 
 // <-------------- check_document() --------------->
@@ -248,9 +238,7 @@ function check_empr_secouru($id) {
 - si le document est réservé pour un autre lecteur -> l'utilisateur doit confirmer le prêt  retour HAS_RESA
 - si le document est réservé pour ce lecteur -> on efface la réservation et on retourne EX_OK */
 function check_document($id_expl, $id_empr) {
-
-	global $dbh;
-
+	$retour = new stdClass();
 	$retour -> flag = 0;
 
 	if (!$id_expl || !$id_empr)
@@ -262,7 +250,7 @@ function check_document($id_expl, $id_empr) {
 	$query.= " where e.expl_id=$id_expl";
 	$query.= " and s.idstatut=e.expl_statut";
 	$query.= " limit 1";
-	$result = pmb_mysql_query($query, $dbh);
+	$result = pmb_mysql_query($query);
 
 	// exemplaire inconnu
 	if (!pmb_mysql_num_rows($result)) {
@@ -275,7 +263,7 @@ function check_document($id_expl, $id_empr) {
 
 	// une autre query pour savoir si l'exemplaire est en prêt...
 	$query = "select pret_idempr from pret where pret_idexpl=$id_expl limit 1";
-	$result = pmb_mysql_query($query, $dbh);
+	$result = pmb_mysql_query($query);
 	if (@ pmb_mysql_num_rows($result)) {
 		// l'exemplaire est déjà en prêt
 		$empr = pmb_mysql_result($result, '0', 'pret_idempr');
@@ -300,7 +288,7 @@ function check_document($id_expl, $id_empr) {
 	// cas des réservations
 	// on checke si l'exemplaire a une réservation
 	$query = "select resa_idempr as empr, id_resa, resa_cb from resa where resa_idnotice='$expl->notice' and resa_idbulletin='$expl->bulletin' order by resa_date limit 1";
-	$result = pmb_mysql_query($query, $dbh);
+	$result = pmb_mysql_query($query);
 	if (pmb_mysql_num_rows($result)) {
 		$reservataire = pmb_mysql_result($result, 0, 'empr');
 		$id_resa = pmb_mysql_result($result, 0, 'id_resa');
@@ -323,8 +311,6 @@ function check_document($id_expl, $id_empr) {
 
 // ajoute le prêt en table
 function add_pret($id_empr, $id_expl, $cb_doc) {
-	// le lien MySQL
-	global $dbh;
 	global $msg;
 	global $pmb_quotas_avances;
 	
@@ -345,7 +331,7 @@ function add_pret($id_empr, $id_expl, $cb_doc) {
 		$query.= " WHERE expl_id='".$id_expl;
 		$query.= "' and idtyp_doc=expl_typdoc LIMIT 1";
 
-		$result = @ pmb_mysql_query($query, $dbh) or die("can't SELECT exemplaires ".$query);
+		$result = @ pmb_mysql_query($query) or die("can't SELECT exemplaires ".$query);
 		$expl_properties = pmb_mysql_fetch_object($result);
 		$duree_pret = $expl_properties -> duree_pret;
 	} 	
@@ -359,7 +345,7 @@ function add_pret($id_empr, $id_expl, $cb_doc) {
 	$query.= "pret_date   = sysdate(), ";
 	$query.= "pret_retour = '".date("Y-m-d", $pret_retour)."', ";
 	$query.= "retour_initial = '".date("Y-m-d", $pret_retour)."' ";
-	$result = @ pmb_mysql_query($query, $dbh) or die(pmb_mysql_error()."<br />can't INSERT into pret".$query);
+	pmb_mysql_query($query) or die(pmb_mysql_error()."<br />can't INSERT into pret".$query);
 	
 	// insérer la trace en stat, récupérer l'id et le mettre dans la table des prêts pour la maj ultérieure
 	$stat_avant_pret = pret_construit_infos_stat ($id_expl) ;
@@ -367,7 +353,7 @@ function add_pret($id_empr, $id_expl, $cb_doc) {
 	$query = "update pret SET pret_arc_id='$stat_id' where ";
 	$query.= "pret_idempr = '".$id_empr."' and ";
 	$query.= "pret_idexpl = '".$id_expl."' ";
-	$result = @ pmb_mysql_query($query, $dbh) or die("can't update pret for stats ".$query);
+	pmb_mysql_query($query) or die("can't update pret for stats ".$query);
 	audit::insert_creation (AUDIT_PRET, $stat_id) ;
 	
 	//enregistrer les champs perso pret
@@ -377,40 +363,43 @@ function add_pret($id_empr, $id_expl, $cb_doc) {
 	$query = "update exemplaires SET ";
 	$query.= "last_loan_date = sysdate() ";
 	$query.= "where expl_id= '".$id_expl."' ";
-	$result = @ pmb_mysql_query($query, $dbh) or die("can't update last_loan_date in exemplaires : ".$query);
+	pmb_mysql_query($query) or die("can't update last_loan_date in exemplaires : ".$query);
 
 	$query = "update empr SET ";
 	$query.= "last_loan_date = sysdate() ";
 	$query.= "where id_empr= '".$id_empr."' ";
-	$result = @ pmb_mysql_query($query, $dbh) or die("can't update last_loan_date in empr : ".$query);
+	pmb_mysql_query($query) or die("can't update last_loan_date in empr : ".$query);
 
+	/**
+	 * Publication d'un évenement à l'enregistrement du prêt en base (pièges passés et prêt validé (quotas etc..) )
+	 */
+	$evt_handler = events_handler::get_instance();
+	$event = new event_loan("loan", "add_loan");
+	$event->set_id_loan($id_loan);
+	$event->set_id_empr($id_empr);
+	$evt_handler->send($event);
 }
 
 // efface une résa pour un emprunteur donné et réaffecte le cb éventuellement
 function del_resa($id_empr, $id_notice, $id_bulletin, $cb_encours_de_pret) {
-	
-	global $dbh;
-	
 	if (!$id_empr || (!$id_notice && !$id_bulletin))
 		return FALSE;
 
-	if (!$id_notice)
-		$id_notice = 0;
-	if (!$id_bulletin)
-		$id_bulletin = 0;
+	$id_notice += 0;
+	$id_bulletin += 0;
 	$rqt = "select resa_cb, id_resa from resa where resa_idnotice='".$id_notice."' and resa_idbulletin='".$id_bulletin."'  and resa_idempr='".$id_empr."' ";
-	$res = pmb_mysql_query($rqt, $dbh);
+	$res = pmb_mysql_query($rqt);
 	$obj = pmb_mysql_fetch_object($res);
 	$cb_recup = $obj->resa_cb;
 	$id_resa = $obj->id_resa;
 	
 	// suppression
 	$rqt = "delete from resa where id_resa='".$id_resa."' ";
-	$res = pmb_mysql_query($rqt, $dbh);
+	$res = pmb_mysql_query($rqt);
 	
 	// si on delete une resa à partir d'un prêt, on invalide la résa qui était validée avec le cb, mais on ne change pas les dates, ça sera fait par affect_cb
 	$rqt_invalide_resa = "update resa set resa_cb='' where resa_cb='".$cb_encours_de_pret."' " ;  
-	$res = pmb_mysql_query($rqt_invalide_resa, $dbh) ;
+	$res = pmb_mysql_query($rqt_invalide_resa) ;
 												
 	// réaffectation du doc éventuellement
 	if ($cb_recup != $cb_encours_de_pret) {
@@ -422,18 +411,18 @@ function del_resa($id_empr, $id_notice, $id_bulletin, $cb_encours_de_pret) {
 			if (!$res_affectation && $cb_recup) {
 				// cb non réaffecté, il faut transférer les infos de la résa dans la table des docs à ranger
 				$rqt = "insert into resa_ranger (resa_cb) values ('".$cb_recup."') ";
-				$res = pmb_mysql_query($rqt, $dbh);
+				$res = pmb_mysql_query($rqt);
 				}
 			}
 		}
 	// Au cas où il reste des résa invalidées par resa_cb, on leur colle les dates comme il faut...
 	$rqt_invalide_resa = "update resa set resa_date_debut='0000-00-00', resa_date_fin='0000-00-00' where resa_cb='' " ;  
-	$res = pmb_mysql_query($rqt_invalide_resa, $dbh) ;
+	$res = pmb_mysql_query($rqt_invalide_resa) ;
 	return TRUE;
 }
 
 function rec_pret($reader,$line) {
-	global $msg,$dbh;
+	global $msg;
 	//Recherche du lecteur
 	$requete="select id_empr from empr where empr_cb='".addslashes($reader)."'";
 	$resultat=pmb_mysql_query($requete);
@@ -444,47 +433,49 @@ function rec_pret($reader,$line) {
 		$resultat=pmb_mysql_query($requete);
 		if (pmb_mysql_num_rows($resultat)) {
 			$expl_id=pmb_mysql_result($resultat,0,0);
-			print pmb_bidi("<div class='erreur'>Prêt <a href='./circ.php?categ=visu_ex&form_cb_expl=".rawurlencode($line)."'>".$line."</a> pour <a href='./circ.php?categ=pret&form_cb=".rawurlencode($reader)."'>".$reader."</a></div>");	
-			if (check_empr_secouru($id_empr)) {
+			print pmb_bidi("<div class='erreur'>".$msg['secouru_pret']." <a href='./circ.php?categ=visu_ex&form_cb_expl=".rawurlencode($line)."'>".$line."</a> pour <a href='./circ.php?categ=pret&form_cb=".rawurlencode($reader)."'>".$reader."</a></div>");	
+			if (emprunteur::exists($id_empr)) {
 				$empr_temp = new emprunteur($id_empr, '', FALSE, 1);
 				$statut = check_document($expl_id, $id_empr);
 				if ($statut -> flag & ALREADY_LOANED || $statut -> flag & ALREADY_BORROWED) {
 					if ($statut -> flag & ALREADY_LOANED) {
 						print "			<div class='row'>
-											<span class='erreur'>$msg[386]</span></div>
+											<span class='erreur'>".$msg['386']."</span></div>
 											<br />";
 					}
 					if ($statut -> flag & ALREADY_BORROWED) {
 						print "			<div class='row'>
-											<span class='erreur'>$msg[387]</span></div>
+											<span class='erreur'>".$msg['387']."</span></div>
 											<br />";
 					}
 				} else {
 					if ($statut -> flag && ($statut -> flag & HAS_RESA_GOOD)) {
 						// archivage resa
 						$rqt_arch = "UPDATE resa_archive, resa SET resarc_pretee = 1 WHERE id_resa = '".$statut->id_resa."' AND resa_arc = resarc_id ";	
-						pmb_mysql_query($rqt_arch, $dbh);
+						pmb_mysql_query($rqt_arch);
 						
 						// suppression de la resa pour ce lecteur
 						del_resa($id_empr, $statut -> idnotice, $statut -> idbulletin, $statut -> expl_cb);
 					}
 					// ajout du prêt
 					add_pret($id_empr, $expl_id, $line);
-					print "<div class='erreur'>effectué</div>";	
+					print "<div class='erreur'>".$msg['secouru_pret_done']."</div>";	
 				}
 			} else {
-				print "<div class='erreur'>".$reader." : Lecteur inconnu"."</div>";	
+				print "<div class='erreur'>".$reader." : ".$msg['secouru_pret_unknown_borrower']."</div>";	
 			}
 		} else {
-			print "<div class='erreur'>".$line." : Exemplaire inconnu"."</div>";	
+			print "<div class='erreur'>".$line." : ".$msg['secouru_pret_unknown_expl']."</div>";	
 		}
 	} else {
-		print "<div class='erreur'>".$reader." : Lecteur inconnu"."</div>";	
+		print "<div class='erreur'>".$reader." : ".$msg['secouru_pret_unknown_borrower']."</div>";	
 	}
 }
 
 function rec_retour($line) {
 	global $action_piege,$piege_resa;
+	global $msg;
+	
 	$form_cb_expl=$line;
 	$expl=new expl_to_do($form_cb_expl);
 	//print $expl->cb_tmpl;
@@ -500,21 +491,16 @@ function rec_retour($line) {
 		if($stuff=check_barcode($form_cb_expl)) {
 			$stuff = check_pret($stuff);
 			$stuff = check_resa($stuff);
-			// on a maintenant un gros objet $stuff avec toutes les infos pour traiter les choses
-			// les propriétés de cet objet sont visibles dans la fonction show_reports() plus bas
-			// show_report($stuff); // uncomment for debugging
 			// appel de la fonction do_retour, qui va gérer tout cela
 			do_retour_secouru($stuff);
 		} else {
-			print "<div class='erreur'>".$form_cb_expl." : Exemplaire inconnu"."</div>";			
+			print "<div class='erreur'>".$form_cb_expl." : ".$msg['secouru_retour_unknown_expl']."</div>";			
 		}
 	}
 }
 
 // effectue les opérations de retour et mise en stat
 function do_retour_secouru($stuff) {
-
-	global $dbh;
 	global $msg;
 	global $alert_sound_list;
 
@@ -534,7 +520,7 @@ function do_retour_secouru($stuff) {
 	$query .= " and s.idsection=".$stuff->expl_section;
 	$query .= " limit 1";
 
-	$result = pmb_mysql_query($query, $dbh);
+	$result = pmb_mysql_query($query);
 	$info_doc = pmb_mysql_fetch_object($result);
 	print pmb_bidi('<br />'.$info_doc->type_doc);
 	print pmb_bidi('.&nbsp;'.$info_doc->location);
@@ -550,12 +536,12 @@ function do_retour_secouru($stuff) {
 		if ($stuff->empr_msg) {
 			$message_fiche_empr= "
 					<div class='row'>
-					<div class='colonne10'><img src='./images/info.png' /></div>
+					<div class='colonne10'><img src='".get_url_icon('info.png')."' /></div>
 					<div class='colonne-suite'><span class='erreur'>$stuff->empr_msg</span></div>
 					</div><br />";
 			$alert_sound_list[]="information";
 			print $message_fiche_empr ;
-			}
+		}
 			
 		// calcul du retard éventuel
 		$rqt_date = "select ((TO_DAYS(CURDATE()) - TO_DAYS('$stuff->pret_retour'))) as retard ";
@@ -568,11 +554,11 @@ function do_retour_secouru($stuff) {
 
 		// zone du dernier emrunteur
 		if($stuff->expl_lastempr) {
-			print "<hr /><div class='row'>$msg[expl_prev_empr] ";
+			print "<hr /><div class='row'>".$msg['expl_prev_empr']." ";
 			$link = "<a href='./circ.php?categ=pret&form_cb=".rawurlencode($stuff->lastempr_cb)."'>";
 			print pmb_bidi($link.$stuff->lastempr_prenom.' '.$stuff->lastempr_nom.' ('.$stuff->lastempr_cb.')</a>');
 			print "</div><hr />";
-			}
+		}
 
 		// code de suppression prêt et la mise en table de stat
 		if (del_pret($stuff)) {
@@ -591,7 +577,7 @@ function do_retour_secouru($stuff) {
 	if ($stuff->expl_note)
 		print pmb_bidi("<hr /><div class='erreur'>${msg[377]} :</div><div class='message_important'>".$stuff->expl_note."</div>");
 	if ($stuff->expl_comment)
-		print pmb_bidi("<hr /><div class='erreur'>".$msg[expl_zone_comment]." :</div>".$stuff->expl_comment."<br />");
+		print pmb_bidi("<hr /><div class='erreur'>".$msg['expl_zone_comment']." :</div>".$stuff->expl_comment."<br />");
 
 		// traitement de l'éventuelle réservation
 	if ($stuff->resa_idempr) {

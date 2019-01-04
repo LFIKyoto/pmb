@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serials_simple_circ_suite.php,v 1.2.4.2 2015-09-22 13:17:41 ngantier Exp $
+// $Id: serials_simple_circ_suite.php,v 1.4 2016-08-18 15:30:30 jpermanne Exp $
 
 $base_path = "..";   
 $class_path = "$base_path/classes";
@@ -12,6 +12,7 @@ require_once ("$base_path/includes/init.inc.php");
 require_once ("$class_path/fpdf.class.php");
 require_once ("$class_path/ufpdf.class.php");
 require_once ("$class_path/fpdf_etiquette.class.php");
+require_once ("$class_path/encoding_normalize.class.php");
 
 require_once("$class_path/simple_circ.class.php");
 
@@ -19,7 +20,7 @@ switch($action){
 	case "add_circ_cb":
 		$simple_circ= new simple_circ($start_date,$end_date,$circ_cb);
 		$data=$simple_circ->get_data();
-		print(json_encode($charset != "uft-8" ? pmb_utf8_encode($data) : $data));
+		print(encoding_normalize::json_encode($data));
 		exit;
 		break;
 	case "print_list":

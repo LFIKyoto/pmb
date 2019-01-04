@@ -2,12 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fichier.php,v 1.4 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: fichier.php,v 1.7 2018-07-24 14:16:37 dgoron Exp $
 
 
 // définition du minimum nécéssaire 
 $base_path=".";                            
-$base_auth = "FICHIER_AUTH";  
+$base_auth = "FICHES_AUTH";  
 $base_title = "\$msg[onglet_fichier]";  
 $prefix = "gestfic0";
 
@@ -21,6 +21,7 @@ require("$include_path/templates/fichier.tpl.php");
 
 
 // création de la page
+if(!isset($dest)) $dest = '';
 switch($dest) {
 	case "TABLEAU":
 	
@@ -28,9 +29,7 @@ switch($dest) {
 	case "TABLEAUHTML":
 		header("Content-Type: application/download\n");
 		header("Content-Disposition: atttachement; filename=\"tableau.html\"");
-		print "<html><head>" .
-		'<meta http-equiv=Content-Type content="text/html; charset='.$charset.'" />'.
-		"</head><body>";
+		print "<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" /></head><body>";
 		echo "<h1>".htmlentities($msg['onglet_fichier'].$msg[1003].$msg[1001],ENT_QUOTES,$charset)."</h1>";  
 		break;
 	default:
@@ -61,6 +60,13 @@ switch($categ){
 		break;
 	case 'gerer':
 		include("$base_path/fichier/fichier_gestion.inc.php");
+		break;
+	case 'plugin' :
+		$plugins = plugins::get_instance();
+		$file = $plugins->proceed("fichier",$plugin,$sub);
+		if($file){
+			include $file;
+		}
 		break;
 	default:
 		include("$include_path/messages/help/$lang/module_fichier.txt");	

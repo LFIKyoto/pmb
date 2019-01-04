@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export_form.tpl.php,v 1.7 2009-05-16 11:19:55 dbellamy Exp $
+// $Id: export_form.tpl.php,v 1.9 2017-10-18 15:26:29 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 require_once("$include_path/templates/export_param.tpl.php");
@@ -28,11 +28,11 @@ function show_list(selectBox) {
 }
 </script>
 <form class='form-$current_module' name=\"export_form\" action=\"start_export.php\" method=\"post\">
-<h3>$msg[admin_ExpPara]</h3>
+<h3>".$msg['admin_ExpPara']."</h3>
 <div class='form-contenu'>
   <div class='row'>
 	<div class='colonne3'>
-		<label class='etiquette'>$msg[admin_Expvers]</label>
+		<label class='etiquette'>".$msg['admin_Expvers']."</label>
 	</div>
 	<div class='colonne_suite'>
 		!!export_type!!
@@ -40,7 +40,7 @@ function show_list(selectBox) {
   </div>
   <div class='row'>
     <div class='colonne3'>
-		<label class='etiquette'>$msg[admin_ExpProp]</label>
+		<label class='etiquette'>".$msg['admin_ExpProp']."</label>
 	</div>
 	<div class='colonne_suite'>
 		!!lenders!!
@@ -49,29 +49,33 @@ function show_list(selectBox) {
   <br /><br />
   <div class='row'>
     <div class='colonne3'>
-       <b>$msg[17]</b><br />
-       <i><font size=1>$msg[admin_ExpSelect]</font></i><br />
+       <b>".$msg['17']."</b><br />
+       <i>".$msg['admin_ExpSelect']."</i><br />
        !!typ_doc_lists!!
     </div>
     <div class='colonne10'>
        &nbsp;
     </div>
     <div class='colonne_suite'>
-       <b>$msg[admin_ExpStatut]</b><br />
-       <i><font size=1>$msg[admin_ExpSelect]</font></i><br />
+       <b>".$msg['admin_ExpStatut']."</b><br />
+       <i>".$msg['admin_ExpSelect']."</i><br />
        !!statut_lists!!
     </div>
   </div>
   <div class='row'>
   	<input type=\"checkbox\" id=\"keep_expl\" name=\"keep_expl\" value=\"1\">
-  	<label for=\"keep_expl\">$msg[caddie_Conserver995]</label>
+  	<label for=\"keep_expl\">".$msg['caddie_Conserver995']."</label>
+  </div>
+  <div class='row'>
+	<input type='checkbox' value='1' id='keep_explnum' name='keep_explnum'> 
+	<label for='keep_explnum'>".$msg['caddie_export_keep_explnum']."</label>
   </div>
   <div class='row'> !!form_param!!</div>
   
 </div>
 
 <div class='row'>
-	<input type=\"submit\" class='bouton' value=\"$msg[admin_Lance]\">
+	<input type=\"submit\" class='bouton' value=\"".$msg['admin_Lance']."\">
 	</div>
 </form>
 ";

@@ -1,8 +1,8 @@
 <?php
 // +-------------------------------------------------+
-// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: connecteurs.class.php,v 1.36.4.1 2015-09-15 14:32:56 apetithomme Exp $
+// $Id: connecteurs.class.php,v 1.53 2018-11-26 14:32:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,34 +11,63 @@ require_once($include_path."/templates/connecteurs.tpl.php");
 require_once($class_path."/upload_folder.class.php");
 
 class connector {
-	var $repository;				//Est-ce un entrepot ?
-	var $timeout;					//Time-out
-	var $retry;						//Nombre de réessais
-	var $ttl;						//Time to live
-	var $parameters;				//Paramètres propres au connecteur
-	var $sources;					//Sources disponibles
-	var $msg;						//Messages propres au connecteur
-	var $connector_path;
+	public $repository;				//Est-ce un entrepot ?
+	public $timeout;					//Time-out
+	public $retry;						//Nombre de réessais
+	public $ttl;						//Time to live
+	public $parameters;				//Paramètres propres au connecteur
+	public $sources;					//Sources disponibles
+	public $msg;						//Messages propres au connecteur
+	public $connector_path;
+	protected static $sources_params = array();
 	
-	function connector($connector_path="") {
+	//Calcul ISBD
+	protected static $xml_indexation;
+	protected static $isbd_ask_list = array();
+	protected static $ufields = array();
+	
+	//Variables internes pour la progression de la récupération des notices
+	public $callback_progress;		//Nom de la fonction de callback progression passée par l'appellant
+	public $source_id;				//Numéro de la source en cours de synchro
+	public $del_old;				//Supression ou non des notices dejà existantes
+	
+	//Résultat de la synchro
+	public $error;					//Y-a-t-il eu une erreur
+	public $error_message;			//Si oui, message correspondant
+	
+	public function __construct($connector_path="") {
 		$this->fetch_global_properties();
 		$this->get_messages($connector_path);
 		$this->connector_path=$connector_path;
 	}
 	
 	//Signature de la classe
-	function get_id() {
+	public function get_id() {
 		return "";
 	}
 	
 	//Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 0;
 	}
 	
-	function get_messages($connector_path) {
+	public function get_libelle($message) {
+		if (substr($message,0,4)=="msg:") return $this->msg[substr($message,4)]; else return $message;
+	}
+	
+	protected function unserialize_source_params($source_id) {
+		$params=$this->get_source_params($source_id);
+		if ($params["PARAMETERS"]) {
+			$vars=unserialize($params["PARAMETERS"]);
+			$params["PARAMETERS"]=$vars;
+		}
+		return $params;
+	}
+	
+	public function get_messages($connector_path) {
 		global $lang;
 		
+		$file_name = '';
 		if (file_exists($connector_path."/messages/".$lang.".xml")) {
 			$file_name=$connector_path."/messages/".$lang.".xml";
 		} else if (file_exists($connector_path."/messages/fr_FR.xml")) {
@@ -52,41 +81,47 @@ class connector {
 	}
 	
 	//Récupération de la liste des sources
-	function get_sources() {
-		$sources=array();
-		$requete="SELECT connectors_sources.*, source_sync.cancel, source_sync.percent, source_sync.date_sync FROM connectors_sources LEFT JOIN source_sync ON ( connectors_sources.source_id = source_sync.source_id ) where id_connector='".addslashes($this->get_id())."' order by connectors_sources.name";
-		$resultat=pmb_mysql_query($requete);
-		if (pmb_mysql_num_rows($resultat)) {
-			while ($r=pmb_mysql_fetch_object($resultat)) {
-				$s["SOURCE_ID"]=$r->source_id;
-				$s["PARAMETERS"]=$r->parameters;
-				$s["NAME"]=$r->name;
-				$s["COMMENT"]=$r->comment;
-				$s["RETRY"]=$r->retry;
-				$s["REPOSITORY"]=$r->repository;
-				$s["TTL"]=$r->ttl;
-				$s["TIMEOUT"]=$r->timeout;
-				$s["OPAC_ALLOWED"]=$r->opac_allowed;
-				$s["UPLOAD_DOC_NUM"]=$r->upload_doc_num;
-				$s["REP_UPLOAD"] = $r->rep_upload;
-				$s["ENRICHMENT"] = $r->enrichment;
-				$s["OPAC_AFFILIATE_SEARCH"] = $r->opac_affiliate_search;
-				$s["OPAC_SELECTED"] = $r->opac_selected;
-				$s["TYPE_ENRICHEMENT_ALLOWED"]=unserialize($r->type_enrichment_allowed);
-				$s["CANCELLED"]=$r->cancel;
-				$s["PERCENT"]=$r->percent;
-				$s["DATESYNC"]=$r->date_sync;
-				$s["LASTSYNCDATE"]=$r->last_sync_date;
-				$s["ICO_NOITICE"]=$r->ico_notice;
-				$sources[$r->source_id]=$s;
+	public function get_sources() {
+		if(!isset($this->sources) || !count($this->sources)) {
+			$sources=array();
+			$requete="SELECT connectors_sources.*, source_sync.cancel, source_sync.percent, source_sync.date_sync FROM connectors_sources LEFT JOIN source_sync ON ( connectors_sources.source_id = source_sync.source_id ) where id_connector='".addslashes($this->get_id())."' order by connectors_sources.name";
+			$resultat=pmb_mysql_query($requete);
+			if (pmb_mysql_num_rows($resultat)) {
+				while ($r=pmb_mysql_fetch_object($resultat)) {
+					$s["SOURCE_ID"]=$r->source_id;
+					$s["PARAMETERS"]=$r->parameters;
+					$s["NAME"]=$r->name;
+					$s["COMMENT"]=$r->comment;
+					$s["RETRY"]=$r->retry;
+					$s["REPOSITORY"]=$r->repository;
+					$s["TTL"]=$r->ttl;
+					$s["TIMEOUT"]=$r->timeout;
+					$s["OPAC_ALLOWED"]=$r->opac_allowed;
+					$s["UPLOAD_DOC_NUM"]=$r->upload_doc_num;
+					$s["REP_UPLOAD"] = $r->rep_upload;
+					$s["ENRICHMENT"] = $r->enrichment;
+					$s["OPAC_AFFILIATE_SEARCH"] = $r->opac_affiliate_search;
+					$s["OPAC_SELECTED"] = $r->opac_selected;
+					$s["GESTION_SELECTED"] = $r->gestion_selected;
+					$s["TYPE_ENRICHEMENT_ALLOWED"]=unserialize($r->type_enrichment_allowed);
+					$s["CANCELLED"]=$r->cancel;
+					$s["PERCENT"]=$r->percent;
+					$s["DATESYNC"]=$r->date_sync;
+					$s["LASTSYNCDATE"]=$r->last_sync_date;
+					$s["ICO_NOTICE"]=$r->ico_notice;
+					$sources[$r->source_id]=$s;
+				}
 			}
+			$this->sources=$sources;
 		}
-		$this->sources=$sources;
-		return $sources;
+		return $this->sources;
 	}
 	
 	//Récupération des paramètres d'une source
-	function get_source_params($source_id) {
+	public function get_source_params($source_id) {
+		if(isset(self::$sources_params[$source_id])) {
+			return self::$sources_params[$source_id];
+		}
 		if ($source_id) {
 			$requete="select * from connectors_sources where id_connector='".addslashes($this->get_id())."' and source_id=".$source_id."";
 			$resultat=pmb_mysql_query($requete);
@@ -106,12 +141,13 @@ class connector {
 				$s["ENRICHMENT"] = $r->enrichment;
 				$s["OPAC_AFFILIATE_SEARCH"] = $r->opac_affiliate_search;
 				$s["OPAC_SELECTED"]=$r->opac_selected;
+				$s["GESTION_SELECTED"] = $r->gestion_selected;
 				if($r->type_enrichment_allowed == ""){
 					$s["TYPE_ENRICHMENT_ALLOWED"] = array();
 				}else{
 					$s["TYPE_ENRICHMENT_ALLOWED"]=unserialize($r->type_enrichment_allowed);
 				}
-				$s["ICO_NOITICE"]=$r->ico_notice;
+				$s["ICO_NOTICE"]=$r->ico_notice;
 			} 
 		} else {
 			$s["SOURCE_ID"]="";
@@ -128,7 +164,8 @@ class connector {
 			$s["ENRICHMENT"] = 0;
 			$s["OPAC_AFFILIATE_SEARCH"] = 0;
 			$s["OPAC_SELECTED"]=0;
-			$s["ICO_NOITICE"]="";
+			$s["GESTION_SELECTED"] = 0;
+			$s["ICO_NOTICE"]="";
 			$s["TYPE_ENRICHMENT_ALLOWED"]=array();
 		}
 		//Gestion du timeout au niveau de mysql pour ne pas perdre la connection
@@ -140,25 +177,21 @@ class connector {
 			}
 			pmb_mysql_query("SET SESSION wait_timeout=".($timeout_default+(($s["TIMEOUT"])*1)));
 		}
-		return $s;
+		self::$sources_params[$source_id] = $s;
+		return self::$sources_params[$source_id];
 	}
 	
 	//Formulaire des propriétés d'une source
-	function source_get_property_form($source_id) {
-		$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			//Affichage du formulaire avec $params["PARAMETERS"]	
-		} else {
-			//Affichage du formulaire vide
-		}
+	public function source_get_property_form($source_id) {
+		return "";
 	}
 	
-	function make_serialized_source_properties($source_id) {
+	public function make_serialized_source_properties($source_id) {
 		$this->sources[$source_id]["PARAMETERS"]="";
 	}
 	
 	//Formulaire de sauvegarde des propriétés d'une source
-	function source_save_property_form($source_id) {
+	public function source_save_property_form($source_id) {
 		global $source_categories;
 		$this->make_serialized_source_properties($source_id);
 		$this->sources[$source_id]["OPAC_ALLOWED"] = $this->sources[$source_id]["OPAC_ALLOWED"] ? 1 : 0;
@@ -166,6 +199,7 @@ class connector {
 		$this->sources[$source_id]["ENRICHMENT"] = $this->sources[$source_id]["ENRICHMENT"] ? 1 : 0;
 		$this->sources[$source_id]["OPAC_AFFILIATE_SEARCH"] = $this->sources[$source_id]["OPAC_AFFILIATE_SEARCH"] ? 1 : 0;
 		$this->sources[$source_id]["OPAC_SELECTED"] = $this->sources[$source_id]["OPAC_SELECTED"] ? 1 : 0;
+		$this->sources[$source_id]["GESTION_SELECTED"] = $this->sources[$source_id]["GESTION_SELECTED"] ? 1 : 0;
 		if(!is_array($this->sources[$source_id]["TYPE_ENRICHMENT_ALLOWED"])){
 			$this->sources[$source_id]["TYPE_ENRICHMENT_ALLOWED"]=array();
 		}
@@ -173,8 +207,8 @@ class connector {
 		if(is_array($this->sources[$source_id]["PARAMETERS"])){
 			$this->sources[$source_id]["PARAMETERS"]=serialize($this->sources[$source_id]["PARAMETERS"]);
 		}
-		$requete="replace into connectors_sources (source_id,id_connector,parameters,comment,name,repository,retry,ttl,timeout,opac_allowed,upload_doc_num,rep_upload,enrichment,opac_affiliate_search,opac_selected,type_enrichment_allowed,ico_notice) 
-			values('".$source_id."','".addslashes($this->get_id())."','".addslashes($this->sources[$source_id]["PARAMETERS"])."','".addslashes($this->sources[$source_id]["COMMENT"])."','".addslashes($this->sources[$source_id]["NAME"])."','".addslashes($this->sources[$source_id]["REPOSITORY"])."','".addslashes($this->sources[$source_id]["RETRY"])."','".addslashes($this->sources[$source_id]["TTL"])."','".addslashes($this->sources[$source_id]["TIMEOUT"])."','".addslashes($this->sources[$source_id]["OPAC_ALLOWED"])."','".addslashes($this->sources[$source_id]["UPLOAD_DOC_NUM"])."','".addslashes($this->sources[$source_id]["REP_UPLOAD"])."','".addslashes($this->sources[$source_id]["ENRICHMENT"])."','".addslashes($this->sources[$source_id]["OPAC_AFFILIATE_SEARCH"])."','".addslashes($this->sources[$source_id]["OPAC_SELECTED"])."','".addslashes($this->sources[$source_id]["TYPE_ENRICHMENT_ALLOWED"])."','".addslashes($this->sources[$source_id]["ICO_NOTICE"])."')";
+		$requete="replace into connectors_sources (source_id,id_connector,parameters,comment,name,repository,retry,ttl,timeout,opac_allowed,upload_doc_num,rep_upload,enrichment,opac_affiliate_search,opac_selected,gestion_selected,type_enrichment_allowed,ico_notice) 
+			values('".$source_id."','".addslashes($this->get_id())."','".addslashes($this->sources[$source_id]["PARAMETERS"])."','".addslashes($this->sources[$source_id]["COMMENT"])."','".addslashes($this->sources[$source_id]["NAME"])."','".addslashes($this->sources[$source_id]["REPOSITORY"])."','".addslashes($this->sources[$source_id]["RETRY"])."','".addslashes($this->sources[$source_id]["TTL"])."','".addslashes($this->sources[$source_id]["TIMEOUT"])."','".addslashes($this->sources[$source_id]["OPAC_ALLOWED"])."','".addslashes($this->sources[$source_id]["UPLOAD_DOC_NUM"])."','".addslashes($this->sources[$source_id]["REP_UPLOAD"])."','".addslashes($this->sources[$source_id]["ENRICHMENT"])."','".addslashes($this->sources[$source_id]["OPAC_AFFILIATE_SEARCH"])."','".addslashes($this->sources[$source_id]["OPAC_SELECTED"])."','".addslashes($this->sources[$source_id]["GESTION_SELECTED"])."','".addslashes($this->sources[$source_id]["TYPE_ENRICHMENT_ALLOWED"])."','".addslashes($this->sources[$source_id]["ICO_NOTICE"])."')";
 		$result = pmb_mysql_query($requete);
 		if (!$source_id) $source_id = pmb_mysql_insert_id(); 
 
@@ -222,7 +256,7 @@ class connector {
 	}
 	
 	//Suppression d'une source
-	function del_source($source_id) {
+	public function del_source($source_id) {
 		//suppression des documents numériques intégrés en tant que fichiers
 		$this->del_explnums($source_id);
 		$table_entrepot_sql = "DROP TABLE `entrepot_source_$source_id`;";
@@ -233,7 +267,7 @@ class connector {
 	}
 	
 	//Récupération  des propriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
+	public function fetch_default_global_values() {
 		$this->timeout=5;
 		$this->repository=2;
 		$this->retry=3;
@@ -242,7 +276,7 @@ class connector {
 	}
 	
 	//Récupération  des propriétés globales du connecteur (timeout, retry, repository, parameters)
-	function fetch_global_properties() {
+	public function fetch_global_properties() {
 		$requete="select * from connectors where connector_id='".addslashes($this->get_id())."'";
 		$resultat=pmb_mysql_query($requete);
 		if (pmb_mysql_num_rows($resultat)) {
@@ -258,21 +292,18 @@ class connector {
 	}
 	
 	//Formulaire des propriétés générales
-	function get_property_form() {
+	public function get_property_form() {
 		$this->fetch_global_properties();
-		//Affichage du formulaire en fonction de $this->parameters
-		if ($this->parameters) {
-		} else {
-			//Affichage du formulaire vide
-		}	
+		return "";	
 	}
 	
-	function make_serialized_properties() {
+	public function make_serialized_properties() {
 		//Mise en forme des paramètres à partir de variables globales (mettre le résultat dans $this->parameters)
+		$this->parameters="";
 	}
 	
 	//Sauvegarde des propriétés générales
-	function save_property_form() {
+	public function save_property_form() {
 		$this->make_serialized_properties();
 		$requete="replace into connectors (connector_id,parameters, retry, timeout, ttl, repository) values('".addslashes($this->get_id())."',
 		'".addslashes($this->parameters)."','".$this->retry."','".$this->timeout."','".$this->ttl."','".$this->repository."')";
@@ -280,7 +311,7 @@ class connector {
 	}
 	
 	//Supression des notices dans l'entrepot !
-	function del_notices($source_id) {
+	public function del_notices($source_id) {
 		$requete="select * from source_sync where source_id=".$source_id;
 		$resultat=pmb_mysql_query($requete);
 		if (pmb_mysql_num_rows($resultat)) {
@@ -291,12 +322,15 @@ class connector {
 		$this->del_explnums($source_id);
 		
 		pmb_mysql_query("TRUNCATE TABLE entrepot_source_".$source_id);
+		
+		pmb_mysql_query("DELETE FROM external_count WHERE source_id = '".$source_id."'");
+		
 		pmb_mysql_query("delete from source_sync where source_id=".$source_id);
 		return true;
 	}
 	
 	//Suppression des documents numériques intégrés en tant que fichiers
-	function del_explnums($source_id) {
+	public function del_explnums($source_id) {
 		global $dbh;
 		$q = "select value as file_name from entrepot_source_$source_id where ufield='897' and usubfield='a' and value like '/%' ";
 		$r = pmb_mysql_query($q,$dbh);
@@ -307,52 +341,57 @@ class connector {
 		}
 	}
 	
-	//Annulation de la mise a jour (faux = synchro conservee dans la table, vrai = synchro supprimee dans la table)
-	function cancel_maj($source_id) {
+	//Annulation de la mise à jour (faux = synchro conservée dans la table, vrai = synchro supprimée dans la table)
+	public function cancel_maj($source_id) {
 		return false;
 	}
 	
-	//Annulation de la mise a jour (faux = synchro conservee dans la table, vrai = synchro supprimee dans la table)
-	function break_maj($source_id) {
+	//Annulation de la mise à jour (faux = synchro conservée dans la table, vrai = synchro supprimée dans la table)
+	public function break_maj($source_id) {
 		return false;
+	}
+	
+	public function sync_custom_page($source_id) {
+		return '';
 	}
 	
 	//Formulaire complementaire facultatif pour la synchronisation
-	function form_pour_maj_entrepot($source_id) {
-		return false;
-	}
-
-	//Nécessaire pour passer les valeurs obtenues dans form_pour_maj_entrepot au javascript asynchrone
-	function get_maj_environnement($source_id) {
+	public function form_pour_maj_entrepot($source_id) {
 		return false;
 	}
 	
-	//M.A.J. Entrepot lie a une source
-	function maj_entrepot($source_id,$callback_progress="",$recover=false,$recover_env="") {
+	//Nécessaire pour passer les valeurs obtenues dans form_pour_maj_entrepot au javascript asynchrone
+	public function get_maj_environnement($source_id) {
+		return array();
+	}
+	
+	//M.A.J. Entrepôt lié à une source
+	public function maj_entrepot($source_id,$callback_progress="",$recover=false,$recover_env="") {
+		return 0;
 	}
 	
 	//Export d'une notice en UNIMARC
-	function to_unimarc($notice) {
+	public function to_unimarc($notice) {
 	}
 	
 	//Export d'une notice en Dublin Core (c'est le minimum)
-	function to_dublin_core($notice) {
+	public function to_dublin_core($notice) {
 	}
 	
 	//Fonction de recherche
-	function search($source_id,$query,$search_id) {
+	public function search($source_id,$query,$search_id) {
 	}
 	
-	//Recherche d'une page de resultat
-	function get_page_result($search_id,$page, $n_per_page) {
+	//Recherche d'une page de résultat
+	public function get_page_result($search_id,$page, $n_per_page) {
 	}
 	
 	//Nombre de résultats d'une recherche
-	function get_n_results($search_id) {
+	public function get_n_results($search_id) {
 	}
 	
-	//Recuperation de la valeur d'une autorite
-	function get_values_from_id($id,$ufield) {
+	//Récupération de la valeur d'une autorité
+	public function get_values_from_id($id,$ufield) {
 		$r="";
 		switch ($ufield) {
 			//Categorie
@@ -407,7 +446,7 @@ class connector {
 		return $r;
 	}
 	
-	function get_unimarc_search_fields() {
+	public function get_unimarc_search_fields() {
     	$fields=array();
     	//Calcul de la liste des champs disponibles
 		$sc=new search(false,"search_fields_unimarc");
@@ -444,20 +483,16 @@ class connector {
 		return $fields;
     }
     
-    function enrichment_is_allow(){
+    public function enrichment_is_allow(){
 		return false;
 	}
 	
-	function rec_records_from_xml_array($records=array(),$source_id=0) {
-
+	public function rec_records_from_xml_array($records=array(),$source_id=0) {
 		global $dbh;
 		
 		if (is_array($records) && count($records) && $source_id*1) {
-			
 			$this->source_id=$source_id;
-			
 			foreach($records as $k=>$rec) {
-				
 				//Initialisation
 				$ref='';
 				$ufield='';
@@ -477,22 +512,14 @@ class connector {
 				$n_header['dt']=$rec['dt']['value'];
 				
 				//suppression des anciennes notices
-				$q="delete from external_count where recid='".addslashes($this->get_id().' '.$this->source_id.' '.$ref)."' and source_id='".$this->source_id."' ";
-				pmb_mysql_query($q,$dbh);
-				$q="delete from entrepot_source_".$this->source_id." where ref='".addslashes($ref)."'";
-				pmb_mysql_query($q,$dbh);
+				$this->delete_from_external_count($this->source_id, $ref);
+				$this->delete_from_entrepot($this->source_id, $ref);
 				
 				//Récupération d'un ID
-				$q="insert into external_count (recid, source_id) values('".addslashes($this->get_id()." ".$this->source_id." ".$ref)."', ".$this->source_id.")";
-				$rid=pmb_mysql_query($q,$dbh);
-				if ($rid) $recid=pmb_mysql_insert_id();
-				
+				$recid = $this->insert_into_external_count($this->source_id, $ref);
 				
 				foreach($n_header as $hc=>$code) {
-					$q="insert into entrepot_source_".$this->source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid) values(
-					'".addslashes($this->get_id())."',".$this->source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
-					'".$hc."','',-1,0,'".addslashes($code)."','',$recid)";
-					pmb_mysql_query($q,$dbh);
+					$this->insert_header_into_entrepot($this->source_id, $ref, $date_import, $hc, $code, $recid);
 				}
 			
 				for ($i=0; $i<count($rec['f']); $i++) {
@@ -523,14 +550,333 @@ class connector {
 		$requete="delete from external_count where recid='".addslashes($this->get_id()." ".$source_id." ".$ref)."' and source_id = ".$source_id;
 		pmb_mysql_query($requete, $dbh);
 	}
+	
+	protected function is_into_external_count($source_id, $ref) {
+    	$rid = 0;
+    	$query = "select rid from external_count where source_id=".$source_id." and recid='".addslashes($this->get_id()." ".$source_id." ".$ref)."' limit 1";
+    	$result = pmb_mysql_query($query);
+    	if($result && pmb_mysql_num_rows($result)) {
+    		$rid = pmb_mysql_result($result, 0, 0);
+    	}
+    	return $rid;
+    }
+	
+	protected function insert_into_external_count($source_id, $ref) {
+		$recid = 0;
+		$query = "insert into external_count (recid, source_id) values('".addslashes($this->get_id()." ".$source_id." ".$ref)."', ".$source_id.")";
+		$rid=pmb_mysql_query($query);
+		if ($rid) $recid=pmb_mysql_insert_id();
+		return $recid;
+	}
+	
+	protected function insert_header_into_entrepot($source_id, $ref, $date_import, $ufield, $value, $recid, $search_id = '') {
+		$query = "insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid, search_id) values(
+			'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
+			'".$ufield."','',-1,0,'".addslashes($value)."','',$recid, '$search_id')";
+		pmb_mysql_query($query);
+	}
+	
+	protected function insert_content_into_entrepot($source_id, $ref, $date_import, $ufield, $usubfield, $field_order, $subfield_order, $value, $recid, $search_id = '') {
+		$query = "insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid, search_id) values(
+			'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
+			'".addslashes($ufield)."','".addslashes($usubfield)."',".$field_order.",".$subfield_order.",'".addslashes($value)."',
+			' ".addslashes(strip_empty_words($value))." ',$recid, '$search_id')";
+		pmb_mysql_query($query);
+	}
+	
+	protected function insert_origine_into_entrepot($source_id, $ref, $date_import, $recid, $search_id = '') {
+		$query = "select count(*) from entrepot_source_".$source_id." where ref = '".$ref."' and ufield='801' and usubfield='b'";
+		$result = pmb_mysql_query($query);
+		if($result && !pmb_mysql_result($result, 0, 0)) {
+			$this->insert_content_into_entrepot($source_id, $ref, $date_import, '801', 'a', 0, 0, 'FR', $recid, $search_id);
+			$this->insert_content_into_entrepot($source_id, $ref, $date_import, '801', 'b', 0, 0, $this->get_sources()[$source_id]["NAME"], $recid, $search_id);
+		}
+	}
+	
+	protected function delete_from_entrepot($source_id, $ref, $search_id = '') {
+		$query = "delete from entrepot_source_".$source_id." where ref='".addslashes($ref)."'";
+		if($search_id) {
+			$query .= " and search_id='".addslashes($search_id)."'";
+		}
+		pmb_mysql_query($query);
+	}
+	
+	protected function has_ref($source_id, $ref, $search_id = '') {
+		$query = "select count(*) from entrepot_source_".$source_id." where ref='".addslashes($ref)."'";
+		if($search_id) {
+			$query .= " and search_id='".addslashes($search_id)."'";
+		}
+		$result = pmb_mysql_query($query);
+		if($result) {
+			return pmb_mysql_result($result, 0, 0);
+		}
+		return 0;
+	}
+	
+	public function apply_xsl_to_xml($xml, $xsl) {
+		global $charset;
+		$xh = xslt_create();
+		xslt_set_encoding($xh, $charset);
+		$arguments = array(
+				'/_xml' => $xml,
+				'/_xsl' => $xsl
+		);
+		$result = xslt_process($xh, 'arg:/_xml', 'arg:/_xsl', NULL, $arguments);
+		xslt_free($xh);
+		return $result;
+	}
+	
+	/**
+	 * ISBD d'une personne physique
+	 */
+	protected function get_isbd_physical_author($unimarcKey, $field_order, $subfield_order) {
+		$name = static::$ufields[$unimarcKey][$field_order][$subfield_order];
+		if(isset(static::$ufields[substr($unimarcKey, 0, 3).'$b'][$field_order][$subfield_order])) {
+			$rejete = static::$ufields[substr($unimarcKey, 0, 3).'$b'][$field_order][$subfield_order];
+		} else {
+			$rejete = '';
+		}
+		if(isset(static::$ufields[substr($unimarcKey, 0, 3).'$f'][$field_order][$subfield_order])) {
+			$date = static::$ufields[substr($unimarcKey, 0, 3).'$f'][$field_order][$subfield_order];
+		} else {
+			$date = '';
+		}
+		$isbd = '';
+		if($rejete) {
+			$isbd = $name.", ".$rejete.($date ? " (".$date.")" : "");
+		} else {
+			$isbd = $name.($date ? " (".$date.")" : "");
+		}
+		return $isbd;
+	}
+	
+	/**
+	 * ISBD d'une collectivité / d'un congrès
+	 */
+	protected function get_isbd_coll_congres_author($unimarcKey, $field_order, $subfield_order) {
+		$name = static::$ufields[$unimarcKey][$field_order][$subfield_order];
+		$subdivision = static::$ufields[substr($unimarcKey, 0, 3).'$b'][$field_order][$subfield_order];
+		$comment = static::$ufields[substr($unimarcKey, 0, 3).'$c'][$field_order][$subfield_order];
+		$numero = static::$ufields[substr($unimarcKey, 0, 3).'$d'][$field_order][$subfield_order];
+		$date = static::$ufields[substr($unimarcKey, 0, 3).'$f'][$field_order][$subfield_order];
+		$rejete = static::$ufields[substr($unimarcKey, 0, 3).'$g'][$field_order][$subfield_order];
+		$lieu = static::$ufields[substr($unimarcKey, 0, 3).'$k'][$field_order][$subfield_order];
+		$ville = static::$ufields[substr($unimarcKey, 0, 3).'$l'][$field_order][$subfield_order];
+		$pays = static::$ufields[substr($unimarcKey, 0, 3).'$m'][$field_order][$subfield_order];
+			
+		$isbd = $name;
+		if ($rejete) {
+			$isbd .= ", " .$rejete;
+		}
+		$liste_field = $liste_lieu = array();
+		if ($subdivision) {
+			$liste_field[] = $subdivision;
+		}
+		if ($numero) {
+			$liste_field[] = $numero;
+		}
+		if ($date) {
+			$liste_field[] = $date;
+		}
+		if ($lieu) {
+			$liste_lieu[] = $lieu;
+		}
+		if ($ville) {
+			$liste_lieu[] = $ville;
+		}
+		if ($pays) {
+			$liste_lieu[] = $pays;
+		}
+		if (count($liste_lieu))
+			$liste_field[] = implode(", ", $liste_lieu);
+		if (count($liste_field)) {
+			$liste_field = implode("; ", $liste_field);
+			$isbd .= ' (' .$liste_field .')';
+		}
+		return $isbd;
+	}
+	
+	public function get_external_isbd($class_name, $type = '') {
+		$external_isbd = array();
+		foreach (static::$ufields as $unimarcKey=>$ufield) {
+			switch ($class_name){
+				case 'author':
+					foreach ($ufield as $field_order=>$subfield) {
+						foreach ($subfield as $subfield_order=>$name) {
+							switch ($type) {
+								case '0':
+									if ($unimarcKey == '700$a') {
+										$external_isbd[$field_order][$subfield_order] = $this->get_isbd_physical_author($unimarcKey, $field_order, $subfield_order);
+									} elseif($unimarcKey == '710$a') {
+										$external_isbd[$field_order][$subfield_order] = $this->get_isbd_coll_congres_author($unimarcKey, $field_order, $subfield_order);
+									}
+									break;
+								case '1':
+									if ($unimarcKey == '701$a') {
+										$external_isbd[$field_order][$subfield_order] = $this->get_isbd_physical_author($unimarcKey, $field_order, $subfield_order);
+									} elseif($unimarcKey == '711$a') {
+										$external_isbd[$field_order][$subfield_order] = $this->get_isbd_coll_congres_author($unimarcKey, $field_order, $subfield_order);
+									}
+									break;
+								case '2':
+									if ($unimarcKey == '702$a') {
+										$external_isbd[$field_order][$subfield_order] = $this->get_isbd_physical_author($unimarcKey, $field_order, $subfield_order);
+									} elseif($unimarcKey == '712$a') {
+										$external_isbd[$field_order][$subfield_order] = $this->get_isbd_coll_congres_author($unimarcKey, $field_order, $subfield_order);
+									}
+									break;
+							}
+						}
+					}
+					break;
+				case 'editeur':
+					if ($unimarcKey == '210$c') {
+						foreach ($ufield as $field_order=>$subfield) {
+							foreach ($subfield as $subfield_order=>$name) {
+								if(isset(static::$ufields['210$b'][$field_order][$subfield_order])) {
+									$address = static::$ufields['210$b'][$field_order][$subfield_order];
+								} else {
+									$address = '';
+								}
+								if(isset(static::$ufields['210$a'][$field_order][$subfield_order])) {
+									$city = static::$ufields['210$a'][$field_order][$subfield_order];
+								} else {
+									$city = '';
+								}
+								// Determine le lieu de publication
+								$l = '';
+								if ($address) $l = $address;
+								if ($city) $l = ($l=='') ? $city : $city.' ('.$l.')';
+								if ($l=='') $l = '[S.l.]';
+								$external_isbd[$field_order][$subfield_order] = $l.'&nbsp;: '.$name;
+							}
+						}
+					}
+					break;
+				case 'indexint':
+					if ($unimarcKey == '676$a' || $unimarcKey == '686$a') {
+						foreach ($ufield as $field_order=>$subfield) {
+							foreach ($subfield as $subfield_order=>$name) {
+								$comment = static::$ufields[substr($unimarcKey, 0, 3).'$l'][$field_order][$subfield_order];
+								if($comment) {
+									$external_isbd[$field_order][$subfield_order] = $name." (".$comment.")";
+								} else {
+									$external_isbd[$field_order][$subfield_order] = $name;
+								}
+							}
+						}
+					}
+					break;
+				case 'collection':
+					if ($unimarcKey == '410$t' || $unimarcKey == '225$a') {
+						foreach ($ufield as $field_order=>$subfield) {
+							foreach ($subfield as $subfield_order=>$name) {
+								if(static::$ufields['410$x'][$field_order][$subfield_order]) {
+									$issn = static::$ufields['410$x'][$field_order][$subfield_order];
+								} else {
+									$issn = static::$ufields['225$x'][$field_order][$subfield_order];
+								}
+								$external_isbd[$field_order][$subfield_order] = $name.($issn ? ', ISSN '.$issn : '');
+							}
+						}
+						
+					}
+					break;
+				case 'subcollection':
+					if ($unimarcKey == '411$t' || $unimarcKey == '225$i') {
+						foreach ($ufield as $field_order=>$subfield) {
+							foreach ($subfield as $subfield_order=>$name) {
+								if(static::$ufields['411$x'][$field_order][$subfield_order]) {
+									$issn = static::$ufields['411$x'][$field_order][$subfield_order];
+								} else {
+									$issn = static::$ufields['225$i'][$field_order][$subfield_order];
+								}
+								$external_isbd[$field_order][$subfield_order] = $name.($issn ? ', ISSN '.$issn : '');
+							}
+						}
+					}
+					break;
+				case 'serie':
+					if ($unimarcKey == '461$t' || $unimarcKey == '200$i') {
+						foreach ($ufield as $field_order=>$subfield) {
+							foreach ($subfield as $subfield_order=>$name) {
+								$external_isbd[$field_order][$subfield_order] = $name;
+							}
+						}
+					}
+					break;
+				case 'categories':
+					
+					break;
+				case 'titre_uniforme':
+					if ($unimarcKey == '500$a') {
+						foreach ($ufield as $field_order=>$subfield) {
+							foreach ($subfield as $subfield_order=>$name) {
+								$external_isbd[$field_order][$subfield_order] = $name;
+							}
+						}
+					}
+					break;
+			}
+		}
+		return $external_isbd;
+	}
+	
+	public function rec_isbd_record($source_id, $ref, $recid) {
+		global $include_path;
+		$type = 'notices_externes';
+		if(!isset(self::$xml_indexation[$type])) {
+			$file = $include_path."/indexation/".$type."/champs_base_subst.xml";
+			if(!file_exists($file)){
+				$file = $include_path."/indexation/".$type."/champs_base.xml";
+			}
+			$fp=fopen($file,"r");
+			if ($fp) {
+				$xml=fread($fp,filesize($file));
+			}
+			fclose($fp);
+			self::$xml_indexation[$type] = _parser_text_no_function_($xml,"INDEXATION",$file);
+			
+			for ($i=0;$i<count(self::$xml_indexation[$type]['FIELD']);$i++) { //pour chacun des champs decrits
+				if(isset(self::$xml_indexation[$type]['FIELD'][$i]['ISBD']) && self::$xml_indexation[$type]['FIELD'][$i]['ISBD']){ // isbd autorités
+					self::$isbd_ask_list[self::$xml_indexation[$type]['FIELD'][$i]['ID']]= array(
+							'champ' => self::$xml_indexation[$type]['FIELD'][$i]['ID'],
+							'ss_champ' => self::$xml_indexation[$type]['FIELD'][$i]['ISBD'][0]['ID'],
+							'pond' => (isset(self::$xml_indexation[$type]['FIELD'][$i]['ISBD'][0]['POND']) ? self::$xml_indexation[$type]['FIELD'][$i]['ISBD'][0]['POND'] : ''),
+							'class_name' => self::$xml_indexation[$type]['FIELD'][$i]['ISBD'][0]['CLASS_NAME'],
+							'type' => (isset(self::$xml_indexation[$type]['FIELD'][$i]['ISBD'][0]['TYPE']) ? self::$xml_indexation[$type]['FIELD'][$i]['ISBD'][0]['TYPE'] : '')
+					);
+				}	
+			}
+		}
+		$query = "select * from entrepot_source_".$source_id." where ref='".addslashes($ref)."'";
+		$result = pmb_mysql_query($query);
+		static::$ufields = array();
+		if($result) {
+			while($row = pmb_mysql_fetch_object($result)) {
+				static::$ufields[$row->ufield.($row->usubfield ? "$".$row->usubfield : "")][$row->field_order][$row->subfield_order] = $row->value;
+			}
+		}
+		foreach(self::$isbd_ask_list as $k=>$infos){
+			$isbd = $this->get_external_isbd($infos['class_name'], $infos['type']);
+			if(count($isbd)) {
+				foreach ($isbd as $field_order=>$authority) {
+					foreach ($authority as $subfield_order=>$value) {
+						$this->insert_content_into_entrepot($source_id, $ref, date("Y-m-d H:i:s",time()), substr($infos['class_name'],0,3), 'i', $field_order, $subfield_order, $value, $recid);
+					}
+				}
+			}
+		}
+	}
 } 
 
 class connecteurs {
 	
-	var $catalog=array();			//Liste des connecteurs declares
+	public $catalog=array();			//Liste des connecteurs déclarés
+	private static $instance;			//Instance de la classe
 	
 	//Constructeur
-	function connecteurs() {
+	public function __construct() {
 		global $base_path;
 		if (file_exists($base_path."/admin/connecteurs/in/catalog_subst.xml")) 
 			$catalog=$base_path."/admin/connecteurs/in/catalog_subst.xml";
@@ -539,7 +885,7 @@ class connecteurs {
 		$this->parse_catalog($catalog);
 	}
 	
-	static function get_class_name($source_id) {
+	public static function get_class_name($source_id) {
 		$connector_id="";
 		$requete="select id_connector from connectors_sources where source_id=".$source_id;
 		$resultat=pmb_mysql_query($requete);
@@ -549,11 +895,11 @@ class connecteurs {
 		return $connector_id;
 	}
 	
-	function parse_catalog($catalog) {
+	public function parse_catalog($catalog) {
 		global $base_path,$lang;
 		//Construction du tableau des connecteurs disponbibles
 		$xml=file_get_contents($catalog);
-		$param=_parser_text_no_function_($xml,"CATALOG");
+		$param=_parser_text_no_function_($xml,"CATALOG",$catalog);
 		for ($i=0; $i<count($param["ITEM"]); $i++) {
 			$item=$param["ITEM"][$i];
 			$t=array();
@@ -568,10 +914,15 @@ class connecteurs {
 			$t["STATUS"]=$manifest["STATUS"][0]["value"];
 			$t["URL"]=$manifest["URL"][0]["value"];
 			$t["REPOSITORY"]=$manifest["REPOSITORY"][0]["value"];
-			$t["ENRICHMENT"]=$manifest["ENRICHMENT"][0]["value"];
+			if(isset($manifest["ENRICHMENT"][0]["value"])) {
+				$t["ENRICHMENT"]=$manifest["ENRICHMENT"][0]["value"];
+			} else {
+				$t["ENRICHMENT"]='';
+			}
 			//Commentaires
 			$comment=array();
 			for ($j=0; $j<count($manifest["COMMENT"]); $j++) {
+				if(!isset($manifest["COMMENT"][$j]["lang"])) $manifest["COMMENT"][$j]["lang"] = '';
 				if ($manifest["COMMENT"][$j]["lang"]==$lang) { 
 					$comment=$manifest["COMMENT"][$j]["value"];
 					break;
@@ -583,7 +934,7 @@ class connecteurs {
 			$t["COMMENT"]=$comment;
 			
 			//enrichissement
-			if($manifest["ENRICHMENTS"]){
+			if(isset($manifest["ENRICHMENTS"])){
 				$t["ENRICHMENTS"]=array();
 				foreach($manifest["ENRICHMENTS"][0]["TYPE"] as $type){
 					$t["ENRICHMENTS"][$type["NAME"]] = $type["value"];
@@ -594,7 +945,7 @@ class connecteurs {
 		}
 	}	
 	
-	function show_connector_form($id) {
+	public function show_connector_form($id) {
 		global $base_path,$charset,$admin_connecteur_global_params,$lang,$msg;
 		//Inclusion de la classe
 		require_once($base_path."/admin/connecteurs/in/".$this->catalog[$id]["PATH"]."/".$this->catalog[$id]["NAME"].".class.php");
@@ -624,8 +975,8 @@ class connecteurs {
 		return $connector_form;
 	}
 	
-	function show_source_form($id,$source_id="") {
-		global $base_path,$charset,$admin_connecteur_source_global_params,$lang,$msg, $dbh;
+	public function show_source_form($id,$source_id="") {
+		global $base_path,$charset,$admin_connecteur_source_global_params,$lang,$msg, $dbh, $pmb_docnum_in_database_allow, $deflt_upload_repertoire;
 		
 		//Inclusion de la classe
 		require_once($base_path."/admin/connecteurs/in/".$this->catalog[$id]["PATH"]."/".$this->catalog[$id]["NAME"].".class.php");
@@ -641,9 +992,9 @@ class connecteurs {
 		$connector_form=str_replace("!!source!!",htmlentities($s["NAME"],ENT_QUOTES,$charset),$connector_form);
 		$connector_form=str_replace("!!name!!",htmlentities($s["NAME"],ENT_QUOTES,$charset),$connector_form);
 		$connector_form=str_replace("!!comment!!",htmlentities($s["COMMENT"],ENT_QUOTES,$charset),$connector_form);
-		$connector_form=str_replace("!!ico_notice!!",htmlentities($s["ICO_NOITICE"],ENT_QUOTES,$charset),$connector_form);
+		$connector_form=str_replace("!!ico_notice!!",htmlentities($s["ICO_NOTICE"],ENT_QUOTES,$charset),$connector_form);
 		
-		$xsl_exemplaire_input .= '&nbsp;<input onchange="document.source_form.action_xsl_expl.selectedIndex=1" type="file" name="xsl_exemplaire">';
+		$xsl_exemplaire_input = '&nbsp;<input onchange="document.source_form.action_xsl_expl.selectedIndex=1" type="file" name="xsl_exemplaire">';
 				
 		$categories_select = '<select MULTIPLE name="source_categories[]">';
 		$categories_select .= '<option value="">'.$msg["source_no_category"].'</option>';
@@ -661,6 +1012,9 @@ class connecteurs {
 		
 		if ($s["OPAC_SELECTED"]) $connector_form=str_replace("!!opac_selected_checked!!","checked",$connector_form);
 		else $connector_form=str_replace("!!opac_selected_checked!!","",$connector_form);
+		
+		if ($s["GESTION_SELECTED"]) $connector_form=str_replace("!!gestion_selected_checked!!","checked",$connector_form);
+		else $connector_form=str_replace("!!gestion_selected_checked!!","",$connector_form);
 		
 		if ($s["OPAC_AFFILIATE_SEARCH"]) $connector_form=str_replace("!!opac_affiliate_search!!","checked",$connector_form);
 		else $connector_form=str_replace("!!opac_affiliate_search!!","",$connector_form);
@@ -759,10 +1113,19 @@ class connecteurs {
 		$connector_form=str_replace("!!ttl!!",$s["TTL"],$connector_form);
 		$connector_form=str_replace("!!retry!!",$s["RETRY"],$connector_form);
 		
-		//rep upload    
+		//rep upload : on tient compte du paramétrage
+		if (!$source_id) {
+			$s_rep_upload = $deflt_upload_repertoire;
+		} else {
+			$s_rep_upload = $s['REP_UPLOAD'];
+		}
+		
 		$rep_upload_form="
-				<select name='rep_upload'>
+				<select name='rep_upload'>";
+		if ($pmb_docnum_in_database_allow) {
+			$rep_upload_form.="
 					<option value=''>".$msg["connecteurs_no_upload_rep"]."</option>";
+		}
 		//on récup la liste des répertoires d'upload...
 		$upload_folders = array();
 		$res = pmb_mysql_query("select repertoire_id from upload_repertoire");
@@ -770,7 +1133,7 @@ class connecteurs {
 			while ($r = pmb_mysql_fetch_object($res)){
 				$rep = new upload_folder($r->repertoire_id);
 				$rep_upload_form.="
-					<option value='".$rep->repertoire_id."' ".($s['REP_UPLOAD']==$rep->repertoire_id ? "selected" : "").">".$rep->repertoire_nom."</option>";
+					<option value='".$rep->repertoire_id."' ".($s_rep_upload==$rep->repertoire_id ? "selected" : "").">".$rep->repertoire_nom."</option>";
 			}
 		}			
 		$rep_upload_form.="
@@ -781,11 +1144,17 @@ class connecteurs {
 		if (!$source_id) {
 			$bt_suppr="";
 		} else {
-			$bt_suppr="<input type='button' class='bouton' value='".$msg["63"]."' onClick='this.form.act.value=\"delete_source\"; this.form.submit();'/>";
+			$bt_suppr="<input type='button' class='bouton' value='".$msg["63"]."' onClick='if (confirm(\"".$msg["connecteurs_delete_source_confirm"]."\")) { this.form.act.value=\"delete_source\"; this.form.submit(); }'/>";
 		}
 		$connector_form=str_replace("!!bt_supprimer!!",$bt_suppr,$connector_form);
 		return $connector_form;
 	}
-
+	
+	public static function get_instance() {
+		if(!isset(static::$instance)) {
+			static::$instance = new connecteurs();
+		}
+		return static::$instance;
+	}
 }
 ?>

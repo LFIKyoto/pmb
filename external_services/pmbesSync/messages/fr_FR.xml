@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: fr_FR.xml,v 1.2 2012-08-16 15:21:08 arenou Exp $ -->
+$Id: fr_FR.xml,v 1.5 2018-09-20 13:14:23 dgoron Exp $ -->
 
 <!DOCTYPE XMLlist SYSTEM "../../../includes/XMLlist.dtd" >
 <XMLlist>
@@ -31,5 +31,17 @@ doSync
   <entry code="doSync_callback_command">Fonction de callback au traitement de la commande (Facultatif)</entry>
   <entry code="doSync_output_description"></entry>
   <entry code="doSync_result">Retourne le rapport de la synchronisation</entry> 
-    
+  <entry code="doSync_auto_delete">Suppression automatique des notices supprimées du serveur</entry> 
+  <entry code="doSync_not_in_notices_externes">Ne pas inscrire les notices importées dans la table notices_externes</entry> 
+  <entry code="doSync_date_start">Date de début (Facultatif)</entry>
+  <entry code="doSync_date_end">Date de fin (Facultatif)</entry>
+  <!-- 
+emptySource
+ -->  
+  <entry code="emptySource_description">Vide l'entrepôt</entry>
+  <entry code="emptySource_input_description"></entry>
+  <entry code="emptySource_id_connector">Identifiant du connecteur de la source</entry>
+  <entry code="emptySource_id_source">Identifiant de la source de l'entrepôt</entry>
+  <entry code="emptySource_output_description"></entry>
+  <entry code="emptySource_result"></entry>
 </XMLlist>

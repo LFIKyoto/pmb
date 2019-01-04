@@ -1,4 +1,4 @@
-<h1>Borrowers management</h1>
+<h2>Borrowers management</h2>
 <p>Use the various codes assigned to each user of the library to create statistics. 
 </p>
 

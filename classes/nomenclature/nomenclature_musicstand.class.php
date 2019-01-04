@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // Â© 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_musicstand.class.php,v 1.13 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: nomenclature_musicstand.class.php,v 1.14 2016-02-15 14:09:40 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -75,6 +75,13 @@ class nomenclature_musicstand {
 	protected $used_by_workshops;
 	
 	/**
+	 * Ordre du musicstand
+	 * @access protected
+	 */
+	protected $order;
+	
+	
+	/**
 	 * Constructueur
 	 *
 	 * @return void
@@ -88,7 +95,7 @@ class nomenclature_musicstand {
 	protected function fetch_datas(){
 		global $dbh;
 		if($this->id){
-			$query = "select nomenclature_musicstands.musicstand_name, nomenclature_musicstands.musicstand_division, nomenclature_musicstands.musicstand_workshop, nomenclature_instruments.id_instrument, nomenclature_instruments.instrument_code, nomenclature_instruments.instrument_name from nomenclature_musicstands left join nomenclature_instruments on nomenclature_musicstands.id_musicstand = nomenclature_instruments.instrument_musicstand_num and instrument_standard = 1 where nomenclature_musicstands.id_musicstand = ".$this->id;
+			$query = "select nomenclature_musicstands.musicstand_order, nomenclature_musicstands.musicstand_name, nomenclature_musicstands.musicstand_division, nomenclature_musicstands.musicstand_workshop, nomenclature_instruments.id_instrument, nomenclature_instruments.instrument_code, nomenclature_instruments.instrument_name from nomenclature_musicstands left join nomenclature_instruments on nomenclature_musicstands.id_musicstand = nomenclature_instruments.instrument_musicstand_num and instrument_standard = 1 where nomenclature_musicstands.id_musicstand = ".$this->id;
 			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				while($row = pmb_mysql_fetch_object($result)){
@@ -96,6 +103,7 @@ class nomenclature_musicstand {
 					if($row->id_instrument){
 						$this->set_standard_instrument(new nomenclature_instrument($row->id_instrument,$row->instrument_code,$row->instrument_name));
 					}
+					$this->order = $row->musicstand_order;
 					$this->set_divisable($row->musicstand_division);
 					$this->set_used_by_workshops($row->musicstand_workshop);
 				}
@@ -368,6 +376,11 @@ class nomenclature_musicstand {
 	public function get_abbreviation( ) {
 		return  pmb_preg_replace('/\s+/', '', $this->abbreviation);
 	} // end of member function get_abbreviation
+	
+	
+	public function get_order(){
+		return $this->order;
+	}
 	
 	/**
 	 * Calcule et affecte la nomenclature abrégée à  partir de l'arbre

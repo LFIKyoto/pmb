@@ -2,13 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.51 2015-05-18 08:24:08 jpermanne Exp $
+// $Id: main.inc.php,v 1.58 2018-05-18 13:07:36 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+if(!isset($suppr_id_resa)) $suppr_id_resa = '';
+
+require_once($class_path."/resa.class.php");
 require_once("$include_path/resa.inc.php");
 require_once("$include_path/resa_func.inc.php");
 require_once("$include_path/templates/resa.tpl.php");
+
+
+if(!isset($impression_confirmation)) $impression_confirmation = '';
 
 if ($action=="suppr_resa" && $impression_confirmation) {
 	$action = "imprimer_confirmation" ;
@@ -16,6 +22,11 @@ if ($action=="suppr_resa" && $impression_confirmation) {
 	$bouton_impr_conf = 1 ;
 } 
  
+$msg_a_pointer = "";
+$ancre = "";
+$msg_a_ranger = "";
+$aff_a_ranger = "";
+
 switch($action) {
 	case 'valide_cb':
 		if ($sub == 'encours') {
@@ -38,7 +49,7 @@ switch($action) {
 					$msg_a_pointer .= "</div>" ;
 					break ;
 				}				
-				if (!verif_cb_resa_flag ($form_cb_expl)) {
+				if (!reservation::verif_cb_resa_flag ($form_cb_expl)) {
 					$msg_a_pointer = "<br /><div class='erreur'>";
 					$msg_a_pointer .=  "<strong>$form_cb_expl: ".$msg["resa_statut_non_pretable"]."</strong><br />";
 					$msg_a_pointer .= "</div>" ;
@@ -143,7 +154,7 @@ switch($action) {
 		// récupérer les items
 		for ($i=0 ; $i < sizeof($suppr_id_resa) ; $i++) {
 			// récup éventuelle du cb
-			$cb_recup = recupere_cb ($suppr_id_resa[$i]) ;
+			$cb_recup = reservation::get_cb_from_id($suppr_id_resa[$i]);
 			if($pmb_transferts_actif){
 				
 				// on cloture que si etat_demande =0, le livre est en rayon, pas validé... https://mypmb.sigb.net/issues/3370
@@ -207,7 +218,7 @@ switch($action) {
 							$res = pmb_mysql_query( $rqt );
 							if (pmb_mysql_num_rows($res)){	
 								// Document à traiter au lieu de à ranger, car transfert en cours?			
-								$sql = "UPDATE exemplaires set expl_retloc='".$deflt_docs_location."' where expl_cb='".$cb_recup."' limit 1";						
+								$sql = "UPDATE exemplaires set expl_retloc=expl_location where expl_cb='".$cb_recup."' limit 1";						
 								pmb_mysql_query($sql);
 								$pas_ranger=1;
 								$msg_a_pointer .= "<div class='row'>";
@@ -271,8 +282,8 @@ switch($action) {
 		}
 		$rqt = "delete from resa_ranger where resa_cb='".$form_cb_expl."' ";
 		$res = pmb_mysql_query($rqt, $dbh) ;
-		if (pmb_mysql_affected_rows()) $msg_a_ranger .= $msg[resa_docrange] ;
-			else $msg_a_ranger .= $msg[resa_docrange_non] ;
+		if (pmb_mysql_affected_rows()) $msg_a_ranger .= $msg['resa_docrange'] ;
+			else $msg_a_ranger .= $msg['resa_docrange_non'] ;
 		$msg_a_ranger = str_replace('!!cb!!', $form_cb_expl, $msg_a_ranger );
 		$msg_a_ranger .= "</div>" ;
 		break;
@@ -283,7 +294,7 @@ switch($sub) {
 	case 'docranger':
 		echo window_title($database_window_title.$msg["5"]." : ".$msg["resa_menu"]." ".$msg["resa_menu_liste_docranger"]);
 		print "<h1>$msg[resa_menu] > ".$msg["resa_menu_liste_".$sub]."</h1>" ;
-		get_cb_expl("", $msg[661], $msg[resa_suppr_doc], "./circ.php?categ=listeresa&sub=$sub&action=suppr_cb", 1);
+		get_cb_expl("", $msg[661], $msg['resa_suppr_doc'], "./circ.php?categ=listeresa&sub=$sub&action=suppr_cb");
 		print $msg_a_ranger.$aff_a_ranger ;
 		print "<h3>".$msg['resa_liste_docranger']."</h3>" ;
 		print pmb_bidi(resa_ranger_list ()) ;
@@ -302,7 +313,14 @@ switch($sub) {
 	case 'encours':
 		echo window_title($database_window_title.$msg["5"]." : ".$msg["resa_menu"]." ".$msg["resa_menu_liste_encours"]);
 		print "<h1>$msg[resa_menu] > ".$msg["resa_menu_liste_".$sub]."</h1>" ;
-		get_cb_expl("", $msg[661], $msg[resa_pointage_doc], "./circ.php?categ=listeresa&sub=$sub&action=valide_cb&f_loc=$f_loc", 1);
+		if(!isset($f_loc)) {
+			if ($pmb_lecteurs_localises){
+				$f_loc = $deflt_resas_location;
+			} else {
+				$f_loc = 0;
+			}
+		}
+		get_cb_expl("", $msg[661], $msg['resa_pointage_doc'], "./circ.php?categ=listeresa&sub=$sub&action=valide_cb&f_loc=$f_loc");
 
 		//un message à afficher
 		print $msg_a_pointer ;

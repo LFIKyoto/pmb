@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.class.php,v 1.1 2011-08-02 12:35:59 arenou Exp $
+// $Id: search.class.php,v 1.3 2017-07-12 15:15:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,13 +11,13 @@ require_once($include_path."/rec_history.inc.php");
 //Classe de gestion de la recherche spécial "combine"
 
 class openurl_search {
-	var $id;
-	var $n_ligne;
-	var $params;
-	var $search;
+	public $id;
+	public $n_ligne;
+	public $params;
+	public $search;
 
 	//Constructeur
-    function openurl_search($id,$n_ligne,$params,&$search) {
+    public function __construct($id,$n_ligne,$params,&$search) {
     	$this->id=$id;
     	$this->n_ligne=$n_ligne;
     	$this->params=$params;
@@ -25,7 +25,7 @@ class openurl_search {
     }
     
     //fonction de récupération des opérateurs disponibles pour ce champ spécial (renvoie un tableau d'opérateurs)
-    function get_op() {
+    public function get_op() {
     	$operators = array();
     	if ($_SESSION["nb_queries"]!=0) {
     		$operators["EQ"]="=";
@@ -34,15 +34,16 @@ class openurl_search {
     }
     
     //fonction de récupération de l'affichage de la saisie du critère
-    function get_input_box() {
+    public function get_input_box() {
     	//Récupération de la valeur de saisie
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
+    	
     	//on stocke l'environnement courant
-    	$current_search = search::serialize_search();
+    	$current_search = $this->search->serialize_search();
     	//on le détruit
-    	search::destroy_global_env();
+    	$this->search->destroy_global_env();
     	//et on se met dans le contexte de la requete OpenURL
     	$this->s = new search("search_openurl");
     	$this->s->unserialize_search($valeur[0]);
@@ -51,26 +52,26 @@ class openurl_search {
     	$r.=$this->s->make_human_query();
     	$r.="<span><input type='hidden' name='field_".$this->n_ligne."_s_".$this->id."[]' value='".htmlentities($valeur[0],ENT_QUOTES,$charset)."'/></span>";
     	//et on détruit le contexte d'OpenURL pour revenir en mode normal
- 		search::destroy_global_env();
-    	search::unserialize_search($current_search);   	
+ 		$this->search->destroy_global_env();
+    	$this->search->unserialize_search($current_search);   	
     	return $r;
     }
 
     //fonction de conversion de la saisie en quelque chose de compatible avec l'environnement
-    function transform_input() {
+    public function transform_input() {
     }
     
     //fonction de création de la requête (retourne une table temporaire)
-    function make_search() {
+    public function make_search() {
      	//Récupération de la valeur de saisie
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
-    	   	
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
+    	 
      	//on stocke l'environnement courant
-    	$current_search = search::serialize_search();
+    	$current_search = $this->search->serialize_search();
     	//on le détruit
-    	search::destroy_global_env();
+    	$this->search->destroy_global_env();
     	//et on se met dans le contexte de la requete OpenURL
     	$this->s = new search("search_openurl");
     	$this->s->unserialize_search($valeur[0]);
@@ -78,24 +79,24 @@ class openurl_search {
     	//on cherche...
     	$table_tempo=$this->s->make_search("openurl_".$this->n_ligne,true);  	
     	//et on détruit le contexte d'OpenURL pour revenir en mode normal 	
-    	search::destroy_global_env();
-    	search::unserialize_search($current_search);
+    	$this->search->destroy_global_env();
+    	$this->search->unserialize_search($current_search);
     	
     	return $table_tempo;  	
     }
     
     //fonction de traduction littérale de la requête effectuée (renvoie un tableau des termes saisis)
-    function make_human_query() {
+    public function make_human_query() {
      	//Récupération de la valeur de saisie
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
       	$litteral=array();
     	
       	//on stocke l'environnement courant
-    	$current_search = search::serialize_search();
+    	$current_search = $this->search->serialize_search();
     	//on le détruit
-    	search::destroy_global_env();
+    	$this->search->destroy_global_env();
     	//et on se met dans le contexte de la requete OpenURL
     	$this->s = new search("search_openurl");
     	$this->s->unserialize_search($valeur[0]);
@@ -103,17 +104,17 @@ class openurl_search {
     	//on génère une human_query
     	$litteral[0]=$this->s->make_human_query();
     	//et on détruit le contexte d'OpenURL pour revenir en mode normal
- 		search::destroy_global_env();
-    	search::unserialize_search($current_search);   	
+ 		$this->search->destroy_global_env();
+    	$this->search->unserialize_search($current_search);   	
     	
     	return $litteral;	   	
     }
     
-    function make_unimarc_query() {
+    public function make_unimarc_query() {
     	//Récupération de la valeur de saisie
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
     	
     	if (!$this->is_empty($valeur)) {
     		
@@ -184,26 +185,26 @@ class openurl_search {
 				}
 				//opérateur
     			$op="op_0_".$search[0];
-    			global $$op;
-    			$$op=$op_;
+    			global ${$op};
+    			${$op}=$op_;
     		    			
     			//contenu de la recherche
     			$field="field_0_".$search[0];
     			$field_=array();
     			$field_[0]=$valeur_champ;
-    			global $$field;
-    			$$field=$field_;
+    			global ${$field};
+    			${$field}=$field_;
     	    	    	    	
     	    	//opérateur inter-champ
     			$inter="inter_0_".$search[0];
-    			global $$inter;
-    			$$inter="";
+    			global ${$inter};
+    			${$inter}="";
     			    		
     			//variables auxiliaires
     			$fieldvar_="fieldvar_0_".$search[0];
-    			global $$fieldvar_;
-    			$$fieldvar_="";
-    			$fieldvar=$$fieldvar_;	
+    			global ${$fieldvar_};
+    			${$fieldvar_}="";
+    			$fieldvar=${$fieldvar_};	
 								
 	       		$es=new search("search_simple_fields");	
 	       	break;	
@@ -220,26 +221,26 @@ class openurl_search {
 				
 				//opérateur
     			$op="op_0_".$search[0];
-    			global $$op;
-    			$$op=$op_;
+    			global ${$op};
+    			${$op}=$op_;
     		    			
     			//contenu de la recherche
     			$field="field_0_".$search[0];
     			$field_=array();
     			$field_[0]=$valeur_champ;
-    			global $$field;
-    			$$field=$field_;
+    			global ${$field};
+    			${$field}=$field_;
     	    	
     	    	//opérateur inter-champ
     			$inter="inter_0_".$search[0];
-    			global $$inter;
-    			$$inter="";
+    			global ${$inter};
+    			${$inter}="";
     			    		
     			//variables auxiliaires
     			$fieldvar_="fieldvar_0_".$search[0];
-    			global $$fieldvar_;
-    			$$fieldvar_="";
-    			$fieldvar=$$fieldvar_;
+    			global ${$fieldvar_};
+    			${$fieldvar_}="";
+    			$fieldvar=${$fieldvar_};
     							
 				$es=new search("search_simple_fields");	
 			break;
@@ -268,27 +269,27 @@ class openurl_search {
 				
 				//opérateur
     			$op="op_0_".$search[0];
-    			global $$op;
-    			$$op=$op_;
+    			global ${$op};
+    			${$op}=$op_;
     		    			
     			//contenu de la recherche
     			$field="field_0_".$search[0];
     			$field_=array();
     			$field_[0]=$valeur_champ;
-    			global $$field;
-    			$$field=$field_;
+    			global ${$field};
+    			${$field}=$field_;
     	    	
     	    	//opérateur inter-champ
     			$inter="inter_0_".$search[0];
-    			global $$inter;
-    			$$inter="";
+    			global ${$inter};
+    			${$inter}="";
     			    		
     			//variables auxiliaires
     			$fieldvar_="fieldvar_0_".$search[0];
-    			global $$fieldvar_;
+    			global ${$fieldvar_};
     			//fieldvar attention pour la section
-    			$$fieldvar_="";
-    			$fieldvar=$$fieldvar_;
+    			${$fieldvar_}="";
+    			$fieldvar=${$fieldvar_};
     			
 				$es=new search("search_simple_fields");
 			break;
@@ -305,7 +306,7 @@ class openurl_search {
     }
     
     //fonction de découpage d'une chaine trop longue
-    function cutlongwords($valeur) {
+    public function cutlongwords($valeur) {
     	if (strlen($valeur)>=50) {
     		$pos=strrpos(substr($valeur,0,50)," ");
     		if ($pos) {
@@ -316,7 +317,7 @@ class openurl_search {
     }
     
 	//fonction de vérification du champ saisi ou sélectionné
-    function is_empty($valeur) {
+    public function is_empty($valeur) {
     	if (count($valeur)) {
     		if ($valeur[0]=="-1") return true;
     			else return ($valeur[0] === false);

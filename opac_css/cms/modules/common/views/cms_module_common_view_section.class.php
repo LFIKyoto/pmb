@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_section.class.php,v 1.12 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: cms_module_common_view_section.class.php,v 1.15 2018-08-24 08:44:59 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,7 +13,7 @@ class cms_module_common_view_section extends cms_module_common_view_django{
 		parent::__construct($id);
 		$this->default_template = "<h3>{{title}}</h3>
 <p>{{resume}}</p>
-<img src='{{logo.large}}'/>
+<img src='{{logo.large}}' alt=''/>
 <p>{{content}}</p>
  <h5>Sous-rubriques</h5> 
   <ul>
@@ -137,17 +137,50 @@ class cms_module_common_view_section extends cms_module_common_view_django{
 	protected function add_links($data,$type='section'){
 		global $opac_url_base;
 		$data['link'] = $opac_url_base."?lvl=cmspage&pageid=".$this->parameters['links'][$type]['page']."&".$this->parameters['links'][$type]['var']."=".$data['id'];
-		for ($i=0; $i<count($data['children']) ; $i++){
-			$data['children'][$i] = $this->add_links($data['children'][$i]);
-		}	
-		for ($i=0; $i<count($data['articles']) ; $i++){
-			$data['articles'][$i] = $this->add_links($data['articles'][$i],'article');
+		if(isset($data['parent']['id'])) {
+			$data['parent'] = $this->add_links($data['parent']);
+		}
+		if(isset($data['children'])) {
+			for ($i=0; $i<count($data['children']) ; $i++){
+				$data['children'][$i] = $this->add_links($data['children'][$i]);
+			}
+		}
+		if(isset($data['articles'])) {
+			for ($i=0; $i<count($data['articles']) ; $i++){
+				$data['articles'][$i] = $this->add_links($data['articles'][$i],'article');
+			}
 		}
 		return $data;
 	}
 	
 	public function get_format_data_structure(){
+		$format = array();
 		$datasource = new cms_module_common_datasource_section();
-		return $datasource->get_format_data_structure();
+		$format = $datasource->get_format_data_structure();
+		for ($i=0; $i<count($format) ; $i++){
+			if($format[$i]['var'] == 'parent') {
+				$format[$i]['children'][] = array(
+						'var' => "parent.link",
+						'desc'=> $this->msg['cms_module_common_view_section_link_desc']
+				);
+			}
+			if($format[$i]['var'] == 'children') {
+				$format[$i]['children'][] = array(
+						'var' => "children[i].link",
+						'desc'=> $this->msg['cms_module_common_view_section_link_desc']
+				);
+			}
+			if($format[$i]['var'] == 'articles') {
+				$format[$i]['children'][] = array(
+						'var' => "articles[i].link",
+						'desc'=> $this->msg['cms_module_common_view_article_link_desc']
+				);
+			}
+		}
+		$format[] = array(
+				'var' => "link",
+				'desc'=> $this->msg['cms_module_common_view_section_link_desc']
+		);
+		return $format;
 	}
 }

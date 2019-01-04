@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: categories.inc.php,v 1.35 2015-04-03 11:16:27 jpermanne Exp $
+// $Id: categories.inc.php,v 1.36 2017-01-31 15:41:41 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+if(!isset($opac_show_categ_browser_home_id_thes)) $opac_show_categ_browser_home_id_thes = '';
 // affichage du sommaire général des catégories
 
 require_once ($base_path.'/classes/thesaurus.class.php');
@@ -116,8 +117,8 @@ while ($level0 = pmb_mysql_fetch_object($result)) {
 		$child[] = "<a href='./index.php?lvl=categ_see&id=$id&main=1&id_thes=".$sub_categ->num_thesaurus."'".$result_com['java_com'].">".$link."</a>".$result_com['zoom'];
 		
 	}
-	$categ_array[] = array( categ => $categ,
-							child => $child);						
+	$categ_array[] = array( 'categ' => $categ,
+							'child' => $child);						
 }	
 	
 //affichage des liens vers les autres thésaurus 
@@ -162,7 +163,7 @@ while(list($cle, $valeur) = each($categ_array)) {
 	$toprint_rootcategories = str_replace("!!category_name!!", $valeur['categ'], $toprint_rootcategories);
 	$toprint_subcategories = "";
 	$cpt=0;
-	while(list($key, $sub) = each($valeur[child])) {
+	while(list($key, $sub) = each($valeur['child'])) {
 		$toprint_subcategories .= $tpl_subcategory;
 		$toprint_subcategories = str_replace("!!sub_category!!", $sub, $toprint_subcategories);
 		$cpt++;

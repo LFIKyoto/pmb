@@ -1,3 +1,8 @@
+-- +-------------------------------------------------+
+-- © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+-- +-------------------------------------------------+
+-- $Id: readme.txt,v 1.10 2016-03-30 09:04:52 mbertin Exp $
+
 ------------------------------------------------------------------------------------------------------------------
 
 Description des fichiers
@@ -85,10 +90,12 @@ L'équipe des développeurs.
 
 \_/-\_/-\_/-\_/-\_/-\_/-\_/-\            minimum.sql
 # Contenu de la table abts_periodicites
+# Contenu de la table bannette_tpl
 # Contenu de la table categories
 # Contenu de la table classements
+# Contenu de la table cms_editorial_types
 # Contenu de la table empr_statut
-# Contenu de la table infopages
+# Contenu de la table explnum_statut
 # Contenu de la table lenders
 # Contenu de la table lignes_actes_statuts
 # Contenu de la table noeuds
@@ -99,6 +106,7 @@ L'équipe des développeurs.
 # Contenu de la table pclassement
 # Contenu de la table sauv_sauvegardes
 # Contenu de la table sauv_tables
+# Contenu de la table serialcirc_tpl
 # Contenu de la table suggestions_categ
 # Contenu de la table thesaurus
 # Contenu de la table users
@@ -127,22 +135,26 @@ L'équipe des développeurs.
 # Contenu de la table expl_custom
 # Contenu de la table expl_custom_lists
 # Contenu de la table facettes
+# Contenu de la table infopages
 # Contenu de la table notice_tpl
 # Contenu de la table notice_tplcode
 # Contenu de la table procs
 # Contenu de la table procs_classements
 # Contenu de la table search_perso
 # Contenu de la table statopac_request
-# Création et contenu de la table statopac_vue_1
-# Création et contenu de la table statopac_vue_2
-# Création et contenu de la table statopac_vue_3
-# Création et contenu de la table statopac_vue_4
-# Création et contenu de la table statopac_vue_5
+# Contenu de la table statopac_vue_1
+# Contenu de la table statopac_vue_2
+# Contenu de la table statopac_vue_3
+# Contenu de la table statopac_vue_4
+# Contenu de la table statopac_vue_5
 # Contenu de la table statopac_vues
 # Contenu de la table statopac_vues_col
 
 \_/-\_/-\_/-\_/-\_/-\_/-\_/-\            bibliportail.sql
-# Contenu nécéssaire à la demo du portail
+# Base complète avec un portail pagéo de démo
+
+\_/-\_/-\_/-\_/-\_/-\_/-\_/-\            biblizen.sql
+# Base complète avec un portail zen de démo
 
 \_/-\_/-\_/-\_/-\_/-\_/-\_/-\            data_test.sql
 # Contenu de la table analysis

@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: func_rameau_to_thesaurus.inc.php,v 1.9 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: func_rameau_to_thesaurus.inc.php,v 1.10 2016-09-07 08:35:37 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -139,7 +139,7 @@ return $categ_retour ;
 }
 
 
-function create_categ($num_parent, $libelle, $index) {
+function create_categ_z3950($num_parent, $libelle, $index) {
 	
 	global $thes;
 	$n = new noeuds();

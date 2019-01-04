@@ -2,19 +2,19 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: files_gestion.class.php,v 1.3 2014-08-18 14:03:09 dgoron Exp $
+// $Id: files_gestion.class.php,v 1.7 2018-10-03 10:47:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($include_path."/templates/files_gestion.tpl.php");
 
 class files_gestion {	
-	var $path="";
-	var $url="";
-	var $info=array();
-	var $error="";
+	public $path="";
+	public $url="";
+	public $info=array();
+	public $error="";
 	
-	function files_gestion($path,$url,$create_if_not_exist=1) {
+	public function __construct($path,$url,$create_if_not_exist=1) {
 		global $msg;
 		$this->error="";
 		$this->path=$path;		
@@ -37,7 +37,7 @@ class files_gestion {
 		$this->fetch_data();
 	}
 	
-	function fetch_data() {
+	public function fetch_data() {
 		global $msg;
 		global $PMBuserid;
 		$this->error="";
@@ -53,6 +53,7 @@ class files_gestion {
 				if($object != '.' && $object != '..') {
 					if (filetype($this->path."/".$object) != "dir") {
 						$this->info[$i]['name']=$object;
+						$this->info[$i]['strtolower_name']=strtolower($object);
 						$this->info[$i]['path']=$this->path;
 						$this->info[$i]['type']=filetype($this->path . $object);
 						$i++;
@@ -60,44 +61,53 @@ class files_gestion {
  				}
 			}
 		}
+		if(count($this->info)){
+			usort($this->info, array($this,'triArrayInfo'));
+		}
 	}
 	
-	function get_error() {
+	public function triArrayInfo($a, $b){
+		return $a['strtolower_name'] > $b['strtolower_name'];
+	}
+	
+	public function get_error() {
 		return $this->error;
 	}	
 		
-	function get_count_file() {
+	public function get_count_file() {
 		return count($this->info);
 	}	
 	
-	function upload($MAX_FILESIZE=0x500000) {
+	public function upload($from='bottom', $MAX_FILESIZE=0x500000) {
 		global $msg;
+		
 		$statut=false;
-		if (! is_uploaded_file($_FILES['select_file']['tmp_name'])){
-			$this->error=$msg["admin_files_gestion_error_not_write"].$_FILES['select_file']['name'];
+		$input_name = 'select_file_'.$from;
+		if (! is_uploaded_file($_FILES[$input_name]['tmp_name'])){
+			$this->error=$msg["admin_files_gestion_error_not_write"].$_FILES[$input_name]['name'];
 			return $statut;				
 		}
 		
-		if ($_FILES['select_file']['size'] >= $MAX_FILESIZE){ 
-			$this->error=$msg["admin_files_gestion_error_to_big"].$_FILES['select_file']['name'];
+		if ($_FILES[$input_name]['size'] >= $MAX_FILESIZE){ 
+			$this->error=$msg["admin_files_gestion_error_to_big"].$_FILES[$input_name]['name'];
 			return $statut;
 		}
 		//		"/^\.(jpg|jpeg|gif|png|doc|docx|txt|rtf|pdf|xls|xlsx|ppt|pptx){1}$/i"; 
 		$no_valid_extension="/^\.(php|PHP){1}$/i";
-		if(preg_match($no_valid_extension, strrchr($_FILES['select_file']['name'], '.'))){
-			$this->error=$msg["admin_files_gestion_error_not_valid"].$_FILES['select_file']['name'];
+		if(preg_match($no_valid_extension, strrchr($_FILES[$input_name]['name'], '.'))){
+			$this->error=$msg["admin_files_gestion_error_not_valid"].$_FILES[$input_name]['name'];
 			return $statut;			
 		}
 		// tout semble ok on le déplace au bon endroit
-		$statut=move_uploaded_file($_FILES["select_file"]["tmp_name"],$this->path.$_FILES['select_file']['name']);
-		if($statut==false) $this->error=$msg["admin_files_gestion_error_not_loaded"].$_FILES['select_file']['name'];
+		$statut=move_uploaded_file($_FILES[$input_name]["tmp_name"],$this->path.$_FILES[$input_name]['name']);
+		if($statut==false) $this->error=$msg["admin_files_gestion_error_not_loaded"].$_FILES[$input_name]['name'];
 	
-		chmod($this->path.$_FILES['select_file']['name'], 0777);
+		chmod($this->path.$_FILES[$input_name]['name'], 0777);
 		$this->fetch_data();
 		return $statut;
 	}	
 		
-	function delete($filename) {
+	public function delete($filename) {
 		global $msg;
 		$statut=false;
 		foreach($this->info as $elt){
@@ -116,8 +126,17 @@ class files_gestion {
 		return($statut);
 	}	
 	
-	function get_list($post_url="admin.php?categ=mailtpl&sub=img") {
-		global $files_gestion_list_tpl,$files_gestion_list_line_tpl,$msg;
+	protected function get_file_template($from='bottom') {
+		global $files_gestion_list_add_file;
+		
+		$tpl = $files_gestion_list_add_file;
+		$tpl = str_replace('!!from!!',$from, $tpl);
+		return $tpl;
+	}
+	
+	public function get_list($post_url="admin.php?categ=mailtpl&sub=img") {
+		global $msg,$charset;
+		global $files_gestion_list_tpl,$files_gestion_list_line_tpl;
 		
 		$tpl=$files_gestion_list_tpl;
 		$tpl_list="";
@@ -126,19 +145,26 @@ class files_gestion {
 			$tpl_elt=$files_gestion_list_line_tpl;
 			if($odd_even=='odd')$odd_even="even";
 			else $odd_even="odd";
-			$tpl_elt=str_replace('!!odd_even!!',$odd_even, $tpl_elt);	
+			$tpl_elt=str_replace('!!odd_even!!',$odd_even, $tpl_elt);
 			$tpl_elt=str_replace('!!name!!',$elt['name'], $tpl_elt);
-			$tpl_elt=str_replace('!!path!!',$elt['path'], $tpl_elt);	
+			$tpl_elt=str_replace('!!path!!',$elt['path'], $tpl_elt);
 			$tpl_elt=str_replace('!!type!!',$elt['type'], $tpl_elt);
-			$tpl_elt=str_replace('!!vignette!!',"<img height='15' width='15' src=\"".$this->url.$elt['name']."\" alt=\"\" />", $tpl_elt);	
-			$tpl_list.=$tpl_elt;	
+			$tpl_elt=str_replace('!!vignette!!',"<img height='15' width='15' src=\"".$this->url.urlencode($elt['name'])."\" alt=\"\" onmouseover=\"show_div_img(event,'".$this->url.urlencode($elt['name'])."')\" onmouseout=\"hide_div_img()\" />", $tpl_elt);
+			$tpl_elt=str_replace('!!urlencode_name!!',urlencode($elt['name']), $tpl_elt);
+			$tpl_list.=$tpl_elt;
 		}
 		$tpl=str_replace('!!list!!',$tpl_list, $tpl);
 		$tpl=str_replace('!!post_url!!',$post_url, $tpl);
+		if(count($this->info) > 20) {
+			$tpl=str_replace('!!add_file_top!!',$this->get_file_template('top'), $tpl);
+		} else {
+			$tpl=str_replace('!!add_file_top!!','', $tpl);
+		}
+		$tpl=str_replace('!!add_file_bottom!!',$this->get_file_template('bottom'), $tpl);
 		return $tpl;
 	}	
 	
-	function get_sel($sel_name='select_file',$value_tpl="!!path!!!!name!!",$label_tpl="!!name!!") {
+	public function get_sel($sel_name='select_file',$value_tpl="!!path!!!!name!!",$label_tpl="!!name!!") {
 		global $msg, $pmb_mail_html_format; 
 		$tpl="<select name='$sel_name' id='$sel_name'>";				
 		foreach($this->info as $elt){

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesClean.class.php,v 1.10.2.1 2015-09-30 08:40:31 jpermanne Exp $
+// $Id: pmbesClean.class.php,v 1.29 2018-10-03 10:22:52 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,38 +13,47 @@ require_once("$include_path/mysql_connect.inc.php");
  ATTENTION: Si vous modifiez de fichier vous devez probablement modifier le fichier pmbesIndex.class.php
 */
 class pmbesClean extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
+	public $error=false;		//Y-a-t-il eu une erreur
+	public $error_message="";	//Message correspondant à l'erreur
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	
-	function indexGlobal() {
+	public function indexGlobal() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
+			ini_set("memory_limit","-1");
+			
 			$result .= "<h3>".htmlentities($msg["nettoyage_reindex_global"], ENT_QUOTES, $charset)."</h3>";
 			pmb_mysql_query("set wait_timeout=3600");
 			//remise a zero de la table au début
 			pmb_mysql_query("delete from notices_global_index",$dbh);
 			pmb_mysql_query("delete from notices_mots_global_index",$dbh);
-				
+			pmb_mysql_query("delete from notices_fields_global_index",$dbh);
+			
+			pmb_mysql_query("ALTER TABLE notices_global_index DISABLE KEYS",$dbh);
+			pmb_mysql_query("ALTER TABLE notices_mots_global_index DISABLE KEYS",$dbh);
+			pmb_mysql_query("ALTER TABLE notices_fields_global_index DISABLE KEYS",$dbh);
+			
+			notice::set_deleted_index(true);
 			$query = pmb_mysql_query("select notice_id from notices order by notice_id",$dbh);
 			if(pmb_mysql_num_rows($query)) {
 				while($mesNotices = pmb_mysql_fetch_assoc($query)) {
 					// Mise à jour de la table "notices_global_index"
 			    	notice::majNoticesGlobalIndex($mesNotices['notice_id']);
 			    	// Mise à jour de la table "notices_mots_global_index"
-			    	notice::majNoticesMotsGlobalIndex($mesNotices['notice_id']);             		   	
+			    	notice::majNoticesMotsGlobalIndex($mesNotices['notice_id']);
 				}
 				pmb_mysql_free_result($query);
 			}
@@ -52,15 +61,20 @@ class pmbesClean extends external_services_api_class {
 			$not = pmb_mysql_query("SELECT count(1) FROM notices_global_index", $dbh);
 			$count = pmb_mysql_result($not, 0, 0);
 			$result .= $count." ".htmlentities($msg["nettoyage_res_reindex_global"], ENT_QUOTES, $charset);
+			
+			pmb_mysql_query("ALTER TABLE notices_global_index ENABLE KEYS",$dbh);
+			pmb_mysql_query("ALTER TABLE notices_mots_global_index ENABLE KEYS",$dbh);
+			pmb_mysql_query("ALTER TABLE notices_fields_global_index ENABLE KEYS",$dbh);
 		} else {
 			$result .= sprintf($msg["planificateur_rights_bad_user_rights"], $PMBusername);
 		}
 		return $result;	
 	}
 	
-	function indexNotices() {
+	public function indexNotices() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			//NOTICES
 			$result .= "<h3>".htmlentities($msg["nettoyage_reindex_notices"], ENT_QUOTES, $charset)."</h3>";
@@ -80,7 +94,7 @@ class pmbesClean extends external_services_api_class {
 			//AUTEURS
 			$result .= "<h3>".htmlentities($msg["nettoyage_reindex_authors"], ENT_QUOTES, $charset)."</h3>";
 		
-			$query = pmb_mysql_query("SELECT author_id as id,concat(author_name,' ',author_rejete,' ', author_lieu, ' ',author_ville,' ',author_pays,' ',author_numero,' ',author_subdivision) as auteur from authors LIMIT $start, $lot", $dbh);
+			$query = pmb_mysql_query("SELECT author_id as id,concat(author_name,' ',author_rejete,' ', author_lieu, ' ',author_ville,' ',author_pays,' ',author_numero,' ',author_subdivision) as auteur from authors", $dbh);
 			if (pmb_mysql_num_rows($query)) {
 				while(($row = pmb_mysql_fetch_object($query))) {
 					// constitution des pseudo-indexes
@@ -179,7 +193,7 @@ class pmbesClean extends external_services_api_class {
 			//SERIES
 			$result .= "<h3>".htmlentities($msg["nettoyage_reindex_series"], ENT_QUOTES, $charset)."</h3>";
 			
-			$query = pmb_mysql_query("SELECT serie_id as id, serie_name from series LIMIT $start, $lot", $dbh);
+			$query = pmb_mysql_query("SELECT serie_id as id, serie_name from series", $dbh);
 			if (pmb_mysql_num_rows($query)) {
 				while(($row = pmb_mysql_fetch_object($query))) {
 					// constitution des pseudo-indexes
@@ -199,7 +213,7 @@ class pmbesClean extends external_services_api_class {
 			//DEWEY
 			$result .= "<h3>".htmlentities($msg["nettoyage_reindex_indexint"], ENT_QUOTES, $charset)."</h3>";
 			
-			$query = pmb_mysql_query("SELECT indexint_id as id, concat(indexint_name,' ',indexint_comment) as index_indexint from indexint LIMIT $start, $lot", $dbh);
+			$query = pmb_mysql_query("SELECT indexint_id as id, concat(indexint_name,' ',indexint_comment) as index_indexint from indexint", $dbh);
 			if (pmb_mysql_num_rows($query)) {
 				while(($row = pmb_mysql_fetch_object($query))) {
 					// constitution des pseudo-indexes
@@ -222,9 +236,10 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanAuthors() {
+	public function cleanAuthors() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			//1er passage
 			$result .= "<h3>".htmlentities($msg["nettoyage_suppr_auteurs"], ENT_QUOTES, $charset)."</h3>";
@@ -264,9 +279,10 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanPublishers() {
+	public function cleanPublishers() {
 		global $msg,$dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_suppr_editeurs"], ENT_QUOTES, $charset)."</h3>";
 			
@@ -286,9 +302,10 @@ class pmbesClean extends external_services_api_class {
 			return $result;
 	}
 	
-	function cleanCollections() {
+	public function cleanCollections() {
 		global $msg,$dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_suppr_collections"], ENT_QUOTES, $charset)."</h3>";
 			
@@ -303,9 +320,10 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanSubcollections() {
+	public function cleanSubcollections() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_suppr_subcollections"], ENT_QUOTES, $charset)."</h3>";
 					
@@ -320,10 +338,11 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanCategories() {
+	public function cleanCategories() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
-		if ($deleted=="") $deleted=0 ;
+		$result = '';
+		$deleted=0 ;
 
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_suppr_categories"], ENT_QUOTES, $charset)."</h3>";
@@ -351,9 +370,10 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanSeries() {
+	public function cleanSeries() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_suppr_series"], ENT_QUOTES, $charset)."</h3>";
 			
@@ -370,9 +390,10 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanTitresUniformes() {
+	public function cleanTitresUniformes() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_suppr_titres_uniformes"], ENT_QUOTES, $charset)."</h3>";
 			
@@ -399,9 +420,10 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanIndexint() {
+	public function cleanIndexint() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_suppr_indexint"], ENT_QUOTES, $charset)."</h3>";
 			
@@ -423,9 +445,10 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanRelations() {
+	public function cleanRelations() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			//relation 1
 			$result .= "<h3>".htmlentities($msg["nettoyage_clean_relations_ban"], ENT_QUOTES, $charset)."</h3>";
@@ -448,7 +471,8 @@ class pmbesClean extends external_services_api_class {
 			$affected += pmb_mysql_affected_rows();
 			$query = pmb_mysql_query("delete bannette_contenu FROM bannette_contenu left join bannettes on num_bannette=id_bannette where id_bannette is null ");
 			$affected += pmb_mysql_affected_rows();
-			$query = pmb_mysql_query("DELETE avis FROM avis LEFT JOIN notices ON num_notice=notice_id WHERE notice_id IS NULL ");
+			$query = pmb_mysql_query("DELETE avis FROM avis LEFT JOIN notices ON num_notice=notice_id WHERE type_object = 1 AND notice_id IS NULL ");
+			$query = pmb_mysql_query("DELETE avis FROM avis LEFT JOIN cms_articles ON num_notice=id_article WHERE type_object = 2 AND id_article IS NULL ");
 	
 			$result .= $affected." ".htmlentities($msg["nettoyage_res_suppr_relations_ban"], ENT_QUOTES, $charset);
 			$opt = pmb_mysql_query('OPTIMIZE TABLE bannette_contenu');
@@ -466,7 +490,6 @@ class pmbesClean extends external_services_api_class {
 			$affected = pmb_mysql_affected_rows();
 	
 			$result .= $affected." ".htmlentities($msg["nettoyage_res_suppr_relations_cat"], ENT_QUOTES, $charset);
-			$opt = pmb_mysql_query('OPTIMIZE TABLE notices_categories');
 	
 			//relation 3
 			$result .= "<h3>".htmlentities($msg["nettoyage_clean_relations_pan"], ENT_QUOTES, $charset)."</h3>";
@@ -500,7 +523,6 @@ class pmbesClean extends external_services_api_class {
 			$affected += pmb_mysql_affected_rows();
 	
 			$result .= $affected." ".htmlentities($msg["nettoyage_res_suppr_relations_cat2"], ENT_QUOTES, $charset);
-			$opt = pmb_mysql_query('OPTIMIZE TABLE notices_categories');
 	
 			//relation 5
 			$result .= "<h3>".htmlentities($msg["nettoyage_clean_relations_pan2"], ENT_QUOTES, $charset)."</h3>";
@@ -518,7 +540,6 @@ class pmbesClean extends external_services_api_class {
 			if($query) $affected = pmb_mysql_affected_rows();
 	
 			$result .= $affected." ".htmlentities($msg["nettoyage_res_suppr_relations_pan2"], ENT_QUOTES, $charset);
-			$opt = pmb_mysql_query('OPTIMIZE TABLE notices_categories');
 	
 			//relation 6
 			$result .= "<h3>".htmlentities($msg["nettoyage_clean_relations_dep1"], ENT_QUOTES, $charset)."</h3>";
@@ -532,10 +553,7 @@ class pmbesClean extends external_services_api_class {
 			$affected += pmb_mysql_affected_rows();
 			$query = pmb_mysql_query("delete bulletins from bulletins left join notices on bulletin_notice=notice_id where notice_id is null");
 			$affected += pmb_mysql_affected_rows();
-			$query = pmb_mysql_query("delete notices_relations from notices_relations left join notices on num_notice=notice_id where notice_id is null ");
-			$affected += pmb_mysql_affected_rows();
-			$query = pmb_mysql_query("delete notices_relations from notices_relations left join notices on linked_notice=notice_id where notice_id is null ");
-			$affected += pmb_mysql_affected_rows();
+			$affected += notice_relations::clean_lost_links();
 			$result .= $affected." ".htmlentities($msg["nettoyage_res_suppr_relations_dep1"], ENT_QUOTES, $charset);
 			$opt = pmb_mysql_query('OPTIMIZE TABLE notices');
 	
@@ -582,15 +600,21 @@ class pmbesClean extends external_services_api_class {
 			}
 			$result .= $affected." ".htmlentities($msg["nettoyage_res_suppr_blob"], ENT_QUOTES, $charset);
 			
+			//relation 8
+			$result .= "<h3>".htmlentities($msg["nettoyage_update_relations"], ENT_QUOTES, $charset)."</h3>";
+			$affected = notice_relations::upgrade_notices_relations_table();
+			$result .= $affected." ".htmlentities($msg["nettoyage_res_update_relations"], ENT_QUOTES, $charset);
+			
 		} else {
 			$result .= sprintf($msg["planificateur_rights_bad_user_rights"], $PMBusername);
 		}
 		return $result;
 	}
 	
-	function cleanNotices() {
+	public function cleanNotices() {
 		global $msg,$dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {	
 			$result .= "<h3>".htmlentities($msg["nettoyage_suppr_notices"], ENT_QUOTES, $charset)."</h3>";
 			pmb_mysql_query("set wait_timeout=3600");
@@ -610,9 +634,10 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function indexAcquisitions() {
+	public function indexAcquisitions() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			//SUGGESTIONS
 			$result .= "<h3>".htmlentities($msg["nettoyage_reindex_sug"], ENT_QUOTES, $charset)."</h3>";
@@ -653,7 +678,7 @@ class pmbesClean extends external_services_api_class {
 			//ACTES
 			$result .= "<h3>".htmlentities($msg["nettoyage_reindex_act"], ENT_QUOTES, $charset)."</h3>";
 			
-			$query = pmb_mysql_query("SELECT actes.id_acte, actes.numero, entites.raison_sociale, actes.commentaires, actes.reference FROM actes, entites where num_fournisseur=id_entite LIMIT ".$start.", ".$lot." ");
+			$query = pmb_mysql_query("SELECT actes.id_acte, actes.numero, entites.raison_sociale, actes.commentaires, actes.reference FROM actes, entites where num_fournisseur=id_entite");
 			if(pmb_mysql_num_rows($query)) {		
 				while($row = pmb_mysql_fetch_object($query)) {
 					// index acte
@@ -687,9 +712,10 @@ class pmbesClean extends external_services_api_class {
 		}
 	}
 	
-	function genSignatureNotice() {
+	public function genSignatureNotice() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["gen_signature_notice"], ENT_QUOTES, $charset)."</h3>";
 			
@@ -714,9 +740,10 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function genPhonetique() {
+	public function genPhonetique() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["gen_phonetique"], ENT_QUOTES, $charset)."</h3>";
 
@@ -748,9 +775,10 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function nettoyageCleanTags() {
+	public function nettoyageCleanTags() {
 		global $msg, $dbh, $charset, $PMBusername;
-			
+		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_clean_tags"], ENT_QUOTES, $charset)."</h3>";
 			
@@ -772,9 +800,10 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanCategoriesPath() {
+	public function cleanCategoriesPath() {
 		global $msg,$charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			// Pour tous les thésaurus, on parcours les childs
 			$list_thesaurus = thesaurus::getThesaurusList();
@@ -797,9 +826,10 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function genDatePublicationArticle() {
+	public function genDatePublicationArticle() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["gen_date_publication_article"], ENT_QUOTES, $charset)."</h3>";
 			
@@ -819,9 +849,10 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function genDateTri() {
+	public function genDateTri() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["gen_date_tri_msg"], ENT_QUOTES, $charset)."</h3>";
 			
@@ -884,9 +915,10 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function indexDocnum() {
+	public function indexDocnum() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["docnum_reindexation"], ENT_QUOTES, $charset)."</h3>";
 			pmb_mysql_query("set wait_timeout=3600");
@@ -909,10 +941,11 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanRdfStore() {
+	public function cleanRdfStore() {
 		global $msg, $dbh, $charset, $PMBusername;
 		global $class_path;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_rdfstore_reindexation"], ENT_QUOTES, $charset)."</h3>";
 
@@ -951,9 +984,10 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanSynchroRdfStore() {
+	public function cleanSynchroRdfStore() {
 		global $msg,$dbh, $charset, $PMBusername;
 	
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_synchrordfstore_reindexation"], ENT_QUOTES, $charset)."</h3>";
 			$synchro_rdf = new synchro_rdf();
@@ -991,10 +1025,11 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanFAQ() {
+	public function cleanFAQ() {
 		global $msg,$dbh, $charset, $PMBusername;
 		global $include_path;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_reindex_faq"], ENT_QUOTES, $charset)."</h3>";
 				
@@ -1008,6 +1043,7 @@ class pmbesClean extends external_services_api_class {
 			$faq_questions = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($faq_questions)) {
 				$indexation = new indexation($include_path."/indexation/faq/question.xml", "faq_questions");
+				$indexation->set_deleted_index(true);
 				while($row = pmb_mysql_fetch_object($faq_questions)) {
 					$indexation->maj($row->id_faq_question);
 				}
@@ -1023,9 +1059,10 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanCMS() {
+	public function cleanCMS() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_reindex_cms"], ENT_QUOTES, $charset)."</h3>";
 
@@ -1064,10 +1101,15 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanConcept() {
-		global $msg, $dbh, $charset, $base_path, $PMBusername;
+	public function cleanConcept() {
+		global $msg, $dbh, $charset, $base_path, $PMBusername, $thesaurus_concepts_autopostage, $deflt_concept_scheme;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
+			
+			$autoloader = new autoloader();
+			$autoloader->add_register("onto_class",true);
+			
 			$result .= "<h3>".htmlentities($msg["nettoyage_reindex_concept"], ENT_QUOTES, $charset)."</h3>";
 		
 			//remise a zero de la table au début
@@ -1113,9 +1155,10 @@ class pmbesClean extends external_services_api_class {
 					"pmb"	=> "http://www.pmbservices.fr/ontology#"
 			);
 			
-			$onto_index = new onto_index();
+			$onto_index = onto_index::get_instance("skos");
 			$onto_index->load_handler($base_path."/classes/rdf/skos_pmb.rdf", "arc2", $onto_store_config, "arc2", $data_store_config,$tab_namespaces,'http://www.w3.org/2004/02/skos/core#prefLabel');
 			$onto_index->init();
+			$onto_index->set_netbase(true);
 			
 			//la requete de base...
 			$query = "select * where {
@@ -1133,6 +1176,7 @@ class pmbesClean extends external_services_api_class {
 			$query.= " order by asc(?label)";
 			$onto_index->handler->data_query($query);
 			if($onto_index->handler->data_num_rows()) {
+				$onto_index->set_deleted_index(true);
 				$results = $onto_index->handler->data_result();
 				foreach($results as $row){
 					$onto_index->maj(0,$row->item);
@@ -1153,9 +1197,10 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
-	function hashEmprPassword() {
+	public function hashEmprPassword() {
 		global $msg,$dbh, $charset, $PMBusername;
 	
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["hash_empr_password"], ENT_QUOTES, $charset)."</h3>";
 			$rqt = "SHOW COLUMNS FROM empr LIKE 'empr_password_is_encrypted'";
@@ -1188,9 +1233,262 @@ class pmbesClean extends external_services_api_class {
 		return $result;
 	}
 	
+	public function indexAuthorities() {
+		global $msg, $dbh, $charset, $PMBusername;
+		global $include_path;
+		
+		$result = '';
+		if (SESSrights & ADMINISTRATION_AUTH) {
+			pmb_mysql_query("set wait_timeout=3600");
+			ini_set("memory_limit","-1");
+			
+			//remise a zero de la table au début
+			pmb_mysql_query("truncate authorities_words_global_index",$dbh);
+			pmb_mysql_query("truncate authorities_fields_global_index",$dbh);
+			pmb_mysql_query("ALTER TABLE authorities_words_global_index DISABLE KEYS",$dbh);
+			pmb_mysql_query("ALTER TABLE authorities_fields_global_index DISABLE KEYS",$dbh);
+			
+			//AUTHORS
+			$result .= $this->indexAuthors();
+			
+			//PUBLISHERS
+			$result .= $this->indexPublishers();
+		
+			//CATEGORIES
+			$result .= $this->indexCategories();
+			
+			//COLLECTIONS
+			$result .= $this->indexCollections();
+			
+			//SUBCOLLECTIONS
+			$result .= $this->indexSubCollections();
+			
+			//SERIES
+			$result .= $this->indexSeries();
+		
+			//DEWEY
+			$result .= $this->indexIndexint();
+			
+			//TITRES_UNIFORMES
+			$result .= $this->indexTitresUniformes();
+			
+			//AUTORITES PERSO
+			$result .= $this->indexAuthperso();
+			
+			pmb_mysql_query("ALTER TABLE authorities_words_global_index ENABLE KEYS",$dbh);
+			pmb_mysql_query("ALTER TABLE authorities_fields_global_index ENABLE KEYS",$dbh);
+		} else {
+			$result .= sprintf($msg["planificateur_rights_bad_user_rights"], $PMBusername);
+		}
+		
+		return $result;
+	}
+	
+	public function indexAuthors() {
+		global $msg, $charset;
+	
+		$result = "<h3>".htmlentities($msg["nettoyage_reindex_authors"], ENT_QUOTES, $charset)."</h3>";
+		if (SESSrights & ADMINISTRATION_AUTH) {
+			//On controle qu'il n'y a pas d'autorité à enlever
+			$req="SELECT id_authority FROM authorities LEFT JOIN authors ON num_object=author_id WHERE type_object='".AUT_TABLE_AUTHORS."' AND author_id IS NULL";
+			$res = pmb_mysql_query($req,$dbh);
+			if($res && pmb_mysql_num_rows($res)){
+				while($aut = pmb_mysql_fetch_row($res)){
+					$authority = new authority($aut[0]);
+					$authority->delete();
+				}
+			}
+			$query = "SELECT author_id as id from authors";
+			$count = netbase_authorities::index_from_query($query, AUT_TABLE_AUTHORS);
+			$result .= htmlentities($msg["nettoyage_reindex_authors"], ENT_QUOTES, $charset)." $count ".htmlentities($msg["nettoyage_res_reindex_authors"], ENT_QUOTES, $charset);
+		}
+		return $result;
+	}
+	
+	public function indexPublishers() {
+		global $msg, $charset;
+	
+		$result = "<h3>".htmlentities($msg["nettoyage_reindex_publishers"], ENT_QUOTES, $charset)."</h3>";
+		if (SESSrights & ADMINISTRATION_AUTH) {
+			//On controle qu'il n'y a pas d'autorité à enlever
+			$req="SELECT id_authority FROM authorities LEFT JOIN publishers ON num_object=ed_id WHERE type_object='".AUT_TABLE_PUBLISHERS."' AND ed_id IS NULL";
+			$res = pmb_mysql_query($req,$dbh);
+			if($res && pmb_mysql_num_rows($res)){
+				while($aut = pmb_mysql_fetch_row($res)){
+					$authority = new authority($aut[0]);
+					$authority->delete();
+				}
+			}
+			$query = "SELECT ed_id as id from publishers";
+			$count = netbase_authorities::index_from_query($query, AUT_TABLE_PUBLISHERS);
+			$result .= htmlentities($msg["nettoyage_reindex_publishers"], ENT_QUOTES, $charset)." $count ".htmlentities($msg["nettoyage_res_reindex_publishers"], ENT_QUOTES, $charset);
+		}
+		return $result;
+	}
+	
+	public function indexCategories() {
+		global $msg, $charset;
+	
+		$result = "<h3>".htmlentities($msg["nettoyage_reindex_categories"], ENT_QUOTES, $charset)."</h3>";
+		if (SESSrights & ADMINISTRATION_AUTH) {
+			//On controle qu'il n'y a pas d'autorité à enlever
+			$req="SELECT id_authority FROM authorities LEFT JOIN categories ON num_object=num_noeud WHERE type_object='".AUT_TABLE_CATEG."' AND num_noeud IS NULL";
+			$res = pmb_mysql_query($req,$dbh);
+			if($res && pmb_mysql_num_rows($res)){
+				while($aut = pmb_mysql_fetch_row($res)){
+					$authority = new authority($aut[0]);
+					$authority->delete();
+				}
+			}
+			$query = "select distinct num_noeud as id from categories";
+			$count = netbase_authorities::index_from_query($query, AUT_TABLE_CATEG);
+			$result .= htmlentities($msg["nettoyage_reindex_categories"], ENT_QUOTES, $charset)." $count ".htmlentities($msg["nettoyage_res_reindex_categories"], ENT_QUOTES, $charset);
+		}
+		return $result;
+	}
+	
+	public function indexCollections() {
+		global $msg, $charset;
+	
+		$result = "<h3>".htmlentities($msg["nettoyage_reindex_collections"], ENT_QUOTES, $charset)."</h3>";
+		if (SESSrights & ADMINISTRATION_AUTH) {
+			//On controle qu'il n'y a pas d'autorité à enlever
+			$req="SELECT id_authority FROM authorities LEFT JOIN collections ON num_object=collection_id WHERE type_object='".AUT_TABLE_COLLECTIONS."' AND collection_id IS NULL";
+			$res = pmb_mysql_query($req,$dbh);
+			if($res && pmb_mysql_num_rows($res)){
+				while($aut = pmb_mysql_fetch_row($res)){
+					$authority = new authority($aut[0]);
+					$authority->delete();
+				}
+			}
+			$query = "SELECT collection_id as id from collections";
+			$count = netbase_authorities::index_from_query($query, AUT_TABLE_COLLECTIONS);
+			$result .= htmlentities($msg["nettoyage_reindex_collections"], ENT_QUOTES, $charset)." $count ".htmlentities($msg["nettoyage_res_reindex_collections"], ENT_QUOTES, $charset);
+		}
+		return $result;
+	}
+	
+	public function indexSubCollections() {
+		global $msg, $charset;
+	
+		$result = "<h3>".htmlentities($msg["nettoyage_reindex_sub_collections"], ENT_QUOTES, $charset)."</h3>";
+		if (SESSrights & ADMINISTRATION_AUTH) {
+			//On controle qu'il n'y a pas d'autorité à enlever
+			$req="SELECT id_authority FROM authorities LEFT JOIN sub_collections ON num_object=sub_coll_id WHERE type_object='".AUT_TABLE_SUB_COLLECTIONS."' AND sub_coll_id IS NULL";
+			$res = pmb_mysql_query($req,$dbh);
+			if($res && pmb_mysql_num_rows($res)){
+				while($aut = pmb_mysql_fetch_row($res)){
+					$authority = new authority($aut[0]);
+					$authority->delete();
+				}
+			}
+			
+			$query = "SELECT sub_coll_id as id from sub_collections";
+			$count = netbase_authorities::index_from_query($query, AUT_TABLE_SUB_COLLECTIONS);
+			$result .= htmlentities($msg["nettoyage_reindex_sub_collections"], ENT_QUOTES, $charset)." $count ".htmlentities($msg["nettoyage_res_reindex_sub_collections"], ENT_QUOTES, $charset);
+		}
+		return $result;
+	}
+	
+	public function indexSeries() {
+		global $msg, $charset;
+	
+		$result = "<h3>".htmlentities($msg["nettoyage_reindex_series"], ENT_QUOTES, $charset)."</h3>";
+		if (SESSrights & ADMINISTRATION_AUTH) {
+			//On controle qu'il n'y a pas d'autorité à enlever
+			$req="SELECT id_authority FROM authorities LEFT JOIN series ON num_object=serie_id WHERE type_object='".AUT_TABLE_SERIES."' AND serie_id IS NULL";
+			$res = pmb_mysql_query($req,$dbh);
+			if($res && pmb_mysql_num_rows($res)){
+				while($aut = pmb_mysql_fetch_row($res)){
+					$authority = new authority($aut[0]);
+					$authority->delete();
+				}
+			}
+			$query = "SELECT serie_id as id from series";
+			$count = netbase_authorities::index_from_query($query, AUT_TABLE_SERIES);
+			$result .= htmlentities($msg["nettoyage_reindex_series"], ENT_QUOTES, $charset)." $count ".htmlentities($msg["nettoyage_res_reindex_series"], ENT_QUOTES, $charset);
+		}
+		return $result;
+	}
+	
+	public function indexIndexint() {
+		global $msg, $charset;
+	
+		$result = "<h3>".htmlentities($msg["nettoyage_reindex_indexint"], ENT_QUOTES, $charset)."</h3>";
+		if (SESSrights & ADMINISTRATION_AUTH) {
+			//On controle qu'il n'y a pas d'autorité à enlever
+			$req="SELECT id_authority FROM authorities LEFT JOIN indexint ON num_object=indexint_id WHERE type_object='".AUT_TABLE_INDEXINT."' AND indexint_id IS NULL";
+			$res = pmb_mysql_query($req,$dbh);
+			if($res && pmb_mysql_num_rows($res)){
+				while($aut = pmb_mysql_fetch_row($res)){
+					$authority = new authority($aut[0]);
+					$authority->delete();
+				}
+			}
+			$query = "SELECT indexint_id as id from indexint";
+			$count = netbase_authorities::index_from_query($query, AUT_TABLE_INDEXINT);
+			$result .= htmlentities($msg["nettoyage_reindex_indexint"], ENT_QUOTES, $charset)." $count ".htmlentities($msg["nettoyage_res_reindex_indexint"], ENT_QUOTES, $charset);
+		}
+		return $result;
+	}
+	
+	public function indexTitresUniformes() {
+		global $msg, $charset;
+	
+		$result = "<h3>".htmlentities($msg["nettoyage_reindex_titres_uniformes"], ENT_QUOTES, $charset)."</h3>";
+		if (SESSrights & ADMINISTRATION_AUTH) {
+			//On controle qu'il n'y a pas d'autorité à enlever
+			$req="SELECT id_authority FROM authorities LEFT JOIN titres_uniformes ON num_object=tu_id WHERE type_object='".AUT_TABLE_TITRES_UNIFORMES."' AND tu_id IS NULL";
+			$res = pmb_mysql_query($req,$dbh);
+			if($res && pmb_mysql_num_rows($res)){
+				while($aut = pmb_mysql_fetch_row($res)){
+					$authority = new authority($aut[0]);
+					$authority->delete();
+				}
+			}
+			$query = "SELECT tu_id as id from titres_uniformes";
+			$count = netbase_authorities::index_from_query($query, AUT_TABLE_TITRES_UNIFORMES);
+			$result .= htmlentities($msg["nettoyage_reindex_titres_uniformes"], ENT_QUOTES, $charset)." $count ".htmlentities($msg["nettoyage_res_reindex_titres_uniformes"], ENT_QUOTES, $charset);
+		}
+		return $result;
+	}
+	
+	public function indexAuthperso() {
+		global $msg, $charset, $include_path;
+	
+		$result = "<h3>".htmlentities($msg["nettoyage_reindex_authperso"], ENT_QUOTES, $charset)."</h3>";
+		if (SESSrights & ADMINISTRATION_AUTH) {
+			//On controle qu'il n'y a pas d'autorité à enlever
+			$req="SELECT id_authority FROM authorities LEFT JOIN authperso_authorities ON num_object=id_authperso_authority WHERE type_object ='".AUT_TABLE_AUTHPERSO."' AND id_authperso_authority IS NULL";
+			$res = pmb_mysql_query($req,$dbh);
+			if($res && pmb_mysql_num_rows($res)){
+				while($aut = pmb_mysql_fetch_row($res)){
+					$authority = new authority($aut[0]);
+					$authority->delete();
+				}
+			}
+			$query = pmb_mysql_query("SELECT id_authperso_authority as id, authperso_authority_authperso_num from authperso_authorities");
+			$count = pmb_mysql_num_rows($query);
+			if ($count) {
+				$id_authperso = 0;
+				while($row = pmb_mysql_fetch_object($query)) {
+					if(!$id_authperso || ($id_authperso != $row->authperso_authority_authperso_num)) {
+						$indexation_authperso = new indexation_authperso($include_path."/indexation/authorities/authperso/champs_base.xml", "authorities", (1000+$row->authperso_authority_authperso_num), $row->authperso_authority_authperso_num);
+						$indexation_authperso->set_deleted_index(true);
+						$id_authperso = $row->authperso_authority_authperso_num;
+					}
+					$indexation_authperso->maj($row->id);
+				}
+				pmb_mysql_free_result($query);
+			}
+			$result .= htmlentities($msg["nettoyage_reindex_authperso"], ENT_QUOTES, $charset)." $count ".htmlentities($msg["nettoyage_res_reindex_authperso"], ENT_QUOTES, $charset);
+		}
+		return $result;
+	}
+	
 	/*Fonction copiée du fichier ./admin/netbase/category.inc.php*/
 	/*Ne doit être appelable*/
-//	function process_categ($id_noeud) {
+//	public function process_categ($id_noeud) {
 //		global $dbh;
 //		
 //		global $deleted;

@@ -1,14 +1,14 @@
 <?php
 // +-------------------------------------------------+
-// © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_datatype_resource_selector_ui.class.php,v 1.16 2015-03-04 14:26:24 apetithomme Exp $
+// $Id: onto_common_datatype_resource_selector_ui.class.php,v 1.26 2018-09-24 13:39:22 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once $class_path.'/onto/common/onto_common_datatype_ui.class.php';
-
-
+require_once $class_path.'/authority.class.php';
+require_once $class_path.'/notice.class.php';
 /**
  * class onto_common_datatype_resource_selector_ui
  * 
@@ -77,15 +77,24 @@ class onto_common_datatype_resource_selector_ui extends onto_common_datatype_ui 
 	 */
 	public static function get_form($item_uri,$property, $restrictions,$datas, $instance_name,$flag) {
 		global $msg,$charset,$ontology_tpl;
-
-		$form=$ontology_tpl['form_row'];
-		$form=str_replace("!!onto_row_label!!",htmlentities($property->label ,ENT_QUOTES,$charset) , $form);
 		
-		$range_for_form = "";
-		foreach($property->range as $range){
-			if($range_for_form) $range_for_form.="|||";
-			$range_for_form.=$range;
+		$form=$ontology_tpl['form_row'];
+		$form=str_replace("!!onto_row_label!!",htmlentities(encoding_normalize::charset_normalize($property->label, 'utf-8') ,ENT_QUOTES,$charset) , $form);
+		
+		/** traitement initial du range ?!*/
+		$range_for_form = ""; 
+		if(is_array($property->range)){
+			foreach($property->range as $range){
+				if($range_for_form) $range_for_form.="|||";
+				$range_for_form.=$range;
+			}
 		}
+		/** **/
+		
+		/** TODO: à revoir avec le chef ** / 
+		/** On part du principe que l'on a qu'un range **/
+// 		$selector_url = $this->get_resource_selector_url($property->range[0]);
+		
 		$content='';
 		$content.=$ontology_tpl['form_row_content_input_sel'];
 		if($restrictions->get_max()<$i || $restrictions->get_max()===-1){
@@ -139,7 +148,6 @@ class onto_common_datatype_resource_selector_ui extends onto_common_datatype_ui 
 			
 			$inside_row=$ontology_tpl['form_row_content_resource_selector'];
 			$inside_row=str_replace("!!form_row_content_resource_selector_display_label!!","" , $inside_row);
-			$inside_row=str_replace("!!form_row_content_resource_selector_display_label!!","" , $inside_row);
 			$inside_row=str_replace("!!form_row_content_resource_selector_value!!","" , $inside_row);
 			$inside_row=str_replace("!!form_row_content_resource_selector_range!!","" , $inside_row);
 			$inside_row=str_replace("!!onto_current_element!!",onto_common_uri::get_id($item_uri),$inside_row);
@@ -158,6 +166,7 @@ class onto_common_datatype_resource_selector_ui extends onto_common_datatype_ui 
 		}
 		
 		$form=str_replace("!!onto_rows!!",$content ,$form);
+		$form=str_replace("!!onto_completion!!",self::get_completion_from_range($range_for_form), $form);
 		$form=str_replace("!!onto_row_id!!",$instance_name.'_'.$property->pmb_name , $form);
 		
 		return $form;
@@ -186,7 +195,104 @@ class onto_common_datatype_resource_selector_ui extends onto_common_datatype_ui 
 		$display.='</p>';
 		$display.='</div>';
 		return $display;
-		
+	}
+
+	
+	protected static function get_resource_selector_url($resource_uri){
+		/**
+		 * TODO: 
+		 * Deux solutions possibles ?
+		 * Générer Les urls côté php et concatener avec les variables spéciales issues du formulaire dans les fonctions JS ? 
+		 * 	Ex: transmetre './select.php?what=notice&caller='; et passer les params directement dans la fonction js appelée à l'appui sur ajouter
+		 *   -> Si l'on a qu'une fonction JS, ça impose de ressortir un type depuis le php ?!
+		 *   	  
+		 * 
+		 *  
+		 */		
+		switch($resource_uri){
+			case 'http://www.pmbservices.fr/ontology#record':
+				$selector_url = './select.php?what=notice&caller=';
+				break;
+			case 'http://www.pmbservices.fr/ontology#author':
+			case 'http://www.pmbservices.fr/ontology#responsability':
+				$selector_url = './select.php?what=auteur&caller=';
+				break;
+			case 'http://www.pmbservices.fr/ontology#category':
+				$selector_url = './select.php?what=categorie&caller=';
+				break;
+			case 'http://www.pmbservices.fr/ontology#publisher':
+				$selector_url = './select.php?what=editeur&caller=';
+				break;
+			case 'http://www.pmbservices.fr/ontology#collection':
+				$selector_url = './select.php?what=collection&caller=';
+				break;
+			case 'http://www.pmbservices.fr/ontology#sub_collection':
+				$selector_url = './select.php?what=subcollection&caller=';
+				break;
+			case 'http://www.pmbservices.fr/ontology#serie':
+				$selector_url = './select.php?what=serie&caller=';
+				break;
+			case 'http://www.pmbservices.fr/ontology#work':
+				$selector_url = './select.php?what=titre_uniforme&caller=';
+				break;
+			case 'http://www.pmbservices.fr/ontology#indexint':
+				$selector_url = './select.php?what=indexint&caller=';
+				break;
+			case 'http://www.w3.org/2004/02/skos/core#Concept':
+				$selector_url = './select.php?what=ontology&objs=&element=concept&caller=';
+				break;
+			case 'http://www.pmbservices.fr/ontology#bulletin':
+				$selector_url = './select.php?what=bulletin&caller=';
+				break;
+			default: 
+				$selector_url = './select.php?what=ontologies&caller=';
+				break; 
+		}
+		return $selector_url;
+	}
+	
+
+	protected static function get_completion_from_range($range) {
+		$completion = '';
+		//on récupère le type de range en enlevant le préfixe propre à l'ontologie
+		switch ($range) {
+			case 'http://www.pmbservices.fr/ontology#linked_record' :
+			case 'http://www.pmbservices.fr/ontology#record' :
+				$completion = 'notice';
+				break;
+			case 'http://www.pmbservices.fr/ontology#author' :
+			case 'http://www.pmbservices.fr/ontology#responsability' :
+				$completion = 'authors';
+				break;
+			case 'http://www.pmbservices.fr/ontology#category' :
+				$completion = 'categories';
+				break;
+			case 'http://www.pmbservices.fr/ontology#publisher' :
+				$completion = 'publishers';
+				break;
+			case 'http://www.pmbservices.fr/ontology#collection' :
+				$completion = 'collections';
+				break;
+			case 'http://www.pmbservices.fr/ontology#sub_collection' :
+				$completion = 'subcollections';
+				break;
+			case 'http://www.pmbservices.fr/ontology#serie' :
+				$completion = 'serie';
+				break;
+			case 'http://www.pmbservices.fr/ontology#work' :
+				$completion = 'titre_uniforme';
+				break;
+			case 'http://www.pmbservices.fr/ontology#indexint' :
+				$completion = 'indexint';
+				break;
+			case 'http://www.w3.org/2004/02/skos/core#Concept' :
+				$completion = 'onto';
+				break;
+			default:
+				$completion ='onto';
+				break;
+		}
+		return $completion;
 	}
 
 } // end of onto_common_datatype_resource_selector_ui

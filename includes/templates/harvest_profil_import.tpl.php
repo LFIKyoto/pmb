@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: harvest_profil_import.tpl.php,v 1.2 2012-06-13 07:54:32 ngantier Exp $
+// $Id: harvest_profil_import.tpl.php,v 1.3 2017-11-07 15:34:41 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -21,7 +21,7 @@ $harvest_list_tpl="
 $harvest_list_line_tpl="
 <tr class='!!odd_even!!' onmousedown=\"document.location='./admin.php?categ=harvest&sub=profil&action=form&id_profil=!!id!!';\"  style=\"cursor: pointer\" 
 onmouseout=\"this.className='!!odd_even!!'\" onmouseover=\"this.className='surbrillance'\">	
-	<td valign='top'>				
+	<td style='vertical-align:top'>				
 		!!name!!
 	</td> 	
 </tr> 	

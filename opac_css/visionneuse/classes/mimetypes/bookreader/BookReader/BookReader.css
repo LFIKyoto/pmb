@@ -568,7 +568,7 @@ a.BRgrey:visited   { color: #666; }
 }
 div#BRpage {
     float: right;
-    width: 280px;
+    width: 320px;
     padding-left:12px;
     text-align: right;
 }
@@ -589,7 +589,7 @@ div#BRnav {
 }
 div#BRnavpos {
     position: relative;
-    margin-right: 280px;
+    margin-right: 320px;
     height: 40px;
 }
 div#BRpager {
@@ -666,7 +666,7 @@ div#pagenum {
     line-height: 19px;
     font-weight: 700;
     padding: 0 5px;
-    width: 80px;
+    min-width: 100px;
     text-align: right;
     background-color: #000;
     font-family: "Lucida Grande", "Arial", sans-serif;
@@ -911,4 +911,112 @@ div#BRzoombtn {
 }
 #BRnavCntlTop.BRup,#BRnavCntlTop.BRdn {
     background-position: 8px 4px;
+}
+
+
+/*************
+ * PERSO PMB *
+ *************/
+
+.BRicon.contrast {background-position:-1240px 0;}
+.BRicon.contrast:hover {background-position:-1280px 0;}
+
+.BRnavCntlContrast {
+	display: none;
+	position: absolute;
+	right: 80px;
+	top: -124px;
+	background-color: #e2dcc5;
+	width: 300px;
+	height: 120px;	
+	-moz-border-radius-topright: 8px;
+	-webkit-border-top-right-radius: 8px;
+	-moz-border-radius-topleft: 8px;
+	-webkit-border-top-left-radius: 8px;
+	border: 2px solid #615132;
+}
+.BRcontrastLabel, .BRbrightLabel {
+	position: relative;
+	right:0px;
+	overflow:visible;
+	height:32px;
+	width: 270px;
+	background-position: 8px;
+	background-repeat: no-repeat;
+}
+.BRcontrastLabel {
+	background-image : url("images/contrast.png");
+	
+}
+.BRbrightLabel {
+	background-image : url("images/brightness.png");
+	
+}
+.BRcontrastSlider {
+	position:absolute;
+	left:30px;
+	top:10px;
+	margin: 20px;
+}
+	
+
+#BRnavCntlContrast .ui-slider { position: relative; text-align: left; }
+#BRnavCntlContrast .ui-slider .ui-slider-handle { position: absolute; z-index: 2; width: 1.2em; height: 1.2em; cursor: default; }
+#BRnavCntlContrast .ui-slider .ui-slider-range { position: absolute; z-index: 1; font-size: .7em; display: block; border: 0; background-position: 0 0; }
+
+#BRnavCntlContrast .ui-slider-horizontal { height: .8em; }
+#BRnavCntlContrast .ui-slider-horizontal .ui-slider-handle { top: -.3em; margin-left: -.6em; }
+#BRnavCntlContrast .ui-slider-horizontal .ui-slider-range { top: 0; height: 100%; }
+#BRnavCntlContrast .ui-slider-horizontal .ui-slider-range-min { left: 0; }
+#BRnavCntlContrast .ui-slider-horizontal .ui-slider-range-max { right: 0; }
+
+/* Corner radius */
+#BRnavCntlContrast .ui-corner-all, #BRnavCntlContrast .ui-corner-top, #BRnavCntlContrast .ui-corner-left, #BRnavCntlContrast .ui-corner-tl { 
+	-moz-border-radius-topleft: 4px/*{cornerRadius}*/; 
+	-webkit-border-top-left-radius: 4px/*{cornerRadius}*/; 
+	-khtml-border-top-left-radius: 4px/*{cornerRadius}*/; 
+	border-top-left-radius: 4px/*{cornerRadius}*/; }
+#BRnavCntlContrast .ui-corner-all, #BRnavCntlContrast .ui-corner-top, #BRnavCntlContrast .ui-corner-right, #BRnavCntlContrast .ui-corner-tr { 
+	-moz-border-radius-topright: 4px/*{cornerRadius}*/; 
+	-webkit-border-top-right-radius: 4px/*{cornerRadius}*/; 
+	-khtml-border-top-right-radius: 4px/*{cornerRadius}*/; 
+	border-top-right-radius: 4px/*{cornerRadius}*/; }
+#BRnavCntlContrast .ui-corner-all, #BRnavCntlContrast .ui-corner-bottom, #BRnavCntlContrast .ui-corner-left, #BRnavCntlContrast .ui-corner-bl { 
+	-moz-border-radius-bottomleft: 4px/*{cornerRadius}*/; 
+	-webkit-border-bottom-left-radius: 4px/*{cornerRadius}*/; 
+	-khtml-border-bottom-left-radius: 4px/*{cornerRadius}*/; 
+	border-bottom-left-radius: 4px/*{cornerRadius}*/; }
+#BRnavCntlContrast .ui-corner-all, #BRnavCntlContrast .ui-corner-bottom, #BRnavCntlContrast .ui-corner-right, #BRnavCntlContrast .ui-corner-br { 
+	-moz-border-radius-bottomright: 4px/*{cornerRadius}*/; 
+	-webkit-border-bottom-right-radius: 4px/*{cornerRadius}*/; 
+	-khtml-border-bottom-right-radius: 4px/*{cornerRadius}*/; 
+	border-bottom-right-radius: 4px/*{cornerRadius}*/; }
+----------------------------------*/
+#BRnavCntlContrast .ui-widget { 
+	font-family: Verdana,Arial,sans-serif/*{ffDefault}*/; 
+	font-size: 1.1em/*{fsDefault}*/; }
+
+.ui-widget input, .ui-widget select, .ui-widget textarea, .ui-widget button { 
+	font-family: Verdana,Arial,sans-serif/*{ffDefault}*/; 
+	font-size: 1em; }
+#BRnavCntlContrast .ui-widget-content {
+	border: 1px solid #aaaaaa/*{borderColorContent}*/; 
+	background: #ffffff/*{bgColorContent}*/
+}
+#BRnavCntlContrast .ui-widget-content a { 
+	color: #222222/*{fcContent}*/; 
+}
+.ui-widget-header { 
+	border: 1px solid #aaaaaa/*{borderColorHeader}*/; 
+	background: #cccccc/*{bgColorHeader}*/ ;
+	color: #222222/*{fcHeader}*/; 
+	font-weight: bold;
+}
+/* Interaction states
+----------------------------------*/
+#BRnavCntlContrast .ui-state-default, #BRnavCntlContrast .ui-widget-content .ui-state-default, #BRnavCntlContrast .ui-widget-header .ui-state-default { 
+	border: 1px solid #000/*{borderColorDefault}*/; 
+	background: #000;
+	font-weight: normal/*{fwDefault}*/; 
+	color: #555555/*{fcDefault}*/; 
 }

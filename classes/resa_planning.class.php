@@ -2,15 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: resa_planning.class.php,v 1.6.2.2 2015-12-02 14:11:51 dbellamy Exp $
+// $Id: resa_planning.class.php,v 1.10 2017-12-29 15:47:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path.'/resa.class.php');
 
 class resa_planning{
-
-
 	public $id_resa = 0;							//Identifiant de prévision
 	public $resa_idempr = 0;						//Identifiant du lecteur ayant fait la prévision
 	public $resa_idnotice = 0;						//Identifiant de la notice sur laquelle est posée la prévision
@@ -28,23 +26,19 @@ class resa_planning{
 	public $resa_remaining_qty = 1;					//Quantité restante
 	
 	public function __construct($id_resa= 0) {
-
 		$id_resa+=0;
-
 		if ($id_resa) {
 			$this->id_resa = $id_resa;
 			$this->load();
 		}
 	}
 
-
 	// charge une prévision à partir de la base.
 	public function load(){
-
-		global $dbh, $msg;
+		global $msg;
 
 		$q = "select resa_idempr, resa_idnotice, resa_idbulletin, resa_date, date_format(resa_date, '".$msg["format_date"]."') as aff_resa_date, resa_date_debut, date_format(resa_date_debut, '".$msg["format_date"]."') as aff_resa_date_debut, resa_date_fin, date_format(resa_date_fin, '".$msg["format_date"]."') as aff_resa_date_fin, resa_validee, resa_confirmee, resa_loc_retrait, resa_qty, resa_remaining_qty from resa_planning where id_resa = '".$this->id_resa."' ";
-		$r = pmb_mysql_query($q, $dbh) ;
+		$r = pmb_mysql_query($q) ;
 		$obj = pmb_mysql_fetch_object($r);
 		$this->resa_idempr = $obj->resa_idempr;
 		$this->resa_idnotice = $obj->resa_idnotice;
@@ -62,12 +56,8 @@ class resa_planning{
 		$this->resa_remaining_qty  = $obj->resa_remaining_qty ;
 	}
 
-
 	// enregistre une prévision en base.
 	public function save(){
-
-		global $dbh;
-
 		if ($this->id_resa) {
 			if ($this->resa_date_debut && $this->resa_date_fin) {
 				$this->resa_validee = ($this->resa_validee==1)?1:0;
@@ -76,66 +66,49 @@ class resa_planning{
 				$q.= "resa_validee = '".$this->resa_validee."', resa_confirmee = '".$this->resa_confirmee."', ";
 				$q.= "resa_loc_retrait = ".$this->resa_loc_retrait.", resa_qty=".$this->resa_qty.", resa_remaining_qty=".$this->resa_remaining_qty;
 				$q.= " where id_resa = '".$this->id_resa."' ";
-				$r = pmb_mysql_query($q, $dbh);
+				$r = pmb_mysql_query($q);
 			}
 		} else {
 			if ($this->resa_idempr && ((!$this->resa_idnotice && $this->resa_idbulletin) || ($this->resa_idnotice && !$this->resa_idbulletin)) && $this->resa_date_debut && $this->resa_date_fin) {
 				$q = "insert into resa_planning set resa_idempr = '".$this->resa_idempr."', resa_idnotice = '".$this->resa_idnotice."', resa_idbulletin = '".$this->resa_idbulletin."', resa_date = SYSDATE(), ";
 				$q.= "resa_date_debut = '".$this->resa_date_debut."', resa_date_fin = '".$this->resa_date_fin."', resa_validee = '0', resa_confirmee = '0', ";
 				$q.= "resa_loc_retrait = ".$this->resa_loc_retrait.", resa_qty=".$this->resa_qty.", resa_remaining_qty=".$this->resa_remaining_qty;
-				$r = pmb_mysql_query($q, $dbh);
-				$this->id_resa = pmb_mysql_insert_id($dbh);
+				$r = pmb_mysql_query($q);
+				$this->id_resa = pmb_mysql_insert_id();
 			}
 		}
-
 	}
-
 
 	//supprime une prévision de la base
 	static public function delete($id_resa=0) {
-
-		global $dbh;
-
-			$id_resa+=0;
+		$id_resa+=0;
 		if($id_resa) {
 			$q = "delete from resa_planning where id_resa=$id_resa ";
-			$r = pmb_mysql_query($q, $dbh);
+			$r = pmb_mysql_query($q);
 		}
-
 	}
-
 
 	//Compte le nb de prévisions sur une notice
 	static public function count_resa($id_notice=0,$id_bulletin=0) {
-
-		global $dbh;
-
 		$id_notice+=0;
 		$id_bulletin+=0;
 		if (!$id_notice && !$id_bulletin) {
 			return 0;
 		}
 		$q = "SELECT count(1) FROM resa_planning WHERE resa_idnotice=$id_notice and resa_idbulletin=$id_bulletin ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		return pmb_mysql_result($r, 0, 0);
 	}
 
-
 	//optimisation de la table resa_planning
 	public function optimize() {
-
-		global $dbh;
-
-		$opt = pmb_mysql_query('OPTIMIZE TABLE resa_planning', $dbh);
+		$opt = pmb_mysql_query('OPTIMIZE TABLE resa_planning');
 		return $opt;
-
 	}
-
 
 	//retourne la liste des localisations de retrait possibles pour un emprunteur selon le paramétrage ainsi que la qté d'exemplaires disponibles
 	static public function get_available_locations($id_empr=0,$id_notice=0,$id_bulletin=0) {
-
-		global $dbh,$msg;
+		global $msg;
 		global $pmb_location_reservation,$pmb_location_resa_planning;
 		$id_empr+=0;
 		$id_notice+=0;
@@ -153,10 +126,10 @@ class resa_planning{
 				}
 			}
 			$q.= ' group by expl_location order by location_libelle';
-			$r = pmb_mysql_query($q,$dbh);
+			$r = pmb_mysql_query($q);
 			if(pmb_mysql_num_rows($r)) {
 				$i=0;
-				while ($o=mysql_fetch_object($r)) {
+				while ($o=pmb_mysql_fetch_object($r)) {
 					$loc[$i]['location_id']=$o->expl_location;
 					$loc[$i]['location_libelle']=$o->location_libelle;
 					$loc[$i]['location_nb']=$o->nb;
@@ -170,13 +143,11 @@ class resa_planning{
 
 	//Transformation prevision en reservation(s)
 	public function to_resa() {
-
-		global $dbh;
 		//Il faut insérer la prévision avant les résas déjà créées
 		$q = 'select date_sub(resa_date,INTERVAL 1 DAY) from resa where resa_idnotice='.$this->resa_idnotice.
 				' and resa_idbulletin='.$this->resa_idbulletin.
 				' and resa_cb="" order by resa_date limit 1';
-		$r = pmb_mysql_query($q,$dbh);
+		$r = pmb_mysql_query($q);
 
 		if(pmb_mysql_num_rows($r)) {
 			//Au moins une resa
@@ -188,16 +159,16 @@ class resa_planning{
 		while($this->resa_remaining_qty) {
 			$q = 'insert into resa (resa_idempr,resa_idnotice,resa_idbulletin,resa_date,resa_date_debut,resa_date_fin,resa_loc_retrait,resa_planning_id_resa) '.
 					'values ('.$this->resa_idempr.','.$this->resa_idnotice.','.$this->resa_idbulletin.',"'.$d.'","'.$this->resa_date_debut.'","'.$this->resa_date_fin.'",'.$this->resa_loc_retrait.','.$this->id_resa.')';
-			$r = pmb_mysql_query($q,$dbh);
-			$id_resa = pmb_mysql_insert_id($dbh);
+			$r = pmb_mysql_query($q);
+			$id_resa = pmb_mysql_insert_id();
 
 			// Archivage de la résa: info lecteur et notice et nombre d'exemplaire
 			$q = "SELECT * FROM empr WHERE id_empr=".$this->resa_idempr;
-			$r = pmb_mysql_query($q,$dbh);
+			$r = pmb_mysql_query($q);
 			$empr = pmb_mysql_fetch_object($r);
 
 			$q = "SELECT count(*) FROM exemplaires where expl_notice=".$this->resa_idnotice." and expl_bulletin=".$this->resa_idbulletin;
-			$r = pmb_mysql_query($q, $dbh);
+			$r = pmb_mysql_query($q);
 			$nb_expl = pmb_mysql_result($r,0,0);
 
 			$q = "INSERT INTO resa_archive SET
@@ -219,15 +190,14 @@ class resa_planning{
 					resarc_empr_location = ".$empr->empr_location.",
 					resarc_expl_nb = $nb_expl,
 					resarc_resa_planning_id_resa = ".$this->id_resa;
-			pmb_mysql_query($q, $dbh);
-			$id_resarc = pmb_mysql_insert_id($dbh);
+			pmb_mysql_query($q);
+			$id_resarc = pmb_mysql_insert_id();
 			// Lier archive et résa pour suivre l'évolution de la résa
 			$query = "update resa SET resa_arc=$id_resarc where id_resa=".$id_resa;
-			pmb_mysql_query($query, $dbh);
+			pmb_mysql_query($query);
 
 			$this->resa_remaining_qty--;
 		}
 		$this->save();
 	}
-
 }

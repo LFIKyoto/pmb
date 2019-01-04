@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr_func.inc.php,v 1.37 2015-06-02 13:24:51 dgoron Exp $
+// $Id: empr_func.inc.php,v 1.52 2018-10-24 12:34:04 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -23,12 +23,17 @@ function connexion_empr() {
 	global $cms_build_activate;
 	//a positionner si les vues OPAC sont activées
 	global $include_path;
+	global $opac_integrate_anonymous_cart;
 	
 	$erreur_connexion=0;
 	
 	$log_ok=0;
 	if (!$_SESSION["user_code"]) {
-		if (!get_magic_quotes_gpc()) $p_login=addslashes($_POST['login']); else $p_login=$_POST['login'];
+		if (!get_magic_quotes_gpc()) {
+			$p_login=(isset($_POST['login']) ? addslashes($_POST['login']) : '');
+		} else {
+			$p_login=(isset($_POST['login']) ? $_POST['login'] : '');
+		}
 		if ($time_expired==0) { // début if ($time_expired==0) 1
 			//Si pas de session en cours, vérification du login
 			$verif_query = "SELECT id_empr, empr_cb, empr_nom, empr_prenom, empr_password, empr_lang, empr_date_expiration<sysdate() as isexp, empr_login, empr_ldap,empr_location, allow_opac 
@@ -36,17 +41,29 @@ function connexion_empr() {
 					JOIN empr_statut ON empr_statut=idstatut
 					WHERE empr_login='".($emprlogin ? $emprlogin :$p_login)."'";
 			$verif_result = pmb_mysql_query($verif_query);
-			// récupération des valeurs MySQL du lecteur et injection dans les variables
-			while ($verif_line = pmb_mysql_fetch_array($verif_result)) {
-				$verif_empr_cb = $verif_line['empr_cb'];
-				$verif_empr_login = $verif_line['empr_login'];
-				$verif_empr_ldap = $verif_line['empr_ldap'];
-				$verif_empr_password = $verif_line['empr_password'];
-				$verif_lang = ($verif_line['empr_lang']?$verif_line['empr_lang']:"fr_FR");
-				$verif_id_empr = $verif_line['id_empr'];
-				$verif_isexp = $verif_line['isexp'];
-				$verif_opac = $verif_line['allow_opac'];
-				$empr_location = $verif_line['empr_location'];
+			if(pmb_mysql_num_rows($verif_result)) {
+				// récupération des valeurs MySQL du lecteur et injection dans les variables
+				while ($verif_line = pmb_mysql_fetch_array($verif_result)) {
+					$verif_empr_cb = $verif_line['empr_cb'];
+					$verif_empr_login = $verif_line['empr_login'];
+					$verif_empr_ldap = $verif_line['empr_ldap'];
+					$verif_empr_password = $verif_line['empr_password'];
+					$verif_lang = ($verif_line['empr_lang']?$verif_line['empr_lang']:"fr_FR");
+					$verif_id_empr = $verif_line['id_empr'];
+					$verif_isexp = $verif_line['isexp'];
+					$verif_opac = $verif_line['allow_opac'];
+					$empr_location = $verif_line['empr_location'];
+				}
+			} else {
+				$verif_empr_cb = '';
+				$verif_empr_login = '';
+				$verif_empr_ldap = '';
+				$verif_empr_password = '';
+				$verif_lang = '';
+				$verif_id_empr = 0;
+				$verif_isexp = '';
+				$verif_opac = 0;
+				$empr_location = 0;
 			}
 
 			$auth_ok=0;
@@ -54,20 +71,28 @@ function connexion_empr() {
 				if (!$encrypted_password) {
 					$encrypted_password = password::gen_hash($password, $verif_id_empr);
 				}
+				$empty_encrypted_password = password::gen_hash('', $verif_id_empr);
+				
 				if ($ext_auth) $auth_ok=$ext_auth;
 				elseif($code) $auth_ok = connexion_auto();
 				elseif($password_key) $auth_ok = connexion_unique();
 				elseif (($verif_empr_ldap)) $auth_ok=auth_ldap($p_login,$password); // auth by server ldap
-				else $auth_ok=( ($empty_pwd ||(!$empty_pwd && $verif_empr_password)) && ($verif_empr_password==stripslashes($encrypted_password)) && ($verif_empr_login!="")/*&&(!$verif_isexp)*/ ); //auth standard
+				else $auth_ok=( ($empty_pwd || $verif_empr_password!=$empty_encrypted_password) && ($verif_empr_password==$encrypted_password) && ($verif_empr_login!='')/*&&(!$verif_isexp)*/ ); //auth standard
 			}
 
-			if ($auth_ok) { // début if ($auth_ok) 1 
+			if ($auth_ok) { // début if ($auth_ok) 1
+				$cart_anonymous = array();
+				if($opac_integrate_anonymous_cart && isset($_SESSION['cart'])) {
+					$cart_anonymous = $_SESSION['cart'];
+				}
 				//Si mot de passe correct, enregistrement dans la session de l'utilisateur
 				startSession("PmbOpac", $verif_empr_login);
 				
 				$log_ok=1;
+				$login=$verif_empr_login;//Dans le cas de la connexion automatique à l'Opac
 				if($_SESSION["cms_build_activate"])$cms_build_activate=1;
-				if($_SESSION["build_id_version"])$build_id_version=$_SESSION["build_id_version"];
+				if(isset($_SESSION["build_id_version"]) && $_SESSION["build_id_version"])$build_id_version=$_SESSION["build_id_version"];
+				else $build_id_version='';
 				//Récupération de l'environnement précédent
 				$requete="select session from opac_sessions where empr_id=".$verif_id_empr;
 				$res_session=pmb_mysql_query($requete);
@@ -116,12 +141,17 @@ function connexion_empr() {
 						$_SESSION["opac_view"]=0;
 					}
 					$css=$_SESSION["css"]=$opac_default_style;
-				}				
-				$first_log=true;
+				}
+				if(count($cart_anonymous)) {
+					$_SESSION["cart_anonymous"] = $cart_anonymous;
+				}
+				if(!$code && !$password_key) {
+					$first_log=true;
+				}
 			} else {
 				//Sinon, on détruit la session créée
 				if($_SESSION["cms_build_activate"])$cms_build_activate=1;
-				if($_SESSION["build_id_version"])$build_id_version=$_SESSION["build_id_version"];				
+				if(isset($_SESSION["build_id_version"]) && $_SESSION["build_id_version"])$build_id_version=$_SESSION["build_id_version"];				
 				@session_destroy();					
 				if($cms_build_activate){
 					session_start();
@@ -133,9 +163,9 @@ function connexion_empr() {
 				}
 				if (($verif_empr_password!=stripslashes($encrypted_password)) || ($verif_empr_login=="") || $verif_empr_ldap || $code){
 					// la saisie du mot de passe ou du login est incorrect ou erreur de connexion avec le ldap
-					$erreur_session = $empr_erreur_header;
+					$erreur_session = (isset($empr_erreur_header) ? $empr_erreur_header : '');
 					$erreur_session .= $msg["empr_type_card_number"]."<br />";
-					$erreur_session .= $empr_erreur_footer;
+					$erreur_session .= (isset($empr_erreur_footer) ? $empr_erreur_footer : '');
 					$erreur_connexion=3;
 				}elseif ($verif_isexp){
 					//Si l'abonnement est expiré
@@ -147,16 +177,19 @@ function connexion_empr() {
 					$erreur_connexion=2;
 				}else{
 					// Autre cas au cas où...
-					$erreur_session = $empr_erreur_header;
+					$erreur_session = (isset($empr_erreur_header) ? $empr_erreur_header : '');
 					$erreur_session .= $msg["empr_type_card_number"]."<br />";
-					$erreur_session .= $empr_erreur_footer;
+					$erreur_session .= (isset($empr_erreur_footer) ? $empr_erreur_footer : '');
 					$erreur_connexion=3;
 				}
 				$log_ok=0 ;
 				$time_expired = 0 ;
 			} // fin if ($auth_ok) 1
-		} else  // la session a expiré, on va le lui dire
-			echo "<script>alert(\"".sprintf($msg["session_expired"],round($opac_duration_session_auth/60))."\");</script>";
+		} elseif ($time_expired==1) {  // la session a expiré, on va le lui dire
+			echo "<script>alert(reverse_html_entities(\"".sprintf($msg["session_expired"],round($opac_duration_session_auth/60))."\"));</script>";
+		} else { //session anonyme expirée, time_expired=2
+			echo "<script>alert(reverse_html_entities(\"".sprintf($msg["anonymous_session_expired"],round($opac_duration_session_auth/60))."\"));</script>";
+		}
 	} else {
 		//Si session en cours, pas de problème...
 		$log_ok=1;
@@ -167,7 +200,7 @@ function connexion_empr() {
 		if(!$code)$_SESSION["connexion_empr_auto"]=0;
 	}
 	// pour visualiser une notice issue de DSI avec une connexion auto
-	if($_SESSION["connexion_empr_auto"] && $log_ok){
+	if(isset($_SESSION["connexion_empr_auto"]) && $_SESSION["connexion_empr_auto"] && $log_ok){
 		global $connexion_empr_auto,$tab,$lvl;
 		$connexion_empr_auto=1;
 		if(!$code){
@@ -199,7 +232,8 @@ function recupere_pref_droits($login,$limitation_adhesion=0) {
 		$empr_sexe,
 		$empr_login,
 		$empr_ldap,
-		$empr_location;
+		$empr_location,
+		$empr_statut;
 
 	global $allow_loan,
 		$allow_loan_hist,
@@ -216,7 +250,9 @@ function recupere_pref_droits($login,$limitation_adhesion=0) {
 		$allow_liste_lecture,
 		$allow_self_checkout,
 		$allow_self_checkin,
-		$allow_serialcirc;
+		$allow_serialcirc,
+		$allow_scan_request,
+		$allow_contribution;
 	global $opac_adhesion_expired_status;
 	
 	if($limitation_adhesion && $opac_adhesion_expired_status){
@@ -239,6 +275,8 @@ function recupere_pref_droits($login,$limitation_adhesion=0) {
 		$droit_self_checkout = $data_expired['allow_self_checkout'];
 		$droit_self_checkin = $data_expired['allow_self_checkin'];
 		$droit_serialcirc = $data_expired['allow_serialcirc'];
+		$droit_scan_request = $data_expired['allow_scan_request'];
+		$droit_contribution = $data_expired['allow_contribution'];
 	} else {
 		$droit_loan= 1;
 		$droit_loan_hist=1;
@@ -256,6 +294,8 @@ function recupere_pref_droits($login,$limitation_adhesion=0) {
 		$droit_self_checkout=1;
 		$droit_self_checkin=1;
 		$droit_serialcirc=1;
+		$droit_scan_request=1;
+		$droit_contribution=1;
 	}
 	
 	$query0 = "select * from empr, empr_statut where empr_login='".$login."' and idstatut=empr_statut ";
@@ -280,6 +320,9 @@ function recupere_pref_droits($login,$limitation_adhesion=0) {
 	$empr_login= $data['empr_login'];
 	$empr_ldap= $data['empr_ldap'];
 	$empr_location= $data['empr_location'];
+	$empr_date_adhesion= $data['empr_date_adhesion'];
+	$empr_date_expiration= $data['empr_date_expiration'];
+	$empr_statut= $data['empr_statut'];
 	
 	// droits de l'utilisateur
 	$allow_loan= $data['allow_loan'] & $droit_loan;
@@ -298,16 +341,34 @@ function recupere_pref_droits($login,$limitation_adhesion=0) {
 	$allow_self_checkout= $data['allow_self_checkout'] & $droit_self_checkout;
 	$allow_self_checkin= $data['allow_self_checkin'] & $droit_self_checkin;
 	$allow_serialcirc= $data['allow_serialcirc'] & $droit_serialcirc;
+	$allow_scan_request= $data['allow_scan_request'] & $droit_scan_request;
+	$allow_contribution = $data['allow_contribution'] & $droit_contribution;
 }
 
+function connexion_auto_duration(){
+	global $opac_connexion_auto_duration;
+	global $date_conex;
+	
+	$log_ok=1;
+	$opac_connexion_auto_duration += 0;
+	if($opac_connexion_auto_duration) {
+		$diff = StrToTime(date('Y-m-d H:i:s')) - $date_conex;
+		$hours = $diff / ( 60 * 60 );
+		if($hours > $opac_connexion_auto_duration) {
+			$log_ok=0;
+		}
+	}
+	return $log_ok;
+}
 
 function connexion_auto(){
 	global $opac_connexion_phrase;
 	global $date_conex,$emprlogin,$code;
 	
 	$log_ok=0;
-	if($opac_connexion_phrase && ($code == md5($opac_connexion_phrase.$emprlogin.$date_conex)))
+	if(connexion_auto_duration() && $opac_connexion_phrase && ($code == md5($opac_connexion_phrase.$emprlogin.$date_conex))) {
 		$log_ok = 1;
+	}
 	return $log_ok;
 }
 

@@ -2,14 +2,14 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_generic.class.php,v 1.6 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: searcher_generic.class.php,v 1.17 2018-11-29 09:04:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/analyse_query.class.php");
 require_once($class_path."/filter_results.class.php");
 require_once($class_path."/sort.class.php");
-
+require_once($class_path.'/elements_list/elements_records_list_ui.class.php');
 
 //classe devant piloter les recherches de manière générique (quelle idée...)
 class searcher_generic {
@@ -30,6 +30,7 @@ class searcher_generic {
 	public $search_noise_limit_type;
 	public $pmb_search_cache_duration;
 	public $stemming_active;
+	public $result;
 	
 	protected $tri="default";	// tri à utiliser
 	
@@ -73,22 +74,24 @@ class searcher_generic {
 			$this->table_tempo = $this->aq->get_objects_pert($this->objects_ids,$this->object_index_key,$this->object_words_table,$this->object_words_value,$this->object_fields_table,$this->object_fields_value,$this->object_key,$this->field_restrict,false,false,$query);
 		}
 	}
-
+	
+	public function get_objects_ids() {
+	    return $this->objects_ids;
+	}
+	
 	protected function _get_objects_ids(){
 		global $dbh;
 		if(!$this->searched){
 			$query = $this->_get_search_query();
 			$this->objects_ids="";
 			$res = pmb_mysql_query($query,$dbh);
-			if($res){
-				if(pmb_mysql_num_rows($res)){
-					while ($row = pmb_mysql_fetch_object($res)){
-						if($this->objects_ids!="") $this->objects_ids.=",";
-						$this->objects_ids.=$row->{$this->object_index_key};
-					}
+			if(pmb_mysql_num_rows($res)){
+				while ($row = pmb_mysql_fetch_object($res)){
+					if($this->objects_ids!="") $this->objects_ids.=",";
+					$this->objects_ids.=$row->{$this->object_index_key};
 				}
-				pmb_mysql_free_result($res);
 			}
+			pmb_mysql_free_result($res);
 			$this->searched=true;
 		}
 		return $this->objects_ids;
@@ -105,10 +108,16 @@ class searcher_generic {
 	}
 
 	protected function _get_sign($sorted=false){
+		$str_to_hash = $this->_get_sign_elements($sorted);
+		return "gestion_".md5($str_to_hash);
+	}
+	
+	protected function _get_sign_elements($sorted=false) {
 		global $page;
 		global $lang;
 		global $PMBuserid;
-
+		global $nb_per_page_custom;
+		
 		$str_to_hash = session_id();
 		$str_to_hash.= $PMBuserid;
 		$str_to_hash.= "&lang=".$lang;
@@ -116,9 +125,12 @@ class searcher_generic {
 		$str_to_hash.= "&user_query=".$this->_get_user_query();
 		if($sorted){
 			$str_to_hash.= "&tri=".$this->tri;
-			$str_to_hash.= "&page=$page";
+			$str_to_hash.= "&page=".$page;
 		}
-		return "gestion_".md5($str_to_hash);
+		if($nb_per_page_custom) {
+			$str_to_hash.= "&nb_per_page_custom=".$nb_per_page_custom;
+		}
+		return $str_to_hash;
 	}
 
 	protected function _get_in_cache($sorted=false){
@@ -175,7 +187,6 @@ class searcher_generic {
 
 	public function get_result(){
 		global $dbh;
-		$this->tri = $tri;
 		$this->_delete_old_objects();
 		$this->_analyse();
 		$cache_result = $this->_get_in_cache();
@@ -183,9 +194,9 @@ class searcher_generic {
 			$this->_get_objects_ids();
 			$this->_filter_results();
 			//Ecretage
-			if($this->search_noise_limit_type && $this->user_query != "*"){
+			if($this->search_noise_limit_type && $this->user_query !== "*"){
 				$limit = 0;
-				//calcul pertinance
+				//calcul pertinence
 				$this->_get_pert();
 				//calcul du seuil.
 				
@@ -214,7 +225,6 @@ class searcher_generic {
 					pmb_mysql_query($query,$dbh);
 					$query ="select distinct ".$this->object_key." from ".$this->table_tempo;
 					$result = pmb_mysql_query($query,$dbh);
-					
 					if(pmb_mysql_num_rows($result)){
 						$this->objects_ids = "";
 						while($row = pmb_mysql_fetch_object($result)){
@@ -246,7 +256,6 @@ class searcher_generic {
 		return $this->result;
 	}
 
-
 	protected function _sort_result($start,$number){
 		$this->_get_pert();
 		$this->_sort($start,$number);
@@ -257,13 +266,60 @@ class searcher_generic {
 	}
 
 	public function get_full_query(){
-		if($this->get_result()){
+		if ($this->get_result()) {
 			$query = $this->_get_pert(true);
-		}else{
+		} else {
 			$query = "select ".$this->object_index_key." from ".$this->object_words_table." where ".$this->object_index_key." = 0";
 		}
 		return $query;
 	}
+	
+	/**
+	 * Ajoute des restriction au tableau $field_restrict
+	 * @param array $fields_restrict Tableau des restrictions à ajouter
+	 */
+	public function add_fields_restrict($fields_restrict = array()) {
+		$this->field_restrict = array_merge($this->field_restrict, $fields_restrict);
+	}
+	
+	public function explain($display, $mode = 'records',$mini=false){
+		error_reporting(E_ALL & ~E_NOTICE);
+		print '<div style="margin-left:10px;width:49%;overflow:hidden;float:left">';
+		print '<h1>Recherche Native</h1>';
+		print '<p>QUERY : '.$this->user_query.'</p>';
+		$start = microtime(true);
+		print '<p>Nombre de resultats trouves: '.$this->get_nb_results().'</p>';
+		if(!$mini && $this->get_nb_results()>0){
+			$result = $this->get_sorted_result();
+			$inter = microtime(true);
+			print '<p>Temps de calcul (en seconde) : '.($inter - $start).'</p>';
+			if ($display) {
+				switch ($mode) {
+					case 'authors' :
+						$elements_authorities_list_ui = new elements_authorities_list_ui($result, 20, 1);
+						print $elements_authorities_list_ui->get_elements_list();
+						break;
+					case 'titres_uniformes' :
+						$elements_authorities_list_ui = new elements_authorities_list_ui($result, 20, 7);
+						print $elements_authorities_list_ui->get_elements_list();
+						break;
+					case 'records' :
+					default:
+						$elements_records_list_ui = new elements_records_list_ui($result, count($result), false);
+						print $elements_records_list_ui->get_elements_list();
+						break;
+				}
+			}
+			print '<p>Temps de gen page (en seconde) : '.(microtime(true) - $inter).'</p>';
+		}
+	
+		print '<p>Temps Total (en seconde) : '.(microtime(true) - $start).'</p></div>';
+	}
+	
 
+	public function init_fields_restrict($mode){
+		return false;
+	}
+	
 
 }

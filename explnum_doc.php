@@ -3,7 +3,7 @@
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // | creator : Yves PRATTER                                                   |
 // +-------------------------------------------------+
-// $Id: explnum_doc.php,v 1.7 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: explnum_doc.php,v 1.9 2018-02-26 17:01:59 apetithomme Exp $
 
 // définition du minimum nécéssaire 
 $base_path     = ".";                            
@@ -38,7 +38,7 @@ if ($ligne->explnum_doc_data) {
 		$name = " name='$name' ";
 	} else $type="type='$ligne->explnum_mimetype'" ;
 	if ($_mimetypes_bymimetype_[$ligne->explnum_mimetype]["embeded"]=="yes") {
-		print "<html><body><EMBED src=\"./explnum_doc_data.php?explnumdoc_id=$explnumdoc_id\" $type $name controls='console' ></EMBED></body></html>" ;
+		print "<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" /></head><body><EMBED src=\"./explnum_doc_data.php?explnumdoc_id=$explnumdoc_id\" $type $name controls='console' ></EMBED></body></html>" ;
 		exit ;
 	}
 	
@@ -48,7 +48,7 @@ if ($ligne->explnum_doc_data) {
 	}
 	elseif ($ligne->explnum_doc_extfichier)
 		$nomfichier="pmb".$ligne->explnum_id.".".$ligne->explnum_doc_extfichier;
-	if ($nomfichier) header("Content-Disposition: inline; filename=".$nomfichier);
+	if ($nomfichier) header('Content-Disposition: inline; filename="'.$nomfichier.'"');
 	
 	header("Content-Type: ".$ligne->explnum_doc_mimetype);
 	print $ligne->explnum_doc_data;

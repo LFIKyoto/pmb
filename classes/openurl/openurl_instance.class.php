@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: openurl_instance.class.php,v 1.1 2011-08-02 12:35:59 arenou Exp $
+// $Id: openurl_instance.class.php,v 1.2 2016-12-22 16:36:18 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -17,24 +17,24 @@ require_once($class_path."/export_param.class.php");
 //Cette s'occupe de toute la gestion des classes OpenURL, donc en théorie, si je m'en sors, cette seule classe peut suffir à l'interface...
 
 class openurl_instance {
-	var $notice_id = 0;				// identifiant de la notice
-	var $notice_externe_id = 0;		// identifiant de la notice externe
-	var $parent_id = 0;				// identifiant de la notice parente
-	var $params = array();			// jeu de paramètres...
-	var $notice_infos = "";			// informations sur la notice
-	var $parent_infos = "";			// informations sur la notice parente, si disponible...
-	var $serialization = "";		// mode de sérialization
-	var $referent;					// entité referent
-	var $referringEntity;			// entité referring_entity
-	var $requester;					// entité requester
-	var $serviceType;				// entité service_type
-	var $resolver;					// entité resolver
-	var $referrer;					// entité referrer
-	var $contextObject;				// l'objet contextuel
-	var $transport;					// object pour le transport
-	var $source_id;					// id de la source
+	public $notice_id = 0;				// identifiant de la notice
+	public $notice_externe_id = 0;		// identifiant de la notice externe
+	public $parent_id = 0;				// identifiant de la notice parente
+	public $params = array();			// jeu de paramètres...
+	public $notice_infos = "";			// informations sur la notice
+	public $parent_infos = "";			// informations sur la notice parente, si disponible...
+	public $serialization = "";		// mode de sérialization
+	public $referent;					// entité referent
+	public $referringEntity;			// entité referring_entity
+	public $requester;					// entité requester
+	public $serviceType;				// entité service_type
+	public $resolver;					// entité resolver
+	public $referrer;					// entité referrer
+	public $contextObject;				// l'objet contextuel
+	public $transport;					// object pour le transport
+	public $source_id;					// id de la source
 
-	function openurl_instance($id=0,$id_externe=0,$params=array(),$source_id=0){
+	public function __construct($id=0,$id_externe=0,$params=array(),$source_id=0){
 		$this->notice_id = $id;
 		$this->notice_externe_id = $id_externe;
 		$this->params = $params;
@@ -42,7 +42,7 @@ class openurl_instance {
 		$this->fetch_data();
 	}
 	
-	function fetch_data(){
+	public function fetch_data(){
 		//si on a rien, on peut pas travailler...
 		if(!$this->notice_id && !$this->notice_externe_id)
 			return false;
@@ -110,7 +110,7 @@ class openurl_instance {
 		}
 	}
 
-	function getReferent(){
+	public function getReferent(){
 		$descriptors = array();
 		foreach($this->params['entities']['referent'] as $desc => $type){
 			if(is_array($type)){
@@ -142,7 +142,7 @@ class openurl_instance {
 		return $this->referent;
 	}
 
-	function getReferringEntity(){
+	public function getReferringEntity(){
 		if($this->parent_id){
 			$descriptors = array();
 			
@@ -180,7 +180,7 @@ class openurl_instance {
 		}
 	}
 
-	function getRequester(){
+	public function getRequester(){
 		if($this->params['entities']['requester']['allow'] == "yes"){
 			$class_desc = "openurl_descriptor_identifier_".$this->serialization."_requester";
 			$desc = new $class_desc($this->params['entities']['requester']['value']);
@@ -192,7 +192,7 @@ class openurl_instance {
 		}
 	}
 
-	function getServiceType(){
+	public function getServiceType(){
 		if($this->params['entities']['service_type']['allow'] == "yes"){
 			$class_desc = "openurl_descriptor_byval_".$this->serialization."_service_type";
 			$desc = new $class_desc($this->params['entities']['service_type']['values']);
@@ -204,7 +204,7 @@ class openurl_instance {
 		}
 	}
 
-	function getResolver(){
+	public function getResolver(){
 			if($this->params['entities']['resolver']['allow'] == "yes"){
 			$class_desc = "openurl_descriptor_identifier_".$this->serialization."_resolver";
 			$desc = new $class_desc($this->params['entities']['resolver']['value']);
@@ -216,7 +216,7 @@ class openurl_instance {
 		}
 	}
 
-	function getReferrer(){
+	public function getReferrer(){
 		if($this->params['entities']['referrer']['allow'] == "yes"){
 			$class_desc = "openurl_descriptor_identifier_".$this->serialization."_referrer";
 			$desc = new $class_desc($this->params['entities']['referrer']['value']);
@@ -228,7 +228,7 @@ class openurl_instance {
 		}
 	}
 
-	function generateEntities(){
+	public function generateEntities(){
 		$entities = array();
 		$entities[] = $this->getReferent();
 		
@@ -250,7 +250,7 @@ class openurl_instance {
 		return $entities;
 	}
 
-	function getContextObject(){
+	public function getContextObject(){
 		switch($this->serialization){
 			case "kev_mtx" : 
 					$this->contextObject = new openurl_context_object_kev_mtx_ctx();
@@ -258,7 +258,7 @@ class openurl_instance {
 		}
 	}
 	
-	function generateContextObject(){
+	public function generateContextObject(){
 		$this->getContextObject();
 		$entities = $this->generateEntities();
 		foreach($entities as $entity){
@@ -266,7 +266,7 @@ class openurl_instance {
 		}
 	}
 	
-	function getTransport(){
+	public function getTransport(){
 		if(!$this->transport){
 			$class = "openurl_transport_".$this->params['transport']['method']."_".$this->params['transport']['protocole'];
 			if($this->params['transport']['method']=="byref"){
@@ -275,13 +275,13 @@ class openurl_instance {
 		}
 	}
 	
-	function generateTransport(){
+	public function generateTransport(){
 		$this->getTransport();
 		if(!$this->contextObject) $this->generateContextObject();
 		$this->transport->addContext($this->contextObject);
 	}
 	
-	function getInFrame($width,$height){
+	public function getInFrame($width,$height){
 		$this->generateTransport();
 		return  "<iframe style='width:".$width."px;height:".$height."px' src='".$this->transport->generateURL()."'></iframe>";
 	}

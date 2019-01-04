@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_element.class.php,v 1.5 2014-10-07 10:34:17 arenou Exp $
+// $Id: vedette_element.class.php,v 1.9 2018-12-04 10:26:44 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -33,6 +33,12 @@ abstract class vedette_element {
 	protected $isbd;
 	
 	/**
+	 * Paramètres supplémentaires
+	 * @var array
+	 */
+	protected $params;
+	
+	/**
 	 * Instance de la classe PMB de l'autorité ou de la notice
 	 * @access private
 	 */
@@ -44,6 +50,19 @@ abstract class vedette_element {
 	 */
 	protected $db_id;
 	
+	
+	/**
+	 * Instance liée à l'élément
+	 * @var unknown
+	 */
+	protected $entity;
+	
+	/**
+	 * Numéro du champ comme défini dans la grammaire
+	 * @var int
+	 */
+	protected $num_available_field;
+	
 	/**
 	 * Construit un element de la vedette
 	 *
@@ -53,10 +72,11 @@ abstract class vedette_element {
 	 * @return void
 	 * @access public
 	 */
-	public function __construct($type, $id, $isbd = ""){
-		$this->type = $type;
-		$this->id=$id;
+	public function __construct($num_available_field, $id, $isbd = "", $params = array()){
+		$this->num_available_field = $num_available_field;
+		$this->id = $id;
 		$this->isbd = $isbd;
+		$this->params = $params;
 		$this->fetch_datas_cache();
 	}
 	
@@ -97,6 +117,10 @@ abstract class vedette_element {
 		return $this->element;
 	}
 	
+	public function get_num_available_field() {
+		return $this->num_available_field;
+	}
+	
 	public static function search_vedette_element_ui_class_name($vedette_element_class_name){
 		if(class_exists($vedette_element_class_name.'_ui')){
 			return $vedette_element_class_name.'_ui';
@@ -121,4 +145,15 @@ abstract class vedette_element {
 		}
 	}
 	
+	protected function get_generic_link(){
+		return "./autorites.php?categ=see&sub=!!type!!&id=!!id!!";
+	}
+	
+	public function get_entity(){
+		return $this->entity;
+	}
+	
+	public function get_params() {
+		return $this->params;
+	}
 }

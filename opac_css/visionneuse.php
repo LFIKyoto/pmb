@@ -2,25 +2,38 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: visionneuse.php,v 1.32.4.1 2015-10-01 13:35:53 arenou Exp $
+// $Id: visionneuse.php,v 1.42 2018-07-04 09:50:33 dgoron Exp $
 $base_path = ".";
 $include_path ="$base_path/includes";
 $class_path ="$base_path/classes";
 $visionneuse_path="$base_path/visionneuse";
+
+require_once($include_path."/apache_functions.inc.php");
+
+$headers = getallheaders();
+if(isset($headers['If-Modified-Since'])){
+	if(isset($_GET['lvl']) && isset($_GET['explnum_id']) && isset($_GET['method']) && isset($_GET['page'])){
+		$lvl = $_GET['lvl'];
+		$explnum_id= $_GET['explnum_id']*1;
+		$method= $_GET['method'];
+		$page= $_GET['page']*1;
+		if($lvl == 'ajax' && $method == 'getPage'){
+			$tmp_file = $visionneuse_path.'/temp/pmb_page_'.$explnum_id.'-'.$page;
+			if(file_exists($tmp_file) && filemtime($tmp_file) <= strtotime($headers['If-Modified-Since'])){
+				header('Last-Modified: '.$headers['If-Modified-Since'], true, 304);
+				return;
+			}
+			
+		}
+	}
+}
+
 //y a plein de trucs à récup...
 require_once($base_path."/includes/init.inc.php");
-require_once($base_path."/includes/error_report.inc.php") ;
-require_once($base_path.'/includes/opac_config.inc.php');
-require_once($base_path.'/includes/opac_db_param.inc.php');
-require_once($base_path.'/includes/opac_mysql_connect.inc.php');
-$dbh = connection_mysql();
-require_once($base_path."/includes/session.inc.php");
-//vraiment plein...
 
-require_once($include_path.'/misc.inc.php');
+//fichiers nécessaires au bon fonctionnement de l'environnement
+require_once($base_path."/includes/common_includes.inc.php");
 
-require_once($base_path.'/includes/start.inc.php');
-require_once($base_path.'/includes/divers.inc.php');
 require_once($include_path.'/templates/common.tpl.php');
 require_once($base_path."/includes/includes_rss.inc.php");
 require_once($class_path."/cms/cms_cache.class.php");
@@ -35,31 +48,6 @@ if($opac_parse_html || $cms_active){
 	ob_start();
 }
 
-//si les vues sont activées (à laisser après le calcul des mots vides)
-if($opac_opac_view_activate){
-	if($opac_view==-1){
-		$_SESSION["opac_view"]="default_opac";
-	}else if($opac_view)	{
-		$_SESSION["opac_view"]=$opac_view*1;
-	}
-	$_SESSION['opac_view_query']=0;
-	if(!$pmb_opac_view_class) $pmb_opac_view_class= "opac_view";
-	require_once($base_path."/classes/".$pmb_opac_view_class.".class.php");
-
-	$opac_view_class= new $pmb_opac_view_class($_SESSION["opac_view"],$_SESSION["id_empr_session"]);
-	if($opac_view_class->id){
-		$opac_view_class->set_parameters();
-		$opac_view_filter_class=$opac_view_class->opac_filters;
-		$_SESSION["opac_view"]=$opac_view_class->id;
-		if(!$opac_view_class->opac_view_wo_query) {
-			$_SESSION['opac_view_query']=1;
-		}
-	}else{
-		$_SESSION["opac_view"]=0;
-	}
-	$css=$_SESSION["css"]=$opac_default_style;
-}
-
 $explnum_id+=0;
 
 //Pour les epubs
@@ -71,8 +59,9 @@ if (isset($_SERVER["PATH_INFO"])) {
 	$explnum = array_shift($tmpEpub);
 	$myPage = implode("/",$tmpEpub);
 }else{
-	if(!$myPage)
+	if(!isset($myPage) || !$myPage)
 		$myPage='';
+	if(!isset($driver)) $driver = '';
 }
 
 switch($driver){
@@ -129,28 +118,31 @@ switch($driver){
 			$start = true;
 		}
 		if($lvl == "afficheur" || $lvl == "visionneuse"){
+			if(!isset($search)) $search = '';
 			$params = array(
-					"mode" => $mode,
-					"user_query" => $user_query,
-					"pert" => $pert,
-					"join" => $join,
-					"clause" => $clause,
-					"clause_bull" => $clause_bull,
-					"clause_bull_num_notice" => $clause_bull_num_notice,
-					"tri" => $tri,
-					"table" => $table,
+					"mode" => (isset($mode) ? $mode : ''),
+					"user_query" => (isset($user_query) ? $user_query : ''),
+					"pert" => (isset($pert) ? $pert : ''),
+					"join" => (isset($join) ? $join : ''),
+					"clause" => (isset($clause) ? $clause : ''),
+					"clause_bull" => (isset($clause_bull) ? $clause_bull : ''),
+					"clause_bull_num_notice" => (isset($clause_bull_num_notice) ? $clause_bull_num_notice : ''),
+					"tri" => (isset($tri) ? $tri : ''),
+					"table" => (isset($table) ? $table : ''),
 					"user_code" => $_SESSION["user_code"],
-					"idautorite" => $idautorite,
-					"id" => $id,
-					"idperio" => $idperio,
-					"search" => $search,
-					"bulletin" => $bulletin,
+					"idautorite" => (isset($idautorite) ? $idautorite : ''),
+					"id" => (isset($id) ? $id : ''),
+					"idperio" => (isset($idperio) ? $idperio : ''),
+					"search" => (!is_array($search) ? $search : $serialized_search), //A vérifier, mais à mon avis ca sert à rien ce test
+					"bulletin" => (isset($bulletin) ? $bulletin : ''),
 					"explnum_id" => $explnum_id,
-					"position" => $position,
-					"start" => $start,
+					"position" => (isset($position) ? $position : ''),
+					"start" => (isset($start) ? $start : ''),
 					"lvl" => $lvl,
-					"explnum" => $explnum,
-					"page" => $myPage
+					"explnum" => (isset($explnum) ? $explnum : ''),
+					"page" => (isset($myPage) ? $myPage : ''),
+					"bull_only" => (isset($bull_only) ? $bull_only : ''),
+					"serialized_search"=> (isset($serialized_search) ? $serialized_search : '')
 			);
 		}else{
 			$params = array(

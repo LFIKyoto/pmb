@@ -2,14 +2,14 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: transaction_list.class.php,v 1.3 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: transaction_list.class.php,v 1.5 2017-06-30 14:08:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($include_path."/templates/transaction/transaction.tpl.php");
 
 class transactype_list {	
-	var $transactype_list=array(); // liste des caisses
+	public $transactype_list=array(); // liste des caisses
 	
 	public function __construct(){
 		$this->fetch_data();		
@@ -35,6 +35,8 @@ class transactype_list {
 	public function get_form(){
 		global $msg;
 		global $transactype_list_form, $charset;
+		$form = '';
+		$parity = 0;
 		foreach ($this->transactype_list as $index =>$transactype){
 			if ($parity++ % 2)	$pair_impair = "even"; else $pair_impair = "odd";	
 			if($transactype['quick_allowed'])	$quick_allowed="x";	else $quick_allowed="";

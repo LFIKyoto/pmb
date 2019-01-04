@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_bannetteslist_datasource_bannetteslist.class.php,v 1.2 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: cms_module_bannetteslist_datasource_bannetteslist.class.php,v 1.4 2017-11-27 10:37:25 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -40,14 +40,14 @@ class cms_module_bannetteslist_datasource_bannetteslist extends cms_module_commo
 		$selector = $this->get_selected_selector();
 		if ($selector) {
 			$return = array();
-			if (count($selector->get_value()) > 0) {
+			if (is_array($selector->get_value()) && count($selector->get_value()) > 0) {				
 				foreach ($selector->get_value() as $value) {
-					$return[] = $value;
+					$return[] = $value*1;
 				}
 			}
 			
 			if(count($return)){
-				$query = "select id_bannette, nom_bannette, comment_public, nb_notices_diff from bannettes where id_bannette in (".implode(",",$return).")";
+				$query = "select id_bannette, nom_bannette, comment_public, nb_notices_diff from bannettes where id_bannette in ('".implode("','",$return)."')";
 
 				$result = pmb_mysql_query($query);
 				if(pmb_mysql_num_rows($result)){
@@ -55,7 +55,7 @@ class cms_module_bannetteslist_datasource_bannetteslist extends cms_module_commo
 					while($row=pmb_mysql_fetch_object($result)){
 						$flux_rss = array();
 						$i=0;
-						$query2 = "select * from rss_flux_content, rss_flux where id_rss_flux =num_rss_flux and type_contenant='BAN' and num_contenant=".$row->id_bannette;
+						$query2 = "select * from rss_flux_content, rss_flux where id_rss_flux =num_rss_flux and type_contenant='BAN' and num_contenant='".($row->id_bannette*1)."'";
 						$result2 = pmb_mysql_query($query2);						
 						if (pmb_mysql_num_rows($result2)) {
 							while ($row2 = pmb_mysql_fetch_object($result2)) {
@@ -80,7 +80,7 @@ class cms_module_bannetteslist_datasource_bannetteslist extends cms_module_commo
 								
 								$i++;
 							}
-						}						
+						}
 						$return[] = array("id" => $row->id_bannette, "name" => $row->nom_bannette, "comment" => $row->comment_public, "record_number" => $row->nb_notices_diff, "flux_rss" => $flux_rss);
 					}
 				}
@@ -89,5 +89,4 @@ class cms_module_bannetteslist_datasource_bannetteslist extends cms_module_commo
 		}
 		return false;
 	}
-	
 }

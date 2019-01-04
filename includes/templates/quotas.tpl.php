@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: quotas.tpl.php,v 1.9 2012-08-08 14:42:08 arenou Exp $
+// $Id: quotas.tpl.php,v 1.11 2018-06-20 09:53:10 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+if(!isset($query_compl)) $query_compl = '';
 
 $typ_quota_form="<div class='row'>!!quotas_elements_list!!</div>
 <div class='row'>
@@ -36,7 +38,7 @@ $typ_quota_form="<div class='row'>!!quotas_elements_list!!</div>
 ";
 
 $elements_quota_form="
-<form class='form-$current_module' name='quotas_typ_form' action='./admin.php?categ=$categ&sub=$sub&elements=$elements$query_compl' method='post'>
+<form class='form-".$current_module."' name='quotas_typ_form' action='./admin.php?categ=".$categ."&sub=".$sub."&elements=".(!empty($element) ? $element: "" ).$query_compl."' method='post'>
 	<div class='form-contenu'>
 		!!quota_table!!
 	</div>

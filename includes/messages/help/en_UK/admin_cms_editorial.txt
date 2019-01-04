@@ -1,4 +1,4 @@
-<h1>Administration of the editorial content</h1>
+<h2>Administration of the editorial content</h2>
 
 <p>The <b>administration of the editorial content</b> section allows to set the parameters of the application for the editorial content.
 <ul>

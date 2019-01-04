@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.6 2015-07-17 15:02:23 dgoron Exp $ -->
+$Id: manifest.xml,v 1.13 2017-12-07 09:03:42 vtouchard Exp $ -->
 <manifest>
 	<name>pmbesClean</name>
 	<methods>
@@ -94,6 +94,9 @@ $Id: manifest.xml,v 1.6 2015-07-17 15:02:23 dgoron Exp $ -->
 			</outputs>
 		</method>
 		<method name="cleanRelations" rights="" version="1.0" comment="msg:cleanRelations_description" language_independant="true">
+			<pmb_requirements>
+				<pmb_requirement start_path="class" file="notice_relations.class.php"/>
+			</pmb_requirements>
 			<inputs/>
 			<outputs>
 				<description>msg:cleanRelations_output_description</description>
@@ -226,6 +229,7 @@ $Id: manifest.xml,v 1.6 2015-07-17 15:02:23 dgoron Exp $ -->
 		<method name="cleanConcept" rights="" version="1.0" comment="msg:cleanConcept_description" language_independant="true">
 			<pmb_requirements>
 				<pmb_requirement start_path="class" file="onto/onto_index.class.php"/>
+				<pmb_requirement start_path="class" file="autoloader.class.php"/>
 			</pmb_requirements>
 			<inputs/>
 			<outputs>
@@ -241,6 +245,27 @@ $Id: manifest.xml,v 1.6 2015-07-17 15:02:23 dgoron Exp $ -->
 			<outputs>
 				<description>msg:hashEmprPassword_output_description</description>
 				<result name="result" type="scalar" dataType="string" description="msg:hashEmprPassword_result"/>
+			</outputs>
+		</method>
+		<method name="indexAuthorities" rights="" version="1.0" comment="msg:indexAuthorities_description" language_independant="true">
+			<pmb_requirements>
+				<pmb_requirement start_path="class" file="indexation_authority.class.php"/>
+				<pmb_requirement start_path="class" file="indexation_authperso.class.php"/>
+				<pmb_requirement start_path="class" file="netbase/netbase_authorities.class.php"/>
+		  		<requirement group="pmbesClean" name="indexAuthors" version="1.0"/>
+		  		<requirement group="pmbesClean" name="indexPublishers" version="1.0"/>
+		  		<requirement group="pmbesClean" name="indexCategories" version="1.0"/>
+		  		<requirement group="pmbesClean" name="indexCollections" version="1.0"/>
+		  		<requirement group="pmbesClean" name="indexSubCollections" version="1.0"/>
+		  		<requirement group="pmbesClean" name="indexSeries" version="1.0"/>
+		  		<requirement group="pmbesClean" name="indexIndexint" version="1.0"/>
+		  		<requirement group="pmbesClean" name="indexTitresUniformes" version="1.0"/>
+		  		<requirement group="pmbesClean" name="indexAuthperso" version="1.0"/>
+			</pmb_requirements>
+			<inputs/>
+			<outputs>
+				<description>msg:indexAuthorities_output_description</description>
+				<result name="result" type="scalar" dataType="string" description="msg:indexAuthorities_result"/>
 			</outputs>
 		</method>
 	</methods>

@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax.js,v 1.25 2014-01-27 17:24:41 mbertin Exp $
+// $Id: ajax.js,v 1.34 2018-06-14 07:36:49 dgoron Exp $
 
 requete=new Array();
 line=new Array();
@@ -10,7 +10,7 @@ last_word=new Array();
 ids=new Array();
 dontblur=false;
 timers=new Array();
-ajax_stat=new Array();//Permet de savoir si une requete Ajax est déjà en cours
+ajax_stat=new Array();//Permet de savoir si une requete Ajax est dï¿½jï¿½ en cours
 
 function isFirefox1() {
 	if(navigator.userAgent.indexOf("Firefox")!=-1){
@@ -67,6 +67,32 @@ function simulate_event(id) {
 	}
 }
 
+function ajax_resize_element(input){
+	var id="";
+	n=ids.length;
+	if (input.getAttribute("completion")) {
+		if (((input.getAttribute("type")=="text")||(input.nodeName=="TEXTAREA"))&&(input.getAttribute("id"))) {
+			ids[n]=input.getAttribute("id");		
+			id=ids[n];
+			w=input.clientWidth
+			if(w) {
+				d1= document.getElementById("d"+id);
+				if(d1)d1.style.width=w+"px";
+			}
+		}
+	}
+}
+
+function ajax_resize_elements(){
+	var inputs=document.getElementsByTagName("input");
+	for (i=0; i<inputs.length; i++) {
+		ajax_resize_element(inputs[i]);
+	}
+	var textareas=document.getElementsByTagName("textarea");
+	for (i=0; i<textareas.length; i++) {
+		ajax_resize_element(textareas[i]);
+	}
+}
 
 function ajax_pack_element(inputs) {
 	var id="";
@@ -78,13 +104,16 @@ function ajax_pack_element(inputs) {
 			//Insertion d'un div parent
 			w=inputs.clientWidth;
 			d=document.createElement("span");
-			d.style.width=w+"px";
+			if(w) {
+				d.style.width=w+"px";
+			}
 			p=inputs.parentNode;
 			var input=inputs;
 			p.replaceChild(d,inputs);
 			d.appendChild(input);
 			d1=document.createElement("div");
 			d1.setAttribute("id","d"+id);
+			d1.setAttribute("class","ajax_completion");
 			d1.style.width=w+"px";
 			d1.style.border="1px #000 solid";
 			d1.style.left="0px";
@@ -95,11 +124,11 @@ function ajax_pack_element(inputs) {
 			d1.style.zIndex=1000;
 			document.getElementById('att').appendChild(d1);
 			if (input.addEventListener) {
-				input.addEventListener("keyup",function(e) { ajax_update_info(e,'up',id); },false);
+				input.addEventListener("keyup",function(e) { ajax_update_info(e,'up'); },false);
 				input.addEventListener("blur",function(e) { ajax_hide_list(e); },false);
 			} else if (input.attachEvent) {
-				input.attachEvent("onkeydown",function() { ajax_update_info(window.event,'down',id); });//Pour internet explorer il faut que je capte l'appuie sur "entrée" avant le formulaire
-				input.attachEvent("onkeyup",function() { ajax_update_info(window.event,'up',id); });
+				input.attachEvent("onkeydown",function() { ajax_update_info(window.event,'down'); });//Pour internet explorer il faut que je capte l'appuie sur "entrï¿½e" avant le formulaire
+				input.attachEvent("onkeyup",function() { ajax_update_info(window.event,'up'); });
 				input.attachEvent("onblur",function() { ajax_hide_list(window.event); });
 			}
 			//on retire l'autocomplete du navigateur...
@@ -111,6 +140,18 @@ function ajax_pack_element(inputs) {
 	line[id]=0;
 	not_show[id]=true;
 	last_word[id]="";	
+}
+
+function active_autocomplete(inputs) {
+	var inputs=document.getElementsByTagName("input");
+	for (i=0; i<inputs.length; i++) {
+		if (inputs[i].getAttribute("completion")) {
+			if (((inputs[i].getAttribute("type")=="text")||(inputs[i].nodeName=="TEXTAREA"))&&(inputs[i].getAttribute("id"))) {			
+				//on remet l'autocomplete du navigateur...
+				inputs[i].setAttribute("autocomplete","on");	
+			}
+		}
+	}
 }
 
 function ajax_parse_dom() {
@@ -148,7 +189,7 @@ function ajax_set_datas(sp_name,id) {
 					}
 				}
 			}
-		}	
+		}
 	}
 	var callback=document.getElementById(id).getAttribute("callback");
 	var word_only = document.getElementById(id).getAttribute("word_only");
@@ -160,15 +201,13 @@ function ajax_set_datas(sp_name,id) {
 	document.getElementById(id).focus();
 	document.getElementById("d"+id).style.display='none';
 	not_show[id]=true;
-	if(callback)window[callback](id);
+	if(callback) window[callback](id);
 }
 		
 function ajax_update_info(e,code) {
-	if (e.target)
-	{
+	if(e.target) {
 		var id=e.target.getAttribute("id");
-	}
-	else{
+	} else {
 		var id=e.srcElement.getAttribute("id");
 	}
 	
@@ -192,8 +231,8 @@ function ajax_update_info(e,code) {
 				if (e.stopPropagation) { e.stopPropagation(); }
 			}
 			break;
-		case 40:	//Flèche bas
-		if(document.getElementById(id).value=="")	document.getElementById(id).value="*";
+		case 40:	//Flï¿½che bas
+			if(document.getElementById(id).value=="")	document.getElementById(id).value="*";
 			next_line=line[id]+1;
 			if (document.getElementById("d"+id).style.display=="block") {
 				if (document.getElementById("l"+id+"_"+next_line)==null) break;
@@ -227,9 +266,8 @@ function ajax_update_info(e,code) {
 					if (e.stopPropagation) e.stopPropagation();
 				}
 			}
-			
 			break;
-		case 38:	//Flèche haut
+		case 38:	//Flï¿½che haut
 			if (document.getElementById("d"+id).style.display=="block") {
 				old_line=line[id];
 				if (line[id]>0) line[id]--;
@@ -260,7 +298,7 @@ function ajax_update_info(e,code) {
 				var text=sp.firstChild.nodeValue;
 				var autfield=document.getElementById(id).getAttribute("autfield");
 				var callback=document.getElementById(id).getAttribute("callback");
-				var div_cache=document.getElementById("c"+id+"_"+line[id]);								
+				var div_cache=document.getElementById("c"+id+"_"+line[id]);
 				if (autfield) {
 					var autid=sp.getAttribute("autid");
 					document.getElementById(autfield).value=autid;
@@ -273,12 +311,10 @@ function ajax_update_info(e,code) {
 				document.getElementById("d"+id).style.display='none';
 				not_show[id]=true;
 				if(e.preventDefault){
-					e.preventDefault();//Firefox : Si je suis dans une liste je ne veux pas valider le formulaire quand je clic sur entrée 
+					e.preventDefault();//Firefox : Si je suis dans une liste je ne veux pas valider le formulaire quand je clic sur entrï¿½e 
 				}else{
-					e.returnValue = false;//IE : Si je suis dans une liste je ne veux pas valider le formulaire quand je clic sur entrée 
+					e.returnValue = false;//IE : Si je suis dans une liste je ne veux pas valider le formulaire quand je clic sur entrï¿½e 
 				}
-			}else{
-
 			}
 
 			if (sp) {
@@ -315,7 +351,7 @@ function ajax_update_info(e,code) {
 			}
 			break;
 		default:	//Autres
-			if (document.getElementById(id).getAttribute("expand_mode")) {
+			if (document.getElementById(id).getAttribute("expand_mode") || (document.getElementById(id).value.length > 2)) {
 				if(document.getElementById(id).value=="") {
 					if (timers[id]) {
 						clearTimeout(timers[id]);
@@ -377,7 +413,7 @@ function ajax_show_info(id) {
 			}
 		} else {
 			if(typeof console != 'undefined') {
-				console.log("Erreur : le serveur a répondu "+requete.responseText);
+				console.log("Erreur : le serveur a rï¿½pondu "+requete.responseText);
 			}
 		}
 		ajax_requete_wait_remove(id);
@@ -389,6 +425,8 @@ function ajax_get_info(id) {
 	var autfield = '' ;
 	var linkfield = '' ;
 	var listfield = '';
+	var param1 = '';
+	var param2 = '';
 	
 	requete[id].open("POST","ajax_selector.php",true);
 	requete[id].onreadystatechange=function() { ajax_show_info(id) };
@@ -397,6 +435,8 @@ function ajax_get_info(id) {
 	if (document.getElementById(id).getAttribute("autexclude")) autexclude = document.getElementById(id).getAttribute("autexclude") ;
 	if (document.getElementById(id).getAttribute("linkfield")) linkfield = document.getElementById(document.getElementById(id).getAttribute("linkfield")).value ;
 	if (document.getElementById(id).getAttribute("autfield")) autfield = document.getElementById(id).getAttribute("autfield") ;
+	if (document.getElementById(id).getAttribute("param1")) param1 = document.getElementById(id).getAttribute("param1") ;
+	if (document.getElementById(id).getAttribute("param2")) param2 = document.getElementById(id).getAttribute("param2") ;
 	if (document.getElementById(id).getAttribute("listfield")){
 		var reg = new RegExp("[,]","g");
 		var tab = (document.getElementById(id).getAttribute("listfield")).split(reg);		
@@ -404,26 +444,25 @@ function ajax_get_info(id) {
 			listfield = listfield + "&"+tab[k]+"="+(document.getElementById(tab[k]).value);
 		}
 	}
-		
-	requete[id].send("datas="+encode_URL(document.getElementById(id).value)+"&id="+encode_URL(id)+"&completion="+encode_URL(document.getElementById(id).getAttribute("completion"))+"&persofield="+encode_URL(document.getElementById(id).getAttribute("persofield"))+"&autfield="+encode_URL(autfield)+"&autexclude="+encode_URL(autexclude)+"&linkfield="+encode_URL(linkfield)+listfield);
+	requete[id].send("datas="+encode_URL(document.getElementById(id).value)+"&id="+encode_URL(id)+"&completion="+encode_URL(document.getElementById(id).getAttribute("completion"))+"&persofield="+encode_URL(document.getElementById(id).getAttribute("persofield"))+"&autfield="+encode_URL(autfield)+"&autexclude="+encode_URL(autexclude)+"&linkfield="+encode_URL(linkfield)+listfield+"&param1="+encode_URL(param1)+"&param2="+encode_URL(param2));
 }
 
 function ajax_requete_wait(id) {
-	//Insertion d'un élément pour l'attente
+	//Insertion d'un ï¿½lï¿½ment pour l'attente
 	if (document.getElementById("patience_"+id)) return;
 	div=document.createElement("span");
 	div.setAttribute("id","patience_"+id);
 	div.style.width="100%";
 	div.style.height="30px";
 	img=document.createElement("img");
-	img.src="./images/patience.gif";
+	img.src=pmb_img_patience;
 	img.id="collapseall";
 	img.style.border="0px";
 	div.appendChild(img);
 	document.getElementById(id).parentNode.appendChild(div);
 }
 function ajax_requete_wait_remove(id) {
-	//Suppression de l'élément pour l'attente
+	//Suppression de l'ï¿½lï¿½ment pour l'attente
 	try {
 		wait=document.getElementById("patience_"+id);
 		wait.parentNode.removeChild(wait);
@@ -445,7 +484,6 @@ function ajax_timer_creerRequete(id) {
 	}else{
 		ajax_stat[id] = "Start";
 	}
-	
 	ajax_creerRequete(id);
 	if (requete[id]) {
 		last_word[id]=document.getElementById(id).value;

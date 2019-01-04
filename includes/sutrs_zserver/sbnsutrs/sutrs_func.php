@@ -5,7 +5,7 @@
 // authors: Marco Vaninetti, Massimo Mancini
 // state: higly experimental ;-)
 // +-------------------------------------------------+
-// $Id: sutrs_func.php,v 1.10 2013-04-11 08:19:45 mbertin Exp $
+// $Id: sutrs_func.php,v 1.11 2017-07-10 13:46:57 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "sutrs_func.php")) die("no access");
 
@@ -289,6 +289,7 @@ function sut_autfn($a,$at){
 	$af=explode('.',$ax[0]);
 	//printr($af,'','AF');
 	reset($fun);
+	$end = false;
 	while (list($cf,$ff)=each($fun)){
 		$ff=str_replace('/','\/',$ff);
 		for ($k=0;$k<count($af);$k++){
@@ -303,12 +304,16 @@ function sut_autfn($a,$at){
 						if (strpos($af[$k],$a[0])){ //cerca cognome
 							$ret=$cf; 				//funzione identificata !!!
 							//$k=9999 ;
-							break 3;
+							//break 3;
+							$end = true;
+							break;
 						} 
 					}
 				}
 			}
+			if($end) break;
 		}
+		if($end) break;
 	}
 	return $ret;
 }	

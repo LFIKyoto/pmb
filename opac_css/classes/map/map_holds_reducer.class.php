@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_holds_reducer.class.php,v 1.6 2015-04-17 12:50:24 vtouchard Exp $
+// $Id: map_holds_reducer.class.php,v 1.7 2016-11-05 14:49:08 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -62,7 +62,6 @@ class map_holds_reducer {
 	
 	public function init(){
 		global $dbh, $opac_map_hold_distance;
-		$coords = $this->map_hold->get_coords();
 		
 		$query = "select Area(geomfromtext('".$this->map_hold->get_wkt()."')) as area";
 		$result = pmb_mysql_query($query, $dbh);
@@ -118,21 +117,19 @@ class map_holds_reducer {
 				}
 			}
 		}
-		//
+		
 		foreach($this->clusters as $key => $hold){
 			$wkt = $hold->get_center();
 			$this->clusters[$key] = new map_hold_point("point", $hold->get_num_object());
 			$this->clusters[$key]->set_wkt($wkt);
 		}
-
-		//
-			//var_dump(count($displayed_holds));
+  
 		uasort($this->displayed_holds, array('self', 'cmp_area'));
 		return array_merge($this->displayed_holds, $this->clusters);
 	} 
 	
 	public function get_occupation_percentage($hold){
-			return ($hold->get_normalized_bbox_area()/$this->map_area)*100;
+            return ($hold->get_normalized_bbox_area()/$this->map_area)*100;
 	}
 	
 	public function get_point_center($hold){
@@ -215,15 +212,24 @@ class map_holds_reducer {
 		}
 	}
 	
+  	public function calc_empr($seuil_min){
+            
+            $this->displayed_holds = array();
+            $this->clusters = array();
+            $this->clustered_holds=$this->holds;
+            return array();
+	}
+   /*     
 	public function calc_empr($seuil_min){
 		global $opac_map_hold_ratio_max;
+                
 		$this->displayed_holds = array();
 		$this->clustered_holds = array();
 		$this->clusters = array();
-	
 		foreach($this->holds as $key => $hold){
 			if($this->get_occupation_percentage($hold) > $seuil_min){//ces emprises doivent être affichées
-				if ($this->get_occupation_percentage($hold) < $opac_map_hold_ratio_max){
+                                //quand il y a une seule emprise, $this->get_occupation_percentage($hold) renvoie 100
+				if ($this->get_occupation_percentage($hold) < $opac_map_hold_ratio_max || count($this->holds) == 1){ 
 					$existant_key = $this->check_wkt($this->displayed_holds, $hold->get_wkt());
 					if($existant_key != false){
 						if(is_array($this->displayed_holds[$existant_key]->get_num_object())){
@@ -246,6 +252,8 @@ class map_holds_reducer {
 		}
 		return count($this->displayed_holds);
 	}
+    */
+     
 	public static function cmp_area($a, $b) {
 		if ($a->get_normalized_bbox_area() == $b->get_normalized_bbox_area()) {
 			return 0;

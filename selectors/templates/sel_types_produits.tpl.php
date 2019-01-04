@@ -3,17 +3,11 @@
 
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sel_types_produits.tpl.php,v 1.6 2013-12-11 16:10:32 dgoron Exp $
+// $Id: sel_types_produits.tpl.php,v 1.9 2017-10-13 10:41:16 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
 // templates du sélecteur adresses
-
-//--------------------------------------------
-//	$nb_per_page : nombre de lignes par page
-//--------------------------------------------
-// nombre de références par pages
-$nb_per_page = $nb_per_page_select;
 
 //-------------------------------------------
 //	$sel_header : header
@@ -35,18 +29,21 @@ $jscript = "
 <!--
 function set_parent(f_caller, typ, lib_typ, rem, tva)
 {
-	window.opener.document.forms[f_caller].elements['$param1'].value = typ;
-	window.opener.document.forms[f_caller].elements['$param2'].value = reverse_html_entities(lib_typ);
-	window.opener.document.forms[f_caller].elements['$param3'].value = reverse_html_entities(rem);";
+	set_parent_value(f_caller, '".$param1."', typ);
+	set_parent_value(f_caller, '".$param2."', reverse_html_entities(lib_typ));
+	set_parent_value(f_caller, '".$param3."', reverse_html_entities(rem));";
 if ($acquisition_gestion_tva) {
-	$jscript.= "window.opener.document.forms[f_caller].elements['$param4'].value = reverse_html_entities(tva);";
+	$jscript.= "set_parent_value(f_caller, '".$param4."', reverse_html_entities(tva));";
 }
 if ($acquisition_gestion_tva == 1) {
-	$jscript.= "window.opener.document.getElementById('convert_ht_ttc_".$param5."').innerHTML=ht_to_ttc(window.opener.document.forms[f_caller].elements['prix[$param5]'].value,window.opener.document.forms[f_caller].elements['$param4'].value);";
+	$jscript.= "window.parent.document.getElementById('convert_ht_ttc_".$param5."').innerHTML=ht_to_ttc(window.parent.document.forms[f_caller].elements['prix[$param5]'].value,window.parent.document.forms[f_caller].elements['$param4'].value);";
 } else if ($acquisition_gestion_tva == 2) {
- 	$jscript.= "window.opener.document.getElementById('convert_ht_ttc_".$param5."').innerHTML=ttc_to_ht(window.opener.document.forms[f_caller].elements['prix[$param5]'].value,window.opener.document.forms[f_caller].elements['$param4'].value);";
+ 	$jscript.= "window.parent.document.getElementById('convert_ht_ttc_".$param5."').innerHTML=ttc_to_ht(window.parent.document.forms[f_caller].elements['prix[$param5]'].value,window.parent.document.forms[f_caller].elements['$param4'].value);";
 }
-$jscript.= "window.close();
+if ($callback) {
+	$jscript.= "window.parent.".$callback."();";
+}
+$jscript.= "closeCurrentEnv();
 }
 -->
 </script>

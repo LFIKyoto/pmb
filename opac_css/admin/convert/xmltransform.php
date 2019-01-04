@@ -2,18 +2,18 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: xmltransform.php,v 1.13 2013-04-17 08:37:34 mbertin Exp $
+// $Id: xmltransform.php,v 1.15 2018-11-05 14:09:15 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "xmltransform.php")) die("no access");
-
-//Bibliothèque des transformations par défaut
-
-require_once ("$base_path/admin/convert/xml_unimarc.class.php");
 
 if (version_compare(PHP_VERSION,'5','>=') && extension_loaded('xsl')) {
 	if (substr(phpversion(), 0, 1) == "5") @ini_set("zend.ze1_compatibility_mode", "0");
 	require_once($include_path.'/xslt-php4-to-php5.inc.php');
 	}
+
+//Bibliothèque des transformations par défaut
+
+require_once ("$base_path/admin/convert/xml_unimarc.class.php");
 
 //Conversion par une feuille de style XSLT
 function perform_xslt($xml, $s, $islast, $isfirst, $param_path) {
@@ -22,7 +22,7 @@ function perform_xslt($xml, $s, $islast, $isfirst, $param_path) {
 	
 	//Si c'est la première transformation, on rajoute les entêtes
 	if ($isfirst) {
-		if($s['ENCODING']){
+		if(isset($s['ENCODING']) && $s['ENCODING']){
 			$xml1 = "<?xml version=\"1.0\" encoding=\"".$s['ENCODING']."\"?>\n<".$s['ROOTELEMENT'][0]["value"];
 		}else{
 			$xml1 = "<?xml version=\"1.0\" encoding=\"$charset\"?>\n<".$s['ROOTELEMENT'][0]["value"];
@@ -37,6 +37,7 @@ function perform_xslt($xml, $s, $islast, $isfirst, $param_path) {
 	$f = fopen($transform, "r");
 	$xsl = fread($f, filesize($transform));
 	fclose($f);
+	$xsl = str_replace('!!charset!!',$charset,$xsl);
 
 	//Création du processeur
 	$xh = xslt_create();
@@ -80,7 +81,7 @@ function perform_xslt($xml, $s, $islast, $isfirst, $param_path) {
 //Conversion XML en iso2709
 function toiso($notice, $s, $islast, $isfirst, $param_path) {
 	$x2i = new xml_unimarc();
-	$x2i -> XMLtoiso2709_notice($notice,$s['ENCODING']);
+	$x2i -> XMLtoiso2709_notice($notice,(isset($s['ENCODING']) ? $s['ENCODING'] : ''));
 	if($x2i->warning_msg[0]){
 		$r['WARNING']=$x2i->warning_msg[0];
 	}
@@ -114,7 +115,7 @@ function isotoxml($notice, $s, $islast, $isfirst, $param_path) {
 		if (!$islast) {
 			$r['DATA'] = "<".$s['TROOTELEMENT'][0]['value'].">\n".$r['DATA'];
 			$r['DATA'].= "</".$s['TROOTELEMENT'][0]['value'].">";
-			$r['DATA'] = "<?xml version=\"1.0\" encoding=\"".($i2x->is_utf8?"utf-8":$charset)."\" ?>\n".$r['DATA'];
+			$r['DATA'] = "<?xml version=\"1.0\" encoding=\"".$charset."\" ?>\n".$r['DATA'];
 		}
 	}
 	return $r;

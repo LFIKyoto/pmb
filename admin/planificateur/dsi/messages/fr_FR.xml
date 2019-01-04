@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: fr_FR.xml,v 1.3 2013-05-23 07:01:18 dgoron Exp $ -->
+$Id: fr_FR.xml,v 1.4 2016-06-01 10:34:58 jpermanne Exp $ -->
 
 <XMLlist>
 	<entry code="planificateur_dsi_bannette">Choix de la(des) bannette(s)</entry>
@@ -23,5 +23,5 @@ $Id: fr_FR.xml,v 1.3 2013-05-23 07:01:18 dgoron Exp $ -->
 	<entry code="dsi_report_header">Diffusion sélective d'informations</entry>
 	<entry code="dsi_report_action">Action(s) sur la bannette</entry>
 	<entry code="dsi_stopped">Tâche interrompue</entry>
-	<entry code="dsi_no_diffusable">Délai avant prochaine diffusion possible : %s jour(s)</entry>
+	<entry code="dsi_no_diffusable">Aucune action effectuée, la bannette n'est pas arrivée à échéance (périodicité : %s jour(s))</entry>
 </XMLlist>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_record_ui.class.php,v 1.7 2015-04-10 09:26:25 dgoron Exp $
+// $Id: nomenclature_record_ui.class.php,v 1.11 2018-03-21 15:42:14 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,6 +16,7 @@ require_once($class_path."/nomenclature/nomenclature_record_formations_ui.class.
 require_once($class_path."/nomenclature/nomenclature_record_child_ui.class.php");
 
 require_once($class_path."/nomenclature/nomenclature_datastore.class.php");
+require_once($class_path."/notice_relations_collection.class.php");
 
 class nomenclature_record_ui {
 
@@ -47,15 +48,12 @@ class nomenclature_record_ui {
 		$this->id=$id*1;	
 		$this->id_parent=0;
 		
-		$query = "select * from notices_relations where relation_type='".$pmb_nomenclature_record_children_link."' and num_notice = ".$this->id;
-		$result = pmb_mysql_query($query,$dbh);
-		if(pmb_mysql_num_rows($result)){
-			if($row = pmb_mysql_fetch_object($result)){
-				$this->id_parent=$row->linked_notice;
-				$this->nomenclature_record = new nomenclature_record_child_ui($this->id);
-			}
-		}				
-		if(!$this->id_parent){
+		$notice_relations = notice_relations_collection::get_object_instance($this->id);
+		$parents = $notice_relations->get_parents();
+		if(isset($parents[$pmb_nomenclature_record_children_link][0])) {
+			$this->id_parent=$parents[$pmb_nomenclature_record_children_link][0]->get_linked_notice();
+			$this->nomenclature_record = new nomenclature_record_child_ui($this->id);
+		} else {
 			$this->nomenclature_record = new nomenclature_record_formations_ui($this->id);
 		}
 	} // end of member function __construct
@@ -65,21 +63,23 @@ class nomenclature_record_ui {
 		return $this->nomenclature_record->create_record_child($id_parent);
 	}
 		
-	public function get_form(){
+	public function get_form($duplicate = false){
 
-		$args = "num_record:".$this->id."";
+		$args = "num_record:".($duplicate ? 0 : $this->id);
 		if($this->id_parent){
 			$args.=",child_detail :\"".addslashes(encoding_normalize::json_encode($this->nomenclature_record->record_child->get_data()))."\"";
 		}else{
-			$args.=",record_formations :\"".addslashes(encoding_normalize::json_encode($this->nomenclature_record->record_formations->get_data()))."\"";
+			$args.=",record_formations :\"".addslashes(encoding_normalize::json_encode($this->nomenclature_record->record_formations->get_data($duplicate)))."\"";
 		}
+		
 		$div = nomenclature_datastore::get_form();
+		$div.= "<script type='text/javascript' src='./javascript/instru_drag_n_drop.js'></script>";
 		return $div."<div data-dojo-type='apps/nomenclature/nomenclature_record_ui' data-dojo-props='".$args."'></div>";
 	} 
 	
 	public function save_form(){	
 		
-		if(!$this->id)return; // pas id de notice	
+		if(!$this->id)return; // pas id de notice
 		$this->nomenclature_record->save_form();				
 	}
 	
@@ -94,12 +94,11 @@ class nomenclature_record_ui {
 	}
 	
 	public static function get_index($id) {
-		global $dbh;
 		global $pmb_nomenclature_record_children_link;
 		
-		$query = "select linked_notice from notices_relations where relation_type='".$pmb_nomenclature_record_children_link."' and num_notice = ".$id;
-		$result = pmb_mysql_query($query,$dbh);
-		if(pmb_mysql_num_rows($result)){
+		$notice_relations = notice_relations_collection::get_object_instance($id);
+		$parents = $notice_relations->get_parents();
+		if(isset($parents[$pmb_nomenclature_record_children_link][0])) {
 			return nomenclature_record_child_ui::get_index($id);
 		}else{
 			return nomenclature_record_formations_ui::get_index($id);

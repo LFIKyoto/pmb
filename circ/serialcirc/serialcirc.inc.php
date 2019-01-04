@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc.inc.php,v 1.3 2014-10-20 13:23:52 arenou Exp $
+// $Id: serialcirc.inc.php,v 1.4 2017-01-25 16:43:49 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once("$class_path/serialcirc.class.php");
 
+if(!isset($location_id)) $location_id = 0;
 $serialcirc=new serialcirc($location_id);
 
 switch($sub){	

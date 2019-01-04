@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export_z3950_new.php,v 1.7 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: export_z3950_new.php,v 1.9 2017-08-02 08:49:00 tsamson Exp $
 
 $base_path="../..";
 
@@ -46,8 +46,13 @@ function make_error($nerr,$err_message) {
 	exit();
 }
 
-if (!@pmb_mysql_connect(SQL_SERVER,USER_NAME,USER_PASS)) make_error(1,"Could'nt connect to database server");
-if (!@pmb_mysql_select_db(DATA_BASE)) make_error(2,"Database unknown");
+$mysql_connect = @pmb_mysql_connect(SQL_SERVER,USER_NAME,USER_PASS);
+if (!$mysql_connect) {
+	make_error(1,"Could'nt connect to database server");
+}
+if (!@pmb_mysql_select_db(DATA_BASE, $mysql_connect)) {
+	make_error(2,"Database unknown");
+}
 
 //Commande envoyée
 $command=$_GET["command"];
@@ -99,20 +104,20 @@ function construct_query($query,$not,$level,$argn="",$oper="") {
 		$return1=construct_query($args[1],0,$level+1,1,$ope);
 		if (($oper)&&($return1)) {
 			$inter="inter_".($level-2+$argn)."_f_".$return1;
-			global $$inter;
-			if (!$$inter)
-				$$inter=$oper;
-			//print $inter."=".$$inter."<br />";
+			global ${$inter};
+			if (!${$inter})
+				${$inter}=$oper;
+			//print $inter."=".${$inter}."<br />";
 		}
 		$return2=construct_query($args[2],0,$level+1,2,$ope);
 		if ($return2) {
 			//print $level." ".$argn;
 			if ($argn=="") $argn=2;
 			$inter="inter_".($level-1+$argn)."_f_".$return2;
-			global $$inter;
-			if (!$$inter)
-				$$inter=$ope;
-			//print $inter."=".$$inter."<br />";
+			global ${$inter};
+			if (!${$inter})
+				${$inter}=$ope;
+			//print $inter."=".${$inter}."<br />";
 		}
 		return;
 	} else {
@@ -125,11 +130,11 @@ function construct_query($query,$not,$level,$argn="",$oper="") {
 			$vals=array();
 			$vals[0]=traite_val($use[1],$idf);
 			$field="field_".(!$level?0:($level-2+$argn))."_f_".$idf;
-			global $$field;
-			$$field=$vals;
+			global ${$field};
+			${$field}=$vals;
 			$op="op_".(!$level?0:($level-2+$argn))."_f_".$idf;
-			global $$op;
-			$$op=$corresp_op[$use[0]];
+			global ${$op};
+			${$op}=$corresp_op[$use[0]];
 			return $idf;
 		}	
 	}

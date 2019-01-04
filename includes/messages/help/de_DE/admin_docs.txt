@@ -1,4 +1,4 @@
-<h1>Item management</h1>
+<h2>Item management</h2>
 <p>This section allows you to define the application settings for <b>loans and statistics</b>.
 <ul>
 <li><b>media types</b> lets you set up the various loan options, including loan period in days.</li>

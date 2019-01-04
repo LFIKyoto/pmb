@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: z_frame.php,v 1.9.10.1 2015-11-22 17:59:48 Alexandre Exp $
+// $Id: z_frame.php,v 1.10 2015-11-22 18:32:44 Alexandre Exp $
 
 if ( ($clause=="") && (count($bibli)==0) ) {
 	echo "<h1>$msg[z3950_progr_rech]</h1>";
@@ -21,9 +21,9 @@ if ($clause=="") {
 		}
 	}
 
-if ($clause!="")
-	$selection_bib="where bib_id in (".$clause.") ";
-else
+if ($clause!="") 
+	$selection_bib="where bib_id in (".$clause.") "; 
+else 
 	$selection_bib;
 
 print "

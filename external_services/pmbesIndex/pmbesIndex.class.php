@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesIndex.class.php,v 1.6 2015-06-19 08:12:42 mbertin Exp $
+// $Id: pmbesIndex.class.php,v 1.7 2017-06-22 08:49:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,22 +14,20 @@ ATTENTION: Si vous modifiez de fichier vous devez aussi modifier le fichier pmbe
 */
 
 class pmbesIndex extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	
-	function reindexRecords($list_notices=array()){
+	public function reindexRecords($list_notices=array()){
 		global $msg, $dbh, $charset, $PMBusername;
 		$result = array();
 		$result['nb_reindexed_records'] = 0;
@@ -66,8 +64,9 @@ class pmbesIndex extends external_services_api_class {
 	
 	
 	
-	function indexGlobal() {
+	public function indexGlobal() {
 		global $msg, $dbh, $charset, $PMBusername;
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_reindex_global"], ENT_QUOTES, $charset)."</h3>";
 			pmb_mysql_query("set wait_timeout=3600");
@@ -96,9 +95,10 @@ class pmbesIndex extends external_services_api_class {
 		return $result;	
 	}
 	
-	function indexNotices() {
+	public function indexNotices() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			//NOTICES
 			$result .= "<h3>".htmlentities($msg["nettoyage_reindex_notices"], ENT_QUOTES, $charset)."</h3>";
@@ -260,9 +260,10 @@ class pmbesIndex extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanAuthors() {
+	public function cleanAuthors() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			//1er passage
 			$result .= "<h3>".htmlentities($msg["nettoyage_suppr_auteurs"], ENT_QUOTES, $charset)."</h3>";
@@ -302,9 +303,10 @@ class pmbesIndex extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanPublishers() {
+	public function cleanPublishers() {
 		global $msg,$dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_suppr_editeurs"], ENT_QUOTES, $charset)."</h3>";
 			
@@ -324,9 +326,10 @@ class pmbesIndex extends external_services_api_class {
 			return $result;
 	}
 	
-	function cleanCollections() {
+	public function cleanCollections() {
 		global $msg,$dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_suppr_collections"], ENT_QUOTES, $charset)."</h3>";
 			
@@ -341,9 +344,10 @@ class pmbesIndex extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanSubcollections() {
+	public function cleanSubcollections() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_suppr_subcollections"], ENT_QUOTES, $charset)."</h3>";
 					
@@ -358,11 +362,12 @@ class pmbesIndex extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanCategories() {
+	public function cleanCategories() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
 		if ($deleted=="") $deleted=0 ;
 
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_suppr_categories"], ENT_QUOTES, $charset)."</h3>";
 			
@@ -389,9 +394,10 @@ class pmbesIndex extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanSeries() {
+	public function cleanSeries() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_suppr_series"], ENT_QUOTES, $charset)."</h3>";
 			
@@ -408,9 +414,10 @@ class pmbesIndex extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanTitresUniformes() {
+	public function cleanTitresUniformes() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_suppr_titres_uniformes"], ENT_QUOTES, $charset)."</h3>";
 			
@@ -437,9 +444,10 @@ class pmbesIndex extends external_services_api_class {
 		return $result;
 	}
 	
-	function cleanIndexint() {
+	public function cleanIndexint() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["nettoyage_suppr_indexint"], ENT_QUOTES, $charset)."</h3>";
 			
@@ -463,9 +471,10 @@ class pmbesIndex extends external_services_api_class {
 	
 
 	
-	function cleanNotices() {
+	public function cleanNotices() {
 		global $msg,$dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {	
 			$result .= "<h3>".htmlentities($msg["nettoyage_suppr_notices"], ENT_QUOTES, $charset)."</h3>";
 			pmb_mysql_query("set wait_timeout=3600");
@@ -485,9 +494,10 @@ class pmbesIndex extends external_services_api_class {
 		return $result;
 	}
 	
-	function indexAcquisitions() {
+	public function indexAcquisitions() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			//SUGGESTIONS
 			$result .= "<h3>".htmlentities($msg["nettoyage_reindex_sug"], ENT_QUOTES, $charset)."</h3>";
@@ -562,9 +572,10 @@ class pmbesIndex extends external_services_api_class {
 		}
 	}
 
-	function indexDocnum() {
+	public function indexDocnum() {
 		global $msg, $dbh, $charset, $PMBusername;
 		
+		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["docnum_reindexation"], ENT_QUOTES, $charset)."</h3>";
 			pmb_mysql_query("set wait_timeout=3600");

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- $Id: de_DE.xml,v 1.8.2.3 2015-08-17 15:03:04 jpermanne Exp $ -->
+<!-- $Id: de_DE.xml,v 1.18 2018-06-22 10:00:09 ngantier Exp $ -->
 <XMLlist>
 <!-- Types de page  -->
 <entry code="1">Search</entry>
@@ -31,6 +31,12 @@
 <entry code="27">Résultats de documents numériques</entry>
 <entry code="28">Accueil</entry>
 <entry code="29">Requête AJAX</entry>
+<entry code="31">Formulaire de contact</entry>
+<entry code="32">Etat de collection</entry>
+<entry code="33">Pixel blanc</entry>
+<entry code="34">Univers</entry>
+<entry code="35">Segment</entry>
+<entry code="36">PNB</entry>
 
 <!-- Sous-Types de page  -->
 <entry code="101">Quick Search</entry>
@@ -104,13 +110,16 @@
 <entry code="723">Transformer les éléments du panier en suggestion multiple</entry>
 <entry code="724">Prévision</entry>
 <entry code="725">Mon compte</entry>
+<entry code="726">Mes demandes de numérisation</entry>
+<entry code="727">Modifier une alerte</entry>
+<entry code="728">Désinscription d'une alerte</entry>
 <entry code="801">Show Basket</entry>
 <entry code="802">Print Basket</entry>
 <entry code="803">Export Basket</entry>
 <entry code="804">Réservation à partir d'un panier</entry>
 <entry code="805">Vider le panier</entry>
 <entry code="806">Vider du panier les notices cochées</entry>
-<entry code="807">Impression non aboutie d'un panier</entry>
+<entry code="807">Options d'impression d'un panier</entry>
 <entry code="808">Tri d'un panier</entry>
 <entry code="809">Transformer les éléments du panier en suggestion multiple</entry>
 <entry code="810">Transformer les éléments du panier en liste de lecture</entry>
@@ -142,6 +151,11 @@
 <entry code="2903">Affichage d'un bulletin dans un résultat de recherche</entry>
 <entry code="2904">Affichage d'un article dans un résultat de recherche</entry>
 <entry code="3001">Url externe</entry>
+<entry code="3401">Recherche univers</entry>
+<entry code="3501">Recherche segment</entry>
+<entry code="3601">Prêts numérique en cours</entry>
+<entry code="3602">Mes périphériques de lecture</entry>
+<entry code="3603">Paramètres</entry>
 <!-- Types d'url cliquées  -->
 <entry code="external_url_notice">Url sur la notice</entry>
 <entry code="external_url_autor">Url sur l'autorité</entry>
@@ -151,4 +165,5 @@
 <entry code="notice_type_a">Article</entry>
 <entry code="notice_type_m">Monographie</entry>
 <entry code="notice_type_s">Périodique</entry>
+<entry code="3101">Formulaire de contact</entry>
 </XMLlist>

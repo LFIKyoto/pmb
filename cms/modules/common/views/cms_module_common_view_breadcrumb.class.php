@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_breadcrumb.class.php,v 1.3 2014-11-17 17:00:52 arenou Exp $
+// $Id: cms_module_common_view_breadcrumb.class.php,v 1.5 2016-12-01 12:07:57 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -48,7 +48,10 @@ class cms_module_common_view_breadcrumb extends cms_module_common_view_django{
 			'title' => $this->msg['home'],
 			'link' => $opac_url_base
 		);
-		foreach($datas as $section){
+		if($datas['article']){
+			$render_datas['article'] = $datas['article'];
+		}
+		foreach($datas['sections'] as $section){
 			$cms_section = new cms_section($section);
 			$infos= $cms_section->format_datas(false,false);
 			$infos['link'] = $this->get_constructed_link("section",$section);

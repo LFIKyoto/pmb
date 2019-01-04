@@ -3,7 +3,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_ui.class.php,v 1.4 2014-08-07 14:31:53 arenou Exp $
+// $Id: onto_ui.class.php,v 1.7 2017-06-22 10:19:48 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -42,16 +42,15 @@ class onto_ui {
 	 * @param string $default_display_label
 	 * @param onto_param $params
 	 */
-	function __construct($ontology_filepath, $onto_store_type, $onto_store_config, $data_store_type, $data_store_config, $tab_namespaces, $default_display_label, $params){
+	function __construct($ontology_filepath, $onto_store, $onto_store_config, $data_store_type, $data_store_config, $tab_namespaces, $default_display_label, $params){
 		$this->params=$params;
 		
-		$this->handler = new onto_handler($ontology_filepath, $onto_store_type, $onto_store_config, $data_store_type, $data_store_config, $tab_namespaces, $default_display_label);
+		$this->handler = new onto_handler($ontology_filepath, $onto_store, $onto_store_config, $data_store_type, $data_store_config, $tab_namespaces, $default_display_label);
 		$this->handler->get_ontology();
 		
-		if(!$params->sub){
+		if(!isset($params->sub) || !$params->sub){
 			$params->sub=$this->handler->get_first_ontology_class_name();
 		}
-		
 		$controler_class_name=self::resolve_controler_class_name($this->handler->get_onto_name());
 		$this->controler=new $controler_class_name($this->handler,$this->params);
 	}
@@ -80,7 +79,6 @@ class onto_ui {
 	public static function search_controler_class_name($ontology_name){
 		$suffixe = "_controler";
 		$prefix="onto_";
-		
 		if(class_exists($prefix.$ontology_name.$suffixe)){
 			//La classe controler a le même nom que l'ontologie
 			//ex : onto_skos<=>onto_skos_controler

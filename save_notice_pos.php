@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: save_notice_pos.php,v 1.7 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: save_notice_pos.php,v 1.9 2016-01-05 09:17:03 ngantier Exp $
 
 $base_path=".";
 $base_noheader=1;

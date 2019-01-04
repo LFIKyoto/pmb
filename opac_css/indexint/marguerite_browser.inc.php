@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: marguerite_browser.inc.php,v 1.12 2015-04-03 11:16:27 jpermanne Exp $
+// $Id: marguerite_browser.inc.php,v 1.14 2017-11-07 15:51:41 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -127,7 +127,7 @@ if (js > 1.0) {
    onMouseOver='changeImagemap(\"map0\");self.status=\"".$msg["put_mouse_over_petals"]."\";document.getElementById(\"marguerite_petal_text\").innerHTML = \"!!000!!\";return true'
    onMouseOut='changeImagemap(\"mapMarg\");self.status=\"\";document.getElementById(\"marguerite_petal_text\").innerHTML = \"".$msg["put_mouse_over_petals"]."\";return true'>
 </map>
-<img NAME=\"boxImage\" src=\"images/marg.gif\" width=\"348\" height=\"341\" border=\"0\" USEMAP=\"#image-map\">";
+<img NAME=\"boxImage\" src=\"images/marg.gif\" style='border:0px; width:348px; height:341px;' USEMAP=\"#image-map\">";
 
 $rqt = " select indexint_id, indexint_comment, indexint_name from indexint where indexint_name in ('000','100','200','300','400','500','600','700','800','900') ";
 $res = pmb_mysql_query($rqt, $dbh);
@@ -138,6 +138,6 @@ while($indexint=pmb_mysql_fetch_object($res)) {
 	$marguerite_img = pmb_preg_replace("/!!id".$indexint->indexint_name."!!/", $indexint->indexint_id, $marguerite_img);
 	}
 print preg_replace('/!!indexint_title!!/m',$msg["colors_marguerite"], $decimal_see_header);
-print "<center>".$marguerite_img;
-print "<div id=\"marguerite_petal_text\">".$msg["put_mouse_over_petals"]."</div></center><br />";
+print "<span style='text-align:center'>".$marguerite_img;
+print "<div id=\"marguerite_petal_text\">".$msg["put_mouse_over_petals"]."</div></span><br />";
 print $decimal_see_footer;

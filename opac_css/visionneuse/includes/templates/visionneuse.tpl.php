@@ -2,13 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: visionneuse.tpl.php,v 1.14 2014-09-19 14:26:41 arenou Exp $
+// $Id: visionneuse.tpl.php,v 1.18 2017-07-21 13:05:58 vtouchard Exp $
 
 $visionneuse ="
 	<div style='overflow:hidden;position:absolute;top:0%;left:0%;text-align:center;height:100%;width:100%'>
 		<div id='visio_current_object' style='overflow-y:auto;'>
 			<div id='visio_current_titre'><h1>!!titre!!</h1></div>
 			!!download!!
+			!!explnum_licence_picto!!
 			<div id='visio_current_doc'>!!doc!!</div>
 			<div id='visio_current_description'>!!desc!!</div>
 		</div>
@@ -19,11 +20,11 @@ $visionneuse ="
 				<table style='text-align:center;width:100%'>
 					<tr>
 						<td style='width:45%;text-align:right;'>
-							<img src='$visionneuse_path/images/prev.gif' id='previous' style='display:!!previous_style!!' onclick='visionneuseNav(\"previous\");' />
+							<img src='".$visionneuse_path."/images/prev.gif' id='previous' style='display:!!previous_style!!' onclick='visionneuseNav(\"previous\");' />
 						</td>
 						<td style='width:10%;'>!!current_position!!</td>
 						<td style='width:45%;text-align:left;'>
-							<img src='$visionneuse_path/images/next.gif'  id='next' style='display:!!next_style!!' onclick='visionneuseNav(\"next\");'/>
+							<img src='".$visionneuse_path."/images/next.gif'  id='next' style='display:!!next_style!!' onclick='visionneuseNav(\"next\");'/>
 						</td>
 					</tr>
 				</table>
@@ -39,16 +40,23 @@ $visionneuse ="
 			switch(where){
 				case 'next' :
 					if ((document.forms['docnumForm'].position.value*1+1)> !!max_pos!!){
-						document.forms['docnumForm'].position.value= !!max_pos!!
+						document.forms['docnumForm'].position.value= !!max_pos!!;
 					}else{
 						document.forms['docnumForm'].position.value++;
 					}
 					break;
 				case 'previous' :
 					if((document.forms['docnumForm'].position.value*1-1)< 0) {
-						document.forms['docnumForm'].position.value= 0
+						document.forms['docnumForm'].position.value= 0;
 					}else{
 						document.forms['docnumForm'].position.value--;
+					}
+					break;
+				case 'custom' :
+					if ((document.forms['docnumForm'].go_page.value*1) > !!max_pos!!){
+						document.forms['docnumForm'].position.value= !!max_pos!!;
+					} else if ((document.forms['docnumForm'].go_page.value*1) > 0){
+						document.forms['docnumForm'].position.value= document.forms['docnumForm'].go_page.value*1-1;
 					}
 					break;
 			}
@@ -76,10 +84,10 @@ $visionneuse ="
 				visionneuseIframe.style.top = '0px';
 				linkFullscreen.innerHTML=\"!!normal!!\";
 			}else{
-				visionneuseIframe.style.width = '60%';
-				visionneuseIframe.style.height = '80%';
-				visionneuseIframe.style.left = '20%';
-				visionneuseIframe.style.top = '8%';
+				visionneuseIframe.style.width = '96%';
+				visionneuseIframe.style.height = '96%';
+				visionneuseIframe.style.left = '2%';
+				visionneuseIframe.style.top = '2%';
 				linkFullscreen.innerHTML=\"!!fullscreen!!\";
 			}
 		}

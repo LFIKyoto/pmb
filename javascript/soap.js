@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: soap.js,v 1.3 2012-11-23 14:02:37 ngantier Exp $
+// $Id: soap.js,v 1.4 2016-12-27 16:26:28 dgoron Exp $
 /// Ajax = Asynchronous JavaScript + XML (+ HTML)
 /// Ajax framework for Internet Explorer (6.0, ...) and Firefox (1.0, ...)
 /// by Matthias Hertel
@@ -375,7 +375,9 @@ proxies._response = function () {
   var x = proxies.xmlhttp;
   var cc = proxies.current;
 
-  if(netscape.security.PrivilegeManager)netscape.security.PrivilegeManager.enablePrivilege('UniversalBrowserRead');	
+  if(typeof netscape !== 'undefined') {
+	  if(netscape.security.PrivilegeManager)netscape.security.PrivilegeManager.enablePrivilege('UniversalBrowserRead');
+  }
   if ((x != null) && (x.readyState == 4)) {
 	if (x.status == 200) {
 	

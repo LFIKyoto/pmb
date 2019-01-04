@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_bannette_view_bannette_from_tpl.class.php,v 1.1.2.2 2015-10-06 07:08:25 dgoron Exp $
+// $Id: cms_module_bannette_view_bannette_from_tpl.class.php,v 1.3 2018-06-19 13:43:38 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -26,7 +26,10 @@ class cms_module_bannette_view_bannette_from_tpl extends cms_module_common_view_
 	}
 	
 	public function get_form(){
-
+		if(!isset($this->parameters['used_bannette_template'])) $this->parameters['used_bannette_template'] = '';
+		if(!isset($this->parameters['used_record_template'])) $this->parameters['used_record_template'] = '';
+		if(!isset($this->parameters['nb_notices'])) $this->parameters['nb_notices'] = '';
+		
 		$form = parent::get_form()
 				."
 		<div class='row'>
@@ -34,7 +37,7 @@ class cms_module_bannette_view_bannette_from_tpl extends cms_module_common_view_
 				<label for='cms_module_bannette_view_django_template_bannette_content'>".$this->format_text($this->msg['cms_module_bannette_view_django_template_bannette_content'])."</label>
 			</div>
 			<div class='colonne-suite'>
-				".bannette_tpl::gen_tpl_select("cms_module_bannette_view_django_template_bannette_content",$this->parameters['used_bannette_template'])."
+				".bannette_tpl::gen_tpl_select("cms_module_bannette_view_django_template_bannette_content",$this->parameters['used_bannette_template'], "", 1)."
 			</div>
 		</div>
 		<div class='row'>
@@ -85,6 +88,9 @@ class cms_module_bannette_view_bannette_from_tpl extends cms_module_common_view_
 			$bannette->notice_tpl = $this->parameters['used_record_template'];
 			$bannette->document_notice_tpl = $this->parameters['used_record_template'];
 			$bannette->bannette_tpl_num = $this->parameters['used_bannette_template'];
+			if(!empty($this->parameters['nb_notices'])) {
+				$bannette->nb_notices_diff = $this->parameters['nb_notices'];
+			}
 			$bannette->get_datas_content();
 			$datas = array_merge($datas,$bannette->data_document);
 			$datas["content"] = bannette_tpl::render($bannette->bannette_tpl_num,$datas);

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sessions.inc.php,v 1.40 2015-05-19 14:29:28 apetithomme Exp $
+// $Id: sessions.inc.php,v 1.57 2018-12-20 11:00:19 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -12,6 +12,8 @@ if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 if(preg_match('/sessions\.inc\.php/', $REQUEST_URI)) {
 	include('./forbidden.inc.php'); forbidden();
 }
+
+require_once($class_path."/cache_factory.class.php");
 
 define( 'CHECK_USER_NO_SESSION', 1 );
 define( 'CHECK_USER_SESSION_DEPASSEE', 2 );
@@ -31,26 +33,25 @@ function checkUser($SESSNAME, $allow=0,$user_connexion='') {
 	
 	global $biblio_name,$biblio_adr1,$biblio_adr2,$biblio_cp,$biblio_town,$biblio_state,$biblio_country,$biblio_phone,$biblio_email,$biblio_website,$biblio_logo,$biblio_commentaire;
 	global $nb_per_page_search, $nb_per_page_select, $nb_per_page_gestion ;
+	global $nb_per_page, $nb_per_page_custom;
 	
-	global $PMBuserid, $PMBusername, $PMBgrp_num;
+	global $PMBuserid, $PMBusername;
 	global $checkuser_type_erreur ;
 	global $stylesheet ;
-	global $PMBusernom;
-	global $PMBuserprenom;
-	global $PMBuseremail,$PMBuseremailbcc;
 	global $explr_invisible ;
 	global $explr_visible_unmod ;
 	global $explr_visible_mod ;
 	global $check_messages;
 	global $pmb_sur_location_activate;
+	global $pmb_session_reactivate, $pmb_session_maxtime;
 	// par défaut : pas de session ouverte
 	$checkuser_type_erreur = CHECK_USER_NO_SESSION ;
 	
 	// récupère les infos de session dans les cookies
-	$PHPSESSID = $_COOKIE["$SESSNAME-SESSID"];
+	$PHPSESSID = (isset($_COOKIE["$SESSNAME-SESSID"]) ? $_COOKIE["$SESSNAME-SESSID"] : '');
 	if ($user_connexion) $PHPSESSLOGIN = $user_connexion; 
-	else $PHPSESSLOGIN = $_COOKIE["$SESSNAME-LOGIN"];
-	$PHPSESSNAME = $_COOKIE["$SESSNAME-SESSNAME"];
+	else $PHPSESSLOGIN = (isset($_COOKIE["$SESSNAME-LOGIN"]) ? $_COOKIE["$SESSNAME-LOGIN"] : '');
+	$PHPSESSNAME = (isset($_COOKIE["$SESSNAME-SESSNAME"]) ? $_COOKIE["$SESSNAME-SESSNAME"] : '');
 
 	// message de debug messages ?
 	if ($check_messages==-1) setcookie($SESSNAME."-CHECK-MESSAGES", 0, 0);
@@ -61,45 +62,63 @@ function checkUser($SESSNAME, $allow=0,$user_connexion='') {
 
 	// recherche de la session ouverte dans la table
 	$query = "SELECT SESSID, login, IP, SESSstart, LastOn, SESSNAME FROM sessions WHERE ";
-	$query .= "SESSID='$PHPSESSID'";
+	$query .= "SESSID='".addslashes($PHPSESSID)."'";
 	$txt_er = $query;
 	$result = pmb_mysql_query($query, $dbh);
 	$numlignes = pmb_mysql_num_rows($result);
 
 	if(!$result || !$numlignes) {
 		$checkuser_type_erreur = CHECK_USER_NO_SESSION ;
+		define('SESSname', '');
 		return FALSE;
 	}
 	
 	// vérification de la durée de la session
 	$session = pmb_mysql_fetch_object($result);
 	// durée depuis le dernier rafraichissement
+	if(!defined('SESSION_REACTIVATE')) {
+		if(!empty($pmb_session_reactivate)) {
+			define('SESSION_REACTIVATE', $pmb_session_reactivate);
+		} else {
+			define('SESSION_REACTIVATE', 7200); // refresh max = 120 minutes
+		}
+	}
 	if(($session->LastOn+SESSION_REACTIVATE) < time()) {
 		$checkuser_type_erreur = CHECK_USER_SESSION_DEPASSEE ;
 		return FALSE;
 	}
 	// durée depuis le début de la session
+	if(!defined('SESSION_MAXTIME')) {
+		if(!empty($pmb_session_maxtime)) {
+			define('SESSION_MAXTIME', $pmb_session_maxtime);
+		} else {
+			define('SESSION_MAXTIME', 86400);	// durée de vie maximum d'une session = 24h
+		}
+	}
 	if(($session->SESSstart+SESSION_MAXTIME) < time()) {
 		$checkuser_type_erreur = CHECK_USER_SESSION_DEPASSEE ;
+		define('SESSname', '');
 		return FALSE;
 	}
 	
 	// il faut stocker le sessid parce FL réutilise le tableau session pour aller lire les infos de users !!!
 	if($session->SESSID=="") {
 		$checkuser_type_erreur = CHECK_USER_SESSION_INVALIDE ;
+		define('SESSname', '');
 		return FALSE;
 	} else {
 		$id_session = $session->SESSID ;
 		$SESSstart_session = $session->SESSstart ;
 	}
 	// contrôle des droits utilisateurs
-	$query = "SELECT * FROM users WHERE username='$PHPSESSLOGIN' ";
+	$query = "SELECT * FROM users WHERE username='".addslashes($PHPSESSLOGIN)."'";
 	$result = @pmb_mysql_query($query, $dbh);
 	$session = pmb_mysql_fetch_object($result);
 
 	if($allow) {
 		if(!($allow & $session->rights)) {
 			$checkuser_type_erreur = CHECK_USER_AUCUN_DROIT ;
+			define('SESSname', '');
 			return FALSE;
 		}
 	}
@@ -118,21 +137,32 @@ function checkUser($SESSNAME, $allow=0,$user_connexion='') {
 
 	if(!$result) {
 		$checkuser_type_erreur = CHECK_USER_PB_ENREG_SESSION ;
+		define('SESSname', '');
 		return FALSE;
 	}
 	
 	// récupération de la langue de l'utilisateur
 
 	// mise à disposition des variables de la session
-	define('SESSlogin'	, $PHPSESSLOGIN);
-	define('SESSname'	, $SESSNAME);
-	define('SESSid'		, $PHPSESSID);
+	define('SESSlogin'	, addslashes($PHPSESSLOGIN));
+	define('SESSname'	, addslashes($SESSNAME));
+	define('SESSid'		, addslashes($PHPSESSID));
 	define('SESSstart'	, $SESSstart_session);
 	define('SESSlang'	, $session->user_lang);
 	define('SESSrights'	, $session->rights);
 	define('SESSuserid'	, $session->userid);
 	
 	/* Nbre d'enregistrements affichés par page */
+	/* l'usager a demandé à voir plus de résultats dans sa liste paginée */
+	$nb_per_page = intval($nb_per_page);
+	$nb_per_page_custom = intval($nb_per_page_custom);
+	if($nb_per_page) $nb_per_page_custom = $nb_per_page;
+	if($nb_per_page_custom) {
+		$session->nb_per_page_search = $nb_per_page_custom;
+		$session->nb_per_page_select = $nb_per_page_custom;
+		$session->nb_per_page_gestion = $nb_per_page_custom;
+		$nb_per_page = $nb_per_page_custom;
+	}
 	/* gestion */ 
 	$nb_per_page_author = $session->nb_per_page_gestion ;
 	$nb_per_page_publisher = $session->nb_per_page_gestion ;
@@ -143,64 +173,14 @@ function checkUser($SESSNAME, $allow=0,$user_connexion='') {
 	$nb_per_page_select = $session->nb_per_page_select ;
 	$nb_per_page_gestion = $session->nb_per_page_gestion ;
 	
-	/* param par défaut */	
-	$requete_param = "SELECT * FROM users WHERE username='$PHPSESSLOGIN' LIMIT 1 ";
-	$res_param = pmb_mysql_query($requete_param, $dbh);
-	$field_values = pmb_mysql_fetch_row( $res_param );
-	$array_values = pmb_mysql_fetch_array( $res_param );
-	$i = 0;
-	while ($i < pmb_mysql_num_fields($res_param)) {
-		$field = pmb_mysql_field_name($res_param, $i) ;
-		$field_deb = substr($field,0,6);
-		switch ($field_deb) {
-			case "deflt_" :
-				global $$field;
-				$$field=$field_values[$i];
-				break;
-			case "deflt2" :
-				global $$field;
-				$$field=$field_values[$i];
-				break;
-			case "param_" :
-				global $$field;
-				$$field=$field_values[$i];
-				break ;
-			case "value_" :
-				global $$field;
-				$$field=$field_values[$i];
-				break ;
-			case "xmlta_" :
-				global $$field;
-				$$field=$field_values[$i];
-				break ;
-			case "deflt3" :
-				global $$field;
-				$$field=$field_values[$i];
-				break;
-			default :
-				break ;
-			}
-		$i++;
-		}
-	$requete_nom = "SELECT nom, prenom, user_email, userid, username, environnement, grp_num FROM users WHERE username='$PHPSESSLOGIN' ";
-	$res_nom = pmb_mysql_query($requete_nom, $dbh);
-	$param_nom = @pmb_mysql_fetch_object( $res_nom );
-	$PMBusernom=$param_nom->nom ;
-	$PMBuserprenom=$param_nom->prenom ;
-	$PMBuseremail=$param_nom->user_email ;	
-	$PMBgrp_num=$param_nom->grp_num;
-	$PMBuseremailbcc=$value_email_bcc ;	
-	// pour que l'id user soit dispo partout
-	define('SESSuserid'	, $param_nom->userid);
-	$PMBuserid = $param_nom->userid;
-	$PMBusername = $param_nom->username;
-	$menusarray=unserialize($param_nom->environnement);
-	if (is_array($menusarray)) $_SESSION["AutoHide"]=$menusarray;
-	
+	/* param par défaut */
+	load_user_param();
 	/* on va chercher la feuille de style du user */
+	global $deflt_styles;
 	$stylesheet = $deflt_styles ;
 	
-	/* param de la localisation */	
+	/* param de la localisation */
+	global $deflt2docs_location;
 	if ($deflt2docs_location) $requete_param = "SELECT * FROM docs_location where idlocation='$deflt2docs_location'";
 	else $requete_param = "SELECT * FROM docs_location limit 1";
 	$res_param = pmb_mysql_query($requete_param, $dbh);
@@ -267,6 +247,9 @@ function checkUser($SESSNAME, $allow=0,$user_connexion='') {
 	$explr_visible_unmod = $session->explr_visible_unmod ;
 	$explr_visible_mod = $session->explr_visible_mod ;
 	
+	//on a une langue par défaut, on fixe
+	$pmb_indexation_lang = $session->user_lang;
+	
 	return TRUE;
 	}
 
@@ -274,11 +257,8 @@ function checkUser($SESSNAME, $allow=0,$user_connexion='') {
 function startSession($SESSNAME, $login, $database=LOCATION) {
 	global $dbh; // le lien MySQL
 	global $stylesheet; /* pour qu'à l'ouverture de la session le user récupère de suite son style */
-	global $PMBuserid, $PMBusername, $PMBgrp_num;
+	global $PMBuserid, $PMBusername;
 	global $checkuser_type_erreur ;
-	global $PMBusernom;
-	global $PMBuserprenom;
-	global $PMBuseremail;
 	global $PMBdatabase ;
 	
 	if (!$PMBdatabase) $PMBdatabase=$database;
@@ -300,19 +280,19 @@ function startSession($SESSNAME, $login, $database=LOCATION) {
 	// adresse IP du client
 	$IP = $_SERVER['REMOTE_ADDR'];
 
-	$query = "SELECT rights, user_lang FROM users WHERE username='$login'";
+	$query = "SELECT rights, user_lang FROM users WHERE username='".addslashes($login)."'";
 	$result = pmb_mysql_query($query, $dbh);
 	$ff = pmb_mysql_fetch_object($result);
 	$flag = $ff->rights;
 
 	// inscription de la session dans la table
 	$query = "INSERT INTO sessions (SESSID, login, IP, SESSstart, LastOn, SESSNAME) VALUES(";
-	$query .= "'$SESSID'";
-	$query .= ", '$login'";
+	$query .= "'".addslashes($SESSID)."'";
+	$query .= ", '".addslashes($login)."'";
 	$query .= ", '$IP'";
-	$query .= ", '$SESSstart'";
-	$query .= ", '$SESSstart'";
-	$query .= ", '$SESSNAME' )";
+	$query .= ", '".$SESSstart."'";
+	$query .= ", '".$SESSstart."'";
+	$query .= ", '".addslashes($SESSNAME)."' )";
 
 	$result = pmb_mysql_query($query, $dbh);
 	if(!$result) {
@@ -333,64 +313,19 @@ function startSession($SESSNAME, $login, $database=LOCATION) {
 	setcookie($SESSNAME."-DATABASE", $PMBdatabase, 0);
 
 	// mise à disposition des variables de la session
-	define('SESSlogin'	, $login);
-	define('SESSname'	, $SESSNAME);
-	define('SESSid'		, $SESSID);
+	define('SESSlogin'	, addslashes($login));
+	define('SESSname'	, addslashes($SESSNAME));
+	define('SESSid'		, addslashes($SESSID));
 	define('SESSstart'	, $SESSstart);
 	define('SESSlang'	, $ff->user_lang);
 	define('SESSrights'	, $flag);
 	
 	/* param par défaut */	
-	$requete_param = "SELECT * FROM users WHERE username='$login' LIMIT 1 ";
-	$res_param = pmb_mysql_query($requete_param, $dbh);
-	$field_values = pmb_mysql_fetch_row( $res_param );
-	$i = 0;
-	while ($i < pmb_mysql_num_fields($res_param)) {
-		$field = pmb_mysql_field_name($res_param, $i) ;
-		$field_deb = substr($field,0,6);
-		switch ($field_deb) {
-			case "deflt_" :
-				global $$field;
-				$$field=$field_values[$i];
-				break;
-			case "deflt2" :
-				global $$field;
-				$$field=$field_values[$i];
-				break;
-			case "param_" :
-				global $$field;
-				$$field=$field_values[$i];
-				break ;
-			case "value_" :
-				global $$field;
-				$$field=$field_values[$i];
-				break ;
-			case "xmlta_" :
-				global $$field;
-				$$field=$field_values[$i];
-				break ;
-			case "deflt3" :
-				global $$field;
-				$$field=$field_values[$i];
-				break;
-			default :
-				break ;
-			}
-		$i++;
-		}
-	$requete_nom = "SELECT nom, prenom, user_email, userid, username, grp_num FROM users WHERE username='$login' ";
-	$res_nom = pmb_mysql_query($requete_nom, $dbh);
-	$param_nom = pmb_mysql_fetch_object( $res_nom );
-	$PMBusernom=$param_nom->nom ;
-	$PMBuserprenom=$param_nom->prenom ;
-	$PMBgrp_num=$param_nom->grp_num;
-	$PMBuseremail=$param_nom->user_email ;	
-	// pour que l'id user soit dispo partout
-	define('SESSuserid'	, $param_nom->userid);
-	$PMBuserid = $param_nom->userid;
-	$PMBusername = $param_nom->username;
+	load_user_param();
 	
+	define('SESSuserid'	, $PMBuserid);
 	/* on va chercher la feuille de style du user */
+	global $deflt_styles;
 	$stylesheet = $deflt_styles ;
 	
 	//Ouverture de la session php
@@ -421,7 +356,7 @@ function cleanTable($SESSNAME) {
 	$time_out = time() - SESSION_MAXTIME;
 
 	// suppression des sessions inactives
-	$query = "DELETE FROM sessions WHERE LastOn < ".$time_out." and SESSNAME = '".$SESSNAME."'";
+	$query = "DELETE FROM sessions WHERE LastOn < ".$time_out." and SESSNAME = '".addslashes($SESSNAME)."'";
 	$result = pmb_mysql_query($query, $dbh);
 	}
 
@@ -454,8 +389,8 @@ function sessionDelete($SESSNAME) {
 
 	// effacement de la session de la table des sessions
 
-	$query = "DELETE FROM sessions WHERE login='$login'";
-	$query .= " AND SESSNAME='$SESSNAME' and SESSID='$PHPSESSID'";
+	$query = "DELETE FROM sessions WHERE login='".addslashes($login)."'";
+	$query .= " AND SESSNAME='".addslashes($SESSNAME)."' and SESSID='".addslashes($PHPSESSID)."'";
 
 	$result = @pmb_mysql_query($query, $dbh);
 	if($result)
@@ -465,3 +400,97 @@ function sessionDelete($SESSNAME) {
 
 	}
 
+function load_user_param(){
+	$nxtweb_params=array();
+	
+	$cache_php=cache_factory::getCache();
+	if ($cache_php) {
+		$db_user_parameters_name = SQL_SERVER.DATA_BASE.SESSlogin."_users";
+		$db_user_parameters_datetime = SQL_SERVER.DATA_BASE.SESSlogin."_users_datetime";
+		$tmp_user_parameters_datetime=$cache_php->getFromCache($db_user_parameters_datetime);
+		if($tmp_user_parameters_datetime){
+			$re_date="select if ((SELECT IF(UPDATE_TIME IS NULL,'3000-01-01 01:01:01',UPDATE_TIME) from information_schema.tables where table_schema='".DATA_BASE."' and table_name='users' ) >= '".$tmp_user_parameters_datetime."', 0, 1)";
+			$cache_up_to_date = pmb_sql_value($re_date);
+			if ($cache_up_to_date) {
+				$nxtweb_params = $cache_php->getFromCache($db_user_parameters_name);
+				if(count($nxtweb_params)){
+					foreach( $nxtweb_params as $param_name => $param_value ) {
+						if($param_name == "menusarray"){//Paramètre particulié
+							if (is_array($param_value)) $_SESSION["AutoHide"]=$param_value;
+						}else{
+							global ${$param_name};
+							${$param_name} = $param_value;
+						}
+					}
+					return;//On a récupéré les paramètres
+				}
+			}
+		}
+	}
+	
+	global $PMBusernom, $PMBuserprenom, $PMBuseremail, $PMBgrp_num, $PMBuseremailbcc, $PMBuserid, $PMBusername, $pmb_indexation_lang;
+	$requete_param = "SELECT * FROM users WHERE username='".SESSlogin."' LIMIT 1 ";
+	$res_param = pmb_mysql_query($requete_param);
+	$field_values = pmb_mysql_fetch_row( $res_param );
+	$i = 0;
+	while ($i < pmb_mysql_num_fields($res_param)) {
+		$field = pmb_mysql_field_name($res_param, $i) ;
+		$field_deb = substr($field,0,6);
+		switch ($field_deb) {
+			case "deflt_" :
+			case "deflt2" :
+			case "param_" :
+			case "value_" :
+			case "xmlta_" :
+			case "deflt3" :
+				global ${$field};
+				${$field}=$field_values[$i];
+				$nxtweb_params[$field]=$field_values[$i];
+				break;
+			default :
+				break ;
+		}
+		if ($field == 'user_lang') {
+			$pmb_indexation_lang = $field_values[$i];
+			$nxtweb_params["pmb_indexation_lang"]=$field_values[$i];
+		}
+		$i++;
+	}
+	
+	pmb_mysql_data_seek($res_param, 0);
+	$param_nom = pmb_mysql_fetch_object($res_param);
+	
+	$PMBusernom=$param_nom->nom ;
+	$nxtweb_params["PMBusernom"]=$param_nom->nom ;
+	
+	$PMBuserprenom=$param_nom->prenom ;
+	$nxtweb_params["PMBuserprenom"]=$param_nom->prenom ;
+	
+	$PMBuseremail=$param_nom->user_email ;
+	$nxtweb_params["PMBuseremail"]=$param_nom->user_email;
+	
+	$PMBgrp_num=$param_nom->grp_num;
+	$nxtweb_params["PMBgrp_num"]=$param_nom->grp_num;
+	
+	$PMBuseremailbcc=$value_email_bcc ;
+	$nxtweb_params["PMBuseremailbcc"]=$value_email_bcc;
+	
+	// pour que l'id user soit dispo partout
+	$PMBuserid = $param_nom->userid;
+	$nxtweb_params["PMBuserid"]=$param_nom->userid;
+	
+	$PMBusername = $param_nom->username;
+	$nxtweb_params["PMBusername"]=$param_nom->username;
+	
+	$menusarray=unserialize($param_nom->environnement);
+	$nxtweb_params["menusarray"]=$menusarray;
+	
+	if (is_array($menusarray)) $_SESSION["AutoHide"]=$menusarray;
+		
+	if($cache_php){
+		$cache_php->setInCache($db_user_parameters_datetime, pmb_sql_value("select now()"));
+		$cache_php->setInCache($db_user_parameters_name, $nxtweb_params);
+	}
+	
+	return;
+}

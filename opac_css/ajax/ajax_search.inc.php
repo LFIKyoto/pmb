@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_search.inc.php,v 1.3 2015-03-18 11:03:34 apetithomme Exp $
+// $Id: ajax_search.inc.php,v 1.4 2018-04-09 09:07:33 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -54,6 +54,7 @@ switch($type){
 }
 $as->makeSearch();
 
+if(!isset($wanted)) $wanted = '';
 switch($wanted){
 	case "results":
 		$as->getResults();
@@ -72,7 +73,7 @@ $return['affiliate_tabLabel'] = $msg['in_affiliate_source'];
 $return['any_results_msg'] = $msg['affiliate_source_any_results'];
 
 //On renvoie du JSON dans le charset de PMB...
-if(!$debugtest){
+if(!isset($debugtest) || !$debugtest){
 	header("Content-Type:application/json; charset=$charset");
 	$return = charset_pmb_normalize($return);
 	print json_encode($return);

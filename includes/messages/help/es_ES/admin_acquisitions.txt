@@ -1,4 +1,4 @@
-<h1>Adquisiciones</h1>
+<h2>Adquisiciones</h2>
 </p><p>
 <b>Datos</b> ficha de identificaci&oacute;n de la biblioteca.
 </p><p>

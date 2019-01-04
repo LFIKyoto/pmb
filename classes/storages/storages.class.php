@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: storages.class.php,v 1.2 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: storages.class.php,v 1.3 2017-10-18 13:00:57 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -194,7 +194,7 @@ class storages {
 						<label for='storage_name'>".$msg['storage_name']."</label>
 					</div>
 					<div class='colonne_suite'>
-						<input type='text' name='storage_name' value='".htmlentities($row['storage_name'],ENT_QUOTES,$charset)."' />
+						<input type='text' name='storage_name' value='".(!empty($row['storage_name']) ? htmlentities($row['storage_name'],ENT_QUOTES,$charset) : "")."' />
 					</div>
 				</div>
 				<div class='row'>
@@ -217,7 +217,7 @@ class storages {
 					</div>
 					<div class='row'>&nbsp;</div>
 					<div class='row' id='storage_params_form'>";
-		if($row['storage_class']){
+		if(!empty($row['storage_class'])){
 			$form.= $this->get_params_form($row['storage_class'],$row['id_storage']);
 		}	
 		$form.= "
@@ -243,7 +243,7 @@ class storages {
 						<input class='bouton' type='submit' value='".htmlentities($msg['storage_save'],ENT_QUOTES,$charset)."' />&nbsp;
 						<input class='bouton' type='button' value='".htmlentities($msg['storage_cancel'],ENT_QUOTES,$charset)."' onclick='history.go(-1);'/>
 					</div>";
-		if($row['id_storage']){
+		if(!empty($row['id_storage'])) {
 			$form.= "
 					<div class='right'>
 						<input class='bouton' type='button' value='".htmlentities($msg['storage_delete'],ENT_QUOTES,$charset)."' onclick='confirm_storage_delete(".$id.");'/>
@@ -278,7 +278,7 @@ class storages {
 			}
 		}
 		
-		if($row['id_storage']){
+		if(!empty($row['id_storage'])) {
 			$query = "update storages set ";
 			$clause =" where id_storage = ".$row['id_storage'];
 		}else{

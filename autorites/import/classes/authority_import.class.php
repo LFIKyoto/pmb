@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authority_import.class.php,v 1.6 2015-04-03 11:16:27 jpermanne Exp $
+// $Id: authority_import.class.php,v 1.9 2017-12-22 13:31:51 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,18 +16,20 @@ require_once($include_path."/misc.inc.php");
  */
 
 class authority_import {
-	var $notice;
-	var $create_link;
-	var $create_link_spec;
-	var $force_update;
-	var $use_rejected;
-	var $use_associated;
-	var $use_parallel;
+	public $notice;
+	public $create_link;
+	public $create_link_spec;
+	public $force_update;
+	public $use_rejected;
+	public $use_associated;
+	public $use_parallel;
 	
-	var $authority_id;
-	var $num_origin;
-	var $id_authority_source;
-	var $splitted;
+	public $authority_id;
+	public $num_origin;
+	public $id_authority_source;
+	public $splitted;
+	public $id_thesaurus;
+	public $scheme_uri;
 	
 	/*
 	 * Constructeur
@@ -51,7 +53,7 @@ class authority_import {
 		if($authority_number){ 
 			if(strlen($authority_number) == $size){
 				$number = str_replace("FRBNF","",$authority_number);
-				return substr($number,0,-1);	
+				return substr($number,0,-1);
 			}else{
 				return $authority_number;
 			}
@@ -242,7 +244,11 @@ class authority_import {
 		if($this->authority_id){
 			$id = $this->authority_id;
 		}else{
-			$id = $this->notice->check_if_exists($this->notice->specifics_data,$this->id_thesaurus);
+			if($this->scheme_uri) {
+				$id = $this->notice->check_if_exists($this->notice->specifics_data,$this->scheme_uri);
+			} else {
+				$id = $this->notice->check_if_exists($this->notice->specifics_data,$this->id_thesaurus);
+			}
 		}
 		if($id!=0){
 			$query = "select * from authorities_sources where num_authority = ".$id." and authority_type = '".$this->notice->type."' and num_origin_authority != ".$this->num_origin;
@@ -299,7 +305,7 @@ class authority_import {
 					}
 					break;
 				case "category" :
-					$this->authority_id = category::import($this->notice->specifics_data,$this->id_thesaurus,$this->get_parent_category(),$this->notice->common_data['lang']);
+					$this->authority_id = category::import($this->notice->specifics_data, $this->id_thesaurus, $this->get_parent_category(), $this->notice->common_data['lang']);
 					break;
 				default :
 					//	on fait rien...
@@ -334,15 +340,24 @@ class authority_import {
 				case "category" :
 					$authority = new category($this->authority_id);
 					break;
+				case "concept" :
+					$authority = new skos_concept($this->authority_id);
+					break;
 				default :
 				//	on fait rien...
 					break;
 			}
 			if($authority && !$authority->import_denied){
-				if($this->notice->type == "category"){
-					$result=$authority->update($data,$this->id_thesaurus,$this->get_parent_category(),$this->notice->common_data['lang']);
-				}else{
-					$result=$authority->update($data,$force_creation);
+				switch ($this->notice->type) {
+					case 'category' :
+						$result = $authority->update($data, $this->id_thesaurus, $this->get_parent_category(), $this->notice->common_data['lang']);
+						break;
+					case 'concept' :
+						$result = $authority->update($data, $this->scheme_uri, $this->get_parent_concept(), $this->notice->common_data['lang']);
+						break;
+					default :
+						$result = $authority->update($data, $force_creation);
+						break;
 				}
 				if($result){
 					if($this->authority_id){
@@ -555,6 +570,7 @@ class authority_import {
 	 */
 	public function import(){
 		global $msg;
+		$id_authority = 0;
 		
 		$this->num_origin = origin::import("authorities",$this->notice->common_data['source']);
 		//on commence par regarder si le numéro d'autorité est présent dans la table authorities_sources...
@@ -635,6 +651,12 @@ class authority_import {
 				case "category" :
 					$this->authority_id = category::import($this->notice->specifics_data,$this->id_thesaurus,$this->get_parent_category(),$this->notice->common_data['lang']);
 					break;
+				case "concept" :
+					if(!$this->scheme_uri) {
+						$this->scheme_uri = $this->notice->get_scheme_uri();
+					}
+					$this->authority_id = skos_concept::import($this->notice->specifics_data, $this->scheme_uri, $this->get_parent_concept(), $this->notice->common_data['lang']);
+					break;
 				default :
 					//	on fait rien...
 					break;
@@ -655,14 +677,13 @@ class authority_import {
 	}
 	
 	public function update_authority($id_authority){
+		$need_update = false;
 		$query = "select * from authorities_sources where num_authority = ".$id_authority." and authority_type= '".$this->notice->type."' and num_origin_authority = ".$this->num_origin;
 		$result = pmb_mysql_query($query);
 		if(pmb_mysql_num_rows($result)){
 			$infos = pmb_mysql_fetch_object($result);
-		}else{
-			$need_update = false;
 		}
-		if(is_object($infos) && ($infos->update_date!=0 && $this->force_update == 0)){
+		if(isset($infos) && is_object($infos) && ($infos->update_date!=0 && $this->force_update == 0)){
 			//on regarde la date de la notice dans le notice en cours d'import...
 			if(strlen($this->notice->common_data['source']['date']) == 8){
 				$query = "select datediff('".substr($this->notice->common_data['source']['date'],0,4)."-".substr($this->notice->common_data['source']['date'],4,2)."-".substr($this->notice->common_data['source']['date'],6,2)."','".$infos->update_date."')";
@@ -694,6 +715,11 @@ class authority_import {
 					break;
 				case "category" :
 					$authority = new category($id_authority);
+					break;
+				case "concept" :
+					//$authority = new skos_concept($id_authority);
+					// TODO En attendant une methode update, on évite une fatale...
+					$authority = null;
 					break;
 				default :
 				//	on fait rien...
@@ -763,15 +789,25 @@ class authority_import {
 				}
 				$authority = new category(0);
 				break;
+			case "concept" :
+				$num_parent = $this->get_parent_concept();
+				$authority = new skos_concept();
+				break;
 			default :
 			//	on fait rien...
 				break;
 		}
 		if($authority && !$authority->import_denied){
-			if($this->notice->type == "category"){
-				$result=$authority->update($data,$this->id_thesaurus,$num_parent,$this->notice->common_data['lang']);
-			}else{
-				$result=$authority->update($data,true);
+			switch ($this->notice->type) {
+				case "category" :
+					$result = $authority->update($data, $this->id_thesaurus, $num_parent, $this->notice->common_data['lang']);
+					break;
+				case "concept" :
+					$result = $authority->update($data, $this->scheme_uri, $num_parent, $this->notice->common_data['lang']);
+					break;
+				default :
+					$result = $authority->update($data, true);
+					break;
 			}
 			if($result){
 				$this->splitted = true;
@@ -831,5 +867,14 @@ class authority_import {
 
 	protected function get_parent_category(){
 		return 0;
+	}
+	
+	protected function get_parent_concept(){
+		return 0;
+	}
+	
+	public function set_scheme_uri($scheme_uri) {
+		$this->scheme_uri = $scheme_uri;
+		return $this;
 	}
 }

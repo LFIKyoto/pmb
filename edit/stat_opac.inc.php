@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: stat_opac.inc.php,v 1.12 2015-06-14 11:47:19 Alexandre Exp $
+// $Id: stat_opac.inc.php,v 1.24 2017-11-22 11:07:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -16,11 +16,13 @@ function show_stats($dbh) {
 	
  	print "
 		<script type=\"text/javascript\" src=\"".$javascript_path."/tablist.js\"></script>
-		<a href=\"javascript:expandAll()\"><img src='./images/expand_all.gif' border='0' id=\"expandall\"></a>
-		<a href=\"javascript:collapseAll()\"><img src='./images/collapse_all.gif' border='0' id=\"collapseall\"></a>
+		<span class='item-expand'>
+			<a href=\"javascript:expandAll()\"><img src='".get_url_icon('expand_all.gif')."' style='border:0px' id=\"expandall\"></a>
+			<a href=\"javascript:collapseAll()\"><img src='".get_url_icon('collapse_all.gif')."' style='border:0px' id=\"collapseall\"></a>
+		</span>
 		";
 	
- 	$requete_vue = "select * from statopac_vues";
+ 	$requete_vue = "select * from statopac_vues order by nom_vue";
  	$res = pmb_mysql_query($requete_vue,$dbh);
  	$vue_affichage="";	
 	if(pmb_mysql_num_rows($res) == 0){
@@ -30,7 +32,7 @@ function show_stats($dbh) {
 		$vue_affichage="";
 		$parity=1;
 		while(($vue = pmb_mysql_fetch_object($res))){			
-			$rqt="select * from statopac_request where num_vue='".addslashes($vue->id_vue)."'";
+			$rqt="select * from statopac_request where num_vue='".addslashes($vue->id_vue)."' order by name";
 			$result = pmb_mysql_query($rqt);
 			$liste_requete ="";
 			while(($request = pmb_mysql_fetch_object($result))){
@@ -50,8 +52,8 @@ function show_stats($dbh) {
 				$tab_list="<table><tr><th colspan=4>".stripslashes(htmlentities($vue->nom_vue,ENT_QUOTES,$charset))."</th></tr>".$liste_requete."</table>";
 				$vue_affichage .= "<div id='vue".$vue->id_vue."Parent' class='notice-parent'>";
 				$lien = stripslashes(htmlentities($vue->nom_vue,ENT_QUOTES,$charset));
-				$space = "<small><span style='margin-right: 3px;'><img src='./images/spacer.gif' width='10' height='10' /></span></small>";
-				$vue_affichage .= "<img id='vue".$vue->id_vue."Img' class='img_plus' hspace='3' border='0' onClick=\"expandBase('vue".$vue->id_vue."',true);return false;\" title='requete' name='imEx' src=\"./images/plus.gif\" >";
+				$space = "<small><span style='margin-right: 3px;'><img src='".get_url_icon('spacer.gif')."' width='10' height='10' /></span></small>";
+				$vue_affichage .= "<img id='vue".$vue->id_vue."Img' class='img_plus' style='border:0px; margin:3px 3px' onClick=\"expandBase('vue".$vue->id_vue."',true);return false;\" title='requete' name='imEx' src='".get_url_icon('plus.gif')."' >";
 				$vue_affichage .= "$space<span class='notice-heada'>$lien</span>";
 				$vue_affichage .= "</div>";
 				$vue_affichage .= "<div id='vue".$vue->id_vue."Child' class='notice-child' style='margin-bottom: 6px; display: none;'>$tab_list</div>";
@@ -116,7 +118,7 @@ function show_results_stats($id_proc=0){
 		}
 		
 		$req_nombre_lignes="";
-		if(!$nombre_lignes_total){
+		if(!isset($nombre_lignes_total) || !$nombre_lignes_total){
 			$req_nombre_lignes = pmb_mysql_query($sql);
 			if(!$req_nombre_lignes){
 				 die($sql."<br /><br />".pmb_mysql_error());
@@ -127,7 +129,7 @@ function show_results_stats($id_proc=0){
 		
 		
 		//Si aucune limite_page n'a été passée, valeur par défaut : 10
-		if (!$limite_page) $limite_page = 10;
+		if (!isset($limite_page) || !$limite_page) $limite_page = 10;
 		$nbpages= $nombre_lignes_total / $limite_page; 
 		
 		// on arondi le nombre de page pour ne pas avoir de virgules, ici au chiffre supérieur 
@@ -136,7 +138,7 @@ function show_results_stats($id_proc=0){
 		// on enlève 1 au nombre de pages, car la 1ere page affichée ne fait pas partie des pages suivantes
 		$nbpages_arrondi = $nbpages_arrondi - 1; 
 		
-		if (!$numero_page) $numero_page=0;
+		if (!isset($numero_page) || !$numero_page) $numero_page=0;
 		
 		$limite_mysql = $limite_page * $numero_page; 
 		
@@ -167,16 +169,14 @@ function show_results_stats($id_proc=0){
 		if ($nbr_lignes) {
 			switch($dest) {
 				case "TABLEAU":
-					$fichier_temp_nom = tempnam(sys_get_temp_dir(),$fichier_temp_nom);
-					$workbook = new writeexcel_workbook($fichier_temp_nom);
-					$worksheet = &$workbook->addworksheet();
+					$worksheet = new spreadsheet();
 					
-					$worksheet->write(0,0,$row[1]);
-					$worksheet->write(0,1,$row[3]);
+					$worksheet->write_string(0,0,$row[1]);
+					$worksheet->write_string(0,1,$row[3]);
 					for($i=0; $i < $nbr_champs; $i++) {
 						// entête de colonnes
 						$fieldname = pmb_mysql_field_name($res, $i);
-						$worksheet->write(2,$i,${fieldname});
+						$worksheet->write_string(2,$i,$fieldname);
 					}
               		        		
 					for($i=0; $i < $nbr_lignes; $i++) {
@@ -187,22 +187,19 @@ function show_results_stats($id_proc=0){
 								$col = "'".$col ;
 							}
 							if(trim($col)=='') $col=" ";
-							$worksheet->write(($i+3),$j,$col);
+							$worksheet->write_string(($i+3),$j,$col);
 							$j++;
 						}
 					}
 					
-					$workbook->close();
-					$fh=fopen($fichier_temp_nom, "rb");
-					fpassthru($fh);
-					unlink($fichier_temp_nom);	
+					$worksheet->download('edition.xls');
 					break;
 				case "TABLEAUHTML":
-					echo "<h1>$row[1]</h1><h2>$row[3]</h2>$sql<br/>";						
+					echo "<h1>$row[1]</h1><h2>$row[3]</h2>$sql<br />";						
 					echo "<table>";
 					for($i=0; $i < $nbr_champs; $i++) {
 						$fieldname = pmb_mysql_field_name($res, $i);
-						print("<th align='left'>${fieldname}</th>");
+						print("<th class='align_left'>".$fieldname."</th>");
 					}
        		        for($i=0; $i < $nbr_lignes; $i++) {
 						$row = pmb_mysql_fetch_row($res);
@@ -221,8 +218,8 @@ function show_results_stats($id_proc=0){
 				case "TABLEAUCSV":
 					for($i=0; $i < $nbr_champs; $i++) {
 						$fieldname = pmb_mysql_field_name($res, $i);
-						print("${fieldname}\t");
-						}
+						print $fieldname."\t";
+					}
 					for($i=0; $i < $nbr_lignes; $i++) {
 						$row = pmb_mysql_fetch_row($res);
 						echo "\n";
@@ -238,9 +235,9 @@ function show_results_stats($id_proc=0){
 					echo "<table>";
 					for($i=0; $i < $nbr_champs; $i++) {
 						$fieldname = pmb_mysql_field_name($res, $i);
-						print("<th align='left'>${fieldname}</th>");
-						}
-       		                	$odd_even=0;
+						print "<th class='align_left'>".$fieldname."</th>";
+					}
+					$odd_even=0;
 					for($i=0; $i < $nbr_lignes; $i++) {
 						$row = pmb_mysql_fetch_row($res);
 						if ($odd_even==0) {
@@ -256,9 +253,9 @@ function show_results_stats($id_proc=0){
 						}
 						echo "</tr>";
 					}
-					echo "</table><hr>";
+					echo "</table><hr />";
 		
-					echo "<p align=left size='-3' class='pn-normal'>
+					echo "<p class='align_left pn-normal' size='-3'>
 					<form name='navbar' class='form-edit' action='$page' method='post'>";
 					echo "
 					<input type='hidden' name='numero_page'  value='$numero_page' />
@@ -272,23 +269,24 @@ function show_results_stats($id_proc=0){
 					// dans cette condition, la variable numero_page est incrémenté et est inférieure à $nombre 
 					
 					// constitution des liens
+					$nav_bar = '';
 					$suivante = $numero_page+1;
 					$precedente = $numero_page-1;
 					// affichage du lien précédent si nécéssaire
 					if ($precedente >= 0)
-						$nav_bar .= "<img src='./images/left.gif' border='0' title='$msg[48]' alt='[$msg[48]]' hspace='3' align='bottom' onClick=\"document.navbar.dest.value='';document.navbar.numero_page.value='$precedente'; document.navbar.limite_page.value='$limite_page'; document.navbar.submit(); \"/>" ;
+						$nav_bar .= "<img src='".get_url_icon('left.gif')."' style='border:0px; margin:3px 3px' title='$msg[48]' alt='[$msg[48]]' class='align_bottom' onClick=\"document.navbar.dest.value='';document.navbar.numero_page.value='$precedente'; document.navbar.limite_page.value='$limite_page'; document.navbar.submit(); \"/>" ;
 					for ($i = 0; $i <=$nbpages_arrondi; $i++) {
 						if($i==$numero_page) $nav_bar .= "<strong>".($i+1)."/".($nbpages_arrondi+1)."</strong>";
 					}
-					if ($suivante<=$nbpages_arrondi) $nav_bar .= "<img src='./images/right.gif' border='0' title='$msg[49]' alt='[$msg[49]]' hspace='3' align='bottom' onClick=\"document.navbar.dest.value='';document.navbar.numero_page.value='$suivante'; document.navbar.limite_page.value='$limite_page'; document.navbar.submit(); \" />";
+					if ($suivante<=$nbpages_arrondi) $nav_bar .= "<img src='".get_url_icon('right.gif')."' style='border:0px; margin:3px 3px' title='$msg[49]' alt='[$msg[49]]' class='align_bottom' onClick=\"document.navbar.dest.value='';document.navbar.numero_page.value='$suivante'; document.navbar.limite_page.value='$limite_page'; document.navbar.submit(); \" />";
 					echo $nav_bar ;
 
 					echo "
 					<input type='hidden' name='dest' value='' />
 					$msg[edit_cbgen_mep_afficher] <input type='text' name='limite_page' value='$limite_page' class='saisie-5em' /> $msg[1905]
-					<input type='submit' class='bouton' value='".$msg['actualiser']."' onclick=\"this.form.dest.value='';document.navbar.numero_page.value=0;\" /><font size='4'>&nbsp;&nbsp;&nbsp;&nbsp;</font>
-					<input type='image' src='./images/tableur.gif' border='0' onClick=\"this.form.dest.value='TABLEAU';\" alt='Export tableau EXCEL' title='Export tableau EXCEL' /><font size='4'>&nbsp;&nbsp;&nbsp;&nbsp;</font>
-					<input type='image' src='./images/tableur_html.gif' border='0' onClick=\"this.form.dest.value='TABLEAUHTML';\" alt='Export tableau HTML' title='Export tableau HTML' />
+					<input type='submit' class='bouton' value='".$msg['actualiser']."' onclick=\"this.form.dest.value='';document.navbar.numero_page.value=0;\" />&nbsp;&nbsp;&nbsp;&nbsp;
+					<input type='image' src='".get_url_icon('tableur.gif')."' style='border:0px' onClick=\"this.form.dest.value='TABLEAU';\" alt='".$msg['export_tableur']."' title='".$msg['export_tableur']."' />&nbsp;&nbsp;&nbsp;&nbsp;
+					<input type='image' src='".get_url_icon('tableur_html.gif')."' style='border:0px' onClick=\"this.form.dest.value='TABLEAUHTML';\" alt='".$msg['export_tableau_html']."' title='".$msg['export_tableau_html']."' />
 					</form></p>";
 					break;
 				}
@@ -300,7 +298,7 @@ function show_results_stats($id_proc=0){
 	
 }
 
-if(!$id_proc){
+if(!isset($id_proc)){
 	print show_stats($dbh);
 } else {
 	print show_results_stats($id_proc);

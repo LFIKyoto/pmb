@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_musicstand.js,v 1.22 2015-02-03 10:05:27 vtouchard Exp $
+// $Id: nomenclature_musicstand.js,v 1.27 2016-03-02 10:44:50 vtouchard Exp $
 
 define(["dojo/_base/declare",  "apps/nomenclature/nomenclature_instrument", "apps/nomenclature/nomenclature_family", "dijit/registry"], function(declare, Instrument, Family, registry){
 	/*
@@ -115,16 +115,30 @@ define(["dojo/_base/declare",  "apps/nomenclature/nomenclature_instrument", "app
 			},
 
 			calc_effective: function(){
-				var effective = 0;
-				if(this.is_indefinite_effective()){
-					this.effective = this.family.nomenclature.indefinite_character;
-				}else{
-					if(!this.get_used_by_workshops()){
-						for(var i=0; i<this.instruments.length ; i++){
-							effective=effective+this.instruments[i].get_effective();
+				this.set_indefinite_effective(false);
+				if(!this.get_used_by_workshops()){
+					var effective = 0;
+					for(var i=0; i<this.instruments.length ; i++){
+						if (this.instruments[i].is_indefinite_effective()) {
+							effective = 0;
+							this.set_indefinite_effective(true);
+							break;
 						}
-						this.set_effective(effective);
+						effective+=this.instruments[i].get_effective();
 					}
+					this.set_effective(effective);
+				}else{
+    				for(var i=0 ; i<this.family.nomenclature.workshops.length ; i++){
+    					if(!this.family.nomenclature.workshops[i].get_defined()){
+    						this.set_indefinite_effective(true);
+    						break;
+    					}
+    				}
+    				if(!this.is_indefinite_effective()){
+    					this.set_effective(this.family.nomenclature.workshops.length);
+    				}else{
+    					this.set_effective(0);
+    				}
 				}
 			},
 			
@@ -177,48 +191,51 @@ define(["dojo/_base/declare",  "apps/nomenclature/nomenclature_instrument", "app
 		    
 			calc_abbreviation: function(){
 				var abbreviation= "";
-				if(this.get_used_by_workshops() || this.is_indefinite_effective()){
-					abbreviation = this.get_effective()+"";
-				}else{
-					var tab_instruments = new Array();
-					var instruments_reordered = this.get_instruments();
-					instruments_reordered.sort(this.sort_array);
-					if(!this.get_divisable() || (this.get_divisable() && this.get_effective() == this.instruments.length)){
-						//Flag indique si dans le pupitre, des crochets seront nécessaire.
-						var flag = false;
-						for(var i=0; i<instruments_reordered.length ; i++){
-							//Si l'instrument n'est pas standard, ou si ils comprend des instruments annexe ou si sa partie est != de 0 (pupitre des cordes)
-							if(!instruments_reordered[i].is_standard() || instruments_reordered[i].get_others_instruments()!=null || instruments_reordered[i].get_part()){
-								flag = true;
-							}
-							instruments_reordered[i].calc_abbreviation();
-							if (instruments_reordered[i].get_part()) {
-								tab_instruments.push(instruments_reordered[i].get_abbreviation());
-							} else {
-								tab_instruments.push(instruments_reordered[i].get_abbreviation());
-							}
-							
+				var tab_instruments = new Array();
+				var instruments_reordered = this.get_instruments();
+				instruments_reordered.sort(this.sort_array);
+				if((!this.get_divisable() && !this.get_used_by_workshops())){
+					//Flag indique si dans le pupitre, des crochets seront nécessaire.
+					var flag = false;
+					for(var i=0; i<instruments_reordered.length ; i++){
+						//Si l'instrument n'est pas standard, ou si ils comprend des instruments annexe ou si sa partie est != de 0 (pupitre des cordes)
+						if(!instruments_reordered[i].is_standard() || instruments_reordered[i].get_others_instruments()!=null || instruments_reordered[i].get_part()){
+							flag = true;
 						}
-						abbreviation += this.get_effective();
-						if (flag) {
-							abbreviation += "[";
-							abbreviation += tab_instruments.join('.');
-							abbreviation += "]";
-						}
-					}else{
-						abbreviation += this.get_effective();
-						if(this.get_max_order()>1){
-							abbreviation += "[";
-							for(var i=0 ; i<instruments_reordered.length ; i++){
-								
-								abbreviation += instruments_reordered[i].get_effective();
-								if(i<instruments_reordered.length -1){
-									abbreviation += ".";
-								}
-							}
-							abbreviation += "]";
+						if (instruments_reordered[i].get_part()) {
+							tab_instruments.push(instruments_reordered[i].get_abbreviation());
+						} else {
+							tab_instruments.push(instruments_reordered[i].get_abbreviation());
 						}
 					}
+					abbreviation += this.get_effective();
+					if (flag) {
+						abbreviation += "[";
+						abbreviation += tab_instruments.join('.');
+						abbreviation += "]";
+					}
+				}else if(this.get_used_by_workshops()){
+					if(this.is_indefinite_effective()){
+						abbreviation += this.family.nomenclature.indefinite_character;
+					}else{
+						abbreviation += this.get_effective();
+					}
+				}else{
+					if(this.is_indefinite_effective()){
+						abbreviation += this.family.nomenclature.indefinite_character;
+					}else{
+						abbreviation += this.get_effective();
+					}
+					if(this.get_max_order()>1){
+						abbreviation += "[";
+						for(var i=0 ; i<instruments_reordered.length ; i++){
+							abbreviation+= instruments_reordered[i].get_abbreviation();
+							if(i<instruments_reordered.length -1){
+								abbreviation += ".";
+							}
+						}
+						abbreviation += "]";
+					}	
 				}
 				this.set_abbreviation(abbreviation);
 			},
@@ -239,15 +256,23 @@ define(["dojo/_base/declare",  "apps/nomenclature/nomenclature_instrument", "app
 			check : function(){
 				var total_effective = 0;
 				this.valid = true;
+				var undefined_musicstand = false;
 				//on commence par vérifier les instruments...
 				for(var i=0 ; i<this.instruments.length ; i++){
-					total_effective+=this.instruments[i].get_effective();
 					if(!this.instruments[i].check()){
 						this.valid = false;
 						this.error_message = registry.byId('nomenclature_datastore').get_message('nomenclature_js_nomenclature_error_check_instrument_incorrect')
 						break;
+					}else if(this.instruments[i].is_indefinite_effective()){
+						undefined_musicstand = true;
+					}else{
+						total_effective+=this.instruments[i].get_effective();
 					}
 				}
+				if(undefined_musicstand){
+					total_effective = 0;
+				}
+				
 				if(this.valid && this.get_used_by_workshops()){
 					//nothing to do
 				}else if(this.valid && total_effective != this.effective){
@@ -258,6 +283,7 @@ define(["dojo/_base/declare",  "apps/nomenclature/nomenclature_instrument", "app
 			},
 			get_error_message : function(){
 				return this.error_message;
-			} 
+			},
+			
 	    });
 	});

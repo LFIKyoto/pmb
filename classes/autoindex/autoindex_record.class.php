@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: autoindex_record.class.php,v 1.11 2015-03-16 10:59:15 jpermanne Exp $
+// $Id: autoindex_record.class.php,v 1.17 2018-04-18 09:12:33 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,7 +11,6 @@ require_once("$class_path/autoindex/autoindex_document.class.php");
 require_once("$class_path/marc_table.class.php");
 require_once("$class_path/category.class.php");
 require_once("$class_path/thesaurus.class.php");
-require_once("$class_path/facette_search_opac.class.php");
 require_once("$class_path/notice_doublon.class.php");
 
 class autoindex_record extends autoindex_document {
@@ -201,9 +200,9 @@ class autoindex_record extends autoindex_document {
 				
 				if ($field_name) {
 					
-					if($notice_fields->fields[$field_name][$htmlfieldstype]){
+					if($notice_fields::$fields[$field_name][$htmlfieldstype]){
 						$tpl_field[$i]['name'] = $field_name;
-						$tpl_field[$i]['field'] = $notice_fields->fields[$field_name][$htmlfieldstype];
+						$tpl_field[$i]['field'] = $notice_fields::$fields[$field_name][$htmlfieldstype];
 						$tpl_field[$i]['pond'] = $field_pond;
 						
 						if($field_name=="tit1"){ // cas du formulaire de bulletin ou le titre = bul_titre au lieu de tit1
@@ -228,7 +227,7 @@ class autoindex_record extends autoindex_document {
 						$tpl_selector_field.= '</tr><tr>';
 					}
 					$tpl_selector_field.= "<td><input type='checkbox' id='chk_".$tpl_field[$i]['name']."' name='chk_".$tpl_field[$i]['name']."' value='1' ".$checked." />&nbsp;";
-					$tpl_selector_field.= "<label for='chk_".$tpl_field[$i]['name']."'>".htmlentities($notice_fields->fields[$field_name]['label'],ENT_QUOTES,$charset)."</label></td>";
+					$tpl_selector_field.= "<label for='chk_".$tpl_field[$i]['name']."'>".htmlentities($notice_fields::$fields[$field_name]['label'],ENT_QUOTES,$charset)."</label></td>";
 					$j++;
 					$i++;
 				}
@@ -267,7 +266,7 @@ class autoindex_record extends autoindex_document {
 			}
 			$combo .= "</select></div>";
 			$combo.= "<div id='autoindex_selector_field'>$tpl_selector_field</div>";
-			$combo.= "<input type='button' class='bouton_small' value='".$msg['autoindex_do']."' onClick=\"autoindex_get_index();\" />";
+			$combo.= "<input type='button' class='bouton_small' id='refresh_autoindex_search_button' value='".$msg['autoindex_do']."' onClick=\"autoindex_get_index();\" />";
 			$combo.= "</div>";
 					
 			$tpl_index_auto="
@@ -277,7 +276,7 @@ class autoindex_record extends autoindex_document {
 				
 				function autoindex_get_index(){
 					
-					if(!parent.window.opener.document.forms['$caller']) return false;
+					if(!parent.window.parent.document.forms['$caller']) return false;
 												
 					//lecture des champs de la notice
 					var something_checked=false;
@@ -285,21 +284,17 @@ class autoindex_record extends autoindex_document {
 						fields_index_auto[i]['value']='';
 						if(document.getElementById('chk_'+fields_index_auto[i]['name']).checked) {
 							something_checked=true;
-							//console.log('chk_'+fields_index_auto[i]['name']);
-							if( parent.window.opener.document.forms['$caller'].elements[fields_index_auto[i]['field']]) {
-								fields_index_auto[i]['value'] = encodeURIComponent(parent.window.opener.document.forms['$caller'].elements[fields_index_auto[i]['field']].value);
+							if( parent.window.parent.document.forms['$caller'].elements[fields_index_auto[i]['field']]) {
+								fields_index_auto[i]['value'] = encodeURIComponent(parent.window.parent.document.forms['$caller'].elements[fields_index_auto[i]['field']].value);
 							}
 						}
 						
 					}
 					
 					// lecture de la langue d'indexation de la notice
-					document.getElementById('user_lang').value=parent.window.opener.document.forms['$caller'].elements['indexation_lang'].value;
+					document.getElementById('user_lang').value=parent.window.parent.document.forms['$caller'].elements['indexation_lang'].value;
 
 					document.getElementById('autoindex_txt').value=JSON.stringify(fields_index_auto);
-					//console.log(document.getElementById('autoindex_txt').value);
-					parent.document.getElementsByTagName('frameset')[0].rows = '' ;
-					
 					if (something_checked) {
 						document.forms['search_form'].submit();
 					}
@@ -309,7 +304,6 @@ class autoindex_record extends autoindex_document {
 			</script>
 			&nbsp;
 			
-			<input type='radio' value='autoindex' name='search_type' !!autoindex_checked!! onClick=\"document.getElementById('autoindex_selectors').style.display='block';parent.document.getElementsByTagName('frameset')[0].rows = '' ;\" />&nbsp;".$msg["autoindex_selector_search"]."&nbsp;
 			<input type='hidden' value='' name='autoindex_txt' id='autoindex_txt'/>
 			<input type='hidden' value='$htmlfieldstype' name='htmlfieldstype' />
 			<input type='hidden' value='' name='autoindex_lang' id='autoindex_lang'/>
@@ -325,12 +319,17 @@ class autoindex_record extends autoindex_document {
 		global $charset,$base_path,$base_url;
 		global $categ_browser_autoindex;
 		global $thesaurus_mode_pmb;
-		global $include_path,$caller;	
+		global $include_path,$caller,$callback;	
 		global $msg;
 
 		$this->process();
 		
-		$categ_list=$this->terms;
+		$libelle_partiel=0;
+		if($caller == 'search_form') {
+			$libelle_partiel=1;
+		}
+		$tpl_insert_all_index = '';
+		$tpl_insert_all_index_name = '';
 		
 		$browser_content="<h3>".$msg["autoindex_selector_title"]."</h3>";	
 		
@@ -339,7 +338,7 @@ class autoindex_record extends autoindex_document {
 			else $categ_id=$categ_obj->id;
 			$tcateg =  new category($categ_id);
 			$browser_content .= "<tr><td>";
-			if($id_thes == -1 && $thesaurus_mode_pmb){
+			if($this->get_thesaurus() == -1 && $thesaurus_mode_pmb){
 				$display = '['.htmlentities($tcateg->thes->libelle_thesaurus,ENT_QUOTES, $charset).']';
 			} else {
 				$display = '';
@@ -364,9 +363,9 @@ class autoindex_record extends autoindex_document {
 			}
 			if($tcateg->has_child) {
 				//$browser_content .= "<a href='$base_url".$tcateg->id."&id2=".$tcateg->id.'&id_thes='.$tcateg->thes->id_thesaurus."'>";//On mets le bon identifiant de thésaurus
-				$browser_content .= "<img src='$base_path/images/folderclosed.gif' hspace='3' border='0'/>";
+				$browser_content .= "<img src='".get_url_icon('folderclosed.gif')."' style='border:0px; margin:3px 3px'/>";
 			} else {
-				$browser_content .= "<img src='$base_path/images/doc.gif' hspace='3' border='0'/>";
+				$browser_content .= "<img src='".get_url_icon('doc.gif')."' style='border:0px; margin:3px 3px'/>";
 			}
 			if ($tcateg->commentaire) {
 				$zoom_comment = "<div id='zoom_comment".$tcateg->id."' style='border: solid 2px #555555; background-color: #FFFFFF; position: absolute; display:none; z-index: 2000;'>".htmlentities($tcateg->commentaire,ENT_QUOTES, $charset)."</div>" ;
@@ -375,14 +374,14 @@ class autoindex_record extends autoindex_document {
 				$zoom_comment = "" ;
 				$java_comment = "" ;
 			}
-			if ($thesaurus_mode_pmb ) $nom_tesaurus='['.$tcateg->thes->getLibelle().'] ' ;
-			else $nom_tesaurus='' ;
+			if ($thesaurus_mode_pmb ) $nom_thesaurus='['.$tcateg->thes->getLibelle().'] ' ;
+			else $nom_thesaurus='' ;
 			
 			if($tcateg->not_use_in_indexation){
-				$browser_content .= "<img src='$base_path/images/interdit.gif' hspace='3' border='0'/>&nbsp;";
+				$browser_content .= "<img src='".get_url_icon('interdit.gif')."' style='border:0px; margin:3px 3px'/>&nbsp;";
 				$browser_content .= $display;
 			} else {
-				$browser_content .= "<a href='#' $java_comment onclick=\"set_parent('$caller', '$id_', '".htmlentities(addslashes($nom_tesaurus.$libelle_),ENT_QUOTES, $charset)."','$callback','".$tcateg->thes->id_thesaurus."')\">";
+				$browser_content .= "<a href='#' $java_comment onclick=\"set_parent('$caller', '$id_', '".htmlentities(addslashes($nom_thesaurus.$libelle_),ENT_QUOTES, $charset)."','$callback','".$tcateg->thes->id_thesaurus."')\">";
 				$browser_content .= $display;
 				$browser_content .= "</a>";
 			}
@@ -394,7 +393,7 @@ class autoindex_record extends autoindex_document {
 					$tpl_insert_all_index_name.=",";
 				}
 				$tpl_insert_all_index.=$id_;
-				$tpl_insert_all_index_name.="'".htmlentities(addslashes($nom_tesaurus.$libelle_),ENT_QUOTES, $charset)."'";
+				$tpl_insert_all_index_name.="'".htmlentities(addslashes($nom_thesaurus.$libelle_),ENT_QUOTES, $charset)."'";
 			}
 					
 		}

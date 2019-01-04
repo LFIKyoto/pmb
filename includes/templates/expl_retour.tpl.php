@@ -2,45 +2,20 @@
 // +-------------------------------------------------+
 // ? 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl_retour.tpl.php,v 1.14 2014-01-08 14:22:32 dgoron Exp $
+// $Id: expl_retour.tpl.php,v 1.21 2018-08-03 10:28:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
-
-$script_magnetique="
-<script language='javascript' type='text/javascript'>
-var requete = null;
-
-function creerRequette(){
-	if(window.XMLHttpRequest) // Firefox
-		requete = new XMLHttpRequest();
-	else if(window.ActiveXObject) // Internet Explorer
-  		requete = new ActiveXObject('Microsoft.XMLHTTP');
-	else { // XMLHttpRequest non supporté par le navigateur
-   		alert('Votre navigateur ne supporte pas les objets XMLHTTPRequest...');
-    	return;
-	}
-}
-
-function magnetise(commande){
-	creerRequette();
-	
-	if(netscape.security.PrivilegeManager)netscape.security.PrivilegeManager.enablePrivilege('UniversalBrowserRead');	
-	requete.open('GET', 'http://localhost:30000/?send_value='+commande+'&command=Send', false);
-	requete.send(null);
-	if(requete.readyState != 4) alert('Requête antivol non effectuée !');
-}
-<!--call_script_magnetique-->
-</script>
-";
 
 $script_antivol_rfid="
 <script language='javascript' type='text/javascript'>
 	flag_antivol_retour	=1;
+	document.getElementById('indicateur').src='./images/orange.png';	
 	init_rfid_antivol ('!!expl_cb!!',1,ack_antivol_retour);	
-	function ack_antivol_retour(){		
+	function ack_antivol_retour(){
 		flag_antivol_retour	=0;
 		flag_semaphore_rfid=0;
 		flag_semaphore_rfid_read=0;
+		document.getElementById('indicateur').src='./images/sauv_succeed.png';
 		setTimeout(\"init_rfid_read_cb(0,f_expl);\",0);
 	}	
 </script>
@@ -55,12 +30,12 @@ $confirmation_retour_tpl="
 
 $retour_ok_tpl="
 <div class='right'>
-	<font color='RED'><b>".$msg["retour_ok"]."</b></font>
+	<span style='color:RED'><b>".$msg["retour_ok"]."</b></span>
 </div>
 ";	
 $retour_intouvable_tpl="
 <div class='right'>
-	<font color='RED'><b>".$msg[605]."</b></font>
+	<span style='color:RED'><b>".$msg[605]."</b></span>
 </div>
 ";	
 
@@ -98,7 +73,7 @@ $form_retour_tpl="
 				<td>!!section!!</td>
 				<td>!!statut!!</td>
 				<td>!!expl_owner!!</td>
-				<td><img src='./images/basket_small_20x20.gif' alt='basket' title='".$msg[400]."' onclick=\"openPopUp('./cart.php?object_type=EXPL&item=!!expl_id!!', 'cart', 600, 700, -2, -2, 'toolbar=no, dependent=yes, resizable=yes, scrollbars=yes')\" align='middle'></td>				
+				<td><img src='".get_url_icon('basket_small_20x20.gif')."' alt='basket' title='".$msg[400]."' onclick=\"openPopUp('./cart.php?object_type=EXPL&item=!!expl_id!!', 'cart')\" class='align_middle'></td>				
 			</tr>
 		</table>
 		!!perso_aff!!	
@@ -118,7 +93,8 @@ $rfid_js_header
 		window.onblur=function(){rfid_focus_active=0;}
 		
 		//antivol_test//					
-		setTimeout(\"init_rfid_read_cb(0,f_expl);\",0);
+		if(!'!!expl_cb!!')setTimeout(\"init_rfid_read_cb(0,f_expl);\",0);
+		
 		//memo_cb_rfid_js//
 		if(!memo_cb_rfid_js.length) post_rfid=1;
 		
@@ -156,7 +132,7 @@ $rfid_js_header
 					}
 				}				
 			}			
-			if(cb.length-nb_parties) indication=\"<font size='2'>( \" + count_present+ \" / \" + (cb.length-nb_parties) +\" )</font>\";
+			if(cb.length-nb_parties) indication=\"( \" + count_present+ \" / \" + (cb.length-nb_parties) +\" )\";
 			document.getElementById('indicateur_nb_doc').innerHTML=indication;
 		
 			if(!post_rfid)return;
@@ -196,7 +172,7 @@ $rfid_js_header
 			<input class='saisie-20em' type='text' id='form_cb_expl' name='form_cb_expl' value=''  />
 			<input type='hidden' id='expl_cb' name='expl_cb' value='!!expl_cb!!' />
 			&nbsp;&nbsp;
-			<input type='submit' class='bouton' value='$msg[502]' />&nbsp;<span class='erreur' id='indicateur_nb_doc'></span>
+			<input type='submit' class='bouton' value='$msg[502]' />&nbsp;<img src='".get_url_icon('sauv_succeed.png')."' id='indicateur' class='align_top' ><span class='erreur' id='indicateur_nb_doc'></span>
 		</div>
 		<!--memo_cb_rfid_form-->
 	</form>

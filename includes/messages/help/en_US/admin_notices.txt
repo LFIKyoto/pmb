@@ -1,4 +1,4 @@
-<h1>Volumes' management</h1>
+<h2>Volumes' management</h2>
 
 <p>Here you'll find the different parameters concerning the volumes.</p>
 <ul>

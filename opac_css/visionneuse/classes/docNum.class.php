@@ -2,20 +2,21 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docNum.class.php,v 1.7 2013-02-22 16:06:33 apetithomme Exp $
+// $Id: docNum.class.php,v 1.8 2017-05-10 17:16:13 arenou Exp $
 
 require_once($visionneuse_path."/classes/mimetypes/affichage.class.php");
 require_once($visionneuse_path."/classes/defaultConf.class.php");
 require_once($visionneuse_path."/classes/mimetypeClass.class.php");
 
 class docNum {
-	var $infos;
-	var $driver;				//classe driver dela visionneuse
-	var $displayClass = false;
-	var $defaultClass;		
-	var $params=array();
+	public $infos;
+	public $driver;				//classe driver dela visionneuse
+	public $displayClass = false;
+	public $defaultClass;		
+	public $params=array();
+	public $message = array();
 
-	function docNum($infos,$driver,$params=array()) {
+	public function __construct($infos,$driver,$params=array()) {
 		$this->titre = $infos["titre"];
 		$this->path = $infos["path"];
 		$this->desc = $infos["desc"];
@@ -29,7 +30,7 @@ class docNum {
 		else $this->search = "";
     }
 
-    function fetchDisplay(){
+    public function fetchDisplay(){
     	global $visionneuse_path;
     	if($this->driver->is_allowed($this->id)){
 			$this->selectDisplayClass();
@@ -44,13 +45,16 @@ class docNum {
 			return $this->toDisplay;
     	}
     }
+    public function setMessage($message){
+    	$this->message = $message;
+    }
     
-    function render(){
+    public function render(){
     	$this->selectDisplayClass();
     	$this->displayClass->render();
     }
     
-    function exec($method){
+    public function exec($method){
     	$this->selectDisplayClass();
     	if(method_exists($this->displayClass, "exec") && $method){
     		$this->displayClass->exec($method);
@@ -58,8 +62,7 @@ class docNum {
     	return false;
     }
      
-    
-    function selectDisplayClass(){
+    public function selectDisplayClass(){
     	global $visionneuse_path;
 
     	if (sizeof($this->mimetypeClass)>0){
@@ -87,6 +90,7 @@ class docNum {
 				$this->displayClass = new affichage($this);
 			}		
     	}
+    	$this->displayClass->setMessage($this->message);
     }
 }
 ?>

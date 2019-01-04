@@ -2,19 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sel_origine.tpl.php,v 1.11 2010-02-08 11:28:15 kantin Exp $
+// $Id: sel_origine.tpl.php,v 1.14 2017-10-13 10:21:55 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
 // templates du sélecteur origine
-
-//--------------------------------------------
-//	$nb_per_page : nombre de lignes par page
-//--------------------------------------------
-// nombre de références par pages
-if ($nb_per_page_a_select != "") 
-	$nb_per_page = $nb_per_page_a_select ;
-	else $nb_per_page = 10;
 
 //-------------------------------------------
 //	$sel_header : header
@@ -34,6 +26,7 @@ $sel_header = "
 		$sel_header .="
 			<li id='sel_navbar_empr' !!is_current_empr!! ><a href=\"./select.php?what=origine&caller=$caller&sub=empr&param1=$param1&param2=$param2&param3=$param3&param4=$param4&param5=$param5&param6=$param6&callback=$callback&user_input=$user_input\" >".htmlentities($msg['selector_lib_empr'],ENT_QUOTES, $charset)."</a></li>
 			<li id='sel_navbar_user' !!is_current_user!! ><a href=\"./select.php?what=origine&caller=$caller&sub=user&param1=$param1&param2=$param2&param3=$param3&param4=$param4&param5=$param5&param6=$param6&callback=$callback&user_input=$user_input\" >".htmlentities($msg['selector_lib_user'],ENT_QUOTES, $charset)."</a></li>
+			<li id='sel_navbar_visitor' !!is_current_visitor!! ><a href=\"./select.php?what=origine&caller=$caller&sub=visitor&param1=$param1&param2=$param2&param3=$param3&param4=$param4&param5=$param5&param6=$param6&callback=$callback&user_input=$user_input\" >".htmlentities($msg['selector_lib_visitor'],ENT_QUOTES, $charset)."</a></li>
 	";
 	}
 $sel_header .= "	
@@ -51,32 +44,32 @@ $jscript = "
 function set_parent(f_caller, orig_value, lib_orig_value, typ_value, poi_value, loc )
 {	
 	try{
-	  window.opener.document.forms[f_caller].elements['$param1'].value = orig_value;
+	  set_parent_value(f_caller, '".$param1."', orig_value);
 	} catch(err){}
 	try{
-		window.opener.document.forms[f_caller].elements['$param2'].value = reverse_html_entities(lib_orig_value);
+		set_parent_value(f_caller, '".$param2."', reverse_html_entities(lib_orig_value));
 	} catch(err){}
 	try{
-		window.opener.document.forms[f_caller].elements['$param3'].value = typ_value;
+		set_parent_value(f_caller, '".$param3."', typ_value);
 	} catch(err){}
 	try{
-		window.opener.document.forms[f_caller].elements['$param4'].value = poi_value;
+		set_parent_value(f_caller, '".$param4."', poi_value);
 	} catch(err){}
 	try{
-		window.opener.document.forms[f_caller].elements['$param5'].value = poi_value;
+		set_parent_value(f_caller, '".$param5."', poi_value);
 	} catch(err){}
 	try{
-	   window.opener.document.getElementById('$param6').innerHTML = poi_value;
+	   window.parent.document.getElementById('$param6').innerHTML = poi_value;
 	} catch(err){}
 	if(loc){
 		try{
-	   window.opener.document.getElementById('dmde_loc').value = loc;
+	   window.parent.document.getElementById('dmde_loc').value = loc;
 		} catch(err){}
 	}
 ";
 	
-if ($callback) $jscript.="\n	window.opener.".$callback."();\n";
-$jscript .= "	window.close();
+if ($callback) $jscript.="\n	window.parent.".$callback."();\n";
+$jscript .= "	closeCurrentEnv();
 }
 
 -->
@@ -89,10 +82,8 @@ $jscript .= "	window.close();
 $sel_search_form ="
 <script type='text/javascript'>
 <!--
-function test_form(form)
-{
-	if(form.f_user_input.value.length == 0)
-	{
+function test_form(form){
+	if(form.f_user_input.value.length == 0){
 		form.f_user_input.value = '*';
 	}
 	return true;

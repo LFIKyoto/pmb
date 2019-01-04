@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: quotas.class.php,v 1.43 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: quotas.class.php,v 1.52 2018-12-20 11:00:19 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,19 +13,39 @@ require_once($class_path."/marc_table.class.php");
 
 class quota {
 	
-	var $type_id;
-	var $quota_type;
-	var $elements_values_id;
-	var $elements_values;
-	var $elements_forc_id;
-	var $elements_forc;
-	var $error_message;
-	var $force;
-	var $table;
-	var $descriptor;
+	public $type_id;
+	public $quota_type;
+	public $elements_values_id;
+	public $elements_values;
+	public $elements_forc_id;
+	public $elements_forc;
+	public $error_message;
+	public $force;
+	public $table;
+	public $descriptor;
+	public static $_quotas_;
 	
-	static function parse_quotas($descriptor="") {
-		global $_parsed_quotas_;
+	//Constructeur
+	public function __construct($type_id="",$descriptor="") {
+		global $lang;
+		global $include_path;
+	
+		if ($descriptor=="") $this->descriptor=$include_path."/quotas/$lang.xml"; else $this->descriptor=$descriptor;
+	
+		if(!isset(static::$_quotas_[$this->descriptor])) {
+			static::parse_quotas($this->descriptor);
+		}
+		$this->table=static::$_quotas_[$this->descriptor]['_table_'];
+		 
+		if ($type_id!="") {
+			$this->type_id=$type_id;
+			$this->quota_type=$this->get_quota_type_by_id($type_id);
+			if (count($this->quota_type)==0) $this->quota_type=$this->get_quota_type_by_name($type_id);
+		}
+	}
+	
+	public static function parse_quotas($descriptor="") {
+// 		global $_parsed_quotas_;
 		global $_quotas_elements_;
 		global $_quotas_types_;
 		global $lang;
@@ -33,122 +53,148 @@ class quota {
 		global $_quotas_table_;
 		
 		//Recherche du fichier de description
-		if ($descriptor)
+		if ($descriptor) {
 			$p_descriptor=$descriptor;
-		else
+		} else {
 			$p_descriptor=$include_path."/quotas/$lang.xml";
+		}
 		
 		// Gestion de fichier subst	
 		$p_descriptor_subst=substr($p_descriptor,0,-4)."_subst.xml";
-		if (file_exists($p_descriptor_subst)) 
+		if (file_exists($p_descriptor_subst)) {
 			$p_descriptor=$p_descriptor_subst;
-				
-		//Parse le fichier dans un tableau
-		$fp=fopen($p_descriptor,"r") or die("Can't find XML file $p_descriptor");
-		$xml=fread($fp,filesize($p_descriptor));
-		fclose($fp);
-		$param=_parser_text_no_function_($xml, "PMBQUOTAS");
-	
-		if (!$param["TABLE"]) {
-			$table="quotas";
-		} else  {
-			$table=$param["TABLE"];
 		}
-		$_quotas_table_=$table;
-		
-		//Récupération des éléments
-		$_quotas_elements_=array();
-		
-		for ($i=0; $i<count($param["ELEMENTS"][0]["ELEMENT"]); $i++) {
-			$p_elt=$param["ELEMENTS"][0]["ELEMENT"][$i];
-			$elt=array();
-			$elt["NAME"]=$p_elt["NAME"];
-			$elt["ID"]=$p_elt["ID"];
-			$elt["COMMENT"]=$p_elt["COMMENT"];
-			$elt["LINKEDTO"]=$p_elt["LINKEDTO"][0]["value"];
-			$elt["TABLELINKED"]=$p_elt["TABLELINKED"][0]["value"];
-			$elt["TABLELINKED_BY"]=$p_elt["TABLELINKED"][0]["BY"];
-			$elt["LINKEDFIELD"]=$p_elt["LINKEDFIELD"][0]["value"];
-			$elt["LINKEDID"]=$p_elt["LINKEDID"][0]["value"];
-			$elt["LINKEDID_BY"]=$p_elt["LINKEDID"][0]["BY"];
-			$elt["TABLE"]=$p_elt["TABLE"][0]["value"];
-			if ($p_elt["TABLE"][0]["TYPE"]=="marc_list") {
-				$ml=new marc_list($elt["TABLE"]);
-				reset($ml->table);
-				$requete="create temporary table ".$elt["TABLE"]." (id varchar(255),libelle varchar(255)) ENGINE=MyISAM ";
-				pmb_mysql_query($requete);
-				while (list($key,$val)=each($ml->table)) {
-					$requete="insert into ".$elt["TABLE"]." (id,libelle) values('".addslashes($key)."','".addslashes($val)."')";
+		if(!isset(static::$_quotas_[$descriptor])) {
+			static::$_quotas_[$descriptor] = array();
+			//Parse le fichier dans un tableau
+			$fp=fopen($p_descriptor,"r") or die("Can't find XML file $p_descriptor");
+			$xml=fread($fp,filesize($p_descriptor));
+			fclose($fp);
+			$param=_parser_text_no_function_($xml, "PMBQUOTAS");
+			
+			if (!isset($param["TABLE"])) {
+				$table="quotas";
+			} else  {
+				$table=$param["TABLE"];
+			}
+			static::$_quotas_[$descriptor]['_table_'] = $table;
+			
+			//Récupération des éléments
+			for ($i=0; $i<count($param["ELEMENTS"][0]["ELEMENT"]); $i++) {
+				$p_elt=$param["ELEMENTS"][0]["ELEMENT"][$i];
+				$elt=array();
+				$elt["NAME"]=$p_elt["NAME"];
+				$elt["ID"]=$p_elt["ID"];
+				$elt["COMMENT"]=$p_elt["COMMENT"];
+				$elt["LINKEDTO"]=$p_elt["LINKEDTO"][0]["value"];
+				$elt["TABLELINKED"]=$p_elt["TABLELINKED"][0]["value"];
+				$elt["TABLELINKED_BY"]=(isset($p_elt["TABLELINKED"][0]["BY"]) ? $p_elt["TABLELINKED"][0]["BY"] : '');
+				$elt["LINKEDFIELD"]=$p_elt["LINKEDFIELD"][0]["value"];
+				$elt["LINKEDID"]=$p_elt["LINKEDID"][0]["value"];
+				$elt["LINKEDID_BY"]=(isset($p_elt["LINKEDID"][0]["BY"]) ? $p_elt["LINKEDID"][0]["BY"] : '');
+				$elt["TABLE"]=$p_elt["TABLE"][0]["value"];
+				if (isset($p_elt["TABLE"][0]["TYPE"]) && ($p_elt["TABLE"][0]["TYPE"]=="marc_list")) {
+					$ml=new marc_list($elt["TABLE"]);
+					reset($ml->table);
+					$requete="create temporary table ".$elt["TABLE"]." (id varchar(255),libelle varchar(255)) ENGINE=MyISAM ";
 					pmb_mysql_query($requete);
+					while (list($key,$val)=each($ml->table)) {
+						$requete="insert into ".$elt["TABLE"]." (id,libelle) values('".addslashes($key)."','".addslashes($val)."')";
+						pmb_mysql_query($requete);
+					}
+					$elt["FIELD"]="id";
+					$elt["LABEL"]="libelle";
+				} else {
+					$elt["FIELD"]=$p_elt["FIELD"][0]["value"];
+					$elt["LABEL"]=$p_elt["LABEL"][0]["value"];
 				}
-				$elt["FIELD"]="id";
-				$elt["LABEL"]="libelle";
-			} else {
-				$elt["FIELD"]=$p_elt["FIELD"][0]["value"];
-				$elt["LABEL"]=$p_elt["LABEL"][0]["value"];
-			}
-			define($elt["NAME"],$elt["ID"]);
-			$_quotas_elements_[]=$elt;
-		}
-		
-		//Récupération des types
-		$_quotas_types_=array();
-		
-		for ($i=0; $i<count($param["TYPES"][0]["TYPE"]); $i++) {
-			$p_typ=$param["TYPES"][0]["TYPE"][$i];
-			$typ=array();
-			$typ["NAME"]=$p_typ["NAME"];
-			$typ["ID"]=$p_typ["ID"];
-			$typ["COMMENT"]=$p_typ["COMMENT"];
-			$typ["SHORT_COMMENT"]=$p_typ["SHORT_COMMENT"];
-			$typ["COMMENTFORCELEND"]=$p_typ["COMMENTFORCELEND"];
-			$typ["FILTER_ID"]=$p_typ["FILTER_ID"];
-			$typ["SPECIALCLASS"]=$p_typ["SPECIALCLASS"];
-			$typ["DEFAULT_VALUE_LABEL"]=$p_typ["DEFAULT_VALUE_LABEL"];
-			$typ["CONFLIT_MAX"]=($p_typ["CONFLIT_MAX"] == "no" ? false : true);
-			$typ["CONFLIT_MIN"]=($p_typ["CONFLIT_MIN"] == "no" ? false : true);
-			$typ["ELEMENTS_LABEL"]=$p_typ["ELEMENTS_LABEL"];
-			
-			$p_typ_entity=$p_typ["ENTITY"][0];
-			$typ["ENTITY"]=$p_typ_entity["NAME"];
-			if ($p_typ_entity["MAXQUOTA"]=="yes") $typ["MAX_QUOTA"]=true;
-			
-			$typ["COUNT_TABLE"]=$p_typ_entity["COUNTTABLE"][0]["value"];
-			$typ["COUNT_FIELD"]=$p_typ_entity["COUNTFIELD"][0]["value"];
-			$typ["COUNT_FILTER"]=$p_typ_entity["COUNTFILTER"][0]["value"];
-			$typ["MAX_ERROR_MESSAGE"]=$p_typ_entity["MAX_ERROR_MESSAGE"][0]["value"];
-			$typ["PARTIAL_ERROR_MESSAGE"]=$p_typ_entity["PARTIAL_ERROR_MESSAGE"][0]["value"];
-			$typ["DEFAULT_ERROR_MESSAGE"]=$p_typ_entity["DEFAULT_ERROR_MESSAGE"][0]["value"];
-			
-			if ($p_typ["MAX"]=="yes") $typ["MAX"]=true; else $typ["MAX"]=false;
-			if ($p_typ["MIN"]=="yes") $typ["MIN"]=true; else $typ["MIN"]=false;
-			if ($p_typ["FORCELEND"]=="yes") $typ["FORCELEND"]=true; else $typ["FORCELEND"]=false;
-			
-			$quotas=array();
-			$countfields=array();
-			for ($j=0; $j<count($p_typ["QUOTAS"][0]["ON"]); $j++) {
-				$quotas[]=$p_typ["QUOTAS"][0]["ON"][$j]["value"];
-				$countfields[]=$p_typ["QUOTAS"][0]["ON"][$j]["COUNTFIELDS"];
+				if(!defined($elt["NAME"])) {
+					define($elt["NAME"],$elt["ID"]);
+				}
+				static::$_quotas_[$descriptor]['_elements_'][]=$elt;
 			}
 			
-			$typ["QUOTAS"]=$quotas;
-			$typ["COUNTFIELDS"]=$countfields;
-			
-			define($typ["NAME"],$typ["ID"]);
-			$_quotas_types_[]=$typ;
-		}
+			//Récupération des types
+			for ($i=0; $i<count($param["TYPES"][0]["TYPE"]); $i++) {
+				$p_typ=$param["TYPES"][0]["TYPE"][$i];
+				$typ=array();
+				$typ["NAME"]=$p_typ["NAME"];
+				$typ["ID"]=$p_typ["ID"];
+				$typ["COMMENT"]=$p_typ["COMMENT"];
+				$typ["SHORT_COMMENT"]=$p_typ["SHORT_COMMENT"];
+				$typ["COMMENTFORCELEND"]=(isset($p_typ["COMMENTFORCELEND"]) ? $p_typ["COMMENTFORCELEND"] : '');
+				$typ["FILTER_ID"]=(isset($p_typ["FILTER_ID"]) ? $p_typ["FILTER_ID"] : '');
+				$typ["SPECIALCLASS"]=(isset($p_typ["SPECIALCLASS"]) ? $p_typ["SPECIALCLASS"] : '');
+				$typ["DEFAULT_VALUE_LABEL"]=(isset($p_typ["DEFAULT_VALUE_LABEL"]) ? $p_typ["DEFAULT_VALUE_LABEL"] : '');
+				if(isset($p_typ["CONFLIT_MAX"])) {
+					$typ["CONFLIT_MAX"]=($p_typ["CONFLIT_MAX"] == "no" ? false : true);
+				} else {
+					$typ["CONFLIT_MAX"]='';
+				}
+				if(isset($p_typ["CONFLIT_MIN"])) {
+					$typ["CONFLIT_MIN"]=($p_typ["CONFLIT_MIN"] == "no" ? false : true);
+				} else {
+					$typ["CONFLIT_MIN"]='';
+				}
+				$typ["ELEMENTS_LABEL"]=(isset($p_typ["ELEMENTS_LABEL"]) ? $p_typ["ELEMENTS_LABEL"] : '');
 		
-		$_parsed_quotas_=1;
+				if(isset($p_typ["ENTITY"])) {
+					$p_typ_entity=$p_typ["ENTITY"][0];
+					$typ["ENTITY"]=$p_typ_entity["NAME"];
+					if ($p_typ_entity["MAXQUOTA"]=="yes") $typ["MAX_QUOTA"]=true;
+					
+					$typ["COUNT_TABLE"]=$p_typ_entity["COUNTTABLE"][0]["value"];
+					$typ["COUNT_FIELD"]=$p_typ_entity["COUNTFIELD"][0]["value"];
+					$typ["COUNT_FILTER"]=$p_typ_entity["COUNTFILTER"][0]["value"];
+					$typ["MAX_ERROR_MESSAGE"]=$p_typ_entity["MAX_ERROR_MESSAGE"][0]["value"];
+					$typ["PARTIAL_ERROR_MESSAGE"]=$p_typ_entity["PARTIAL_ERROR_MESSAGE"][0]["value"];
+					$typ["DEFAULT_ERROR_MESSAGE"]=$p_typ_entity["DEFAULT_ERROR_MESSAGE"][0]["value"];
+				} else {
+					$typ["ENTITY"]='';
+					$typ["MAX_QUOTA"]='';
+					
+					$typ["COUNT_TABLE"]='';
+					$typ["COUNT_FIELD"]='';
+					$typ["COUNT_FILTER"]='';
+					$typ["MAX_ERROR_MESSAGE"]='';
+					$typ["PARTIAL_ERROR_MESSAGE"]='';
+					$typ["DEFAULT_ERROR_MESSAGE"]='';
+				}
+				
+				if ($p_typ["MAX"]=="yes") $typ["MAX"]=true; else $typ["MAX"]=false;
+				if ($p_typ["MIN"]=="yes") $typ["MIN"]=true; else $typ["MIN"]=false;
+				if ($p_typ["FORCELEND"]=="yes") $typ["FORCELEND"]=true; else $typ["FORCELEND"]=false;
+		
+				$quotas=array();
+				$countfields=array();
+				for ($j=0; $j<count($p_typ["QUOTAS"][0]["ON"]); $j++) {
+					$quotas[]=$p_typ["QUOTAS"][0]["ON"][$j]["value"];
+					if(isset($p_typ["QUOTAS"][0]["ON"][$j]["COUNTFIELDS"])) {
+						$countfields[]=$p_typ["QUOTAS"][0]["ON"][$j]["COUNTFIELDS"];
+					} else {
+						$countfields[]='';
+					}
+				}
+				$typ["QUOTAS"]=$quotas;
+				$typ["COUNTFIELDS"]=$countfields;
+		
+				define($typ["NAME"],$typ["ID"]);
+				static::$_quotas_[$descriptor]['_types_'][]=$typ;
+			}
+		}
+		//provisoire
+		$_quotas_table_ = static::$_quotas_[$descriptor]['_table_'];
+		$_quotas_elements_ = static::$_quotas_[$descriptor]['_elements_'];
+		$_quotas_types_ = static::$_quotas_[$descriptor]['_types_'];
+		
+// 		$_parsed_quotas_=1;
 	}
 	
 	//Récupération d'un élément à partir de son nom
-	function get_element_by_name($element_name) {
-		global $_quotas_elements_;
-		global $_parsed_quotas_;
-		
-		if ($_parsed_quotas_) {
-			reset($_quotas_elements_);
-			while (list($key,$val)=each($_quotas_elements_)) {
+	public function get_element_by_name($element_name) {
+		if (isset(static::$_quotas_[$this->descriptor])) {
+			reset(static::$_quotas_[$this->descriptor]['_elements_']);
+			while (list($key,$val)=each(static::$_quotas_[$this->descriptor]['_elements_'])) {
 				if ($val["NAME"]==$element_name)
 					return $key;
 			}
@@ -157,13 +203,10 @@ class quota {
 	}
 	
 	//Récupération d'un élément à partir de son ID
-	function get_element_by_id($element_id) {
-		global $_quotas_elements_;
-		global $_parsed_quotas_;
-	
-		if ($_parsed_quotas_) {
-			reset($_quotas_elements_);
-			while (list($key,$val)=each($_quotas_elements_)) {
+	public function get_element_by_id($element_id) {
+		if (isset(static::$_quotas_[$this->descriptor])) {
+			reset(static::$_quotas_[$this->descriptor]['_elements_']);
+			while (list($key,$val)=each(static::$_quotas_[$this->descriptor]['_elements_'])) {
 				if ($val["ID"]==$element_id)
 					return $key;
 			}
@@ -172,13 +215,10 @@ class quota {
 	}
 	
 	//Récupération de l'ID d'un élément par son nom
-	function get_element_id_by_name($element_name) {
-		global $_quotas_elements_;
-		global $_parsed_quotas_;
-		
-		if ($_parsed_quotas_) {
-			reset($_quotas_elements_);
-			while (list($key,$val)=each($_quotas_elements_)) {
+	public function get_element_id_by_name($element_name) {
+		if (isset(static::$_quotas_[$this->descriptor])) {
+			reset(static::$_quotas_[$this->descriptor]['_elements_']);
+			while (list($key,$val)=each(static::$_quotas_[$this->descriptor]['_elements_'])) {
 				if ($val["NAME"]==$element_name)
 					return $val["ID"];
 			}
@@ -187,10 +227,7 @@ class quota {
 	}
 	
 	//Récupération de l'ID de plusieurs éléments par leur noms séparés par des virgules
-	function get_elements_id_by_names($elements) {
-		global $_quotas_elements_;
-		global $_parsed_quotas_;
-		
+	public function get_elements_id_by_names($elements) {
 		$id=0;
 		$elts=explode(",",$elements);
 		for ($j=0; $j<count($elts); $j++) {
@@ -201,15 +238,12 @@ class quota {
 	}
 	
 	//Récupération de la structure type de quota par son id
-	function get_quota_type_by_id($type_id) {
-		global $_parsed_quotas_;
-		global $_quotas_types_;
-		
+	public function get_quota_type_by_id($type_id) {
 		$r=array();
-		if ($_parsed_quotas_) {
-			for ($i=0; $i<count($_quotas_types_); $i++) {
-				if ($_quotas_types_[$i]["ID"]==$type_id) {
-					$r=$_quotas_types_[$i];
+		if (isset(static::$_quotas_[$this->descriptor])) {
+			for ($i=0; $i<count(static::$_quotas_[$this->descriptor]['_types_']); $i++) {
+				if (static::$_quotas_[$this->descriptor]['_types_'][$i]["ID"]==$type_id) {
+					$r=static::$_quotas_[$this->descriptor]['_types_'][$i];
 					break;
 				}
 			}
@@ -218,15 +252,12 @@ class quota {
 	}
 	
 	//Récupération de la structure type de quota par son id
-	function get_quota_type_by_name($type_id) {
-		global $_parsed_quotas_;
-		global $_quotas_types_;
-		
+	public function get_quota_type_by_name($type_id) {
 		$r=array();
-		if ($_parsed_quotas_) {
-			for ($i=0; $i<count($_quotas_types_); $i++) {
-				if ($_quotas_types_[$i]["NAME"]==$type_id) {
-					$r=$_quotas_types_[$i];
+		if (isset(static::$_quotas_[$this->descriptor])) {
+			for ($i=0; $i<count(static::$_quotas_[$this->descriptor]['_types_']); $i++) {
+				if (static::$_quotas_[$this->descriptor]['_types_'][$i]["NAME"]==$type_id) {
+					$r=static::$_quotas_[$this->descriptor]['_types_'][$i];
 					break;
 				}
 			}
@@ -235,7 +266,7 @@ class quota {
 	}
 	
 	//Récupération des valeurs liées aux paramètres généraux du type de quota
-	function get_values() {
+	public function get_values() {
 		global $min_value,$max_value,$default_value,$conflict_value,$conflict_list,$force_lend,$max_quota;
 		
 		$requete="select constraint_type, elements, value from ".$this->table." where quota_type=".$this->quota_type["ID"]." and constraint_type in ('MIN','MAX','DEFAULT','CONFLICT','PRIORITY','FORCE_LEND','MAX_QUOTA')";
@@ -277,7 +308,7 @@ class quota {
 		$n=0;
 		if ($conflict_value==4) {
 			for ($i=(count($this->quota_type["QUOTAS"])-1); $i>=0; $i--) {
-				if (!$conflict_list[$n]) {
+				if (!isset($conflict_list[$n]) || !$conflict_list[$n]) {
 					$conflict_list[$n]=$this->get_elements_id_by_names($this->quota_type["QUOTAS"][$i]);
 				}
 				$n++;
@@ -286,20 +317,18 @@ class quota {
 	}
 	
 	//Récupération du tableau des ids de chaque élément composant un id multiple
-	function get_table_ids_from_elements_id($id) {
-		global $_quotas_elements_;
-		
+	public function get_table_ids_from_elements_id($id) {
 		$r=array();
-		for ($i=0; $i<count($_quotas_elements_); $i++) {
-			if (((int)$id&(int)$_quotas_elements_[$i]["ID"])==(int)$_quotas_elements_[$i]["ID"]) {
-				$r[]=$_quotas_elements_[$i]["ID"];
+		for ($i=0; $i<count(static::$_quotas_[$this->descriptor]['_elements_']); $i++) {
+			if (((int)$id&(int)static::$_quotas_[$this->descriptor]['_elements_'][$i]["ID"])==(int)static::$_quotas_[$this->descriptor]['_elements_'][$i]["ID"]) {
+				$r[]=static::$_quotas_[$this->descriptor]['_elements_'][$i]["ID"];
 			}
 		}
 		return $r;
 	}
 	
 	//Récupération du tableau des ids de chaque élément composant un id multiple trié par ordre décrit dans le type de quota
-	function get_table_ids_from_elements_id_ordered($id) {
+	public function get_table_ids_from_elements_id_ordered($id) {
 		$ids=array();
 		for ($i=0; $i<count($this->quota_type["QUOTAS"]); $i++) {
 			if ($this->get_elements_id_by_names($this->quota_type["QUOTAS"][$i])==$id) {
@@ -313,7 +342,7 @@ class quota {
 		return $ids;
 	}
 	
-	function get_quotas_index_from_elements_id($id) {
+	public function get_quotas_index_from_elements_id($id) {
 		for ($i=0; $i<count($this->quota_type["QUOTAS"]); $i++) {
 			if ($this->get_elements_id_by_names($this->quota_type["QUOTAS"][$i])==$id) {
 				return $i;
@@ -323,20 +352,19 @@ class quota {
 	}
 	
 	//Récupération du titre correspondant aux éléments du quota (par xxx et par xxx et ...)
-	function get_title_by_elements_id($id) {
-		global $_quotas_elements_;
+	public function get_title_by_elements_id($id) {
 		global $msg;
 		
 		$ids=$this->get_table_ids_from_elements_id($id);
 		$r=array();
 		for ($i=0; $i<count($ids); $i++) {
-			$r[]=$msg["quotas_by"]." ".$_quotas_elements_[$this->get_element_by_id($ids[$i])]["COMMENT"];
+			$r[]=$msg["quotas_by"]." ".static::$_quotas_[$this->descriptor]['_elements_'][$this->get_element_by_id($ids[$i])]["COMMENT"];
 		}
 		return implode(" ".$msg["quotas_and"]." ",$r);
 	}
 	
 	//Récupération des valeurs de quota et de forçage dans la base pour un ou des éléments
-	function get_elements_values($id) {
+	public function get_elements_values($id) {
 		
 		//Récupération des valeurs de quota
 		$requete="select quota_type,constraint_type,elements,value from ".$this->table." where quota_type=".$this->quota_type["ID"]." and elements=".$id." and (constraint_type like 'Q:%' or constraint_type like 'F:%')";
@@ -362,35 +390,39 @@ class quota {
 	}
 	
 	//Recherche d'une valeur de quota déjà saisie avec les valeurs de chaque élément
-	function search_for_element_value($values_ids,$ids) {
+	public function search_for_element_value($values_ids,$ids) {
 		
-		for ($i=0; $i<count($this->elements_values_id); $i++) {
-			$elvid=$this->elements_values_id[$i];
-			$test=1;
-			for ($j=0; $j<count($ids); $j++) {
-				$test&=($elvid[$ids[$j]]==$values_ids[$j]);
+		if(is_array($this->elements_values_id) && count($this->elements_values_id)){
+			for ($i=0; $i<count($this->elements_values_id); $i++) {
+				$elvid=$this->elements_values_id[$i];
+				$test=1;
+				for ($j=0; $j<count($ids); $j++) {
+					$test&=($elvid[$ids[$j]]==$values_ids[$j]);
+				}
+				if ($test) return $this->elements_values[$i];
 			}
-			if ($test) return $this->elements_values[$i];
 		}
 		return "";
 	}
 	
 	//Recherche d'une valeur de forçage déjà saisie avec les valeurs de chaque élément
-	function search_for_element_forc($values_ids,$ids) {
+	public function search_for_element_forc($values_ids,$ids) {
 		
-		for ($i=0; $i<count($this->elements_forc_id); $i++) {
-			$elvid=$this->elements_forc_id[$i];
-			$test=1;
-			for ($j=0; $j<count($ids); $j++) {
-				$test&=($elvid[$ids[$j]]==$values_ids[$j]);
+		if(is_array($this->elements_forc_id) && count($this->elements_forc_id)){
+			for ($i=0; $i<count($this->elements_forc_id); $i++) {
+				$elvid=$this->elements_forc_id[$i];
+				$test=1;
+				for ($j=0; $j<count($ids); $j++) {
+					$test&=($elvid[$ids[$j]]==$values_ids[$j]);
+				}
+				if ($test) return $this->elements_forc[$i];
 			}
-			if ($test) return $this->elements_forc[$i];
 		}
 		return "";
 	}
 	
 	//Affichage récursif de la liste des quotas pour les éléments choisis
-	function show_quota_list($level,$prefixe_label,$prefixe_varname,$ids,$elements,&$ta) {
+	public function show_quota_list($level,$prefixe_label,$prefixe_varname,$ids,$elements,&$ta) {
 		global $min_value,$max_value,$max_quota;
 		global $msg;
 		global $charset;
@@ -451,8 +483,7 @@ class quota {
 	}
 	
 	//Affichage de la table des quotas
-	function show_quota_table($elements_id) {
-		global $_quotas_elements_;
+	public function show_quota_table($elements_id) {
 		global $force_lend;
 		global $msg;
 		global $charset;
@@ -465,7 +496,7 @@ class quota {
 		//Pour chaque id on récupère les identifiants et les labels du champ concerné
 		//Stockage dans $elements
 		for ($i=0; $i<count($ids); $i++) {
-			$_quota_element_=$_quotas_elements_[$this->get_element_by_id($ids[$i])];
+			$_quota_element_=static::$_quotas_[$this->descriptor]['_elements_'][$this->get_element_by_id($ids[$i])];
 			
 			$requete="select ".$_quota_element_["FIELD"].", ".$_quota_element_["LABEL"]." from ".$_quota_element_["TABLE"]." order by ".$_quota_element_["LABEL"];
 			$resultat=pmb_mysql_query($requete);
@@ -512,7 +543,7 @@ class quota {
 		$ta.="<table>\n";
 		$ta.="<tr>";
 		for ($i=0; $i<count($ids); $i++) {
-			$ta.="<th>".$_quotas_elements_[$this->get_element_by_id($ids[$i])]["COMMENT"]."</th>";
+			$ta.="<th>".static::$_quotas_[$this->descriptor]['_elements_'][$this->get_element_by_id($ids[$i])]["COMMENT"]."</th>";
 		}
 		
 		$force="";
@@ -536,7 +567,7 @@ class quota {
 	}
 	
 	//Enregistrement récursif des quotas saisis
-	function rec_quota_list($level,$prefixe_varname,$ids,$elements,$elements_id) {
+	public function rec_quota_list($level,$prefixe_varname,$ids,$elements,$elements_id) {
 		//Forçage du prêt ?
 		if ($this->quota_type["FORCELEND"]) $force_lend=1;
 		//Pour tous les éléments
@@ -551,15 +582,15 @@ class quota {
 				$val="val".$prefixe_varname_;
 				if ($force_lend) {
 					$forc="forc".$prefixe_varname_;
-					global $$forc;
+					global ${$forc};
 				}
-				global $$val;
+				global ${$val};
 				if($this->quota_type['SPECIALCLASS']){
 					global $class_path;
 					require_once($class_path."/".$this->quota_type['SPECIALCLASS'].".class.php");
-					$value_to_store = call_user_func(array($this->quota_type['SPECIALCLASS'],'get_storable_value'),$$val);
+					$value_to_store = call_user_func(array($this->quota_type['SPECIALCLASS'],'get_storable_value'),${$val});
 				}else{
-					$value_to_store = $$val;
+					$value_to_store = ${$val};
 				}
 				//Si il y a une valeur de quota saisie, construction de la requête d'enregistrement
 				if ($value_to_store!=="") {
@@ -573,14 +604,14 @@ class quota {
 					pmb_mysql_query($requete);
 				}
 				//Si le forçage est coché, construction de la requête d'enregistrement
-				if (($$forc)&&($force_lend)) {
+				if ((${$forc})&&($force_lend)) {
 					$constraint="F:";
 					$quota=array();
 					for ($j=0; $j<count($ids); $j++) {
 						$quota[]=$ids[$j]."=".$values_ids[$j];
 					}
 					$constraint.=implode(",",$quota);
-					$requete="insert into ".$this->table." (quota_type,constraint_type,elements,value) values(".$this->quota_type["ID"].",'".$constraint."',$elements_id,".$$forc.")";
+					$requete="insert into ".$this->table." (quota_type,constraint_type,elements,value) values(".$this->quota_type["ID"].",'".$constraint."',$elements_id,".${$forc}.")";
 					pmb_mysql_query($requete);
 				}
 			}
@@ -588,10 +619,9 @@ class quota {
 	}
 	
 	//Enregistrement des quotas après soumission du tableau
-	function rec_quota($elements_id) {
+	public function rec_quota($elements_id) {
 		global $first;
 		global $ids_order;
-		global $_quotas_elements_;
 		//Si formulaire soumis
 		if ($first) {
 			//Suppression des quotas dans la table
@@ -604,7 +634,7 @@ class quota {
 			
 			//Pour chaque id on récupère l'identifiant et le label
 			for ($i=0; $i<count($ids); $i++) {
-				$_quota_element_=$_quotas_elements_[$this->get_element_by_id($ids[$i])];
+				$_quota_element_=static::$_quotas_[$this->descriptor]['_elements_'][$this->get_element_by_id($ids[$i])];
 				$requete="select ".$_quota_element_["FIELD"].", ".$_quota_element_["LABEL"]." from ".$_quota_element_["TABLE"];
 				$resultat=pmb_mysql_query($requete);
 				while ($r=pmb_mysql_fetch_array($resultat)) {
@@ -620,7 +650,7 @@ class quota {
 		}
 	}
 	
-	function apply_conflict($q) {
+	public function apply_conflict($q) {
 		global $conflict_value, $default_value, $conflict_list;
 		if(!$q)return;
 		$this->get_values();
@@ -656,8 +686,8 @@ class quota {
 						$min_quota_id=$key;
 					}
 				$nb_quotas++;
-				$total_quotas+=$val;
-				$total_id_quotas+=$key;
+				$total_quotas=intval($val);
+				$total_id_quotas=intval($key);
 			}
 		}
 		//Si les valeurs sont toutes vides et qu'il y a une valeur par défaut alors on la renvoie
@@ -717,9 +747,7 @@ class quota {
 	}
 	
 	//Récupération de la valeur de forçage d'un quota par son id
-	function get_force_value_by_id($struct,$element_id) {
-		global $_quotas_elements_;
-		
+	public function get_force_value_by_id($struct,$element_id) {
 		//vérification des paramètres
 		for ($i=0; $i<count($this->quota_type["QUOTAS"]); $i++) {
 			$on=explode(",",$this->quota_type["QUOTAS"][$i]);
@@ -731,13 +759,26 @@ class quota {
 		$flag=true;
 		$values=array();
 		while (list($key,$val)=each($s)) {
-			$_quota_element_=$_quotas_elements_[$val];
+			$_quota_element_=static::$_quotas_[$this->descriptor]['_elements_'][$val];
 			if ($struct[$_quota_element_["LINKEDTO"]]=="") {
 				$flag=false;
 				break;
 			} else {
+				$struct_=$struct;
+				//Si c'est une recherche indirecte (tout ça pour faire plaisir à Eric !!)
+				$flag_indirect=false;
+				if ($_quota_element_["TABLELINKED_BY"]) {
+					$indirect=$this->get_object_for_indirect_element($_quota_element_,$struct_);
+					if ($indirect!=-1) {
+						$flag_indirect=true;
+						$struct_[$_quota_element_["LINKEDID"]]=$indirect;
+					} else {
+						$flag=false;
+						break;
+					}
+				}
 				$requete="select ".$_quota_element_["LINKEDFIELD"]." from ".$_quota_element_["TABLELINKED"];
-				$requete.=" where ".$_quota_element_["LINKEDID"]."='".$struct[$_quota_element_["LINKEDTO"]]."'";
+				$requete.=" where ".$_quota_element_["LINKEDID"]."='".$struct_[$flag_indirect?$_quota_element_["LINKEDID"]:$_quota_element_["LINKEDTO"]]."'";
 				$resultat=pmb_mysql_query($requete);
 				$values[$_quota_element_["ID"]]=@pmb_mysql_result($resultat,0,0);
 			}
@@ -769,9 +810,7 @@ class quota {
 	}
 	
 	//Récupération de la valeur d'un quota par son id
-	function get_quota_value_by_id($struct,$element_id) {
-		global $_quotas_elements_;
-		
+	public function get_quota_value_by_id($struct,$element_id) {
 		//vérification des paramètres
 		for ($i=0; $i<count($this->quota_type["QUOTAS"]); $i++) {
 			$on=explode(",",$this->quota_type["QUOTAS"][$i]);
@@ -783,7 +822,7 @@ class quota {
 		$flag=true;
 		$values=array();
 		while (list($key,$val)=each($s)) {
-			$_quota_element_=$_quotas_elements_[$val];
+			$_quota_element_=static::$_quotas_[$this->descriptor]['_elements_'][$val];
 			if ($struct[$_quota_element_["LINKEDTO"]]=="") {
 				$flag=false;
 				break;
@@ -820,7 +859,7 @@ class quota {
 		} else return -1;
 	}
 	
-	function get_object_for_indirect_element($_quota_element_,$struct) {
+	public function get_object_for_indirect_element($_quota_element_,$struct) {
 		$flag=true;
 		//Je prends tous les éléments que je trouve et je recherche récursivement le plus défavorale
 		$requete="select distinct ".$_quota_element_["LINKEDFIELD"]." from ".$_quota_element_["TABLELINKED"];
@@ -864,9 +903,7 @@ class quota {
 	}
 	
 	//Récupération de valeur d'un quota et de son id
-	function get_quota_value_with_id($struct,$by=false) {
-		global $_quotas_elements_;
-
+	public function get_quota_value_with_id($struct,$by=false) {
 		$s=array() ;
 		
 		//vérification des paramètres
@@ -881,7 +918,7 @@ class quota {
 		$values=array();
 		while (list($key,$val)=each($s)) {
 			$struct_=$struct;
-			$_quota_element_=$_quotas_elements_[$val];
+			$_quota_element_=static::$_quotas_[$this->descriptor]['_elements_'][$val];
 			if ($struct_[$_quota_element_["LINKEDTO"]]=="") {
 				$flag=false;
 				break;
@@ -935,12 +972,12 @@ class quota {
 		} else return array("ID"=>"","VALUE"=>-1);
 	}
 	
-	function get_quota_value($struct) {
+	public function get_quota_value($struct) {
 		$r=$this->get_quota_value_with_id($struct);
 		return $r["VALUE"];
 	}
 	
-	function get_force_value($struct) {
+	public function get_force_value($struct) {
 		global $force_lend;
 		$r=$this->get_quota_value_with_id($struct);
 		$force=$force_lend;
@@ -955,15 +992,15 @@ class quota {
 			
 	}
 	
-	function get_criterias_title_by_elements_id($struct,$id) {
-		global $_quotas_elements_;
+	public function get_criterias_title_by_elements_id($struct,$id) {
 		global $msg;
 		
 		$title=array();
 		
 		$ids=$this->get_table_ids_from_elements_id_ordered($id);
+		$where = '';
 		for ($i=0; $i<count($ids); $i++) {
-			$element=$_quotas_elements_[$this->get_element_by_id($ids[$i])];
+			$element=static::$_quotas_[$this->descriptor]['_elements_'][$this->get_element_by_id($ids[$i])];
 			if ($element["TABLE"]==$element["TABLELINKED"]) {
 				$requete="select ".$element["LABEL"]." from ".$element["TABLE"]." where ".$element["FIELD"]."='".$struct[$element["LINKEDTO"]]."'";
 			} else {
@@ -991,16 +1028,15 @@ class quota {
 		return implode(" ".$msg["quotas_and"]." ",$title);
 	}
 	
-	function check_quota($struct) {
+	public function check_quota($struct) {
 		global $max_value,$max_quota,$force_lend;
-		global $_quotas_elements_;
 		global $msg;
 		
 		//Récupération du quota à partir des paramètres passés
 		$r=$this->get_quota_value_with_id($struct);
 	
 		//Récupération de l'entité
-		$_quota_element_entity_=$_quotas_elements_[$this->get_element_by_name($this->quota_type["ENTITY"])];
+		$_quota_element_entity_=static::$_quotas_[$this->descriptor]['_elements_'][$this->get_element_by_name($this->quota_type["ENTITY"])];
 			
 		//Le forçage est initialisé à la valeur des paramètres généraux
 		$force=$force_lend;
@@ -1057,10 +1093,10 @@ class quota {
 						//Si ce n'est pas l'entité
 						if ($elements_[$i]<>$this->quota_type["ENTITY"]) {
 							//Réqupération de l'élément par son nom
-							$element=$_quotas_elements_[$this->get_element_by_name($elements_[$i])];
+							$element=static::$_quotas_[$this->descriptor]['_elements_'][$this->get_element_by_name($elements_[$i])];
 							//Lien avec la table de l'objet (ex : exemplaire)
 							//La table a-t-elle déjà été citée dans la requete ?
-							if (!$tablelinked[$element["TABLELINKED"]]) {
+							if (!isset($tablelinked[$element["TABLELINKED"]]) || !$tablelinked[$element["TABLELINKED"]]) {
 								$from.=", ".$element["TABLELINKED"];
 								$tablelinked[$element["TABLELINKED"]]=true;
 								$already_present=false;
@@ -1181,27 +1217,6 @@ class quota {
 		//forçage ou non dans $this->force
 		return $error;
 	}
-	
-	//Constructeur
-    function quota($type_id="",$descriptor="") {
-    	global $_parsed_quotas_;
-    	global $lang;
-    	global $include_path;
-		global $_quotas_table_;
-    
-    	if ($descriptor=="") $this->descriptor=$include_path."/quotas/$lang.xml"; else $this->descriptor=$descriptor;
-    
-    	if (!$_parsed_quotas_[$this->descriptor]){
-    		quota::parse_quotas($this->descriptor); 
-    	}
-    	$this->table=$_quotas_table_;
-    	
-    	if ($type_id!="") {
-    		$this->type_id=$type_id;
-    		$this->quota_type=$this->get_quota_type_by_id($type_id);
-    		if (count($this->quota_type)==0) $this->quota_type=$this->get_quota_type_by_name($type_id);
-    	}
-    }
 }
 
 ?>

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: statut.inc.php,v 1.4 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: statut.inc.php,v 1.6 2018-10-12 14:44:48 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+require_once($class_path."/list/configuration/collstate/list_configuration_collstate_statut_ui.class.php");
 
 // gestion des codes statut exemplaires
 ?>
@@ -22,48 +24,8 @@ function test_form(form)
 
 <?php
 function show_statut($dbh) {
-	global $msg;
-
-	print "<table>
-	<tr>
-		<th rowspan=2 >".$msg["collstate_statut_gestion"]."</th>
-		<th colspan=2 >".$msg["collstate_statut_opac"]."</th>
-	</tr><tr>
-		
-		
-		<th>".$msg["collstate_statut_libelle"]."</th>
-		<th>".$msg["collstate_statut_visu_opac"]."</th>
-	</tr>";//<th>".$msg["collstate_statut_libelle"]."</th> <th>".$msg["collstate_statut_visu_gestion"]."</th>
-
-	// affichage du tableau des statuts
-	$requete = "SELECT * FROM arch_statut ORDER BY archstatut_gestion_libelle ";
-	$res = pmb_mysql_query($requete, $dbh);
-	$nbr = pmb_mysql_num_rows($res);
-
-	$parity=1;
-	for($i=0;$i<$nbr;$i++) {
-		$row=pmb_mysql_fetch_object($res);
-		if ($parity % 2) {
-			$pair_impair = "even";
-			} else {
-				$pair_impair = "odd";
-				}
-		$parity += 1;
-		$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./admin.php?categ=collstate&sub=statut&action=modif&id=$row->archstatut_id';\" ";
-		print pmb_bidi("<tr class='$pair_impair' $tr_javascript style='cursor: pointer'>");
-		print pmb_bidi("<td><span class='$row->archstatut_class_html'  style='margin-right: 3px;'><img src='./images/spacer.gif' width='10' height='10' /></span>") ;
-		print pmb_bidi("$row->archstatut_gestion_libelle</td>"); 
-		/*if($row->archstatut_visible_gestion) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";*/
-		print "<td>$row->archstatut_opac_libelle</td>"; 
-		if($row->archstatut_visible_opac) print "<td>X</td>";
-			else print "<td>&nbsp;</td>";
-
-		print "</tr>";
-		}
-	print "</table>
-		<input class='bouton' type='button' value=' $msg[115] ' onClick=\"document.location='./admin.php?categ=collstate&sub=statut&action=add'\" />";
-	}
+	print list_configuration_collstate_statut_ui::get_instance()->get_display_list();
+}
 
 function statut_form($id=0, $gestion_libelle="", $opac_libelle="", $visible_opac=1, $visible_gestion=1, $class_html='', $visible_opac_abon=0) {
 
@@ -95,7 +57,7 @@ function statut_form($id=0, $gestion_libelle="", $opac_libelle="", $visible_opac
 	for ($i=1;$i<=20; $i++) {
 		if ($class_html=="statutnot".$i) $checked = "checked";
 		else $checked = "";
-		$couleur[$i]="<span for='statutnot".$i."' class='statutnot".$i."' style='margin: 7px;'><img src='./images/spacer.gif' width='10' height='10' />
+		$couleur[$i]="<span for='statutnot".$i."' class='statutnot".$i."' style='margin: 7px;'><img src='".get_url_icon('spacer.gif')."' width='10' height='10' />
 					<input id='statutnot".$i."' type=radio name='form_class_html' value='statutnot".$i."' $checked class='checkbox' /></span>";
 		if ($i==10) $couleur[10].="<br />";
 		elseif ($i!=20) $couleur[$i].="<b>|</b>";

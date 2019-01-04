@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cod_stat.inc.php,v 1.17 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: cod_stat.inc.php,v 1.19 2018-10-12 11:59:35 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+require_once($class_path."/list/configuration/docs/list_configuration_docs_codstat_ui.class.php");
 
 // gestion des codes stat exemplaires
 ?>
@@ -22,37 +24,8 @@ function test_form(form)
 </script>
 <?php
 function show_codstat($dbh) {
-	global $msg;
-	print "<table>
-	<tr>
-		<th>".$msg[103]."</th>
-		<th>".$msg['proprio_codage_proprio']."</th>
-		<th>".$msg['import_codage']."</th>
-	</tr>";
-
-	$requete = "SELECT idcode, codestat_libelle, statisdoc_codage_import, statisdoc_owner, lender_libelle FROM docs_codestat left join lenders on statisdoc_owner=idlender ORDER BY codestat_libelle ";
-	$res = pmb_mysql_query($requete, $dbh);
-
-	$nbr = pmb_mysql_num_rows($res);
-
-	$parity=1;
-	for($i=0;$i<$nbr;$i++) {
-		$row=pmb_mysql_fetch_object($res);
-		if ($parity % 2) {
-			$pair_impair = "even";
-			} else {
-				$pair_impair = "odd";
-				}
-		$parity += 1;
-	        $tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./admin.php?categ=docs&sub=codstat&action=modif&id=$row->idcode';\" ";
-		if ($row->statisdoc_owner) print pmb_bidi("<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td><i>$row->codestat_libelle</i></td>"); 
-                	else print pmb_bidi("<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td><strong>$row->codestat_libelle</strong></td>"); 
-		print pmb_bidi("<td>$row->lender_libelle</td>") ;
-		print pmb_bidi("<td>$row->statisdoc_codage_import</td></tr>");
-		}
-	print "</table>
-		<input class='bouton' type='button' value=' $msg[99] ' onClick=\"document.location='./admin.php?categ=docs&sub=codstat&action=add'\" />";
-	}
+	print list_configuration_docs_codstat_ui::get_instance()->get_display_list();
+}
 
 function codstat_form($libelle="", $statisdoc_codage_import="", $statisdoc_owner=0, $id=0) {
 	global $msg;
@@ -125,7 +98,7 @@ switch($action) {
 				show_codstat($dbh);
 			} else {
 				$msg_suppr_err = $admin_liste_jscript;
-				$msg_suppr_err .= $msg[1701]." <a href='#' onclick=\"showListItems(this);return(false);\" what='codestat_docs' item='".$id."' total='".$total."' alt=\"".$msg["admin_docs_list"]."\" title=\"".$msg["admin_docs_list"]."\"><img src='./images/req_get.gif'></a>" ;
+				$msg_suppr_err .= $msg[1701]." <a href='#' onclick=\"showListItems(this);return(false);\" what='codestat_docs' item='".$id."' total='".$total."' alt=\"".$msg["admin_docs_list"]."\" title=\"".$msg["admin_docs_list"]."\"><img src='".get_url_icon('req_get.gif')."'></a>" ;
 				error_message(	$msg[294], $msg_suppr_err, 1, 'admin.php?categ=docs&sub=codstat&action=');
 			}
 		} else show_codstat($dbh);

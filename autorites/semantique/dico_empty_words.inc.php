@@ -2,9 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dico_empty_words.inc.php,v 1.4 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: dico_empty_words.inc.php,v 1.5 2017-01-26 15:36:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($search_empty_word)) $search_empty_word = '';
+if(!isset($page)) $page = 0;
+if(!isset($type_mot_vide)) $type_mot_vide = '';
+if(!isset($tri)) $tri = '';
+if(!isset($clause)) $clause = '';
 
 require_once("$class_path/semantique.class.php");
 require_once("$include_path/templates/dico_empty_words.tpl.php");

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.class.php,v 1.24.2.1 2015-12-11 11:14:34 jpermanne Exp $
+// $Id: search.class.php,v 1.39 2018-10-19 14:50:42 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,13 +11,13 @@ require_once($include_path."/rec_history.inc.php");
 //Classe de gestion de la recherche spécial "combine"
 
 class combine_search {
-	var $id;
-	var $n_ligne;
-	var $params;
-	var $search;
+	public $id;
+	public $n_ligne;
+	public $params;
+	public $search;
 
 	//Constructeur
-	function combine_search($id,$n_ligne,$params,&$search) {
+	public function __construct($id,$n_ligne,$params,&$search) {
 		$this->id=$id;
 		$this->n_ligne=$n_ligne;
 		$this->params=$params;
@@ -28,7 +28,7 @@ class combine_search {
 	 * Fonction de récupération des opérateurs disponibles pour ce champ spécial (renvoie un tableau d'opérateurs)
 	 * @return array Opérateurs disponibles
 	 */
-	function get_op() {
+	public function get_op() {
 		$operators = array();
 		if ($_SESSION["nb_queries"]!=0) {
 			$operators["EQ"]="=";
@@ -40,16 +40,17 @@ class combine_search {
 	 * Fonction de récupération de l'affichage de la saisie du critère
 	 * @return string Chaine html
 	 */
-	function get_input_box() {
+	public function get_input_box() {
 		global $msg;
 		global $charset;
 		global $get_input_box_id;
 			
 		//Récupération de la valeur de saisie
 		$valeur_="field_".$this->n_ligne."_s_".$this->id;
-		global $$valeur_;
-		$valeur=$$valeur_;
-			
+		global ${$valeur_};
+		$valeur=${$valeur_};
+		
+		$r = "";
 		if ($_SESSION["nb_queries"]!=0) {
 			if(!$get_input_box_id)$get_input_box_id="input_box_id_0";
 			else	$get_input_box_id++;
@@ -57,14 +58,14 @@ class combine_search {
 			//$r="&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td><td colspan='3'>";
 			$r .="<script type='text/javascript' src='./includes/javascript/tablist.js'></script>
 			<div id='$get_input_box_id' class='notice-parent'>
-			<img src='./getgif.php?nomgif=plus' class='img_plus' name='imEx' id='$get_input_box_id"."Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('$get_input_box_id', true); return false;\" hspace='3'>
+			<img src='./getgif.php?nomgif=plus' class='img_plus' name='imEx' id='$get_input_box_id"."Img' title='".addslashes($msg['plus_detail'])."' alt='".addslashes($msg['expand'])."' border='0' onClick=\"expandBase('$get_input_box_id', true); return false;\" hspace='3'>
 			<span class='notice-heada'>
 			<input type='hidden' name='field_".$this->n_ligne."_s_".$this->id."[]'  id='".$get_input_box_id."_value' value='!!value_selected!!'/>
 					<label id='".$get_input_box_id."_label' >!!label_selected!!</label>
 					</span>
 
 					</div>
-					<div id='$get_input_box_id"."Child' class='notice-child' style='margin-bottom:6px;display:none;width:94%' $max>
+					<div id='$get_input_box_id"."Child' class='notice-child' style='margin-bottom:6px;display:none;width:94%'>
 					<table class='table-no-border'>
 					!!contenu!!
 					</table>
@@ -116,30 +117,35 @@ class combine_search {
 	/**
 	 * Fonction de conversion de la saisie en quelque chose de compatible avec l'environnement
 	 */
-	function transform_input() {
+	public function transform_input() {
 	}
 
 	/**
 	 * Fonction de création de la requête (retourne une table temporaire)
 	 * @return string Nom de la table temporaire
 	 */
-	function make_search() {
+	public function make_search() {
 			
 		//Récupération de la valeur de saisie
 		$valeur_="field_".$this->n_ligne."_s_".$this->id;
-		global $$valeur_;
-		$valeur=$$valeur_;
+		global ${$valeur_};
+		$valeur=${$valeur_};
 			
 		if (!$this->is_empty($valeur)) {
 			//enregistrement de l'environnement courant
 			$this->search->push();
 			
-			$mc = self::simple2mc($valeur[0]);
-			
+			if(is_numeric($valeur[0])){
+				$mc = self::simple2mc($valeur[0]);
+			}else{
+				$mc = $valeur[0];
+				$mc['search_instance'] = new search($mc['search_type']);
+				$mc['search_instance']->unserialize_search($mc['serialized_search']);
+			}
 			$es = $mc['search_instance'];
 			
-			if($mc["search_type"]=="search_simple_fields"){
-				$table_tempo=$es->make_search("tempo_".$valeur[0]);
+			if($mc["search_type"]=="search_simple_fields" && $es !== null){
+				$table_tempo=$es->make_search("tempo_".md5(serialize($valeur[0]).microtime(true)));
 			} else {
 				$searcher = new searcher_extended();
 				$searcher->get_result();
@@ -156,12 +162,12 @@ class combine_search {
 	 * Fonction de création de la recherche sérialisée (retourne un tableau sérialisé)
 	 * @return string Nom du tableau sérialisé
 	 */
-	function serialize_search() {
+	public function serialize_search() {
 			
 		//Récupération de la valeur de saisie
 		$valeur_="field_".$this->n_ligne."_s_".$this->id;
-		global $$valeur_;
-		$valeur=$$valeur_;
+		global ${$valeur_};
+		$valeur=${$valeur_};
 			
 		if (!$this->is_empty($valeur)) {
 			//enregistrement de l'environnement courant
@@ -178,12 +184,32 @@ class combine_search {
 		}
 		return $retour;
 	}
+	
+	public function get_recursive() {
+			
+		//Récupération de la valeur de saisie
+		$valeur_="field_".$this->n_ligne."_s_".$this->id;
+		global ${$valeur_};
+		$valeur=${$valeur_};
+	
+		if (!$this->is_empty($valeur)) {
+			//enregistrement de l'environnement courant
+			$this->search->push();
+			$mc = self::simple2mc($valeur[0],true);
+			//restauration de l'environnement courant
+			$this->search->pull();
+		}
+		unset($mc['search_instance']);
+		return $mc;
+	}
+	
+	
 
 	/**
 	 * Fonction de traduction littérale de la requête effectuée (renvoie un tableau des termes saisis)
 	 * @return array
 	 */
-	function make_human_query() {
+	public function make_human_query() {
 		global $msg;
 		global $include_path;
 
@@ -191,8 +217,8 @@ class combine_search {
 
 		//Récupération de la valeur de saisie
 		$valeur_="field_".$this->n_ligne."_s_".$this->id;
-		global $$valeur_;
-		$valeur=$$valeur_;
+		global ${$valeur_};
+		$valeur=${$valeur_};
 
 		if (!$this->is_empty($valeur)) {
 			$litteral[0]= get_human_query_level_two($valeur[0]);
@@ -200,17 +226,17 @@ class combine_search {
 		return $litteral;
 	}
 
-	function make_unimarc_query() {
+	public function make_unimarc_query() {
 		//Récupération de la valeur de saisie
 		$valeur_="field_".$this->n_ligne."_s_".$this->id;
-		global $$valeur_;
-		$valeur=$$valeur_;
+		global ${$valeur_};
+		$valeur=${$valeur_};
 
 		if (!$this->is_empty($valeur)) {
 
 			//enregistrement de l'environnement courant
 			$this->search->push();
-
+			
 			//on instancie la classe search avec le nom de la nouvelle table temporaire
 			switch ($_SESSION["search_type".$valeur[0]]) {
 				case 'simple_search':
@@ -243,7 +269,7 @@ class combine_search {
 							$valeur_champ=$_SESSION["notice_view".$valeur[0]]["search_id"];
 							break;
 						case 'categ_see':
-							$search[0]="f_1";
+							$search[0]="s_6";
 							$op_="EQ";
 							$valeur_champ=$_SESSION["notice_view".$valeur[0]]["search_id"];
 							break;
@@ -279,26 +305,26 @@ class combine_search {
 					}
 					//opérateur
 					$op="op_0_".$search[0];
-					global $$op;
-					$$op=$op_;
+					global ${$op};
+					${$op}=$op_;
 
 					//contenu de la recherche
 					$field="field_0_".$search[0];
 					$field_=array();
 					$field_[0]=$valeur_champ;
-					global $$field;
-					$$field=$field_;
+					global ${$field};
+					${$field}=$field_;
 
 					//opérateur inter-champ
 					$inter="inter_0_".$search[0];
-					global $$inter;
-					$$inter="";
+					global ${$inter};
+					${$inter}="";
 
 					//variables auxiliaires
 					$fieldvar_="fieldvar_0_".$search[0];
-					global $$fieldvar_;
-					$$fieldvar_="";
-					$fieldvar=$$fieldvar_;
+					global ${$fieldvar_};
+					${$fieldvar_}="";
+					$fieldvar=${$fieldvar_};
 
 					$es=new search("search_simple_fields");
 					break;
@@ -315,26 +341,26 @@ class combine_search {
 
 					//opérateur
 					$op="op_0_".$search[0];
-					global $$op;
-					$$op=$op_;
+					global ${$op};
+					${$op}=$op_;
 
 					//contenu de la recherche
 					$field="field_0_".$search[0];
 					$field_=array();
 					$field_[0]=$valeur_champ;
-					global $$field;
-					$$field=$field_;
+					global ${$field};
+					${$field}=$field_;
 
 					//opérateur inter-champ
 					$inter="inter_0_".$search[0];
-					global $$inter;
-					$$inter="";
+					global ${$inter};
+					${$inter}="";
 
 					//variables auxiliaires
 					$fieldvar_="fieldvar_0_".$search[0];
-					global $$fieldvar_;
-					$$fieldvar_="";
-					$fieldvar=$$fieldvar_;
+					global ${$fieldvar_};
+					${$fieldvar_}="";
+					$fieldvar=${$fieldvar_};
 
 					$es=new search("search_simple_fields");
 					break;
@@ -367,7 +393,7 @@ class combine_search {
 							$search[0]="f_8";
 							break;
 						case 'categ_see':
-							$search[0]="f_1";
+							$search[0]="s_6";
 							break;
 						case 'indexint_see':
 							$search[0]="f_2";
@@ -387,27 +413,27 @@ class combine_search {
 
 					//opérateur
 					$op="op_0_".$search[0];
-					global $$op;
-					$$op=$op_;
+					global ${$op};
+					${$op}=$op_;
 
 					//contenu de la recherche
 					$field="field_0_".$search[0];
 					$field_=array();
 					$field_[0]=$valeur_champ;
-					global $$field;
-					$$field=$field_;
+					global ${$field};
+					${$field}=$field_;
 
 					//opérateur inter-champ
 					$inter="inter_0_".$search[0];
-					global $$inter;
-					$$inter="";
+					global ${$inter};
+					${$inter}="";
 
 					//variables auxiliaires
 					$fieldvar_="fieldvar_0_".$search[0];
-					global $$fieldvar_;
+					global ${$fieldvar_};
 					//fieldvar attention pour la section
-					$$fieldvar_="";
-					$fieldvar=$$fieldvar_;
+					${$fieldvar_}="";
+					$fieldvar=${$fieldvar_};
 
 					$es=new search("search_simple_fields");
 					break;
@@ -428,7 +454,7 @@ class combine_search {
 	 * @param string $valeur Chaine à découper
 	 * @return string Chaine découpée
 	 */
-	function cutlongwords($valeur) {
+	public function cutlongwords($valeur) {
 		if (strlen($valeur)>=50) {
 			$pos=strrpos(substr($valeur,0,50)," ");
 			if ($pos) {
@@ -443,7 +469,7 @@ class combine_search {
 	 * @param array $valeur Champ saisi ou sélectionné
 	 * @return boolean true si vide
 	 */
-	function is_empty($valeur) {
+	public function is_empty($valeur) {
 		if (count($valeur)) {
 			if ($valeur[0]=="-1") return true;
 			else return ($valeur[0] === false);
@@ -461,279 +487,379 @@ class combine_search {
 				'search_instance' => instance de search
 				)
 	 */
-	static function simple2mc($index_history) {
+	static function simple2mc($index_history,$recursive_history=false) {
 		global $opac_indexation_docnum_allfields;
 		global $opac_search_other_function;
 		$table_tempo = "";
 		$xml_file="search_simple_fields";
 		//on instancie la classe search avec le nom de la nouvelle table temporaire
-		switch ($_SESSION["search_type".$index_history]) {
-			case 'simple_search':
-				global $search;
-				if ($opac_search_other_function) search_other_function_get_history($index_history);
-				switch($_SESSION["notice_view".$index_history]["search_mod"]) {
-					case 'title':
-						$search[0]="f_6";
-						$op_="BOOLEAN";
-						$valeur_champ=$_SESSION["user_query".$index_history];
-						break;
-					case 'all':
-						$search[0]="f_7";
-						$op_="BOOLEAN";
-						$valeur_champ=$_SESSION["user_query".$index_history];
-						$t["is_num"][0]= $opac_indexation_docnum_allfields;
-						$t["ck_affiche"][0]=$opac_indexation_docnum_allfields;
-						break;
-					case 'abstract':
-						$search[0]="f_13";
-						$op_="BOOLEAN";
-						$valeur_champ=$_SESSION["user_query".$index_history];
-						break;
-					case 'keyword':
-						$search[0]="f_12";
-						$op_="BOOLEAN";
-						$valeur_champ=$_SESSION["user_query".$index_history];
-						break;
-					case 'author_see':
-						$search[0]="f_8";
-						$op_="EQ";
-						$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
-						break;
-					case 'categ_see':
-						$search[0]="f_1";
-						$op_="EQ";
-						$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
-						break;
-					case 'indexint_see':
-						$search[0]="f_2";
-						$op_="EQ";
-						$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
-						break;
-					case 'coll_see':
-						$search[0]="f_4";
-						$op_="EQ";
-						$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
-						break;
-					case 'publisher_see':
-						$search[0]="f_3";
-						$op_="EQ";
-						$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
-						break;
-					case 'subcoll_see':
-						$search[0]="f_5";
-						$op_="EQ";
-						$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
-						break;
-					case 'titre_uniforme_see':
-						$search[0]="f_27";
-						$op_="EQ";
-						$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
-						break;
-					case 'serie_see':
-						$search[0]="f_28";
-						$op_="EQ";
-						$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
-						break;
-					case 'concept_see':
-						$search[0]="f_29";
-						$op_="EQ";
-						$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
-						break;
-					case 'docnum':
-						$search[0]="f_16";
-						$op_="BOOLEAN";
-						$valeur_champ=$_SESSION["user_query".$index_history]["search_id"];
-						break;
-					case 'docnum':
-						$search[0]="f_16";
-						$op_="BOOLEAN";
-						$valeur_champ=$_SESSION["user_query".$index_history]["search_id"];
-						break;
-					case 'authperso_see':
-						$search[0]="f_30";
-						$op_="EQ";
-						$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
-						break;
-					case 'etagere_see':
-						$search[0]="f_14";
-						$op_="EQ";
-						$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
-						break;
-					case 'section_see':
-						$xml_file='';
-						$search[0]="s_5";
-						$op_="EQ";
-						$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
-						break;
-				}
-				//opérateur
-				$op="op_0_".$search[0];
-				global $$op;
-				$$op=$op_;
-
-				//contenu de la recherche
-				$field="field_0_".$search[0];
-				$field_=array();
-				$field_[0]=$valeur_champ;
-				global $$field;
-				$$field=$field_;
-
-				//opérateur inter-champ
-				$inter="inter_0_".$search[0];
-				global $$inter;
-				$$inter="";
-
-				//variables auxiliaires
-				$fieldvar_="fieldvar_0_".$search[0];
-				global $$fieldvar_;
-				if($t) $$fieldvar_=$t;
-				else $$fieldvar_="";
-				$fieldvar=$$fieldvar_;
-
-				if($_SESSION["typdoc".$index_history]){
-					$search[1]="f_9";
+		if(isset($_SESSION["search_type".$index_history])) {
+			switch ($_SESSION["search_type".$index_history]) {
+				case 'simple_search':
+					global $search;
+					if ($opac_search_other_function) search_other_function_get_history($index_history);
+					if(isset($_SESSION["notice_view".$index_history]["search_mod"])) {
+						switch($_SESSION["notice_view".$index_history]["search_mod"]) {
+							case 'title':
+								$search[0]="f_6";
+								$op_="BOOLEAN";
+								$valeur_champ=$_SESSION["user_query".$index_history];
+								break;
+							case 'all':
+								$search[0]="f_7";
+								$op_="BOOLEAN";
+								$valeur_champ=$_SESSION["user_query".$index_history];
+								$t["is_num"][0]= $opac_indexation_docnum_allfields;
+								$t["ck_affiche"][0]=$opac_indexation_docnum_allfields;
+								break;
+							case 'abstract':
+								$search[0]="f_13";
+								$op_="BOOLEAN";
+								$valeur_champ=$_SESSION["user_query".$index_history];
+								break;
+							case 'keyword':
+								$search[0]="f_12";
+								$op_="BOOLEAN";
+								$valeur_champ=$_SESSION["user_query".$index_history];
+								break;
+							case 'author_see':
+								$search[0]="f_8";
+								$op_="EQ";
+								$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
+								break;
+							case 'categ_see':
+								$search[0]="s_6";
+								$op_="EQ";
+								$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
+								break;
+							case 'indexint_see':
+								$search[0]="f_2";
+								$op_="EQ";
+								$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
+								break;
+							case 'coll_see':
+								$search[0]="f_4";
+								$op_="EQ";
+								$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
+								break;
+							case 'publisher_see':
+								$search[0]="f_3";
+								$op_="EQ";
+								$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
+								break;
+							case 'subcoll_see':
+								$search[0]="f_5";
+								$op_="EQ";
+								$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
+								break;
+							case 'titre_uniforme_see':
+								$search[0]="f_27";
+								$op_="EQ";
+								$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
+								break;
+							case 'serie_see':
+								$search[0]="f_28";
+								$op_="EQ";
+								$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
+								break;
+							case 'concept_see':
+								$search[0]="f_29";
+								$op_="EQ";
+								$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
+								break;
+							case 'docnum':
+								$search[0]="f_16";
+								$op_="BOOLEAN";
+								$valeur_champ = $_SESSION["user_query".$index_history];
+								break;
+							case 'authperso_see':
+								$search[0]="f_30";
+								$op_="EQ";
+								$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
+								break;
+							case 'etagere_see':
+								$search[0]="f_14";
+								$op_="EQ";
+								$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
+								break;
+							case 'section_see':
+								$xml_file='';
+								$search[0]="s_5";
+								$op_="EQ";
+								$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
+								break;
+						}
+						//opérateur
+						$op="op_0_".$search[0];
+						global ${$op};
+						${$op}=$op_;
+		
+						//contenu de la recherche
+						$field="field_0_".$search[0];
+						$field_=array();
+						$field_[0]=(isset($valeur_champ) ? $valeur_champ : '');
+						global ${$field};
+						${$field}=$field_;
+		
+						//opérateur inter-champ
+						$inter="inter_0_".$search[0];
+						global ${$inter};
+						${$inter}="";
+		
+						//variables auxiliaires
+						$fieldvar_="fieldvar_0_".$search[0];
+						global ${$fieldvar_};
+						if(isset($t)) ${$fieldvar_}=$t;
+						else ${$fieldvar_}="";
+						$fieldvar=${$fieldvar_};
+	
+						if(isset($_SESSION["typdoc".$index_history]) && $_SESSION["typdoc".$index_history]){
+							$search[1]="f_9";
+							$op_="EQ";
+							$valeur_champ=$_SESSION["typdoc".$index_history];
+							//opérateur
+							$op="op_1_".$search[1];
+							global ${$op};
+							${$op}=$op_;
+		
+							//contenu de la recherche
+							$field="field_1_".$search[1];
+							$field_=array();
+							$field_[0]=$valeur_champ;
+							global ${$field};
+							${$field}=$field_;
+		
+							//opérateur inter-champ
+							$inter="inter_1_".$search[1];
+							global ${$inter};
+							${$inter}="and";
+						}
+					}	
+					$es=new search($xml_file);
+					$serialized = $es->serialize_search();
+					break;
+				case 'extended_search':
+					if(isset($search[0]) && $search[0] == 's_9'){
+						$es=new search("search_simple_fields");
+						$serialized = $es->serialize_search($recursive_history);
+						$search_type="search_simple_fields";
+					}else{
+						get_history($index_history);
+						$es=new search("search_fields");
+						$serialized = $es->serialize_search($recursive_history);
+						$search_type="search_fields";
+					}
+					break;
+				case 'term_search':
+					global $search;
+	
+					$search[0]="f_1";
 					$op_="EQ";
-					$valeur_champ=$_SESSION["typdoc".$index_history];
+					$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
+	
 					//opérateur
-					$op="op_1_".$search[1];
-					global $$op;
-					$$op=$op_;
-
+					$op="op_0_".$search[0];
+					global ${$op};
+					${$op}=$op_;
+	
 					//contenu de la recherche
-					$field="field_1_".$search[1];
+					$field="field_0_".$search[0];
 					$field_=array();
 					$field_[0]=$valeur_champ;
-					global $$field;
-					$$field=$field_;
-
+					global ${$field};
+					${$field}=$field_;
+	
 					//opérateur inter-champ
-					$inter="inter_1_".$search[1];
-					global $$inter;
-					$$inter="and";
-				}
-				$es=new search($xml_file);
-				$serialized = $es->serialize_search();
-				break;
-			case 'extended_search':
-				get_history($index_history);
-				$es=new search("search_fields");
-				$serialized = $es->serialize_search();
-				$search_type="search_fields";
-				break;
-			case 'term_search':
-				global $search;
-
-				$search[0]="f_1";
-				$op_="EQ";
-				$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
-
-				//opérateur
-				$op="op_0_".$search[0];
-				global $$op;
-				$$op=$op_;
-
-				//contenu de la recherche
-				$field="field_0_".$search[0];
-				$field_=array();
-				$field_[0]=$valeur_champ;
-				global $$field;
-				$$field=$field_;
-
-				//opérateur inter-champ
-				$inter="inter_0_".$search[0];
-				global $$inter;
-				$$inter="";
-
-				//variables auxiliaires
-				$fieldvar_="fieldvar_0_".$search[0];
-				global $$fieldvar_;
-				$$fieldvar_="";
-				$fieldvar=$$fieldvar_;
-
-				$es=new search("search_simple_fields");
-				$serialized = $es->serialize_search();
-				break;
-			case 'module':
-				global $search;
-
-				switch($_SESSION["notice_view".$index_history]["search_mod"]) {
-					case 'authperso_see':
-						$search[0]="f_30";
-						break;
-					case 'concept_see':
-						$search[0]="f_29";
-						break;
-					case 'serie_see':
-						$search[0]="f_28";
-						break;
-					case 'publisher_see':
-						$search[0]="f_3";
-						break;
-					case "titre_uniforme_see" :
-						$search[0]="f_27";
-						break;
-					case "subcoll_see" :
-						$search[0]="f_5";
-						break;
-					case "coll_see" :
-						$search[0]="f_4";
-						break;
-					case 'author_see':
-						$search[0]="f_8";
-						break;
-					case 'categ_see':
-						$search[0]="f_1";
-						break;
-					case 'indexint_see':
-						$search[0]="f_2";
-						break;
-					case 'etagere_see':
-						$search[0]="f_14";
-						break;
-					case 'section_see':
-						$xml_file='';
-						$search[0]="s_5";
-						global $search_localisation;
-						$search_localisation=$_SESSION["notice_view".$index_history]["search_location"];
-						break;
-				}
-
-				$op_="EQ";
-				$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
-
-				//opérateur
-				$op="op_0_".$search[0];
-				global $$op;
-				$$op=$op_;
-
-				//contenu de la recherche
-				$field="field_0_".$search[0];
-				$field_=array();
-				$field_[0]=$valeur_champ;
-				global $$field;
-				$$field=$field_;
-
-				//opérateur inter-champ
-				$inter="inter_0_".$search[0];
-				global $$inter;
-				$$inter="";
-
-				//variables auxiliaires
-				$fieldvar_="fieldvar_0_".$search[0];
-				global $$fieldvar_;
-				//fieldvar attention pour la section
-				$$fieldvar_="";
-				$fieldvar=$$fieldvar_;
-
-				$es=new search($xml_file);
-				$serialized = $es->serialize_search();
-				break;
+					$inter="inter_0_".$search[0];
+					global ${$inter};
+					${$inter}="";
+	
+					//variables auxiliaires
+					$fieldvar_="fieldvar_0_".$search[0];
+					global ${$fieldvar_};
+					${$fieldvar_}="";
+					$fieldvar=${$fieldvar_};
+	
+					$es=new search("search_simple_fields");
+					$serialized = $es->serialize_search();
+					break;
+				case 'module':
+					global $search;
+	
+					switch($_SESSION["notice_view".$index_history]["search_mod"]) {
+						case 'authperso_see':
+							$search[0]="f_30";
+							break;
+						case 'concept_see':
+							$search[0]="f_29";
+							break;
+						case 'serie_see':
+							$search[0]="f_28";
+							break;
+						case 'publisher_see':
+							$search[0]="f_3";
+							break;
+						case "titre_uniforme_see" :
+							$search[0]="f_27";
+							break;
+						case "subcoll_see" :
+							$search[0]="f_5";
+							break;
+						case "coll_see" :
+							$search[0]="f_4";
+							break;
+						case 'author_see':
+							$search[0]="f_8";
+							break;
+						case 'categ_see':
+							$xml_file='';
+							$search[0]="s_6";
+							break;
+						case 'indexint_see':
+							$search[0]="f_2";
+							break;
+						case 'etagere_see':
+							$search[0]="f_14";
+							break;
+						case 'section_see':
+							$xml_file='';
+							$search[0]="s_5";
+							global $search_localisation;
+							$search_localisation=$_SESSION["notice_view".$index_history]["search_location"];
+							break;
+					}
+	
+					$op_="EQ";
+					$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
+	
+					//opérateur
+					$op="op_0_".$search[0];
+					global ${$op};
+					${$op}=$op_;
+	
+					//contenu de la recherche
+					$field="field_0_".$search[0];
+					$field_=array();
+					$field_[0]=$valeur_champ;
+					global ${$field};
+					${$field}=$field_;
+	
+					//opérateur inter-champ
+					$inter="inter_0_".$search[0];
+					global ${$inter};
+					${$inter}="";
+	
+					//variables auxiliaires
+					$fieldvar_="fieldvar_0_".$search[0];
+					global ${$fieldvar_};
+					//fieldvar attention pour la section
+					${$fieldvar_}="";
+					$fieldvar=${$fieldvar_};
+	
+					$es=new search($xml_file);
+					$serialized = $es->serialize_search();
+					break;
+			}
 		}
 		return array(
 				'serialized_search' => $serialized,
-				'search_type' => ($search_type?$search_type:"search_simple_fields"),
+				'search_type' => (isset($search_type) && $search_type?$search_type:"search_simple_fields"),
 				'search_instance' => $es
 		);
+	}
+	
+	public static function simple_search_to_mc($user_query = '', $to_json = false, $type = TYPE_NOTICE) {
+	    global $opac_indexation_docnum_allfields;
+	    global $opac_search_other_function;
+	    global $search;
+	    
+	    if (!isset($search) || !is_array($search)) {
+	        $search = array();
+	    }
+	    if ($type == TYPE_NOTICE) {
+	        //$xml_file="search_simple_fields";
+	        $xml_file="search_fields";
+	        $search_class = new search($xml_file);
+	    } else {
+	        $xml_file="search_fields_authorities";
+	        $search_class = new search_authorities($xml_file);
+	    }
+	    
+		$valeur_champ = '';
+		$op_="BOOLEAN";
+		
+		//on calcule le nouvel index de la recherche
+		$n = count($search);
+		switch($type){
+			case TYPE_NOTICE:
+				$search[$n]="f_42";
+				break;
+			case TYPE_AUTHOR:
+				$search[$n]="f_1102";
+				break;
+			case TYPE_CATEGORY:
+				$search[$n]="f_2102";
+				break;
+			case TYPE_PUBLISHER:
+				$search[$n]="f_3102";
+				break;
+			case TYPE_COLLECTION:
+				$search[$n]="f_4102";
+				break;
+			case TYPE_SUBCOLLECTION:
+				$search[$n]="f_5102";
+				break;
+			case TYPE_SERIE:
+				$search[$n]="f_6102";
+				break;
+			case TYPE_TITRE_UNIFORME:
+				$search[$n]="f_7102";
+				break;
+			case TYPE_INDEXINT:
+				$search[$n]="f_8102";
+				break;
+			case TYPE_AUTHPERSO:
+			default :
+			    if (intval($type) > 1000) {
+			        $id_authperso = (intval($type) - 1000);
+			        $search[$n]="authperso_".$id_authperso;
+			    }
+				break;
+		}
+        $valeur_champ = $user_query;
+        $t["is_num"][$n]= $opac_indexation_docnum_allfields;
+        $t["ck_affiche"][$n]=$opac_indexation_docnum_allfields;
+
+	    //opérateur
+	    $op="op_".$n."_".$search[$n];
+	    global ${$op};
+	    ${$op}=$op_;
+	    //contenu de la recherche
+	    $field="field_".$n."_".$search[$n];
+	    $field_=array();
+	    $field_[0]=(isset($valeur_champ) ? $valeur_champ : '');
+	    global ${$field};
+	    ${$field}=$field_;
+	    
+	    //opérateur inter-champ
+	    $inter="inter_".$n."_".$search[$n];
+	    global ${$inter};
+		if ($n == 0) {
+	        ${$inter}="";
+	    } else {
+	        ${$inter}="and";
+	    }
+	    
+	    //variables auxiliaires
+	    $fieldvar_="fieldvar_".$n."_".$search[$n];
+	    global ${$fieldvar_};
+	    if(isset($t)) ${$fieldvar_}=$t;
+	    else ${$fieldvar_}="";
+	    $fieldvar=${$fieldvar_};
+	    if ($to_json) {
+	        return $search_class->json_encode_search();
+	    }
+	    return $search_class->serialize_search();
 	}
 }
 ?>

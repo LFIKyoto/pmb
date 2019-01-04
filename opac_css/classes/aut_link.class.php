@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: aut_link.class.php,v 1.5.4.1 2015-08-14 14:51:42 dbellamy Exp $
+// $Id: aut_link.class.php,v 1.17 2018-10-08 13:59:39 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 // gestion des liens entre autorités
@@ -17,6 +17,7 @@ require_once("$class_path/serie.class.php");
 require_once("$class_path/category.class.php");
 require_once("$class_path/titre_uniforme.class.php");
 require_once("$class_path/authperso.class.php");
+require_once("$class_path/authorities_collection.class.php");
 //require_once("$class_path/concept.class.php");
 
 
@@ -32,6 +33,10 @@ define('AUT_TABLE_TITRES_UNIFORMES',7);
 define('AUT_TABLE_INDEXINT',8);
 define('AUT_TABLE_AUTHPERSO',9);
 define('AUT_TABLE_CONCEPT',10);
+define('AUT_TABLE_INDEX_CONCEPT',11);
+// Pour la classe authorities_collection
+define('AUT_TABLE_CATEGORIES',12);
+define('AUT_TABLE_AUTHORITY',13);
 
 $aut_table_name_list=array(
 	AUT_TABLE_AUTHORS => 'authors',
@@ -42,24 +47,34 @@ $aut_table_name_list=array(
 	AUT_TABLE_SERIES => 'series',
 	AUT_TABLE_TITRES_UNIFORMES => 'titres_uniformes',
 	AUT_TABLE_INDEXINT => 'indexint',
-	AUT_TABLE_CONCEPT => 'concept'
-);
+	AUT_TABLE_CONCEPT => 'concept',
+	AUT_TABLE_INDEX_CONCEPT => 'concept',
+	AUT_TABLE_AUTHPERSO => 'authperso'
+); 
 
 // définition de la classe de gestion des liens entre autorités
 class aut_link {
 
-	function aut_link($aut_table,$id) {
+	public $aut_table;
+	public $id;
+	
+	public function __construct($aut_table,$id) {
 		$this->aut_table = $aut_table;
 		$this->id = $id;
 		$this->getdata();
-	}
+	}	
 
-	function getdata() {
+	public function getdata() {
 		global $dbh,$msg;
 		global $aut_table_name_list;
-		$this->aut_table_name = $aut_table_name_list[$this->aut_table];
-		$this->aut_list=array();
-
+		global $pmb_opac_url;
+		if($this->aut_table > 1000) {
+			$this->aut_table_name = $aut_table_name_list[AUT_TABLE_AUTHPERSO];
+		} else {
+			$this->aut_table_name = $aut_table_name_list[$this->aut_table];
+		}
+		$this->aut_list=array();		
+			
 		$rqt="select * from aut_link where (aut_link_from='".$this->aut_table."'	and aut_link_from_num='".$this->id."' )
 		or ( aut_link_to='".$this->aut_table."' and aut_link_to_num='".$this->id."' and aut_link_reciproc=1 )
 		order by aut_link_type ";
@@ -72,7 +87,7 @@ class aut_link {
 			$this->aut_list[$i]['type']=$row->aut_link_type;
 			$this->aut_list[$i]['reciproc']=$row->aut_link_reciproc;
 			$this->aut_list[$i]['comment']=$row->aut_link_comment;
-
+						
 			if(($this->aut_table==$row->aut_link_to ) and ($this->id == $row->aut_link_to_num)) {
 				$this->aut_list[$i]['flag_reciproc']=1;
 				$this->aut_list[$i]['to']=$row->aut_link_from;
@@ -80,62 +95,61 @@ class aut_link {
 			} else {
 				$this->aut_list[$i]['flag_reciproc']=0;
 			}
-
-
+			
 			switch($this->aut_list[$i]['to']){
 				case AUT_TABLE_AUTHORS :
-					$auteur = new auteur($this->aut_list[$i]['to_num']);
-					$this->aut_list[$i]['isbd_entry'] = $auteur->isbd_entry;
-					$this->aut_list[$i]['libelle'] = sprintf($msg['aut_link_author'] ,$auteur->isbd_entry);
+					$auteur = authorities_collection::get_authority("author", $this->aut_list[$i]['to_num']);
+					$this->aut_list[$i]['isbd_entry'] = $auteur->get_isbd();
+					$this->aut_list[$i]['libelle'] = sprintf($msg['aut_link_author'] ,$auteur->get_isbd());
 				break;
 				case AUT_TABLE_CATEG :
-					$categ = new category($this->aut_list[$i]['to_num']);
+					$categ = authorities_collection::get_authority("category", $this->aut_list[$i]['to_num']);
 					$this->aut_list[$i]['isbd_entry'] = $categ->libelle;
 					$this->aut_list[$i]['libelle'] = sprintf($msg['aut_link_categ'], $categ->libelle);
 				break;
 				case AUT_TABLE_PUBLISHERS :
-					$ed = new publisher($this->aut_list[$i]['to_num']) ;
-					$this->aut_list[$i]['isbd_entry'] = $ed->isbd_entry;
-					$this->aut_list[$i]['libelle'] = sprintf($msg['aut_link_publisher'] ,$ed->isbd_entry);
+					$ed = authorities_collection::get_authority("publisher", $this->aut_list[$i]['to_num']);
+					$this->aut_list[$i]['isbd_entry'] = $ed->get_isbd();
+					$this->aut_list[$i]['libelle'] = sprintf($msg['aut_link_publisher'] ,$ed->get_isbd());
 				break;
 				case AUT_TABLE_COLLECTIONS :
-					$subcollection = new collection($this->aut_list[$i]['to_num']);
-					$this->aut_list[$i]['isbd_entry'] = $subcollection->isbd_entry;
-					$this->aut_list[$i]['libelle'] = sprintf($msg['aut_link_coll'], $subcollection->isbd_entry);
+					$collection = authorities_collection::get_authority("collection", $this->aut_list[$i]['to_num']);
+					$this->aut_list[$i]['isbd_entry'] = $collection->get_isbd();
+					$this->aut_list[$i]['libelle'] = sprintf($msg['aut_link_coll'], $collection->get_isbd());
 				break;
 				case AUT_TABLE_SUB_COLLECTIONS :
-					$collection = new subcollection($this->aut_list[$i]['to_num']);
-					$this->aut_list[$i]['isbd_entry'] = $collection->isbd_entry;
-					$this->aut_list[$i]['libelle'] = sprintf($msg['aut_link_subcoll'], $collection->isbd_entry);
+					$subcollection = authorities_collection::get_authority("subcollection", $this->aut_list[$i]['to_num']);
+					$this->aut_list[$i]['isbd_entry'] = $subcollection->get_isbd();
+					$this->aut_list[$i]['libelle'] = sprintf($msg['aut_link_subcoll'], $subcollection->get_isbd());
 				break;
 				case AUT_TABLE_SERIES :
-					$serie = new serie($this->aut_list[$i]['to_num']);
-					$this->aut_list[$i]['isbd_entry'] = $serie->name;
-					$this->aut_list[$i]['libelle'] = sprintf($msg['aut_link_serie'], $serie->name);
+					$serie = authorities_collection::get_authority("serie", $this->aut_list[$i]['to_num']);
+					$this->aut_list[$i]['isbd_entry'] = $serie->get_isbd();
+					$this->aut_list[$i]['libelle'] = sprintf($msg['aut_link_serie'], $serie->get_isbd());
 				break;
 				case AUT_TABLE_TITRES_UNIFORMES :
-					$tu = new titre_uniforme($this->aut_list[$i]['to_num']);
-					$this->aut_list[$i]['isbd_entry'] = $tu->name;
-					$this->aut_list[$i]['libelle'] = sprintf($msg['aut_link_tu'], $tu->name);
+					$tu = authorities_collection::get_authority("titre_uniforme", $this->aut_list[$i]['to_num']);
+					$this->aut_list[$i]['isbd_entry'] = $tu->get_isbd();
+					$this->aut_list[$i]['libelle'] = sprintf($msg['aut_link_tu'], $tu->get_isbd());
 				break;
 				case AUT_TABLE_INDEXINT :
-					$indexint = new indexint($this->aut_list[$i]['to_num']);
-					$this->aut_list[$i]['isbd_entry'] = $indexint->display;
-					$this->aut_list[$i]['libelle'] = sprintf($msg['aut_link_indexint'], $indexint->display);
-				break;/*
+					$indexint = authorities_collection::get_authority("indexint", $this->aut_list[$i]['to_num']);
+					$this->aut_list[$i]['isbd_entry'] = $indexint->get_isbd();
+					$this->aut_list[$i]['libelle'] = sprintf($msg['aut_link_indexint'], $indexint->get_isbd());
+				break;
 				case AUT_TABLE_CONCEPT :
-					$concept= new concept($this->aut_list[$i]['to_num']);
+					$concept= authorities_collection::get_authority("concept", $this->aut_list[$i]['to_num']);
 					$this->aut_list[$i]['isbd_entry'] = $concept->get_display_label();
-					$this->aut_list[$i]['libelle'] = sprintf($msg['aut_link_concept'], $concept->get_display_label());
-				break;*/
+					$this->aut_list[$i]['libelle'] =  $concept->get_display_label();					
+				break;
 				default:
 					if($this->aut_list[$i]['to']>1000){
 						// authperso
 						$authperso = new authperso($this->aut_list[$i]['to']-1000);
-						$isbd=$authperso->get_isbd($this->aut_list[$i]['to_num']);
+						$isbd=authperso::get_isbd($this->aut_list[$i]['to_num']);
 						$this->aut_list[$i]['isbd_entry']=$isbd;
 						$this->aut_list[$i]['libelle']="[".$authperso->info['name']."] ".$isbd;
-						$this->aut_list[$i]["url_to_opac"]=$pmb_opac_url."index.php?lvl=authperso_see&id=".$this->aut_list[$i]['to_num'];
+						$this->aut_list[$i]['url_to_opac']=$pmb_opac_url."index.php?lvl=authperso_see&id=".$this->aut_list[$i]['to_num'];
 					}
 				break;
 			}
@@ -148,16 +162,16 @@ class aut_link {
 		}
 	}
 
-	function get_data() {
+	public function get_data() {
 		return $this->aut_list;
 	}
-
-	function get_display($caller="categ_form") {
+	
+	public function get_display($caller="categ_form") {
 		global $msg;
 
 		if(!count($this->aut_list)) return"";
 
-		$aut_link_table_select[AUT_TABLE_AUTHORS]='./index.php?lvl=author_see&id=!!to_num!!';
+		$aut_link_table_select[AUT_TABLE_AUTHORS]='./index.php?lvl=author_see&id=!!to_num!!';		
 		$aut_link_table_select[AUT_TABLE_CATEG]='./index.php?lvl=categ_see&id=!!to_num!!';
 		$aut_link_table_select[AUT_TABLE_PUBLISHERS]='./index.php?lvl=publisher_see&id=!!to_num!!';
 		$aut_link_table_select[AUT_TABLE_COLLECTIONS]='./index.php?lvl=coll_see&id=!!to_num!!';
@@ -165,22 +179,27 @@ class aut_link {
 		$aut_link_table_select[AUT_TABLE_SERIES]='./index.php?lvl=serie_see&id=!!to_num!!';
 		$aut_link_table_select[AUT_TABLE_TITRES_UNIFORMES]='./index.php?lvl=titre_uniforme_see&id=!!to_num!!';
 		$aut_link_table_select[AUT_TABLE_INDEXINT]='./index.php?lvl=indexint_see&id=!!to_num!!';
-
-		$marc_table=new marc_list("relationtype_aut");
+		$aut_link_table_select[AUT_TABLE_CONCEPT]='./index.php?lvl=concept_see&id=!!to_num!!';
+		$aut_link_table_select[AUT_TABLE_AUTHPERSO]='./index.php?lvl=authperso_see&id=!!to_num!!';
+		
+		$marc_table=marc_list_collection::get_instance("relationtype_aut");
 		$liste_type_relation = $marc_table->table;
-		$marc_tableup=new marc_list("relationtype_autup");
+		$marc_tableup=marc_list_collection::get_instance("relationtype_autup");
 		$liste_type_relationup = $marc_tableup->table;
-
 		$aff="<ul>";
 		foreach ($this->aut_list as $aut) {
 			$aff.="<li>";
-			if($aut['reciproc']) {
+			if($aut['flag_reciproc']) {
 				$aff.=$liste_type_relationup[$aut['type']]." : ";
 			} else	{
 				$aff.=$liste_type_relation[$aut['type']]." : ";
 			}
-			$link=str_replace("!!to_num!!",$aut['to_num'],$aut_link_table_select[$aut['to']]);
-			$aff.=" <a href=".$link.">".$aut['libelle']."</a>";
+			if($aut['to'] > 1000) {
+				$link=str_replace("!!to_num!!",$aut['to_num'],$aut_link_table_select[AUT_TABLE_AUTHPERSO]);
+			} else {
+				$link=str_replace("!!to_num!!",$aut['to_num'],$aut_link_table_select[$aut['to']]);
+			}
+			$aff.=" <a href='".$link."'>".$aut['libelle']."</a>";
 			if($aut['comment']) {
 				$aff.=" (".$aut['comment'].")";
 			}
@@ -189,7 +208,7 @@ class aut_link {
 		$aff.="</ul>";
 		return $aff;
 	}
-
-
+	
+	
 // fin class
 }

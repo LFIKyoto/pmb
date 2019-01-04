@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.5 2009-05-16 11:12:04 dbellamy Exp $
+// $Id: main.inc.php,v 1.8 2017-09-29 09:53:23 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -13,7 +13,7 @@ require_once("$class_path/thesaurus.class.php");
 
 
 //recuperation du thesaurus session 
-if(!$id_thes) {
+if(!isset($id_thes) || !$id_thes) {
 	$id_thes = thesaurus::getSessionThesaurusId();
 }
 
@@ -40,12 +40,6 @@ $search_form_term = "
 	</form>
 	<script type='text/javascript'>
 		document.forms['term_search_form'].elements['search_term'].focus();
-		function aide_regex()
-			{
-				var fenetreAide;
-				var prop = 'scrollbars=yes, resizable=yes';
-				fenetreAide = openPopUp('./help.php?whatis=regex', 'regex_howto', 500, 400, -2, -2, prop);
-			}
 		</script>
 	<br />
 	";
@@ -69,7 +63,7 @@ if ($thesaurus_mode_pmb != 0) {	 //la liste des thesaurus n'est pas affichée en 
 	$sel_thesaurus.= ">".htmlentities($msg['thes_all'],ENT_QUOTES,$charset)."</option>";
 	$sel_thesaurus.= "</select>&nbsp;";
 
-	$lien_thesaurus = "<a href='./autorites.php?categ=categories&sub=thes'>".$msg[thes_lien]."</a>";
+	$lien_thesaurus = "<a href='./autorites.php?categ=categories&sub=thes'>".$msg['thes_lien']."</a>";
 
 }	
 $search_form_term=str_replace("<!-- sel_thesaurus -->",$sel_thesaurus,$search_form_term);

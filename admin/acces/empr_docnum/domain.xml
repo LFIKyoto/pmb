@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: domain.xml,v 1.3 2014-09-22 08:43:37 arenou Exp $ -->
+$Id: domain.xml,v 1.5 2017-09-06 15:33:47 tsamson Exp $ -->
 
 <domain>
 	<!--  empr -->
@@ -15,6 +15,12 @@ $Id: domain.xml,v 1.3 2014-09-22 08:43:37 arenou Exp $ -->
 		</property_link>
 		<property_link with="2">
 			<r_query type="field" value="empr_location" />				<!--  champ emprunteur localisation  -->
+		</property_link>
+		<property_link with="5">
+			<r_query type="session" value="opac_view" />				<!--  variable session vue OPAC  -->
+		</property_link>
+		<property_link with="6">
+			<r_query type="field" value="empr_codestat" />				<!--  champ emprunteur code statistique de lecteur  -->
 		</property_link>
 	</user>
 
@@ -37,6 +43,12 @@ $Id: domain.xml,v 1.3 2014-09-22 08:43:37 arenou Exp $ -->
 		<property id="3" lib="msg:docnum_statut_docnum">
 			<ref type="table" name="explnum_statut" key="id_explnum_statut" value="gestion_libelle" />
 		</property>
+		<property id="5" lib="msg:opac_view">
+			<ref type="table" name="opac_views" key="opac_view_id" value="opac_view_name" />
+		</property>
+		<property id="6" lib="msg:24">
+			<ref type="table" name="empr_codestat" key="idcode" value="libelle" />
+		</property>
 	</properties>
 
 	<controls>
@@ -44,6 +56,7 @@ $Id: domain.xml,v 1.3 2014-09-22 08:43:37 arenou Exp $ -->
 		<control id='2' global="yes" lib='dom_mod_pro' />
 		<control id='3' lib='view_docnum_opac' />
 		<control id='4' lib='download_docnum_opac' />	
-		<control id='5' lib='show_docnum_opac' />	
+		<control id='5' lib='show_docnum_opac' />
+		<control id='10' global="yes" lib='dom_override_rights' />
 	</controls>
 </domain>

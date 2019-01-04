@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_customfields.inc.php,v 1.3.4.2 2015-09-25 15:20:19 jpermanne Exp $
+// $Id: func_customfields.inc.php,v 1.6 2018-01-09 08:54:31 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+global $base_path; //Nécessaire pour certaines inclusions
 include_once $base_path.'/admin/import/lib_func_customfields.inc.php';
 
 function recup_noticeunimarc_suite($notice) {

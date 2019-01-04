@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // Â© 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_datasource_rss.class.php,v 1.9 2015-03-17 14:18:26 ngantier Exp $
+// $Id: docwatch_datasource_rss.class.php,v 1.16 2018-04-19 11:58:55 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -38,6 +38,7 @@ class docwatch_datasource_rss extends docwatch_datasource{
 			$aCurl->timeout=2;
 			$content = $aCurl->get($link);
 			$flux=$content->body;
+			if(!isset($this->parameters['nb_max_elements'])) $this->parameters['nb_max_elements']=0;
 			if($flux && $content->headers['Status-Code'] == 200){
 				$rss = new domDocument();
 				$old_errors_value = false;
@@ -51,7 +52,7 @@ class docwatch_datasource_rss extends docwatch_datasource{
 						//Flux RSS	
 						$sxe = new SimpleXMLElement($flux);
 						$ns=$sxe->getNamespaces(true);
-						
+						if(!isset($ns["dc"])) $ns["dc"] = '';
 						$informations['items'] =array();
 						if ($rss->getElementsByTagName("channel")->length > 0) {
 							$channel = $rss->getElementsByTagName("channel")->item(0);
@@ -75,12 +76,14 @@ class docwatch_datasource_rss extends docwatch_datasource{
 								if($this->parameters['nb_max_elements']==0 || $i < $this->parameters['nb_max_elements']){
 									$informations['items'][$count]=$this->get_informations($rss_items->item($i),$elements,false);
 									if($ns["dc"]){
-										$informations['items'][$count]['pubDate'] = $rss->getElementsByTagNameNS($ns["dc"], 'date')->item($i)->nodeValue;
-										$informations['items'][$count]['pubDate'] = str_replace("T", " ", $informations['items'][$count]['pubDate']);		
-										$informations['items'][$count]['pubDate'] = str_replace("Z", " ", $informations['items'][$count]['pubDate']);										
-										$informations['items'][$count]['subject'] = $rss->getElementsByTagNameNS($ns["dc"], 'subject')->item($i)->nodeValue;								}
-									if($ns["content"]){
-									//	$informations['items'][$count]['content'] = $rss->getElementsByTagNameNS($ns["content"], 'encoded')->item($i)->nodeValue;										
+										$namespace_dc_date = $rss->getElementsByTagNameNS($ns["dc"], 'date')->item($i)->nodeValue;
+										if($namespace_dc_date){
+											$informations['items'][$count]['pubDate'] = str_replace(array("T","Z"), " ", $namespace_dc_date);
+										}
+										$namespace_dc_subject = $rss->getElementsByTagNameNS($ns["dc"], 'subject')->item($i)->nodeValue;
+										if($namespace_dc_subject){
+											$informations['items'][$count]['subject'] = $namespace_dc_subject;
+										}
 									}
 									$count++;
 								}
@@ -113,14 +116,15 @@ class docwatch_datasource_rss extends docwatch_datasource{
 							$data["type"] = "rss";
 							$data["title"] = $rss_item["title"];
 							$data["summary"] = $rss_item["description"];
+							if(!isset($rss_item["content"])) $rss_item["content"] = '';
 							$data["content"] = $rss_item["content"];
 							$data["url"] = $rss_item["link"];
-							if($rss_item["pubDate"]) $data["publication_date"] = date ( 'Y-m-d h:i:s' , strtotime($rss_item["pubDate"]));
+							if($rss_item["pubDate"]) $data["publication_date"] = date ( 'Y-m-d H:i:s' , strtotime($rss_item["pubDate"]));
 							else $data["publication_date"] ="";
 														
 							$data["logo_url"] = $informations["url"];
 							$data["descriptors"] = "";
-							if(is_array($rss_item["category"])){
+							if(isset($rss_item["category"]) && is_array($rss_item["category"])){
 								$data["tags"] = array_map("strip_tags", $rss_item["category"]);
 							}else{
 								$data["tags"] = strip_tags($rss_item["category"]);
@@ -139,10 +143,28 @@ class docwatch_datasource_rss extends docwatch_datasource{
 			return false;
 		}
 	}
+	
+	protected function delete_media_tags($node) {
+		
+		//Cas particulier nom d'espace media (yahoo) : les balises sont doublées dans un noms d'espace "media"
+		try {
+			$items = $node->getElementsByTagNameNS('http://search.yahoo.com/mrss/','*');
+			if($items->length>0){
+				$node->removeChild($items->item(0));
+			}
+		} catch(Exception $e) {
+		
+		}
+		
+		return $node;
+	}
 
 	protected function get_informations($node,$elements,$first_only=false){
 		global $charset;
 		$informations = array();
+		
+		$node = $this->delete_media_tags($node);
+		
 		foreach($elements as $element){
 			$items = $node->getElementsByTagName($element);
 			if($items->length == 1 || $first_only){
@@ -159,6 +181,9 @@ class docwatch_datasource_rss extends docwatch_datasource{
 	protected function get_atom_informations($node,$atom_elements,$first_only=false){
 		global $charset;
 		$informations = array();
+		
+		$node = $this->delete_media_tags($node);
+		
 		foreach($atom_elements as $atom_element){
 			$items = $node->getElementsByTagName($atom_element);
 			switch ($atom_element) {

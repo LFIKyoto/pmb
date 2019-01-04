@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_jsonrest.class.php,v 1.1.2.1 2015-10-07 12:46:15 arenou Exp $
+// $Id: cms_module_common_datasource_jsonrest.class.php,v 1.4 2016-01-22 19:15:50 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,7 +14,7 @@ class cms_module_common_datasource_jsonrest extends cms_module_common_datasource
 	}
 	
 	protected function get_store_hash(){
-		return "cmsrest_".SESSid."_".md5(serialize($this->parameters));
+		return "cmsrest_".SESSid."_".(isset($_SESSION['opac_view'])? $_SESSION['opac_view'] : "")."_".md5(serialize($this->parameters));
 	}
 	
 	protected function get_jsonstore_url(){

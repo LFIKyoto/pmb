@@ -2,11 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_ajax.inc.php,v 1.8 2013-11-12 14:54:44 ngantier Exp $
+// $Id: serialcirc_ajax.inc.php,v 1.10 2017-03-17 14:29:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once("$class_path/serialcirc.class.php");
+
+if($pmb_lecteurs_localises && (!isset($location_id) || !$location_id) && isset($_SESSION['serialcirc_location'])){
+	$location_id = $_SESSION['serialcirc_location'];
+} else {
+	$location_id = 0;
+}
 
 if ($pmb_serialcirc_subst) {
 	require_once("$class_path/".$pmb_serialcirc_subst);	

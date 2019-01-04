@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pdf.php,v 1.39 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: pdf.php,v 1.48 2017-12-06 13:36:09 dgoron Exp $
 
 // définition du minimum nécéssaire 
 $base_path=".";                            
@@ -14,7 +14,11 @@ require_once ("$base_path/includes/init.inc.php");
 
 //Appliquons un eventuel fichier de substitution de paramètres en fonction de la localisation de l'utilisateur courant
 require_once("$class_path/parameters_subst.class.php");
-$subst_filename = $include_path.'/parameters_subst/per_localisations.xml';
+if (file_exists($include_path.'/parameters_subst/per_localisations_subst.xml')){
+	$subst_filename = $include_path.'/parameters_subst/per_localisations_subst.xml';
+} else {
+	$subst_filename = $include_path.'/parameters_subst/per_localisations.xml';
+}
 $parameter_subst = new parameters_subst($subst_filename, $deflt2docs_location);
 $parameter_subst->extract();
 
@@ -32,20 +36,19 @@ require_once("$include_path/fields_empr.inc.php");
 require_once("$include_path/datatype.inc.php");
 require_once("$include_path/parser.inc.php");
 
-//pour le planificateur
-require_once("$class_path/tache.class.php");
-
 // inclusion de la classe de gestion des impressions PDF
 // Definition de la police si pas définie dans les paramètres
 if (!$pmb_pdf_font) $pmb_pdf_font = 'pmb'; 
 if (!$pmb_pdf_fontfixed) $pmb_pdf_fontfixed = 'pmbmono'; 
-define('FPDF_FONTPATH',"$class_path/font/");
+if(!defined('FPDF_FONTPATH')) define('FPDF_FONTPATH',"$class_path/font/");
 require_once("$class_path/fpdf.class.php");
 require_once("$class_path/ufpdf.class.php");
 
+require_once($class_path."/sticks_sheet/sticks_sheet_output.class.php");
+
 switch ($pdfdoc) {
 	case 'ticket_pret':
-		if($pmb_printer_ticket_script && $cb_doc) $script_perso_file=$pmb_printer_ticket_script;
+		if($pmb_printer_ticket_script) $script_perso_file=$pmb_printer_ticket_script;
 		else $script_perso_file	= "./circ/ticket-pret.inc.php";
 		if(SESSrights & CIRCULATION_AUTH) include($script_perso_file);
 			else echo "<script> self.close(); </script>" ;
@@ -59,6 +62,7 @@ switch ($pdfdoc) {
 		echo "<script> self.close(); </script>" ;
 		break;
 	case 'lettre_retard':
+		if(!isset($niveau)) $niveau = '';
 		if ($niveau) $relance=$niveau; else $relance=1;
 		if((SESSrights & EDIT_AUTH) || (SESSrights & CIRCULATION_AUTH))  include("./edit/lettre-retard.inc.php");
 			else echo "<script> self.close(); </script>" ;
@@ -77,7 +81,7 @@ switch ($pdfdoc) {
 			else echo "<script> self.close(); </script>" ;
 		break;
 	case 'liste_pret_groupe':
-		if(SESSrights & EDIT_AUTH) include("./edit/liste_prets.inc.php");
+		if((SESSrights & EDIT_AUTH) || (SESSrights & CIRCULATION_AUTH)) include("./edit/liste_prets.inc.php");
 			else echo "<script> self.close(); </script>" ;
 		break;
 	case 'lettre_relance_adhesion':
@@ -135,6 +139,23 @@ switch ($pdfdoc) {
 		if(SESSrights & ADMINISTRATION_AUTH) include("./admin/planificateur/rapport_tache.inc.php");
 			else echo "<script> self.close(); </script>" ;
 		break;			
+	case 'account_command':
+		if(SESSrights & ACQUISITION_AUTH) include("./acquisition/rent/account_command.inc.php");
+		else echo "<script> self.close(); </script>" ;		
+		break;		
+	case 'account_invoice':
+		if(SESSrights & ACQUISITION_AUTH) include("./acquisition/rent/account_invoice.inc.php");
+		else echo "<script> self.close(); </script>" ;		
+		break;
+	case 'sticks_sheet':
+		$sticks_sheet_output = new sticks_sheet_output($id, $display_class);
+		$data = explode(",", $data);
+		$sticks_sheet_output->output("PDF", $data, $x_stick_selected, $y_stick_selected);
+		break;
+	case 'mail_liste_pret_groupe':
+		if(SESSrights & CIRCULATION_AUTH) include("./circ/ticket-pret-electro.inc.php");
+		echo "<script> self.close(); </script>" ;
+		break;
 	default:
 		echo "<script> self.close(); </script>" ;
 		break;

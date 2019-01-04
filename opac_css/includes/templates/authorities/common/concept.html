@@ -1,7 +1,7 @@
 {% extends 'gabarit.html' %}
 
 {% block header %}
-	{{ authority.broaders }}
+	{{ authority.broaders_list }}
 {% endblock %}
 
 {% block aut_see %}
@@ -11,11 +11,11 @@
 {% endblock %}
 	
 {% block title %}
-	{{ authority.title }}
+	<h3>{{ authority.isbd }}</h3>
 {% endblock %} 
 
 {% block details %}
-	{{ authority.narrowers }} 
-	{{ authority.details }}
+	{{ authority.narrowers_list }} 
+	{{ authority.details_list }}
 	{{ authority.authoritieslist }}
 {% endblock %}

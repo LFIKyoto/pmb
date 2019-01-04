@@ -2,19 +2,26 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: resa.inc.php,v 1.58.2.1 2015-09-24 09:52:07 mbertin Exp $
+// $Id: resa.inc.php,v 1.68 2018-03-27 09:49:07 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+if(!isset($id_bulletin)) $id_bulletin = 0;
+if(!isset($id_notice)) $id_notice = 0;
+if(!isset($popup_resa)) $popup_resa = '';
+if(!isset($delete)) $delete = '';
 // fichier initialement créé et maintenu en partie gestion.
 
 require_once($base_path.'/includes/resa_func.inc.php');
 require_once($include_path."/mail.inc.php");
 require_once($base_path.'/classes/notice.class.php');
 require_once($base_path.'/classes/resa.class.php');
+require_once($base_path.'/classes/event/events/event_resa.class.php');
+require_once($base_path.'/classes/event/events_handler.class.php');
 
 // Si id de bulletin, on ne s'occupe pas de sa notice du pério pour la résa
 if($id_bulletin) $id_notice=0;
+
 
 if ($opac_resa) {
 	// est-on appelé par le popup
@@ -115,7 +122,7 @@ if ($opac_resa) {
 				pmb_mysql_query($sql);
 				alert_mail_users_pmb($id_notice, $id_bulletin, $_SESSION["id_empr_session"], 2) ;
 			}
-				} else {
+		} else {
 			alert_mail_users_pmb($id_notice, $id_bulletin, $_SESSION["id_empr_session"], 1) ;
 		}
 		if ($id_notice) {
@@ -135,48 +142,55 @@ if ($opac_resa) {
 			//les transferts sont actifs, avec un choix du lieu de retrait et pas de choix encore fait
 			//=> on affiche les localisations
 
-			if($pmb_location_reservation) {
-				$loc_req="SELECT idlocation, location_libelle FROM docs_location WHERE location_visible_opac=1  and idlocation in (select resa_loc from resa_loc where resa_emprloc=$empr_location) ORDER BY location_libelle ";
-				$req_loc_list = "SELECT expl_location FROM exemplaires, docs_statut WHERE expl_notice='".$id_notice."' and  expl_statut=idstatut
-				and transfert_flag=1 and statut_allow_resa=1
-				AND expl_bulletin='".$id_bulletin."' and expl_location in (select resa_loc from resa_loc where resa_emprloc=$empr_location)";
-			} else {
-				$loc_req="SELECT idlocation, location_libelle FROM docs_location WHERE location_visible_opac=1 ORDER BY location_libelle";
-				$req_loc_list = "SELECT expl_location FROM exemplaires, docs_statut WHERE expl_notice='".$id_notice."' and  expl_statut=idstatut
-				and transfert_flag=1 and statut_allow_resa=1 AND expl_bulletin='".$id_bulletin."' ";
+			$evth = events_handler::get_instance();
+			$event = new event_resa('resa', 'show_location_form');
+			$evth->send($event);
+			
+			if($event->get_location_form() == ''){
+    		    if($pmb_location_reservation) {
+    				$loc_req="SELECT idlocation, location_libelle FROM docs_location WHERE location_visible_opac=1  and idlocation in (select resa_loc from resa_loc where resa_emprloc=$empr_location) ORDER BY location_libelle ";
+    				$req_loc_list = "SELECT expl_location FROM exemplaires, docs_statut WHERE expl_notice='".$id_notice."' and  expl_statut=idstatut
+    				and transfert_flag=1 and statut_allow_resa=1
+    				AND expl_bulletin='".$id_bulletin."' and expl_location in (select resa_loc from resa_loc where resa_emprloc=$empr_location)";
+    			} else {
+    				$loc_req="SELECT idlocation, location_libelle FROM docs_location WHERE location_visible_opac=1 ORDER BY location_libelle";
+    				$req_loc_list = "SELECT expl_location FROM exemplaires, docs_statut WHERE expl_notice='".$id_notice."' and  expl_statut=idstatut
+    				and transfert_flag=1 and statut_allow_resa=1 AND expl_bulletin='".$id_bulletin."' ";
+    			}
+    			$loc_list=array();
+    			$flag_transferable=0;
+    			$res_loc_list = pmb_mysql_query($req_loc_list);
+    			if(pmb_mysql_num_rows($res_loc_list)){
+    				while ($r = pmb_mysql_fetch_object($res_loc_list)){
+    					$loc_list[]=$r->expl_location;
+    					// au moins un expl transférable
+    					$flag_transferable=1;
+    				}
+    			}
+    
+    			$res = pmb_mysql_query($loc_req);$tmpHtml = "<form method='post' action='do_resa.php?lvl=".$lvl."&id_notice=".$id_notice."&id_bulletin=".$id_bulletin."'>";
+    			$tmpHtml .= $msg["reservation_selection_localisation"]."<br /><select name='idloc'>";
+    
+    			//on parcours la liste des localisations
+    			while ($value = pmb_mysql_fetch_array($res)) {
+    				if(!$flag_transferable){
+    					// il y en a un ici?
+    					$req= "select expl_id from exemplaires, docs_statut where expl_notice='".$id_notice."' AND expl_bulletin='".$id_bulletin."' and expl_location = " . $value[0] . "
+    					and expl_statut=idstatut and statut_allow_resa=1 ";
+    					$res_expl = pmb_mysql_query($req);
+    					if(!pmb_mysql_num_rows($res_expl)){
+    						continue;
+    					}
+    				}
+    				if($value[0]==$empr_location) $selected=" selected='selected' ";
+    				else $selected="";
+    				$tmpHtml .= "<option value='" . $value[0] . "' $selected >" . $value[1] . "</option>";
+    			}
+    			$tmpHtml .= "</select><br /><br /><input type='submit' class='bouton' value='" . $msg["reservation_bt_choisir_localisation"] . "'></form>";
+    			echo $tmpHtml;
+			}else{
+			    print $event->get_location_form();
 			}
-			$loc_list=array();
-			$flag_transferable=0;
-			$res_loc_list = pmb_mysql_query($req_loc_list);
-			if(pmb_mysql_num_rows($res_loc_list)){
-				while ($r = pmb_mysql_fetch_object($res_loc_list)){
-					$loc_list[]=$r->expl_location;
-					// au moins un expl transférable
-					$flag_transferable=1;
-				}
-			}
-
-			$res = pmb_mysql_query($loc_req);$tmpHtml = "<form method='post' action='do_resa.php?lvl=".$lvl."&id_notice=".$id_notice."&id_bulletin=".$id_bulletin."'>";
-			$tmpHtml .= $msg["reservation_selection_localisation"]."<br /><select name='idloc'>";
-
-			//on parcours la liste des localisations
-			while ($value = pmb_mysql_fetch_array($res)) {
-				if(!$flag_transferable){
-					// il y en a un ici?
-					$req= "select expl_id from exemplaires, docs_statut where expl_notice='".$id_notice."' AND expl_bulletin='".$id_bulletin."' and expl_location = " . $value[0] . "
-					and expl_statut=idstatut and statut_allow_resa=1 ";
-					$res_expl = pmb_mysql_query($req);
-					if(!pmb_mysql_num_rows($res_expl)){
-						continue;
-					}
-				}
-				if($value[0]==$empr_location) $selected=" selected='selected' ";
-				else $selected="";
-				$tmpHtml .= "<option value='" . $value[0] . "' $selected >" . $value[1] . "</option>";
-			}
-			$tmpHtml .= "</select><br /><br /><input type='submit' value='" . $msg["reservation_bt_choisir_localisation"] . "'></form>";
-			echo $tmpHtml;
-
 		} else {
 
 			// test au cas où tentative de passer une résa hors URL de résa autorisée...
@@ -195,11 +209,12 @@ if ($opac_resa) {
 					$ouvrage_resa = bulletin_affichage_reduit($id_bulletin,1) ;
 				}
 				$message_resa = "" ;
+				$reservation = new reservation($_SESSION["id_empr_session"], $id_notice, $id_bulletin);
 				$resa_check = check_statut($id_notice, $id_bulletin) ;
-				$already = allready_loaned($id_notice, $id_bulletin, $_SESSION["id_empr_session"]) ;
+				$already = $reservation->allready_loaned() ;
 				if ($resa_check==1 && !$already) {
 					// document sélectionné -> création de la réservation
-					$res_resa_OK = check_quota_resa ($_SESSION["id_empr_session"], $id_notice, $id_bulletin) ;
+					$res_resa_OK = $reservation->check_quota();
 					if ($res_resa_OK['ERROR']) {
 						$message_resa = $msg["resa_failed"]." : ".$res_resa_OK['MESSAGE'] ;
 					} else {
@@ -236,7 +251,18 @@ if ($opac_resa) {
 									$requete3 .= "VALUES ('".$_SESSION["id_empr_session"]."','$id_notice','$id_bulletin', SYSDATE())";
 								}
 								$result3 = @pmb_mysql_query($requete3, $dbh);
-								$id_resa_ajoutee = pmb_mysql_insert_id($dbh) ;
+								$id_resa_ajoutee = pmb_mysql_insert_id($dbh);
+								
+								
+								//Evenement publié à chaque réservation faite et validée depuis l'OPAC
+								$evt_handler = events_handler::get_instance();
+								
+								$event = new event_resa("resa", "validate_resa");
+								$event->set_resa_id($id_resa_ajoutee);
+								$event->set_empr_id($_SESSION["id_empr_session"]);
+								
+								$evt_handler->send($event);
+								
 								$message_resa = $msg["added_resa"];
 								alert_mail_users_pmb($id_notice, $id_bulletin, $_SESSION["id_empr_session"]) ;
 							} else {
@@ -302,14 +328,15 @@ if ($opac_resa) {
 
 	if (!$popup_resa) {
 		// récupération des résas de l'emprunteur
-		print "<h3><span>".$msg["empr_bt_show_resa"]."</span></h3>";
+		print '<h3><span>'.$msg['empr_resa'].'</span></h3>';
 		$requete3 = "SELECT id_resa, resa_idempr, resa_idnotice, resa_idbulletin, resa_date, resa_date_fin, resa_cb, IF(resa_date_fin>=sysdate() or resa_date_fin='0000-00-00',0,1) as perimee, date_format(resa_date_fin, '".$msg["format_date_sql"]."') as aff_date_fin FROM resa WHERE resa_idempr=".$_SESSION["id_empr_session"];
 		$result3 = @pmb_mysql_query($requete3, $dbh);
 		$tableau_resa="<table class='fiche-lecteur'>";
 
-		if(pmb_mysql_num_rows($result3) && ($msg["resa_liste_titre"] || $msg["resa_liste_rank"] || $msg["resa_liste_del"])) {
+		if(pmb_mysql_num_rows($result3) && (isset($msg["resa_liste_titre"]) || isset($msg["resa_liste_rank"]) || isset($msg["resa_liste_del"]))) {
 			$tableau_resa.="<tr><th>".$msg["resa_liste_titre"]."</th><th>".$msg["resa_liste_rank"]."</th><th>".$msg["resa_liste_del"]."</th></tr>";
 		}
+		$parity = 0;
 		while ($resa = pmb_mysql_fetch_array($result3)) {
 			$id_resa = $resa['id_resa'];
 			$resa_idempr = $resa['resa_idempr'];
@@ -318,12 +345,9 @@ if ($opac_resa) {
 			$resa_date = $resa['resa_date'];
 			if ($resa_idnotice) {
 				// affiche la notice correspondant à la réservation
-				$requete = "SELECT * FROM notices WHERE notice_id='$resa_idnotice' ";
-				$res = @pmb_mysql_query($requete, $dbh);
-				$obj=pmb_mysql_fetch_object($res);
-				$notice = new notice($obj);
+				$notice = new notice($resa_idnotice);
 				$titre= pmb_bidi($notice->print_resume(1,$css));
-				$link_del= pmb_bidi("<a href='empr.php?tab=loan_reza&lvl=all&delete=1&id_notice=".$resa_idnotice."#empr-resa'>".$msg['resa_effacer_resa']."</a>");
+				$link_del= pmb_bidi("<a href='javascript:if(confirm(\"".$msg['empr_confirm_delete_resa']."\")){location.href=\"empr.php?tab=loan_reza&lvl=all&delete=1&id_notice=".$resa_idnotice."#empr-resa\"}'>".$msg['resa_effacer_resa']."</a>");
 			} else {
 				// c'est un bulletin donc j'affiche le nom de périodique et le nom du bulletin (date ou n°)
 				$requete = "SELECT bulletin_id, bulletin_numero, bulletin_notice, mention_date, date_date, date_format(date_date, '".$msg["format_date_sql"]."') as aff_date_date FROM bulletins WHERE bulletin_id='$resa_idbulletin'";
@@ -339,11 +363,11 @@ if ($opac_resa) {
 					$titre.= pmb_bidi("(".$obj->aff_date_date.")\n");
 				}
 
-				$link_del="<a href='empr.php?tab=loan_reza&lvl=all&delete=1&id_bulletin=".$resa_idbulletin."#empr-resa'>".$msg['resa_effacer_resa']."</a>";
+				$link_del="<a href='javascript:if(confirm(\"".$msg['empr_confirm_delete_resa']."\")){location.href=\"empr.php?tab=loan_reza&lvl=all&delete=1&id_bulletin=".$resa_idbulletin."#empr-resa\"}'>".$msg['resa_effacer_resa']."</a>";
 			}
 
 			$rang = recupere_rang($resa_idempr, $resa_idnotice, $resa_idbulletin) ;
-			$rank_texte=sprintf($msg[rank],$rang) ;
+			$rank_texte=sprintf($msg['rank'],$rang) ;
 			if (!$resa['perimee']) {
 				if ($resa['resa_cb'])  $rank_texte.= " ".sprintf($msg["expl_reserved_til"],$resa['aff_date_fin'])." " ;
 				else $rank_texte.= " ".$msg["resa_attente_validation"];
@@ -355,12 +379,13 @@ if ($opac_resa) {
 		}
 		$tableau_resa.="</table>";
 
-		print  "$tableau_resa
-				<br /><small><br />".$msg["empr_resa_how_to"]." <br />
-				<form style='margin-bottom:0px;padding-bottom:0px;' action='empr.php' method='post' name='FormName'>
-				<input type='button' class='bouton' 'name='lvlx' value='".$msg["empr_make_resa"]."' onClick=\"document.location='./index.php?lvl=search_result'\" />
-				</form>
-				</small>";
+		print  $tableau_resa;
+		if(!$opac_resa_planning) {
+			print '<br /><br /><small>'.$msg['empr_resa_how_to'].'</small><br />
+				<form style="margin-bottom:0px;padding-bottom:0px;" action="empr.php" method="post" name="FormName">
+				<input type="button" class="bouton" name="lvlx" value="'.$msg['empr_make_resa'].'" onClick=\'document.location="./index.php?lvl=search_result"\' />
+				</form>';
+		}
 	}
 
 

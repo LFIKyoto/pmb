@@ -2,11 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: self_checkout.tpl.php,v 1.1 2010-08-17 12:32:56 ngantier Exp $
+// $Id: self_checkout.tpl.php,v 1.2 2018-01-25 10:13:28 dgoron Exp $
 
 // templates pour gestion des autorités collections
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $form_self_checkout;
+global $form_self_checkin;
 
 $form_self_checkout ="
 	<script type='text/javascript'>		

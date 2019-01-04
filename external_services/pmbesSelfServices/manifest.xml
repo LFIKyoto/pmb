@@ -3,7 +3,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.7.2.2 2015-10-05 10:01:41 vtouchard Exp $ -->
+$Id: manifest.xml,v 1.8 2015-10-05 10:12:21 vtouchard Exp $ -->
 
 <manifest>
 	<name>pmbesSelfServices</name>
@@ -78,7 +78,7 @@ $Id: manifest.xml,v 1.7.2.2 2015-10-05 10:01:41 vtouchard Exp $ -->
 				<result name="transaction_date" type="scalar" dataType="string" description="msg:self_renew_transaction_date"/>
 				<result name="due_date" type="scalar" dataType="string" description="msg:self_renew_due_date"/>				
 			</outputs>
-		</method>
+		</method>		
 		<method name="self_checkout_bibloto" comment="msg:self_checkout_bibloto_description" rights="" version="1.0" language_independant="false">
 			<inputs>
 				<description>msg:self_checkout_bibloto_inputs_description</description>

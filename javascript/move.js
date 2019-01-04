@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: move.js,v 1.15.4.1 2015-10-15 07:53:24 jpermanne Exp $
+// $Id: move.js,v 1.32 2018-05-17 07:42:00 vtouchard Exp $
 
 down=false;
 down_parent=false;
@@ -154,7 +154,7 @@ function go_after(child_name) {
 		}
 	}
 	if ((i<childs.length)&&(i>0)) {
-		//recherche du précédent
+		//recherche du prï¿½cï¿½dent
 		for (i=i-1;i>=0;i--) {
 			if (childs[i].nodeType==1) {
 				if (childs[i].getAttribute("movable")=="yes") {
@@ -228,7 +228,7 @@ function monter_onglet(onglet_name) {
 		}
 	}
 	if ((i<childs.length)&&(i>0)) {
-		//recherche du précédent
+		//recherche du prï¿½cï¿½dent
 		for (i=i-1;i>=0;i--) {
 			if (childs[i].nodeType==1) {
 				if (childs[i].getAttribute("etirable")=="yes") {
@@ -313,23 +313,36 @@ function visible_onglet(onglet_name) {
 	resize_onglet(child,true);
 }
 
+function open_onglet(onglet_name) {
+	var child=document.getElementById(onglet_name);
+	child.setAttribute("startOpen","yes");
+	place_fields(child);
+	if (document.getElementById("popup_onglet")) document.getElementById("popup_onglet").parentNode.removeChild(document.getElementById("popup_onglet"));
+}
+
+function close_onglet(onglet_name) {
+	var child=document.getElementById(onglet_name);
+	child.setAttribute("startOpen","no");
+	if (document.getElementById("popup_onglet")) document.getElementById("popup_onglet").parentNode.removeChild(document.getElementById("popup_onglet"));
+
+}
+
 function save_all(e) {
 	var xml="<formpage relative='"+(relative?"yes":"no")+"'>\n";
 	var etn=0;
-	var grille_typdoc='a';
-	var grille_niveau_biblio='m';
-	var grille_loc=0;
 	var relp=relative;
-	
+	var onglet_state= new Array();
+		
 	if (document.getElementById("popup_onglet")) document.getElementById("popup_onglet").parentNode.removeChild(document.getElementById("popup_onglet"));
 	etirables=document.getElementsByTagName("div");
 	var i=0;
 	for (i=0; i<etirables.length; i++) {
-		if (etirables[i].getAttribute("etirable")=="yes") {
+		if (etirables[i].getAttribute("etirable")=="yes") {	
 			if (etirables[i].getAttribute("invert")=="yes") relp=(!relative); else relp=relative;
 			etn++;
 			xml+="  <etirable id='"+etirables[i].getAttribute("id")+"' visible='"+(etirables[i].getAttribute("hide")=="yes"?"no":"yes")+"' "+(etirables[i].getAttribute("invert")=="yes"?"invert='yes' ":"")+" order='"+etn+"' ";
-			if (!relp) xml+=" width='"+etirables[i].clientWidth+"' height='"+etirables[i].clientHeight+"'";
+			if (!relp) xml+=" width='"+etirables[i].clientWidth+"' height='"+etirables[i].clientHeight+"' ";			
+			xml+= "startOpen='" + (etirables[i].getAttribute("startOpen")=="yes"?"yes":"no") + "'";		
 			xml+="/>\n";
 		}
 	}
@@ -342,6 +355,29 @@ function save_all(e) {
 		}
 	}
 	xml+="</formpage>";
+	
+	var empr_grille_categ = document.getElementById('empr_grille_categ');
+	if(empr_grille_categ) {
+		// Grille fiche lecteur
+		var empr_grille_location = document.getElementById('empr_grille_location');	
+		var url = "./ajax.php?module=circ&categ=empr&sub=set_empr_grille";
+		var post_params = "&empr_grille_categ="+empr_grille_categ.value+"&empr_grille_location=";
+		if (empr_grille_location) post_params+= empr_grille_location.value;
+		post_params+= "&empr_grille_format="+encodeURIComponent(xml);
+		var req = new http_request();
+		if(req.request(url,1,post_params)){
+			alert(msg_move_saved_error);
+		} else {
+			var resp = req.get_text();
+			alert(msg_move_saved_ok);
+		}
+		return;
+	}
+	
+	// Grille notice
+	var grille_typdoc='a';
+	var grille_niveau_biblio='m';
+	var grille_loc=0;
 	ajax_creerRequete("sauve_notice");
 	requete["sauve_notice"].open("POST","save_notice_pos.php",true);
 	requete["sauve_notice"].onreadystatechange=function() { move_saved() };
@@ -354,13 +390,44 @@ function save_all(e) {
 
 function move_fields(domXML) {
 	var need_parse = false;
+	var dateboxes = [];
 	if(typeof(dojo) == "object"){
 		var widgets = dijit.registry.toArray();
 		for(var i=0 ; i<widgets.length ; i++){
-			widgets[i].destroy(true);
-			need_parse = true;
+			if (widgets[i].declaredClass != 'dGrowl') {
+				/**
+				 * Cas spÃ©cial pour les dates dojo
+				 */
+				if(widgets[i].declaredClass == 'dijit.form.DateTextBox'){
+					require(['dojo/dom-construct'], function(domConstruct){
+						domConstruct.create('div', {id: widgets[i].domNode.id+'_save'}, widgets[i].domNode, 'after');	
+					});
+					dateboxes.push({
+						params: widgets[i].params,
+						value: widgets[i].get('value'),
+						divId: widgets[i].domNode.id+'_save'
+					});
+					widgets[i].destroy();
+				}else{
+					widgets[i].destroy(true);
+				}
+				need_parse = true;
+			}
 		}
   	}
+	var text_areas = document.getElementsByTagName('textarea');
+	text_areas_with_tinymce = new Array();
+	if (text_areas.length >0) {
+		for (var j=0; j<text_areas.length; j++) {
+			if(typeof(tinyMCE)!= 'undefined') {
+				var test = tinyMCE_getInstance(text_areas[j].getAttribute("id"));
+				if (test != null) {
+					tinyMCE_execCommand('mceRemoveControl', true, text_areas[j].getAttribute("id"));
+					text_areas_with_tinymce.push(text_areas[j].getAttribute("id"));
+				}
+			}
+		}
+	}
 	root=domXML.getElementsByTagName("formpage");
 	relative=root[0].getAttribute("relative");
 	if (relative=="yes") relative=true; else relative=false;
@@ -368,7 +435,14 @@ function move_fields(domXML) {
 	var relp=relative;
 	
 	var etirables=domXML.getElementsByTagName("etirable");
-	var parent_onglet=document.getElementById(etirables[0].getAttribute("id")).parentNode;
+	var parent_onglet=false;
+	for (i=0; i<etirables.length; i++) {
+		if(document.getElementById(etirables[i].getAttribute("id"))) {
+			parent_onglet=document.getElementById(etirables[i].getAttribute("id")).parentNode;
+			break;
+		}
+	}
+	if(!parent_onglet) return;
 	var onglet=new Array();
 	var onglet_titre=Array();
 	var fields= new Array();
@@ -377,14 +451,15 @@ function move_fields(domXML) {
 	for (i=0; i<etirables.length; i++) {
 		//Onglets flottants
 		id=etirables[i].getAttribute("id");
-		//on regénère le dom des textarea, le navigateur se contente d'affecter la propriété value... 
+		if(!document.getElementById(id)) continue;
+		//on regï¿½nï¿½re le dom des textarea, le navigateur se contente d'affecter la propriï¿½tï¿½ value... 
 		var text_areas = document.getElementById(id).getElementsByTagName('textarea');
 		for(var x=0 ; x<text_areas.length ; x++){
 			if(!text_areas[x].firstChild){
 				text_areas[x].appendChild(document.createTextNode(text_areas[x].value));
 			}
 		}
-		//on regénère le dom des select, le navigateur se contente d'affecter la propriété selected sans recréer l'attribut... 
+		//on regï¿½nï¿½re le dom des select, le navigateur se contente d'affecter la propriï¿½tï¿½ selected sans recrï¿½er l'attribut... 
 		var selects = document.getElementById(id).getElementsByTagName('select');
 		for(var x=0 ; x<selects.length ; x++){
 			for(var y=0 ; y<selects[x].options.length ; y++){
@@ -402,6 +477,7 @@ function move_fields(domXML) {
 	}
 	for (i=0; i<etirables.length; i++) {
 		//Remise en ordre
+		if(!onglet_titre[i]) continue;
 		parent_onglet.appendChild(onglet_titre[i]);
 		parent_onglet.appendChild(onglet[i]);
 		if (onglet[i].getAttribute("invert")=="yes") 
@@ -417,16 +493,29 @@ function move_fields(domXML) {
 			onglet_titre[i].style.display="block";
 			onglet[i].style.display="block";
 			onglet[i].setAttribute("hide","");
+		}	
+
+		if(etirables[i].getAttribute("startOpen")=="yes"){
+			onglet[i].setAttribute("startOpen","yes");
+		}
+		if(etirables[i].getAttribute("startOpen")=="no"){
+			onglet[i].setAttribute("startOpen","no");
+		}
+		if(etirables[i].getAttribute("visible")=="no"){
+			onglet[i].setAttribute("startOpen","no");
+		}
+		if(etirables[i].getAttribute("startOpen")!="no" && onglet[i].id=='el0Child'){
+			onglet[i].setAttribute("startOpen","yes");
 		}
 	}
-	
+
 	var movables=domXML.getElementsByTagName("movable");
 
 	for (i=0; i<movables.length; i++) {
 		id=movables[i].getAttribute("id");
 		var parent_id=movables[i].getAttribute("parent");
 		var mov=document.getElementById(id);
-		if (mov != null) {
+		if (mov != null && document.getElementById(parent_id)) {
 			var new_mov=mov.cloneNode(true);
 			mov.parentNode.removeChild(mov);
 			document.getElementById(parent_id).appendChild(new_mov);
@@ -451,11 +540,44 @@ function move_fields(domXML) {
 	}
 	parent_onglet.style.visibility="visible";
 	if(need_parse){
-		dojo.parser.parse();
+	if(dateboxes.length){ //on a des dates Ã  recrÃ©er
+			require(['dojo/dom', 'dojo/dom-construct', 'dojo/dom-attr'], function(dom, domConstruct, domAttr){
+				dateboxes.forEach(dateObj => {
+					if(dateObj.value){
+						var val = new Date(dateObj.value);
+						var day = val.getDate();
+						var month = val.getMonth()+1;
+	
+						var year = val.getFullYear();
+						if(day<10){
+						    day='0'+day;
+						} 
+						if(month<10){
+						    month='0'+month;
+						} 
+						day = year+'-'+month+'-'+day;
+						dateObj.params.value = day;	
+					}
+					
+					delete dateObj.params.constraints;
+					dateObj.params['data-dojo-type']='dijit/form/DateTextBox';
+					
+					var input = domConstruct.create('input', dateObj.params, dom.byId(dateObj.divId), 'replace');
+					input.setAttribute('value', dateObj.params.value);
+				});
+			});
+		}
+		dojo.parser.parse(document.getElementById('notice'));
+	}
+	if (text_areas_with_tinymce.length >0) {
+		for (var j=0; j<text_areas_with_tinymce.length; j++) {
+			tinyMCE_execCommand('mceAddControl', true, text_areas_with_tinymce[j]);
+		}
 	}
 }
 
 function move_getted_pos() {
+	// Grille notice
 	if (requete["get_notice"].readyState==4) {
 		if (requete["get_notice"].status=="200") {
 			var formatpage=requete["get_notice"].responseXML;
@@ -470,7 +592,29 @@ function move_getted_pos() {
 	}
 }
 
-function get_pos() {
+function get_pos(def) {
+	var empr_grille_categ = document.getElementById('empr_grille_categ');
+	if(empr_grille_categ) {
+		// Grille fiche lecteur
+		if (def) {
+			var empr_grille_location = document.getElementById('empr_grille_location');
+			var url = "./ajax.php?module=circ&categ=empr&sub=get_default_empr_grille";
+		} else {
+			var empr_grille_categ=document.getElementById('form_categ');
+			var empr_grille_location=document.getElementById('empr_location_id');
+			var url = "./ajax.php?module=circ&categ=empr&sub=get_empr_grille";
+		}
+		var post_params = "&empr_grille_categ="+empr_grille_categ.value+"&empr_grille_location="+empr_grille_location.value;
+		var req = new http_request();
+		if(req.request(url,1,post_params)){
+		} else {
+			document.body.dispatchEvent(new Event('movestart'));
+			move_fields(req.get_xml());
+			document.body.dispatchEvent(new Event('moveend'));
+		}
+		return;
+	}
+	// Grille notice
 	var grille_typdoc='a';
 	var grille_niveau_biblio='m';
 
@@ -479,23 +623,20 @@ function get_pos() {
 	requete["get_notice"].setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 	grille_typdoc=document.notice.typdoc.value;
 	grille_niveau_biblio=document.notice.b_level.value;
-	requete["get_notice"].send("grille_typdoc="+encode_URL(grille_typdoc)+"&grille_niveau_biblio="+encode_URL(grille_niveau_biblio));
+	if(def) {
+		requete["get_notice"].send("grille_typdoc=default&grille_niveau_biblio="+encode_URL(grille_niveau_biblio));
+	}else {
+		requete["get_notice"].send("grille_typdoc="+encode_URL(grille_typdoc)+"&grille_niveau_biblio="+encode_URL(grille_niveau_biblio));
+	}
 	move_getted_pos();
 }
 
 function get_default_pos() {
-	var grille_typdoc='a';
-	var grille_niveau_biblio='m';
-
-	ajax_creerRequete("get_notice");
-	requete["get_notice"].open("POST","load_notice_pos.php",false);
-	requete["get_notice"].setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-	grille_niveau_biblio=document.notice.b_level.value;
-	requete["get_notice"].send("grille_typdoc=default&grille_niveau_biblio="+encode_URL(grille_niveau_biblio));
-	move_getted_pos();
+	get_pos(1);
 }
 
 function move_saved() {
+	// Grille notice
 	if (requete["sauve_notice"].readyState==4) {
 		if (requete["sauve_notice"].status=="200") {
 			if (requete["sauve_notice"].responseText=="OK") {
@@ -541,10 +682,35 @@ function move_parse_dom(rel) {
 	relative=rel;
 	inedit=true;
 	var i=0;
-	//Rendre visible la liste des localisations
-	if (document.getElementById("grille_location"))
-		document.getElementById("grille_location").style.display="block";
-	//Rendre invisible le bouton d'édition et visible le bouton de switch
+	
+	//Rendre visible les listes des categories et localisations et desactiver les selecteurs du formulaire
+	var sc = document.getElementById('form_categ');
+	if(sc) {
+		// Grille fiche lecteur
+		var sgc = document.getElementById('empr_grille_categ');
+		if (sgc!=null) {
+			sgc.onchange = function(e) {
+				get_pos();
+			}
+			sgc.style.display = "block";
+			sgc.value = sc.value;
+		}
+		var sl = document.getElementById('empr_location_id');
+		var sgl = document.getElementById('empr_grille_location');
+		if (sgl!=null) {
+			sgl.onchange = function(e) {
+				get_pos();
+			}
+			sgl.style.display = "block";
+			sgl.value = sl.value;
+		}	
+	} else {	
+		// Grille notice
+		//Rendre visible la liste des localisations
+		if (document.getElementById("grille_location"))
+			document.getElementById("grille_location").style.display="block";
+	}
+	//Rendre invisible le bouton d'ï¿½dition et visible le bouton de switch
 	if (!relative) 
 		document.getElementById("bt_swap_relative").value=msg_move_to_relative_pos;
 	else
@@ -631,6 +797,7 @@ function move_parse_dom(rel) {
 					textHtml+="<div onmouseover='this.style.background=\"#666\"; this.style.color=\"#FFF\";' onmouseout='this.style.background=\"#CCC\"; this.style.color=\"#000\";' style='width:100%;background:#CCC' onClick='descendre_onglet(\""+e.currentTarget.parentNode.getAttribute("id")+"\")'>"+msg_move_down_tab+"</div>";
 					textHtml+="<div onmouseover='this.style.background=\"#666\"; this.style.color=\"#FFF\";' onmouseout='this.style.background=\"#CCC\"; this.style.color=\"#000\";' style='width:100%;background:#CCC' onClick='invert_onglet(\""+e.currentTarget.parentNode.getAttribute("id")+"\")'>"+msg_move_position_tab+" "+(relp?msg_move_position_absolute_tab:msg_move_position_relative_tab)+"</div>";
 					textHtml+="<div onmouseover='this.style.background=\"#666\"; this.style.color=\"#FFF\";' onmouseout='this.style.background=\"#CCC\"; this.style.color=\"#000\";' style='width:100%;background:#CCC' onClick='invisible_onglet(\""+e.currentTarget.parentNode.getAttribute("id")+"\")'>"+msg_move_invisible_tab+"</div>";
+					textHtml+="<div onmouseover='this.style.background=\"#666\"; this.style.color=\"#FFF\";' onmouseout='this.style.background=\"#CCC\"; this.style.color=\"#000\";' style='width:100%;background:#CCC' onClick='open_onglet(\""+e.currentTarget.parentNode.getAttribute("id")+"\")'>"+msg_move_open_tab+"</div>";
 					textHtml_visible="";
 					for(i=0; i<etirables.length; i++) {
 						if ((etirables[i].getAttribute("etirable")=="yes")&&(etirables[i].getAttribute("hide")=="yes")) {
@@ -640,6 +807,16 @@ function move_parse_dom(rel) {
 					if (textHtml_visible) {
 						textHtml+="<div style='width:100%;background:#CCC;color:#333;'>"+msg_move_visible_tab+"</div>";
 						textHtml+=textHtml_visible;
+					}
+					var textHtml_open="";
+					for(i=0; i<etirables.length; i++) {
+						if ((etirables[i].getAttribute("etirable")=="yes")&&(etirables[i].getAttribute("startOpen")=="yes")) {
+							textHtml_open+="<div onmouseover='this.style.background=\"#666\"; this.style.color=\"#FFF\";' onmouseout='this.style.background=\"#EEE\"; this.style.color=\"#000\";' style='width:100%' onclick='close_onglet(\""+etirables[i].getAttribute("id")+"\"); this.parentNode.parentNode.removeChild(this.parentNode);'>&nbsp;&nbsp;"+(etirables[i].getAttribute("title")?etirables[i].getAttribute("title"):etirables[i].getAttribute("id"))+"</div>";
+						}
+					}
+					if (textHtml_open) {
+						textHtml+="<div style='width:100%;background:#CCC'>"+msg_move_close_tab+"</div>";
+						textHtml+=textHtml_open;
 					}
 					textHtml+="<div onmouseover='this.style.background=\"#666\"; this.style.color=\"#FFF\";' onmouseout='this.style.background=\"#CCC\"; this.style.color=\"#000\";' style='width:100%;background:#CCC' onClick='save_all(event);'>"+msg_move_save+"</div>";
 					popup.innerHTML=textHtml;
@@ -744,7 +921,17 @@ function move_parse_dom(rel) {
 						textHtml+="<div style='width:100%;background:#FFF;border-bottom:#000 2px solid;border-top:#000 1px solid;text-align:center'><b>Champs</b></div>";
 						textHtml+="<div style='width:100%;background:#CCC'>"+msg_move_visible+"</div>";
 						textHtml+=textHtml_visible;
+					}		
+					var textHtml_open="";
+					for(i=0; i<etirables.length; i++) {
+						if ((etirables[i].getAttribute("etirable")=="yes")&&(etirables[i].getAttribute("startOpen")=="yes")) {
+							textHtml_open+="<div onmouseover='this.style.background=\"#666\"; this.style.color=\"#FFF\";' onmouseout='this.style.background=\"#EEE\"; this.style.color=\"#000\";' style='width:100%' onclick='close_onglet(\""+etirables[i].getAttribute("id")+"\"); this.parentNode.parentNode.removeChild(this.parentNode);'>&nbsp;&nbsp;"+(etirables[i].getAttribute("title")?etirables[i].getAttribute("title"):etirables[i].getAttribute("id"))+"</div>";
+						}
 					}
+					if (textHtml_open) {
+						textHtml+="<div style='width:100%;background:#CCC'>"+msg_move_close_tab+"</div>";
+						textHtml+=textHtml_open;
+					}			
 					textHtml+="<div onmouseover='this.style.background=\"#666\"; this.style.color=\"#FFF\";' onmouseout='this.style.background=\"#CCC\"; this.style.color=\"#000\";' style='width:100%;background:#CCC' onClick='save_all(event);'>"+msg_move_save+"</div>";
 					popup.innerHTML=textHtml;
 					document.body.appendChild(popup);

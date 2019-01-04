@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_articles.class.php,v 1.3 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: cms_articles.class.php,v 1.5 2017-06-12 09:22:27 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -73,18 +73,29 @@ class cms_articles {
 		
 		$list = str_replace("!!cms_articles_list_title!!", sprintf($msg['cms_articles_list_title'],$this->get_section_title()),$cms_articles_list);
 		if($this->get_nb_articles()){
-			$rqt = "select *from cms_articles where id_article in (".implode(",",$this->list).")";
+			$rqt = "select * from cms_articles where id_article in (".implode(",",$this->list).")";
 			$res = pmb_mysql_query($rqt);
-			$items="";
+			$items = "";
 			if(pmb_mysql_num_rows($res)){
 				while($row = pmb_mysql_fetch_object($res)){
-					$item = str_replace("!!cms_article_logo_src!!","",$cms_articles_list_item);
-					$item = str_replace("!!cms_article_title!!",htmlentities($row->article_title,ENT_QUOTES),$item);
-					$items.=$item;
+					$type_label = '';
+					$rqt_type = "select editorial_type_label from cms_editorial_types where id_editorial_type = '".$row->article_num_type."'";
+					$res_type = pmb_mysql_query($rqt_type);
+					if(pmb_mysql_num_rows($res_type)){
+						$row_type = pmb_mysql_fetch_object($res_type);
+						$type_label = $row_type->editorial_type_label;							
+					}
+					$item = str_replace('!!cms_article_type!!', $type_label, $cms_articles_list_item);
+					$item = str_replace('!!cms_article_id!!', $row->id_article, $item);
+					$item = str_replace('!!cms_article_title!!', $row->article_title, $item);
+					$items.= $item;
 				}	
 			}
-		}
-		
+		}		
 		return str_replace("!!items!!",$items,$list);
+	}
+	
+	public function get_num_section(){
+		return $this->num_section;
 	}
 }

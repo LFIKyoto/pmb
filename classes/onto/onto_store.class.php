@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_store.class.php,v 1.13 2014-07-29 10:53:09 apetithomme Exp $
+// $Id: onto_store.class.php,v 1.14 2018-12-20 11:00:19 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -40,7 +40,7 @@ abstract class onto_store {
 	/**
 	 * Tableau des erreurs
 	 */
-	protected $errors;
+	protected $errors = array();
 	
 	/**
 	 * 

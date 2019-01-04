@@ -4,12 +4,13 @@
 ****************************************************************************************
 © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.1 2012-09-26 14:16:44 dgoron Exp $ -->
+$Id: manifest.xml,v 1.3 2018-08-02 14:22:55 wlair Exp $ -->
 
 <manifest name="audio">
-	<desc msg="Lecture des fichiers audio en visionneuse Flash. "/>
+	<desc msg="Lecture des fichiers audio. "/>
 	<screenshoot url="images/audio.class.png"></screenshoot>
 	<mimetypes>
 		<mimetype name="audio/mpeg"/>
+		<mimetype name="audio/ogg"/>
 	</mimetypes>
 </manifest>

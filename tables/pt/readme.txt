@@ -1,3 +1,8 @@
+-- +-------------------------------------------------+
+-- © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+-- +-------------------------------------------------+
+-- $Id: readme.txt,v 1.4 2016-03-30 09:04:51 mbertin Exp $
+
 ------------------------------------------------------------------------------------------------------------------
 
 Descrição dos arquivos
@@ -80,10 +85,12 @@ A equipa de desenvolvimento.
 
 \_/-\_/-\_/-\_/-\_/-\_/-\_/-\            minimum.sql
 # Conteúdo da tabela abts_periodicites
+# Conteúdo da tabela bannette_tpl
 # Conteúdo da tabela categories
 # Conteúdo da tabela classements
+# Conteúdo da tabela cms_editorial_types
 # Conteúdo da tabela empr_statut
-# Conteúdo da tabela infopages
+# Conteúdo da tabela explnum_statut
 # Conteúdo da tabela lenders
 # Conteúdo da tabela lignes_actes_statuts
 # Conteúdo da tabela noeuds
@@ -94,6 +101,7 @@ A equipa de desenvolvimento.
 # Conteúdo da tabela pclassement
 # Conteúdo da tabela sauv_sauvegardes
 # Conteúdo da tabela sauv_tables
+# Conteúdo da tabela serialcirc_tpl
 # Conteúdo da tabela suggestions_categ
 # Conteúdo da tabela thesaurus
 # Conteúdo da tabela users
@@ -122,6 +130,7 @@ A equipa de desenvolvimento.
 # Conteúdo da tabela expl_custom
 # Conteúdo da tabela expl_custom_lists
 # Conteúdo da tabela facettes
+# Conteúdo da tabela infopages
 # Conteúdo da tabela notice_tpl
 # Conteúdo da tabela notice_tplcode
 # Conteúdo da tabela procs

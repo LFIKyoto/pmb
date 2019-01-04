@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mail-retard.inc.php,v 1.32 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: mail-retard.inc.php,v 1.37 2017-10-18 13:38:12 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -18,23 +18,23 @@ if (!$relance) $relance = 1;
 
 // l'objet du mail
 $var = "mailretard_".$relance."objet";
-eval ("\$objet=\"".$$var."\";");
+eval ("\$objet=\"".${$var}."\";");
 
 // la formule de politesse du bas (le signataire)
 $var = "mailretard_".$relance."fdp";
-eval ("\$fdp=\"".$$var."\";");
+eval ("\$fdp=\"".${$var}."\";");
 
 // le texte après la liste des ouvrages en retard
 $var = "mailretard_".$relance."after_list";
-eval ("\$after_list=\"".$$var."\";");
+eval ("\$after_list=\"".${$var}."\";");
 
 // le texte avant la liste des ouvrges en retard
 $var = "mailretard_".$relance."before_list";
-eval ("\$before_list=\"".$$var."\";");
+eval ("\$before_list=\"".${$var}."\";");
 
 // le "Madame, Monsieur," ou tout autre truc du genre "Cher adhérent,"
 $var = "mailretard_".$relance."madame_monsieur";
-eval ("\$madame_monsieur=\"".$$var."\";");
+eval ("\$madame_monsieur=\"".${$var}."\";");
 
 if($madame_monsieur) $texte_mail.=$madame_monsieur."\r\n\r\n";
 if($before_list) $texte_mail.=$before_list."\r\n\r\n";
@@ -57,25 +57,8 @@ while ($data = pmb_mysql_fetch_array($req)) {
 	$res = pmb_mysql_query($requete);
 	$expl = pmb_mysql_fetch_object($res);
 	
-	$responsabilites=array() ;
-	$header_aut = "" ;
 	$responsabilites = get_notice_authors(($expl->m_id+$expl->s_id)) ;
-	$as = array_search ("0", $responsabilites["responsabilites"]) ;
-	if ($as!== FALSE && $as!== NULL) {
-		$auteur_0 = $responsabilites["auteurs"][$as] ;
-		$auteur = new auteur($auteur_0["id"]);
-		$header_aut .= $auteur->isbd_entry;
-	} else {
-		$aut1_libelle=array();
-		$as = array_keys ($responsabilites["responsabilites"], "1" ) ;
-		for ($i = 0 ; $i < count($as) ; $i++) {
-			$indice = $as[$i] ;
-			$auteur_1 = $responsabilites["auteurs"][$indice] ;
-			$auteur = new auteur($auteur_1["id"]);
-			$aut1_libelle[]= $auteur->isbd_entry;
-		}
-		$header_aut .= implode (", ",$aut1_libelle) ;
-	}
+	$header_aut = gen_authors_header($responsabilites);
 	$header_aut ? $auteur=" / ".$header_aut : $auteur="";
 	
 	// récupération du titre de série
@@ -91,8 +74,8 @@ while ($data = pmb_mysql_fetch_array($req)) {
 	}
 
 	$texte_mail.=$expl->tit.$auteur."\r\n";
-	$texte_mail.="    -".$msg[fpdf_date_pret]." : ".$expl->aff_pret_date." ".$msg[fpdf_retour_prevu]." : ".$expl->aff_pret_retour."\r\n";
-	$texte_mail.="    -".$expl->location_libelle.": ".$expl->section_libelle." (".$expl->expl_cb.")\r\n\r\n\r\n";
+	$texte_mail.="    -".$msg['fpdf_date_pret']." ".$expl->aff_pret_date." ".$msg['fpdf_retour_prevu']." ".$expl->aff_pret_retour."\r\n";
+	$texte_mail.="    -".$expl->location_libelle." : ".$expl->section_libelle." (".$expl->expl_cb.")\r\n\r\n\r\n";
 	$i++;
 }
 $texte_mail.="\r\n";
@@ -127,7 +110,7 @@ $headers .= "Content-type: text/plain; charset=".$charset."\n";
 	
 $res_envoi=mailpmb($coords_dest->empr_prenom." ".$coords_dest->empr_nom, $coords_dest->empr_mail, $objet." : ".$coords->empr_prenom." ".mb_strtoupper($coords->empr_nom,$charset)." (".$coords->empr_cb.")",$texte_mail, $biblio_name, $biblio_email,$headers, "", $PMBuseremailbcc,1);	
 
-if ($res_envoi) echo "<center><h3>".sprintf($msg["mail_retard_succeed"],$coords_dest->empr_mail)."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["mail_retard_close"]."</a></center><br /><br />".nl2br($texte_mail);
-	else echo "<center><h3>".sprintf($msg["mail_retard_failed"],$coords_dest->empr_mail)."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["mail_retard_close"]."</a></center>";
+if ($res_envoi) echo "<h3>".sprintf($msg["mail_retard_succeed"],$coords_dest->empr_mail)."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["mail_retard_close"]."</a><br /><br />".nl2br($texte_mail);
+	else echo "<h3>".sprintf($msg["mail_retard_failed"],$coords_dest->empr_mail)."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["mail_retard_close"]."</a>";
 
 ?>

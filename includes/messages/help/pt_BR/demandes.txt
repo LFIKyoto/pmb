@@ -1,4 +1,4 @@
-<h1>Módulo de Pedidos de Busca e Informação</h1>
+<h2>Módulo de Pedidos de Busca e Informação</h2>
 <p>Os pedidos de busca e de informação são um serviço que permite a um leitor contatar um bibliotecário para discutir, esclarecer e buscar as informações para alcançar um registro como resultado o mais próximo possível à sua necessidade.</p>
 
 <h2>Listas</h2>

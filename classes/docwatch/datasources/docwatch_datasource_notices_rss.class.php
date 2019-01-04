@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_datasource_notices_rss.class.php,v 1.7 2015-03-13 14:00:10 dgoron Exp $
+// $Id: docwatch_datasource_notices_rss.class.php,v 1.8 2016-10-10 13:52:50 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -108,7 +108,7 @@ class docwatch_datasource_notices_rss extends docwatch_datasource_notices{
 							$data["summary"] = $rss_item["description"];
 							$data["content"] = $rss_item["description"];
 							$data["url"] = $rss_item["link"];
-							$data["publication_date"] = date ( 'Y-m-d h:i:s' , strtotime($rss_item["pubDate"]));
+							$data["publication_date"] = date ( 'Y-m-d H:i:s' , strtotime($rss_item["pubDate"]));
 							$data["logo_url"] = $informations["url"];
 							$data["descriptors"] = "";
 							if(is_array($rss_item["category"])){

@@ -2,7 +2,21 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: getgif.php,v 1.6 2015-05-18 10:11:04 dgoron Exp $
+// $Id: getgif.php,v 1.11 2018-02-21 16:28:17 dgoron Exp $
+
+require_once("./includes/apache_functions.inc.php");
+
+//on ajoute des entêtes qui autorisent le navigateur à faire du cache...
+$headers = getallheaders();
+//une journée
+$offset = 60 * 60 * 24 ;
+if (isset($headers['If-Modified-Since']) && (strtotime($headers['If-Modified-Since']) <= time())) {
+	header('Last-Modified: '.$headers['If-Modified-Since'], true, 304);
+	return;
+}else{
+	header('Expired: '.gmdate("D, d M Y H:i:s", time() + $offset).' GMT', true);
+	header('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT', true, 200);
+}
 
 $base_path=".";
 require_once($base_path."/includes/init.inc.php");
@@ -23,29 +37,29 @@ require_once($base_path.'/includes/start.inc.php');
 
 session_write_close();
 
-if(!$optionnel){//Dans le cas ou l'image est obligatoire (si elle sert de lien cliquable par exemple)
+if(!isset($optionnel) || !$optionnel){//Dans le cas ou l'image est obligatoire (si elle sert de lien cliquable par exemple)
 	if($nomgif == "plus"){
-		$chemin="./images/plus.gif";
+		$chemin=get_url_icon("plus.gif");
 	}elseif($nomgif == "moins"){
-		$chemin="./images/minus.gif";
+		$chemin=get_url_icon("minus.gif");
 	}
 	$content_type_gif="Content-Type: image/gif";
 	$fp=@fopen($chemin, "rb");
 }else{
 	$chemin="";
 	$content_type_gif="Content-Type: image/png";
-	$fp=@fopen('./images/vide.png', "rb");
+	$fp=@fopen(get_url_icon('vide.png'), "rb");
 }
 
 switch ($nomgif) {
 	case "plus":
 		if($opac_notices_depliable_plus){
-			$chemin='./images/'.$opac_notices_depliable_plus;
+			$chemin = get_url_icon($opac_notices_depliable_plus);
 		}
 		break;
 	case "moins":
 		if($opac_notices_depliable_moins){
-			$chemin='./images/'.$opac_notices_depliable_moins;
+			$chemin = get_url_icon($opac_notices_depliable_moins);
 		}
 		break;
 	default:

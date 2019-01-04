@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: modes_paiements.inc.php,v 1.12 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: modes_paiements.inc.php,v 1.13 2017-04-19 12:37:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -37,7 +37,7 @@ function show_list_mode() {
 			print "</tr>";
 	}
 	print "</table>
-		<input class='bouton' type='button' value=' ".$msg[acquisition_ajout_mode]." ' onClick=\"document.location='./admin.php?categ=acquisition&sub=mode&action=add'\" />";
+		<input class='bouton' type='button' value=' ".$msg['acquisition_ajout_mode']." ' onClick=\"document.location='./admin.php?categ=acquisition&sub=mode&action=add'\" />";
 
 }
 
@@ -53,14 +53,14 @@ function show_mode_form($id=0) {
 	
 	if(!$id) {
 		
-		$mode_form = str_replace('!!form_title!!', htmlentities($msg[acquisition_ajout_mode],ENT_QUOTES,$charset), $mode_form);
+		$mode_form = str_replace('!!form_title!!', htmlentities($msg['acquisition_ajout_mode'],ENT_QUOTES,$charset), $mode_form);
 		$mode_form = str_replace('!!libelle!!', '', $mode_form);
 		$mode_form = str_replace('!!commentaire!!', '', $mode_form);
 
 	} else {
 		
 		$mode = new paiements($id);
-		$mode_form = str_replace('!!form_title!!', htmlentities($msg[acquisition_modif_mode],ENT_QUOTES,$charset), $mode_form);
+		$mode_form = str_replace('!!form_title!!', htmlentities($msg['acquisition_modif_mode'],ENT_QUOTES,$charset), $mode_form);
 		$mode_form = str_replace('!!libelle!!', htmlentities($mode->libelle,ENT_QUOTES,$charset), $mode_form);
 		$mode_form = str_replace('!!commentaire!!', $mode->commentaire, $mode_form);
 		
@@ -90,7 +90,7 @@ $mode_form = "
 	</div>
 
 	<div class='row'>
-		<label class='etiquette' for='comment'>".htmlentities($msg[acquisition_mode_comment],ENT_QUOTES,$charset)."</label>
+		<label class='etiquette' for='comment'>".htmlentities($msg['acquisition_mode_comment'],ENT_QUOTES,$charset)."</label>
 	</div>
 	<div class='row'>
 		<textarea id='comment' name='comment' class='saisie-80em' cols='62' rows='6' wrap='virtual'>!!commentaire!!</textarea>
@@ -117,7 +117,7 @@ $mode_form = "
 
 ";
 
-$ptab = "<input class='bouton' type='button' value=' ".$msg[supprimer]." ' onClick=\"javascript:confirmation_delete('!!id!!', '!!libelle_suppr!!')\" />";
+$ptab = "<input class='bouton' type='button' value=' ".$msg['supprimer']." ' onClick=\"javascript:confirmation_delete('!!id!!', '!!libelle_suppr!!')\" />";
 
 ?>
 
@@ -175,8 +175,8 @@ switch($action) {
 			if ($total1==0) {
 				paiements::delete($id);
 			} else {
-				$msg_suppr_err = $msg[acquisition_mode_used] ;
-				if ($total1) $msg_suppr_err .= "<br />- ".$msg[acquisition_mode_used_fou] ;
+				$msg_suppr_err = $msg['acquisition_mode_used'] ;
+				if ($total1) $msg_suppr_err .= "<br />- ".$msg['acquisition_mode_used_fou'] ;
 				error_message($msg[321], $msg_suppr_err, 1, 'admin.php?categ=acquisition&sub=mode');
 			}
 		} else {

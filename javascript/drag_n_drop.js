@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: drag_n_drop.js,v 1.23.4.1 2015-10-15 08:27:51 jpermanne Exp $
+// $Id: drag_n_drop.js,v 1.27 2016-12-13 10:54:34 jpermanne Exp $
 
 
 /*
@@ -59,8 +59,12 @@ allow_drag['dropzone']['rapport']=true;
 allow_drag['rapport']=new Array();
 allow_drag['rapport']['rapport']=true;
 allow_drag['rapport']['export']=true;
-allow_drag['daughter']=new Array();
-allow_drag['daughter']['daughter']=true;
+allow_drag['parents']=new Array();
+allow_drag['parents']['parents']=true;
+allow_drag['pairs']=new Array();
+allow_drag['pairs']['pairs']=true;
+allow_drag['childs']=new Array();
+allow_drag['childs']['childs']=true;
 allow_drag['avisdrop']=new Array();
 allow_drag['avisdrop']['avisdrop']=true;
 allow_drag['circdiffdrop']=new Array();
@@ -100,6 +104,8 @@ allow_drag['vedette_composee_delete_element']=new Array();
 allow_drag['vedette_composee_delete_element']['vedette_composee_element']=true;
 allow_drag['instru']=new Array();
 allow_drag['instru']['instru']=true;
+allow_drag['search_perso']=new Array();
+allow_drag['search_perso']['search_perso']=true;
 
 var r_x=new Array();
 var r_y=new Array();
@@ -156,6 +162,8 @@ function mouse_down_draggable(e) {
 		e.cancelBubble=true;
 		e.returnValue=false;
 	}
+	//On commence par recalculer les récepteurs.
+	recalc_recept();
 	//Recuperation de l'element d'origine qui a reçu l'evenement
 	if (e.target) var targ=e.target; else var targ=e.srcElement;
 

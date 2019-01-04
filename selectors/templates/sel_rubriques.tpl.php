@@ -3,19 +3,11 @@
 
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sel_rubriques.tpl.php,v 1.7 2015-01-23 09:42:50 jpermanne Exp $
+// $Id: sel_rubriques.tpl.php,v 1.8 2017-01-19 10:25:18 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
 // templates du sélecteur adresses
-
-//--------------------------------------------
-//	$nb_per_page : nombre de lignes par page
-//--------------------------------------------
-// nombre de références par pages
-if(!isset($nb_per_page)){
-	$nb_per_page = 10;
-}
 
 //-------------------------------------------
 //	$sel_header : header
@@ -54,18 +46,10 @@ $sel_search="<div class='row'>
 //-------------------------------------------
 //	$jscript : script de m.a.j. du parent
 //-------------------------------------------
-$jscript = "
-<script type='text/javascript'>
-<!--
-function set_parent(f_caller, rub, lib_rub)
-{
-	window.opener.document.forms[f_caller].elements['$param1'].value = rub;
-	window.opener.document.forms[f_caller].elements['$param2'].value = reverse_html_entities(lib_rub);
-	window.close();
-}
--->
-</script>
-";
+$jscript = $jscript_common_selector_simple;
+$jscript = str_replace('!!param1!!', $param1, $jscript);
+$jscript = str_replace('!!param2!!', $param2, $jscript);
+$jscript = str_replace('!!infield!!', '', $jscript);
 
 //-------------------------------------------
 //	$sel_footer : footer

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <xsl:stylesheet version = '1.0'
      xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>
-		<xsl:output method="xml" indent='yes'/>
+		<xsl:output method="xml" indent='yes'  encoding="UTF-8"/><!-- On considère que le fichier unimarc contient des notices en utf-8 -->
 
 <xsl:template match="pmbmarc">
 	<unimarc>
@@ -609,7 +609,7 @@ En sortie: Unimarc
 	<xsl:for-each select="./f[@c='653']">
 		<xsl:element name="f">	
 			<xsl:attribute name="c">610</xsl:attribute>
-			<xsl:attribute name="ind">./@ind</xsl:attribute>
+			<xsl:attribute name="ind"><xsl:value-of select="./@ind"/></xsl:attribute>
 
 			<!-- Subject term a -> a -->
 			<xsl:for-each select="./s[@c='a']">	

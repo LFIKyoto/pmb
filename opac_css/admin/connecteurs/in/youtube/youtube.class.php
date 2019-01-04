@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: youtube.class.php,v 1.5 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: youtube.class.php,v 1.10 2017-07-12 15:15:02 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,85 +13,42 @@ require_once("youtube_api.class.php");
 
 class youtube extends connector {
 	
-    function youtube($connector_path="") {
-    	parent::connector($connector_path);
+    public function __construct($connector_path="") {
+    	parent::__construct($connector_path);
     }
     
-    function get_id() {
+    public function get_id() {
     	return "youtube";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 2;
 	}
-    
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-    
-    function get_libelle($message) {
-    	if (substr($message,0,4)=="msg:") return $this->msg[substr($message,4)]; else return $message;
-    }
-    
-    function source_get_property_form($source_id) {
-		return "";
-    }
-    
-    function make_serialized_source_properties($source_id) {
-    	$this->sources[$source_id]["PARAMETERS"]=serialize(array());
-	}
-	
-	//Récupération  des proriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
-		$this->timeout=5;
-		$this->repository=2;
-		$this->retry=3;
-		$this->ttl=1800;
-		$this->parameters="";
-	}
-	
-	 //Formulaire des propriétés générales
-	function get_property_form() {
-		return "";
-	}
-    
-    function make_serialized_properties() {
-    	global $accesskey, $secretkey;
-		//Mise en forme des paramètres à partir de variables globales (mettre le résultat dans $this->parameters)
-		$keys = array();
-		$this->parameters = serialize($keys);
-	}
 
-	function enrichment_is_allow(){
+	public function enrichment_is_allow(){
 		return true;
 	}
 	
-	function getEnrichmentHeader($source_id){
+	public function getEnrichmentHeader($source_id){
 		$header= array();
 		$header[]= "<!-- Script d'enrichissement pour Youtube-->";
 		return $header;
 	}
 	
-	function getTypeOfEnrichment($notice_id,$source_id){
+	public function getTypeOfEnrichment($notice_id,$source_id){
 		$type['type'] = array(
 			array(
 				'code' => "youtube",
 				'label' => $this->msg['youtube']
-			)
-			
+			)			
 		);		
 		$type['source_id'] = $source_id;
 		return $type;
 	}
 	
-	function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array(),$page=1){
-		global $lang;
+	public function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array(),$page=1){
+		global $lang, $charset;
 		
 		$this->noticeToEnrich= $notice_id;
 		
@@ -100,8 +57,8 @@ class youtube extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		$enrichment= array();
@@ -111,39 +68,49 @@ class youtube extends connector {
 		switch ($type){
 			case "youtube" :
 				$api = new youtube_api();
-				$vars = array(
-					"q" => utf8_encode($infos['title']." ".$infos['author'])
-				);
+				$vars ['q'] = $infos['title']." ".$infos['author'];
+				if($charset != 'utf-8') $vars ['q'] = utf8_encode($vars ['q']);
 				$result = $api->search_videos($vars);
 				
-				if($result->feed->{'openSearch$totalResults'}->{'$t'} >= $result->feed->{'openSearch$itemsPerPage'}->{'$t'}){
-					$aff_result = sprintf($this->msg['youtube_partial_results'],$result->feed->{'openSearch$itemsPerPage'}->{'$t'},$result->feed->{'openSearch$totalResults'}->{'$t'});
+				if($result['pageInfo']['resultsPerPage'] < $result['pageInfo']['totalResults']){
+					$aff_result = sprintf($this->msg['youtube_partial_results'],$result['pageInfo']['resultsPerPage'],$result['pageInfo']['totalResults']);
 					$aff_result.= "<br/>
 					<a target='_blank' href='http://www.youtube.com/results?search_query=".$vars['q']."'>".$this->msg['youtube_go_to_result_page']."</a>";
 				}else{
-					$aff_result = sprintf($this->msg['youtube_all_results'],$result->feed->{'openSearch$totalResults'}->{'$t'});
-				}
+					$aff_result = sprintf($this->msg['youtube_all_results'],$result['pageInfo']['totalResults']);
+				}				
 				$enrichment['youtube']['content']= "<p style='padding:10px;'>".$aff_result."</p>";
-				foreach($result->feed->entry as $elem){
+								
+				foreach ($result['items'] as $searchResult) {
 					$enrichment['youtube']['content'].= "
-					<span style='margin-right : 4px;'>";
-					if(!$elem->{'yt$noembed'}){
-						$enrichment['youtube']['content'].= "
-						<iframe style='width:480px;height:360px;' src='".$elem->{'media$group'}->{'media$content'}[0]->url."' frameborder='0' allowfullscreen></iframe>";
-					}else{
-						$enrichment['youtube']['content'].= " 
-						<a target='_blank' href='".$elem->{'media$group'}->{'media$player'}[0]->url."'><img alt='".$elem->content->{'$t'}."' title='".$elem->title->{'$t'}."' src='".$elem->{'media$group'}->{'media$thumbnail'}[0]->url."'/></a>";
+						<span style='margin-right : 4px;'>";
+					switch ($searchResult['id']['kind']) {
+						case 'youtube#video':														
+							$enrichment['youtube']['content'].= sprintf('<li>%s (%s)</li>',
+							$searchResult['snippet']['title'], $searchResult['id']['videoId'])."
+							<iframe style='width:480px;height:360px;' src='https://www.youtube.com/embed/".$searchResult['id']['videoId']."' frameborder='0' allowfullscreen></iframe>";
+							break;
+						case 'youtube#channel':
+							$enrichment['youtube']['content'].= sprintf('<li>%s (%s)</li>',
+							$searchResult['snippet']['title'], $searchResult['id']['channelId'])."
+							<iframe style='width:480px;height:360px;' src='https://www.youtube.com/embed/".$searchResult['id']['channelId']."' frameborder='0' allowfullscreen></iframe>";
+							break;
+						case 'youtube#playlist':
+							$playlists .= sprintf('<li>%s (%s)</li>',
+							$searchResult['snippet']['title'], $searchResult['id']['playlistId'])."
+							<iframe style='width:480px;height:360px;' src='https://www.youtube.com/embed/".$searchResult['id']['playlistId']."' frameborder='0' allowfullscreen></iframe>";						
+							break;
 					}
 					$enrichment['youtube']['content'].= "
-					</span>";
-				}
+						</span>";
+				}				
 				break;
 		}		
 		$enrichment['source_label']=$this->msg['youtube_enrichment_source'];
 		return $enrichment;
 	}
 
-	function get_notice_infos(){
+	public function get_notice_infos(){
 		$infos = array();
 		//on va chercher le titre de la notice...
 		$query = "select tit1 from notices where notice_id = ".$this->noticeToEnrich;
@@ -157,7 +124,6 @@ class youtube extends connector {
 		if(pmb_mysql_num_rows($result)){
 			$author_id = pmb_mysql_result($result,0,0);
 			$author = new auteur($author_id);
-			//$infos['author'] = $author->display;
 			$infos['author'] = ($author->rejete!= ""? $author->rejete." ":"").$author->name;
 		}
 		return $infos; 		

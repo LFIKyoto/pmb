@@ -2,13 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: etagere_func.inc.php,v 1.55 2015-04-03 11:16:16 jpermanne Exp $
+// $Id: etagere_func.inc.php,v 1.62 2018-06-14 10:19:16 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($base_path.'/includes/templates/notice_display.tpl.php');
 require_once($base_path.'/includes/explnum.inc.php');
 require_once($base_path.'/classes/sort.class.php');
+require_once($base_path.'/classes/etagere.class.php');
 
 // tableau des étagères avec leurs petits caddies associés
 // 	$accueil=1 filtre les étagères de l'accueil uniquement
@@ -33,21 +34,22 @@ function tableau_etagere($idetagere, $accueil=0) {
 			if(is_array($memo_bannettes_generated)) if(in_array($tab_id[$i], $memo_bannettes_generated)) continue;
 			
 			$clause_etagere="idetagere ='".$tab_id[$i]."' and";
-			$query = "select idetagere, name, comment,id_tri from etagere where $clause_accueil $clause_etagere ( (validite_date_deb<=sysdate() and validite_date_fin>=sysdate()) or validite=1 ) ";
+			$query = "select idetagere from etagere where $clause_accueil $clause_etagere ( (validite_date_deb<=sysdate() and validite_date_fin>=sysdate()) or validite=1 ) ";
 			$result = pmb_mysql_query($query, $dbh);
 			if (pmb_mysql_num_rows($result)) {
 				$etagere=pmb_mysql_fetch_object($result) ;
+				$etagere_instance = new etagere($etagere->idetagere);
 				$tableau_etagere[] = array (
-						'idetagere' => $etagere->idetagere,
-						'nometagere' => $etagere->name,
-						'commentetagere' => $etagere->comment,
-						'id_tri' => $etagere->id_tri,
-						'idcaddies' => caddies_etagere($etagere->idetagere)
-						);				
+						'idetagere' => $etagere_instance->idetagere,
+						'nometagere' => $etagere_instance->get_translated_name(),
+						'commentetagere' => $etagere_instance->get_translated_comment(),
+						'id_tri' => $etagere_instance->id_tri,
+						'idcaddies' => caddies_etagere($etagere_instance->idetagere)
+				);				
 			}
 		}
 	} else {
-		$query = "select idetagere, name, comment,id_tri from etagere where $clause_accueil ( (validite_date_deb<=sysdate() and validite_date_fin>=sysdate()) or validite=1 ) order by $opac_etagere_order ";
+		$query = "select idetagere from etagere where $clause_accueil ( (validite_date_deb<=sysdate() and validite_date_fin>=sysdate()) or validite=1 ) order by $opac_etagere_order ";
 		$result = pmb_mysql_query($query, $dbh);
 		if (pmb_mysql_num_rows($result)) {
 			while ($etagere=pmb_mysql_fetch_object($result)) {				
@@ -55,13 +57,14 @@ function tableau_etagere($idetagere, $accueil=0) {
 				// si déjà affiché dans la page (DSI), on ne duplique pas
 				if(is_array($memo_bannettes_generated)) if(in_array($etagere->idetagere, $memo_bannettes_generated)) continue;
 				
+				$etagere_instance = new etagere($etagere->idetagere);
 				$tableau_etagere[] = array (
-						'idetagere' => $etagere->idetagere,
-						'nometagere' => $etagere->name,
-						'commentetagere' => $etagere->comment,
-						'id_tri' => $etagere->id_tri,
-						'idcaddies' => caddies_etagere($etagere->idetagere)
-						);
+						'idetagere' => $etagere_instance->idetagere,
+						'nometagere' => $etagere_instance->get_translated_name(),
+						'commentetagere' => $etagere_instance->get_translated_comment(),
+						'id_tri' => $etagere_instance->id_tri,
+						'idcaddies' => caddies_etagere($etagere_instance->idetagere)
+				);
 			}
 		}
 	}
@@ -89,6 +92,7 @@ function notices_caddie($idetagere, &$notices, $acces_j='', $statut_j='', $statu
 	global $dbh ;
 	global $opac_etagere_notices_order ;
 	
+	$idetagere += 0;
 	if (!$opac_etagere_notices_order) {
 		$opac_etagere_notices_order =" index_serie, tit1 ";
 	} else {
@@ -96,8 +100,10 @@ function notices_caddie($idetagere, &$notices, $acces_j='', $statut_j='', $statu
 	}
 	
 	// on constitue un tableau avec les notices du caddie
-	$query_notice = "select distinct notice_id from caddie_content, etagere_caddie, notices $acces_j $statut_j ";
-	$query_notice.= "where etagere_id=$idetagere and caddie_content.caddie_id=etagere_caddie.caddie_id and notice_id=object_id $statut_r ";
+	$query_notice = "select distinct notice_id, niveau_biblio from caddie_content 
+	JOIN etagere_caddie ON caddie_content.caddie_id=etagere_caddie.caddie_id
+	JOIN notices ON notice_id=object_id ".$acces_j." ".$statut_j."
+	WHERE etagere_id=".$idetagere." ".$statut_r." ";
 	if($id_tri>0){
 		$sort = new sort("notices","base");
 		$query_notice = $sort->appliquer_tri($id_tri, $query_notice, "notice_id", 0, 0);		
@@ -109,7 +115,7 @@ function notices_caddie($idetagere, &$notices, $acces_j='', $statut_j='', $statu
 	
 	if (pmb_mysql_num_rows($result_notice)) {
 		while (($notice=pmb_mysql_fetch_object($result_notice))) {
-			$notices[$notice->notice_id]= $notice->niveau_biblio ; 
+			$notices[$notice->notice_id]= (isset($notice->niveau_biblio) ? $notice->niveau_biblio : ''); 
 		}
 	} // fin if notices
 }
@@ -131,8 +137,10 @@ function affiche_etagere($accueil=0, $etageres="", $aff_commentaire=0, $aff_noti
 	global $class_path;
 	global $opac_view_filter_class;
 	
-	if($_SESSION["opac_view"] && $_SESSION["opac_view_query"] ){
+	if(isset($_SESSION["opac_view"]) && $_SESSION["opac_view"] && $_SESSION["opac_view_query"] ){
 		$opac_view_restrict=" notice_id in (select opac_view_num_notice from  opac_view_notices_".$_SESSION["opac_view"].") ";
+	} else {
+		$opac_view_restrict="";
 	}
 	//droits d'acces emprunteur/notice
 	$acces_j='';
@@ -219,12 +227,17 @@ function affiche_etagere($accueil=0, $etageres="", $aff_commentaire=0, $aff_noti
 //	$depliable : affichage des notices une par ligne avec le bouton de dépliable
 //	$link_to_etagere : 0 ou 1 pour afficher le lien d'accès à l'étagère en cas de nb notices > nb max
 //  $link : "./index.php?lvl=etagere_see&id=!!id!!"
-function contenu_etagere($idetagere, $aff_notices_nb=0, $mode_aff_notice=AFF_ETA_NOTICES_BOTH, $depliable=AFF_ETA_NOTICES_DEPLIABLES_OUI, $link_to_etagere="", $link) {
+function contenu_etagere($idetagere, $aff_notices_nb=0, $mode_aff_notice=AFF_ETA_NOTICES_BOTH, $depliable=AFF_ETA_NOTICES_DEPLIABLES_OUI, $link_to_etagere="", $link="", $template_directory = "") {
 	
 	global $charset, $msg;
 	global $gestion_acces_active, $gestion_acces_empr_notice;
 	global $class_path;
 	
+	if($_SESSION["opac_view"] && $_SESSION["opac_view_query"] ){
+		$opac_view_restrict=" notice_id in (select opac_view_num_notice from  opac_view_notices_".$_SESSION["opac_view"].") ";
+	} else {
+		$opac_view_restrict="";
+	}
 	//droits d'acces emprunteur/notice
 	$acces_j='';
 	if ($gestion_acces_active==1 && $gestion_acces_empr_notice==1) {
@@ -241,6 +254,8 @@ function contenu_etagere($idetagere, $aff_notices_nb=0, $mode_aff_notice=AFF_ETA
 		$statut_j=',notice_statut';
 		$statut_r="and statut=id_notice_statut and ((notice_visible_opac=1 and notice_visible_opac_abon=0)".($_SESSION["user_code"]?" or (notice_visible_opac_abon=1 and notice_visible_opac=1)":"").")";
 	}	
+	
+	if($opac_view_restrict)  $statut_r=" and ".$opac_view_restrict. $statut_r;
 
 	if (!$idetagere) return "" ;
 		
@@ -263,7 +278,7 @@ function contenu_etagere($idetagere, $aff_notices_nb=0, $mode_aff_notice=AFF_ETA
 	$limit=0;
 	while ((list($idnotice, $niveau_biblio)= each($notices)) && ($limit<$limite_notices)) {
 		$limit++;
-		$retour_aff .= aff_notice($idnotice, 0, 1, 0, $mode_aff_notice, $depliable);
+		$retour_aff .= aff_notice($idnotice, 0, 1, 0, $mode_aff_notice, $depliable, 0, 1, 0, 1, $template_directory);
 	}
 
 	if ((count($notices)>$limite_notices) && $link_to_etagere) {

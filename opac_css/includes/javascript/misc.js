@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: misc.js,v 1.4 2015-05-13 07:33:26 dgoron Exp $
+// $Id: misc.js,v 1.11 2018-09-24 08:30:44 dgoron Exp $
 
 
 function replace_texte(string,text,by) {
@@ -24,6 +24,8 @@ function replace_texte(string,text,by) {
 function reverse_html_entities(text) {
     
     text = replace_texte(text,'&quot;',unescape('%22'));
+    text = replace_texte(text,'&apos;',unescape('%27'));
+	text = replace_texte(text,'&#039;',unescape('%27'));
     text = replace_texte(text,'&amp;',unescape('%26'));
     text = replace_texte(text,'&lt;',unescape('%3C'));
     text = replace_texte(text,'&gt;',unescape('%3E'));
@@ -281,4 +283,53 @@ function set_font_size(i) {
 			set_value_style('pmbopac', 'fontSize', (value*1.1)+unit);
 			break;
 	}
+	if(document.getElementById('iframe_resume_panier')) {
+		set_iframe_font_size('iframe_resume_panier', 'cart_info_body');
+	}
+}
+
+function set_iframe_font_size(frameNodeId, bodyNodeId) {
+	var iframe = document.getElementById(frameNodeId);
+	var innerDoc = (iframe.contentDocument) ? iframe.contentDocument : iframe.contentWindow.document;
+	var cartBodyNode = innerDoc.getElementById(bodyNodeId);
+	get_ref(cartBodyNode).style['fontSize'] = get_value_style('pmbopac','font-size');
+}
+
+
+function empty_dojo_calendar_by_id(id){
+	require(["dijit/registry"], function(registry) {registry.byId(id).set('value',null);});
+}
+
+function closeCurrentEnv(){
+	window.close();
+}
+
+function set_parent_value(f_caller, id, value){
+	window.opener.document.forms[f_caller].elements[id].value = value;
+}
+
+function get_parent_value(f_caller, id){
+	return window.opener.document.forms[f_caller].elements[id].value;
+}
+
+function set_parent_focus(f_caller, id){
+	window.opener.document.forms[f_caller].elements[id].focus();
+}
+
+/* --------------------------------------------------------------------------------------
+ * Fonction addLoadEvent
+ * Empile les differentes fonctions a appeler quand la page est chargee
+ */
+function addLoadEvent(func) {
+  if (window.addEventListener)
+    window.addEventListener("load", func, false);
+  else if (window.attachEvent)
+    window.attachEvent("onload", func);
+  else { // fallback
+    var old = window.onload;
+    window.onload = function() {
+      if (old) old();
+      func();
+    };
+  }
 }

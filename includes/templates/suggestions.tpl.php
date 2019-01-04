@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions.tpl.php,v 1.39 2014-08-19 13:13:58 dgoron Exp $
+// $Id: suggestions.tpl.php,v 1.47 2017-11-23 15:48:51 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -71,14 +71,19 @@ $sug_search_form.= "
 					<input type='hidden' id='user_id0' name='user_id[0]' value='!!user_id!!'/>
 					<input type='hidden' id='user_statut0' name='user_statut[0]' value='!!user_statut!!' />
 					<input type='text' id='user_txt0' name='user_txt[0]' class='saisie-20emr' value='!!user_txt!!'/>
-					<input type='button' class='bouton_small' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=origine&caller=search&param1=user_id0&param2=user_txt0&param3=user_statut0&deb_rech='+".pmb_escape()."(this.form.user_txt0.value)+'&callback=filtrer_user', 'select_user', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes')\" />
-					<input type='button' class='bouton_small' value='".$msg['raz']."'  onclick=\"this.form.user_id0.value=0;this.form.user_statut0.value=0;this.form.user_txt0.value=''\"/>
+					<input type='button' class='bouton_small' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=origine&caller=search&param1=user_id0&param2=user_txt0&param3=user_statut0&deb_rech='+".pmb_escape()."(this.form.user_txt0.value)+'&callback=filtrer_user', 'selector')\" />
+					<input type='button' class='bouton_small' value='".$msg['raz']."'  onclick=\"this.form.user_id0.value='';this.form.user_statut0.value='';this.form.user_txt0.value=''\"/>
 					<input type='button' onclick='add_orig();' value='+' class='bouton_small' />
 					<input type='hidden' id='max_orig' value='!!max_orig!!' />
 					<div id='add_orig' ><!-- sel_orig --></div>
 				</div>
 			</div>
 		</div>
+		<div class='row'>
+			<div class='colonne3'>
+				!!sel_date!!
+			</div>
+		</div>					
 		
 		<div class='row'></div>
 	</div>		
@@ -96,6 +101,18 @@ $sug_search_form.= "
 	<div class='row'></div>
 </form>
 <br />
+";
+
+$sel_date_form[0] = "<label class='etiquette'>!!msg!!</label>";
+$sel_date_form[1] = "
+<input type='hidden' id='date_inf' name='date_inf' value='!!date_inf!!' />
+<input type='button' name='date_inf_lib' class='bouton_small' value='!!date_inf_lib!!' onclick=\"openPopUp('./select.php?what=calendrier&caller='+this.form.name+'&date_caller=&param1=date_inf&param2=date_inf_lib&auto_submit=NO&date_anterieure=YES', 'calendar');\">
+<input type='button' class='bouton_small' value='".$msg['raz']."' onclick=\"this.form.elements['date_inf_lib'].value='".$msg['parperso_nodate']."'; this.form.elements['date_inf'].value='';\" >
+";
+$sel_date_form[2] = "
+<input type='hidden' id='date_sup' name='date_sup' value='!!date_sup!!' />
+<input type='button' name='date_sup_lib' class='bouton_small' value='!!date_sup_lib!!' onclick=\"openPopUp('./select.php?what=calendrier&caller='+this.form.name+'&date_caller=&param1=date_sup&param2=date_sup_lib&auto_submit=NO&date_anterieure=YES', 'calendar');\">
+<input type='button' class='bouton_small' value='".$msg['raz']."' onclick=\"this.form.elements['date_sup_lib'].value='".$msg['parperso_nodate']."'; this.form.elements['date_sup'].value='';\" >
 ";
 
 //	------------------------------------------------------------------------------
@@ -128,7 +145,7 @@ $sug_list_form.="
 		</table>
 	</div>
 	<div class='row'>
-		<div class='left'><!-- bt_imp -->&nbsp;<!-- bt_exporter -->&nbsp;<!-- bt_todo --><span class='child' ><!-- to_categ --></span></div>
+		<div class='left'><!-- bt_imp -->&nbsp;<!-- bt_exporter -->&nbsp;<!-- bt_export_tableau -->&nbsp;<!-- bt_todo --><span class='child' ><!-- to_categ --></span></div>
 		<div class='right'><!-- bt_chk --></div>
 	</div>
 	<div class='row'>&nbsp;</div>
@@ -241,7 +258,7 @@ $sug_modif_form.="
 				<div class='row'>
 					<!-- nombre_expl -->
 					<input  class='bouton_small' type='button' value='-' onclick=\"add_numeric_obj('nombre_expl',-1)\">
-					<input maxLength='4' size='2' value='!!nombre_expl!!' id='nombre_expl' name='nombre_expl' >
+					<input maxLength='4' type='text' size='2' value='!!nombre_expl!!' id='nombre_expl' name='nombre_expl' >
 					<input class='bouton_small' type='button' value='+' onclick=\"add_numeric_obj('nombre_expl',1)\">
 				</div>	
 			</div>
@@ -256,6 +273,7 @@ $sug_modif_form.="
 				</div>	
 			</div>";
 		}
+if(!isset($back_url)) $back_url = "onClick=\"document.location='./acquisition.php?categ=sug&action=list'\"";
 $sug_modif_form.="	
 		<div class='colonne5'>
 			<label class='etiquette' >".htmlentities($msg['acquisition_sugg_filtre_src'], ENT_QUOTES, $charset)."</label>
@@ -271,7 +289,7 @@ $sug_modif_form.="
 			<label class='etiquette' >".htmlentities($msg['acquisition_sug_tit'], ENT_QUOTES, $charset)."</label>
 		</div>
 		<div class='row'>
-			<input type='text/javascript' id='tit' name='tit' class='saisie-60em' value='!!tit!!' />
+			<input type='text' id='tit' name='tit' class='saisie-60em' value='!!tit!!' />
 			!!lien!!
 		</div>
 
@@ -279,35 +297,35 @@ $sug_modif_form.="
 			<label class='etiquette' >".htmlentities($msg['acquisition_sug_edi'], ENT_QUOTES, $charset)."</label>
 		</div>
 		<div class='row'>
-			<input type='text/javascript' id='edi' name='edi' class='saisie-30em' value='!!edi!!' />
+			<input type='text' id='edi' name='edi' class='saisie-30em' value='!!edi!!' />
 		</div>
 
 		<div class='row'>
 			<label class='etiquette' >".htmlentities($msg['acquisition_sug_aut'], ENT_QUOTES, $charset)."</label>
 		</div>
 		<div class='row'>
-			<input type='text/javascript' id='aut' name='aut' class='saisie-30em' value='!!aut!!' />
+			<input type='text' id='aut' name='aut' class='saisie-30em' value='!!aut!!' />
 		</div>
 
 		<div class='row'>
 			<label class='etiquette' >".htmlentities($msg['acquisition_sug_cod'], ENT_QUOTES, $charset)."</label>
 		</div>
 		<div class='row'>
-			<input type='text/javascript' id='cod' name='cod' class='saisie-30em' value='!!cod!!' />
+			<input type='text' id='cod' name='cod' class='saisie-30em' value='!!cod!!' />
 		</div>
 
 		<div class='row'>
 			<label class='etiquette' >".htmlentities($msg['acquisition_sug_pri'], ENT_QUOTES, $charset)."</label>
 		</div>
 		<div class='row'>
-			<input type='text/javascript' id='pri' name='pri' class='saisie-10em' value='!!pri!!' />
+			<input type='text' id='pri' name='pri' class='saisie-10em' value='!!pri!!' />
 		</div>
 
 		<div class='row'>
 			<label class='etiquette' >".htmlentities($msg['acquisition_sug_url'], ENT_QUOTES, $charset)."</label>
 		</div>
 		<div class='row'>
-			<input type='text/javascript' id='url_sug' name='url_sug' class='saisie-80em' value='!!url_sug!!' />
+			<input type='text' id='url_sug' name='url_sug' class='saisie-80em' value='!!url_sug!!' />
 			<!-- url_sug -->
 		</div>
 		<div class='row'>
@@ -327,7 +345,7 @@ $sug_modif_form.="
 		</div>
 		<div class='row'>
 			<input type='text' id='date_publi' name='date_publi' value='!!date_publi!!'>
-			<input type='button' class='bouton' id='date_publi_sug' name='date_publi_sug' value='...' onClick=\"openPopUp('./select.php?what=calendrier&caller=sug_modif_form&param1=date_publi&param2=date_publi&auto_submit=NO&date_anterieure=YES', 'date_publi', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\"/>
+			<input type='button' class='bouton' id='date_publi_sug' name='date_publi_sug' value='...' onClick=\"openPopUp('./select.php?what=calendrier&caller=sug_modif_form&param1=date_publi&param2=date_publi&auto_submit=NO&date_anterieure=YES', 'calendar')\"/>
 		</div>
 		<div class='row'>
 			<label class='etiquette' >".htmlentities($msg['acquisition_sugg_piece_jointe'], ENT_QUOTES, $charset)."</label>
@@ -414,17 +432,18 @@ $sug_modif_form.="
 
 
 $orig_form_mod = "
-	<input type='text' id='lib_orig' name='lib_orig' class='saisie-10emr' value='!!lib_orig!!' onchange=\"openPopUp('./select.php?what=origine&caller=sug_modif_form&param1=orig&param2=lib_orig&param3=typ&param4=poi&param5=poi_tot&param6=aff_poi_tot&deb_rech='+".pmb_escape()."(this.form.lib_orig.value), 'select_orig', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes')\" />
-	<input type='button' class='bouton_small' value='...' onclick=\"openPopUp('./select.php?what=origine&caller=sug_modif_form&param1=orig&param2=lib_orig&param3=typ&param4=poi&param5=poi_tot&param6=aff_poi_tot&deb_rech='+".pmb_escape()."(this.form.lib_orig.value), 'select_orig', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes')\" />";
+	<input type='text' id='lib_orig' name='lib_orig' class='saisie-10emr' value='!!lib_orig!!' onchange=\"openPopUp('./select.php?what=origine&caller=sug_modif_form&param1=orig&param2=lib_orig&param3=typ&param4=poi&param5=poi_tot&param6=aff_poi_tot&deb_rech='+".pmb_escape()."(this.form.lib_orig.value), 'selector')\" />
+	<input type='button' class='bouton_small' value='...' onclick=\"openPopUp('./select.php?what=origine&caller=sug_modif_form&param1=orig&param2=lib_orig&param3=typ&param4=poi&param5=poi_tot&param6=aff_poi_tot&deb_rech='+".pmb_escape()."(this.form.lib_orig.value), 'selector')\" />";
 
-$bt_chk ="<input type='button' id='bt_chk' class='bouton_small' value='".$msg[acquisition_sug_checkAll]."' onClick=\"checkAll('sug_list_form', 'chk', check); return false;\" />";
+$bt_chk ="<input type='button' id='bt_chk' class='bouton_small' value='".$msg['acquisition_sug_checkAll']."' onClick=\"checkAll('sug_list_form', 'chk', check); return false;\" />";
 $bt_supChk = "<input type='button' class='bouton_small' value='$msg[63]' onClick=\"supChk();\" />";
 
 
 $bt_imp = "<input type='button' class='bouton_small' value='$msg[imprimer]' onClick=\"!!imp!!\" />";
 $bt_exporter = "<input type='button' class='bouton_small' value='".$msg['admin_Expvers']."' onClick=\"!!exp!!\" /><!-- list_export -->";
+$bt_export_tableau = "<input type='button' class='bouton_small' value='".$msg['sugg_export_tableau']."' onClick=\"!!exp!!\" />";
 
-$lk_url_sug = "<a href='!!url_sug!!' target='_blank'><img src='./images/globe.gif' border='0'/></a>";
+$lk_url_sug = "<a href='!!url_sug!!' target='_blank'><img src='".get_url_icon('globe.gif')."' border='0'/></a>";
 
 
 $script = "
@@ -449,10 +468,10 @@ $script = "
 		}
 		if (check == true) {
 			check = false;
-			document.getElementById('bt_chk').value = '".$msg[acquisition_sug_uncheckAll]."';
+			document.getElementById('bt_chk').value = '".$msg['acquisition_sug_uncheckAll']."';
 		} else {
 			check = true;
-			document.getElementById('bt_chk').value = '".$msg[acquisition_sug_checkAll]."';	
+			document.getElementById('bt_chk').value = '".$msg['acquisition_sug_checkAll']."';	
 		}
 		return true;
 	}
@@ -503,7 +522,7 @@ $sel_orig_form = "
 	<input type='hidden' id='user_id!!i!!' name='user_id[!!i!!]' value='!!user_id!!'/>
 	<input type='hidden' id='user_statut!!i!!' name='user_statut[!!i!!]' value='!!user_statut!!' />
 	<input type='text' id='user_txt!!i!!' name='user_txt[!!i!!]' class='saisie-20emr' value='!!user_txt!!'/>
-	<input type='button' class='bouton_small' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=origine&caller=search&param1=user_id!!i!!&param2=user_txt!!i!!&param3=user_statut!!i!!&deb_rech='+".pmb_escape()."(this.form.user_txt!!i!!.value)+'&callback=filtrer_user', 'select_user', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes')\" />
+	<input type='button' class='bouton_small' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=origine&caller=search&param1=user_id!!i!!&param2=user_txt!!i!!&param3=user_statut!!i!!&deb_rech='+".pmb_escape()."(this.form.user_txt!!i!!.value)+'&callback=filtrer_user', 'selector')\" />
 	<input type='button' class='bouton_small' value='".$msg['raz']."'  onclick=\"this.form.user_id!!i!!.value=0;this.form.user_statut!!i!!.value=0;this.form.user_txt!!i!!.value=''\"/>
 </div>
 ";

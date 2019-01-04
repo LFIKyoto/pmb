@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_bannette_datasource_bannette.class.php,v 1.1.2.2 2015-10-06 07:08:25 dgoron Exp $
+// $Id: cms_module_bannette_datasource_bannette.class.php,v 1.2 2016-09-20 10:25:42 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -42,13 +42,13 @@ class cms_module_bannette_datasource_bannette extends cms_module_common_datasour
 			$id_bannette = $selector->get_value();
 			
 			if(is_array($id_bannette) && count($id_bannette)){
-				$query = "select id_bannette, nom_bannette, comment_public, entete_mail, piedpage_mail from bannettes where id_bannette = ".$id_bannette[0];
+				$query = "select id_bannette, nom_bannette, comment_public, entete_mail, piedpage_mail from bannettes where id_bannette = '".($id_bannette[0]*1)."'";
 				$result = pmb_mysql_query($query);
 				if(pmb_mysql_num_rows($result)){
 					$row=pmb_mysql_fetch_object($result);
 					$flux_rss = array();
 					$i=0;
-					$query2 = "select num_rss_flux from  rss_flux_content where type_contenant='BAN' and num_contenant=".$row->id_bannette;
+					$query2 = "select num_rss_flux from  rss_flux_content where type_contenant='BAN' and num_contenant='".($row->id_bannette*1)."'";
 					$result2 = pmb_mysql_query($query2);						
 					if (pmb_mysql_num_rows($result2)) {
 						while ($row2 = pmb_mysql_fetch_object($result2)) {

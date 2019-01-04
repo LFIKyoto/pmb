@@ -2,10 +2,10 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: connector_out.php,v 1.6 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: connector_out.php,v 1.9 2018-02-20 10:10:49 dbellamy Exp $
 //Here be komodo dragons
 
-//Les erreurs php font taches dans les protocols des connecteurs
+//Les erreurs php font taches dans les protocoles des connecteurs
 if (!isset($_GET["debug"])) {
 	ini_set('display_errors', 0);
 	error_reporting(0);
@@ -22,19 +22,17 @@ $include_path = $base_path."/includes";
 $javascript_path= $base_path."/javascript";
 
 
-//Cette fonction recréer un environnement de session, comme si l'utilisateur était loggué
+//Cette fonction recrée un environnement de session, comme si l'utilisateur était loggué
 function create_user_environment($user_id) {
 	//Copié de /includes/sessions.inc.php
 	global $dbh; // le lien MySQL
 	global $stylesheet; /* pour qu'à l'ouverture de la session le user récupère de suite son style */
-	global $PMBuserid, $PMBusername, $PMBgrp_num;
+	global $PMBuserid, $PMBgrp_num;
 	global $checkuser_type_erreur ;
-	global $PMBusernom;
-	global $PMBuserprenom;
-	global $PMBuseremail;
 	global $PMBdatabase ;
 	global $database;
 	global $deflt_styles;
+	global $pmb_indexation_lang;
 	
 	if (!$PMBdatabase) $PMBdatabase=$database;
 	
@@ -54,57 +52,11 @@ function create_user_environment($user_id) {
 	define('SESSlang'	, $ff->user_lang);
 	define('SESSrights'	, $flag);
 	
-	/* param par défaut */	
-	$requete_param = "SELECT * FROM users WHERE userid=$user_id LIMIT 1 ";
-	$res_param = pmb_mysql_query($requete_param, $dbh);
-	$field_values = pmb_mysql_fetch_row( $res_param );
-	$i = 0;
-	while ($i < pmb_mysql_num_fields($res_param)) {
-		$field = pmb_mysql_field_name($res_param, $i) ;
-		$field_deb = substr($field,0,6);
-		switch ($field_deb) {
-			case "deflt_" :
-				global $$field;
-				$$field=$field_values[$i];
-				break;
-			case "deflt2" :
-				global $$field;
-				$$field=$field_values[$i];
-				break;
-			case "param_" :
-				global $$field;
-				$$field=$field_values[$i];
-				break ;
-			case "value_" :
-				global $$field;
-				$$field=$field_values[$i];
-				break ;
-			case "xmlta_" :
-				global $$field;
-				$$field=$field_values[$i];
-				break ;
-			case "deflt3" :
-				global $$field;
-				$$field=$field_values[$i];
-				break;
-			default :
-				break ;
-			}
-		$i++;
-		}
-	$requete_nom = "SELECT nom, prenom, user_email, userid, username, grp_num FROM users WHERE userid=$user_id ";
-	$res_nom = pmb_mysql_query($requete_nom, $dbh);
-	$param_nom = pmb_mysql_fetch_object( $res_nom );
-	$PMBusernom=$param_nom->nom ;
-	$PMBuserprenom=$param_nom->prenom ;
-	$PMBgrp_num=$param_nom->grp_num;
-	$PMBuseremail=$param_nom->user_email ;	
-	// pour que l'id user soit dispo partout
-	define('SESSuserid'	, $param_nom->userid);
-	$PMBuserid = $param_nom->userid;
-	$PMBusername = $param_nom->username;
-	
+	/* param par défaut */
+	load_user_param();
+	define('SESSuserid'	, $PMBuserid);
 	/* on va chercher la feuille de style du user */
+	global $deflt_styles;
 	$stylesheet = $deflt_styles ;
 
 	//Récupération  de l'historique
@@ -122,7 +74,7 @@ function create_user_environment($user_id) {
 //Ignition sequence:
 require_once ("$base_path/includes/init.inc.php");
 @ini_set('zend.ze1_compatibility_mode',0);
-//Les erreurs php font taches dans les protocols des connecteurs
+//Les erreurs php font taches dans les protocoles des connecteurs
 if (!isset($_GET["debug"])) {
 	ini_set('display_errors', 0);
 	error_reporting(~E_ALL);

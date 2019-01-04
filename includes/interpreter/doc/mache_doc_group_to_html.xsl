@@ -3,7 +3,7 @@
 ****************************************************************************************
 © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: mache_doc_group_to_html.xsl,v 1.1 2015-07-02 07:47:24 mbertin Exp $ 
+$Id: mache_doc_group_to_html.xsl,v 1.2 2016-03-22 09:01:20 cgil Exp $ 
 Conception: Erwan Martin:
 Design copié de la feuille de style wsdl-viewer.xsl, voir http://tomi.vanek.sk
 -->
@@ -90,11 +90,16 @@ extension-element-prefixes="func" xmlns:pmb="http://sigb.net/es/misc/" xmlns:exs
 					<h1>Template de PMB: Liste des groupes de fonctions</h1>
 				</div>
 				<h2 class="target">Liste des groupes</h2>
-				<ul>
+				<ul class="listDocs">
 					<xsl:for-each select="$catalog/catalog/item">
 						<xsl:choose>
 							<xsl:when test="$navigation_base != ''">
-								<li><a href="{$navigation_base}group={@name}"><xsl:value-of select="@name"/></a> : <xsl:value-of select="@description"/></li>
+								<li id="Doc_{@name}">
+									<a href="{$navigation_base}group={@name}">
+										<span class="titleDoc"><xsl:value-of select="@name"/></span>
+										<span class="descDoc"><xsl:value-of select="@description"/></span>
+									</a>
+								</li>
 							</xsl:when>
 							<xsl:otherwise>
 								<li><xsl:value-of select="@name"/></li>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mysql_backup.class.php,v 1.9 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: mysql_backup.class.php,v 1.10 2017-06-30 14:08:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -17,20 +17,20 @@ class mysql_backup {
 //		propriétés de la classe
 // ---------------------------------------------------------------
 
-	var $host;					//---- host name e.g. localhost
-	var $db;					//---- db name
-	var $user;					//---- db username
-	var $pass;					//---- db password
-	var $fptr;					//---- file pointer
-	var $filename;				//---- backup file concerned
-	var $extension = '.bz2';	// extension for backup files
-	var $buffer = '';			// a buffer
-	var $dump = '';
+	public $host;					//---- host name e.g. localhost
+	public $db;					//---- db name
+	public $user;					//---- db username
+	public $pass;					//---- db password
+	public $fptr;					//---- file pointer
+	public $filename;				//---- backup file concerned
+	public $extension = '.bz2';	// extension for backup files
+	public $buffer = '';			// a buffer
+	public $dump = '';
 // ---------------------------------------------------------------
 //		mysql_backup() : constructeur
 // ---------------------------------------------------------------
 
-	function mysql_backup() {
+	public function __construct() {
 		global $pmb_set_time_limit;
 		@set_time_limit ($pmb_set_time_limit);
 	}
@@ -38,7 +38,7 @@ class mysql_backup {
 //---- backup
 //------------------------------------------
 
-	function backup() {
+	public function backup() {
 		if($this->open_backup_stream()) {
 			$this->fetch_data();
 			$this->close_backup_stream;
@@ -50,7 +50,7 @@ class mysql_backup {
 //---- restore
 //------------------------------------------
 
-	function restore($src) {
+	public function restore($src) {
 		global $dbh;
 		$SQL='';
 		if($src) {
@@ -75,7 +75,7 @@ class mysql_backup {
 //---- This will fetch data in the whole database
 //------------------------------------------
 
-	function fetch_data() {
+	public function fetch_data() {
 
 		global $dbh;
 
@@ -208,7 +208,7 @@ class mysql_backup {
 //---- open out stream for backup
 //------------------------------------------
 
-	function open_backup_stream() {
+	public function open_backup_stream() {
 		global $backup_dir;
 		$dir = pmb_preg_replace('/\/\s$|\/$/', '', $backup_dir);
 		if(!$dir) $dir = '.';
@@ -225,7 +225,7 @@ class mysql_backup {
 //---- open stream to restore
 //------------------------------------------
 
-	function open_restore_stream() {
+	public function open_restore_stream() {
 		global $backup_dir;
 		$dir = pmb_preg_replace('/\/\s$|\/$/', '', $backup_dir);
 		if(!$dir) $dir = '.';
@@ -245,7 +245,7 @@ class mysql_backup {
 //---- closes backup stream
 //------------------------------------------
 
-	function close_backup_stream() {
+	public function close_backup_stream() {
 		if($this->fptr)
 			fclose($this->fptr);
 	}

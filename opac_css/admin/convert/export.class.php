@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export.class.php,v 1.31.4.1 2015-11-18 09:48:51 mbertin Exp $
+// $Id: export.class.php,v 1.40 2018-02-20 09:35:07 dbellamy Exp $
 
 //Export d'une notice PMB en XML PMB MARC
 
@@ -13,21 +13,22 @@ if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 //require_once ("$base_path/admin/import/$pmb_import_modele") ;
 require_once($class_path."/parametres_perso.class.php");
 require_once("$class_path/XMLlist.class.php");
+require_once($class_path."/notice_relations_collection.class.php");
 
 class export {
 
-	var $notice;
-	var $xml_array = array();
-	var $notice_list = array();
-	var $current_notice = 0;
-	var $notice_exporte=array();
+	public $notice;
+	public $xml_array = array();
+	public $notice_list = array();
+	public $current_notice = 0;
+	public $notice_exporte=array();
 	//Enregistre les bulletins déja exporté
-	var $bulletins_exporte=array();
+	public $bulletins_exporte=array();
 	//Pour savoir si il y des bulletins à exporter
-	var $expl_bulletin_a_exporter=array();
+	public $expl_bulletin_a_exporter=array();
 	
 	//Initialisation avec une liste de numeros de notices (si liste vide alors on prend toute la base)
-	function export($l_idnotices, $noti_exporte=array(),$bull_exporte=array()) {
+	public function __construct($l_idnotices, $noti_exporte=array(),$bull_exporte=array()) {
 		$this->notice_exporte = $noti_exporte;
 		$this->bulletins_exporte = $bull_exporte;
 		if (is_array($l_idnotices)) {
@@ -46,7 +47,7 @@ class export {
 	}
 	
 	//Conversion au format XML du tableau de donnees
-	function toxml() {
+	public function toxml() {
 		global $charset;
 		$this -> notice = "<notice>\n";
 		//Record descriptor
@@ -63,11 +64,11 @@ class export {
        				$this -> notice.= " ".$key."=\"".htmlspecialchars($value,ENT_QUOTES,$charset)."\""; //On construit le champ f avec nom de l'attribut = sa valeur
 				}
 			}
-			if ($this -> xml_array["f"][$i]["value"] == "") {
+			if (!isset($this -> xml_array["f"][$i]["value"]) || $this -> xml_array["f"][$i]["value"] == "") {
 				$this -> notice.= " ind=\"".$this -> xml_array["f"][$i]["ind"]."\"";
 			}
 			$this -> notice.= ">";
-			if ($this -> xml_array["f"][$i]["value"] == "") {
+			if (!isset($this -> xml_array["f"][$i]["value"]) || $this -> xml_array["f"][$i]["value"] == "") {
 				$this->notice.="\n";
 				for ($j = 0; $j < count($this -> xml_array["f"][$i]["s"]); $j ++) {
 					$this -> notice.= "    <s c=\"".$this -> xml_array["f"][$i]["s"][$j]["c"]."\">".htmlspecialchars($this -> xml_array["f"][$i]["s"][$j]["value"],ENT_QUOTES,$charset)."</s>\n";
@@ -82,25 +83,25 @@ class export {
 		$this -> notice.= "</notice>\n";
 	}
 	
-	function tojson() {
+	public function tojson() {
 		$this->notice = json_encode($this->xml_array);
 	}
 	
-	function toserialized() {
+	public function toserialized() {
 		$this->notice = serialize($this->xml_array);
 	}
 	
-	function to_raw_array() {
+	public function to_raw_array() {
 		$this->notice = $this->xml_array;
 	}
 	
 	//Ajout d'un champ dans le tableau de donnees
-	function add_field($field_code, $field_ind, $sub_fields, $value = "",$attrs= "") {
+	public function add_field($field_code, $field_ind, $sub_fields, $value = "",$attrs= "") {
 		$f_ = array();
 		$f_["c"] = $field_code;
 		if ($field_ind)
 			$f_["ind"] = $field_ind;
-		if($attrs != "" && is_array($attrs)){ //Si on a un tableau d'attribut
+		if(is_array($attrs)){ //Si on a un tableau d'attribut
 			foreach ( $attrs as $key1 => $value1 ) {//Pour chaque couple (nom,valeur) de chaque attribut
 	       		$f_[$key1] = $value1;
 			}
@@ -133,7 +134,7 @@ class export {
 	}
 
 	//Generation XML de la prochaine notice (renvoi true si prochaine notice, false si plus de notices disponibles)
-	function get_next_notice($lender = "", $td = array(), $sd = array(), $keep_expl = false, $params=array(), $force_diffusion=false) {
+	public function get_next_notice($lender = "", $td = array(), $sd = array(), $keep_expl = false, $params=array(), $force_diffusion=false, $keep_explnum=false) {
 		global $include_path, $lang;
 		global $opac_show_book_pics;
 		global $dbh,$charset;
@@ -177,9 +178,14 @@ class export {
 			$c100=substr($res -> create_date, 0, 4).substr($res -> create_date, 5, 2).substr($res -> create_date, 8, 2)."u        u  u0frey".$encodage."    ba";
 			$this-> add_field("100","  ",array("a"=>$c100),"");
 			
+			//date de parution en zone de donnée locale, si calculée
+			if ((trim($res->date_parution)) && ($res->date_parution!='0000-00-00')) {
+				$this -> add_field("009", "  ", array("a"=>$res->date_parution));
+			}
+			
 			//Titre
-			$titre[c] = "200";
-			$titre[ind] = "1 ";
+			$titre['c'] = "200";
+			$titre['ind'] = "1 ";
 			$labels = array("a", "c", "d", "e");
 			$subfields = array();
 			for ($i = 1; $i < 5; $i ++) {
@@ -209,7 +215,7 @@ class export {
 					$subfields["a"] = $row_tu->tu_name;
 					$subfields["u"] = $row_tu->tu_tonalite;
 					$subfields["n"] = $row_tu->tu_comment;
-					$subfields["i"] = $row_tu->ntu_titr;
+					$subfields["i"] = $row_tu->ntu_titre;
 					$subfields["k"] = $row_tu->ntu_date;
 					$subfields["l"] = $row_tu->ntu_sous_vedette;
 					$subfields["m"] = $row_tu->ntu_langue;
@@ -314,6 +320,9 @@ class export {
 			$subfields["a"] = $res -> n_resume;
 			$this -> add_field("330", "  ", $subfields);
 			
+			if(!isset($params["include_authorite_ids"])) {
+				$params["include_authorite_ids"] = '';
+			}
 			//Auteurs
 			
 			//Recherche des auteurs;
@@ -556,14 +565,15 @@ class export {
 
 			//Notices liées, relations entre notices
 			if($params["exp_generer_liens"]){
+				$notice_relations = notice_relations_collection::get_object_instance($res->notice_id);
 				//On choisit d'exporter les notices mères
 				if($params["exp_export_mere"]){
-					$requete="SELECT num_notice, linked_notice, relation_type, rank from notices_relations where num_notice=".$res->notice_id." order by num_notice, rank asc";
-					$resultat=pmb_mysql_query($requete);
-					while(($notice_fille=pmb_mysql_fetch_object($resultat))) {						
-						$requete_mere="SELECT * FROM notices WHERE notice_id=".$notice_fille->linked_notice;
-						$resultat_mere=pmb_mysql_query($requete_mere);
-						while(($notice_mere=pmb_mysql_fetch_object($resultat_mere))) {
+					$parents = $notice_relations->get_parents();
+					foreach ($parents as $rel_type=>$parents_relations) {
+						foreach ($parents_relations as $parent) {
+							$requete_mere="SELECT * FROM notices WHERE notice_id=".$parent->get_linked_notice();
+							$resultat_mere=pmb_mysql_query($requete_mere);
+							$notice_mere=pmb_mysql_fetch_object($resultat_mere);
 							// Exclure de l'export (opac, panier) les fiches interdites de diffusion dans administration, Notices > Origines des notices NG72
 							$sql_exclu="select orinot_diffusion from origine_notice,notices where notice_id = '".$notice_mere->notice_id."' and origine_catalogage = orinot_id ";
 							$result_exclu=pmb_mysql_query($sql_exclu);
@@ -585,8 +595,8 @@ class export {
 							}
 							$list_options[] = "bl:".$notice_mere->niveau_biblio.$notice_mere->niveau_hierar;
 							$list_options[] = "id:".$notice_mere->notice_id;
-							if($notice_fille->rank) $list_options[] = "rank:".$notice_fille->rank;
-							if($notice_fille->relation_type) $list_options[] = "type_lnk:".$notice_fille->relation_type;
+							if($parent['rank']) $list_options[] = "rank:".$parent['rank'];
+							if($parent->get_relation_type()) $list_options[] = "type_lnk:".$parent->get_relation_type();
 							$list_options[] = 'lnk:parent';
 							$subfields["9"] = $list_options;
 							//Relation avec mono = ISBN
@@ -640,26 +650,26 @@ class export {
 							$list_attribut->analyser();
 							$table_attribut = $list_attribut->table;
 							//On teste si la relation est spéciale, de type contient dans une boite
-							if($notice_fille->relation_type=='d')
+							if($parent->get_relation_type()=='d')
 								$indicateur="d0";
 							else $indicateur="  ";
-							$this->add_field($table_attribut[$notice_fille->relation_type],$indicateur,$subfields);
-							
+							$this->add_field($table_attribut[$parent->get_relation_type()],$indicateur,$subfields);
+								
 							//On exporte les notices mères liées
-							if($params["exp_export_notice_mere_link"] && (array_search($notice_mere->notice_id,$this->notice_exporte)===false) && $diffusable){
+							if($params["exp_export_notice_mere_link"] && (array_search($notice_mere->notice_id,$this->notice_exporte)===false) && (array_search($notice_mere->notice_id,$this->notice_list)===false) && $diffusable){
 								$this->notice_list[]=$notice_mere->notice_id;
 							}
-						}						
+						}
 					}
 				}
 				//On choisit d'exporter les notices filles
 				if($params["exp_export_fille"]){
-					$requete="SELECT num_notice, linked_notice, relation_type, rank from notices_relations where linked_notice=".$res->notice_id." order by num_notice, rank asc";
-					$resultat=pmb_mysql_query($requete);
-					while(($notice_mere=pmb_mysql_fetch_object($resultat))) {						
-						$requete_fille="SELECT * FROM notices WHERE notice_id=".$notice_mere->num_notice;
-						$resultat_fille=pmb_mysql_query($requete_fille);
-						while(($notice_fille=pmb_mysql_fetch_object($resultat_fille))) {
+					$childs = $notice_relations->get_childs();
+					foreach ($childs as $rel_type=>$childs_relations) {
+						foreach ($childs_relations as $child) {
+							$requete_fille="SELECT * FROM notices WHERE notice_id=".$child->get_linked_notice();
+							$resultat_fille=pmb_mysql_query($requete_fille);
+							$notice_fille=pmb_mysql_fetch_object($resultat_fille);
 							// Exclure de l'export (opac, panier) les fiches interdites de diffusion dans administration, Notices > Origines des notices NG72
 							$sql_exclu="select orinot_diffusion from origine_notice,notices where notice_id = '".$notice_fille->notice_id."' and origine_catalogage = orinot_id ";
 							$result_exclu=pmb_mysql_query($sql_exclu);
@@ -672,8 +682,8 @@ class export {
 							$list_titre[] = ($notice_fille->tit1) ? $notice_fille->tit1 : " ";
 							$list_options[] = "bl:".$notice_fille->niveau_biblio.$notice_fille->niveau_hierar;
 							$list_options[] = "id:".$notice_fille->notice_id;
-							if($notice_mere->rank) $list_options[] = "rank:".$notice_mere->rank;
-							if($notice_mere->relation_type) $list_options[] = "type_lnk:".$notice_mere->relation_type;
+							if($child['rank']) $list_options[] = "rank:".$child['rank'];
+							if($child->get_relation_type()) $list_options[] = "type_lnk:".$child->get_relation_type();
 							$list_options[] = 'lnk:child';
 							$subfields["9"] = $list_options;
 							//Relation avec mono = ISBN
@@ -729,13 +739,13 @@ class export {
 							if($notice_fille->relation_type=='d')
 								$indicateur="d0";
 							else $indicateur="  ";
-							$this->add_field($table_attribut[$notice_mere->relation_type],$indicateur,$subfields);
+							$this->add_field($table_attribut[$child->get_relation_type()],$indicateur,$subfields);
 							
 							//On exporte les notices filles liées
-							if($params["exp_export_notice_fille_link"] && (array_search($notice_fille->notice_id,$this->notice_exporte)===false) && $diffusable){
+							if($params["exp_export_notice_fille_link"] && (array_search($notice_fille->notice_id,$this->notice_exporte)===false) && (array_search($notice_fille->notice_id,$this->notice_list)===false) && $diffusable){
 								$this->notice_list[]=$notice_fille->notice_id;
 							}
-						}						
+						}			
 					}
 				}
 				
@@ -758,7 +768,7 @@ class export {
 						$subfields_461["9"] = $list_options;
 						$this->add_field("461","  ",$subfields_461);
 						//On exporte les notices de pério liées
-						if($params["exp_export_notice_perio_link"] && (array_search($notice_perio_link->notice_id,$this->notice_exporte)===false) && $diffusable){
+						if($params["exp_export_notice_perio_link"] && (array_search($notice_perio_link->notice_id,$this->notice_exporte)===false) && (array_search($notice_perio_link->notice_id,$this->notice_list)===false) && $diffusable){
 							$this->notice_list[]=$notice_perio_link->notice_id;			
 						}
 					}
@@ -837,7 +847,7 @@ class export {
 					    	$this->expl_bulletin_a_exporter[]=$notice_art_link->bulletin_id;
 					    }
 						//On exporte les notices d'articles liées
-						if($params["exp_export_notice_art_link"] && (array_search($notice_art_link->analysis_notice,$this->notice_exporte)===false)  && $diffusable){
+						if($params["exp_export_notice_art_link"] && (array_search($notice_art_link->analysis_notice,$this->notice_exporte)===false) && (array_search($notice_art_link->analysis_notice,$this->notice_list)===false) && $diffusable){
 							$this->notice_list[]=$notice_art_link->analysis_notice;			
 						}					
 					}			
@@ -890,6 +900,11 @@ class export {
 				}
 			}
 			
+			//Documents numeriques
+			if ($keep_explnum) {
+				$this->process_explnum($res->notice_id);
+			}
+			
 			//Record field
 			$biblio = $res->niveau_biblio ;
 			$hierar = $res->niveau_hierar ;
@@ -917,7 +932,33 @@ class export {
 		}
 	}
 	
-	function get_next_bulletin($lender = "", $td = array(), $sd = array(), $keep_expl = false, $params=array()){
+	private function process_explnum($id_notice) {
+		global $opac_url_base;
+		
+		$record_datas = record_display::get_record_datas($id_notice);
+		$explnum_datas = $record_datas->get_explnums_datas();
+		
+		if(count($explnum_datas['explnums'])) {
+			foreach ($explnum_datas['explnums'] as $explnum){
+				$subfields_897 = array();
+				$subfields_897['a']=$opac_url_base."doc_num.php?explnum_id=".$explnum['id'];
+				$subfields_897['b']=(($explnum['name'])?$explnum['name']:$explnum['filename']);
+				$subfields_897['f']=$explnum['filename'];
+				$subfields_897['p']='';
+				$subfields_897['t']=$explnum['mimetype'];
+				
+				if($explnum['url']) { //URL
+				    $subfields_897['b']=basename(($dn->explnum_nom)?$dn->explnum_nom:$dn->explnum_url);
+					$subfields_897['f']='';
+				}
+				
+				$this->add_field('897','  ',$subfields_897);
+			}
+		}
+
+	}
+	
+	public function get_next_bulletin($lender = "", $td = array(), $sd = array(), $keep_expl = false, $params=array()){
 		global $is_expl_caddie,$charset;
 		
 		unset($this->xml_array);
@@ -1017,7 +1058,7 @@ class export {
 	}
 	
 	
-	function processing_expl($lender,$td,$sd,$params,$expl_notice,$expl_bulletin){
+	public function processing_expl($lender,$td,$sd,$params,$expl_notice,$expl_bulletin){
 		global $is_expl_caddie;
 		//Traitement des exemplaires
 		$requete = "select expl_id, create_date, expl_cb,expl_cote,expl_statut,statut_libelle, statusdoc_codage_import, expl_typdoc, tdoc_libelle, tdoc_codage_import, expl_note, expl_comment, expl_section, section_libelle, sdoc_codage_import, expl_owner, lender_libelle, codestat_libelle, statisdoc_codage_import, expl_date_retour, expl_date_depot, expl_note, pret_flag, location_libelle, locdoc_codage_import from exemplaires, docs_statut, docs_type, docs_section, docs_codestat, lenders, docs_location where ".($expl_bulletin != 0 ?"expl_bulletin=".$expl_bulletin." AND expl_notice=0":"expl_notice=".$expl_notice." AND expl_bulletin=0")." and expl_statut=idstatut and expl_typdoc=idtyp_doc and expl_section=idsection and expl_owner=idlender and expl_codestat=idcode and expl_location=idlocation";
@@ -1047,7 +1088,7 @@ class export {
 		}
 	}
 	
-	function processing_cp($type,$id,$val_f=""){
+	public function processing_cp($type,$id,$val_f=""){
 		$mes_pp= new parametres_perso($type);
 		$mes_pp->get_values($id);
 		$values = $mes_pp->values;

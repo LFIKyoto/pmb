@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_sectionslist_view_carousel.class.php,v 1.5 2015-06-08 09:12:09 arenou Exp $
+// $Id: cms_module_sectionslist_view_carousel.class.php,v 1.7 2018-08-24 08:44:59 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,6 +11,18 @@ class cms_module_sectionslist_view_carousel extends cms_module_carousel_view_car
 	
 	public function __construct($id=0){
 		parent::__construct($id);
+		$this->default_template = "
+<ul id='carousel_{{id}}'>
+	{% for section in sections %}
+		<li class='{{id}}_item'>
+			<a href='{{section.link}}' title='{{section.title}}'>
+				<img src='{{section.vign}}' alt=''/>
+				<br />
+			</a>
+		</li>
+	{% endfor %}
+</ul>
+		";
 	}
 	
 	public function get_form(){
@@ -41,7 +53,7 @@ class cms_module_sectionslist_view_carousel extends cms_module_carousel_view_car
 			$infos['link']=$this->get_constructed_link("section",$infos['id']);
 			$datas[]= $infos;
 		}
-		return parent::render(array('records' => $datas));
+		return parent::render(array('sections' => $datas));
 	}
 	
 	public function get_format_data_structure(){
@@ -53,13 +65,9 @@ class cms_module_sectionslist_view_carousel extends cms_module_carousel_view_car
 		
 		$format_datas = array(
 			array(
-				 'var' => "id",
-				 'desc'=> $this->msg['cms_module_carousel_view_carousel_id_desc']
-			),
-			array(
-				'var' => "records",
-				'desc' => $this->msg['cms_module_carousel_view_carousel_records_desc'],
-				'children' => $this->prefix_var_tree($datas,"records[i]")
+				'var' => "sections",
+				'desc' => $this->msg['cms_module_sectionslist_view_carousel_sections_desc'],
+				'children' => $this->prefix_var_tree($datas,"sections[i]")
 			)
 		);
 		$format_datas = array_merge($format_datas,parent::get_format_data_structure());

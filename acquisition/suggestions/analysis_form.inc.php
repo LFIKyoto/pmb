@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: analysis_form.inc.php,v 1.1 2009-11-04 14:37:54 kantin Exp $
+// $Id: analysis_form.inc.php,v 1.2 2017-08-04 14:05:03 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -14,11 +14,11 @@ $sug = new suggestions($id_sug);
 
 
 $myAnalysis = new analysis($id_analysis);
-if(!$myAnalysis->analysis_id){
-	$myAnalysis->analysis_tit1 = $sug->titre;
-	$myAnalysis->analysis_lien = $sug->url_suggestion;
-	$myAnalysis->analysis_n_gen = $sug->commentaires;
-	$myAnalysis->analysis_typdoc = "a";
+if(!$myAnalysis->id){
+	$myAnalysis->tit1 = $sug->titre;
+	$myAnalysis->lien = $sug->url_suggestion;
+	$myAnalysis->n_gen = $sug->commentaires;
+	$myAnalysis->typdoc = "a";
 }
 
 $analysis_type_form = str_replace('!!id_sug!!',$sug->id_suggestion,$analysis_type_form);

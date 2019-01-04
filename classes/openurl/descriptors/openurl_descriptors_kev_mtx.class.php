@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: openurl_descriptors_kev_mtx.class.php,v 1.1 2011-08-02 12:35:57 arenou Exp $
+// $Id: openurl_descriptors_kev_mtx.class.php,v 1.4 2017-07-12 09:07:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,23 +10,23 @@ require_once($class_path."/openurl/descriptors/openurl_descriptors.class.php");
 
 class openurl_descriptor_identifier_kev_mtx extends openurl_descriptor_identifier{
 
-    function openurl_descriptor_identifier_kev_mtx($notice=array()) {
-		parent::openurl_descriptor_identifier($notice);
+    public function __construct($notice=array()) {
+		parent::__construct($notice);
     }
     
-    function serialize($tab){
+    public static function serialize($tab){
     	return openurl_serialize_kev_mtx::serialize($tab);
     }
 }
 
 class openurl_descriptor_identifier_kev_mtx_isbn extends openurl_descriptor_identifier_kev_mtx{
 
-    function openurl_descriptor_identifier_kev_mtx_isbn($notice) {
-    	parent::openurl_descriptor_identifier_kev_mtx($notice);
+    public function __construct($notice) {
+    	parent::__construct($notice);
     	$this->uri = $this->uri.":urn:ISBN";
     }
     
-    function serialize($debug=false){
+    public function serialize_infos($debug=false){
     	$this->infos=array();
     	if($this->notice['bl']['value'] == "m"){
 	 		foreach($this->notice['f'] as $f){
@@ -44,10 +44,10 @@ class openurl_descriptor_identifier_kev_mtx_isbn extends openurl_descriptor_iden
 	 		}
     	}
     	if($debug) highlight_string("ISBN (identifier):".print_r($this->infos,true));
-	 	return parent::serialize($this->infos);
+	 	return static::serialize($this->infos);
     }
     
-    function unserialize($infos){
+    public function unserialize($infos){
     	$this->infos = $infos;
     	$this->search_infos[] =array(
     		'id' => $this->entityType == "rft" ? $this->crit_id['isbn'] : $this->crit_id['book_isbn'],
@@ -60,12 +60,12 @@ class openurl_descriptor_identifier_kev_mtx_isbn extends openurl_descriptor_iden
 
 class openurl_descriptor_identifier_kev_mtx_issn extends openurl_descriptor_identifier_kev_mtx{
 
-    function openurl_descriptor_identifier_kev_mtx_issn($notice) {
-    	parent::openurl_descriptor_identifier_kev_mtx($notice);
+    public function __construct($notice) {
+    	parent::__construct($notice);
     	$this->uri = $this->uri.":urn:ISSN";
     }
     
-    function serialize($debug=false){
+    public function serialize_infos($debug=false){
     	$this->infos=array();
     	
  		if($this->notice['bl']['value'] == "s" && $this->notice['hl']['value'] == "1"){
@@ -84,10 +84,10 @@ class openurl_descriptor_identifier_kev_mtx_issn extends openurl_descriptor_iden
 	 		}
    		}
    		if($debug) highlight_string("ISSN (identifier):".print_r($this->infos,true));
-    	return parent::serialize($this->infos);
+    	return static::serialize($this->infos);
     }
 
-    function unserialize($infos){
+    public function unserialize($infos){
     	$this->infos = $infos;
      	$this->search_infos[] =array(
     		'id' => $this->entityType == "rft" ? $this->crit_id['issn'] : $this->crit_id['parent_issn'],
@@ -99,12 +99,12 @@ class openurl_descriptor_identifier_kev_mtx_issn extends openurl_descriptor_iden
 
 class openurl_descriptor_identifier_kev_mtx_doi extends openurl_descriptor_identifier_kev_mtx{
 
-    function openurl_descriptor_identifier_kev_mtx_doi($notice) {
-    	parent::openurl_descriptor_identifier_kev_mtx($notice);
+    public function __construct($notice) {
+    	parent::__construct($notice);
     	$this->uri = $this->uri.":info:doi";
     }
 
-    function serialize($debug=false){
+    public function serialize_infos($debug=false){
     	$infos=array();
     	$doi = false;
 
@@ -118,10 +118,10 @@ class openurl_descriptor_identifier_kev_mtx_doi extends openurl_descriptor_ident
   			}
     	}
    		if($debug) highlight_string("DOI (identifier):".print_r($infos,true));
-    	return parent::serialize($infos);
+    	return static::serialize($infos);
     }
     
-    function unserialize($infos){
+    public function unserialize($infos){
     	$this->infos = $infos;
     	//on ne traite que pour la notice, pas un parent...
     	if($this->entityType == "rft"){
@@ -142,12 +142,12 @@ class openurl_descriptor_identifier_kev_mtx_doi extends openurl_descriptor_ident
 
 class openurl_descriptor_identifier_kev_mtx_pmid extends openurl_descriptor_identifier_kev_mtx{
 
-    function openurl_descriptor_identifier_kev_mtx_pmid($notice) {
-    	parent::openurl_descriptor_identifier_kev_mtx($notice);
+    public function __construct($notice) {
+    	parent::__construct($notice);
     	$this->uri = $this->uri.":info:pmid";
     }
     
-    function serialize($debug=false){
+    public function serialize_infos($debug=false){
     	$this->infos=array();
     	$doi = false;
     	
@@ -161,10 +161,10 @@ class openurl_descriptor_identifier_kev_mtx_pmid extends openurl_descriptor_iden
   			} 		
     	}
    		if($debug) highlight_string("PMID (identifier):".print_r($this->infos,true));
-    	return parent::serialize($this->infos);
+    	return static::serialize($this->infos);
     }
     
-    function unserialize($infos){
+    public function unserialize($infos){
     	$this->infos = $infos;
     	//on ne traite que pour la notice, pas un parent...
     	if($this->entityType == "rft"){
@@ -185,51 +185,51 @@ class openurl_descriptor_identifier_kev_mtx_pmid extends openurl_descriptor_iden
 
 class openurl_descriptor_identifier_kev_mtx_resolver extends openurl_descriptor_identifier_kev_mtx{
 	
-	function openurl_descriptor_identifier_kev_mtx_resolver($adr){
-		parent::openurl_descriptor_identifier_kev_mtx();
+	public function __construct($adr){
+		parent::__construct();
 		$this->adr = $adr;
 	}
 	
-	function serialize($debug=false){
+	public function serialize_infos($debug=false){
 		$this->infos = array();
 		$this->infos[$this->entityType.'_id'] = $this->adr;
 		if($debug) highlight_string("Resolver Type (identifier):".print_r($this->infos,true));
-		return parent::serialize($this->infos);
+		return static::serialize($this->infos);
 	}
 	
-    function unserialize($infos){
+    public function unserialize($infos){
     	$this->infos = $infos;
     }
 }
 
 class openurl_descriptor_identifier_kev_mtx_referrer extends openurl_descriptor_identifier_kev_mtx{
 	
-	function openurl_descriptor_identifier_kev_mtx_referrer($adr){
-		parent::openurl_descriptor_identifier_kev_mtx();
+	public function __construct($adr){
+		parent::__construct();
 		$this->adr = $adr;
 	}
 	
-	function serialize($debug=false){
+	public function serialize_infos($debug=false){
 		//TODO : vérifier ce info:sid
 		$this->infos = array();
 		$this->infos[$this->entityType.'_id'] = "info:sid/".$this->adr;
 		if($debug) highlight_string("Referrer (identifier):".print_r($this->infos,true));
-		return parent::serialize($this->infos);
+		return static::serialize($this->infos);
 	}
 	
-    function unserialize($infos){
+    public function unserialize($infos){
     	$this->infos = $infos;
     }
 }
 
 class openurl_descriptor_byval_kev_mtx extends openurl_descriptor_byval{
 
-    function openurl_descriptor_byval_kev_mtx($notice="") {
-    	parent::openurl_descriptor_byval($notice);
+    public function __construct($notice="") {
+    	parent::__construct($notice);
     	$this->uri = $this->uri.":kev:mtx";
     }   
     
-    function serialize(){
+    public function serialize_infos($debug=false){
     	return openurl_serialize_kev_mtx::serialize($this->infos);
     }
 }
@@ -237,12 +237,12 @@ class openurl_descriptor_byval_kev_mtx extends openurl_descriptor_byval{
 
 class openurl_descriptor_byval_kev_mtx_book extends openurl_descriptor_byval_kev_mtx{
 
-    function openurl_descriptor_byval_kev_mtx_book($notice) {
-    	parent::openurl_descriptor_byval_kev_mtx($notice);
+    public function __construct($notice) {
+    	parent::__construct($notice);
     	$this->uri = $this->uri.":book";
     } 
 	
-	function serialize($debug=false){
+	public function serialize_infos($debug=false){
 		$isChapter = false;
 		$this->infos = array();
 
@@ -258,10 +258,10 @@ class openurl_descriptor_byval_kev_mtx_book extends openurl_descriptor_byval_kev
 		if($isChapter) $this->getChapterInfos();
 		else $this->getMonoInfos();
 		if($debug) highlight_string("kev mtx ".($isChapter ? "Chapter" : "Book")." Type (by_val):".print_r($this->infos,true));
-		return parent::serialize();
+		return parent::serialize_infos($debug);
 	}
 	
-	function unserialize($infos){
+	public function unserialize($infos){
 		$this->infos = $infos;
 		$this->search_infos[]= array(
     		'id' => $this->crit_id['typdoc'],
@@ -277,7 +277,7 @@ class openurl_descriptor_byval_kev_mtx_book extends openurl_descriptor_byval_kev
      	}
 	}
 	
-	function unserializeCommon(){
+	public function unserializeCommon(){
 	 	$aut = array();
 		foreach($this->infos as $key => $value){
 			switch(str_replace($this->entityType.".","",$key)){
@@ -357,7 +357,7 @@ class openurl_descriptor_byval_kev_mtx_book extends openurl_descriptor_byval_kev
  		}		
 	}
 	
-	function unserializeChapter(){
+	public function unserializeChapter(){
 		foreach($this->infos as $key => $value){
 			switch(str_replace($this->entityType.".","",$key)){
     			case "atitle" :
@@ -394,7 +394,7 @@ class openurl_descriptor_byval_kev_mtx_book extends openurl_descriptor_byval_kev
 		}		
 	}
 	
-	function unserializeBook(){
+	public function unserializeBook(){
 		foreach($this->infos as $key => $value){
 			switch(str_replace($this->entityType.".","",$key)){
     			case "isbn" :
@@ -424,7 +424,7 @@ class openurl_descriptor_byval_kev_mtx_book extends openurl_descriptor_byval_kev
 		}		
 	}
 	
-	function getCommonInfos(){	
+	public function getCommonInfos(){	
 		$this->infos[$this->entityType.'_val_fmt']=$this->uri;
 		foreach($this->notice['f'] as $f){
 			switch($f['c']){
@@ -542,7 +542,7 @@ class openurl_descriptor_byval_kev_mtx_book extends openurl_descriptor_byval_kev
 		}
 	}
 	
-	function getMonoInfos(){
+	public function getMonoInfos(){
 		$this->infos[$this->entityType.'.genre'] = "book";
 		foreach($this->notice['f'] as $f){
 			switch($f['c']){
@@ -597,7 +597,7 @@ class openurl_descriptor_byval_kev_mtx_book extends openurl_descriptor_byval_kev
 		}  	
 	}
 
-	function getChapterInfos(){
+	public function getChapterInfos(){
 		$this->infos[$this->entityType.'.genre'] = "bookitem";
 		foreach($this->notice['f'] as $f){
 			switch($f['c']){
@@ -661,12 +661,12 @@ class openurl_descriptor_byval_kev_mtx_book extends openurl_descriptor_byval_kev
 
 class openurl_descriptor_byval_kev_mtx_journal extends openurl_descriptor_byval_kev_mtx{
 
-    function openurl_descriptor_byval_kev_mtx_journal($notice) {
-    	parent::openurl_descriptor_byval_kev_mtx($notice);
+    public function __construct($notice) {
+    	parent::__construct($notice);
     	$this->uri = $this->uri.":journal";
     } 
 	
-	function serialize($debug=false){
+	public function serialize_infos($debug=false){
 		$this->infos = array();
 		$this->getCommonInfos();
 		switch($this->notice['bl']['value'].$this->notice['hl']['value']){
@@ -682,10 +682,10 @@ class openurl_descriptor_byval_kev_mtx_journal extends openurl_descriptor_byval_
 				break;
 		}
 		if($debug) highlight_string("kev_mtx Journal (by_val):".print_r($this->infos,true));
-		return parent::serialize();
+		return parent::serialize_infos($debug);
 	}
     
-	function unserialize($infos){
+	public function unserialize($infos){
     	$this->infos = $infos;
     	$this->unserializeCommon();
     	switch($this->infos[$this->entityType.".genre"]){
@@ -723,7 +723,7 @@ class openurl_descriptor_byval_kev_mtx_journal extends openurl_descriptor_byval_
     	}
     }
     
- 	function unserializeCommon(){
+ 	public function unserializeCommon(){
  		$aut = array();
 		foreach($this->infos as $key => $value){
 			switch(str_replace($this->entityType.".","",$key)){
@@ -763,7 +763,7 @@ class openurl_descriptor_byval_kev_mtx_journal extends openurl_descriptor_byval_
  		}
     }   
     
-    function unserializeSerial(){
+    public function unserializeSerial(){
     	foreach($this->infos as $key => $value){
 			switch(str_replace($this->entityType.".","",$key)){
     			case "jtitle" :
@@ -783,7 +783,7 @@ class openurl_descriptor_byval_kev_mtx_journal extends openurl_descriptor_byval_
     	} 	
     }
     
-    function unserializeBulletin(){
+    public function unserializeBulletin(){
     	foreach($this->infos as $key => $value){
     		
 			switch(str_replace($this->entityType.".","",$key)){
@@ -805,7 +805,7 @@ class openurl_descriptor_byval_kev_mtx_journal extends openurl_descriptor_byval_
     	}    	
     }
 
-    function unserializeArticle(){
+    public function unserializeArticle(){
        	foreach($this->infos as $key => $value){
 			switch(str_replace($this->entityType.".","",$key)){
     			case "atitle" :
@@ -826,7 +826,7 @@ class openurl_descriptor_byval_kev_mtx_journal extends openurl_descriptor_byval_
     	}   	
     }    
 	
-	function getCommonInfos(){	
+	public function getCommonInfos(){	
 		$this->infos[$this->entityType.'_val_fmt']=$this->uri;
 		$autcoll = array();
 		foreach($this->notice['f'] as $f){
@@ -923,7 +923,7 @@ class openurl_descriptor_byval_kev_mtx_journal extends openurl_descriptor_byval_
 		}
 	}
 	
-	function getSerialInfos(){
+	public function getSerialInfos(){
 		$this->infos[$this->entityType.'.genre'] = "journal";	
 		$publisher = "";
 		foreach($this->notice['f'] as $f){
@@ -960,7 +960,7 @@ class openurl_descriptor_byval_kev_mtx_journal extends openurl_descriptor_byval_
 		if($publisher && !$this->infos[$this->entityType.'.aucorp']) $this->infos[$this->entityType.'.aucorp'] = $publisher;
 	}
 
-	function getBulletinInfos(){
+	public function getBulletinInfos(){
 		$this->infos[$this->entityType.'.genre'] = "issue";
 		$lib = $btitle = "";
 		foreach($this->notice['f'] as $f){
@@ -1016,7 +1016,7 @@ class openurl_descriptor_byval_kev_mtx_journal extends openurl_descriptor_byval_
 		$this->infos[$this->entityType.'.issue'] = $issue;						
 	}
 	
-	function getArticleInfos(){
+	public function getArticleInfos(){
 		$this->infos[$this->entityType.'.genre'] = "article";
 		foreach($this->notice['f'] as $f){
 			switch($f['c']){
@@ -1080,97 +1080,100 @@ class openurl_descriptor_byval_kev_mtx_journal extends openurl_descriptor_byval_
 }
 
 class openurl_descriptor_byval_kev_mtx_service_type extends openurl_descriptor_byval_kev_mtx{
-	var $allowedServices = array();	//tableau autorisant ou non les services
+	public $allowedServices = array();	//tableau autorisant ou non les services
 	
-    function openurl_descriptor_byval_kev_mtx_service_type($allowedServices=array()) {
-    	parent::openurl_descriptor_byval_kev_mtx();
+    public function __construct($allowedServices=array()) {
+    	parent::__construct();
     	$this->uri = $this->uri.":sch_svc";
     	$this->allowedServices = $allowedServices;
     }   
     
-    function serialize($debug=false){
+    public function serialize_infos($debug=false){
     	$this->infos[$this->entityType.'_val_fmt']=$this->uri;
     	foreach($this->allowedServices as $key => $value){
 			$this->infos[$this->entityType.'.'.$key]= $value != 0 ? "yes" : "no";
     	}
 		if($debug) highlight_string("Service Type (by_val):".print_r($this->infos,true));
-		return parent::serialize();
+		return parent::serialize_infos($debug);
     }
     
-    function unserialize($infos){
+    public function unserialize($infos){
     	$this->infos = $infos;
     }
 }
 
 class openurl_descriptor_identifier_kev_mtx_requester extends openurl_descriptor_identifier_kev_mtx{
 	
-	function openurl_descriptor_identifier_kev_mtx_requester(){
-		parent::openurl_descriptor_identifier_kev_mtx();
+	public function __construct(){
+		parent::__construct();
 	}
 	
-	function serialize($debug=false){
+	public function serialize_infos($debug=false){
 		$this->infos = array();
 		$this->infos[$this->entityType.'_id'] = $this->adr;
 		if($debug) highlight_string("Resolver Type (identifier):".print_r($this->infos,true));
-		return parent::serialize($this->infos);
+		return static::serialize($this->infos);
 	}
 	
-    function unserialize($infos){
+    public function unserialize($infos){
     	$this->infos = $infos;
     }
 }
 
 class openurl_descriptor_byref_kev_mtx extends openurl_descriptor_byref{
-	var $notice_id;
-	var $source_id;
-	var $byref_url;
+	public $notice_id;
+	public $source_id;
+	public $byref_url;
 	
-	function openurl_descriptor_byref_kev_mtx($notice_infos,$source_id,$byref_url){
-		parent::openurl_descriptor_byref(array());
-		
+	public function __construct($notice_infos,$source_id,$byref_url){
+		parent::__construct(array());
+
+		$end = false;
 		for ($i=0 ; $i<count($notice_infos['f']) ; $i++){
 			switch($notice_infos['f'][$i]['c']){
 				case "001" :
 					$this->notice_id = $notice_infos['f'][$i]['value'];
-					break 2;
-			}
-		}
+					//break 2;
+					break;
+				}
+			if($end) break;
+		}	
 		$this->source_id = $source_id;
 		$this->uri = $this->uri.":kev:mtx";
 		$this->byref_url = $byref_url;
 	}
-	function serialize($tab){
+	public static function serialize($tab){
 		return openurl_serialize_kev_mtx::serialize($tab);
 	}
 }
 
 class openurl_descriptor_byref_kev_mtx_book extends openurl_descriptor_byref_kev_mtx{
 	
-	function openurl_descriptor_byref_kev_mtx_book($notice_infos,$source_id,$byref_url){
-		parent::openurl_descriptor_byref_kev_mtx($notice_infos,$source_id,$byref_url);
+	public function __construct($notice_infos,$source_id,$byref_url){
+		parent::__construct($notice_infos,$source_id,$byref_url);
 		$this->uri = $this->uri.":book";
 	}
 	
-	function serialize(){
+	public function serialize_infos($debug=false){
 		$this->infos = array();
 		$this->infos[$this->entityType.'_ref_fmt'] = $this->uri;
 		$this->infos[$this->entityType.'_ref'] = $this->byref_url."?in_id=".$this->source_id."&notice_id=".$this->notice_id."&uri=".$this->uri."&entity=".$this->entityType;
-		return parent::serialize($this->infos);
+		return static::serialize($this->infos);
 	}
 }
 
 class openurl_descriptor_byref_kev_mtx_journal extends openurl_descriptor_byref_kev_mtx{
 	
-	function openurl_descriptor_byref_kev_mtx_journal($notice_infos,$source_id,$byref_url){
-		parent::openurl_descriptor_byref_kev_mtx($notice_infos,$source_id,$byref_url);
+	public function __construct($notice_infos,$source_id,$byref_url){
+		parent::__construct($notice_infos,$source_id,$byref_url);
 		$this->uri = $this->uri.":journal";
 	}
 	
-	function serialize(){
+	public function serialize_infos($debug=false){
 		global $opac_url_base;
 		$this->infos = array();
 		$this->infos[$this->entityType.'_ref_fmt'] = $this->uri;
 		$this->infos[$this->entityType.'_ref'] = $this->byref_url."?in_id=".$this->source_id."&notice_id=".$this->notice_id."&uri=".$this->uri."&entity=".$this->entityType;
-		return parent::serialize($this->infos);
+		return static::serialize($this->infos);
 	}
 }

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: receptions_frame.php,v 1.10 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: receptions_frame.php,v 1.15 2018-07-05 09:10:34 dgoron Exp $
 
 // définition du minimum nécessaire
 $base_path="./../../..";
@@ -25,20 +25,19 @@ require_once("$include_path/bull_info.inc.php");
 require_once("$class_path/serial_display.class.php");
 require_once("$class_path/explnum.class.php");
 require_once("$class_path/expl.class.php");
+require_once("$class_path/resa.class.php");
 if ($pmb_prefill_cote) {
 	require_once("$base_path/catalog/expl/$pmb_prefill_cote"); 
 } else {
 	require_once("$base_path/catalog/expl/custom_no_cote.inc.php");
 }
 
-
 function show_delivery_form($msg_client='') {
-	
 	global $dbh, $msg, $charset;
 	global $no, $id_lig, $id_prod, $typ_lig;
 	global $recept_deliv_form, $recept_deliv_form_suite;
 	global $recept_form_qte_liv, $recept_bt_update, $recept_bt_undo, $previous, $recept_bt_next;
-
+	global $applicants_tpl;
 	$form = $recept_deliv_form;
 	$lg = new lignes_actes($id_lig);
 	$act = new actes($lg->num_acte);
@@ -75,6 +74,18 @@ function show_delivery_form($msg_client='') {
 						.htmlentities((($act->type_acte)?($msg['acquisition_act_num_dev']):($msg['acquisition_act_num_cde'])),ENT_QUOTES,$charset).htmlentities($act->numero,ENT_QUOTES,$charset),
 						$form);
 	
+	if($act->type_acte == 0 && ($typ_lig == 1 ||$typ_lig == 2) && count($lg->getApplicants())){ //Actes étant des commandes, on prend en compte les demandeurs
+		$applicants = $lg->getApplicants(); //On a les demandeurs de la commande; on les affiche pour que l'utilisateur sache qui bénéfieciera d'une réservation sur cet ouvrage
+		$applicants_label = emprunteur::getName($applicants);
+		$applicants_labels = '';
+		foreach($applicants as $applicant){
+			$applicants_labels.= '<label>'.htmlentities($applicants_label[$applicant],ENT_QUOTES,$charset).'</label><br/>';
+		} 
+		$applicants_tpl = str_replace('!!std_applicants!!', $applicants_labels, $applicants_tpl);
+		$form = str_replace('!!applicants_tr!!',$applicants_tpl,$form);
+	}else{
+		$form = str_replace('!!applicants_tr!!','',$form);
+	}
 	$form = str_replace('!!code!!',htmlentities($lg->code,ENT_QUOTES,$charset),$form);
 	$form = str_replace('!!lib!!',nl2br(htmlentities($lg->libelle,ENT_QUOTES,$charset)),$form);
 	$form = str_replace('!!qte_cde!!',$lg->nb,$form);
@@ -120,9 +131,7 @@ function show_delivery_form($msg_client='') {
 	print $form.$recept_deliv_form_suite;
 }
 
-
 function do_notice_form($notice_id=0) {
-	
 	global $recept_deliv_form_notice;
 	global $prefix_url_image;
 	
@@ -153,9 +162,7 @@ function do_notice_form($notice_id=0) {
 	return $form;
 }
 
-
 function do_art_form($art_id) {
-
 	global $recept_deliv_form_notice;
 	global $prefix_url_image;
 	
@@ -187,9 +194,7 @@ function do_art_form($art_id) {
 	return $form;
 }
 
-
 function do_bull_form($bull_id) {
-
 	global $recept_deliv_form_bull;
 	global $prefix_url_image;
 	
@@ -200,9 +205,7 @@ function do_bull_form($bull_id) {
 	return $form;
 }
 
-
 function do_expl_form() {
-	
 	global $recept_deliv_form_expl, $expl_form;
 	global $typ_lig, $id_prod;
 	global $option_num_auto, $pmb_numero_exemplaire_auto, $pmb_numero_exemplaire_auto_script, $recept_deliv_form_expl_auto;
@@ -267,21 +270,14 @@ function do_expl_form() {
 			$nex = new exemplaire('', 0, 0, $id_bulletin);
 			$expl_form = $nex->expl_form('','');
 			$form = $expl_form;
-			
 		}
-	
 	}
 	return $form;
 }
 
-
 function add_expl() {
-
 	global $typ_lig, $id_prod;
 	global $pmb_droits_explr_localises, $explr_visible_mod;
-	global $f_ex_cb, $f_ex_cote, $f_ex_typdoc, $f_ex_location, $f_ex_statut, $f_ex_cstat;
-	global $f_ex_note, $f_ex_comment, $f_ex_prix, $f_ex_owner;
-	global ${'f_ex_section'.$f_ex_location};
 	
 	$error = false;
 	
@@ -302,7 +298,6 @@ function add_expl() {
 		default : //non catalogué
 			break;
 	}
-
 	if (!$id_bulletin && !$id_notice) return $error;
 		
 	//Vérification des champs personalisés
@@ -315,30 +310,16 @@ function add_expl() {
 	} else {
 		$nex = new exemplaire($f_ex_cb, 0, 0, $id_bulletin);
 	}
-	
 	if ($nex->expl_id) {
 		return $error;
 	} else {
-		$nex->typdoc_id = $f_ex_typdoc;
-		$nex->expl_cb = $nex_expl_cb;
-		$nex->cote = $f_ex_cote;
-		$nex->section_id = ${'f_ex_section'.$f_ex_location};
-		$nex->statut_id = $f_ex_statut;
-		$nex->location_id = $f_ex_location;
-		$nex->codestat_id = $f_ex_cstat;
-		$nex->note = $f_ex_note;
-		$nex->prix = $f_ex_prix;
-		$nex->owner_id = $f_ex_owner;
-		$nex->create_date = today();
-		$nex->expl_comment = $f_ex_comment;
+		$nex->set_properties_from_form();
 		if (!$nex->save()) {
 			return $error;
 		}
-		$p_perso->rec_fields_perso($nex->expl_id);
 	}
 	return !$error;
 }
-
 
 function do_explnum_form() {
 	global $recept_deliv_form_explnum;
@@ -347,9 +328,7 @@ function do_explnum_form() {
 	return $recept_deliv_form_explnum;
 }
 
-
 function do_sugg_form($id_suggestion) {
-	
 	global $dbh, $charset;
 	global $recept_deliv_form_sugg, $deflt3receptsugstat;
 	
@@ -399,9 +378,7 @@ function do_sugg_form($id_suggestion) {
 	return $form;	
 }
 
-
 function upload_file() {
-	
 	global $f_fichier, $id_lig, $typ_lig, $id_prod, $no, $base_path;
 	global $id_rep, $path, $up_place, $f_fichier, $f_url, $f_explnum_statut, $deflt_upload_repertoire, $pmb_indexation_docnum, $pmb_indexation_docnum_default,$ck_index ;
 
@@ -419,7 +396,6 @@ function upload_file() {
 			break;
 	}
 	if (($f_notice || $f_bulletin) && $f_fichier) {
-		
 		$up_place=0;
 		$id_rep=0;
 		$path = '';
@@ -440,10 +416,9 @@ function upload_file() {
 	return;
 }
 
-
 function update() {
-
 	global $id_lig, $qte_liv, $previous; 
+	global $pmb_resa_records_no_expl, $acquisition_sugg_to_cde_resa_auto;
 
 	$error = false;
 	
@@ -499,7 +474,27 @@ function update() {
 	$lig_liv->remise = $lig_cde->remise;
 	$lig_liv->debit_tva = $lig_cde->debit_tva;
 	$lig_liv->save();		
-
+		
+	if(count($lig_cde->getApplicants()) && ($lig_cde->type_ligne == 1 || $lig_cde->type_ligne == 2)){
+		/**
+		 * Traitement des demandeurs et de leurs résas 
+		 */
+		if($pmb_resa_records_no_expl && $acquisition_sugg_to_cde_resa_auto) {
+			$applicants = $lig_cde->getApplicants();
+			foreach($applicants as $applicant){
+				if($lig_cde->type_ligne == 1){ //Notice
+					$resa = new reservation($applicant, $lig_cde->num_produit, 0);
+				}else if($lig_cde->type_ligne == 2){ //bulletin
+					$resa = new reservation($applicant, 0, $lig_cde->num_produit);
+				}
+				if(!$resa->resa_exists()){
+					$resa->add(0,1);
+				}
+				//TODO: check réservation existante. 
+			}
+		}
+	}
+	
 /*
 	//Mise à jour de la suggestion
 	$sug_map = new suggestions_map();
@@ -542,21 +537,17 @@ function update() {
 	return !$error;
 }
 
-
 function update_sug() {
-	
 	global $id_sug, $sel_sugstat;
 	
 	//Mise à jour de la suggestion
 	$sug = array();
-	$sug[0] = new suggestions($id_sug);
+	$sug[0] = $id_sug;
 	$sug_map = new suggestions_map();
-	$sug_map->doTransition($sug_map->getStateNameFromId($sel_sugstat), $sug[0], TRUE);						
+	$sug_map->doTransition($sug_map->getStateNameFromId($sel_sugstat), $sug, TRUE);						
 }
 
-
 function undo() {
-	
 	global $id_lig, $previous;
 	$error=false;
 	
@@ -595,12 +586,10 @@ function undo() {
 	return !$error;
 }
 
-
 //Traitement des actions
 $error_msg = '';
 
 switch($action) {
-
 	case 'upload_file' :
 		upload_file();
 		break;
@@ -636,6 +625,5 @@ switch($action) {
 	default:
 		show_delivery_form();
 		break;
-		
 }
 ?>

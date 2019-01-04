@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: location.inc.php,v 1.32 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: location.inc.php,v 1.35 2018-10-12 11:59:35 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -20,48 +20,16 @@ function test_form(form) {
 </script>
 <?php
 
+require_once($class_path."/list/configuration/docs/list_configuration_docs_location_ui.class.php");
 require_once("$class_path/sur_location.class.php");
+require_once($class_path."/map/map_edition_controler.class.php");
 
 function show_location($dbh) {
 	global $msg,$pmb_location_reservation,$current_module;
 	
 	if($pmb_location_reservation) print "<h1>".$msg["admin_location_list_title"]."</h1>";
-	
-	print "<script type='text/javascript' src='./javascript/sorttable.js'></script>
-		<table class='sortable'>
-		<tr>
-			<th>".$msg[103]."</th>
-			<th>".$msg['opac_object_visible_short']."</th>
-			<th>".$msg['proprio_codage_proprio']."</th>
-			<th>".$msg['import_codage']."</th>
-		</tr>";
 
-	$requete = "SELECT idlocation,location_libelle, locdoc_owner, locdoc_codage_import, lender_libelle, location_visible_opac, css_style FROM docs_location left join lenders on locdoc_owner=idlender ORDER BY location_libelle";
-	$res = pmb_mysql_query($requete, $dbh);
-
-	$nbr = pmb_mysql_num_rows($res);
-
-	$parity=1;
-	for($i=0;$i<$nbr;$i++) {
-		$row=pmb_mysql_fetch_object($res);
-		$memo_location[]=$row;
-		if ($parity % 2) {
-			$pair_impair = "even";
-		} else {
-			$pair_impair = "odd";
-		}
-		$parity += 1;
-		$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./admin.php?categ=docs&sub=location&action=modif&id=$row->idlocation';\" ";
-                if ($row->locdoc_owner) print pmb_bidi("<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td><i>$row->location_libelle</i></td>");     
-                	else print pmb_bidi("<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td><strong>$row->location_libelle</strong></td>");
-		if ($row->location_visible_opac) $visible="X" ; 
-		else $visible="&nbsp;" ;
-		print "<td>$visible</td>" ;
-		print pmb_bidi("<td>$row->lender_libelle</td>") ;
-        print pmb_bidi("<td>$row->locdoc_codage_import</td></tr>");
-	}
-	print "</table>
-		<input class='bouton' type='button' value=' $msg[106] ' onClick=\"document.location='./admin.php?categ=docs&sub=location&action=add'\" />";
+	print list_configuration_docs_location_ui::get_instance()->get_display_list();
 
 	if($pmb_location_reservation) {
 		$form_res_location= 
@@ -108,6 +76,7 @@ function location_form($libelle="", $locdoc_codage_import="", $locdoc_owner=0, $
 	global $msg;
 	global $admin_location_form;
 	global $charset, $sur_loc_selector;
+	global $pmb_map_activate;
 	
 	$admin_location_form = str_replace('!!id!!', $id, $admin_location_form);
 
@@ -129,6 +98,16 @@ function location_form($libelle="", $locdoc_codage_import="", $locdoc_owner=0, $
 	$admin_location_form = str_replace('!!sur_loc_selector!!', $sur_loc_selector, $admin_location_form);
 	if($surloc_used) $checkbox="checked"; else $checkbox="";
 	$admin_location_form = str_replace('!!checkbox_use_surloc!!', $checkbox, $admin_location_form);
+	
+	// map
+	if($pmb_map_activate){
+		$map_edition=new map_edition_controler(TYPE_LOCATION,$id);
+		$map_form=$map_edition->get_form();
+		$admin_location_form = str_replace('!!location_map!!', $map_form, $admin_location_form);
+		
+	} else {
+		$admin_location_form = str_replace('!!location_map!!', "", $admin_location_form);
+	}
 	
 	$admin_location_form = str_replace('!!loc_name!!', 	htmlentities($name,ENT_QUOTES, $charset)     , $admin_location_form);
 	$admin_location_form = str_replace('!!loc_adr1!!', 	htmlentities($adr1,ENT_QUOTES, $charset)     , $admin_location_form);
@@ -168,15 +147,25 @@ switch($action) {
 			if ($nbr > 0) {
 				error_form_message($form_libelle.$msg["docs_label_already_used"]);
 			} else {
-				if(!$form_sur_localisation)$form_location_use_surloc=0;
+				if(empty($form_sur_localisation)) {
+					$form_sur_localisation = '';
+					$form_location_use_surloc=0;
+				}
 				// O.K.,  now if item already exists UPDATE else INSERT
 				$set_values = "SET location_libelle='$form_libelle', locdoc_codage_import='$form_locdoc_codage_import', locdoc_owner='$form_locdoc_owner', location_pic='$form_location_pic', location_visible_opac='$form_location_visible_opac', name= '$form_locdoc_name', adr1= '$form_locdoc_adr1', adr2= '$form_locdoc_adr2', cp= '$form_locdoc_cp', town= '$form_locdoc_town', state= '$form_locdoc_state', country= '$form_locdoc_country', phone= '$form_locdoc_phone', email= '$form_locdoc_email', website= '$form_locdoc_website', logo= '$form_locdoc_logo', commentaire='$form_locdoc_commentaire', num_infopage='$form_num_infopage', css_style='$form_css_style', surloc_num='$form_sur_localisation', surloc_used='$form_location_use_surloc' " ;
 				if($id) {
 					$requete = "UPDATE docs_location $set_values WHERE idlocation='$id' ";
 					$res = pmb_mysql_query($requete, $dbh);
+					
 				} else {
 					$requete = "INSERT INTO docs_location $set_values ";
 					$res = pmb_mysql_query($requete, $dbh);
+					$id = pmb_mysql_insert_id($dbh);
+				}
+				// map
+				if($pmb_map_activate){
+					$map_edition=new map_edition_controler(TYPE_LOCATION,$id);
+					$map_form=$map_edition->save_form();					
 				}
 			}
 		}	
@@ -227,11 +216,11 @@ switch($action) {
 			} else {
 				$msg_suppr_err = $admin_liste_jscript;
 				$msg_suppr_err .= $msg["location_used"] ;
-				if ($total1) $msg_suppr_err .= "<br />- ".$msg["location_used_docs"]." <a href='#' onclick=\"showListItems(this);return(false);\" what='location_docs' item='".$id."' total='".$total1."' alt=\"".$msg["admin_docs_list"]."\" title=\"".$msg["admin_docs_list"]."\"><img src='./images/req_get.gif'></a>" ;
-				if ($total2) $msg_suppr_err .= "<br />- ".$msg["location_used_users"]." <a href='#' onclick=\"showListItems(this);return(false);\" what='location_users' item='".$id."' total='".$total2."' alt=\"".$msg["admin_users_list"]."\" title=\"".$msg["admin_users_list"]."\"><img src='./images/req_get.gif'></a>" ;
-				if ($total3) $msg_suppr_err .= "<br />- ".$msg["location_used_empr"]." <a href='#' onclick=\"showListItems(this);return(false);\" what='location_empr' item='".$id."' total='".$total3."' alt=\"".$msg["admin_empr_list"]."\" title=\"".$msg["admin_empr_list"]."\"><img src='./images/req_get.gif'></a>" ;
-				if ($total4) $msg_suppr_err .= "<br />- ".$msg["location_used_abts"]." <a href='#' onclick=\"showListItems(this);return(false);\" what='location_abts' item='".$id."' total='".$total4."' alt=\"".$msg["admin_abts_list"]."\" title=\"".$msg["admin_abts_list"]."\"><img src='./images/req_get.gif'></a>" ;
-				if ($total5) $msg_suppr_err .= "<br />- ".$msg["location_used_collections_state"]." <a href='#' onclick=\"showListItems(this);return(false);\" what='location_collections_state' item='".$id."' total='".$total5."' alt=\"".$msg["admin_collections_state_list"]."\" title=\"".$msg["admin_collections_state_list"]."\"><img src='./images/req_get.gif'></a>" ;
+				if ($total1) $msg_suppr_err .= "<br />- ".$msg["location_used_docs"]." <a href='#' onclick=\"showListItems(this);return(false);\" what='location_docs' item='".$id."' total='".$total1."' alt=\"".$msg["admin_docs_list"]."\" title=\"".$msg["admin_docs_list"]."\"><img src='".get_url_icon('req_get.gif')."'></a>" ;
+				if ($total2) $msg_suppr_err .= "<br />- ".$msg["location_used_users"]." <a href='#' onclick=\"showListItems(this);return(false);\" what='location_users' item='".$id."' total='".$total2."' alt=\"".$msg["admin_users_list"]."\" title=\"".$msg["admin_users_list"]."\"><img src='".get_url_icon('req_get.gif')."'></a>" ;
+				if ($total3) $msg_suppr_err .= "<br />- ".$msg["location_used_empr"]." <a href='#' onclick=\"showListItems(this);return(false);\" what='location_empr' item='".$id."' total='".$total3."' alt=\"".$msg["admin_empr_list"]."\" title=\"".$msg["admin_empr_list"]."\"><img src='".get_url_icon('req_get.gif')."'></a>" ;
+				if ($total4) $msg_suppr_err .= "<br />- ".$msg["location_used_abts"]." <a href='#' onclick=\"showListItems(this);return(false);\" what='location_abts' item='".$id."' total='".$total4."' alt=\"".$msg["admin_abts_list"]."\" title=\"".$msg["admin_abts_list"]."\"><img src='".get_url_icon('req_get.gif')."'></a>" ;
+				if ($total5) $msg_suppr_err .= "<br />- ".$msg["location_used_collections_state"]." <a href='#' onclick=\"showListItems(this);return(false);\" what='location_collections_state' item='".$id."' total='".$total5."' alt=\"".$msg["admin_collections_state_list"]."\" title=\"".$msg["admin_collections_state_list"]."\"><img src='".get_url_icon('req_get.gif')."'></a>" ;
 				error_message(	$msg[294], $msg_suppr_err, 1, 'admin.php?categ=docs&sub=location&action=');
 			}
 		} else show_location($dbh);

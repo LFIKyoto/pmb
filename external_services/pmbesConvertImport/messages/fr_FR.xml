@@ -25,12 +25,17 @@
 <entry code="get_convert_types_description">Liste des types de conversions possibles</entry>
 <entry code="get_convert_types_output_description">Tableau avec en clé un identifiant et en valeur le libellé de la conversion (attribut "name" de la balise "item" du fichier catalog.xml)</entry>
 
+<!-- convert_by_path -->
+<entry code="convert_by_path_description">Convertit une notice d'un format vers un autre format (utilisation du chemin du type de conversion)</entry>
+<entry code="convert_input_convert_path">Chemin de la conversion à utiliser</entry>
+
 <!-- convert -->
-<entry code="convert_description">Converti une notice d'un format vers un autre format</entry>
+<entry code="convert_description">Convertit une notice d'un format vers un autre format</entry>
 <entry code="convert_input_notice">La notice à convertir</entry>
 <entry code="convert_input_convert_type_id">Identifiant de la conversion à utiliser (voir get_convert_types)</entry>
 <entry code="convert_input_import">Indique si l'import (avec la fonction import) doit être réalisé directement apres la conversion</entry>
 <entry code="convert_input_source_id">Identifiant de la source</entry>
+<entry code="convert_input_do_not_convert">Ne pas convertir la notice (Peut-être utile si notice en format Unimarc)</entry>
 <entry code="convert_output_notice">La notice à convertir</entry>
 <entry code="convert_output_converted_notice">La notice convertie</entry>
 

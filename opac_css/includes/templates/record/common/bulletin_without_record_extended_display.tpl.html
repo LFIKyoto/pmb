@@ -1,31 +1,23 @@
-<!-- $Id: bulletin_without_record_extended_display.tpl.html,v 1.1.2.4 2015-12-10 14:12:36 apetithomme Exp $ -->
+<!-- $Id: bulletin_without_record_extended_display.tpl.html,v 1.20 2017-12-18 10:36:33 dgoron Exp $ -->
 
 <div id="noticeNot">
 	<div class="parentNot">
 		<div id="blocNotice_descr">
 			
-			<ul id="onglets_isbd_public{{ bulletin.bulletin_id }}" class="onglets_isbd_publicNot">
-				<li id="onglet_detail{{ bulletin.bulletin_id }}" class="isbd_public_active"><a href="#" onclick="display_tab(this, 'detail', {{ bulletin.bulletin_id }})"><span>{{ msg.demandes_action_detail }}</span></a></li>
-			</ul>
-			
+			{% if record.enrichment_sources %}
+				<ul id="onglets_isbd_public{{ bulletin.bulletin_id }}" class="onglets_isbd_publicNot">
+					<li id="onglet_detail{{ bulletin.bulletin_id }}" class="isbd_public_active"><a href="#" onclick="display_tab(this, 'detail', {{ bulletin.bulletin_id }})"><span>{{ msg.demandes_action_detail }}</span></a></li>
+				</ul>
+			{% endif %}
 			<div id="div_detail{{ bulletin.bulletin_id }}">
-				<div class="asideContentNot">	
-					<!-- Vignette de la notice -->
-					<div class="vignetteimgNot">
-						<div class="vignetteDocNot">
-							<img class="vignetteNot" src="./styles/common/images/no_image.jpg" />
-						</div>
-					</div>
-					{% if record.cart_allow %}
-						<!-- Ajouter au panier -->
-						<div class="onglet_basketNot">
-							<a href="cart_info.php?id={{ bulletin.bulletin_id }}&amp;lvl=analysis&amp;header={{ bulletin.bulletin_numero | urlencode }}+-+{{ bulletin.mention_date | urlencode }}" target="cart_info" class="img_basketNot"><img src="./includes/templates/record/common/styles/images/basket_blanc.png" border="0" title="{{ msg.record_display_add_to_cart }}" alt="{{ msg.record_display_add_to_cart }}"/>{{ msg.record_display_add_to_cart }}</a>
+				<div class="asideContentNot">
+					{% if global.opac_permalink %}
+						<!-- Permalink -->
+						<div class="lienP">
+							<span class="img_permalink"><i class="fa fa-clipboard" aria-hidden="true"></i></span>
+							<span class="label_permalink"><a href="{{ liens_opac.lien_rech_bulletin | replace '!!id!!' bulletin.bulletin_id }}" title="{{ msg.record_display_permalink_label }}">{{ msg.record_display_permalink_label }}</a></span>
 						</div>
 					{% endif %}
-					<!-- Permalink -->
-					<div class="lienP">
-						<a href="{{ liens_opac.lien_rech_bulletin | replace '!!id!!' bulletin.bulletin_id }}" title="{{ msg.record_display_permalink_label }}">{{ msg.record_display_permalink_label }}</a>
-					</div>
 				</div>
 				<!-- Contenu de la notice -->
 				<div class="notice_contenu">
@@ -37,10 +29,7 @@
 									<span>{{ msg.tit1display_start }}</span>
 								</td>
 								<td>
-									<span id="exempl_titleNot">
-										<a href="{{ liens_opac.lien_rech_notice | replace '!!id!!' parent.id }}" title="{{ parent.tit1 }}">{{ parent.tit1 }}</a>
-										{{ bulletin.bulletin_numero }} - {{ bulletin.mention_date }}
-									</span>
+									<span id="exempl_titleNot"><a href="{{ liens_opac.lien_rech_notice | replace '!!id!!' parent.id }}" title="{{ parent.tit1 }}">{{ parent.tit1 }}{% if parent.tit4 %} : {{parent.tit4}}{% endif %}</a>, {{ bulletin.bulletin_numero }}. {{ bulletin.bulletin_titre }}{% if bulletin.mention_date %} - {{ bulletin.mention_date }}{% endif %}</span>
 								</td>
 							</tr>
 							{% if bulletin.biblio_doc %}
@@ -70,13 +59,13 @@
 		</div>
 		<div class="clear"></div>
 		<!-- Bouton de reservation -->
-		{% if bulletin.resas_datas.flag_resa_visible %}
-			{% if bulletin.resas_datas.flag_resa_possible %}
-				{% if !bulletin.resas_datas.flag_max_resa %}
-					<div id="resa_notice">
-						<a href="{{ bulletin.resas_datas.href }}" onclick="{{ bulletin.resas_datas.onclick }}" id="bt_resa_NotCourte">{{ msg.record_display_expl_reserve }}</a>
-						{% if bulletin.resas_datas.nb_resas %}
-							<p class='record_nb_resas'>{{ msg.resa_nb_deja_resa | replace '!!nbresa!!' bulletin.resas_datas.nb_resas }}</p>
+		{% if resas_datas.flag_resa_visible %}
+			{% if resas_datas.flag_resa_possible %}
+				{% if !resas_datas.flag_max_resa %}
+					<div id="resa_notice-{{ bulletin.bulletin_id }}" class="resa_notice">
+						<a href="{{ resas_datas.href }}" onclick="{{ resas_datas.onclick }}" id="bt_resa_NotCourte-{{ bulletin.bulletin_id }}" class="bt_resa_NotCourte">{{ msg.record_display_expl_reserve }}</a>
+						{% if resas_datas.nb_resas %}
+							<p class='record_nb_resas'>{{ msg.resa_nb_deja_resa | replace '!!nbresa!!' resas_datas.nb_resas }}</p>
 						{% endif %}
 					</div>
 					<div class='clear'></div>
@@ -88,11 +77,18 @@
 		{% for article in bulletin.articles %}
 			{% if loop.first %}
 				<div id="zone_depouillements">
-					<!-- Lien pour ajouter tous les depouillements au panier? 
-					<a href=\"cart_info.php?id=".$id."&lvl=analysis&header=".rawurlencode(strip_tags($notice_header))."\" target=\"cart_info\" class=\"img_basket\" title='".$msg["cart_add_result_in"]."'>".$msg["cart_add_result_in"]."</a>"; -->
 					<h3>
 						<span id="titre_depouillements">{{ msg.bull_dep }}</span>
 					</h3>
+					{% if record.cart_allow %}
+						{% if global.opac_cart_only_for_subscriber == "1" %}
+						      {% if session_vars.id_empr %}
+								<a href="cart_info.php?id={{bulletin.bulletin_id}}&lvl=analysis" target="cart_info" title="{{msg.cart_add_result_in}}">{{msg.cart_add_result_in}}</a>
+						      {% endif %}
+						{% else %}
+						      <a href="cart_info.php?id={{bulletin.bulletin_id}}&lvl=analysis" target="cart_info" title="{{msg.cart_add_result_in}}">{{msg.cart_add_result_in}}</a>
+						{% endif %}
+					{% endif %}
 			{% endif %}
 			{{ article }}
 			{% if loop.last %}
@@ -100,9 +96,13 @@
 			{% endif %}
 		{% endfor %}
 		
-		 <!-- Exemplaire -->
+		 <!-- Exemplaires -->
 		<div id="zone_exemplaires">
 			{{ bulletin.display_expls }}
+		</div>
+		<!-- Exemplaires numériques -->
+		<div id="zone_docnum">
+			{{ bulletin.display_explnum }}
 		</div>
 	</div>
 </div>

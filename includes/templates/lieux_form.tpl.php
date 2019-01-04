@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lieux_form.tpl.php,v 1.8 2008-03-03 13:47:17 ohennequin Exp $
+// $Id: lieux_form.tpl.php,v 1.9 2017-10-18 15:28:12 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -73,7 +73,7 @@ function checkForm()
 <input type="hidden" name="sauv_lieu_id" value="!!sauv_lieu_id!!">
 <input type="hidden" name="first" value="1">
 <table width=100%>
-<th class="brd" colspan=2><center>!!quel_lieu!!: '.$msg["sauv_lieux_form_prop_general"].'</center></th>
+<th class="brd" colspan=2>!!quel_lieu!!: '.$msg["sauv_lieux_form_prop_general"].'</th>
 <tr><td class="nobrd">'.$msg["sauv_lieux_form_nom"].'</td><td class="nobrd"><input type="text"  name="sauv_lieu_nom" value="!!sauv_lieu_nom!!" class="saisie-simple"></td></tr>
 <tr><td class="nobrd">'.$msg["sauv_lieux_form_chemin"].'</td><td class="nobrd"><input type="text" name="sauv_lieu_url" value="!!sauv_lieu_url!!" size=50 class="saisie-simple"></td></tr>
 <tr><td class="nobrd">'.$msg["sauv_lieux_form_protocole"].'</td><td class="nobrd">!!protocol_list!!</td></tr>

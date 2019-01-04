@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: delete.inc.php,v 1.13 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: delete.inc.php,v 1.15 2017-08-23 08:27:52 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -10,6 +10,7 @@ require_once("$class_path/bannette.class.php");
 require_once("$class_path/emprunteur.class.php");
 
 // suppression d'un lecteur
+$erreur=0;
 if ($id) {
 	$total = 0;
 	$total = pmb_mysql_result(pmb_mysql_query("select count(1) from pret where pret_idempr='".$id."' ", $dbh), 0, 0);
@@ -25,7 +26,7 @@ if (!$erreur) {
 	if ($groupID) print "<script type=\"text/javascript\">
 			document.location ='./circ.php?categ=groups&action=showgroup&groupID=$groupID';
             	</script>";
-	else get_cb($msg[13], $msg[34], $msg[circ_tit_form_cb_empr], './circ.php?categ=pret', 0);
+	else get_cb($msg[13], $msg[34], $msg['circ_tit_form_cb_empr'], './circ.php?categ=pret', 0);
 }
 
 

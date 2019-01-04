@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: openurl_out.class.php,v 1.1 2011-08-02 12:35:58 arenou Exp $
+// $Id: openurl_out.class.php,v 1.4 2017-07-12 15:15:02 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,43 +14,43 @@ require_once($class_path."/openurl/transport/openurl_transport.class.php");
 
 class openurl_out extends connecteur_out {
 	
-	function get_config_form() {
+	public function get_config_form() {
 		$result = $this->msg["no_configuration_required"];
 		return $result;
 	}
 	
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		return;
 	}
 	
-	function instantiate_source_class($source_id) {
+	public function instantiate_source_class($source_id) {
 		return new openurl_out_source($this, $source_id, $this->msg);
 	}
 	
 	//On chargera nous même les messages si on en a besoin
-	function need_global_messages() {
+	public function need_global_messages() {
 		return false;
 	}
 	
-	function process($source_id) {
+	public function process($source_id) {
 		global $base_path;
 
 		foreach($this->sources as $source){
 			if($source->id == $source_id){
 				if($source->config['mode'] == "requeteur"){
-					$str = $HTTP_RAW_POST_DATA;
+					$str = file_get_contents("php://input");
 					if(!$str){
 						$str = str_replace('source_id='.$source_id.'&',"",$_SERVER['QUERY_STRING']);
 					}
 					openurl_transport::unserialize($str);
 				}else{	
 					foreach($_POST as $key=>$value) {
-						global $$key;
-						$$key = $value;
+						global ${$key};
+						${$key} = $value;
 					}
 					foreach($_GET as $key=>$value) {
-						global $$key;
-						$$key = $value;
+						global ${$key};
+						${$key} = $value;
 					}
 					require($base_path."/admin/connecteurs/in/openurl/openurl.class.php");
 					$conn = new openurl("openurl");
@@ -65,11 +65,11 @@ class openurl_out extends connecteur_out {
 
 class openurl_out_source extends connecteur_out_source {
 
-	function openurl_out_source($connector, $id, $msg) {
-		parent::connecteur_out_source($connector, $id, $msg);
+	public function __construct($connector, $id, $msg) {
+		parent::__construct($connector, $id, $msg);
 	}
 	
-	function get_config_form() {
+	public function get_config_form() {
 		global $charset;
 		$result = parent::get_config_form();
 
@@ -107,7 +107,7 @@ class openurl_out_source extends connecteur_out_source {
 		return $result;
 	}
 
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		parent::update_config_from_form();
 		global $serialization;
 		global $mode;

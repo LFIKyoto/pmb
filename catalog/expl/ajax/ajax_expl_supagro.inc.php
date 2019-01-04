@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_expl_supagro.inc.php,v 1.4 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: ajax_expl_supagro.inc.php,v 1.5 2017-07-12 15:15:02 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -42,15 +42,15 @@ function calculer_cote_bartoli($text=""){
 	global $f_ex_location, $dbh;
 	
 	$section = 'f_ex_section'.$f_ex_location;
-	global $$section;
+	global ${$section};
 	
 	$array_result = array();
 	
-	$req_section = " select section_libelle from docs_section where idsection='".$$section."'";
+	$req_section = " select section_libelle from docs_section where idsection='".${$section}."'";
 	$res_sect = pmb_mysql_query($req_section,$dbh);
 	$sec_libelle = pmb_mysql_result($res_sect,0,0);
 	
-	if($$section != 27) 
+	if(${$section} != 27) 
 		$array_sec = explode(' ',strip_empty_words($sec_libelle));
 	else $array_sec = array();
 	
@@ -143,15 +143,15 @@ function calculer_cote_irc($text=""){
 	global $f_ex_location, $dbh;
 	
 	$section = 'f_ex_section'.$f_ex_location;
-	global $$section;
+	global ${$section};
 	
 	$array_result = array();
 	
-	$req_section = " select section_libelle from docs_section where idsection='".$$section."'";
+	$req_section = " select section_libelle from docs_section where idsection='".${$section}."'";
 	$res_sect = pmb_mysql_query($req_section,$dbh);
 	$sec_libelle = pmb_mysql_result($res_sect,0,0);
 	
-	if($$section != 27) 
+	if(${$section} != 27) 
 		$array_sec = explode(' ',strip_empty_words($sec_libelle));
 	else $array_sec = array();
 		$req_index = "select indexint_id as id, indexint_name as name from indexint where num_pclass in('4','6')
@@ -193,11 +193,11 @@ function calculer_cote_gaillarde($text){
 	global $f_ex_location, $dbh;
 	
 	$section = 'f_ex_section'.$f_ex_location;
-	global $$section;
+	global ${$section};
 	
 	$array_result = array();
 	
-	$req_section = " select section_libelle from docs_section where idsection='".$$section."'";
+	$req_section = " select section_libelle from docs_section where idsection='".${$section}."'";
 	$res_sect = pmb_mysql_query($req_section,$dbh);
 	$sec_libelle = pmb_mysql_result($res_sect,0,0);
 	
@@ -236,7 +236,7 @@ function calculer_cote_gaillarde($text){
 		}
 	} else {
 		//Catalogage manuelle
-		if($$section != 27) 
+		if(${$section} != 27) 
 			$array_sec = explode(' ',strip_empty_words($sec_libelle));
 		else $array_sec = array();
 		$req_index = "select indexint_id as id, indexint_name as name from indexint 

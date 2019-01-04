@@ -166,14 +166,14 @@ class ARC2_TestHandler extends ARC2_Class {
           }
         }
       }
-      $$var = $infos[$var];
+      ${$var} = $infos[$var];
       ${$var . '_value'} = $infos[$var . '_value'];
       if (count($infos[$var]) == 1) {
-        $$var = $infos[$var][0];
+        ${$var} = $infos[$var][0];
         ${$var . '_value'} = $infos[$var . '_value'][0];
       }
-      if ($$var && ($var != '-result')) {
-        //echo '<pre>' . $$var . $nl . $nl . htmlspecialchars(${$var . '_value'}) . '</pre><hr />';
+      if (${$var} && ($var != '-result')) {
+        //echo '<pre>' . ${$var} . $nl . $nl . htmlspecialchars(${$var . '_value'}) . '</pre><hr />';
       }
     }
     /* query infos */

@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_workshop.js,v 1.7 2015-02-02 16:33:32 dgoron Exp $
+// $Id: nomenclature_workshop.js,v 1.12 2016-02-23 14:07:00 apetithomme Exp $
 
 define(["dojo/_base/declare","apps/nomenclature/nomenclature_instruments_list", "dijit/registry"], function(declare, Instruments_list, registry){
 	/*
@@ -17,15 +17,18 @@ define(["dojo/_base/declare","apps/nomenclature/nomenclature_instruments_list", 
 		    abbreviation: "",
 		    hash:null,
 		    order: 0,
+		    defined: 0,
+		    indice: 0,
 		    
-		    constructor: function(order){
+		    constructor: function(indice,order){
 		    	this.set_order(order);
+		    	this.set_indice(indice);
 		    	this.instruments_list = new Instruments_list();
 		    	this.instruments_list.set_workshop(this);
 		    },
 		    
 		    set_hash : function(hash){
-		    	this.hash = hash+"_workshop_"+this.order;
+		    	this.hash = hash+"_workshop_"+this.indice;
 		    },
 		    
 		    get_hash: function(){
@@ -68,12 +71,28 @@ define(["dojo/_base/declare","apps/nomenclature/nomenclature_instruments_list", 
 				this.order = parseInt(order);
 			},
 			
+			get_defined: function() {
+				return parseInt(this.defined);
+			},
+			
+			set_defined: function(defined) {
+				this.defined = defined;
+			},
+			
 			get_id: function(){
 				return this.id;
 			},
 				
 			set_id: function(id){
 				this.id = id;
+			},
+			
+			get_indice: function(){
+				return this.indice;
+			},
+			
+			set_indice: function(indice){
+				this.indice = indice;
 			},
 			
 			get_instruments_list: function() {
@@ -96,8 +115,7 @@ define(["dojo/_base/declare","apps/nomenclature/nomenclature_instruments_list", 
 				var abbreviation= "";
 				for(var i=0 ; i<this.instruments_list.instruments.length ; i++){
 					if (this.instruments_list.instruments[i].get_name() != "") {
-						this.instruments_list.instruments[i].calc_abbreviation();
-						abbreviation += this.instruments_list.instruments[i].get_effective()+' '+this.instruments_list.instruments[i].get_name();
+						abbreviation += this.instruments_list.instruments[i].get_abbreviation();
 						if(i<this.instruments_list.instruments.length-1)
 							abbreviation += " / ";
 					}

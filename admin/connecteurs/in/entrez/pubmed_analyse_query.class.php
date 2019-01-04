@@ -2,23 +2,23 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pubmed_analyse_query.class.php,v 1.2 2015-02-20 11:07:26 apetithomme Exp $
+// $Id: pubmed_analyse_query.class.php,v 1.3 2017-03-21 11:32:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/analyse_query.class.php");
 
 class pubmed_analyse_query extends analyse_query{
-	var $pubmed_stopwords = array();
+	public $pubmed_stopwords = array();
 
-    function pubmed_analyse_query($input,$debut=0,$parenthesis=0,$search_linked_words=1,$keep_empty=0,$field,$pubmed_stopwords) {
+    public function __construct($input,$debut=0,$parenthesis=0,$search_linked_words=1,$keep_empty=0,$field,$pubmed_stopwords) {
     	$this->pubmed_stopwords = $pubmed_stopwords;
     	$this->field = $field;
     	$this->operator = strtoupper($this->operator);
-    	parent::analyse_query($input,0,0,1,0);
+    	parent::__construct($input,0,0,1,0);
     }
         
-	function nettoyage_mot_vide($string) {
+	public function nettoyage_mot_vide($string) {
 		//Supression des espaces avant et après le terme
 		$string = trim($string);
 		//Décomposition en mots du mot nettoyé (ex : l'arbre devient l arbre qui donne deux mots : l et arbre)
@@ -38,7 +38,7 @@ class pubmed_analyse_query extends analyse_query{
 	}
 	
 	//Affichage sous forme mathématique logique du résultat de l'analyse
-	function show_analyse($tree="") {
+	public function show_analyse($tree="") {
 		if ($tree=="") $tree=$this->tree;
 		foreach($tree as $elem){
 			if($elem->start_with == 0){

@@ -24,6 +24,11 @@
 <!-- get_convert_types -->
 <entry code="get_convert_types_description">List of possible conversion types</entry>
 <entry code="get_convert_types_output_description">Table with an identifier as key and the label of the conversion as value ("name" attribute of the "item" tag of the catalog.xml file)</entry>
+ntry code="get_convert_types_output_description">Tableau avec en clé un identifiant et en valeur le libellé de la conversion (attribut "name" de la balise "item" du fichier catalog.xml)</entry>
+
+<!-- convert_by_path -->
+<entry code="convert_by_path_description">Convertit une notice d'un format vers un autre format (utilisation du chemin du type de conversion)</entry>
+<entry code="convert_input_convert_path">Chemin de la conversion à utiliser</entry>
 
 <!-- convert -->
 <entry code="convert_description">Convert a record from a format to another</entry>
@@ -31,6 +36,7 @@
 <entry code="convert_input_convert_type_id">Identifier of the conversion to use (see get_convert_types)</entry>
 <entry code="convert_input_import">Shows if the import (with the import function) should be realised immediately after the conversion</entry>
 <entry code="convert_input_source_id">Identifier of the source</entry>
+<entry code="convert_input_do_not_convert">Ne pas convertir la notice (Peut-être utile si notice en format Unimarc)</entry>
 <entry code="convert_output_notice">The record to convert</entry>
 <entry code="convert_output_converted_notice">The converted record</entry>
 

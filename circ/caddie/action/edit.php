@@ -2,63 +2,35 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: edit.php,v 1.4 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: edit.php,v 1.8 2018-08-06 10:46:36 dgoron Exp $
 
 // définition du minimum nécéssaire 
 $base_path="../../..";                            
 $base_auth = "CATALOGAGE_AUTH";  
 $base_title = "";
 $base_noheader=1;
-require_once ("$base_path/includes/init.inc.php");  
+require_once ($base_path."/includes/init.inc.php");  
 require_once ("./edition_func.inc.php");  
-require_once ("$class_path/empr_caddie.class.php");
+require_once ($class_path."/empr_caddie.class.php");
+require_once ($class_path."/caddie/empr_caddie_controller.class.php");
+
 $fichier_temp_nom=str_replace(" ","",microtime());
 $fichier_temp_nom=str_replace("0.","",$fichier_temp_nom);
 
 $myCart = new empr_caddie($idemprcaddie);
 if (!$myCart->idemprcaddie) die();
 // création de la page
+if(empty($mode)) $mode = 'simple';
 switch($dest) {
 	case "TABLEAU":
-		require_once ("$class_path/writeexcel/class.writeexcel_workbook.inc.php");
-		require_once ("$class_path/writeexcel/class.writeexcel_worksheet.inc.php");
-
-		$fname = tempnam("./temp", $fichier_temp_nom.".xls");
-		$workbook = new writeexcel_workbook($fname);
-		$worksheet = $workbook->addworksheet();
-
-		$worksheet->write_string(0,0,"Panier N ".$idemprcaddie);
-		$worksheet->write_string(0,1,$myCart->name);
-		$worksheet->write_string(0,2,$myCart->comment);
+		empr_caddie_controller::proceed_edition_tableau($idemprcaddie, $mode);
 		break;
 	case "TABLEAUHTML":
-		header("Content-Type: application/download\n");
-		header("Content-Disposition: atachement; filename=\"tableau.xls\"");
-		print "<html><head>" .
-	 	'<meta http-equiv=Content-Type content="text/html; charset='.$charset.'" />'.
-		"</head><body>";
+		empr_caddie_controller::proceed_edition_tableauhtml($idemprcaddie, $mode);
 		break;
 	default:
-        header ("Content-Type: text/html; charset=$charset");
-		print $std_header;
+		empr_caddie_controller::proceed_edition_html($idemprcaddie, $mode);
 		break;
-	}
-
-afftab_empr_cart_objects ($idemprcaddie, $elt_flag , $elt_no_flag ) ;
-
-switch($dest) {
-	case "TABLEAU":
-		$workbook->close();
-		header("Content-Type: application/x-msexcel; name=\""."Caddie_EMPR_".$idemprcaddie.".xls"."\"");
-		header("Content-Disposition: inline; filename=\""."Caddie_EMPR_".$idemprcaddie.".xls"."\"");
-		$fh=fopen($fname, "rb");
-		fpassthru($fh);
-		unlink($fname);
-		break;
-	case "TABLEAUHTML":
-	default:
-		if ($etat_table) echo "\n</table>";
-		break;
-	}
+}
 	
 pmb_mysql_close($dbh);

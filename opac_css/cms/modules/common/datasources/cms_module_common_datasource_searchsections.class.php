@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_searchsections.class.php,v 1.5 2015-04-09 16:19:51 arenou Exp $
+// $Id: cms_module_common_datasource_searchsections.class.php,v 1.6 2017-01-18 16:29:04 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -41,7 +41,7 @@ class cms_module_common_datasource_searchsections extends cms_module_common_data
 		$selector = $this->get_selected_selector();
 		if($selector) {
 			if($selector->get_value() != ""){
-				$searcher = new cms_editorial_searcher($selector->get_value(),"section");
+				$searcher = new cms_editorial_searcher(stripslashes($selector->get_value()),"section");
 				$results = $searcher->get_sorted_result($this->parameters["sort_by"],$this->parameters["sort_order"],0);
 				$results = $this->filter_datas("sections", $results);
 				if($this->parameters["nb_max_elements"] > 0){

@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc.tpl.php,v 1.21.2.1 2015-12-04 13:34:16 jpermanne Exp $
+// $Id: serialcirc.tpl.php,v 1.27 2017-11-21 12:00:59 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+if(!isset($biblio_name)) $biblio_name = '';
+if(!isset($pmb_lecteurs_localises)) $pmb_lecteurs_localises = 0;
 
 $serialcirc_circ_form = "
 	<script type='text/javascript' src='./javascript/serialcirc.js'></script>
@@ -38,13 +41,16 @@ $serialcirc_circ_form = "
 	
 ";
 
-if($pmb_lecteurs_localises) $serialcirc_circ_liste_location="
-	<h3>".htmlentities($msg["serialcirc_circ_list_title"],ENT_QUOTES,$charset)."</h3>
-	
-	<div class='row'>
-		".htmlentities($msg["serialcirc_circ_list_location_title"],ENT_QUOTES,$charset)." : !!localisation!!
-	</div>
-";		
+if($pmb_lecteurs_localises) {
+	$serialcirc_circ_liste_location="
+		<h3>".htmlentities($msg["serialcirc_circ_list_title"],ENT_QUOTES,$charset)."</h3>
+		
+		<div class='row'>
+			".htmlentities($msg["serialcirc_circ_list_location_title"],ENT_QUOTES,$charset)." : !!localisation!!
+		</div>";
+} else {
+	$serialcirc_circ_liste_location="";
+}
 $serialcirc_circ_liste = "	
 <script type='text/javascript'>	
 
@@ -207,8 +213,8 @@ $serialcirc_circ_liste = "
 		$serialcirc_circ_liste_location		
 		<h3>".htmlentities($msg["serialcirc_circ_list_bull_title"],ENT_QUOTES,$charset)."</h3>
 		<script type='text/javascript' src='./javascript/sorttable.js'></script>
-		<a href='javascript:expandAll()'><img src='./images/expand_all.gif' border='0' id='expandall'></a>
-		<a href='javascript:collapseAll()'><img src='./images/collapse_all.gif' border='0' id='collapseall'></a>
+		<a href='javascript:expandAll()'><img src='".get_url_icon('expand_all.gif')."' border='0' id='expandall'></a>
+		<a href='javascript:collapseAll()'><img src='".get_url_icon('collapse_all.gif')."' border='0' id='collapseall'></a>
 		!!liste_alerter!!
 		!!liste_circuler!!
 		!!liste_circulation!!
@@ -234,8 +240,8 @@ $serialcirc_pointage_form="
 $serialcirc_circ_liste_alerter = "	
 	<table width='100%' class='sortable'>
 		<tr>
-			<th>
-				".htmlentities($msg["serialcirc_circ_list_bull_circulation_date"],ENT_QUOTES,$charset)."
+			<th class='sorttable_alpha'>
+				".htmlentities($msg["serialcirc_circ_list_bull_circulation_periode"],ENT_QUOTES,$charset)."
 			</th>
 			<th>
 				".htmlentities($msg["serialcirc_circ_list_bull_circulation_perodique"],ENT_QUOTES,$charset)."
@@ -316,8 +322,8 @@ $serialcirc_circ_liste_is_alerted_tr="
 $serialcirc_circ_liste_circuler = "	
 	<table width='100%' class='sortable'>
 		<tr id='tr_!!zone!!_!!expl_id!!'>
-			<th>
-				".htmlentities($msg["serialcirc_circ_list_bull_circulation_date"],ENT_QUOTES,$charset)."
+			<th class='sorttable_alpha'>
+				".htmlentities($msg["serialcirc_circ_list_bull_circulation_periode"],ENT_QUOTES,$charset)."
 			</th>
 			<th>
 				".htmlentities($msg["serialcirc_circ_list_bull_circulation_perodique"],ENT_QUOTES,$charset)."
@@ -342,7 +348,7 @@ $serialcirc_circ_liste_circuler = "
 		</tr>
 		!!liste_circuler!!
 	</table>
-	<div align='right'>
+	<div class='align_right'>
 		<input type=\"button\" class='bouton' value='".htmlentities($msg["serialcirc_circ_list_imprimer_bt"],ENT_QUOTES,$charset)."' onClick=\"my_serialcirc_print_all_sel_list_diff('to_be_circ'); return false;\"/>
 	</div>
 ";
@@ -381,8 +387,8 @@ $serialcirc_circ_liste_circulation = "
 		<tr id='tr_!!zone!!_!!expl_id!!'>
 			<th>
 			</th>
-			<th>
-				".htmlentities($msg["serialcirc_circ_list_bull_circulation_date"],ENT_QUOTES,$charset)."
+			<th class='sorttable_alpha'>
+				".htmlentities($msg["serialcirc_circ_list_bull_circulation_periode"],ENT_QUOTES,$charset)."
 			</th>
 			<th>
 				".htmlentities($msg["serialcirc_circ_list_bull_circulation_perodique"],ENT_QUOTES,$charset)."
@@ -408,14 +414,14 @@ $serialcirc_circ_liste_circulation = "
 		</tr>
 		!!liste_circulation!!
 	</table>
-	<div align='right'>
+	<div class='align_right'>
 		<input type='button' id='bt_retour_expl_multiple' class='bouton' value='".htmlentities($msg["serialcirc_circ_list_bull_circulation_comeback_multiple_bt"],ENT_QUOTES,$charset)."' onClick=\"my_serialcirc_comeback_multiple_expl('in_circ'); return false;\"/>
 	</div>
 ";
 $serialcirc_circ_liste_circulation_rotative_tr="
 	<tr  id='tr_!!zone!!_!!expl_id!!' >					
 		<td>
-			<img src='./images/plus.gif' class='img_plus' name='imEx' id='circ_detail_!!zone!!_!!expl_id!!Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('circ_detail_!!zone!!_!!expl_id!!', true);return false;\" hspace='3'>				
+			<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='circ_detail_!!zone!!_!!expl_id!!Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('circ_detail_!!zone!!_!!expl_id!!', true);return false;\" hspace='3'>				
 		</td>				
 		<td>
 			!!date!!
@@ -457,7 +463,7 @@ $serialcirc_circ_liste_circulation_star_tr="
 	<tr id='tr_!!zone!!_!!expl_id!!'>					
 		<td>
 			<input type='checkbox' name='serialcirc_sel_print[]'  value='!!expl_id!!' class='checkbox' />
-			<img src='./images/plus.gif' class='img_plus' name='imEx' id='circ_detail_!!zone!!_!!expl_id!!Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('circ_detail_!!zone!!_!!expl_id!!', true);return false;\" hspace='3'>				
+			<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='circ_detail_!!zone!!_!!expl_id!!Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('circ_detail_!!zone!!_!!expl_id!!', true);return false;\" hspace='3'>				
 			
 		</td>				
 		<td>
@@ -500,8 +506,8 @@ $serialcirc_circ_liste_retard = "
 		<tr id='tr_!!zone!!_!!expl_id!!'>
 			<th>
 			</th>
-			<th>
-				".htmlentities($msg["serialcirc_circ_list_bull_circulation_date"],ENT_QUOTES,$charset)."
+			<th class='sorttable_alpha'>
+				".htmlentities($msg["serialcirc_circ_list_bull_circulation_periode"],ENT_QUOTES,$charset)."
 			</th>
 			<th>
 				".htmlentities($msg["serialcirc_circ_list_bull_circulation_perodique"],ENT_QUOTES,$charset)."
@@ -557,7 +563,7 @@ $serialcirc_circ_liste_retard_tr="
 $serialcirc_circ_liste_retard_rotative_tr="
 	<tr  id='tr_!!zone!!_!!expl_id!!' >					
 		<td>
-			<img src='./images/plus.gif' class='img_plus' name='imEx' id='circ_detail_!!zone!!_!!expl_id!!Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('circ_detail_!!zone!!_!!expl_id!!', true);return false;\" hspace='3'>				
+			<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='circ_detail_!!zone!!_!!expl_id!!Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('circ_detail_!!zone!!_!!expl_id!!', true);return false;\" hspace='3'>				
 		</td>				
 		<td>
 			!!date!!
@@ -591,7 +597,7 @@ $serialcirc_circ_liste_retard_rotative_tr="
 $serialcirc_circ_liste_retard_star_tr="
 	<tr  id='tr_!!zone!!_!!expl_id!!'>					
 		<td>
-			<img src='./images/plus.gif' class='img_plus' name='imEx' id='circ_detail_!!zone!!_!!expl_id!!Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('circ_detail_!!zone!!_!!expl_id!!', true);return false;\" hspace='3'>							
+			<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='circ_detail_!!zone!!_!!expl_id!!Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('circ_detail_!!zone!!_!!expl_id!!', true);return false;\" hspace='3'>							
 		</td>				
 		<td>
 			!!date!!
@@ -625,8 +631,8 @@ $serialcirc_circ_liste_retard_star_tr="
 $serialcirc_copy = "	
 	<table width='100%' class='sortable'>
 		<tr id='tr_!!zone!!_!!expl_id!!'>
-			<th>
-				".htmlentities($msg["serialcirc_circ_list_bull_circulation_date"],ENT_QUOTES,$charset)."
+			<th class='sorttable_alpha'>
+				".htmlentities($msg["serialcirc_circ_list_bull_circulation_periode"],ENT_QUOTES,$charset)."
 			</th>
 			<th>
 				".htmlentities($msg["serialcirc_circ_list_bull_circulation_perodique"],ENT_QUOTES,$charset)."
@@ -747,7 +753,7 @@ $serialcirc_circ_cb_notfound="
 	<div class='erreur'>$msg[540]</div>
 		<div class='row'>
 		<div class='colonne10'>
-			<img src='./images/error.gif' align='left'>
+			<img src='".get_url_icon('error.gif')."' class='align_left'>
 			</div>
 		<div class='colonne80'>
 			<strong>".htmlentities($msg["serialcirc_circ_cb_notfound"],ENT_QUOTES,$charset)."</strong>
@@ -812,74 +818,4 @@ $serialcirc_circ_pdf_diffusion="
 		</table>
 	</span>
 	</page>
-";		
-
-$serialcirc_call_mail="
-<p>Bonjour,</p>
-
-<p>Sauf erreur de notre part, vous êtes toujours en possession du bulletin suivant : !!issue!!.<br />
-Nous vous remercions de bien vouloir le rapporter à votre centre de ressources.</p>
-
-<p>Cordialement,<br />
-$biblio_name</p>";
-
-$serialcirc_transmission_mail="
-<p>Bonjour,</p>
-
-<p>Sauf erreur de notre part, vous êtes toujours en possession du bulletin suivant : !!issue!!.<br />
-Nous vous remercions de bien vouloir le transmettre au prochain destinataire de la liste de circulation.</p>
-
-<p>Cordialement,<br />
-$biblio_name</p>";
-
-$serialcirc_copy_accepted_mail="
-<p>Bonjour,</p>
-<p>Nous vous informons que votre demande de reproduction concernant le bulletin ci-dessous a été acceptée.<br /> 
-!!issue!! .
-</p>
-<p>Cordialement,<br />
-$biblio_name</p>";
-
-$serialcirc_send_alert_mail="
-<p>Bonjour,</p>
-<p>Nous vous informons que le bulletin ci-dessous est disponible.<br />
-!!issue!! .<br />
-Vous pouvez vous inscrire sur votre compte lecteur pour le recevoir. 
-</p>
-<p>Cordialement,<br />
-$biblio_name</p>";
-
-$serialcirc_copy_isdone_mail="
-<p>Bonjour,</p>
-<p>La demande de reproduction concernant le bulletin ci-dessous a été effectuée.<br /> 
-!!issue!!<br />
-Voici le lien pour consulter cette reproduction : <br />
-!!see!! 
-</p>
-<p>Cordialement,<br />
-$biblio_name</p>";
-
-$serialcirc_copy_no_mail="
-<p>Bonjour,</p>
-<p>Nous vous informons que votre demande de reproduction concernant le bulletin ci-dessous a été rejetée.<br /> 
-!!issue!! <br />
-Merci de votre compréhension.
-</p>
-<p>Cordialement,<br />
-$biblio_name</p>";
-
-$serialcirc_resa_accepted_mail ="
-<p>Bonjour,</p>
-<p>Nous vous informons que votre demande de reproduction concernant le bulletin ci-dessous a été rejetée.<br />  
-!!issue!! a été acceptée.
-</p>
-<p>Cordialement,<br />
-$biblio_name</p>";
-
-
-$serialcirc_resa_no_mail ="
-<p>Bonjour,</p>
-<p>La demande de réservation concernant le bulletin !!issue!! a été refusée.
-</p>
-<p>Cordialement,<br />
-$biblio_name</p>";
+";

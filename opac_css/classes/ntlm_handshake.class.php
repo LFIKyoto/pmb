@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ntlm_handshake.class.php,v 1.3.4.1 2015-11-30 08:57:33 mbertin Exp $
+// $Id: ntlm_handshake.class.php,v 1.4 2015-11-30 09:04:47 mbertin Exp $
 
 require_once('log.class.php');
 

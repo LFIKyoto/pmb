@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bookreaderEPUB.class.php,v 1.10 2014-09-04 15:33:53 apetithomme Exp $
+// $Id: bookreaderEPUB.class.php,v 1.13 2018-02-26 17:01:59 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,21 +10,21 @@ require_once($visionneuse_path."/../classes/epubData.class.php");
 require_once($visionneuse_path."/classes/mimetypes/bookreader/PDFMetadata.class.php");
 
 class bookreaderEPUB {
-	var $doc;			//le document EPUB à traiter
-	var $parameters;	//tableau décrivant les paramètres de la classe
-	var $ebook;			//l'objet ebook
-	var $html_ordered;	//tableau des chemins vers les fichiers html de l'ebook dans l'ordre
-	var $PDFMetadata;
-	var $pagesSizes;
+	public $doc;			//le document EPUB à traiter
+	public $parameters;	//tableau décrivant les paramètres de la classe
+	public $ebook;			//l'objet ebook
+	public $html_ordered;	//tableau des chemins vers les fichiers html de l'ebook dans l'ordre
+	public $PDFMetadata;
+	public $pagesSizes;
 	
-	function bookreaderEPUB($doc,$parameters){
+	public function __construct($doc,$parameters){
 		$this->doc = $doc;
 		$this->parameters = $parameters;
     	$this->ebook = new epubData($this->doc->driver->get_cached_filename($this->doc->id));
     	$this->PDFMetadata = new PDFMetadata($this->generatePDF());
 	}
 	
-	function getPage($page){
+	public function getPage($page){
 		$format = $this->parameters['format_image'];
 		switch ($format) {
 			case "imagick":
@@ -58,15 +58,15 @@ class bookreaderEPUB {
 		}
 	}
 	
-	function getWidth($page){
+	public function getWidth($page){
 		return $this->PDFMetadata->pagesSizes[$page]['width']*72/$this->parameters['resolution_image'];
 	}
 	
-	function getHeight($page){
+	public function getHeight($page){
 		return $this->PDFMetadata->pagesSizes[$page]['height']*72/$this->parameters['resolution_image'];
 	}
 	
-	function getPagesSizes(){
+	public function getPagesSizes(){
 		$this->pagesSizes= array();
 		foreach($this->PDFMetadata->pagesSizes as $page => $size){
 			$this->pagesSizes[$page] = array(
@@ -76,7 +76,7 @@ class bookreaderEPUB {
 		}
 	}
 	
-	function search($user_query){
+	public function search($user_query){
 		global $charset;
 		
 		$matches = array();
@@ -224,7 +224,7 @@ class bookreaderEPUB {
 		return array('matches' => $matches);
 	}
 	
-	function getBookmarks(){
+	public function getBookmarks(){
 		global $charset;
 		
 		$bookmarks = array();
@@ -275,11 +275,11 @@ class bookreaderEPUB {
 		return $bookmarks;
 	}
 	
-	function getPDF($pdfParams){
+	public function getPDF($pdfParams){
 		$file = $this->generatePDF();
 		if (file_exists($file)){
 		    header('Content-Type: application/pdf');
-		    header('Content-Disposition: attachment; filename=' . str_replace(" ","_",basename(utf8_decode($pdfParams["outname"]))));
+		    header('Content-Disposition: attachment; filename="' . str_replace(" ","_",basename(utf8_decode($pdfParams["outname"]))).'"');
 			readfile($file);
 			exit;
 		} else {
@@ -287,7 +287,7 @@ class bookreaderEPUB {
 		}
 	}
 	
-	function generatePDF(){
+	public function generatePDF(){
 		global $charset;
 		
 		if (!file_exists($this->doc->driver->get_cached_filename($this->doc->id).".pdf")){
@@ -308,10 +308,12 @@ class bookreaderEPUB {
 				$opfdir = $this->ebook->opfDir;
 				$search = array("/@font-face/", "/%/", "/orphans.*;/", "/widows.*;/");
 				$replace = array("font-face", " %", "/*$0*/", "/*$0*/");
-				foreach ($items as $file) {
-					if ($file["media-type"] == "text/css") {
-						$file_path = $this->doc->driver->get_cached_filename($this->doc->id)."_unzip/".$opfdir.$file["href"];
-						file_put_contents($file_path, preg_replace($search, $replace, file_get_contents($file_path)));
+				if(is_array($items)) {
+					foreach ($items as $file) {
+						if ($file["media-type"] == "text/css") {
+							$file_path = $this->doc->driver->get_cached_filename($this->doc->id)."_unzip/".$opfdir.$file["href"];
+							file_put_contents($file_path, preg_replace($search, $replace, file_get_contents($file_path)));
+						}
 					}
 				}
 				
@@ -339,12 +341,12 @@ class bookreaderEPUB {
 		return $this->doc->driver->get_cached_filename($this->doc->id).".pdf";
 	}
 	
-	function getPageCount(){
+	public function getPageCount(){
 		$page_count = $this->PDFMetadata->nb_pages;
 		return $page_count;
 	}
 	
-	function getHtmlOrdered(){
+	public function getHtmlOrdered(){
 		if (!$this->html_ordered) {
 			$this->html_ordered = array();
 			
@@ -361,7 +363,7 @@ class bookreaderEPUB {
 		return $this->html_ordered;
 	}
 	
-	function rrmdir($dir){
+	public function rrmdir($dir){
 		if (is_dir($dir)) {
 			$objects = scandir($dir);
 			foreach ($objects as $object) {

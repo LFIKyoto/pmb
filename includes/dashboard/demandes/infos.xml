@@ -3,12 +3,36 @@
 ****************************************************************************************
 © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: infos.xml,v 1.2 2015-06-10 07:50:18 dgoron Exp $ -->
+$Id: infos.xml,v 1.3 2016-11-29 15:33:37 agiraud Exp $ -->
 <informations>
 	<information>
-		<name>nb_records</name>
-		<query>select count(*) as total from notices</query>	
+		<name>nb_demandes</name>
+		<query>select count(id_demande) as total from demandes</query>	
 	</information>
+	<information>
+		<name>nb_demandes_a_valider</name>
+		<query>select count(id_demande) as total from demandes where etat_demande=1</query>	
+	</information>
+	<information>
+		<name>nb_demandes_validees</name>
+		<query>SELECT count(id_demande) as total from demandes where etat_demande=2</query>	
+	</information>
+	<information>
+		<name>nb_demandes_refusees</name>
+		<query>select count(id_demande) as total from demandes where etat_demande=3</query>	
+	</information>
+	<information>
+		<name>nb_demandes_terminees</name>
+		<query>select count(id_demande) as total from demandes where etat_demande=4</query>	
+	</information>
+	<information>
+		<name>nb_demandes_abandonnees</name>
+		<query>select count(id_demande) as total from demandes where etat_demande=5</query>	
+	</information>
+	<information>
+		<name>nb_demandes_archivees</name>
+		<query>select count(id_demande) as total from demandes where etat_demande=6</query>	
+	</information>	
 	<!-- <information>
 		<name>nb_records</name>
 		<query>select count(*) as total from notices</query>	

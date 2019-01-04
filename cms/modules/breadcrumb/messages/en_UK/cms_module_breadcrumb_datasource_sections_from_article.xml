@@ -5,9 +5,9 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: cms_module_breadcrumb_datasource_sections_from_article.xml,v 1.1 2015-06-15 12:55:33 pmbs Exp $ -->
+$Id: cms_module_breadcrumb_datasource_sections_from_article.xml,v 1.2 2016-09-20 10:25:42 apetithomme Exp $ -->
 
 <XMLlist>
 	<entry code='cms_module_common_selector_article'>Manual selection of an article</entry>
-	<entry code='cms_module_common_selector_env_var'>Selection of an article from a environment variable</entry>
+	<entry code='cms_module_common_selector_env_var'>Selection of an article from an environment variable</entry>
 </XMLlist>

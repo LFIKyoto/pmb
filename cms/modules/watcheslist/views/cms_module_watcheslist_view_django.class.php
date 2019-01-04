@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_watcheslist_view_django.class.php,v 1.1.4.1 2015-10-09 13:31:42 dgoron Exp $
+// $Id: cms_module_watcheslist_view_django.class.php,v 1.3 2015-12-15 11:27:18 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,7 +13,11 @@ class cms_module_watcheslist_view_django extends cms_module_common_view_django{
 		$this->default_template = "<div>
 {% for watch in watches %}
 <h3>{{watch.title}}</h3>
+{% if watch.logo.exists %}
+<img src='{{watch.logo.vign}}'/>
+{% else %}			
 <img src='{{watch.logo_url}}'/>
+{% endif %}
 <blockquote>{{watch.desc}}</blockquote>
 {% endfor %}
 </div>";

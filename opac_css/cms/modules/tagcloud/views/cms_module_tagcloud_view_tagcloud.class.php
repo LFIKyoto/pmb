@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_tagcloud_view_tagcloud.class.php,v 1.3 2014-12-18 16:31:50 dgoron Exp $
+// $Id: cms_module_tagcloud_view_tagcloud.class.php,v 1.4 2016-09-20 10:25:42 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -34,7 +34,7 @@ class cms_module_tagcloud_view_tagcloud extends cms_module_common_view{
 					}
 				});	
 			}
-		</script>				
+		</script>
 		<div id='".$this->get_form_value_name("weight_styles")."_values'>";
 		if($this->parameters['nb_weight']){
 			$form.= "
@@ -77,7 +77,6 @@ class cms_module_tagcloud_view_tagcloud extends cms_module_common_view{
 			$datas[$i]['weight'] = round((($datas[$i]['weight']-$min)/($max-min))*$this->parameters['nb_weight']);
 		}
 		
-		
 		$html_to_display = "
 		<div>
 			<ul>";
@@ -85,11 +84,12 @@ class cms_module_tagcloud_view_tagcloud extends cms_module_common_view{
 			$html_to_display.="
 				<li class='tag_".$tag['weight']."'><a href='".$tag['link']."'>".$this->format_text($tag['label'])."</a></li>";
 		}
-		$html_to_display.= "		
-			</ul> 
+		$html_to_display.= "
+			</ul>
 		</div>";
 		return $html_to_display;
 	}
+	
 	public function execute_ajax(){
 		global $nb_weight;
 		global $do;
@@ -103,7 +103,6 @@ class cms_module_tagcloud_view_tagcloud extends cms_module_common_view{
 					margin-left: 0px;
 					margin-right: 0px;
 					padding: 2px;
-			
 				}";
 				for($i=0; $i<$this->parameters['nb_weight'] ; $i++ ){
 					$response['content'].= "

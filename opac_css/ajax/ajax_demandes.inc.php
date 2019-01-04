@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_demandes.inc.php,v 1.12 2015-04-03 11:16:27 jpermanne Exp $
+// $Id: ajax_demandes.inc.php,v 1.14 2017-05-17 14:59:57 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -14,6 +14,7 @@ require_once($base_path."/includes/templates/demandes.tpl.php");
 require_once($base_path."/includes/templates/demandes_actions.tpl.php");
 require_once($base_path."/includes/templates/demandes_notes.tpl.php");
 require_once($base_path."/includes/mail.inc.php");
+require_once($class_path.'/audit.class.php');
 
 switch($quoifaire){
 	case 'show_list_action':
@@ -48,8 +49,8 @@ function show_form($id,$type){
 		</div>
 		<div class='row'>
 			<blockquote>
-				<input type='hidden' id='date_rdv' name='date_rdv' value='$date' />
-				<input type='button' class='bouton' id='date_rdv_btn' name='date_rdv_btn' value='".formatdate($date)."' onClick=\"window.open('./select.php?what=calendrier&caller=liste_action&date_caller=$date&param1=date_rdv&param2=date_rdv_btn&auto_submit=NO&date_anterieure=YES', 'date_rdv', 'width=250,height=300,toolbar=no,dependent=yes,resizable=yes')\"/>
+				<input type='text' style='width: 10em;' name='date_rdv' id='date_rdv' 
+					data-dojo-type='dijit/form/DateTextBox' required='false' value='".$date."' />
 			</blockquote>
 		</div>";	
 	}

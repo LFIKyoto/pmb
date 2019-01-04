@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.16 2015-02-16 15:59:21 dgoron Exp $
+// $Id: main.inc.php,v 1.17 2016-03-29 15:31:33 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -39,6 +39,13 @@ switch($categ) {
 		break;
 	case 'docwatch' :
 		include_once("./dsi/docwatch/main.inc.php");
+		break;
+	case 'plugin' :
+		$plugins = plugins::get_instance();
+		$file = $plugins->proceed("dsi",$plugin,$sub);
+		if($file){
+			include $file;
+		}
 		break;
 	default:
         include("$include_path/messages/help/$lang/dsi.txt");

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: parse_format.class.php,v 1.12 2014-10-28 11:04:51 mbertin Exp $
+// $Id: parse_format.class.php,v 1.17 2018-10-02 13:05:53 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
 	die("no access");
@@ -11,24 +11,30 @@ if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
 require_once ($include_path . "/misc.inc.php");
 
 class parse_format {
-	var $error; //Erreur
-	var $error_message; //Message d'erreur
-	var $environnement=array();
-
-	function parse_format($filename='interpreter.inc.php',$in_relation=false) {
+	public $func_format;
+	public $var_format;
+	public $var_return;
+	public $in_relation;
+	public $erreur; //Erreur
+	public $var_set;
+	protected static $instances;
+	
+	public function __construct($filename='interpreter.inc.php',$in_relation=false) {
 		global $include_path;
 		global $func_format;
 		global $var_format;
 		global $class_path;
-		require_once ( $include_path."/interpreter/$filename");	
+		global $base_path;
+		require_once ( $include_path."/interpreter/$filename");
 		$this->func_format=$func_format;
 		$this->var_format=$var_format;
 		$this->var_return='';
 		$this->in_relation = $in_relation;
+		$this->erreur = 0;
 	}
 
 	
-	function exec_function($function_name, $param_name, $param_number) {
+	public function exec_function($function_name, $param_name, $param_number) {
 		if($this->in_relation == false || ($this->in_relation== true && $function_name != "get_childs_in_tpl" && $function_name != "get_parents_in_tpl")){
 			if(! $this->func_format[$function_name]) return " $function_name not found ";
 			$ret = $this->func_format[$function_name]( $param_name, $this);
@@ -38,12 +44,13 @@ class parse_format {
 		}
 	}
 	
-	function exec($cmd, & $i) {
+	public function exec($cmd, & $i) {
 		$state = 0;
 		$ret = "";
 		$function_name='';
 		$param_uneval='';
-		for ($i; $i < strlen($cmd); $i++) {
+		$strlen_cmd = strlen($cmd);
+		for ($i; $i < $strlen_cmd; $i++) {
 			switch ($state) {
 				case '0' : //state Normal
 					switch ($cmd[$i]) {
@@ -59,7 +66,7 @@ class parse_format {
 					}
 					break;
 				case 'get_token' : //get param name
-					if(($cmd[$i -2] == '&') && ($cmd[$i -1] == '#') && preg_match('/[0-9]/',$cmd[$i])){//Il n'y a pas de fonction commençant par un chiffre, il s'agit d'une entité html
+					if(isset($cmd[$i -2]) && ($cmd[$i -2] == '&') && ($cmd[$i -1] == '#') && preg_match('/[0-9]/',$cmd[$i])){//Il n'y a pas de fonction commençant par un chiffre, il s'agit d'une entité html
 						return "#".$cmd[$i];
 						break;
 					}
@@ -100,7 +107,8 @@ class parse_format {
 								$i++;
 								return $param_uneval;
 							}
-							break;
+							//break; -> Il faut garder le } si il n'est pas suivit d'un ; voir expl de {explnum_id} ci-dessous
+							//Expl: #group(#linked_id(down,a,d);,0,<br />,#{- <b><a href="#opac_url();doc_num.php?explnum_id=#expl_num_with_tpl(1,/,0,{explnum_id},1,);">#title();</a></b>};);
 						default:
 							$param_uneval.=$cmd[$i];
 							$state='get_sub_param';
@@ -193,7 +201,7 @@ class parse_format {
 							$param_name[$param_number] = '';
 							break;
 						default :
-							if( ($cmd[$i]=='\\') && ( ($i+1) < strlen($cmd)) )$i++;
+							if( ($cmd[$i]=='\\') && ( ($i+1) < $strlen_cmd) )$i++;
 							$param_name[$param_number] .= $cmd[$i];
 							break;
 					}
@@ -205,12 +213,12 @@ class parse_format {
 		return $ret;
 	}
 		
-	function exec_cmd($no_escape=false) {
+	public function exec_cmd($no_escape=false) {
 	
 		$cmd=$this->cmd;
-		
+		$strlen_cmd = strlen($cmd);
 		$ret = "";
-		for ($i = 0; $i < strlen($cmd); $i++) {
+		for ($i = 0; $i < $strlen_cmd; $i++) {
 			switch ($cmd[$i]) {
 				case '$' :
 				case '#' :
@@ -230,7 +238,7 @@ class parse_format {
 					}
 					break;
 				default :
-					if (!$no_escape) if( ($cmd[$i]=='\\') && ( ($i+1) < strlen($cmd)) )$i++;
+					if (!$no_escape) if( ($cmd[$i]=='\\') && ( ($i+1) < $strlen_cmd) )$i++;
 					$ret .= $cmd[$i];
 					break;
 			}
@@ -239,12 +247,12 @@ class parse_format {
 	}
 
 	
-	function exec_cmd_conso() {
+	public function exec_cmd_conso() {
 
-	$cmd=$this->cmd;
-	
+		$cmd=$this->cmd;
+		$strlen_cmd = strlen($cmd);
 		//$ret = "";
-		for ($i = 0; $i < strlen($cmd); $i++) {
+		for ($i = 0; $i < $strlen_cmd; $i++) {
 			switch ($cmd[$i]) {
 				case '$' :
 				case '#' :
@@ -266,7 +274,7 @@ class parse_format {
 					}
 					break;
 				default :
-					if( ($cmd[$i]=='\\') && ( ($i+1) < strlen($cmd)) )$i++;
+					if( ($cmd[$i]=='\\') && ( ($i+1) < $strlen_cmd) )$i++;
 					$ret .= $cmd[$i];
 					break;
 			}
@@ -274,7 +282,12 @@ class parse_format {
 		return $ret;
 	}
 	
-	
+	public static function get_instance($filename='interpreter.inc.php',$in_relation=false) {
+		if(!isset(static::$instances[$filename][$in_relation])) {
+			static::$instances[$filename][$in_relation] = new parse_format($filename,$in_relation);
+		}
+		return static::$instances[$filename][$in_relation];
+	}
 }	
 	
 ?>

@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: build.inc.php,v 1.1 2012-01-25 15:20:35 ngantier Exp $
+// $Id: build.inc.php,v 1.2 2017-02-20 19:04:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-require_once($class_path."/harvest.class.php");
+if(!isset($id_harvest)) $id_harvest = 0;
 
+require_once($class_path."/harvest.class.php");
 
 switch($action) {
 	case 'form':

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_retour_class.php,v 1.19 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: ajax_retour_class.php,v 1.23 2017-06-08 13:24:27 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -50,72 +50,72 @@ require_once("$include_path/resa_func.inc.php");
  */
 
 class retour {
-	var $expl_cb;		
-	var $msg_293;
-	var $msg_652;
-	var $msg_294;
-	var $msg_rfid_retour_emprunteur_titre;
-	var $expl_id;
-	var $error_message;
-	var $status ;
-	var $expl_section;
-	var $expl_location;
-	var $expl_typdoc;
-	var $expl_cote;
-	var $expl_statut;
-	var $expl_codestat;	
-	var $expl_owner;	
-	var $libelle;
-	var $expl_note;	
-	var $expl_comment;	
-	var $expl_bulletin;
-	var $expl_notice;
-	var $lastempr_cb;
-	var $lastempr_nom;
-	var $lastempr_prenom;
-	var $pret_date;
-	var $empr_cp;
-	var $empr_nom;
-	var $empr_prenom;
-	var $empr_pays;
-	var $empr_codestat;
-	var $empr_msg;
-	var $empr_date_adhesion;
-	var $empr_date_expiration;
-	var $groupes;	
-	var $empr_ville;
-	var $empr_prof;
-	var $empr_year;
-	var $empr_categ;
-	var $empr_sexe;
-	var $empr_statut;
-	var $empr_location;
-	var $type_abt;
-	var $pret_arc_id;
-	var $codestat;	
-	var $pret_idempr;
-	var $pret_idexpl;
-	var $pret_retour;
-	var $aff_pret_date;
-	var $aff_pret_retour;
-	var $id_resa;
-	var $resa_idempr;
-	var $resa_idnotice;
-	var $resa_idbulletin;
-	var $resa_date;
-	var $resa_date_fin;
-	var $aff_resa_date;
-	var $aff_resa_date_fin;
-	var $resa_cb;
-	var $cb_reservataire;
-	var $nom_reservataire;
-	var $prenom_reservataire;
-	var $id_reservataire;	
-	var $url_reservation;
-	var $retour_message;
+	public $expl_cb;		
+	public $msg_293;
+	public $msg_652;
+	public $msg_294;
+	public $msg_rfid_retour_emprunteur_titre;
+	public $expl_id;
+	public $error_message;
+	public $status ;
+	public $expl_section;
+	public $expl_location;
+	public $expl_typdoc;
+	public $expl_cote;
+	public $expl_statut;
+	public $expl_codestat;	
+	public $expl_owner;	
+	public $libelle;
+	public $expl_note;	
+	public $expl_comment;	
+	public $expl_bulletin;
+	public $expl_notice;
+	public $lastempr_cb;
+	public $lastempr_nom;
+	public $lastempr_prenom;
+	public $pret_date;
+	public $empr_cp;
+	public $empr_nom;
+	public $empr_prenom;
+	public $empr_pays;
+	public $empr_codestat;
+	public $empr_msg;
+	public $empr_date_adhesion;
+	public $empr_date_expiration;
+	public $groupes;	
+	public $empr_ville;
+	public $empr_prof;
+	public $empr_year;
+	public $empr_categ;
+	public $empr_sexe;
+	public $empr_statut;
+	public $empr_location;
+	public $type_abt;
+	public $pret_arc_id;
+	public $codestat;	
+	public $pret_idempr;
+	public $pret_idexpl;
+	public $pret_retour;
+	public $aff_pret_date;
+	public $aff_pret_retour;
+	public $id_resa;
+	public $resa_idempr;
+	public $resa_idnotice;
+	public $resa_idbulletin;
+	public $resa_date;
+	public $resa_date_fin;
+	public $aff_resa_date;
+	public $aff_resa_date_fin;
+	public $resa_cb;
+	public $cb_reservataire;
+	public $nom_reservataire;
+	public $prenom_reservataire;
+	public $id_reservataire;	
+	public $url_reservation;
+	public $retour_message;
 		
 	// constructeur
-	function retour() {
+	public function __construct() {
 		global $include_path;
 		global $msg;	
 		$this->expl_cb = '';	
@@ -127,7 +127,7 @@ class retour {
 	}
 
 
-	function check_barcode($cb) {
+	public function check_barcode($cb) {
 		global $dbh;
 		global $msg;	
 		
@@ -141,6 +141,7 @@ class retour {
 			return -1;
 		} else {
 			$this->expl_id = $expl->expl_id;	
+			$this->expl_cb = $expl->expl_cb;
 			$this->expl_section = $expl->expl_section;
 			$this->expl_location = $expl->expl_location;	
 			$this->expl_typdoc = $expl->expl_typdoc;
@@ -176,7 +177,7 @@ class retour {
 
 
 	// mise à jour des stat des infos du prêt
-	function maj_stat_pret () {
+	public function maj_stat_pret () {
 		global $dbh;
 		global $msg;
 		global $dbh, $empr_archivage_prets, $empr_archivage_prets_purge; 
@@ -225,7 +226,7 @@ class retour {
 		return $res ;
 	}
 
-	function check_pret() {
+	public function check_pret() {
 		global $dbh;
 		global $msg;
 			
@@ -286,7 +287,7 @@ class retour {
 		return 0;
 	}	
 	
-	function check_resa() {
+	public function check_resa() {
 		global $dbh;
 		global $msg; 
 		
@@ -325,7 +326,7 @@ class retour {
 	}
 
 
-	function do_retour_doc() {
+	public function do_retour_doc() {
 	
 		global $dbh;
 		global $msg;
@@ -355,7 +356,14 @@ class retour {
 		if ($this->expl_note) {
 			$this->error_message=$msg[377];
 		}	
-		if ($this->pret_idempr) {	
+		if ($this->pret_idempr) {
+			//choix du mode de calcul
+			$loc_calendar = 0;
+			global $pmb_utiliser_calendrier, $pmb_utiliser_calendrier_location;
+			if (($pmb_utiliser_calendrier==1) && $pmb_utiliser_calendrier_location) {
+				$loc_calendar = $this->expl_location;
+			}
+				
 			// calcul du retard éventuel
 			$rqt_date = "select ((TO_DAYS(CURDATE()) - TO_DAYS('$this->pret_retour'))) as retard ";
 			$resultatdate=pmb_mysql_query($rqt_date);
@@ -364,7 +372,7 @@ class retour {
 			if($retard > 0) {
 				//Calcul du vrai nombre de jours
 				$date_debut=explode("-",$this->pret_retour);
-				$ndays=calendar::get_open_days($date_debut[2],$date_debut[1],$date_debut[0],date("d"),date("m"),date("Y"));
+				$ndays=calendar::get_open_days($date_debut[2],$date_debut[1],$date_debut[0],date("d"),date("m"),date("Y"),$loc_calendar);
 				if ($ndays>0) {
 					$retard = (int)$ndays;
 					$this->error_message=$msg[369]." : ".$retard." ".$msg[370];
@@ -374,18 +382,24 @@ class retour {
 			//Calcul du blocage
 			if ($pmb_blocage_retard) {
 				$date_debut=explode("-",$this->pret_retour);
-				$ndays=calendar::get_open_days($date_debut[2],$date_debut[1],$date_debut[0],date("d"),date("m"),date("Y"));
+				$ndays=calendar::get_open_days($date_debut[2],$date_debut[1],$date_debut[0],date("d"),date("m"),date("Y"),$loc_calendar);
 				if ($ndays>$pmb_blocage_delai) {
 					$ndays=$ndays*$pmb_blocage_coef;
 					if (($ndays>$pmb_blocage_max)&&($pmb_blocage_max!=0)) {
-						$ndays=$pmb_blocage_max;
+						if ($pmb_blocage_max!=-1) {
+							$ndays=$pmb_blocage_max;
+						}
 					}
 				} else $ndays=0;
 				if ($ndays>0) {
 					//Le lecteur est-il déjà bloqué ?
 					$date_fin_blocage_empr = pmb_mysql_result(pmb_mysql_query("select date_fin_blocage from empr where id_empr='".$this->pret_idempr."'"),0,0);
 					//Calcul de la date de fin
-					$date_fin=calendar::add_days(date("d"),date("m"),date("Y"),$ndays);
+					if ($pmb_blocage_max!=-1) {
+						$date_fin=calendar::add_days(date("d"),date("m"),date("Y"),$ndays,$loc_calendar);
+					} else {
+						$date_fin=calendar::add_days(date("d"),date("m"),date("Y"),0,$loc_calendar);
+					}
 					if ($date_fin > $date_fin_blocage_empr) {
 						//Mise à jour
 						pmb_mysql_query("update empr set date_fin_blocage='".$date_fin."' where id_empr='".$this->pret_idempr."'");
@@ -406,7 +420,7 @@ class retour {
 					if ($compte_id) {
 						$cpte=new comptes($compte_id);
 						if ($cpte->id_compte) {
-							$cpte->record_transaction("",$amende_t["valeur"],-1,sprintf($msg["finance_retour_amende_expl"],$this->pret_idexpl),0);
+							$cpte->record_transaction("",$amende_t["valeur"],-1,sprintf($msg["finance_retour_amende_expl"],$this->expl_cb),0);
 							$this->error_message.=" ".$msg["finance_retour_amende_recorded"];
 						}
 					}
@@ -444,8 +458,7 @@ class retour {
 	}
 
 	
-	function do_retour( $cb_expl) {	
-		
+	public function do_retour( $cb_expl) {	
 		$this->cb_expl=$cb_expl;
 		$this->error_message='';
 		$this->status=0;

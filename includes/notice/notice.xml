@@ -3,7 +3,7 @@
 ****************************************************************************************
 © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: notice.xml,v 1.6 2014-03-12 12:46:52 dbellamy Exp $ -->
+$Id: notice.xml,v 1.7 2017-02-16 12:29:32 jpermanne Exp $ -->
 
 
 <fields>
@@ -11,6 +11,11 @@ $Id: notice.xml,v 1.6 2014-03-12 12:46:52 dbellamy Exp $ -->
 		<html>typdoc</html>
 		<html_ext>typdoc</html_ext>	
 		<sql>select typdoc from notices where notice_id ='!!id!!'</sql>	
+	</field>
+	<field name="niveau_biblio" label="msg:niveau_biblio" size_max="1">
+		<html>niveau_biblio</html>
+		<html_ext>niveau_biblio</html_ext>	
+		<sql>select niveau_biblio from notices where notice_id ='!!id!!'</sql>	
 	</field>
 	<field name="tit1" label="msg:237" size_max="1">
 		<html>f_tit1</html>	

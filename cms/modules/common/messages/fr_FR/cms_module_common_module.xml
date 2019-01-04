@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: cms_module_common_module.xml,v 1.19 2014-11-26 15:22:28 dgoron Exp $ -->
+$Id: cms_module_common_module.xml,v 1.24 2017-04-05 12:20:55 ngantier Exp $ -->
 
 <XMLlist>
 	<entry code="cms_module_datasource_choice">Choisissez une source de donnée</entry>
@@ -34,14 +34,16 @@ $Id: cms_module_common_module.xml,v 1.19 2014-11-26 15:22:28 dgoron Exp $ -->
 	<entry code="cms_manage_module_conditions">Conditions</entry>
 	<entry code="cms_module_common_module_fixed">Cadre fixe ?</entry>
 	<entry code="cms_module_view_choice">Choisissez une vue</entry>
-	<entry code="cms_module_common_module_memo_url">Attaché à la page ?</entry>
+	<entry code="cms_module_common_module_memo_url">Conserver l'URL de construction ?</entry>
 	<entry code="cms_module_common_module_name_empty">Veuillez saisir le nom du cadre.</entry>
 	<entry code="cms_module_common_module_filter_label">Utiliser un filtre</entry>
 	<entry code="cms_module_common_module_filter_choice">Choisissez un filtre</entry>
 	<entry code="cms_module_common_filter_articles_by_cp">Par la valeur d'un champ d'un type de contenu</entry>
 	<entry code="cms_module_common_filter_articles_by_type">Par le type de contenu</entry>
+	<entry code="cms_module_common_filter_articles_by_publication_state">Par le statut de publication</entry>
 	<entry code="cms_module_common_filter_sections_by_cp">Par la valeur d'un champ d'un type de contenu</entry>
 	<entry code="cms_module_common_filter_sections_by_type">Par le type de contenu</entry>
+	<entry code="cms_module_common_filter_sections_by_publication_state">Par le statut de publication</entry>
 	<entry code="cms_module_common_condition_global_var">Présence d'une variable globale</entry>
 	<entry code="cms_module_common_condition_global_var_value">Valeur d'une variable globale</entry>
 	<entry code="cms_module_common_condition_view">Vues OPAC</entry>
@@ -57,4 +59,9 @@ $Id: cms_module_common_module.xml,v 1.19 2014-11-26 15:22:28 dgoron Exp $ -->
 	<entry code="cms_module_common_module_cache_get_post_view">Selon les GET,POST et vues OPAC</entry>
 	<entry code="cms_module_common_module_cache_view">Selon les vues OPAC</entry>
 	<entry code="cms_module_common_module_cache_all">Systématique</entry>
+	<entry code="cms_module_common_module_css_class">Classe CSS</entry>
+	<entry code="cms_module_common_module_duplicate">Dupliquer</entry>
+	<entry code="cms_module_common_condition_lang">Langues de l'OPAC</entry>
+	<entry code="cms_module_common_filter_articles_by_all_cp">Par la valeur d'un champ de tous les types de contenu</entry>
+	<entry code="cms_module_common_filter_sections_by_all_cp">Par la valeur d'un champ de tous les types de contenu</entry>
 </XMLlist>

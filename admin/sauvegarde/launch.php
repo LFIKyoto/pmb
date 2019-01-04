@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: launch.php,v 1.8 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: launch.php,v 1.9 2017-10-23 10:13:00 ngantier Exp $
 
 //Page de lancement d'un sauvegarde
 $base_path="../..";
@@ -35,7 +35,6 @@ while ($res=pmb_mysql_fetch_object($resultat)) {
 	}
 }
 
-//$tree="<center><b>".$msg["sauv_launch_tree_titre"]."</b><br /><i>".$msg["sauv_launch_tree_help"]."</i></center><hr /><br />";
 for ($i=0; $i<count($sauvegardes); $i++) {
 $tree.= "<input type=\"checkbox\" 
 			name=\"sauvegardes[]\" 

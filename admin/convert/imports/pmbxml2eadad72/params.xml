@@ -7,7 +7,7 @@
 	<!-- Type de l'entrée -->
 	<input type="xml" rootelement="*" noticeelement="notice" specialexport="yes" />
 	<!-- Type de sortie -->
-	<output importable="no" type="custom" script="output_ead.inc.php" suffix="xml" />
+	<output importable="no" type="custom" script="pmbxml2eadad72_output.class.php" suffix="xml" />
 
 	<step type="xmltransform">
 		<!-- Conversion en xml ead -->

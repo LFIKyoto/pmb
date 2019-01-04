@@ -2,21 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: category.tpl.php,v 1.28.4.2 2015-11-03 09:29:56 jpermanne Exp $
+// $Id: category.tpl.php,v 1.39 2018-05-26 09:13:54 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
-// templates du sélecteur catégories
+global $dyn, $infield;
+global $p1, $p2;
+global $jscript;
+global $jscript_term;
+global $select_category_form;
+global $categ_browser, $categ_browser_autoindex;
+global $max_field, $add_field, $field_id, $field_name_id;
 
-//-------------------------------------------
-//	$sel_header : header
-//-------------------------------------------
-$sel_header = "
-<div class='row'>
-	<label for='titre_select_categ' class='etiquette'>$msg[323]</label>
-	</div>	
-<div class='row'>
-";
+// templates du sélecteur catégories
 
 //	----------------------------------
 // $categ_browser : template du browser de catégories
@@ -30,54 +28,17 @@ $categ_browser = "
 if (SESSrights & THESAURUS_AUTH) $categ_browser .= "<div class='right'>!!bt_ajouter!!</div>";
 $categ_browser .= "</div>
 <div class='row'>
-		<table border='0'>
+		<table style='border:0px'>
 			!!browser_content!!
 		</table>
 </div>
 ";
 $categ_browser_autoindex = "
 <div class='row'>
-		<table border='0'>
+		<table style='border:0px'>
 			!!browser_content!!
 		</table>
 </div>
-";
-//-------------------------------------------
-//	$sel_search_form : module de recherche
-//-------------------------------------------
-$sel_search_form ="
-<script type='text/javascript'>
-<!--
-function test_form(form)
-{
-	if(form.f_user_input.value.length == 0)
-	{
-		return true;
-	}
-	return true;
-}
--->
-</script>
-<form name='search_form' method='post' action='$base_url' >
-	!!sel_thesaurus!!
-	<div id='search_part' style='display:!!display_search_part!!'>
-		<input type='text' name='f_user_input' value='!!f_user_input_value!!' />
-		&nbsp;
-		<input type='submit' class='bouton_small' value='$msg[142]' onclick='return test_form(this.form)' />
-	</div>	
-	<br />	
-	<input type='radio' value='hierarchy' name='search_type' !!h_checked!! onClick=\"this.form.submit()\" />
-	&nbsp;".$msg["term_search_type_h"]."&nbsp;
-	<input type='radio' value='term' name='search_type' !!t_checked!! onClick=\"this.form.submit()\" />
-	&nbsp;".$msg["term_search_type_t"]."
-	!!sel_index_auto!!
-</form>
-
-<script type='text/javascript'>
-<!--
-	document.forms['search_form'].elements['f_user_input'].focus();
--->
-</script>
 ";
 
 //-------------------------------------------
@@ -90,12 +51,12 @@ if ($dyn==4) {
 	$jscript_ ="
 <script type='text/javascript'>
 	function set_parent_w(f_caller, id_value, libelle_value,w,callback,id_thesaurus){
-		w.opener.document.forms[f_caller].elements['$p1'].value=id_value;
-		w.opener.document.forms[f_caller].elements['$p2'].value=reverse_html_entities(libelle_value);
+		w.parent.document.forms[f_caller].elements['$p1'].value=id_value;
+		w.parent.document.forms[f_caller].elements['$p2'].value=reverse_html_entities(libelle_value);
 		
 		if(callback)
-			w.opener[callback]('$infield');
-		w.close();
+			w.parent[callback]('$infield');
+		closeCurrentEnv();
 	}
 </script>";
 } else if ($dyn==3) {
@@ -111,19 +72,19 @@ if ($dyn==4) {
 <script type='text/javascript'>
 	function set_parent_w(f_caller, id_value, libelle_value,w,callback,id_thesaurus){
 		var i=0;
-		if(!(typeof w.opener.$add_field == 'function')) {
-			w.opener.document.getElementById('$field_id').value = id_value;
-			w.opener.document.getElementById('$field_name_id').value = reverse_html_entities(libelle_value);
-			parent.parent.close();
+		if(!(typeof w.parent.$add_field == 'function')) {
+			w.parent.document.getElementById('$field_id').value = id_value;
+			w.parent.document.getElementById('$field_name_id').value = reverse_html_entities(libelle_value);
+			closeCurrentEnv();
 			return;
 		}
-		var n_element=w.opener.document.forms[f_caller].elements['$max_field'].value;
+		var n_element=w.parent.document.forms[f_caller].elements['$max_field'].value;
 		var flag = 1;
 		var multiple=1;
 		
 		//Vérification que l'élément n'est pas déjà sélectionnée
 		for (var i=0; i<n_element; i++) {
-			if (w.opener.document.getElementById('$field_id'+i).value==id_value) {
+			if (w.parent.document.getElementById('$field_id'+i).value==id_value) {
 				alert('".$msg["term_already_in_use"]."');
 				flag = 0;
 				break;
@@ -132,12 +93,12 @@ if ($dyn==4) {
 		if (flag) {
 			for (var i=0; i<n_element; i++) {
 					
-				if ((w.opener.document.getElementById('$field_id'+i).value==0)||(w.opener.document.getElementById('$field_id'+i).value=='')) break;
+				if ((w.parent.document.getElementById('$field_id'+i).value==0)||(w.parent.document.getElementById('$field_id'+i).value=='')) break;
 			}
 		
-			if (i==n_element && (typeof w.opener.$add_field == 'function')) w.opener.$add_field();
-			w.opener.document.getElementById('$field_id'+i).value = id_value;
-			w.opener.document.getElementById('$field_name_id'+i).value = reverse_html_entities(libelle_value);
+			if (i==n_element && (typeof w.parent.$add_field == 'function')) w.parent.$add_field();
+			w.parent.document.getElementById('$field_id'+i).value = id_value;
+			w.parent.document.getElementById('$field_name_id'+i).value = reverse_html_entities(libelle_value);
 		}	
 	}
 </script>";
@@ -148,11 +109,11 @@ $jscript_ = "
 function set_parent_w(f_caller, id_value, libelle_value,w,callback,id_thesaurus){
 	dyn='$dyn';
 	if(dyn==2) { // Pour les liens entre autorités
-		n_aut_link=w.opener.document.forms[f_caller].elements['max_aut_link'].value;
+		n_aut_link=w.parent.document.forms[f_caller].elements['max_aut_link'].value;
 		flag = 1;	
 		//Vérification que l'autorité n'est pas déjà sélectionnée
 		for (i=0; i<n_aut_link; i++) {
-			if (w.opener.document.getElementById('f_aut_link_id'+i).value==id_value && w.opener.document.getElementById('f_aut_link_table'+i).value==$p1) {
+			if (w.parent.document.getElementById('f_aut_link_id'+i).value==id_value && w.parent.document.getElementById('f_aut_link_table'+i).value==$p1) {
 				alert('".$msg["term_already_in_use"]."');
 				flag = 0;
 				break;
@@ -160,25 +121,25 @@ function set_parent_w(f_caller, id_value, libelle_value,w,callback,id_thesaurus)
 		}	
 		if (flag) {
 			for (i=0; i<n_aut_link; i++) {
-				if ((w.opener.document.getElementById('f_aut_link_id'+i).value==0)||(w.opener.document.getElementById('f_aut_link_id'+i).value=='')) break;
+				if ((w.parent.document.getElementById('f_aut_link_id'+i).value==0)||(w.parent.document.getElementById('f_aut_link_id'+i).value=='')) break;
 			}	
-			if (i==n_aut_link) w.opener.add_aut_link();
+			if (i==n_aut_link) w.parent.add_aut_link();
 			
-			var selObj = w.opener.document.getElementById('f_aut_link_table_list');
+			var selObj = w.parent.document.getElementById('f_aut_link_table_list');
 			var selIndex=selObj.selectedIndex;
-			w.opener.document.getElementById('f_aut_link_table'+i).value= selObj.options[selIndex].value;
+			w.parent.document.getElementById('f_aut_link_table'+i).value= selObj.options[selIndex].value;
 			
-			w.opener.document.getElementById('f_aut_link_id'+i).value = id_value;
-			w.opener.document.getElementById('f_aut_link_libelle'+i).value = reverse_html_entities('['+selObj.options[selIndex].text+']'+libelle_value);			
+			w.parent.document.getElementById('f_aut_link_id'+i).value = id_value;
+			w.parent.document.getElementById('f_aut_link_libelle'+i).value = reverse_html_entities('['+selObj.options[selIndex].text+']'+libelle_value);			
 			
 		}			
 	} else if (dyn) {
-		n_categ=w.opener.document.forms[f_caller].elements['max_categ'].value;
+		n_categ=w.parent.document.forms[f_caller].elements['max_categ'].value;
 		flag = 1;
 	
 		//Vérification que la catégorie n'est pas déjà sélectionnée
 		for (i=0; i<n_categ; i++) {
-			if (w.opener.document.getElementById('f_categ_id'+i).value==id_value) {
+			if (w.parent.document.getElementById('f_categ_id'+i).value==id_value) {
 				alert('".$msg["term_already_in_use"]."');
 				flag = 0;
 				break;
@@ -187,15 +148,15 @@ function set_parent_w(f_caller, id_value, libelle_value,w,callback,id_thesaurus)
 	
 		if (flag) {
 			for (i=0; i<n_categ; i++) {
-				if ((w.opener.document.getElementById('f_categ_id'+i).value==0)||(w.opener.document.getElementById('f_categ_id'+i).value=='')) break;
+				if ((w.parent.document.getElementById('f_categ_id'+i).value==0)||(w.parent.document.getElementById('f_categ_id'+i).value=='')) break;
 			}
 	
-			if (i==n_categ) w.opener.add_categ();
-			w.opener.document.getElementById('f_categ_id'+i).value = id_value;
-			w.opener.document.getElementById('f_categ'+i).value = reverse_html_entities(libelle_value);
+			if (i==n_categ) w.parent.add_categ();
+			w.parent.document.getElementById('f_categ_id'+i).value = id_value;
+			w.parent.document.getElementById('f_categ'+i).value = reverse_html_entities(libelle_value);
 		}
 		if(callback)
-			w.opener[callback]('$infield');
+			w.parent[callback]('$infield');
 	} else {
 		var p1 = '$p1';
 		var p2 = '$p2';
@@ -210,26 +171,26 @@ function set_parent_w(f_caller, id_value, libelle_value,w,callback,id_thesaurus)
 		tmp_p2.pop();
 		var p2bis = tmp_p2.join('_');
 		
-		var max_aut = w.opener.document.getElementById(p1bis.replace('id','max_aut'));
+		var max_aut = w.parent.document.getElementById(p1bis.replace('id','max_aut'));
 		if(max_aut && (p1bis.replace('id','max_aut').substr(-7)=='max_aut')){
 			var trouve=false;
 			var trouve_id=false;
 			for(i_aut=0;i_aut<=max_aut.value;i_aut++){
-				if(w.opener.document.getElementById(p1bis+'_'+i_aut).value==0){
-					w.opener.document.getElementById(p1bis+'_'+i_aut).value=id_value;
-					w.opener.document.getElementById(p2bis+'_'+i_aut).value=reverse_html_entities(libelle_value);
+				if(w.parent.document.getElementById(p1bis+'_'+i_aut).value==0){
+					w.parent.document.getElementById(p1bis+'_'+i_aut).value=id_value;
+					w.parent.document.getElementById(p2bis+'_'+i_aut).value=reverse_html_entities(libelle_value);
 					trouve=true;
 					break;
-				}else if(w.opener.document.getElementById(p1bis+'_'+i_aut).value==id_value){
+				}else if(w.parent.document.getElementById(p1bis+'_'+i_aut).value==id_value){
 					trouve_id=true;
 				}
 			}
 			if(!trouve && !trouve_id){
-				w.opener.add_line(p1bis.replace('_id',''));
-				w.opener.document.getElementById(p1bis+'_'+i_aut).value=id_value;
-				w.opener.document.getElementById(p2bis+'_'+i_aut).value=reverse_html_entities(libelle_value);
+				w.parent.add_line(p1bis.replace('_id',''));
+				w.parent.document.getElementById(p1bis+'_'+i_aut).value=id_value;
+				w.parent.document.getElementById(p2bis+'_'+i_aut).value=reverse_html_entities(libelle_value);
 			}
-			var theselector = w.opener.document.getElementById(p1.replace('field','fieldvar').replace('_id','')+'[id_thesaurus][]');
+			var theselector = w.parent.document.getElementById(p1.replace('field','fieldvar').replace('_id','')+'[id_thesaurus][]');
 			if(theselector){
 				for (var i=1 ; i< theselector.options.length ; i++){
 					if (theselector.options[i].value == id_thesaurus){
@@ -239,11 +200,11 @@ function set_parent_w(f_caller, id_value, libelle_value,w,callback,id_thesaurus)
 				}
 			}
 			if(callback)
-				w.opener[callback](p1bis.replace('_id','')+'_'+i_aut);
+				w.parent[callback](p1bis.replace('_id','')+'_'+i_aut);
 		}else {
-			w.opener.document.getElementById('$p1').value=id_value;
-			w.opener.document.getElementById('$p2').value=reverse_html_entities(libelle_value);
-			var theselector = w.opener.document.getElementById(p1.replace('field','fieldvar').replace('_id','')+'[id_thesaurus][]');
+			w.parent.document.getElementById('$p1').value=id_value;
+			w.parent.document.getElementById('$p2').value=reverse_html_entities(libelle_value);
+			var theselector = w.parent.document.getElementById(p1.replace('field','fieldvar').replace('_id','')+'[id_thesaurus][]');
 			if(theselector){
 				for (var i=1 ; i< theselector.options.length ; i++){
 					if (theselector.options[i].value == id_thesaurus){
@@ -253,8 +214,8 @@ function set_parent_w(f_caller, id_value, libelle_value,w,callback,id_thesaurus)
 				}
 			}
 			if(callback)
-				w.opener[callback]('$infield');
-			//parent.parent.close();
+				w.parent[callback]('$infield');
+			//closeCurrentEnv();
 		}		
 	}
 }
@@ -285,25 +246,16 @@ function set_parent(f_caller, id_value, libelle_value,callback,id_thesaurus)
 ";
 
 //-------------------------------------------
-//	$sel_footer : footer
-//-------------------------------------------
-$sel_footer = "
-</div>
-";
-
-//-------------------------------------------
 //	$select_category_form : formulaire d'ajout
 //-------------------------------------------
 $select_category_form = "
 <script type='text/javascript'>
 <!--
-	function test_form(form)
-	{
-		if(form.category_libelle.value.length == 0)
-			{
-				alert(\"$msg[320]\");
-				return false;
-			}
+	function test_form(form){
+		if(form.category_libelle.value.length == 0){
+			alert(\"$msg[320]\");
+			return false;
+		}
 		return true;
 	}
 	

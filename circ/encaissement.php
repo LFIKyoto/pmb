@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: encaissement.php,v 1.14 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: encaissement.php,v 1.18 2018-12-19 16:19:54 ngantier Exp $
 
 //Liste des trabsactions d'un compte
 $base_path="..";
@@ -12,6 +12,7 @@ $current_alert="circ";
 require_once("../includes/init.inc.php");
 require_once("$base_path/classes/comptes.class.php");
 require_once($class_path."/transaction/transaction.class.php");
+require_once($class_path . '/transaction/transaction_payment_method_list.class.php');
 
 $cpte=new comptes($id_compte);
 if ($cpte->error) {
@@ -61,6 +62,7 @@ function encaisse_form($with_validated=false, $transacash_num=0) {
 		<input type='hidden' name='transacash_num' value='$transacash_num'/>
 		<input type='hidden' name='val_transactions' value=\"".htmlentities($val_transactions,ENT_QUOTES,$charset)."\"/>".
 		htmlentities($msg['finance_mnt_percu'], ENT_QUOTES, $charset)."&nbsp;<input type='text' value='".$solde*(-1)."' name='somme' class='saisie-5em' style='text-align:right'>&nbsp;".$pmb_gestion_devise."
+        " . transaction_payment_method_list::get_selector() . "
 		<input type='submit' value='".$msg["finance_but_enc"]."' class='bouton' onClick=\"return check_somme(this.form)\"/>&nbsp;<input type='button' value='".$msg["76"]."' class='bouton' onClick=\"document.form_encaissement.act.value=''; document.form_encaissement.submit();\"/>
 		</form>
 		";
@@ -88,7 +90,8 @@ function special_form() {
 	</script>";
 	print "<form name='form_special' action='encaissement.php?id_compte=$id_compte&show_transactions=$show_transactions&date_debut=".rawurlencode(stripslashes($date_debut))."' method='post'>
 		<input type='hidden' name='act' value='enc_special'/>
-		".$msg["finance_montant"]." <input type='text' value='' name='somme' class='saisie-5em' style='text-align:right'>&nbsp;".$pmb_gestion_devise."<br />
+		".$msg["finance_montant"]." <input type='text' value='' name='somme' class='saisie-5em' style='text-align:right'>&nbsp;".$pmb_gestion_devise."
+        " . transaction_payment_method_list::get_selector() . "<br />
 		<input type='radio' value='1' name='typ_special' id='typ_special_1' checked>&nbsp;<label for='typ_special_1'>".$msg["finance_enc_spe_crediter"]."&nbsp;<input type='checkbox' name='credit_perte' value='1'>&nbsp;".$msg["finance_enc_spe_perte"]."</label><br /><input type='radio' value='2' name='typ_special' id='typ_special_2'>&nbsp;<label for='typ_special_2'>".$msg["finance_enc_debiter"]."</label><br />
 		<input type='radio' value='3' name='typ_special' id='typ_special_3'>&nbsp;<label for='typ_special_3'>".$msg["finance_enc_crediter_enc"]."</label><br /><input type='radio' value='4' name='typ_special' id='typ_special_4'>&nbsp;<label for='typ_special_4'>".$msg["finance_enc_debiter_enc"]." <input type='checkbox' name='dec_perte' value='1'>&nbsp;".$msg["finance_enc_spe_perte"]."</label><br />
 		".$msg["finance_enc_raison"]."<br />
@@ -99,56 +102,125 @@ function special_form() {
 }
 
 if($pmb_printer_name) {
-$print_script="
-<div id='printer_script'></div>
-<script type='text/javascript'>
 	
-	function printer_get_jzebra() {
-		if(!document.jzebra) {
-			var req = new http_request();
-			req.request('$base_path/ajax.php?module=circ&categ=zebra_print_pret&sub=get_script');
-			document.getElementById('printer_script').innerHTML=req.get_text();
-			return false;
-		}
+	$raspberry_ip_to_call = '';
+	$tmp_pmb_printer_name = explode('@', $pmb_printer_name);
+	if (isset($tmp_pmb_printer_name[1])) {
+		$raspberry_ip_to_call = $tmp_pmb_printer_name[1];
 	}
-
-	function printer_jzebra_send_ticket(text,printer,encoding) {
-		console.log(text);
-		console.log(printer);
-		console.log(encoding);	
-		var applet = document.jzebra;
-		var found=false;
-		if(applet!=null) {
-			applet.findPrinter(printer);
-			while (!applet.isDoneFinding()) {}
-			if(printer == applet.getPrinter()) {
-				found = true; 
-				if(encoding) {
-					applet.setEncoding(encoding);
+	
+	$print_script="
+		<div id='printer_script'></div>
+			<script type='text/javascript'>
+				function printer_get_jzebra() {
+					if(!document.jzebra) {
+						var req = new http_request();
+						req.request('$base_path/ajax.php?module=circ&categ=zebra_print_pret&sub=get_script');
+						document.getElementById('printer_script').innerHTML=req.get_text();
+						return false;
+					}
 				}
-				applet.append(text);
-				applet.print();
-			}
-		}
-		if(!found) {		     	     				
-       		alert('".$msg['printer_not_found']."');
-       	}
-    } 
 				
-	function printer_jzebra_print_ticket(url) {
-		printer_get_jzebra();
-		var req = new http_request();
-		if(req.request(url)){
-			// Il y a une erreur. 
-			alert ( req.get_text() );			
-		}else { 
-			alert ( req.get_text() );	
-			printer_jzebra_send_ticket(req.get_text(),'".$pmb_printer_name."','850');
-			return 1;	
-		}
+				function printer_jzebra_send_ticket(text,printer,encoding) {
+					var applet = document.jzebra;
+					var found=false;
+					if(applet!=null) {
+						applet.findPrinter(printer);
+						while (!applet.isDoneFinding()) {}
+						if(printer == applet.getPrinter()) {
+							found = true; 
+							if(encoding) {
+								applet.setEncoding(encoding);
+							}
+							applet.append(text);
+							applet.print();
+						}
+					}
+					if(!found) {		     	     				
+			       		alert('".$msg['printer_not_found']."');
+			       	}
+			    }
+			       				
+			    function printer_raspberry_send_ticket(url) {
+         	
+		         	var req = new http_request();
+		         	var tpl;
+		         	var printer = '';
+					var printer_id = 0;
+		         	var raspberry_ip = '';
+					var printer_type = '';
+		         	
+		         	//Quelle est l'imprimante sélectionnée ?
+		         	if (req.request('./ajax.php?module=circ&categ=zebra_print_pret&sub=get_selected_printer')) {
+						alert ( req.get_text() );
+					} else {
+						printer = req.get_text();
+					}
+					if (printer == '') {
+						alert('".$msg['user_printer_not_found']."');
+						return;
+					}
+					
+					var temp = printer.split('@');
+					printer_id = temp[0];
+					raspberry_ip = temp[1];
+		
+					//On interroge le raspberry pour connaitre le type d'imprimante (et savoir si elle est bien sur ce raspberry)
+					if (req.request('http://' + raspberry_ip + '/getPrinter?idPrinter=' + printer_id)) {
+						alert ( req.get_text() );
+					} else {
+						printer_type = req.get_text();
+					}
+					if (printer_type == '' || printer_type == 'unknown') {
+						alert('".$msg['user_printer_type_not_found']."');
+						return;
+					}
+		
+					//On va générer le template en fonction de l'imprimante
+					url = url + '&printer_type=' + printer_type;
+					if(req.request(url)){
+						alert ( req.get_text() );
+					} else {
+						tpl = req.get_text();
+					}
+		         	if (tpl.length == 0) {
+		         		alert('".$msg['printer_tpl_error']."');
+		         		return;
+		         	}
+		
+					//On envoie l'impression
+					var xhr = new XMLHttpRequest();
+					xhr.open('POST', 'http://' + raspberry_ip + '/print?', true);
+					xhr.setRequestHeader('Content-type', 'text/plain');
+					xhr.send(JSON.stringify({idPrinter:printer_id,xml:tpl}));
+								
+		         	return;
+		         				
+		        }
+		";
+	
+	if (substr($pmb_printer_name,0,9) == 'raspberry') {
+		$print_script.= "
+			function printer_jzebra_print_ticket(url) {
+				printer_raspberry_send_ticket(url);
+			}";
+	} else {
+		$print_script.="
+			function printer_jzebra_print_ticket(url) {
+				printer_get_jzebra();
+				var req = new http_request();
+				if(req.request(url)){
+					// Il y a une erreur. 
+					alert ( req.get_text() );			
+				}else { 
+					printer_jzebra_send_ticket(req.get_text(),'".$pmb_printer_name."','850');
+					return 1;	
+				}
+			}";
 	}
-	printer_jzebra_print_ticket('$base_path/ajax.php?module=circ&categ=zebra_print_pret&sub=transacash_ticket&transacash_id=!!transacash_id!!');
-</script>	";
+	$print_script.="
+		printer_jzebra_print_ticket('$base_path/ajax.php?module=circ&categ=zebra_print_pret&sub=transacash_ticket&transacash_id=!!transacash_id!!');
+		</script>	";
 }
 
 switch ($act) {
@@ -175,7 +247,7 @@ switch ($act) {
 	case "enc":
 		if ($somme*1>0) {
 			//Generation de la transaction
-			if ($id_transaction=$cpte->record_transaction("",$somme,1,$val_transactions,1)) {
+		    if ($id_transaction=$cpte->record_transaction("",$somme,1,$val_transactions,1, 0, $f_payment_method)) {
 				$cpte->validate_transaction($id_transaction);
 				$cpte->update_solde();
 				if(!$transacash_num){					
@@ -188,7 +260,8 @@ switch ($act) {
 				}
 				$cpte->cashdesk_memo_encaissement($id_transaction,$transacash_num,$somme);		
 			}
-//			print str_replace("!!transacash_id!!",$transacash_num,$print_script);			
+			//AUCUN TEMPLATE D'ENCAISSEMENT PAR IMPRIMANTE TICKET DE PRET POUR LE MOMENT...
+			//print str_replace("!!transacash_id!!",$transacash_num,$print_script);			
 			back_to_main();
 		} else {
 			back_to_list();
@@ -243,7 +316,7 @@ switch ($act) {
 		if ($somme*1>0) {
 			switch ($typ_special) {
 				case "1":
-					//Crediter
+				    //Crediter
 					$signe=1;
 					$caisse=0;
 					break;
@@ -253,7 +326,7 @@ switch ($act) {
 					$caisse=0;
 					break;
 				case "3":
-					//Crediter et encaisser
+					//Crediter et encaisser 
 					$signe=1;
 					$caisse=1;
 					break;
@@ -263,7 +336,7 @@ switch ($act) {
 					$caisse=1;
 					break;
 			}
-			if ($id_transaction=$cpte->record_transaction("",$somme,$signe,stripslashes($commentaire),$caisse)) {
+			if ($id_transaction=$cpte->record_transaction("",$somme,$signe,stripslashes($commentaire),$caisse, 0, $f_payment_method)) {
 				$cpte->validate_transaction($id_transaction);
 				//Traitement du passage en perte
 				//Credit

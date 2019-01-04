@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sel_searcher_templates.tpl.php,v 1.4 2012-08-20 08:07:10 ngantier Exp $
+// $Id: sel_searcher_templates.tpl.php,v 1.5 2016-04-07 14:59:18 jpermanne Exp $
 
 // page de switch recherche notice
 
 $form_query = "
 <div class='row' style='margin:0px 5px 0px 5px;'>
-	<form class='form-$current_module' id='form_query' name='form_query' method='post' action='!!action_url!!' onSubmit='return test_form(this)'>
+	<form class='form-$current_module' id='form_query' name='form_query' method='post' action='!!action_url!!' onSubmit='if(\"function\" == typeof window.sel_searcher_before_click_submit){sel_searcher_before_click_submit();};return test_form(this)'>
 		<h3>!!menu_query!!</h3>
 		<div class='row' >
 			<input type='text' id='elt_query' name='elt_query' value='!!elt_query!!' class='saisie-30em'/>
@@ -93,7 +93,7 @@ $elt_b_list_abt = "
 <div class='row'>
 	<div class='colonne80'>".$begin_result_liste."!!research!!</div>
 	<div class='colonne10'>&nbsp;</div>
-	<div class='colonne10'>".htmlentities($msg['acquisition_abt_ech'], ENT_QUOTES, $charset)."</div>
+	<div class='colonne10'>&nbsp;</div>
 </div>"; 
 //Ligne liste abonnements
 $elt_r_list_abt = "

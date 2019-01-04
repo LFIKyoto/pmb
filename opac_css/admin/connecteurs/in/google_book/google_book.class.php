@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: google_book.class.php,v 1.9 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: google_book.class.php,v 1.13 2017-07-12 15:15:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,47 +14,34 @@ require_once($include_path."/notice_affichage.inc.php");
 
 class google_book extends connector {
 	//Variables internes pour la progression de la récupération des notices
-	var $del_old;				//Supression ou non des notices dejà existantes
+	public $del_old;				//Supression ou non des notices dejà existantes
 	
-	var $profile;				//Profil Amazon
-	var $match;					//Tableau des critères UNIMARC / AMAZON
-	var $current_site;			//Site courant du profile (n°)
-	var $searchindexes;			//Liste des indexes de recherche possibles pour le site
-	var $current_searchindex;	//Numéro de l'index de recherche de la classe
-	var $match_index;			//Type de recherche (power ou simple)
-	var $types;					//Types de documents pour la conversino des notices
+	public $profile;				//Profil Amazon
+	public $match;					//Tableau des critères UNIMARC / AMAZON
+	public $current_site;			//Site courant du profile (n°)
+	public $searchindexes;			//Liste des indexes de recherche possibles pour le site
+	public $current_searchindex;	//Numéro de l'index de recherche de la classe
+	public $match_index;			//Type de recherche (power ou simple)
+	public $types;					//Types de documents pour la conversino des notices
 	
 	//Résultat de la synchro
-	var $error;					//Y-a-t-il eu une erreur	
-	var $error_message;			//Si oui, message correspondant
+	public $error;					//Y-a-t-il eu une erreur	
+	public $error_message;			//Si oui, message correspondant
 	
-    function google_book($connector_path="") {
-    	parent::connector($connector_path);
+    public function __construct($connector_path="") {
+    	parent::__construct($connector_path);
     }
     
-    function get_id() {
+    public function get_id() {
     	return "google_book";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 2;
 	}
     
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-    
-    function get_libelle($message) {
-    	if (substr($message,0,4)=="msg:") return $this->msg[substr($message,4)]; else return $message;
-    }
-    
-    function source_get_property_form($source_id) {
+    public function source_get_property_form($source_id) {
 		global $charset;
 		
 		$params=$this->get_source_params($source_id);
@@ -62,8 +49,8 @@ class google_book extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		if (!isset($width))
@@ -82,29 +69,15 @@ class google_book extends connector {
 		return $form;
     }
     
-    function make_serialized_source_properties($source_id) {
+    public function make_serialized_source_properties($source_id) {
     	global $width,$height;
     	$t["width"]=$width+0;
     	$t["height"]=$height+0;
     	
     	$this->sources[$source_id]["PARAMETERS"]=serialize($t);
 	}
-	
-	//Récupération  des proriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
-		$this->timeout=5;
-		$this->repository=2;
-		$this->retry=3;
-		$this->ttl=1800;
-		$this->parameters="";
-	}
-	
-	 //Formulaire des propriétés générales
-	function get_property_form() {
-		return "";
-	}
     
-    function make_serialized_properties() {
+    public function make_serialized_properties() {
     	global $accesskey, $secretkey;
 		//Mise en forme des paramètres à partir de variables globales (mettre le résultat dans $this->parameters)
 		$keys = array();
@@ -114,11 +87,11 @@ class google_book extends connector {
 		$this->parameters = serialize($keys);
 	}
 
-	function enrichment_is_allow(){
+	public function enrichment_is_allow(){
 		return true;
 	}
 	
-	function getEnrichmentHeader($source_id){
+	public function getEnrichmentHeader($source_id){
 		global $lang;
 		$header= array();
 		$header[]= "<!-- Script d'enrichissement pour Google Book-->";
@@ -127,7 +100,7 @@ class google_book extends connector {
 		return $header;
 	}
 	
-	function getTypeOfEnrichment($notice_id,$source_id){
+	public function getTypeOfEnrichment($notice_id,$source_id){
 		$type['type'] = array(
 			"books"
 		);		
@@ -135,14 +108,14 @@ class google_book extends connector {
 		return $type;
 	}
 	
-	function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array(),$page=1){
+	public function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array(),$page=1){
 		$params=$this->get_source_params($source_id);
 		if ($params["PARAMETERS"]) {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		$enrichment= array();
@@ -156,7 +129,7 @@ class google_book extends connector {
 				if(pmb_mysql_num_rows($res)){
 					$ref = pmb_mysql_result($res,0,0);
 					//google change son API, on s'assure d'avoir un ISBN13 formaté !
-					if(isEAN($$ref)) {
+					if(isEAN($ref)) {
 						// la saisie est un EAN -> on tente de le formater en ISBN
 						$EAN=$ref;
 						$isbn = EANtoISBN($ref);
@@ -183,7 +156,6 @@ class google_book extends connector {
 							$code = str_replace("*","%",$ref);
 						}
 					}
-					
 					//plutot que de faire une requete pour lancer que si ca marche, on ajoute un callback en cas d'échec
 					if($code /*&& $this->checkIfEmbeddable($code)*/){
 						$enrichment['books']['content'] = "
@@ -210,7 +182,7 @@ class google_book extends connector {
 		return $enrichment;
 	}
 	
-	function checkIfEmbeddable($isbn){
+	public function checkIfEmbeddable($isbn){
 		$identifiers = array();
 		$curl = new Curl();
 		$xmlToParse = $curl->get("http://www.google.com/books/feeds/volumes?q=ISBN".$isbn);	

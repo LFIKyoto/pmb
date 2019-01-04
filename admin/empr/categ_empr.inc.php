@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: categ_empr.inc.php,v 1.14 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: categ_empr.inc.php,v 1.16 2018-10-12 11:59:35 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+require_once($class_path."/list/configuration/empr/list_configuration_empr_categ_ui.class.php");
 
 ?>
 <script type="text/javascript">
@@ -13,7 +15,7 @@ function test_form(form)
 	
 	if(form.form_libelle.value.length == 0)
 	{
-		alert("<?php echo $msg[98]; ?>");
+		alert("<?php echo $msg['98']; ?>");
 		return false;
 	}
 	return true;
@@ -22,50 +24,8 @@ function test_form(form)
 </script>
 <?php
 function show_section($dbh) {
-	global $msg;
-	global $pmb_gestion_financiere,$pmb_gestion_abonnement;
-	if ($pmb_gestion_financiere) $gestion_abts=$pmb_gestion_abonnement; else $gestion_abts=0;
-	
-	print "<table>
-	<tr>
-		<th>".$msg[103]."</th>
-		<th>".$msg[1400]."</th>";
-	if ($gestion_abts) print "<th>".$msg["empr_categ_tarif"]."</th>";
-	print "<th>".$msg["empr_categ_age_min"]."</th>
-		<th>".$msg["empr_categ_age_max"]."</th>
-	</tr>";
-
-	// affichage du tableau des utilisateurs
-
-	$requete = "SELECT id_categ_empr, libelle, duree_adhesion, tarif_abt, age_min, age_max FROM empr_categ ORDER BY libelle, id_categ_empr";
-	$res = pmb_mysql_query($requete, $dbh);
-
-	$nbr = pmb_mysql_num_rows($res);
-
-	$parity=1;
-	for($i=0;$i<$nbr;$i++) {
-		$row=pmb_mysql_fetch_row($res);
-		if ($parity % 2) {
-			$pair_impair = "even";
-			} else {
-				$pair_impair = "odd";
-				}
-		$parity += 1;
-			$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./admin.php?categ=empr&sub=categ&action=modif&id=$row[0]';\" ";
-			print pmb_bidi("<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td>$row[1]</td>
-						<td>$row[2]</td>");
-			if ($gestion_abts==1) 
-				$tarif=$row[3]; 
-			else if ($gestion_abts==2) 
-				$tarif=$msg["finance_see_finance"];
-			if ($gestion_abts) print "<td>".$tarif."</td>";
-			print  "<td>".$row[4]."</td>
-				<td>".$row[5]."</td>
-					</tr>";
-		}
-	print "</table>
-		<input class='bouton' type='button' value=' $msg[524] ' onClick=\"document.location='./admin.php?categ=empr&sub=categ&action=add'\" />";
-	}
+	print list_configuration_empr_categ_ui::get_instance()->get_display_list();
+}
 
 function categempr_form($libelle="", $id=0, $duree_adhesion=365, $tarif="0.00", $age_min="0", $age_max="0") {
 	global $msg;
@@ -74,11 +34,11 @@ function categempr_form($libelle="", $id=0, $duree_adhesion=365, $tarif="0.00", 
 	global $pmb_gestion_financiere,$pmb_gestion_abonnement;
 	
 	$admin_categlec_form = str_replace('!!id!!', $id, $admin_categlec_form);
-	if(!$id) $admin_categlec_form = str_replace('!!form_title!!', $msg[524], $admin_categlec_form);
-		else $admin_categlec_form = str_replace('!!form_title!!', $msg[525], $admin_categlec_form);
+	if(!$id) $admin_categlec_form = str_replace('!!form_title!!', $msg['524'], $admin_categlec_form);
+		else $admin_categlec_form = str_replace('!!form_title!!', $msg['525'], $admin_categlec_form);
 
 	$admin_categlec_form = str_replace('!!libelle!!', htmlentities($libelle,ENT_QUOTES, $charset), $admin_categlec_form);
-	$admin_categlec_form = str_replace('!!libelle_suppr!!', addslashes($libelle), $admin_categlec_form);
+	$admin_categlec_form = str_replace('!!libelle_suppr!!', htmlentities(addslashes($libelle),ENT_QUOTES,$charset), $admin_categlec_form);
 	$admin_categlec_form = str_replace('!!duree_adhesion!!', htmlentities($duree_adhesion,ENT_QUOTES, $charset), $admin_categlec_form);	
 	
 	if (($pmb_gestion_financiere)&&($pmb_gestion_abonnement==1)) {
@@ -163,10 +123,10 @@ switch($action) {
 					$res = pmb_mysql_query($requete, $dbh);
 					show_section($dbh);
 				}else{
-					error_message(	$msg[294], $msg['empr_categ_cant_delete_search_perso'], 1, 'admin.php?categ=empr&sub=categ&action=');
+					error_message(	$msg['294'], $msg['empr_categ_cant_delete_search_perso'], 1, 'admin.php?categ=empr&sub=categ&action=');
 				}
 			} else {
-				error_message(	$msg[294], $msg[1708], 1, 'admin.php?categ=empr&sub=categ&action=');
+				error_message(	$msg['294'], $msg['1708'], 1, 'admin.php?categ=empr&sub=categ&action=');
 				}
 		} else show_section($dbh);
 		break;

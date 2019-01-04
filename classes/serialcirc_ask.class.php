@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_ask.class.php,v 1.7 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: serialcirc_ask.class.php,v 1.11 2017-08-23 07:26:36 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,14 +13,14 @@ require_once($class_path."/serialcirc_diff.class.php");
 
 class serialcirc_ask {	
 
-	var $ask_info=array();
+	public $ask_info=array();
 
-	function serialcirc_ask($id) {
+	public function __construct($id) {
 		$this->id=$id+0;		
 		$this->fetch_data(); 
 	}
 	
-	function fetch_data() {
+	public function fetch_data() {
 		$this->ask_info=array();
 		$req="select * from serialcirc_ask where id_serialcirc_ask=".$this->id;
 		$resultat=pmb_mysql_query($req);	
@@ -43,8 +43,8 @@ class serialcirc_ask {
 					
 				}	
 				if($this->ask_info['num_perio']){						
-					$perio=new serial_display($this->ask_info['num_perio']);
-					$this->ask_info['perio']['header']=$perio->header;	
+					$perio=new serial_display($this->ask_info['num_perio'],0,"","","","","",1,1);
+					$this->ask_info['perio']['header']=$perio->header_texte;
 					$this->ask_info['perio']['view_link']="./catalog.php?categ=serials&sub=view&view=abon&serial_id=".$this->ask_info['num_perio'];	
 					$this->ask_info['perio']['id']=$this->ask_info['num_perio'];	
 					$this->ask_info['num_abt_diff']=$this->empr_is_in_circ($this->ask_info['num_empr'],$this->ask_info['num_perio']);
@@ -87,7 +87,7 @@ class serialcirc_ask {
 		// printr($this->ask_info);
 	}
 	
-	function empr_is_in_circ($id_empr,$id_perio){
+	public function empr_is_in_circ($id_empr,$id_perio){
 		$req="select abt_id,id_serialcirc_diff from serialcirc_diff,serialcirc, abts_abts 
 		where num_serialcirc_diff_serialcirc=id_serialcirc and num_serialcirc_abt=abt_id and  num_notice=$id_perio 
 		and num_serialcirc_diff_empr=$id_empr";
@@ -99,7 +99,7 @@ class serialcirc_ask {
 		}	
 		return 0;	
 	}
-	function ask_send_mail($empr_id,$objet,$texte_mail){
+	public function ask_send_mail($empr_id,$objet,$texte_mail){
 		global $biblio_name,$biblio_email,$PMBuseremailbcc;
 		
 		$empr_info=$this->empr_info($empr_id);
@@ -107,8 +107,14 @@ class serialcirc_ask {
 		return mailpmb($empr_info["prenom"]." ".$empr_info["nom"], $empr_info["mail"], $objet,	$texte_mail, $biblio_name, $biblio_email,"", "", $PMBuseremailbcc,1);
 	}
 	
-	function accept(){
-		global $serialcirc_inscription_accepted_mail,$serialcirc_inscription_end_mail,$msg;
+	public function accept(){
+		global $serialcirc_inscription_accepted_mail,$serialcirc_inscription_end_mail,$msg,$charset;
+		
+		if ($charset=="utf-8") {
+			$serialcirc_inscription_accepted_mail = utf8_encode($serialcirc_inscription_accepted_mail);
+			$serialcirc_inscription_end_mail = utf8_encode($serialcirc_inscription_end_mail);
+		}
+		
 		$req="update serialcirc_ask set serialcirc_ask_statut=1 where id_serialcirc_ask=".$this->id;
 		$resultat=pmb_mysql_query($req);	
 		// send mail
@@ -116,15 +122,20 @@ class serialcirc_ask {
 		else $this->ask_send_mail($this->ask_info['num_empr'],$msg["serialcirc_circ_title"],$serialcirc_inscription_accepted_mail);
 	}
 	
-	function refus(){
-		global $serialcirc_inscription_no_mail,$msg;
+	public function refus(){
+		global $serialcirc_inscription_no_mail,$msg,$charset;
+		
+		if ($charset=="utf-8") {
+			$serialcirc_inscription_no_mail = utf8_encode($serialcirc_inscription_no_mail);
+		}
+		
 		$req="update serialcirc_ask set serialcirc_ask_statut=2 where id_serialcirc_ask=".$this->id;
 		$resultat=pmb_mysql_query($req);	
 		// send mail
 		$this->ask_send_mail($this->ask_info['num_empr'],$msg["serialcirc_circ_title"],$serialcirc_inscription_no_mail);		
 	}
 	
-	function set_inscription($id_perio,$id_empr,$id_serialcirc=0){
+	public function set_inscription($id_perio,$id_empr,$id_serialcirc=0){
 		if($id_serialcirc)$circ= ", num_serialcirc_ask_serialcirc= $id_serialcirc ";
 		$req="update serialcirc_ask set serialcirc_ask_statut=3 $circ where num_serialcirc_ask_perio=$id_perio and num_serialcirc_ask_empr=$id_empr";
 		$resultat=pmb_mysql_query($req);	
@@ -132,12 +143,12 @@ class serialcirc_ask {
 		
 	}
 	
-	function delete(){
+	public function delete(){
 		if($this->ask_info['statut']==0) return; //pas accepté ou refusée
 		$req="delete from serialcirc_ask where id_serialcirc_ask=".$this->id;
 		pmb_mysql_query($req);	
 			
-		// le supprimé de la list de diff si demande de désabonnement
+		// le supprimer de la list de diff si demande de désabonnement
 		if($this->ask_info['type']==1){
 			$req=" DELETE from serialcirc_diff WHERE num_serialcirc_diff_serialcirc=".$this->ask_info['num_serialcirc']." and num_serialcirc_diff_empr=".$this->ask_info['num_empr'];
 			pmb_mysql_query($req);	
@@ -158,7 +169,7 @@ class serialcirc_ask {
 		
 	}
 	
-	function empr_info($id){
+	public function empr_info($id){
 		global $dbh;
 		$info=array();
 		$req="select empr_cb, empr_nom ,  empr_prenom, empr_mail from empr where id_empr=".$id;
@@ -180,19 +191,19 @@ class serialcirc_ask {
 
 class serialcirc_asklist {
 	
-	var $type_filter=0;
-	var $location_filter=0;
-	var $statut_filter=0;	
-	var $asklist=array();
+	public $type_filter=0;
+	public $location_filter=0;
+	public $statut_filter=0;	
+	public $asklist=array();
 	
-	function serialcirc_asklist($location_filter=0,$type_filter=0,$statut_filter=0) {	
+	public function __construct($location_filter=0,$type_filter=0,$statut_filter=0) {	
 		$this->type_filter=$type_filter+0;	
 		$this->location_filter=$location_filter+0;	
 		$this->statut_filter=$statut_filter+0;	
 		$this->fetch_data(); 
 	}
 	
-	function fetch_data() {
+	public function fetch_data() {
 		$this->asklist=array();
 		$filter=" where 1 ";
 		$filter_table="";
@@ -221,7 +232,7 @@ class serialcirc_asklist {
 		//print"<pre>";print_r($this->diffusion);print"</pre>";exit;
 	}
 
-	function get_form_list(){
+	public function get_form_list(){
 		global $msg,$charset,$serialcirc_asklist_filter_tpl,$serialcirc_asklist_tpl;
 		global $serialcirc_asklist_tr;
 		$tpl=$serialcirc_asklist_filter_tpl;
@@ -248,7 +259,7 @@ class serialcirc_asklist {
 		$tpl=str_replace('!!location_filter!!',	 $this->location_filter,$tpl);
 		$tpl=str_replace('!!type_filter!!',	 $this->type_filter,$tpl);
 		$tpl=str_replace('!!statut_filter!!',	 $this->statut_filter,$tpl);
-		
+		$list_tr = '';
 		foreach($this->asklist as $ask){
 			$tr=$serialcirc_asklist_tr;
 			
@@ -277,7 +288,7 @@ class serialcirc_asklist {
 		return $tpl;
 	}
 	
-	function gen_selector($name,$field_list,$value=0){
+	public function gen_selector($name,$field_list,$value=0){
 		global $charset;
 		$selector="<select name='$name' id='$name'>";		
 		foreach($field_list as $val =>$field) {

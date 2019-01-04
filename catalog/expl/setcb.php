@@ -2,96 +2,61 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: setcb.php,v 1.13 2014-11-03 09:10:07 ngantier Exp $
+// $Id: setcb.php,v 1.20 2018-07-27 10:06:25 dgoron Exp $
 // popup de saisie d'un code barre
 
 // YPR 22/11/2004 : on lui passe en paramètre le DOM du champ à modifier en retour $returnDOM
 
-require_once ("../../includes/error_report.inc.php") ;
-require_once ("../../includes/global_vars.inc.php") ;
-require_once ("../../includes/config.inc.php");
-
 $base_path      = "../../";
-$include_path      = "../../".$include_path; 
-$class_path        = "../../".$class_path;
-$javascript_path   = "../../".$javascript_path;
-$styles_path       = "../../".$styles_path;
-
-require("$include_path/db_param.inc.php");
-require("$include_path/mysql_connect.inc.php");
-// connection MySQL
-$dbh = connection_mysql();
-
-include("$include_path/error_handler.inc.php");
-include("$include_path/sessions.inc.php");
-include("$include_path/misc.inc.php");
-include("$javascript_path/misc.inc.php");
-include("$class_path/XMLlist.class.php");
-
-if(!checkUser('PhpMyBibli')) {
-	// localisation (fichier XML) (valeur par défaut)
-	$messages = new XMLlist("$include_path/messages/$lang.xml", 0);
- 	$messages->analyser();
-	$msg = $messages->table;
-	print '<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"../../styles/$stylesheet; ?>\"></head><body>';
-	require_once("$include_path/user_error.inc.php");
-	error_message($msg[11], $msg[12], 1);
-	print '</body></html>';
-	exit;
-	}
-
-
-if(SESSlang) {
-	$lang=SESSlang;
-	$helpdir = $lang;
-	}
-
-
-
-// localisation (fichier XML)
-$messages = new XMLlist("$include_path/messages/$lang.xml", 0);
-$messages->analyser();
-$msg = $messages->table;
-
-require("$include_path/templates/common.tpl.php");
-
-header ("Content-Type: text/html; charset=".$charset);
+$base_title		= "";
+require_once ($base_path."/includes/init.inc.php");
 
 // $d = $_GET['returnDOM'];
 if (! isset($form))  $form  = 'expl';
-if (! isset($field)) $field = 'f_ex_cb';
-$returnDOM = "window.opener.document.forms['".$form."'].elements['".$field."'].value";
+if (! isset($field_name)) $field_name = 'f_ex_cb';
+if (! isset($id)) $id = 0;
 
 print "
-<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN'
- 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
-<html xmlns='http://www.w3.org/1999/xhtml' lang='$msg[1002]' charset='".$charset."'>
-	<meta http-equiv='Pragma' content='no-cache'>
-		<meta http-equiv='Cache-Control' content='no-cache'>";
-print link_styles($stylesheet) ;
-print "	<title>setcb</title>
-	</head>
-	<body>";
-?>
-<script type="text/javascript">
-function updateParent() {
-	<?php echo $returnDOM; ?> = document.forms['setcb'].elements['cb'].value;
-	window.close();
-}
-</script>
-<div align='center'>
-	<form class='form-$current_module' name='setcb' onSubmit='updateParent();'>
-		<small><?php echo $msg[4056]; ?></small><br />
-		<input type='text' name='cb' value=''>
-		<p>
-			<input type='button' class='bouton' name='bouton' value='<?php echo $msg[76]; ?>' onClick='window.close();'>
-			<input type='submit' class='bouton' name='save' value='<?php echo $msg[77]; ?>' />
-		</p>
-	</form>
-<script type="text/javascript">
-self.focus();
-		document.forms['setcb'].elements['cb'].focus();
-</script>
-</div>
+	<script type='text/javascript'>
+		function updateParent() {
+			if(document.forms['setcb'].elements['option_num_auto'] && document.forms['setcb'].elements['option_num_auto'].checked) {
+				var ajax_request = new http_request();
+				ajax_request.request('".$base_path."/ajax.php?module=catalog&categ=get_expl_cb&id=".$id."');
+				window.opener.document.forms['".$form."'].elements['".$field_name."'].value = ajax_request.get_text();
+			} else {
+				window.opener.document.forms['".$form."'].elements['".$field_name."'].value = document.forms['setcb'].elements['cb'].value;
+			}
+			window.close();
+		}
+	</script>
+	<div class='center'>
+		<form class='form-catalog' name='setcb' onSubmit='updateParent();'>
+			<small><?php echo $msg[4056]; ?></small><br />
+			<input type='text' name='cb' value=''>";
+if($pmb_numero_exemplaire_auto==1 || $pmb_numero_exemplaire_auto==2){
+	$checked=true;
+	if ($pmb_numero_exemplaire_auto_script) {
+		if (file_exists($include_path."/$pmb_numero_exemplaire_auto_script")) {
+			require_once($include_path."/$pmb_numero_exemplaire_auto_script");
+			if (function_exists('is_checked_by_default')) {
+				$checked=is_checked_by_default($id,0);
+			}
+		}
+	}
+	print " ".$msg['option_num_auto']." <INPUT type=checkbox name='option_num_auto' value='num_auto' ".($checked ? "checked='checked'" : "")." />";
+}			
+print "		<p>
+				<input type='button' class='bouton' name='bouton' value='".$msg[76]."' onClick='window.close();'>
+				<input type='submit' class='bouton' name='save' value='".$msg[77]."' />
+			</p>
+		</form>
+		<script type='text/javascript'>
+			self.focus();
+				document.forms['setcb'].elements['cb'].focus();
+		</script>
+	</div>
 </body>
-</html>
+</html>		
+";
+
+?>

@@ -2,13 +2,16 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_agroparistech.inc.php,v 1.8 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: func_agroparistech.inc.php,v 1.11 2017-11-27 16:01:42 jpermanne Exp $
 
 /*
  *  ATTENTION CE FICHIER EST EN UTF-8
  */
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path;
+require_once($class_path."/notice_relations.class.php");
 
 function renseigne_cp_agro($val,$notice_id,$type="notices"){
 	$nom=$val["n"];
@@ -656,14 +659,11 @@ function import_new_notice_suite() {
 								}
 								$result = pmb_mysql_query($query);
 								if(pmb_mysql_num_rows($result)) $rank = pmb_mysql_result($result,0,0);
-								
-								$query = "insert into notices_relations set 
-									".$sens[$link_type[$key]['sens_link']][0]." = ".$notice_id.",
-									".$sens[$link_type[$key]['sens_link']][1]." = ".$child_id.",
-									relation_type = '".$link_type[$key]['code']."',
-									rank = ".($rank+1)."
-								";
-								pmb_mysql_query($query);
+								if($sens[$link_type[$key]['sens_link']][0] == 'num_notice') {
+									notice_relations::insert_from_import($notice_id, $child_id, $link_type[$key]['code'], ($rank+1));
+								} else {
+									notice_relations::insert_from_import($child_id, $notice_id, $link_type[$key]['code'], ($rank+1));
+								}
 							}
 						}
 					}

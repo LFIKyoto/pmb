@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_diff.tpl.php,v 1.22.4.1 2015-09-22 13:17:41 ngantier Exp $
+// $Id: serialcirc_diff.tpl.php,v 1.30 2017-11-22 11:07:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -40,7 +40,7 @@ $serialcirc_diff_form="
 			    var end_text = dest.value.substring(start);
 			    dest.value = start_text+selvars+end_text;
 			}else{
-				tinyMCE.execCommand('mceInsertContent',false,selvars);
+				tinyMCE_execCommand('mceInsertContent',false,selvars);
 			}
 		*/	
 			var start = dest.selectionStart;		   
@@ -49,7 +49,7 @@ $serialcirc_diff_form="
 			dest.value = start_text+selvars+end_text;
 		}
 		function serialcirc_diff_duplicate_button(){
-			openPopUp('./select.php?what=abts&caller=&param1=no&param2=&deb_rech=&no_display=!!num_abt!!&dyn=1&callback=serialcirc_diff_duplicate', 'select_abt', 400, 500, -2, -2, '$select1_prop');
+			openPopUp('./select.php?what=abts&caller=&param1=no&param2=&deb_rech=&no_display=!!num_abt!!&dyn=1&callback=serialcirc_diff_duplicate', 'selector');
 		}
 		
 		function serialcirc_diff_duplicate(id_value,libelle_value,flag_circlist_info){
@@ -75,19 +75,19 @@ $serialcirc_diff_form="
 	<h3>!!perio!! / !!abt!!</h3> !!bulletinage_see!!
 	<table>
 		<tr>
-			<td valign='top'>
+			<td style='vertical-align:top'>
 				<div id='serialcirc_diff_form_empr_list'>
 					!!serialcirc_diff_form_empr_list!!
 				</div>
 			</td> 	
-			<td valign='top'>					
+			<td style='vertical-align:top'>					
 				<div id='serialcirc_diff_form_type'>
 					!!serialcirc_diff_form_type!!
 				</div>				
 			</td> 				
 		</tr>
 		<tr>	
-			<td valign='top'>				
+			<td style='vertical-align:top'>				
 				<input type='button' class='bouton' name='add_empr_button' value='".htmlentities($msg["serialcirc_diff_add_empr_button"], ENT_QUOTES, $charset)."' onclick='serialcirc_diff_get_empr_form(0);' />
 				<input type='button' class='bouton' name='ficheformat_button' value='".htmlentities($msg["serialcirc_diff_ficheformat_button"], ENT_QUOTES, $charset)."' onclick='serialcirc_diff_get_ficheformat_form();' />				
 				<input type='button' class='bouton' name='selection_empr_button' id='selection_empr_button' value='".htmlentities($msg["serialcirc_diff_selection_empr_button"], ENT_QUOTES, $charset)."' onclick='serialcirc_diff_selection_empr_button();' />			
@@ -95,8 +95,10 @@ $serialcirc_diff_form="
 				<input type='button' class='bouton' name='duplicate_empr_button' value='".htmlentities($msg["serialcirc_diff_duplicate_button"], ENT_QUOTES, $charset)."' onclick='serialcirc_diff_duplicate_button()' />			
 		
 			</td> 				
-			<td valign='top'>
-				<input type='button' class='bouton' name='record_button' id='record_button'  value='".htmlentities($msg["serialcirc_diff_record_button"], ENT_QUOTES, $charset)."' onclick='if(verif_form())serialcirc_diff_record_button();' />			
+			<td style='vertical-align:top'>
+				<input type='button' class='bouton' name='record_button' id='record_button'  value='".htmlentities($msg["serialcirc_diff_record_button"], ENT_QUOTES, $charset)."' onclick='if(verif_form())serialcirc_diff_record_button(0);' />			
+				<input type='button' class='bouton' style='' name='record_button_other' id='record_button_other'  value='".htmlentities($msg["serialcirc_diff_record_button_other"], ENT_QUOTES, $charset)."' onclick='if(verif_form())serialcirc_diff_record_button(1);' />			
+						
 				<input type='button' class='bouton' name='cancel_button' id='cancel_button' value='".htmlentities($msg["serialcirc_diff_cancel_button"], ENT_QUOTES, $charset)."' onclick='serialcirc_diff_get_option_form();' />
 				<div class='right'>
 					<input type='button' class='bouton' name='del_button' id='del_button' value='".htmlentities($msg["serialcirc_delete_circ"], ENT_QUOTES, $charset)."' onclick='serialcirc_diff_delete();' />							
@@ -122,9 +124,9 @@ $serialcirc_diff_form_empr_list="
 $serialcirc_diff_form_empr_list_empr="
 
 	<div id=\"drag_!!id_diff!!\" handler=\"handle_!!id_diff!!\" dragtype='circdiffdrop' draggable='yes' recepttype='circdiffdrop' id_circdiff='!!id_diff!!'
-			recept='yes' dragicon=\"".$base_path."/images/icone_drag_notice.png\" dragtext='!!empr_name!!' downlight=\"circdiff_downlight\" highlight=\"circdiff_highlight\" 
+			recept='yes' dragicon='".get_url_icon('icone_drag_notice.png')."' dragtext='!!empr_name!!' downlight=\"circdiff_downlight\" highlight=\"circdiff_highlight\" 
 			order='!!order!!' style='' >				
-		<span id=\"handle_!!id_diff!!\" style=\"float:left; padding-right : 7px\"><img src=\"".$base_path."/images/sort.png\" style='width:12px; vertical-align:middle' /></span>
+		<span id=\"handle_!!id_diff!!\" style=\"float:left; padding-right : 7px\"><img src='".get_url_icon('sort.png')."' style='width:12px; vertical-align:middle' /></span>
 		<input type='checkbox' name='diff_list[]' value='!!id_diff!!' />
 		<a href='#'  onclick='serialcirc_diff_get_empr_form(!!id_diff!!)' >!!empr_name!!</a>					
 	</div>
@@ -133,13 +135,13 @@ $serialcirc_diff_form_empr_list_empr="
 $serialcirc_diff_form_empr_list_group = "
 
 	<div id=\"drag_!!id_diff!!\" handler=\"handle_!!id_diff!!\" dragtype='circdiffdrop' draggable='yes' recepttype='circdiffdrop' id_circdiff='!!id_diff!!'
-			recept='yes' dragicon=\"".$base_path."/images/icone_drag_notice.png\" dragtext='!!empr_name!!' downlight=\"circdiff_downlight\" highlight=\"circdiff_highlight\" 
+			recept='yes' dragicon='".get_url_icon('icone_drag_notice.png')."' dragtext='!!empr_name!!' downlight=\"circdiff_downlight\" highlight=\"circdiff_highlight\" 
 			order='!!order!!' style='' >				
-		<span id=\"handle_!!id_diff!!\" style=\"float:left; padding-right : 7px\"><img src=\"".$base_path."/images/sort.png\" style='width:12px; vertical-align:middle' /></span>
+		<span id=\"handle_!!id_diff!!\" style=\"float:left; padding-right : 7px\"><img src='".get_url_icon('sort.png')."' style='width:12px; vertical-align:middle' /></span>
 		<div id='group_circ!!id_diff!!' >
 			
 			<input type='checkbox' name='diff_list[]' value='!!id_diff!!' /> 
-	    	<img src='./images/plus.gif' class='img_plus' name='imEx' id='group_circ!!id_diff!!Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('group_circ!!id_diff!!', true); recalc_recept();return false;\" hspace='3'>				
+	    	<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='group_circ!!id_diff!!Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('group_circ!!id_diff!!', true); recalc_recept();return false;\" hspace='3'>				
 		    <a href='#' onclick='serialcirc_diff_get_group_form(!!id_diff!!)' >!!empr_name!!</a>					
 		</div>
 		<div id='group_circ!!id_diff!!Child' class='notice-child' style='margin-bottom:6px;display:none;'>
@@ -151,9 +153,9 @@ $serialcirc_diff_form_empr_list_group = "
 
 $serialcirc_diff_form_empr_list_group_elt="
 	<div id=\"drag_!!id_diff!!_!!id_empr!!\" handler=\"handle_!!id_diff!!_!!id_empr!!\" dragtype='circdiffgroupdrop' draggable='yes' recepttype='circdiffgroupdrop' id_circdiff='!!id_diff!!_!!id_empr!!'
-			recept='yes' dragicon=\"".$base_path."/images/icone_drag_notice.png\" dragtext='!!empr_libelle!!' downlight=\"circdiff_downlight\" highlight=\"circdiff_highlight\" 
+			recept='yes' dragicon='".get_url_icon('icone_drag_notice.png')."' dragtext='!!empr_libelle!!' downlight=\"circdiff_downlight\" highlight=\"circdiff_highlight\" 
 			order='!!order!!' style='' >				
-		<span id=\"handle_!!id_diff!!_!!id_empr!!\" style=\"float:left; padding-right : 7px\"><img src=\"".$base_path."/images/sort.png\" style='width:12px; vertical-align:middle' /></span>
+		<span id=\"handle_!!id_diff!!_!!id_empr!!\" style=\"float:left; padding-right : 7px\"><img src='".get_url_icon('sort.png')."' style='width:12px; vertical-align:middle' /></span>
 		!!empr_libelle!!	
 	</div>	
 ";
@@ -161,9 +163,9 @@ $serialcirc_diff_form_empr_list_group_elt="
 $serialcirc_diff_form_empr_list_group_empty="
 
 	<div id=\"drag_!!id_diff!!\" handler=\"handle_!!id_diff!!\" dragtype='circdiffdrop' draggable='yes' recepttype='circdiffdrop' id_circdiff='!!id_diff!!'
-			recept='yes' dragicon=\"".$base_path."/images/icone_drag_notice.png\" dragtext='!!empr_name!!' downlight=\"circdiff_downlight\" highlight=\"circdiff_highlight\" 
+			recept='yes' dragicon='".get_url_icon('icone_drag_notice.png')."' dragtext='!!empr_name!!' downlight=\"circdiff_downlight\" highlight=\"circdiff_highlight\" 
 			order='!!order!!' style='' >				
-		<span id=\"handle_!!id_diff!!\" style=\"float:left; padding-right : 7px\"><img src=\"".$base_path."/images/sort.png\" style='width:12px; vertical-align:middle' /></span>
+		<span id=\"handle_!!id_diff!!\" style=\"float:left; padding-right : 7px\"><img src='".get_url_icon('sort.png')."' style='width:12px; vertical-align:middle' /></span>
 		<input type='checkbox' name='diff_list[]' value='!!id_diff!!' />
 		<a href='#'  onclick='serialcirc_diff_get_group_form(!!id_diff!!)' >!!empr_name!!</a>	
 	</div>	
@@ -184,35 +186,44 @@ $serialcirc_diff_form_empr="
 			<input type='text' name='duration' value='!!duration!!' size='5'/>	
 		</div>	
 		<div class='row'>
-			<input type=\"text\" class='saisie-30emr' name=\"libelle_member\" value='!!empr_libelle!!' readonly value=\"\" />
-			<input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=emprunteur&caller=form_edition&param1=id_empr&param2=libelle_member&auto_submit=NO', 'select_empr', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes')\" />
+			<input type=\"text\" id='libelle_member' class='saisie-30emr' name=\"libelle_member\" value='!!empr_libelle!!' autfield='id_empr' completion='empr' autocomplete='off' />
+			<input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=emprunteur&caller=form_edition&param1=id_empr&param2=libelle_member&auto_submit=NO', 'selector')\" />
 			<input type='button' class='bouton' value='$msg[raz]' onclick=\"this.form.libelle_member.value=''; this.form.id_empr.value='0'; \" />
-			<input type=\"hidden\" name=\"id_empr\"  value='!!id_empr!!'  />
+			<input type=\"hidden\" name=\"id_empr\" id='id_empr' value='!!id_empr!!'  />
 			<input type=\"hidden\" name=\"id_diff\"  value='!!id_diff!!'  />
 		</div>
-	</form>				
+	</form>	
+	<script>
+		ajax_pack_element( document.getElementById('libelle_member'));
+	</script>
 ";
 
 $serialcirc_diff_form_group_empr_0="	
 	<input type=\"hidden\" id=\"empr_count\" name=\"empr_count\"  value='!!empr_count!!'  />	
 	<div class='row'>			
 		<input type='radio' name='empr_resp'  id='empr_resp_!!empr_cpt!!' value='!!id_empr!!' !!checked!! onclick=\"document.getElementById('empr_resp_!!empr_cpt!!').value=document.getElementById('id_empr_!!empr_cpt!!').value;\"/>
-		<input type=\"text\" class='saisie-30emr' name=\"libelle_member_!!empr_cpt!!\" value='!!empr_libelle!!' readonly value=\"\" />
-		<input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=emprunteur&caller=form_edition&param1=id_empr_!!empr_cpt!!&param2=libelle_member_!!empr_cpt!!&auto_submit=NO', 'select_empr', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes')\" />
+		<input type=\"text\" class='saisie-30emr' id=\"libelle_member_!!empr_cpt!!\" name=\"libelle_member_!!empr_cpt!!\" value='!!empr_libelle!!' autfield='id_empr_!!empr_cpt!!' completion='empr' autocomplete='off' value=\"\" />
+		<input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=emprunteur&caller=form_edition&param1=id_empr_!!empr_cpt!!&param2=libelle_member_!!empr_cpt!!&auto_submit=NO', 'selector')\" />
 		<input type='button' class='bouton' value='$msg[raz]' onclick=\"this.form.libelle_member_!!empr_cpt!!.value=''; this.form.id_empr_!!empr_cpt!!.value='0'; \" />
 		<input class='bouton' type='button' onclick='serialcirc_diff_group_add_line_empr();' value='+'>
 		<input type=\"hidden\" id=\"id_empr_!!empr_cpt!!\"  name=\"id_empr_!!empr_cpt!!\"  value='!!id_empr!!'  />
 	</div>
+	<script>
+		ajax_pack_element( document.getElementById('libelle_member_!!empr_cpt!!'));
+	</script>
 ";
 
 $serialcirc_diff_form_group_empr="
 	<div class='row'>		
 		<input type='radio' name='empr_resp'  id='empr_resp_!!empr_cpt!!' value='!!id_empr!!' !!checked!! onclick=\"document.getElementById('empr_resp_!!empr_cpt!!').value=document.getElementById('id_empr_!!empr_cpt!!').value;\"/>
-		<input type=\"text\" class='saisie-30emr' name=\"libelle_member_!!empr_cpt!!\" value='!!empr_libelle!!' readonly value=\"\" />
-		<input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=emprunteur&caller=form_edition&param1=id_empr_!!empr_cpt!!&param2=libelle_member_!!empr_cpt!!&auto_submit=NO', 'select_empr', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes')\" />
+		<input type=\"text\" class='saisie-30emr' id=\"libelle_member_!!empr_cpt!!\" name=\"libelle_member_!!empr_cpt!!\" value='!!empr_libelle!!' autfield='id_empr' completion='empr' autocomplete='off' value=\"\" />
+		<input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=emprunteur&caller=form_edition&param1=id_empr_!!empr_cpt!!&param2=libelle_member_!!empr_cpt!!&auto_submit=NO', 'selector')\" />
 		<input type='button' class='bouton' value='$msg[raz]' onclick=\"this.form.libelle_member_!!empr_cpt!!.value=''; this.form.id_empr_!!empr_cpt!!.value='0'; \" />
 		<input type=\"hidden\" id=\"id_empr_!!empr_cpt!!\"  name=\"id_empr_!!empr_cpt!!\" value='!!id_empr!!'  />
 	</div>
+	<script>
+		ajax_pack_element( document.getElementById('libelle_member_!!empr_cpt!!'));
+	</script>
 ";
 
 $serialcirc_diff_form_group="

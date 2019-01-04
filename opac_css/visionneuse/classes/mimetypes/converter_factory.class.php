@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: converter_factory.class.php,v 1.3 2012-04-11 14:15:30 dbellamy Exp $
+// $Id: converter_factory.class.php,v 1.4 2018-06-08 10:46:38 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -124,7 +124,11 @@ class convert_odt_to_swf extends convert_to {
 		if (!$done && $this->params['jodconverter_url']) {
 			file_put_contents($this->tmp_dir.$this->filename.'.'.$this->extension,$file_content);
 			$url=sprintf($this->params['jodconverter_url'],$this->filename.'.pdf');
-			$post=array('inputDocument'=>'@'.$this->tmp_dir.$this->filename.'.'.$this->extension);
+			if(function_exists("curl_file_create")){
+				$post=array("inputDocument"=>curl_file_create($this->tmp_dir.$this->filename.'.'.$this->extension));
+			}else{
+				$post=array('inputDocument'=>'@'.$this->tmp_dir.$this->filename.'.'.$this->extension);
+			}
 			$res='';
 			$ch=curl_init();
 			curl_setopt($ch, CURLOPT_URL, $url);
@@ -174,7 +178,11 @@ class convert_odp_to_swf extends convert_to {
 		if (!$done && $this->params['jodconverter_url']) {
 			file_put_contents($this->tmp_dir.$this->filename.'.'.$this->extension,$file_content);
 			$url=sprintf($this->params['jodconverter_url'],$this->filename.'.'.$this->convert_to);
-			$post=array('inputDocument'=>'@'.$this->tmp_dir.$this->filename.'.'.$this->extension);
+			if(function_exists("curl_file_create")){
+				$post=array("inputDocument"=>curl_file_create($this->tmp_dir.$this->filename.'.'.$this->extension));
+			}else{
+				$post=array('inputDocument'=>'@'.$this->tmp_dir.$this->filename.'.'.$this->extension);
+			}
 			$res='';
 			$ch=curl_init();
 			curl_setopt($ch, CURLOPT_URL, $url);

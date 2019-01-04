@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: parameters_subst.class.php,v 1.2 2009-07-12 08:43:52 erwanmartin Exp $
+// $Id: parameters_subst.class.php,v 1.4 2017-07-12 15:15:00 tsamson Exp $
 
 require_once($include_path."/parser.inc.php");
 
@@ -29,9 +29,9 @@ $parameter_subst = new parameters_subst('fichier.xml', $id);
 $parameter_subst->extract();
  */
 class parameters_subst {
-	var $values = array();
+	public $values = array();
 	
-	function parameters_subst($fichier, $id) {
+	public function __construct($fichier, $id) {
 		if (!file_exists($fichier))
 			return;
 		$file_content = file_get_contents($fichier);
@@ -49,10 +49,10 @@ class parameters_subst {
 		}
 	}
 	
-	function extract() {
+	public function extract() {
 		//Globalisons les valeurs
 		foreach ($this->values as $value_name => $value_content)
-			global $$value_name;
+			global ${$value_name};
 		//Affectons les
 		extract($this->values, EXTR_OVERWRITE);
 	}

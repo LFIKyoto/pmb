@@ -2,21 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: abts_abonnements.tpl.php,v 1.25 2015-03-19 09:24:38 ngantier Exp $
+// $Id: abts_abonnements.tpl.php,v 1.36 2018-03-08 14:24:04 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 global $abonnement_view,$abonnement_list,$abonnement_form;
 
+global $antivol_form;
+
 $abonnement_view = "
 <div id='abts_abonnement!!id_abonnement!!' class='notice-parent'>
-	<img src='./images/plus.gif' class='img_plus' name='imEx' id='abts_abonnement!!id_abonnement!!Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('abts_abonnement!!id_abonnement!!', true); return false;\" hspace='3'>
+	<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='abts_abonnement!!id_abonnement!!Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('abts_abonnement!!id_abonnement!!', true); return false;\" hspace='3'>
 	<span class='notice-heada'>
-    	<small>
-    		<span  class='statutnot1'  style='margin-right: 3px;'>
-    			<img src='./images/spacer.gif' width='10' height='10' />
-    		</span>
-    	</small>
+    	!!statut!!
     	<a href='!!view_id_abonnement!!'>!!abonnement_header!!</a>
     </span>
     <br />
@@ -54,6 +52,11 @@ $abonnement_view = "
 				".$msg["abonnements_nombre_de_horsseries"].": !!nombre_de_horsseries!!
 			</td>
 		</tr>		
+		<tr>
+			<td>
+				".$msg["4050"].": !!prix!!
+			</td>
+		</tr> 
 		!!commentaire!!
 		!!serialcirc_empr_list!! 
 		
@@ -65,9 +68,9 @@ $abonnement_view = "
 
 $abonnement_list ="
 <script type='text/javascript' src='./javascript/tablist.js'></script>
-<div class='form-contenu'>
-<a href='javascript:expandAll()'><img src='./images/expand_all.gif' border='0' id='expandall'></a>
-<a href='javascript:collapseAll()'><img src='./images/collapse_all.gif' border='0' id='collapseall'></a>
+<div class='form-contenu' id='abonnement_list_content'>
+<a href='javascript:expandAll(document.getElementById(\"abonnement_list_content\"))'><img src='".get_url_icon('expand_all.gif')."' border='0' id='expandall'></a>
+<a href='javascript:collapseAll(document.getElementById(\"abonnement_list_content\"))'><img src='".get_url_icon('collapse_all.gif')."' border='0' id='collapseall'></a>
 !!abonnement_list!!
 </div>
 <div class='row'>
@@ -78,7 +81,7 @@ $abonnement_script1 = "
 <script type='text/javascript'>
 function confirm_delete()
 {
-	phrase = \"{$msg[abonnements_confirm_suppr_abonnement]}\";
+	phrase = \"".$msg['abonnements_confirm_suppr_abonnement']."\";
 	result = confirm(phrase);
 	if(result)
 		form.submit();
@@ -101,7 +104,7 @@ function test_form(form)
 $creation_abonnement_form = "
 <script type='text/javascript' src='./javascript/tablist.js'></script>
 $abonnement_script1
-<form class='form-$current_module' id='form_abonnement' name='form_abonnement' method='post' action=!!action!!>
+<form class='form-$current_module' id='form_abonnement' name='form_abonnement' method='post' action='!!action!!'>
 	<h3>!!num_notice_libelle!!: !!libelle_form!!</h3>
 	<div class='form-contenu'>
 		
@@ -178,8 +181,16 @@ $edition_abonnement_form="
 -->
 </script>
 $abonnement_script1
-<form class='form-$current_module' id='form_abonnement' name='form_abonnement' method='post' action=!!action!!>
-	<h3>!!num_notice_libelle!!: !!libelle_form!!</h3>
+<form class='form-$current_module' id='form_abonnement' name='form_abonnement' method='post' action='!!action!!'>
+	<div style='float:left'>
+		<h3>!!num_notice_libelle!!: !!libelle_form!!</h3>	
+	</div>	
+	<div style='float:right'>
+		<label for='abts_status' class='etiquette'>".$msg['empr_statut_menu']."</label>&nbsp;
+		!!abts_status!!&nbsp;
+	</div>
+	<div class='row'></div>
+	
 	<div class='form-contenu'>
 		
 		<div class='colonne2'>
@@ -206,7 +217,7 @@ $abonnement_script1
 			</div>
 			<div class='row'>
 				<input type='hidden' name='date_debut' value='!!date_debut!!' />
-				<input class='bouton' type='button' name='date_debut_lib' value='!!date_debut_lib!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=form_abonnement&date_caller=!!date_debut!!&param1=date_debut&param2=date_debut_lib&auto_submit=NO&date_anterieure=YES', 'date_debut', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\"   />
+				<input class='bouton' type='button' name='date_debut_lib' value='!!date_debut_lib!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=form_abonnement&date_caller=!!date_debut!!&param1=date_debut&param2=date_debut_lib&auto_submit=NO&date_anterieure=YES', 'calendar')\"   />
 			</div>
 		</div>
 		<div class='colonne_suite'>
@@ -215,7 +226,7 @@ $abonnement_script1
 			</div>
 			<div class='row'>
 				<input type='hidden' name='date_fin' value='!!date_fin!!' />
-				<input class='bouton' type='button' name='date_fin_lib' value='!!date_fin_lib!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=form_abonnement&date_caller=!!date_fin!!&param1=date_fin&param2=date_fin_lib&auto_submit=NO&date_anterieure=YES', 'date_fin', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\"   />
+				<input class='bouton' type='button' name='date_fin_lib' value='!!date_fin_lib!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=form_abonnement&date_caller=!!date_fin!!&param1=date_fin&param2=date_fin_lib&auto_submit=NO&date_anterieure=YES', 'calendar')\"   />
 			</div>
 		</div>
 		<div class='colonne2'>
@@ -223,10 +234,10 @@ $abonnement_script1
 				<label for='fournisseur' class='etiquette'>".$msg["abonnements_fournisseur"]."</label>
 			</div>	
 			<div class='row'>
-				<input id='id_fou' id='id_fou' name='id_fou' value='!!id_fou!!' type='hidden'>
-				<input id='lib_fou' id='lib_fou' name='lib_fou' tabindex='1' value='!!lib_fou!!' class='saisie-30emr' onchange=\"openPopUp('./select.php?what=fournisseur&caller=form_abonnement&param1=id_fou&param2=lib_fou&id_bibli=0&deb_rech='+".pmb_escape()."(this.form.lib_fou.value), 'select_fournisseur', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes'); \" type='text'>
+				<input id='id_fou' name='id_fou' value='!!id_fou!!' type='hidden'>
+				<input id='lib_fou' name='lib_fou' tabindex='1' value='!!lib_fou!!' class='saisie-30emr' onchange=\"openPopUp('./select.php?what=fournisseur&caller=form_abonnement&param1=id_fou&param2=lib_fou&id_bibli=0&deb_rech='+".pmb_escape()."(this.form.lib_fou.value), 'selector'); \" type='text'>
 				<input type='button' name='fournisseur' class='bouton' value='...'  
-				onClick=\"openPopUp('./select.php?what=fournisseur&caller=form_abonnement&param1=id_fou&param2=lib_fou&id_bibli=0&deb_rech='+".pmb_escape()."(this.form.lib_fou.value), 'select_fournisseur', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes');\"   />
+				onClick=\"openPopUp('./select.php?what=fournisseur&caller=form_abonnement&param1=id_fou&param2=lib_fou&id_bibli=0&deb_rech='+".pmb_escape()."(this.form.lib_fou.value), 'selector');\"   />
 				<input type='button' tabindex='1' class='bouton' value='".$msg['raz']."' onclick=\"document.getElementById('id_fou').value='0';document.getElementById('lib_fou').value='';\" />
 			</div>
 		</div>
@@ -238,74 +249,83 @@ $abonnement_script1
 				<TEXTAREA name='destinataire' rows='6' cols='50'>!!destinataire!!</TEXTAREA>
 			</div>
 		</div>
-		<div class='row'>&nbsp;</div>
-		<input type='checkbox' !!abt_numeric_checked!! value='1' name='abt_numeric' id='abt_numeric' onclick=\"expl_part_display();\"/><label for='abt_numeric' class='etiquette'>".$msg['abt_numeric_checkbox']."</label>
-		<div id='expl_part'>
-			<div class='row'>
-				<div class='colonne3'>
-					<!-- cote -->
-						<label class='etiquette' for='cote'>$msg[296]</label>
-					<div class='row'>
-						<input type='text' class='saisie-20em' id=\"cote\" name='cote' value='!!cote!!' />
-						</div>
-					</div>
-				<div class='colonne3'>
-					<!-- type document -->
-					<label class='etiquette' for='f_ex_typdoc'>$msg[294]</label>
-					<div class='row'>
-						!!type_doc!!
-						</div>
-					</div>
-				<div class='colonne3'>
-					<!-- type document -->
-					<label class='etiquette' for='exemp_auto'>$msg[exemplarisation_automatique]</label>
-					<div class='row'>
-						!!exemplarisation_automatique!!
-						</div>
-					</div>
-				</div>
-			<div class='row'>
-				<div class='colonne3'>
-					<!-- localisation -->
-					<label class='etiquette' for='f_ex_location'>$msg[298]</label>
-					<div class='row'>
-						!!localisation!!
-						</div>
-					</div>
-				<div class='colonne3'>
-					<!-- section -->
-					<label class='etiquette' for='f_ex_section'>$msg[295]</label>
-					<div class='row'>
-						!!section!!
-						</div>
-					</div>
-				<div class='colonne3'>
-					<!-- propri?taire -->
-					<label class='etiquette' for='f_ex_owner'>$msg[651]</label> 
-					<div class='row'>
-						!!owner!!
-						</div>
-					</div>
-				</div>
+		<div class='row'>
+			<input type='checkbox' !!abt_numeric_checked!! value='1' name='abt_numeric' id='abt_numeric' onclick=\"expl_part_display();\"/><label for='abt_numeric' class='etiquette'>".$msg['abt_numeric_checkbox']."</label>
+		</div>
+		<div class='row'>
+			<div id='expl_part'>
 				<div class='row'>
-				<div class='colonne3'>
-					<!-- statut -->
-					<label class='etiquette' for='f_ex_statut'>$msg[297]</label>
-					<div class='row'>
-						!!statut!!
+					<div class='colonne3'>
+						<!-- cote -->
+							<label class='etiquette' for='cote'>$msg[296]</label>
+						<div class='row'>
+							<input type='text' class='saisie-20em' id=\"cote\" name='cote' value='!!cote!!' />
+							</div>
+						</div>
+					<div class='colonne3'>
+						<!-- type document -->
+						<label class='etiquette' for='f_ex_typdoc'>$msg[294]</label>
+						<div class='row'>
+							!!type_doc!!
+							</div>
+						</div>
+					<div class='colonne3'>
+						<!-- type document -->
+						<label class='etiquette' for='exemp_auto'>$msg[exemplarisation_automatique]</label>
+						<div class='row'>
+							!!exemplarisation_automatique!!
+							</div>
 						</div>
 					</div>
-				<div class='colonne3'>
-					<!-- code stat -->
-					<label class='etiquette' for='f_ex_cstat'>$msg[299]</label>
-					<div class='row'>
-						!!codestat!!
+				<div class='row'>
+					<div class='colonne3'>
+						<!-- localisation -->
+						<label class='etiquette' for='f_ex_location'>$msg[298]</label>
+						<div class='row'>
+							!!localisation!!
+							</div>
+						</div>
+					<div class='colonne3'>
+						<!-- section -->
+						<label class='etiquette' for='f_ex_section'>$msg[295]</label>
+						<div class='row'>
+							!!section!!
+							</div>
+						</div>
+					<div class='colonne3'>
+						<!-- propri?taire -->
+						<label class='etiquette' for='f_ex_owner'>$msg[651]</label> 
+						<div class='row'>
+							!!owner!!
+							</div>
 						</div>
 					</div>
-				".$antivol_form."
-				</div>
-		</div> 		<!-- expl_part end -->
-		<div class='row'>&nbsp;</div>
+				<div class='row'>
+					<div class='colonne3'>
+						<!-- statut -->
+						<label class='etiquette' for='f_ex_statut'>$msg[297]</label>
+						<div class='row'>
+							!!statut!!
+							</div>
+						</div>
+					<div class='colonne3'>
+						<!-- code stat -->
+						<label class='etiquette' for='f_ex_cstat'>$msg[299]</label>
+						<div class='row'>
+							!!codestat!!
+							</div>
+						</div>
+					<div class='colonne3'>
+						<!-- prix -->
+						<label class='etiquette' for='prix'>$msg[4050]</label>
+						<div class='row'>
+							<input type='text' class='saisie-20em' id=\"prix\" name='prix' value='!!prix!!' />
+							</div>
+						</div>
+					".$antivol_form."
+					</div>
+			</div><!-- expl_part end -->
+		</div>
 		<div class='row'>
 			!!modele_list!!
 		</div>
@@ -328,7 +348,7 @@ $abonnement_script1
 ";
 
 $tpl_calendrier = "
-<form class='form-$current_module' id='form_abonnement' name='form_abonnement' method='post' action=!!action!!>
+<form class='form-$current_module' id='form_abonnement' name='form_abonnement' method='post' action='!!action!!'>
 	<h3>!!libelle_form!!</h3>
 	<div class='form-contenu'>
 	<input type='hidden' name='abonnement_id' value='!!abonnement_id!!'/>
@@ -351,7 +371,7 @@ $abonnement_serialcirc_empr_list_group = "
 <br />
 <div class='row' >				
 	<div id='group_circ!!id_diff!!' >
-    	<img src='./images/plus.gif' class='img_plus' name='imEx' id='group_circ!!id_diff!!Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('group_circ!!id_diff!!', true); recalc_recept();return false;\" hspace='3'>				
+    	<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='group_circ!!id_diff!!Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('group_circ!!id_diff!!', true); recalc_recept();return false;\" hspace='3'>				
 	    <a href='#' >!!empr_name!!</a>					
 	</div>
 	<div id='group_circ!!id_diff!!Child' class='notice-child' style='margin-bottom:6px;display:none;'>
@@ -364,4 +384,47 @@ $abonnement_serialcirc_empr_list_group_elt="
 <br />
 <div class='row'>!!empr_libelle!!</div>
 ";
-?>
+
+
+//statuts de contribution
+$admin_abts_status_form = "
+<form class='form-$current_module' name='statusform' method=post action=\"./admin.php?categ=abonnements&sub=status&action=update&id=!!id!!\">
+	<h3><span onclick='menuHide(this,event)'>!!form_title!!</span></h3>
+	<!--    Contenu du form    -->
+	<div class='form-contenu'>
+		<div class='row'>
+			<label class='etiquette' for='form_libelle'>".$msg["docnum_statut_libelle"]."</label>
+		</div>
+		<div class='row'>
+			<input type=text name='form_gestion_libelle' value='!!gestion_libelle!!' class='saisie-50em' />
+		</div>
+		<div class='row'>&nbsp;</div>
+		<div class='row'>
+			<div class='colonne5'>
+				<label class='etiquette' for='form_class_html'>".$msg["docnum_statut_class_html"]."</label>
+			</div>
+			<div class='colonne_suite'>
+				!!class_html!!
+			</div>
+		</div>
+		<div class='row'>
+			<label class='etiquette' for='form_bulletinage_active'>".$msg["docnum_statut_bulletinage_active"]."</label>
+			<input id='form_bulletinage_active' name='form_bulletinage_active' value='1' class='checkbox' type='checkbox' !!bulletinage_active_checked!!>
+		</div>
+		<div class='row'>&nbsp;</div>
+		
+	</div>
+	<!-- Boutons -->
+	<div class='row'>
+		<div class='left'>
+			<input class='bouton' type='button' value=' $msg[76] ' onClick=\"document.location='./admin.php?categ=abonnements&sub=status&action='\">&nbsp;
+			<input class='bouton' type='submit' value=' $msg[77] ' onClick=\"return test_form(this.form)\">
+		</div>
+		<div class='right'>
+			!!bouton_supprimer!!
+		</div>
+	</div>
+	<div class='row'></div>
+</form>
+<script type='text/javascript'>document.forms['statusform'].elements['form_gestion_libelle'].focus();</script>";
+

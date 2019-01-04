@@ -1,4 +1,4 @@
-<h1>Ferramentas</h1>
+<h2>Ferramentas</h2>
 <p>Encontrar&aacute; aqui diferentes op&ccedil;&otilde;es. </p>
 <p>
 <b>Limpeza da base de dados</b> permite fazer as rela&ccedil;&otilde;es nas bases de dados: suprimir os 

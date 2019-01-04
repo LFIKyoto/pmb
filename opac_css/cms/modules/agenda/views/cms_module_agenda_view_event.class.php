@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_agenda_view_event.class.php,v 1.3 2012-11-15 09:47:33 arenou Exp $
+// $Id: cms_module_agenda_view_event.class.php,v 1.4 2018-08-24 08:44:59 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -20,7 +20,7 @@ le {{event_start.format_value}}
  {% endif %}
 {% endif%} : {{title}}
 </h3>
-<img src='{{logo.large}}'/>
+<img src='{{logo.large}}' alt=''/>
 <p>{{content}}</p>";
 	}
 	

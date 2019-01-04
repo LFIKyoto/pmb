@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesEmpr.class.php,v 1.11.2.1 2015-08-04 15:48:17 mbertin Exp $
+// $Id: pmbesEmpr.class.php,v 1.21 2018-10-19 10:21:25 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,24 +11,20 @@ require_once($class_path."/emprunteur.class.php");
 require_once($class_path."/parametres_perso.class.php");
 
 class pmbesEmpr extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
-	var $es;				//Classe mère qui implémente celle-ci !
-	var $msg;
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	
-	function empr_list($filters=array()) {
+	public function empr_list($filters=array()) {
 		global $dbh;
 		global $msg;
 		global $charset;
@@ -62,7 +58,7 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok($infos);
 	}
 	
-	function fetch_empr($empr_cb='', $empr_id='') {
+	public function fetch_empr($empr_cb='', $empr_id='') {
 		global $dbh;
 		global $msg;		
 		global $charset;
@@ -251,7 +247,7 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok($result);
 	}
 	
-	function delete_empr($empr_cb='', $empr_id='') {
+	public function delete_empr($empr_cb='', $empr_id='') {
 		global $dbh;
 		global $msg;		
 		global $charset;
@@ -275,7 +271,7 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok();
 	}
 	
-	function create_empr($empr_cb='',$fields) {
+	public function create_empr($empr_cb='',$fields) {
 		global $dbh,$lang;
 		global $msg;		
 		global $charset;
@@ -438,8 +434,8 @@ class pmbesEmpr extends external_services_api_class {
 				$p_perso = new parametres_perso("empr");
 				foreach($fields['pperso_list'] as $pp){
 					$name=$pp["name"];
-					global $$name;
-					$$name=$pp["value_list"];	
+					global ${$name};
+					${$name}=$pp["value_list"];	
 					
 				}
 				$p_perso->rec_fields_perso($empr_id);
@@ -457,7 +453,7 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok($result);			
 	}	
 	
-	function update_empr($empr_cb='', $empr_id=0, $fields) {
+	public function update_empr($empr_cb='', $empr_id=0, $fields) {
 		global $dbh,$lang;
 		global $msg;
 		global $charset;
@@ -626,8 +622,8 @@ class pmbesEmpr extends external_services_api_class {
 			$p_perso = new parametres_perso("empr");
 			foreach($fields['pperso_list'] as $pp){
 				$name=$pp["name"];
-				global $$name;
-				$$name=$pp["value_list"];
+				global ${$name};
+				${$name}=$pp["value_list"];
 	
 			}
 			$p_perso->rec_fields_perso($empr_id);
@@ -640,7 +636,7 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok();			
 	}
 	
-	function statut_list() {
+	public function statut_list() {
 		global $dbh;
 		global $msg;
 		global $charset;	
@@ -668,13 +664,15 @@ class pmbesEmpr extends external_services_api_class {
 			$infos[$i]["allow_self_checkout"]=$res_info->allow_self_checkout;
 			$infos[$i]["allow_self_checkin"]=$res_info->allow_self_checkin;
 			$infos[$i]["allow_serialcirc"]=$res_info->allow_serialcirc;
+			$infos[$i]["allow_scan_request"]=$res_info->allow_scan_request;
+			$infos[$i]["allow_contribution"]=$res_info->allow_contribution;
 			$i++;
 		}
 		return $this->build_ok($infos);
 	}
 	
 	
-	function categ_list() {
+	public function categ_list() {
 		global $dbh;
 		global $msg;
 		global $charset;
@@ -695,7 +693,7 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok($infos);
 	}
 	
-	function codestat_list() {
+	public function codestat_list() {
 		global $dbh;
 		global $msg;
 		global $charset;
@@ -712,7 +710,7 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok($infos);
 	}
 	
-	function groupe_list() {
+	public function groupe_list() {
 		global $dbh;
 		global $msg;
 		global $charset;
@@ -733,7 +731,7 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok($infos);
 	}
 	
-	function abt_list() {
+	public function abt_list() {
 		global $dbh;
 		global $msg;
 		global $charset;
@@ -756,7 +754,7 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok($infos);
 	}
 	
-	function location_list() {
+	public function location_list() {
 		global $dbh;
 		global $msg;
 		global $charset;
@@ -789,7 +787,7 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok($infos);
 	}
 	
-	function surlocation_list() {
+	public function surlocation_list() {
 		global $dbh;
 		global $msg;
 		global $charset;
@@ -819,7 +817,7 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok($infos);
 	}
 	
-	function caddie_list() {
+	public function caddie_list() {
 		global $dbh;
 		global $msg;
 		global $charset;
@@ -841,7 +839,7 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok($infos);
 	}
 	
-	function caddie_empr_list($caddie_id) {
+	public function caddie_empr_list($caddie_id) {
 		global $dbh;
 		global $msg;
 		global $charset;
@@ -861,7 +859,7 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok($infos);
 	}
 	
-	function procédure_exec($id) {
+	public function procédure_exec($id) {
 		global $dbh;
 		global $msg;
 		global $charset;
@@ -885,20 +883,20 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok($infos);
 	}
 	
-	function caddie_pointage_raz($caddie_id) {
+	public function caddie_pointage_raz($caddie_id) {
 		global $dbh;
 		global $msg;
 		global $charset;
 		global $PMBuserid;
 		$caddie_id+=0;
 		$myCart = new empr_caddie($caddie_id);
-		print aff_empr_cart_titre ($myCart);
-		$droit = verif_droit_empr_caddie($caddie_id) ;
+		print $myCart->aff_cart_titre();
+		$droit = empr_caddie::check_rights($caddie_id) ;
 		if ($droit) $myCart->depointe_items();
 	
 		return $this->build_ok($infos);
 	}			
-	function add_in_caddie($empr_cb='', $empr_id=0, $caddie_id) {
+	public function add_in_caddie($empr_cb='', $empr_id=0, $caddie_id) {
 		global $dbh,$lang;
 		global $msg;
 		global $charset;
@@ -927,7 +925,7 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok();
 	}	
 	
-	function pointe_in_caddie($empr_cb='', $empr_id=0, $caddie_id) {
+	public function pointe_in_caddie($empr_cb='', $empr_id=0, $caddie_id) {
 		global $dbh,$lang;
 		global $msg;
 		global $charset;
@@ -956,7 +954,7 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok();
 	}	
 	
-	function is_in_caddie($empr_cb='', $empr_id=0, $caddie_id) {
+	public function is_in_caddie($empr_cb='', $empr_id=0, $caddie_id) {
 		global $dbh,$lang;
 		global $msg;
 		global $charset;
@@ -999,7 +997,7 @@ class pmbesEmpr extends external_services_api_class {
 		));				
 	}
 		
-	function lang_list() {	
+	public function lang_list() {	
 		global $include_path;
 		global $msg;
 		global $charset;
@@ -1016,7 +1014,38 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok($infos);
 	}
 	
-	function clean_field($field,$addslashes=0){
+	public function pperso_list_type_values($pperso_name) {
+		global $dbh;
+		
+		$result = array(
+				'status' => 0,
+				'flag' => 0
+		);
+
+		$sql = "SELECT idchamp FROM empr_custom WHERE name='".addslashes($pperso_name)."' AND type='list'";
+		$res = pmb_mysql_query($sql);
+
+		if (!$res || !pmb_mysql_num_rows($res)) return $this->build_ok($result,"Champ personnalisé inconnu ou pas de type liste.",false);
+		
+		$pperso_res = pmb_mysql_fetch_object($res);
+		$pperso_id=$pperso_res->idchamp;
+		
+		$sql = "SELECT empr_custom_list_value, empr_custom_list_lib FROM empr_custom_lists WHERE empr_custom_champ='".$pperso_id."' ORDER BY ordre";
+		$res = pmb_mysql_query($sql);
+		
+		if (!$res || !pmb_mysql_num_rows($res)) return $this->build_ok($result,"Aucune valeur pour ce champ.",false);
+		
+		$i=0;
+		while ($pperso_res = pmb_mysql_fetch_object($res)) {
+			$infos[$i]["value"]=$pperso_res->empr_custom_list_value;
+			$infos[$i]["libelle"]=$pperso_res->empr_custom_list_lib;
+			$i++;
+		}
+
+		return $this->build_ok($infos);
+	}
+	
+	public function clean_field($field,$addslashes=0){
 		global $charset;
 		if ($this->proxy_parent->input_charset!='utf-8' && $charset == 'utf-8') {
 			$field = utf8_encode($field);
@@ -1029,7 +1058,7 @@ class pmbesEmpr extends external_services_api_class {
 		return $field;
 	}	
 	
-	function clean_fields($field){
+	public function clean_fields($field){
 		array_walk_recursive($field, function(&$data,$key,$input_charset) {
 			global $charset;
 			if ($input_charset!='utf-8' && $charset == 'utf-8') {
@@ -1043,7 +1072,7 @@ class pmbesEmpr extends external_services_api_class {
 		return $field;
 	}
 	
-	function build_ok($result=array(),$msg="",$statut=true){	
+	public function build_ok($result=array(),$msg="",$statut=true){	
 		array_walk_recursive($result, function(&$data) {
 			$data = utf8_normalize($data);
 		});
@@ -1054,10 +1083,48 @@ class pmbesEmpr extends external_services_api_class {
 		);
 	}
 	
-	function build_error($msg){
+	public function build_error($msg){
 		return  array(
 			'status' => false,
 			'status_msg' => utf8_normalize($msg)
 		);
+	}
+	
+	
+	public function bibloto_empr_list($filters=array()) {
+	    global $dbh;
+	    global $msg;
+	    global $charset;
+	    
+	    $sql_filters="";
+	    object_to_array($filters);
+	    if(is_array($filters)){
+	        $i=0;
+	        foreach($filters as $filter){
+	            if(!$filter['field']) continue;
+	            
+	            if($i==0) $sql_filters=" where ";
+	            else {
+	                if($filter['separator'])
+	                    $sql_filters.=" ".$filter['separator']." ";
+	                    else
+	                        $sql_filters.=" and ";
+	            }
+	            $sql_filters.= $filter['field']." ".$filter['operator']." '".$filter['value']."' ";
+	            $i++;
+	        }
+	    }
+	    $infos= array();
+	    $sql = "SELECT id_empr, empr_cb, empr_nom, empr_prenom FROM empr $sql_filters";
+	    $res = pmb_mysql_query($sql);
+	    $i=0;
+	    while( $res_info=pmb_mysql_fetch_object($res)){
+	        $infos[$i]['empr_cb']=$res_info->empr_cb;
+	        $infos[$i]['empr_id']=$res_info->id_empr;
+	        $infos[$i]['empr_nom']=$res_info->empr_nom;
+	        $infos[$i]['empr_prenom']=$res_info->empr_prenom;
+	        $i++;
+	    }
+	    return $this->build_ok($infos);
 	}
 }

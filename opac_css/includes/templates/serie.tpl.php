@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serie.tpl.php,v 1.2 2007-03-14 16:58:01 dbellamy Exp $
+// $Id: serie.tpl.php,v 1.3 2018-01-25 10:13:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
@@ -16,6 +16,8 @@ if ( ! defined( 'SERIE_TMPL' ) ) {
 // !!id!!        identifiant de l'éditeur
 // !!name!!      nom de l'éditeur
 
+global $serie_level2_display;
+  
 // level 2 : affichage général
 $serie_level2_display = "
 <div class=serielevel2>

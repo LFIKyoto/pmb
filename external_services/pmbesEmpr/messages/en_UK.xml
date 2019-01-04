@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: en_UK.xml,v 1.2 2015-06-16 10:18:15 pmbs Exp $ -->
+$Id: en_UK.xml,v 1.5 2018-10-12 12:28:34 vtouchard Exp $ -->
 
 <!DOCTYPE XMLlist SYSTEM "../../../includes/XMLlist.dtd" >
 <XMLlist>
@@ -151,8 +151,6 @@ statut_list
 	<entry code="statut_list_allow_self_checkout">Autonomous loan</entry>
 	<entry code="statut_list_allow_self_checkin">Autonomous return</entry>
 	<entry code="statut_list_allow_serialcirc">Serials circulation</entry>
-	<entry code=""></entry>
-	<entry code=""></entry>
 	
 <!--
 categ_list
@@ -285,5 +283,18 @@ is_in_caddie
 caddie_pointage_raz
 -->			
 	<entry code="caddie_pointage_raz">Clear the checkings of a basket</entry>						
+	
+<!--
+pperso_list_type_values
+-->			
+	<entry code="pperso_list_type_values">List of possible values for a list type custom field</entry>
+	<entry code="pperso_name">Custom field name</entry>
+	<entry code="pperso_list_type_values_value">Value</entry>
+	<entry code="pperso_list_type_values_libelle">Label</entry>
 		
+<!--
+bibloto_empr_list
+-->	
+	<entry code="bibloto_empr_list">Bibloto readers list</entry>	
+
 </XMLlist>

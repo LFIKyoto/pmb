@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: groupexpl.class.php,v 1.4 2015-04-03 11:16:18 jpermanne Exp $
+// $Id: groupexpl.class.php,v 1.6 2017-02-01 09:22:10 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,22 +12,29 @@ require_once("$include_path/expl_info.inc.php") ;
 require_once("$include_path/bull_info.inc.php") ;
 
 class groupexpl {
-	var $id=0;
-	var $info=array();
-	var $error_message="";
-	var $error_html_message="";
-	var $info_message="";
+	public $id=0;
+	public $info=array();
+	public $error_message="";
+	public $error_html_message="";
+	public $info_message="";
 	
-	function groupexpl($id=0) {
+	public function __construct($id=0) {
 		$this->id=$id+0;
 		$this->error_message="";
 		$this->info_message="";
 		$this->fetch_data();
 	}
 	
-	function fetch_data() {
+	public function fetch_data() {
 		global $dbh;
 		$this->info=array();
+		$this->info['id']= 0;
+		$this->info['name']= '';
+		$this->info['resp_expl_num']= 0;
+		$this->info['location']= 0;
+		$this->info['statut_principal']	= 0;
+		$this->info['statut_others']= '';
+		$this->info['comment']= '';
 		$this->info['expl']=array();
 		if(!$this->id) return;
 		$req="select * from groupexpl where id_groupexpl=". $this->id;		
@@ -41,12 +48,13 @@ class groupexpl {
 			$this->info['statut_principal']	= $r->groupexpl_statut_resp;
 			$this->info['statut_others']= $r->groupexpl_statut_others;
 			$this->info['comment']= $r->groupexpl_comment;	
-		}					 				
+		}
 		
 		$req="select * from groupexpl_expl, exemplaires where expl_id=groupexpl_expl_num and groupexpl_num=". $this->id;		
 		$resultat=pmb_mysql_query($req,$dbh);	
 		$i=0;
 		$this->info['checked']=0;
+		if(!isset($this->info['not_checked'])) $this->info['not_checked']=0;
 		if (pmb_mysql_num_rows($resultat)) {
 			while($r=pmb_mysql_fetch_object($resultat)){	
 				$this->info['expl'][$i]['id']= $r->groupexpl_expl_num;	
@@ -87,22 +95,22 @@ class groupexpl {
 	// printr($this->info);
 	}
 
-	function is_doc_header($cb) {
+	public function is_doc_header($cb) {
 		if(!($expl_id=$this->get_expl_id($cb))) return 0;
 		if($this->info['resp_expl_num']==$expl_id) return 1; 
 		return 0;
 	}
 	
-	function group_is_check_out() {
+	public function group_is_check_out() {
 		if(count($this->info['pret']) )return 1;
 		return 0;
 	}	
 	   
-	function group_have_error() {		
+	public function group_have_error() {		
 		return $this->info['checked'];		
 	}
 	
-	function get_expl_id($cb) {
+	public function get_expl_id($cb) {
 		global $dbh;	
 		$req="select expl_id from exemplaires where expl_cb='$cb' ";		
 		$resultat=pmb_mysql_query($req,$dbh);	
@@ -113,7 +121,7 @@ class groupexpl {
 		return $r->expl_id;
 	}
 	
-	function raz_check($cb='') {
+	public function raz_check($cb='') {
 		global $dbh;
 		if($cb)	{
 			if(!($expl_id=$this->get_expl_id($cb))) return 0;
@@ -128,7 +136,7 @@ class groupexpl {
 		
 	}
 	
-	function do_check($cb='') {
+	public function do_check($cb='') {
 		global $dbh;
 		if($cb)	{
 			if(!($expl_id=$this->get_expl_id($cb))) return 0;
@@ -141,7 +149,7 @@ class groupexpl {
 		$this->fetch_data();			
 	}	
 	
-	function get_name_group_from_id($id) {
+	public function get_name_group_from_id($id) {
 		global $dbh;
 		$req="select groupexpl_name from groupexpl where id_groupexpl='$id' ";
 		$resultat=pmb_mysql_query($req,$dbh);
@@ -150,7 +158,7 @@ class groupexpl {
 		return $r->groupexpl_name;
 	}
 	
-	function get_id_group_from_cb($cb) {
+	public function get_id_group_from_cb($cb) {
 		global $dbh;
 		$req="select id_groupexpl from groupexpl, groupexpl_expl, exemplaires where expl_id=groupexpl_expl_num and groupexpl_num=id_groupexpl and expl_cb='$cb' ";		
 		$resultat=pmb_mysql_query($req,$dbh);	
@@ -159,7 +167,7 @@ class groupexpl {
 		return $r->id_groupexpl;
 	}	
 	
-	function add_expl($cb) {
+	public function add_expl($cb) {
 		global $dbh,$msg,$charset;
 		
 		$this->error_message="";
@@ -191,7 +199,7 @@ class groupexpl {
 		return 1;
 	}
 	
-    function del_expl($cb) {
+    public function del_expl($cb) {
     	global $dbh,$msg,$charset;
     	
 		$this->error_message="";		
@@ -202,7 +210,7 @@ class groupexpl {
 		return 1;    	
     } 
     
-    function get_expl_display($tpl,$id){    
+    public function get_expl_display($tpl,$id){    
     	global 	$msg,$dbh;
 		
 		$expl = get_expl_info($id,1);
@@ -216,7 +224,7 @@ class groupexpl {
 		return $tpl;
     }
  
-	function get_form() {
+	public function get_form() {
 		global $groupexpl_form_tpl,$msg,$charset,$dbh;		
 		global $pmb_lecteurs_localises,$deflt_docs_location;
 		global $groupexpl_form_list_line_tpl;
@@ -232,10 +240,10 @@ class groupexpl {
 			$tpl=str_replace('!!delete!!',"",$tpl);
 			$tpl=str_replace('!!see_button!!',"",$tpl);
 		}		
-		
 		$tpl=str_replace('!!statut_principal!!',do_selector('docs_statut', 'statut_principal', $this->info['statut_principal']),$tpl);
 		$tpl=str_replace('!!statut_others!!',do_selector('docs_statut', 'statut_others', $this->info['statut_others']),$tpl);
 		
+		$loc_select = '';
 		if($pmb_lecteurs_localises){
 			if(!$this->info['location'])$f_loc=$deflt_docs_location;
 			else $f_loc=$this->info['location'];
@@ -284,7 +292,7 @@ class groupexpl {
 		return $tpl;
 	}
 
-	function save($data) {
+	public function save($data) {
 		global $dbh;
 		$data['resp_expl_num']+=0;
 		$data['location']+=0;
@@ -305,25 +313,24 @@ class groupexpl {
 		} else {
 			$req="UPDATE groupexpl SET $fields where id_groupexpl=".$this->id;	
 			pmb_mysql_query($req, $dbh);				
-		}		
-		
+		}
 		$req="update exemplaires set expl_statut=".$this->info['statut_principal']." where expl_id=".$data['resp_expl_num'];				
 		pmb_mysql_query($req, $dbh);	
 		$this->fetch_data();
 	}	
 	
-	function delete() {
+	public function delete() {
 		global $dbh;
 		
 		$req="DELETE from groupexpl WHERE id_groupexpl=".$this->id;
 		pmb_mysql_query($req, $dbh);		
 		$req_pret="delete from groupexpl_expl where groupexpl_num=".$this->id;
-		pmb_mysql_query($req, $dbh);
+		pmb_mysql_query($req_pret, $dbh);
 					
 		$this->fetch_data();	
 	}	
    
-	function get_see_form() {
+	public function get_see_form() {
 		global $groupexpl_see_form_tpl,$msg,$charset,$dbh;		
 		global $pmb_lecteurs_localises,$deflt_docs_location;
 		global $groupexpl_see_form_list_line_tpl,$groupexpl_see_form_principale_tpl;
@@ -360,7 +367,7 @@ class groupexpl {
 		return $tpl;
 	}	
 	
-	function get_confirm_form($cb) {
+	public function get_confirm_form($cb) {
 		global $dbh;
 		global $groupexpl_confirm_form_tpl,$msg,$charset;		
 		global $pmb_lecteurs_localises,$deflt_docs_location;
@@ -407,17 +414,17 @@ class groupexpl {
 
 
 class groupexpls {	
-	var $info=array();
-	var $error_message="";
-	var $info_message="";
+	public $info=array();
+	public $error_message="";
+	public $info_message="";
 	
-	function groupexpls() {
+	public function __construct() {
 		$this->error_message="";
 		$this->info_message="";
 		$this->fetch_data();
 	}
 	
-	function fetch_data() {
+	public function fetch_data() {
 		global $dbh;
 		global $f_loc,$montrerquoi;
 		$f_loc+=0;
@@ -441,11 +448,11 @@ class groupexpls {
 		}
 	}
 	
-	function set_error_message($error_message) {
+	public function set_error_message($error_message) {
 		$this->error_message=$error_message;	
 	}	
 	
-	function get_list() {
+	public function get_list() {
 		global $dbh,$charset;
 		global $pmb_lecteurs_localises,$groupexpl_list_tpl,$groupexpl_list_line_tpl,$msg;
 		global $f_loc,$montrerquoi;
@@ -493,7 +500,11 @@ class groupexpls {
 			$tpl_elt=str_replace('!!odd_even!!',$odd_even, $tpl_elt);	
 			$tpl_elt=str_replace('!!name!!',htmlentities($elt['name'],ENT_QUOTES,$charset), $tpl_elt);	
 			
-			$tpl_elt=str_replace('!!emprunteur!!',$elt['pret']['emprunteur'], $tpl_elt);
+			if(isset($elt['pret'])) {
+				$tpl_elt=str_replace('!!emprunteur!!',$elt['pret']['emprunteur'], $tpl_elt);
+			} else {
+				$tpl_elt=str_replace('!!emprunteur!!','', $tpl_elt);
+			}
 			$error="";
 			if($elt['not_checked'])	$error="X"; 
 			$tpl_elt=str_replace('!!error!!',$error, $tpl_elt);	
@@ -507,7 +518,7 @@ class groupexpls {
 		return $tpl;
 	}	
 	
-	static function get_group_expl($cb){
+	public static function get_group_expl($cb){
 		global $dbh;		
 		$req="select id_groupexpl from groupexpl, groupexpl_expl, exemplaires where expl_id=groupexpl_expl_num and groupexpl_num=id_groupexpl and expl_cb='$cb' ";		
 		$resultat=pmb_mysql_query($req,$dbh);	

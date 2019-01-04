@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_family_admin.tpl.php,v 1.8 2015-02-05 09:48:18 ngantier Exp $
+// $Id: nomenclature_family_admin.tpl.php,v 1.10 2017-11-07 15:34:41 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -27,17 +27,17 @@ $nomenclature_family_list_tpl="
 
 $nomenclature_family_list_line_tpl="
 <tr  class='!!odd_even!!' onmouseout=\"this.className='!!odd_even!!'\" onmouseover=\"this.className='surbrillance'\">	
-	<td valign='top'>				
+	<td style='vertical-align:top'>				
 		<input class='bouton_small' type='button' onclick=\"document.location='./admin.php?categ=family&sub=family&action=up&id=!!id!!'\" value='-'>
 		<input class='bouton_small' type='button' onclick=\"document.location='./admin.php?categ=family&sub=family&action=down&id=!!id!!'\" value='+'>
 	</td> 
-	<td valign='top' style=\"cursor: pointer\"  onmousedown=\"document.location='./admin.php?categ=family&sub=family&action=form&id=!!id!!';\" >				
+	<td style=\"vertical-align:top; cursor: pointer\"  onmousedown=\"document.location='./admin.php?categ=family&sub=family&action=form&id=!!id!!';\" >				
 		!!name!!
 	</td> 
-	<td valign='top' style=\"cursor: pointer\"  onmousedown=\"document.location='./admin.php?categ=family&sub=family&action=form&id=!!id!!';\">				
+	<td style=\"vertical-align:top; cursor: pointer\"  onmousedown=\"document.location='./admin.php?categ=family&sub=family&action=form&id=!!id!!';\">				
 		!!musicstands_display!!
 	</td> 
-	<td valign='top' style=\"cursor: pointer\"  onmousedown=\"document.location='./admin.php?categ=family&sub=family&action=form&id=!!id!!';\">				
+	<td style='vertical-align:top'>				
 		<input type='button' class='bouton' value='".$msg['admin_nomenclature_musicstand_edition']."'  
 			onclick=\"document.location='./admin.php?categ=family&sub=family&action=musicstand_list&id=!!id!!'\"  />
 	</td> 	
@@ -121,20 +121,20 @@ $nomenclature_family_musicstand_list_tpl="
 
 $nomenclature_family_musicstand_list_line_tpl="
 <tr  class='!!odd_even!!' onmouseout=\"this.className='!!odd_even!!'\" onmouseover=\"this.className='surbrillance'\">	
-	<td valign='top'>				
+	<td style='vertical-align:top'>				
 		<input class='bouton_small' type='button' onclick=\"document.location='./admin.php?categ=family&sub=family&action=musicstand_up&id=!!id!!&id_musicstand=!!id_musicstand!!'\" value='-'>
 		<input class='bouton_small' type='button' onclick=\"document.location='./admin.php?categ=family&sub=family&action=musicstand_down&id=!!id!!&id_musicstand=!!id_musicstand!!'\" value='+'>
 	</td> 
-	<td valign='top' style=\"cursor: pointer\"  onmousedown=\"document.location='./admin.php?categ=family&sub=family&action=musicstand_form&id=!!id!!&id_musicstand=!!id_musicstand!!';\" >				
+	<td style=\"vertical-align:top; cursor: pointer\"  onmousedown=\"document.location='./admin.php?categ=family&sub=family&action=musicstand_form&id=!!id!!&id_musicstand=!!id_musicstand!!';\" >				
 		!!name!!
 	</td> 
-	<td valign='top' style=\"cursor: pointer\"  onmousedown=\"document.location='./admin.php?categ=family&sub=family&action=musicstand_form&id=!!id!!&id_musicstand=!!id_musicstand!!';\">				
+	<td style=\"vertical-align:top; cursor: pointer\"  onmousedown=\"document.location='./admin.php?categ=family&sub=family&action=musicstand_form&id=!!id!!&id_musicstand=!!id_musicstand!!';\">				
 		!!instruments!!
 	</td> 
-	<td valign='top' style=\"cursor: pointer\"  onmousedown=\"document.location='./admin.php?categ=family&sub=family&action=musicstand_form&id=!!id!!&id_musicstand=!!id_musicstand!!';\">				
+	<td style=\"vertical-align:top; cursor: pointer\"  onmousedown=\"document.location='./admin.php?categ=family&sub=family&action=musicstand_form&id=!!id!!&id_musicstand=!!id_musicstand!!';\">				
 		!!division!!
 	</td> 
-	<td valign='top' style=\"cursor: pointer\"  onmousedown=\"document.location='./admin.php?categ=family&sub=family&action=musicstand_form&id=!!id!!&id_musicstand=!!id_musicstand!!';\">				
+	<td style=\"vertical-align:top; cursor: pointer\"  onmousedown=\"document.location='./admin.php?categ=family&sub=family&action=musicstand_form&id=!!id!!&id_musicstand=!!id_musicstand!!';\">				
 		!!workshop!!
 	</td> 
 	

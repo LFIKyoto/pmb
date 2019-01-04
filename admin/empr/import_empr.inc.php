@@ -7,6 +7,7 @@
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once("$class_path/emprunteur.class.php");
+require_once($class_path."/import/import_empr.class.php");
 
 //modif Massimo Mancini & Marco Vaninetti
 // modif sauvegarde $OrdreImportEmpr en base 
@@ -33,7 +34,7 @@ if ($obj->valeur_param) {
 	$querry = "SELECT * from empr_custom;";
 	$res = pmb_mysql_query($querry, $dbh);
 	if (pmb_mysql_num_rows($res)) {
-		while (($row=pmb_mysql_fetch_array($res,MYSQL_ASSOC))){
+		while (($row=pmb_mysql_fetch_array($res,PMB_MYSQL_ASSOC))){
 			$OrdreImportEmpr[$row['name']] = 0;
 		}
 	}
@@ -41,10 +42,8 @@ if ($obj->valeur_param) {
 
 print "
 	<script type='text/javascript'>
-		function aide_regex()
-		{
-			var fenetreAide;
-			fenetreAide = openPopUp('./help.php?whatis=import_empr', 'regex_howto', 500,400,-2,-2, 'scrollbars=yes');
+		function aide_regex() {
+			openPopUp('./help.php?whatis=import_empr', 'regex_howto');
 		}
 	</script>";
 
@@ -56,11 +55,6 @@ function show_import_choix_fichier($dbh,$from_ldap) {
 	// $result = pmb_mysql_query("Select duree_adhesion, libelle From empr_categ;", $dbh) or die($msg["err_sql"]);
 	// premier formulaire pour avoir le nom du fichier a importer, le s?parateur de champ
 	// et indiquer dans quel groupe importation va allez
-
-	// MaxMan
-	$result = pmb_mysql_query("Select id_categ_empr, libelle From empr_categ;", $dbh) or die($msg["err_sql"]);
-
-	$result2 = pmb_mysql_query("Select idcode, libelle From empr_codestat;", $dbh) or die($msg["err_sql"]);
 
 	if (!$from_ldap) {
 		$formtype="<form class='form-$current_module' name='form1' ENCTYPE=\"multipart/form-data\" method='post' action=\"./admin.php?categ=empr&sub=implec&action=FichierOK\">
@@ -88,29 +82,16 @@ function show_import_choix_fichier($dbh,$from_ldap) {
 		$formtype
 		<div class='row'>
 			<div class='colonne2'>
-				<label class='etiquette' for='form_import_lec'>". $msg["import_lec_Cat"]."</label>
-				<select name='selectGroupe'>";
-	while(($row = pmb_mysql_fetch_row($result))) // pour remplir la listBox
-		print "<option value='".
-					htmlentities($row[0],ENT_QUOTES, $charset)."'>".
-					htmlentities($row[1],ENT_QUOTES, $charset).
-				"</option>";
-	print "
-			</select>
+				".import_empr::get_categories_selector('selectGroupe')."
 		</div>
 		<div class='colonne2'>
-			<label class='etiquette' for='form_import_stat'>". $msg[60]."</label>
-			<select name='selectStat'>";
-	
-	while(($row = pmb_mysql_fetch_row($result2))) // pour remplir la listBox
-		print "<option value='".
-					htmlentities($row[0],ENT_QUOTES, $charset)."'>".
-					htmlentities($row[1],ENT_QUOTES, $charset).
-				"</option>";
-	
-	print "
-			</select>
+			".import_empr::get_codestat_selector('selectStat')."
 		</div>
+	</div>
+	<br /><br />
+	<div class='row'>
+		<label class='etiquette' for='encodage_fic_source' id='text_desc_encodage_fic_source' name='text_desc_encodage_fic_source'>".htmlentities($msg["admin_import_encodage_fic_source"],ENT_QUOTES,$charset)."</label>
+		".import_empr::get_encoding_selector()."
 	</div>
 	<br />
 	</div>
@@ -149,7 +130,7 @@ function show_import($dbh, $buffer,$from_ldap) {
 //	print "  <tr></td>";
 //	print "<table><tr>";
 	print "        <td class='jauge'><b>".$msg["champ_dans_base_donnee"]."</b></td>";
-	print "        <td class='jauge' width='27%'><center><b>".$msg["champ_dans_texte"]."</b></center></td>";
+	print "        <td class='jauge' width='27%'><b>".$msg["champ_dans_texte"]."</b></td>";
 	print "        <td class='jauge' width='60%'><b>".$msg["first_line_file"]."</b></td>";
 //	print "  </tr>";
 
@@ -176,7 +157,7 @@ function show_import($dbh, $buffer,$from_ldap) {
 			print "<tr>";
 			if ($row[0] == "empr_adr1") {
 				print "<td class='nobrd'>$row[0]</td>";
-				print "<td class='nobrd'><center><input name='".$row[0]."' value='".$ordre[$k]."' type='text' size='1'>";
+				print "<td class='nobrd'><input name='".$row[0]."' value='".$ordre[$k]."' type='text' size='1'>";
 				$k++;
 				if (empty($_POST[plus1]))
 					$ordre[$k] = $OrdreImportEmpr[$row[0]];
@@ -184,7 +165,7 @@ function show_import($dbh, $buffer,$from_ldap) {
 					$ordre[$k] = $_POST[plus1];
 					
 //					print "&nbsp;&nbsp;&nbsp;&nbsp;";
-//					print "<input name='plus1' value='".$ordre[$k]."' type='text' size='1'></center></td>";
+//					print "<input name='plus1' value='".$ordre[$k]."' type='text' size='1'></td>";
 //					$val_buff2 = $buffer[ $ordre[$k] ];
 //					print "<td class='nobrd'><input name='exem$k' value='$val_buff, $val_buff2' type='text' disabled size='40'></td>";
 
@@ -199,14 +180,18 @@ function show_import($dbh, $buffer,$from_ldap) {
 				print "<td><input size='10' class='petit' name='exem$k' readonly value='".formatdate($empr->empr_date_adhesion)."' onClick=\"window.open('./select.php?what=calendrier&caller=empr_form&date_caller=".preg_replace('/-/', '', $empr->empr_date_adhesion)."&param1=form_expiration&param2=form_expiration_lib&auto_submit=NO&date_anterieure=YES', 'date_retour', 'toolbar=no, dependent=yes, width=200, height=200')\"></td>";
 			}*/
 			elseif ($row[0] == "id_empr" || $row[0] == "empr_categ" || $row[0] == "empr_codestat" || $row[0] == "empr_creation" || $row[0] == "empr_modif" || $row[0] == "empr_date_adhesion" || $row[0] == "empr_date_expiration" ||$row[0] == "empr_ldap") {
-					print "<td class='nobrd'><font color='#FF0000'>$row[0]</font></td>";
-					print "<td class='nobrd'><center><input name='".$row[0]."' value='".$ordre[$k]."' type='text' size='1' disabled></center></td>";
+					print "<td class='nobrd'><span style='color:#FF0000'>$row[0]</span></td>";
+					print "<td class='nobrd'><input name='".$row[0]."' value='".$ordre[$k]."' type='text' size='1' disabled></td>";
 					print "<td class='nobrd'><input name='exem$k' value='$val_buff' type='text' disabled size='40'></td>";
-				} else {
-					print "<td class='nobrd'>$row[0]</td>";
-					print "<td class='nobrd'><center><input name='".$row[0]."' value='".$ordre[$k]."' type='text' size='1'></center></td>";
-					print "<td class='nobrd'><input name='exem$k' value='$val_buff' type='text' disabled size='40'></td>";
-				}
+			} elseif(in_array($row[0], array('empr_cb', 'empr_nom', 'empr_login'))) {
+				print "<td class='nobrd'>$row[0] *</td>";
+				print "<td class='nobrd'><input name='".$row[0]."' value='".$ordre[$k]."' type='text' size='1'></td>";
+				print "<td class='nobrd'><input name='exem$k' value='$val_buff' type='text' disabled size='40'></td>";
+			}else {
+				print "<td class='nobrd'>$row[0]</td>";
+				print "<td class='nobrd'><input name='".$row[0]."' value='".$ordre[$k]."' type='text' size='1'></td>";
+				print "<td class='nobrd'><input name='exem$k' value='$val_buff' type='text' disabled size='40'></td>";
+			}
 			print "</tr>";
 			$k++;
 		}
@@ -217,7 +202,7 @@ function show_import($dbh, $buffer,$from_ldap) {
 	if (pmb_mysql_num_rows($res)) {
 		print "<tr><td colspan='3' class='nobrd'><hr /></td></tr>";
 		print "<tr><td colspan='3' class='nobrd'><b>".htmlentities($msg['1131'], ENT_QUOTES, $charset)."</b></td></tr>";
-		while (($row=pmb_mysql_fetch_array($res,MYSQL_ASSOC))) {
+		while (($row=pmb_mysql_fetch_array($res,PMB_MYSQL_ASSOC))) {
 			print "<tr>";
 			
 			if (empty($_POST[$row['name']]))
@@ -227,7 +212,7 @@ function show_import($dbh, $buffer,$from_ldap) {
 
 			$val_buff = $buffer[ $ordre[$k] ];
 			print "<td class='nobrd'>".$row['name']."</td>";
-			print "<td class='nobrd'><center><input name='".$row['name']."' value='".$ordre[$k]."' type='text' size='1'></center></td>";
+			print "<td class='nobrd'><input name='".$row['name']."' value='".$ordre[$k]."' type='text' size='1'></td>";
 			print "<td class='nobrd'><input name='exem$k' value='$val_buff' type='text' disabled size='40'></td>";
 		
 			print "</tr>";
@@ -281,7 +266,7 @@ global $msg;
 		<div cass='row'>
 				<table class='table-but'><tr>
 				<td class='td-rbut'>
-					<input type='submit' class='bouton' name='Confirmation' value='".$msg["ut_deleter"]."'></center></td></table>
+					<input type='submit' class='bouton' name='Confirmation' value='".$msg["ut_deleter"]."'></td></table>
 				</td></tr></table>
 		</div>
 		<input name='from_ldap' value='$from_ldap' type='hidden'>
@@ -417,6 +402,7 @@ switch($action) {
 			}
 			if($ficher)	{
 				$buffer = fgets($ficher, 1000);
+				$buffer = import_empr::get_encoded_buffer($buffer);
 				$buffer = explode ($Sep_Champs, $buffer);
 				$cpt = count($buffer) - 1;
 				// de 1 jusqu'? la fin, le 0 est comme null!
@@ -455,6 +441,7 @@ switch($action) {
 			}
 			if($ficher)	{
 				$buffer = fgets($ficher, 1000);
+				$buffer = import_empr::get_encoded_buffer($buffer);
 				$buffer = explode ($Sep_Champs, $buffer);
 				$cpt = count($buffer) - 1;
 				// de 1 jusqu'? la fin, le 0 est comme null!
@@ -479,7 +466,7 @@ switch($action) {
 				$file_lec = "./temp/$import_lec";
 			}
 			$ficher = fopen( $file_lec, "r" );
-			if($ficher)	{
+			if($file_lec != './temp/' && $ficher)	{
 	
 				//champs perso
 				$perso=array();
@@ -487,7 +474,7 @@ switch($action) {
 				$res = pmb_mysql_query($querry, $dbh);
 				$k=0;
 				if (pmb_mysql_num_rows($res)) {
-					while ($row=pmb_mysql_fetch_array($res,MYSQL_ASSOC)) {
+					while ($row=pmb_mysql_fetch_array($res,PMB_MYSQL_ASSOC)) {
 						$perso[$k++]=$row;
 					}
 				}
@@ -538,32 +525,25 @@ switch($action) {
 					}
 					$bufferChamp[0] = "";
 
-					if ( return_cb($dbh, $bufferChamp[$$desc_empr[1][0]]) )	{
+					if ( return_cb($dbh, $bufferChamp[${$desc_empr[1][0]}]) )	{
 						// ca veut dire que c'est un update d'une personne deja dans la BD
 						for($i = 1; $i < $nbChamp_empr; $i++){
-							if(!$desc_empr[$i][4] and $bufferChamp[$$desc_empr[$i][0]]){ // s'il n'est pas auto incr?mentable								
-								if($desc_empr[$i][3])  // s'il est num?rique
-									$query2 = 'update empr set '.$desc_empr[$i][0].' = '.substr ( $bufferChamp[$$desc_empr[$i][0]], 0, $desc_empr[$i][2]).' where empr_cb = "'.$bufferChamp[$$desc_empr[1][0]].'";';
-								else
-									$query2 = 'update empr set '.$desc_empr[$i][0].' = "'.substr ( $bufferChamp[$$desc_empr[$i][0]], 0, $desc_empr[$i][2]).'" where empr_cb = "'.$bufferChamp[$$desc_empr[1][0]].'";';
-								if($i == 4) // l'exeption pour l'adresse (2 champs dans le 2e formulaire)
-#									$query2 = 'update empr set '.$desc_empr[$i][0].' = "'.substr ( $bufferChamp[$$desc_empr[$i][0]].", ".$bufferChamp[$plus1], 0, $desc_empr[$i][2]).'" where empr_cb = "'.$bufferChamp[$$desc_empr[1][0]].'";';
-#									MaxMan: pas d'exception pour l'addresse									
-									$query2 = 'update empr set '.$desc_empr[$i][0].' = "'.substr ( $bufferChamp[$$desc_empr[$i][0]], 0, $desc_empr[$i][2]).'" where empr_cb = "'.$bufferChamp[$$desc_empr[1][0]].'";';
+							if(!$desc_empr[$i][4] and $bufferChamp[${$desc_empr[$i][0]}]){ // s'il n'est pas auto incr?mentable								
+								$query2 = 'update empr set '.$desc_empr[$i][0].' = "'.substr ( $bufferChamp[${$desc_empr[$i][0]}], 0, $desc_empr[$i][2]).'" where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
 								$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<br />";
 							}
 						}
 						// update pour inserer la date de creation , modif, date_adhesion...
-						$query2 = 'update empr set empr_modif  = "'.aujourdhui(1).'" where empr_cb = "'.$bufferChamp[$$desc_empr[1][0]].'";';
+						$query2 = 'update empr set empr_modif  = "'.aujourdhui(1).'" where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
 						$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<hr />";
-						$query2 = 'update empr set empr_categ = '.$_POST[selectGroupe].' where empr_cb = "'.$bufferChamp[$$desc_empr[1][0]].'";';
+						$query2 = 'update empr set empr_categ = '.$_POST[selectGroupe].' where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
 						$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<hr />";
-						$query2 = 'update empr set empr_codestat =  '.$_POST[selectStat].' where empr_cb = "'.$bufferChamp[$$desc_empr[1][0]].'";';
+						$query2 = 'update empr set empr_codestat =  '.$_POST[selectStat].' where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
 						$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<hr />";
-						$query2 = 'update empr set empr_date_expiration = "'.aujourdhui($dur).'" where empr_cb = "'.$bufferChamp[$$desc_empr[1][0]].'";';
+						$query2 = 'update empr set empr_date_expiration = "'.aujourdhui($dur).'" where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
 						$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query."<hr />";
 						if ($from_ldap){
-							$query2 = "update empr set empr_ldap = '1' where empr_cb = '".$bufferChamp[$$desc_empr[1][0]]."';";
+							$query2 = "update empr set empr_ldap = '1' where empr_cb = '".$bufferChamp[${$desc_empr[1][0]}]."';";
 							$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<hr />";
 						}								
 
@@ -573,22 +553,13 @@ switch($action) {
 						$fields = "";
 						$values = "";
 						for($i = 1; $i < $nbChamp_empr; $i++) {
-							if(!$desc_empr[$i][4] and $bufferChamp[$$desc_empr[$i][0]]) { // s'il n'est pas auto incrementable et que le $bufferChamp ne soit pas vide
+							if(!$desc_empr[$i][4] and $bufferChamp[${$desc_empr[$i][0]}]) { // s'il n'est pas auto incrementable et que le $bufferChamp ne soit pas vide
 								// remplit le $fields dans : insert into empr($fields)...
 								if($fields) $fields .= ', '.$desc_empr[$i][0];
 									else $fields .= $desc_empr[$i][0];
 
-								// WOW, ca c'est du code comme je l'aime!!!
-								// remplit le $values dans : insert into empr($fields) values=($values);
-								// et tronque s'il est trop long!! (import se fait pas avec les int
-								// trop long, varchar et autres pas test?
-								if($desc_empr[$i][3]){  // s'il est num?rique
-									if($values) $values .= ', '.substr ( $bufferChamp[$$desc_empr[$i][0]], 0, $desc_empr[$i][2]);
-										else $values .= substr ( $bufferChamp[$$desc_empr[$i][0]], 0, $desc_empr[$i][2]);
-								}else{
-									if($values) $values .= ', "'.substr ( $bufferChamp[$$desc_empr[$i][0]], 0, $desc_empr[$i][2]).'"';
-										else $values .= '"'.substr ( $bufferChamp[$$desc_empr[$i][0]], 0, $desc_empr[$i][2]).'"';
-								}
+								if($values) $values .= ', "'.substr ( $bufferChamp[${$desc_empr[$i][0]}], 0, $desc_empr[$i][2]).'"';
+										else $values .= '"'.substr ( $bufferChamp[${$desc_empr[$i][0]}], 0, $desc_empr[$i][2]).'"';
 								if($i == 4) { // l'exception pour l'adresse (2 champs dans le 2e formulaire)
 									if($values) {
 										$values = substr($values, 0, strlen($values) - 1);
@@ -603,38 +574,47 @@ switch($action) {
 						//print $query;
 						$res = pmb_mysql_query($query, $dbh) or print $msg["ins_echoue"]."<p>".$query."<hr />";
 						// update pour ins?rer la date de cr?ation , modif, date_adhesion...
-						$query2 = 'update empr set empr_creation = "'.aujourdhui(1).'" where empr_cb = "'.$bufferChamp[$$desc_empr[1][0]].'";';
+						$query2 = 'update empr set empr_creation = "'.aujourdhui(1).'" where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
 						$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<hr />";
-						$query2 = 'update empr set empr_modif  = "'.aujourdhui(1).'" where empr_cb = "'.$bufferChamp[$$desc_empr[1][0]].'";';
+						$query2 = 'update empr set empr_modif  = "'.aujourdhui(1).'" where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
 						$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<hr />";
-						$query2 = 'update empr set empr_date_adhesion = "'.aujourdhui(1).'" where empr_cb = "'.$bufferChamp[$$desc_empr[1][0]].'";';
+						$query2 = 'update empr set empr_date_adhesion = "'.aujourdhui(1).'" where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
 						$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<hr />";
-						$query2 = 'update empr set empr_date_expiration = "'.aujourdhui($dur).'" where empr_cb = "'.$bufferChamp[$$desc_empr[1][0]].'";';
+						$query2 = 'update empr set empr_date_expiration = "'.aujourdhui($dur).'" where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
 						$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<hr />";
-						$query2 = 'update empr set empr_categ = '.$_POST[selectGroupe].' where empr_cb = "'.$bufferChamp[$$desc_empr[1][0]].'";';
+						$query2 = 'update empr set empr_categ = '.$_POST[selectGroupe].' where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
 						$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<hr />";
-						$query2 = 'update empr set empr_codestat = '.$_POST[selectStat].' where empr_cb = "'.$bufferChamp[$$desc_empr[1][0]].'";';
+						$query2 = 'update empr set empr_codestat = '.$_POST[selectStat].' where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
 						$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<hr />";
 						if ($from_ldap){
-							$query2 = "update empr set empr_ldap = '1' where empr_cb = '".$bufferChamp[$$desc_empr[1][0]]."';";
+							$query2 = "update empr set empr_ldap = '1' where empr_cb = '".$bufferChamp[${$desc_empr[1][0]}]."';";
 							$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<hr />";
 						}
 					}
 					// Gestion de la localisation des lecteurs; prend la loc par défaut du user si non défini
 					if ($pmb_lecteurs_localises) {
-						if (!$empr_location) $empr_location = $deflt2docs_location ;
-						$req_location = 'update empr set empr_location = "'.$empr_location.'" where empr_cb = "'.$bufferChamp[$$desc_empr[1][0]].'";';
-						$res = pmb_mysql_query($req_location, $dbh) or print $msg["upd_echoue"]."<p>".$req_location."<hr />";							
+						if (!$empr_location || !$bufferChamp[$empr_location+1]) {
+							$req_location = 'update empr set empr_location = "'.$deflt2docs_location.'" where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
+							$res = pmb_mysql_query($req_location, $dbh) or print $msg["upd_echoue"]."<p>".$req_location."<hr />";
+						}
+					}
+					if(!$empr_login) {
+						$query = 'select empr_nom, empr_prenom from empr where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'"';
+						$result = pmb_mysql_query($query);
+						$row = pmb_mysql_fetch_object($result);
+						$calculated_login = emprunteur::do_login($row->empr_nom, $row->empr_prenom);
+						$req_login = 'update empr set empr_login = "'.$calculated_login.'" where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
+						$res = pmb_mysql_query($req_login, $dbh) or print $msg["upd_echoue"]."<p>".$req_login."<hr />";
 					}
 										
 					//at this point the empr is OK (inserted or updated)
 					//on passe aux champs perso
 					//recup id_empr
 					//printr($bufferChamp,'','TXTRECORD');
-					$querry ="SELECT id_empr FROM empr WHERE empr_cb = '".$bufferChamp[$$desc_empr[1][0]]."';";
+					$querry ="SELECT id_empr FROM empr WHERE empr_cb = '".$bufferChamp[${$desc_empr[1][0]}]."';";
 					$res = pmb_mysql_query($querry, $dbh);
 					if (pmb_mysql_num_rows($res)==1) { //deve esistere un solo lettore! 
-						$row=pmb_mysql_fetch_array($res,MYSQL_ASSOC);
+						$row=pmb_mysql_fetch_array($res,PMB_MYSQL_ASSOC);
 						$empr_id=$row['id_empr'];
 						reset($perso);
 						foreach ($perso as $dummykey=>$cp) {
@@ -661,9 +641,9 @@ switch($action) {
 				}
 				fclose($ficher);
 				print $msg["personnes_upd"].count($bufferLine)."<p>";
-				print "<a href='./admin.php?categ=empr&sub=implec' title='Retour'><img name='gg.gif' src='./images/gg.gif' width='38' height='26'></a>";
+				print "<a href='./admin.php?categ=empr&sub=implec' title='Retour'><img name='gg.gif' src='".get_url_icon('gg.gif')."' width='38' height='26'></a>";
 			} else
-					die($msg["choix_fic"]);
+					die($msg["choix_fi"]);
 		}
 		break;
 
@@ -705,7 +685,7 @@ switch($action) {
 				<table class='table-but'><tr>
 				<td class='td-lbut'>
 					<a href='./admin.php?categ=empr&sub=implec&action=FichierOK&Precedent=1' title='".$msg[654]."'>
-					<img name='gg.gif' src='./images/gg.gif' width='38' height='26'/>
+					<img name='gg.gif' src='".get_url_icon('gg.gif')."' width='38' height='26'/>
 					</a>
 				</td>
 				<td class='td-rbut'>
@@ -736,8 +716,8 @@ switch($action) {
 						if($cmpt == 1) {
 							$desc_empr = desc_table($dbh, "empr");
 							print $val."<br />";
-							print '<font color="#FF0000" face="Geneva, Arial, Helvetica, sans-serif"><strong>'.$msg["personnes_nodel"]."<p>";
-							print '</strong></font>';
+							print '<span style="color:#FF0000"><strong>'.$msg["personnes_nodel"]."<p>";
+							print '</strong></span>';
 							print "<table border='2'>";
 							print " <tr>";
 							foreach($desc_empr as $dummykey=>$empr)
@@ -758,11 +738,12 @@ switch($action) {
 				print $msg["personnes_delete"].(pmb_mysql_num_rows($res) - $cmpt)."<p>";
 			}
 		}
-		print "<a href='./admin.php?categ=empr&sub=implec' title='".$msg[654]."'><img name='gg.gif' src='./images/gg.gif' width='38' height='26'></a>";
+		print "<a href='./admin.php?categ=empr&sub=implec' title='".$msg[654]."'><img name='gg.gif' src='".get_url_icon('gg.gif')."' width='38' height='26'></a>";
 
 		break;
 
 	default:
+		if(!isset($from_ldap)) $from_ldap = 0;
 		show_import_choix_fichier($dbh,$from_ldap);
 		break;
 }

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: install_inc.php,v 1.10 2012-12-12 10:29:54 ngantier Exp $
+// $Id: install_inc.php,v 1.11 2016-03-30 09:04:52 mbertin Exp $
 
 // plus rien ici : reprise d'un script d'une autre install
 if(preg_match('/install_inc\.php/', $_SERVER['REQUEST_URI'])) {
@@ -70,6 +70,104 @@ $footer="
 
 </body>
 </html>
+";
+
+$body_iso="
+<div id=\"conteneur\"> 
+  <h3 align=\"left\">This page allows the creation of the database on your server</h3>
+  <h3 align=\"center\"><font color=red>English set of data may be out of sync with the main version of PMB. 
+		After this installation, you just have to connect normally to PMB, then go to Adminstration > Tools > database update.
+		Just click on 'Click here to start update.' till it says 'Your database is up to date in version $pmb_version_database_as_it_should_be !'
+	</font></h3>
+  <hr />
+  <form method=\"post\" action=\"install_rep.php\">
+  <h2 align=\"left\">System Parameters</h2>
+    <p align=\"left\">We need administrator server connection information 
+      before carrying out all the operations
+      for creation of the database: </p>
+    <table width=\"100%\" border=\"0\" cellspacing=\"2\" cellpadding=\"2\">
+      <tr> 
+        <td width=\"200\" class=\"etiquete\">MySql user :</td>
+        <td><input class=\"saisie\" name=\"usermysql\" type=\"text\" id=\"usermysql\" value=\"root\"></td>
+      </tr>
+      <tr> 
+        <td width=\"200\" class=\"etiquete\">Password :</td>
+        <td><input class=\"saisie\" name=\"passwdmysql\" type=\"password\" id=\"passwdmysql\"></td>
+      </tr>
+      <tr> 
+        <td width=\"200\" class=\"etiquete\">Server :</td>
+        <td><input class=\"saisie\" name=\"dbhost\" type=\"text\" id=\"dbhost\" value=\"localhost\"></td>
+      </tr>
+      <tr> 
+        <td width=\"200\" class=\"etiquete\"><em>Database:</em></td>
+        <td><input class=\"saisie\" name=\"dbnamedbhost\" type=\"text\" onChange=\"
+        if (this.form.dbnamedbhost.value!='') {
+        	this.form.user.value='';
+        	this.form.passwd.value='';
+        	this.form.dbname.value='';
+        	this.form.user.style.display = 'none';
+        	this.form.passwd.style.display = 'none';
+        	this.form.dbname.style.display = 'none';
+        	document.getElementById('fixeuser').style.display = 'inline';
+        	document.getElementById('fixepasswd').style.display = 'inline';
+        	document.getElementById('fixedbname').style.display = 'inline';
+        	} else {
+        		this.form.user.style.display = 'block';
+        		this.form.passwd.style.display = 'block';
+        		this.form.dbname.style.display = 'block';
+        		document.getElementById('fixeuser').style.display = 'none';
+        		document.getElementById('fixepasswd').style.display = 'none';
+        		document.getElementById('fixedbname').style.display = 'none';
+        		}
+        	
+        \"></td>
+      </tr>
+    </table>
+    <p align=\"left\">If you select &quot;database&quot;, the 
+      heading &quot;PMB Parameters&quot; below will be ignored
+      : the PMB tables will be created in the database
+      selected, for example your home database.</p>
+    <hr />
+    <h2 align=\"left\">PMB Parameters</h2>
+    <p align=\"left\">If you haven't selected the database
+      in the preceeding heading, you must specify here
+      the MySQL user and password which will be used by
+      PMB to connect to the database, thus the database name must be also be completed.</p>
+    <table width=\"100%\" border=\"0\" cellspacing=\"2\" cellpadding=\"2\">
+      <tr> 
+        <td width=\"200\" class=\"etiquete\">PMB User:</td>
+        <td><input class=\"saisie\" type=\"text\" name=\"user\" value=\"bibli\"><div id=\"fixeuser\" style=\"display:none\"><strong><font color=\"#FF0000\">Fixed by system parameters</font></strong></div></td>
+      </tr>
+      <tr> 
+        <td width=\"200\" class=\"etiquete\">Password :</td>
+        <td><input class=\"saisie\" name=\"passwd\" type=\"text\" value=\"bibli\"><div id=\"fixepasswd\" style=\"display:none\"><strong><font color=\"#FF0000\">Fixed by system parameters</font></strong></div></td>
+      </tr>
+      <tr> 
+        <td width=\"200\" class=\"etiquete\">PMB database:</td>
+        <td><input class=\"saisie\" type=\"text\" name=\"dbname\" value=\"bibli\"><div id=\"fixedbname\" style=\"display:none\"><strong><font color=\"#FF0000\">Fixed by system parameters</font></strong></div></td>
+      </tr>
+    </table>
+    <p align=\"left\">Warning if a database with the same name already exists, 
+      it will be destroyed, and its tables will be completely lost.</p>
+    <hr />
+    <h2 align=\"left\">Loading PMB data</h2>
+    <table width=\"100%\" border=\"0\" cellspacing=\"2\" cellpadding=\"2\">
+      <tr> 
+        <td width=\"200\" align=right><div align=\"right\"> 
+            <span><strong><font color=\"#FF0000\">Mandatory</font></strong></span><input name=structure type=checkbox value='1' checked readonly style=\"display:none\">
+          </div></td>
+        <td align=left> Create the structure of the database</td>
+      </tr>
+      <tr> 
+        <td width=\"200\" align=right><div align=\"right\"> 
+            <span><strong><font color=\"#FF0000\">Mandatory</font></strong></span><input name=minimum type=checkbox value='1' checked readonly style=\"display:none\">
+          </div></td>
+        <td align=left> Insert the minimum</td>
+      </tr>
+    </table>
+    <br />
+    </div>
+    <hr />
 ";
 
 $body="
@@ -246,8 +344,9 @@ $body="
             <input type=checkbox name=essential value='1'onClick=\"
         if (this.form.essential.checked) {
         	document.getElementById('options_part').style.display = 'inline';
-        	this.form.data_test_cms.checked = false ;        
-		}else{		
+        	this.form.data_test_cms.checked = false ;
+        	this.form.data_test_zen.checked = false ;
+		}else{
 		}
         \">
           </div></td>
@@ -261,6 +360,7 @@ $body="
         	this.form.thesaurus[2].checked = true ;
         	this.form.indexint[3].checked = true ;
         	this.form.data_test_cms.checked = false ;
+        	this.form.data_test_zen.checked = false ;
         	document.getElementById('fixeessential').style.display = 'inline';
         	document.getElementById('fixeagneaux').style.display = 'inline';
         	document.getElementById('fixe100cases').style.display = 'inline';
@@ -273,12 +373,14 @@ $body="
         \">
           </div></td>
         <td align=left> Insert the operational test case data </td>
-      </tr>     <tr> 
-        <td width=\"200\" align=right><div align=\"right\"> 
+      </tr>
+      <tr>
+        <td width=\"200\" align=right><div align=\"right\">
             <input type='checkbox' name='data_test_cms' value='1' onClick=\"
         if (this.form.data_test_cms.checked) {
         	this.form.essential.checked = false ;
         	this.form.data_test.checked = false ;
+        	this.form.data_test_zen.checked = false ;
         	this.form.thesaurus[2].checked = true ;
         	this.form.indexint[3].checked = true ;
         	document.getElementById('options_part').style.display = 'none';
@@ -288,7 +390,25 @@ $body="
         }
         \">
           </div></td>
-        <td align=left> Ins&eacute;rer les donn&eacute;es du portail de test</td>
+        <td align=left> Ins&eacute;rer les donn&eacute;es du portail Pag&eacute;o</td>
+      </tr>
+      <tr>
+        <td width=\"200\" align=right><div align=\"right\">
+            <input type='checkbox' name='data_test_zen' value='1' onClick=\"
+        if (this.form.data_test_zen.checked) {
+        	this.form.essential.checked = false ;
+        	this.form.data_test.checked = false ;
+        	this.form.data_test_cms.checked = false ;
+        	this.form.thesaurus[2].checked = true ;
+        	this.form.indexint[3].checked = true ;
+        	document.getElementById('options_part').style.display = 'none';
+        	document.getElementById('fixeessential').style.display = 'none';
+        } else {
+        	document.getElementById('options_part').style.display = 'inline';
+        }
+        \">
+          </div></td>
+        <td align=left> Ins&eacute;rer les donn&eacute;es du portail Zen</td>
       </tr>
     </table>
     <br />
@@ -296,19 +416,19 @@ $body="
     <hr />
     <h2 align=\"left\">Choice of thesaurus</h2>
     <table width=\"100%\" border=\"0\" cellspacing=\"2\" cellpadding=\"2\">
-      <tr> 
+      <tr>
         <td width=\"200\" align=right><input name=thesaurus type=radio value='aucun'></td>
         <td align=left> No thesaurus</td>
       </tr>
-      <tr> 
+      <tr>
         <td width=\"200\" align=right><input name=thesaurus type=radio value='unesco'></td>
         <td align=left> UNESCO</td>
       </tr>
-      <tr> 
+      <tr>
         <td width=\"200\" align=right><span id=\"fixeagneaux\" style=\"display:none\"><strong><font color=\"#FF0000\">Obligatoire</font></strong></span><input name=thesaurus type=radio value='agneaux'></td>
         <td align=left> AGNEAUX</td>
       </tr>
-      <tr> 
+      <tr>
         <td width=\"200\" align=right><input name=thesaurus type=radio value='environnement'></td>
         <td align=left> ENVIRONNEMENT</td>
       </tr>
@@ -317,19 +437,19 @@ $body="
     <hr />
     <h2 align=\"left\">Choice of internal index</h2>
     <table width=\"100%\" border=\"0\" cellspacing=\"2\" cellpadding=\"2\">
-      <tr> 
+      <tr>
         <td width=\"200\" align=right><input name=indexint type=radio value='aucun'></td>
         <td align=left> No decimal index</td>
       </tr>
-      <tr> 
+      <tr>
         <td width=\"200\" align=right><input name=indexint type=radio value='chambery'></td>
         <td align=left> Chambery library</td>
       </tr>
-      <tr> 
+      <tr>
         <td width=\"200\" align=right><input name=indexint type=radio value='dewey'></td>
         <td align=left> Dewey Style</td>
       </tr>
-      <tr> 
+      <tr>
         <td width=\"200\" align=right><span id=\"fixe100cases\" style=\"display:none\"><strong><font color=\"#FF0000\">Obligatoire</font></strong></span><input name=indexint type=radio value='marguerite'></td>
         <td align=left> 100 cases of knowlege or Category Marguerite flower</td>
       </tr>
@@ -338,5 +458,3 @@ $body="
     </div>
     <hr />
 ";
-?>
-

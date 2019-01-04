@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: curl.class.php,v 1.13.10.1 2015-09-11 08:53:13 jpermanne Exp $
+// $Id: curl.class.php,v 1.19 2018-09-26 14:59:56 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -18,28 +18,29 @@ http://github.com/shuber/curl/tree/master/curl.php4
 */
 	
 class Curl {
-	var $cookie_file;
-	var $headers = array();
-	var $options = array();
-	var $referer = '';
-	var $user_agent = '';
- 	var $reponsecurl=array();
+	public $cookie_file;
+	public $headers = array();
+	public $options = array();
+	public $referer = '';
+	public $user_agent = '';
+ 	public $reponsecurl=array();
 	# Protected
-	var $error = '';
-	var $handle;
-	var $buffer="";
+	public $error = '';
+	public $handle;
+	public $buffer="";
 	
 	# Variables qui empechent le dépassement mémoire
-	var $limit=0;	
-	var $body_overflow;
-	var $timeout=0;
+	public $limit=0;	
+	public $body_overflow;
+	public $timeout=0;
 	
-	function __construct() {
+	public function __construct() {
+		global $base_path;
 		// initialisation des libellés de réponse
 		$this->reponsecurl['N/A'] = "Ikke HTTP";
-		$this->reponsecurl[OK]    = "Valid hostname";
-		$this->reponsecurl[FEJL]  = "Invalid hostname";
-		$this->reponsecurl[Død]   = "No response";
+		$this->reponsecurl['OK']    = "Valid hostname";
+		$this->reponsecurl['FEJL']  = "Invalid hostname";
+		$this->reponsecurl['Død']   = "No response";
 		$this->reponsecurl[100]   = "Continue";
 		$this->reponsecurl[101]   = "Switching Protocols";
 		$this->reponsecurl[200]   = "OK";
@@ -81,21 +82,25 @@ class Curl {
 		$this->reponsecurl[504]   = "Gateway Timeout";
 		$this->reponsecurl[505]   = "HTTP Version Not Supported";
 		
-		$this->cookie_file = realpath('.').'/curl_cookie.txt';
+		if(isset($base_path) && $base_path){
+			$this->cookie_file = $base_path.'/temp/curl_cookie.txt';
+		}else{
+			$this->cookie_file = realpath('.').'/curl_cookie.txt';
+		}
 		$this->user_agent = isset($_SERVER['HTTP_USER_AGENT']) ?
 			$_SERVER['HTTP_USER_AGENT'] :
 			'Curl/PHP ' . PHP_VERSION . ' (http://github.com/shuber/curl/)';
 	}
 	  
-	function delete($url, $vars = array()) {
+	public function delete($url, $vars = array()) {
 		return $this->request('DELETE', $url, $vars);
 	}
 	
-	function error() {
+	public function error() {
 		return $this->error;
 	}
 	
-	function get($url, $vars = array()) {
+	public function get($url, $vars = array()) {
 		$this->buffer="";
 		if (!empty($vars)) {
 			$url .= (stripos($url, '?') !== false) ? '&' : '?';
@@ -104,29 +109,31 @@ class Curl {
 		return $this->request('GET', $url);
 	}
 	
-	function post($url, $vars = array()) {
+	public function post($url, $vars = array()) {
 		return $this->request('POST', $url, $vars);
 	}
 	
-	function put($url, $vars = array()) {
+	public function put($url, $vars = array()) {
 		return $this->request('PUT', $url, $vars);
 	}
 	
-	function getBodyOverflow($curl,$contenu) {
+	public function getBodyOverflow($curl,$contenu) {
 		$taille_max  = $this->limit;
 		$taille_bloc = strlen($contenu);
 		if (strlen($this->body_overflow)+$taille_bloc<$taille_max) $this->body_overflow .= $contenu;	
 		return strlen($contenu);
 	}
 	
-	function saveBodyInFile($curl,$contenu) {
+	public function saveBodyInFile($curl,$contenu) {
 		if(!$this->header_detect) {
 			$this->buffer.=$contenu;
 			$pattern = '#HTTP/\d\.\d.*?$.*?\r\n\r\n#ims';
 			if (preg_match($pattern,$this->buffer)) {
 				$texte = preg_replace($pattern, '', $this->buffer);
 				$this->header_detect=1;
-			}			
+			} else {
+				$texte = '';
+			}
 		} else $texte=$contenu;
 		if($texte) {
 			$fd = fopen($this->save_file_name,"a");
@@ -136,13 +143,13 @@ class Curl {
 		return strlen($contenu);
 	}
 	
-	/*function getHeader($curl,$contenu_header){
+	/*public function getHeader($curl,$contenu_header){
 				
 		return strlen($contenu_header);
 	}*/
 	
 	# Protected
-	function request($method, $url, $vars = array()) {
+	public function request($method, $url, $vars = array()) {
 		
 		$this->handle = curl_init();
 		
@@ -166,7 +173,7 @@ class Curl {
 		if($this->limit) 
 			curl_setopt($this->handle, CURLOPT_WRITEFUNCTION,array(&$this,'getBodyOverflow'));
 		
-		if($this->save_file_name){
+		if(isset($this->save_file_name) && $this->save_file_name){
 			$this->header_detect=0;					
 			curl_setopt($this->handle, CURLOPT_WRITEFUNCTION,array(&$this,'saveBodyInFile'));
 		}	
@@ -210,13 +217,17 @@ class Curl {
 		
 		return $response;
 	}
+	
+	public function set_option($option, $value) {
+		$this->options[$option] = $value;
+	}
 }
  
 class CurlResponse {
-	var $body = '';
-	var $headers = array();
+	public $body = '';
+	public $headers = array();
 	
-	function __construct($response) {
+	public function __construct($response) {
 		# Extract headers from response
 		$pattern = '#HTTP/\d\.\d.*?$.*?\r\n\r\n#ims';
 		preg_match_all($pattern, $response, $matches);
@@ -239,7 +250,7 @@ class CurlResponse {
 		$this->body = preg_replace($pattern, '', $response);
 	}
 	
-	function __toString() {
+	public function __toString() {
 		return $this->body;
 	}
 }

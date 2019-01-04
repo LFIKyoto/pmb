@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_record_formations.js,v 1.4 2015-02-05 14:00:18 dgoron Exp $
+// $Id: nomenclature_record_formations.js,v 1.5 2016-06-03 12:48:58 dgoron Exp $
 
 define(["dojo/_base/declare", "apps/nomenclature/nomenclature_musicstand_ui"], function(declare, Musicstand_ui){
 	/*
@@ -42,6 +42,9 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_musicstand_ui"], f
 						this.record_formations.splice(i, 1);
 						break;
 					}
+				}
+				for(var i=0 ; i<this.record_formations.length ; i++){
+					this.record_formations[i].set_order(i);
 				}
 			}, 
 			get_last_formation: function(){

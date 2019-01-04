@@ -2,9 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: categories.tpl.php,v 1.15 2014-01-09 13:30:47 mbertin Exp $
+// $Id: categories.tpl.php,v 1.18 2018-01-25 10:13:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
+
+global $tpl_div_categories;
+global $tpl_div_category;
+global $tpl_subcategory;
 
 // template for PMB OPAC
 
@@ -30,11 +34,11 @@ $tpl_div_categories = "
 //                       de fils de premiers niveau
 $tpl_div_category =
 "<div class='category' >
-<h2><img src='./images/folder.gif'>!!category_name!!</h2>
+<h2><img src='".get_url_icon('folder.gif')."' alt='folder'>!!category_name!!</h2>
 <ul>
 !!sub_categories!!
-<div class='clear'></div>
 </ul>
+<div class='clear'></div>
 </div>
 ";
 

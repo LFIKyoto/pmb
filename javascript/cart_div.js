@@ -1,7 +1,7 @@
 /* +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cart_div.js,v 1.1 2015-06-19 09:23:03 jpermanne Exp $ */
+// $Id: cart_div.js,v 1.6 2018-02-14 15:46:18 dgoron Exp $ */
 
 var info_div_show = 0;
 var flag_mouseover_info_div = false;
@@ -42,15 +42,15 @@ function get_info_div(id,url,datas) {
 	requete[id].send(datas);
 }
 
-function show_div_access_carts(event,id_notice) {
-	if (info_div_show==id_notice) {
+function show_div_access_carts(event,id_object,type_object,show_on_left) {
+	if (info_div_show==id_object) {
 		return true;
 	}
 	set_flag_info_div(true);
-	setTimeout(function(){ show_div_access_carts_suite(event,id_notice); }, 1000);
+	setTimeout(function(){ show_div_access_carts_suite(event,id_object,type_object,show_on_left); }, 1000);
 }
 
-function show_div_access_carts_suite(event,id_notice) {
+function show_div_access_carts_suite(event,id_object,type_object,show_on_left) {
 	if (flag_mouseover_info_div == false) {
 		return true;
 	}
@@ -60,6 +60,9 @@ function show_div_access_carts_suite(event,id_notice) {
 	var pos=getCoordinate(event);
 	posxdown=pos[0];
 	posydown=pos[1];
+	if (show_on_left != null) {
+		posxdown=posxdown-300;
+	}
 	var pannel=document.createElement("div");
 	pannel.setAttribute("id","div_access_carts");
 	pannel.style.width="300px";
@@ -72,9 +75,10 @@ function show_div_access_carts_suite(event,id_notice) {
 	
 	pannel.style.zIndex=1500;
 	document.body.appendChild(pannel);
-	get_info_div("div_access_carts","cart_list.php","id_notice="+id_notice);
+	if(!type_object) type_object = 'NOTI';
+	get_info_div("div_access_carts","cart_list.php","id_object="+id_object+"&type_object="+type_object);
 	
-	info_div_show = id_notice;
+	info_div_show = id_object;
 	
 	return true;
 }
@@ -88,13 +92,52 @@ function hide_carts_div(t,e,r) {
 	}
 }
 
-function notice_div_caddie(idnotice,idcaddie) {
-	var url= "./ajax.php?module=catalog&categ=caddie_add&caddie=NOTI_"+idcaddie+"&object=NOTI_DRAG_"+idnotice;
+function object_div_caddie(idobject,typeobject,idcaddie) {
+	var module = '';
+	switch(typeobject) {
+	    case 'EMPR':
+	        module = 'circ';
+	        break;
+	    case 'NOTI':
+	    case 'BULL':
+	    case 'EXPL':
+	    	module = 'catalog';
+	    	break;
+	    default:
+	    	module = 'autorites';
+	}
+	var url= "./ajax.php?module="+module+"&categ=caddie&caddie="+typeobject+"_"+idcaddie+"&object="+typeobject+"_DRAG_"+idobject;
 	var ajout_caddie = new http_request();	
 	retour_ajout = ajout_caddie.request(url);
 	message_ajout=ajout_caddie.get_text();
 	if ((retour_ajout) || (isNaN(message_ajout))) { 
 		alert (message_ajout) ;
+	}
+	else{
+		hide_carts_div('','','');
+	}
+}
+
+function object_delete_caddie(idobject,typeobject,idcaddie) {
+	var module = '';
+	switch(typeobject) {
+	    case 'EMPR':
+	        module = 'circ';
+	        break;
+	    case 'NOTI':
+	    case 'BULL':
+	    case 'EXPL':
+	    	module = 'catalog';
+	    	break;
+	    default:
+	    	module = 'autorites';
+	}
+	var url= "./ajax.php?module="+module+"&categ=caddie&action=delete&caddie="+typeobject+"_"+idcaddie+"&object="+typeobject+"_DRAG_"+idobject;
+	var request = new http_request();	
+	var retour_delete = request.request(url);
+	var message_delete = request.get_text();
+	if ((retour_delete) || (isNaN(message_delete))) { 
+		alert (message_delete) ;
 	}
 	else{
 		hide_carts_div('','','');

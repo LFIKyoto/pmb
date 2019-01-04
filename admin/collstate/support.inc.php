@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: support.inc.php,v 1.2 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: support.inc.php,v 1.3 2018-10-12 11:59:35 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+require_once($class_path."/list/configuration/collstate/list_configuration_collstate_support_ui.class.php");
 
 // gestion des prêteurs de documents
 ?>
@@ -22,34 +24,7 @@ function test_form(form)
 </script>
 <?php
 function show_support($dbh) {
-	global $msg;
-
-	print "<table>
-	<tr>
-		<th>".$msg["admin_collstate_support_nom"]."</th>
-	</tr>";
-
-	// affichage du tableau des supports
-
-	$requete = "SELECT * FROM arch_type ORDER BY archtype_libelle ";
-	$res = pmb_mysql_query($requete, $dbh);
-
-	$nbr = pmb_mysql_num_rows($res);
-
-	$parity=1;
-	for($i=0;$i<$nbr;$i++) {
-		$row=pmb_mysql_fetch_object($res);
-		if ($parity % 2) {
-			$pair_impair = "even";
-		} else {
-			$pair_impair = "odd";
-		}
-		$parity += 1;
-		$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./admin.php?categ=collstate&sub=support&action=modif&id=$row->archtype_id';\" ";
-        print pmb_bidi("<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td>$row->archtype_libelle</td></tr>");
-	}
-	print "</table>
-		<input class='bouton' type='button' value=\" ".$msg["admin_collstate_add_support"]." \" onClick=\"document.location='./admin.php?categ=collstate&sub=support&action=add'\" />";
+	print list_configuration_collstate_support_ui::get_instance()->get_display_list();
 }
 
 function support_form($libelle="", $id=0) {

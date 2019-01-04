@@ -1,5 +1,5 @@
-<h1>Modulo di amministrazione</h1>
-<p>Sei entrato nel modulo di amministrazione di PMB. Qui le tue azioni avranno effetto sulla funzionalit&agrave; dell'intera applicazione.  Per favore <b>sii molto attento</b> nell'usare questo modulo. Prima di fare una qualsiasi cosa, rifletti sull'impatto che avr&agrave; sui tuoi archivi. Se hai qualche dubbio, ti invitiamo a <b>inviare un messaggio</b> a <a href="mailto:pmb.user@sigb.net"><b>pmb.user@sigb.net</b></a> Saremo lieti di aiutarti!</p>
+<h2>Modulo di amministrazione</h2>
+<p>Sei entrato nel modulo di amministrazione di PMB. Qui le tue azioni avranno effetto sulla funzionalit&agrave; dell'intera applicazione.  Per favore <b>sii molto attento</b> nell'usare questo modulo. Prima di fare una qualsiasi cosa, rifletti sull'impatto che avr&agrave; sui tuoi archivi. Se hai qualche dubbio, ti invitiamo a <b>inviare un messaggio</b> a <a href="https://pmb.community/">https://pmb.community</a> Saremo lieti di aiutarti!</p>
 
 
 <h2>esemplari</h2>

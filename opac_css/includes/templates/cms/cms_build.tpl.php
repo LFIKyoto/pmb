@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_build.tpl.php,v 1.3 2013-12-02 09:07:25 dbellamy Exp $
+// $Id: cms_build.tpl.php,v 1.5 2017-11-07 15:51:41 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
@@ -185,7 +185,7 @@ $cms_objet_type_selection="
 	</h3>
 	<div class='row'>
 	
-		<table border='0'  width='100%' cellspacing='0'>
+		<table border='0' style='width:100%' cellspacing='0'>
 		<tr>
 			<td>"
 				.$msg["cms_dragable_type"]."		
@@ -272,7 +272,7 @@ $cms_build_cadre_tpl_item="
 <tr class='!!odd_even!!' style='cursor: pointer;' onmouseout=\"this.className='!!odd_even!!'\" onmouseover=\"this.className='surbrillance'\"
  		onclick=\"cms_show_obj('!!cadre_object!!_!!id_cadre!!');return false; \" >
 	<td>		<a onclick=\"cms_build_load_module('!!cadre_object!!','get_form',!!id_cadre!!);\" href='#' > 
-				<img class='icon' width='16' height='16' title='".$msg["cms_build_edit_bt"]."' alt='".$msg["cms_build_page_add_bt"]."' src='./images/b_edit.png'  >
+				<img class='icon' width='16' height='16' title='".$msg["cms_build_edit_bt"]."' alt='".$msg["cms_build_page_add_bt"]."' src='".get_url_icon('b_edit.png')."'  >
 			</a>	
 			!!cadre_name!!
 	</td>			
@@ -328,7 +328,7 @@ $cms_build_pages_tpl="
 ";
 
 $cms_build_pages_tpl_item="
-<a href='#' onclick=\"cms_build_page_edit_add('!!id!!');\"><img class='icon' width='16' height='16' title='".$msg["cms_build_edit_bt"]."' alt='".$msg["cms_build_page_add_bt"]."' src='./images/b_edit.png'> </a> 	
+<a href='#' onclick=\"cms_build_page_edit_add('!!id!!');\"><img class='icon' width='16' height='16' title='".$msg["cms_build_edit_bt"]."' alt='".$msg["cms_build_page_add_bt"]."' src='".get_url_icon('b_edit.png')."'> </a> 	
 <a href='#' onclick=\"cms_build_page_add('!!id!!');\">!!name!!</a> <br/>
 ";	
 
@@ -412,7 +412,7 @@ $cms_build_block_tpl="
 								<h3>".$msg["cms_edit_sel_objet_list"]."</h3>
 								</div>		
 								<div class='row' id='cms_edit_sel_objet_list'>
-									<table id='cms_edit_sel_objet_list_table' border='0'  width='100%' cellspacing='0'>
+									<table id='cms_edit_sel_objet_list_table' border='0' style='width:100%' cellspacing='0'>
 									</table>
 								</div>		
 								<div class='row'>
@@ -425,7 +425,7 @@ $cms_build_block_tpl="
 									<h3>".$msg["cms_edit_sel_cadre_list"]."</h3>
 								</div>
 								<div class='row' id='cms_edit_sel_cadre_list'>
-									<table id='cms_edit_sel_cadre_list_table' border='0'  width='100%' cellspacing='0'>
+									<table id='cms_edit_sel_cadre_list_table' border='0' style='width:100%' cellspacing='0'>
 									</table>
 								</div>			
 								<div class='row'>

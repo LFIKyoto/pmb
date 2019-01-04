@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: autoindex_term.class.php,v 1.6 2015-04-18 13:01:51 dgoron Exp $
+// $Id: autoindex_term.class.php,v 1.7 2017-10-24 10:39:05 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -125,9 +125,9 @@ class autoindex_term {
 
 		//Ajout des pertinences des termes de la même branche pondérés par la distance
 		foreach($terms as $term) {
-			if($this->id != $term_id && $this->path) {
+			if($this->id != $term->id && $this->path) {
 				if( (strpos($term->path, $this->path)!==false) ) {
-					$dist = $this->deep - $term_deep;
+					$dist = $this->deep - $term->deep;
 					$coeff=0;
 					if ( ($dist > 0) && ($dist <= $max_up_distance) ) {
 						$coeff = $autoindex_max_down_ratio/$dist; 
@@ -146,7 +146,7 @@ class autoindex_term {
 		
 		//Ajout des pertinences des termes renvoyant vers ce terme + pondération 
 		foreach($terms as $term) {
-			if($this->id != $term_id) {
+			if($this->id != $term->id) {
 				if (in_array($this->id, $term->see_also)) {
 					$tr+= $term->raw_relevancy * $autoindex_see_also_ratio;
 				}	

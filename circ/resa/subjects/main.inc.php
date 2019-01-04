@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.11 2008-11-27 15:54:26 kantin Exp $
+// $Id: main.inc.php,v 1.12 2017-06-02 10:05:36 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -11,8 +11,8 @@ require_once($class_path."/searcher.class.php");
 require_once("$class_path/thesaurus.class.php");
 
 //recuperation du thesaurus session 
-if(!$id_thes) {
-$id_thes = thesaurus::getSessionThesaurusId();
+if(!isset($id_thes) || !$id_thes) {
+	$id_thes = thesaurus::getSessionThesaurusId();
 } else {
 	thesaurus::setSessionThesaurusId($id_thes);
 }

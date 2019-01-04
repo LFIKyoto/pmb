@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr.inc.php,v 1.28 2015-04-10 14:21:36 dgoron Exp $
+// $Id: empr.inc.php,v 1.35 2018-10-19 15:06:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -18,11 +18,10 @@ $empr_footer ="
 
 $message_null_resa=$msg["empr_resa_empty"];
 if ($opac_resa) {
-	$message_null_resa .= "<br /><small><br />".$msg["empr_resa_how_to"]." <br />
+	$message_null_resa .= "<br /><br /><small>".$msg["empr_resa_how_to"]."</small><br />
 	<form style='margin-bottom:0px;padding-bottom:0px;' action='empr.php' method='post' name='FormName'>
 	<INPUT type='button' class='bouton' 'name='lvlx' value='".$msg["empr_make_resa"]."' onClick=\"document.location='./index.php?search_type_asked=simple_search'\">
-	</form>
-	</small>";
+	</form>";
 	if (!$opac_resa_dispo) $message_null_resa .= "<br /><small>".$msg["empr_resa_only_loaned_book"]."</small>";
 }
 
@@ -31,7 +30,7 @@ $query = "SELECT *, date_format(empr_date_adhesion, '".$msg["format_date_sql"]."
 $result = pmb_mysql_query($query) or die("Query failed ".$query);
 
 // récupération des valeurs MySQL du lecteur et injection dans les variables
-while (($line = pmb_mysql_fetch_array($result, MYSQL_ASSOC))) {
+while (($line = pmb_mysql_fetch_array($result, PMB_MYSQL_ASSOC))) {
 	$id_empr=$line["id_empr"];
 	$empr_cb = $line["empr_cb"];
 	$empr_nom = $line["empr_nom"];
@@ -56,6 +55,7 @@ while (($line = pmb_mysql_fetch_array($result, MYSQL_ASSOC))) {
 	$aff_empr_date_expiration = $line["aff_empr_date_expiration"];
 	$date_fin_blocage = $line["date_fin_blocage"];
 	$aff_date_fin_blocage = $line["aff_date_fin_blocage"];
+	$empr_statut = $line["empr_statut"];
 }
 	
 $empr_identite = "
@@ -66,6 +66,7 @@ $empr_identite = "
 $i=0;
 $tab_empr_info=array();
 $tab_empr_info[$i]["titre"]=$msg["empr_tpl_cb"];
+$tab_empr_info[$i]["class"]="tab_empr_info_cb";
 $tab_empr_info[$i++]["val"]=$empr_cb;
 
 if($empr_adr1 || $empr_adr2 || $empr_cp || $empr_ville) {
@@ -76,24 +77,29 @@ if($empr_adr1 || $empr_adr2 || $empr_cp || $empr_ville) {
 	$empr_adr.="$empr_cp <u>$empr_ville</u>";
 	
 	$tab_empr_info[$i]["titre"]=$msg["empr_adresse"];
+	$tab_empr_info[$i]["class"]="tab_empr_info_adr";
 	$tab_empr_info[$i++]["val"]=$empr_adr;
 }	
 if($empr_tel1 || $empr_tel2){
 	if($empr_tel1 && $empr_tel2) $tel=$empr_tel1.$msg["empr_tel2_separateur"].$empr_tel2;
 	else $tel.=$empr_tel1.$empr_tel2;
 	$tab_empr_info[$i]["titre"]=$msg["empr_tel_titre"];
+	$tab_empr_info[$i]["class"]="tab_empr_info_tel";
 	$tab_empr_info[$i++]["val"]=$tel;	
 }
 if($empr_mail){
 	$tab_empr_info[$i]["titre"]=$msg["empr_mail"];
+	$tab_empr_info[$i]["class"]="tab_empr_info_mail";
 	$tab_empr_info[$i++]["val"]="<a href='mailto:$empr_mail'>$empr_mail</a>";	
 }
 if ($empr_prof){
 	$tab_empr_info[$i]["titre"]=$msg["empr_tpl_prof"];
+	$tab_empr_info[$i]["class"]="tab_empr_info_prof";
 	$tab_empr_info[$i++]["val"]=$empr_prof;	
 }
 if ($empr_year){
 	$tab_empr_info[$i]["titre"]=$msg["empr_tpl_year"];
+	$tab_empr_info[$i]["class"]="tab_empr_info_year";
 	$tab_empr_info[$i++]["val"]=$empr_year;
 }
 
@@ -104,8 +110,9 @@ $perso_=$p_perso->show_fields($id_empr);
 if (count($perso_["FIELDS"])) {
 	for ($ipp=0; $ipp<count($perso_["FIELDS"]); $ipp++) {
 		$p=$perso_["FIELDS"][$ipp];
-		if(($p[OPAC_SHOW]==1) && $p["AFF"]){
+		if(($p['OPAC_SHOW']==1) && $p["AFF"] !== ''){
 			$tab_empr_info[$i]["titre"]=$p["TITRE_CLEAN"];
+			$tab_empr_info[$i]["class"]="tab_empr_info_".$p["NAME"];
 			$tab_empr_info[$i++]["val"]=$p["AFF"];
 		}		
 	}
@@ -114,6 +121,7 @@ if (count($perso_["FIELDS"])) {
 $adhesion=str_replace("!!date_adhesion!!","<strong>".$aff_empr_date_adhesion."</strong>",$msg["empr_format_adhesion"]);	
 $adhesion=str_replace("!!date_expiration!!","<strong>".$aff_empr_date_expiration."</strong>",$adhesion);	
 $tab_empr_info[$i]["titre"]=$msg["empr_tpl_adh"];
+$tab_empr_info[$i]["class"]="tab_empr_info_adh";
 $tab_empr_info[$i++]["val"]=$adhesion;
 
 if ($date_fin_blocage != "0000-00-00"){
@@ -121,6 +129,7 @@ if ($date_fin_blocage != "0000-00-00"){
 	$date_blocage=explode("-",$date_fin_blocage);
 	if (mktime(0,0,0,$date_blocage[1],$date_blocage[2],$date_blocage[0])>time()) {
 		$tab_empr_info[$i]["titre"]=$msg["empr_tpl_date_fin_blocage"];
+		$tab_empr_info[$i]["class"]="tab_empr_info_blocage";
 		$blocage=str_replace("!!date_fin_blocage!!","<strong>".$aff_date_fin_blocage."</strong>",$msg["empr_tpl_blocage_pret"]);
 		$tab_empr_info[$i++]["val"]=$blocage;
 	}
@@ -128,8 +137,8 @@ if ($date_fin_blocage != "0000-00-00"){
 
 foreach ($tab_empr_info as $ligne){
 	$empr_identite.=
-	"<tr>
-		<td class='bg-grey' align='right'><span class='etiq_champ'>".$ligne["titre"]."</span></td>	
+	"<tr class='".$ligne["class"]."'>
+		<td class='bg-grey align_right'><span class='etiq_champ'>".$ligne["titre"]."</span></td>	
 		<td>".$ligne["val"]."</td>
 	</tr>";
 }

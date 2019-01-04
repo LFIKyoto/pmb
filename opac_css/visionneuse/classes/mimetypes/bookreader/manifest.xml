@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.4 2014-10-13 10:23:36 arenou Exp $ -->
+$Id: manifest.xml,v 1.6 2018-06-22 09:55:45 ngantier Exp $ -->
 
 <manifest name="bookreader">
 	<desc msg="Affichage des documents BNF."/>
@@ -15,5 +15,7 @@ $Id: manifest.xml,v 1.4 2014-10-13 10:23:36 arenou Exp $ -->
 		<mimetype name="application/pdf"/>
 		<mimetype name="application/x-pdf"/>
 		<mimetype name="application/epub+zip"/>
+		<mimetype name="application/zip"/>
+		<mimetype name="application/octet-stream"/>
 	</mimetypes>
 </manifest>

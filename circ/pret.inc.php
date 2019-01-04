@@ -2,9 +2,20 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pret.inc.php,v 1.114.2.1 2015-08-24 13:25:36 dbellamy Exp $
+// $Id: pret.inc.php,v 1.148 2018-12-20 11:00:19 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($confirm_pret)) $confirm_pret = '';
+if(!isset($id_notice)) $id_notice = 0; else $id_notice += 0;
+if(!isset($id_bulletin)) $id_bulletin = 0; else $id_bulletin += 0;
+if(!isset($id_expl)){
+	$id_expl = 0; 
+}elseif(!is_array($id_expl)){
+	$id_expl += 0;
+}
+if(!isset($serialcirc_action)) $serialcirc_action = '';
+if(!isset($cb_doc)) $cb_doc = ''; else $cb_doc = trim($cb_doc);
 
 require_once ("$class_path/emprunteur.class.php");
 require_once ("$class_path/serial_display.class.php");
@@ -17,6 +28,10 @@ require_once($class_path."/ajax_pret.class.php");
 require_once("$class_path/groupexpl.class.php");
 require_once("$class_path/resa_planning.class.php");
 require_once("$class_path/pret_parametres_perso.class.php");
+require_once($class_path.'/event/events/event_loan.class.php');
+require_once($class_path.'/audit.class.php');
+require_once($class_path.'/expl.class.php');
+require_once($class_path.'/pret.class.php');
 
 // define pour différent flags de situation document
 define ('EX_OK', 1);
@@ -30,39 +45,51 @@ define ('ALREADY_BORROWED', 128); // ce document est emprunté par un autre empru
 define ('HAS_RESA_PLANNED_FALSE', 256); //Les prévisions sur le document sont égales ou supérieures au nb d'exemplaires disponibles
 define ('IS_TRUSTED',512); //l'exemplaire est monopolisé
 define ('IS_GROUP',1024); //l'exemplaire fait parti d'un groupe d'exemplaires
+
+if(!isset($confirm)) $confirm = '';
+if(!isset($expl_todo)) $expl_todo = '';
+if(!isset($quota)) $quota = '';
+if(!isset($pret_arc)) $pret_arc='';
+
 $affichage = "";
 $warning_text='';
 $dispo_text='';
-$erreur_affichage = "<table border='0' cellpadding='1' width='100%' height='40'><tr><td width='30'>&nbsp;<span></span></td>
-		<td width='100%'>&nbsp;</td></tr></table>";
+$is_doc_group = 0;
+$information_text = '';
+$resarc_id = '';
+$erreur_affichage = "<table border='0' cellpadding='1' style='width:100%' height='40'><tr><td style='width:30px'>&nbsp;<span></span></td>
+		<td style='width:100%'>&nbsp;</td></tr></table>";
 
 // Confirm pret rfid mode1
 if($confirm_pret && $id_empr){
 	$expl = new do_pret();
 	if(is_array($id_expl)) {
 		foreach($id_expl as $id) {
-			if($id)$status= $expl->confirm_pret($id_empr, $id,$short_loan);
+			if($id)$status= $expl->confirm_pret($id_empr, $id, $short_loan);
 		}
 	} else {
 		if($id_expl)$status = $expl->confirm_pret($id_empr, $id_expl,$short_loan);
 	}
-	$erreur_affichage = "<hr />
-		<div class='row'>
-		<div class='colonne10'><img src='./images/info.png' /></div>
-		<div class='colonne-suite'><span class='erreur'>".$msg[384]."</span><br />
-		";
-	$erreur_affichage .= get_display_custom_fields($id_empr,$id_expl);
-	if($pmb_play_pret_sound)$alert_sound_list[]="information";
-	$empr = new emprunteur($id_empr, $erreur_affichage, FALSE, 1);
-	$affichage = $empr -> fiche;
+	$erreur_affichage = pret::get_display_info('', $msg[384]);
+	$erreur_affichage .= pret::get_display_custom_fields($id_empr,$id_expl);
+	$affichage = emprunteur::get_display_card($id_empr, $erreur_affichage);
 
 }else if (($sub == "pret_annulation") && ($id_expl)) {
 	// récupérer la stat insérée pour la supprimer !
 	$query = "select pret_arc_id from pret ";
 	$query.= "where pret_idexpl = '".$id_expl."' ";
-	$result = pmb_mysql_query($query, $dbh);
+	$result = pmb_mysql_query($query);
 	$stat_id = pmb_mysql_fetch_object($result) ;
-	$result = pmb_mysql_query("delete from pret_archive where arc_id='".$stat_id->pret_arc_id."' ", $dbh);
+	
+	/**
+	 * Publication d'un évenement à l'annulation du prêt (avant suppression dans pret_archive)
+	 */
+	$evt_handler = events_handler::get_instance();
+	$event = new event_loan("loan", "cancel_loan");
+	$event->set_id_loan($stat_id->pret_arc_id);
+	$evt_handler->send($event);
+	
+	$result = pmb_mysql_query("delete from pret_archive where arc_id='".$stat_id->pret_arc_id."' ");
 	audit::delete_audit (AUDIT_PRET, $stat_id->pret_arc_id) ;
 
 	// supprimer les valeurs de champs personnalisés
@@ -72,65 +99,24 @@ if($confirm_pret && $id_empr){
 	// supprimer le prêt annulé
 	$query = "delete from pret ";
 	$query.= "where pret_idexpl = '".$id_expl."' ";
-	$result = pmb_mysql_query($query, $dbh);
-	$erreur_affichage = "<hr />
-					<div class='row'>
-					<div class='colonne10'><img src='./images/info.png' /></div>
-					<div class='colonne-suite'><span class='erreur'>".str_replace('!!cb_expl!!', $cb_doc, $msg[607])."</span></div>
-					</div><br />";
-	$alert_sound_list[]="information";
-
-	$empr = new emprunteur($id_empr, $erreur_affichage, FALSE, 1);
-	$affichage = $empr -> fiche;
+	$result = pmb_mysql_query($query);
+	$erreur_affichage = pret::get_display_info('', str_replace('!!cb_expl!!', $cb_doc, $msg[607]));
+	$affichage = emprunteur::get_display_card($id_empr, $erreur_affichage);
 } else {
-
-	$script_magnetique="
-<script language='javascript' type='text/javascript'>
-var requete = null;
-
-function creerRequette(){
-	if(window.XMLHttpRequest) // Firefox
-		requete = new XMLHttpRequest();
-	else if(window.ActiveXObject) // Internet Explorer
-  		requete = new ActiveXObject('Microsoft.XMLHTTP');
-	else { // XMLHttpRequest non supporté par le navigateur
-   		alert('Votre navigateur ne supporte pas les objets XMLHTTPRequest...');
-    	return;
-	}
-}
-
-function magnetise(commande){
-	creerRequette();
-	if(netscape.security.PrivilegeManager)netscape.security.PrivilegeManager.enablePrivilege('UniversalBrowserRead');
-	requete.open('GET', 'http://localhost:30000/?send_value='+commande+'&command=Send', false);
-	requete.send(null);
-	if(requete.readyState != 4) alert('Requête antivol non effectuée !');
-}
-
-";
 	//Si il y a un emprunteur
 	if ($id_empr) {
 		// Vérification id, on dispose d'un id pour l'emprunteur, donc on est en situation de prêt
-		if (check_empr($id_empr)) {
+		if (emprunteur::exists($id_empr)) {
 			$empr_temp = new emprunteur($id_empr, '', FALSE, 0);
 			$empr_date_depassee = $empr_temp -> adhesion_depassee();
 			//Si adhésion dépassée
 			if (!($pmb_pret_adhesion_depassee == 0 && $empr_date_depassee)) {
 				//Si un exemplaire ou un code barres a été fourni
 				if ($cb_doc || $id_expl) {
-					if ($id_expl = get_expl_id_from_cb($cb_doc)) {
+					if ($id_expl = exemplaire::get_expl_id_from_cb($cb_doc)) {
 
 						// Gestion Antivol
-						if($pmb_antivol>0) {
-							$rqt = "SELECT type_antivol FROM exemplaires WHERE expl_id='".$id_expl."' ";
-							$result = pmb_mysql_query($rqt, $dbh);
-							$expl = pmb_mysql_fetch_object($result);
-							$type_antivol =$expl->type_antivol;
-							if($type_antivol ==1)// c'est un support non magnétique (livre, revue...)
-								print "$script_magnetique"."magnetise('DDD');</script>";
-							if($type_antivol ==2)//c'est un support magnétique (cassette)
-								print "$script_magnetique"."magnetise('SSS');</script>";
-						}
+						print pret::get_display_antivol($id_expl);
 
 						//Vérification de la validité du document
 						$statut = check_document($id_expl, $id_empr);
@@ -144,36 +130,34 @@ function magnetise(commande){
 						} else $titre_prete = "";
 						$titre_prete="<b>".$titre_prete."<br />".$cb_doc."</b> $statut->tdoc_libelle $statut->location_libelle $statut->section_libelle <b>$statut->expl_cote</b>";
 
+						if(exemplaire::is_digital($id_expl) || exemplaire::is_digital($cb_doc)){
+							$erreur_affichage = pret::get_display_error($titre_prete, $msg["circ_pret_digital_expl"], 1);
+						    print emprunteur::get_display_card($id_empr, $erreur_affichage);
+						    print alert_sound_script();
+						    exit();
+						}
+						
 						//Y-a-t-il un quota ?
 						if (!$expl_todo && $deflt_docs_location) {
 							$sql = "SELECT expl_retloc FROM exemplaires where expl_retloc='".$deflt_docs_location."' and  expl_id='".$id_expl."' ";
-							$req = pmb_mysql_query($sql) or die ($msg["err_sql"]."<br />".$sql."<br />".pmb_mysql_error());
+							$req = pmb_mysql_query($sql);
 							$nb = pmb_mysql_num_rows($req) ;
 							if($nb)	{
-								$erreur_affichage = "<hr />
-								<div class='row'>
-									<div class='colonne10'><img src='./images/error.png' /></div>
-									<div class='colonne-suite'>$titre_prete : <span class='erreur'>".$msg["circ_pret_piege_expl_todo"]."</span><br />";
-								$alert_sound_list[]="critique";
-								$erreur_affichage.= "<input type='button' class='bouton' value='${msg[76]}' onClick=\"document.location='./circ.php?categ=pret&id_empr=$id_empr'\" />";
-								$erreur_affichage.= "&nbsp;<input type='button' class='bouton' value='${msg[389]}' onClick=\"document.location='./circ.php?categ=pret&id_empr=$id_empr&cb_doc=$cb_doc&expl_todo=1&confirm=$confirm'\" />";
-								$erreur_affichage.= "</div></div><br />";
-								$empr = new emprunteur($id_empr, $erreur_affichage, FALSE, 1);
-								$affichage = $empr -> fiche;
-								print pmb_bidi($affichage);
+								$erreur_affichage = pret::get_display_error($titre_prete, $msg["circ_pret_piege_expl_todo"], 1, 1, "&cb_doc=$cb_doc&expl_todo=1&confirm=$confirm");
+								print emprunteur::get_display_card($id_empr, $erreur_affichage);
 								print alert_sound_script();
 								exit();
 							}
 						}
 
-						//Y-a-t-il un quota ?
-						if (!$quota) {
+						//Y-a-t-il un quota ? On y passe uniquement si l'exemplaire n'est pas déjà en prêt
+						if ((!isset($quota) || !$quota) && !($statut -> flag && ($statut -> flag & ALREADY_LOANED || $statut -> flag & ALREADY_BORROWED))) {
 							$qt=check_quota($id_empr, $id_expl);
 							//Si quota violé
 							if (is_array($qt)) {
 								$erreur_affichage = "<hr />
 								<div class='row'>
-									<div class='colonne10'><img src='./images/error.png' /></div>
+									<div class='colonne10'><img src='".get_url_icon('error.png')."' /></div>
 									<div class='colonne-suite'>$titre_prete : <span class='erreur'>".$qt["MESSAGE"]."</span><br />";
 								$alert_sound_list[]="critique";
 								$erreur_affichage.= "<input type='button' class='bouton' value='${msg[76]}' onClick=\"document.location='./circ.php?categ=pret&id_empr=$id_empr'\" />";
@@ -193,30 +177,19 @@ function magnetise(commande){
 						// Le lecteur a déjà emprunté ce document ?
 						if (!$pret_arc && $pmb_pret_already_loaned) {
 							$rqt_arch = "select arc_id from pret_archive WHERE arc_id_empr = '".$id_empr."' AND arc_expl_id = ".$id_expl." ";
-							$pretarc_res=pmb_mysql_query($rqt_arch, $dbh);
+							$pretarc_res=pmb_mysql_query($rqt_arch);
 							if(pmb_mysql_num_rows($pretarc_res)){
 								$pret_arc=1;
 								$res_pret_arc = pmb_mysql_fetch_object($pretarc_res);
 								$resarc_id = $res_pret_arc->resarc_id;
-								$erreur_affichage = "<hr />
-								<div class='row'>
-								<div class='colonne10'><img src='./images/error.png' /></div>
-								<div class='colonne-suite'>$titre_prete : <span class='erreur'>".$msg['pret_already_loaned_arch']."</span><br />";
-								$alert_sound_list[]="critique";
-								$erreur_affichage.= "<input type='button' class='bouton' value='${msg[76]}' onClick=\"document.location='./circ.php?categ=pret&id_empr=$id_empr'\" />";
-
-								$erreur_affichage.= "&nbsp;<input type='button' class='bouton' value='${msg[389]}' onClick=\"document.location='./circ.php?categ=pret&id_empr=$id_empr&cb_doc=$cb_doc&quota=$quota&pret_arc=1'\" />";
-
-								$erreur_affichage.= "</div></div><br />";
-								$empr = new emprunteur($id_empr, $erreur_affichage, FALSE, 1);
-								$affichage = $empr -> fiche;
-								print pmb_bidi($affichage);
+								$erreur_affichage = pret::get_display_error($titre_prete, $msg['pret_already_loaned_arch'], 1, 1, "&cb_doc=$cb_doc&quota=$quota&pret_arc=1");
+								print emprunteur::get_display_card($id_empr, $erreur_affichage);
 								print alert_sound_script();
 								exit();
 							}
 						}
-
-						if ($statut -> flag && ((($statut -> flag & HAS_NOTE) || ($statut -> flag & IS_GROUP) || ($statut -> flag & ALREADY_LOANED_ARCHIVE) || ($statut -> flag & NON_PRETABLE) || ($statut -> flag & HAS_RESA_FALSE)) || ($statut -> flag & HAS_RESA_PLANNED_FALSE) || ($statut -> flag & IS_TRUSTED)) && !($statut -> flag & ALREADY_LOANED) && !($statut -> flag & ALREADY_BORROWED) ) {
+                        
+						if ($statut -> flag && ((($statut -> flag & HAS_NOTE) || ($statut -> flag & IS_GROUP) || ($statut -> flag & NON_PRETABLE) || ($statut -> flag & HAS_RESA_FALSE)) || ($statut -> flag & HAS_RESA_PLANNED_FALSE) || ($statut -> flag & IS_TRUSTED)) && !($statut -> flag & ALREADY_LOANED) && !($statut -> flag & ALREADY_BORROWED) ) {
 							if (!$confirm) {
 								// mettre ici les routines confirmation
 								if($is_doc_group){
@@ -242,17 +215,8 @@ function magnetise(commande){
 
 										if($statut_trans==1) {
 											//non forcable
-											$erreur_affichage = "<hr />
-											<div class='row'>
-												<div class='colonne10'><img src='./images/error.png' /></div>
-												<div class='colonne-suite'>$titre_prete : <span class='erreur'>".$transfert->check_pret_error_message."</span><br />";
-											$alert_sound_list[]="critique";
-											$erreur_affichage.= "<input type='button' class='bouton' value='${msg[76]}' onClick=\"document.location='./circ.php?categ=pret&id_empr=$id_empr'\" />";
-
-											$erreur_affichage.= "</div></div><br />";
-											$empr = new emprunteur($id_empr, $erreur_affichage, FALSE, 1);
-											$affichage = $empr -> fiche;
-											print pmb_bidi($affichage);
+											$erreur_affichage = pret::get_display_error($titre_prete, $transfert->check_pret_error_message, 1);
+											print emprunteur::get_display_card($id_empr, $erreur_affichage);
 											print alert_sound_script();
 											exit();
 										} elseif($statut_trans==2)	{
@@ -270,21 +234,21 @@ function magnetise(commande){
 								if ($statut -> flag & HAS_RESA_PLANNED_FALSE) {
 									// le document à des prévisions
 									if ($warning_text) $warning_text.= "<br />";
-									$warning_text.= "<img src='./images/plus.gif' class='img_plus'
+									$warning_text.= "<img src='".get_url_icon('plus.gif')."' class='img_plus'
 										onClick=\"
 										var elt=document.getElementById('erreur-child');
 										var vis=elt.style.display;
 										if (vis=='block'){
 											elt.style.display='none';
-											this.src='./images/plus.gif';
+											this.src='".get_url_icon('plus.gif')."';
 										} else {
 											elt.style.display='block';
-											this.src='./images/minus.gif';
+											this.src='".get_url_icon('minus.gif')."';
 										}
 										\" /> ".htmlentities($msg['resa_planning_encours'], ENT_QUOTES, $charset)." <a href='./circ.php?categ=pret&form_cb=".rawurlencode($reservataire_empr_cb)."'>".$reservataire_nom_prenom."</a><br />";
 
 									//Affichage des prévisions sur le document courant
-																	$q = "SELECT id_resa, resa_idnotice, resa_idbulletin, resa_date, resa_date_debut, resa_date_fin, resa_validee, IF(resa_date_fin>=sysdate() or resa_date_fin='0000-00-00',0,1) as perimee, date_format(resa_date_fin, '".$msg["format_date_sql"]."') as aff_date_fin, ";
+									$q = "SELECT id_resa, resa_idnotice, resa_idbulletin, resa_date, resa_date_debut, resa_date_fin, resa_validee, IF(resa_date_fin>=sysdate() or resa_date_fin='0000-00-00',0,1) as perimee, date_format(resa_date_fin, '".$msg["format_date_sql"]."') as aff_date_fin, ";
 									$q.= "resa_idempr, concat(lower(empr_prenom), ' ',upper(empr_nom)) as resa_nom, if(resa_idempr!='".$id_empr."', 0, 1) as resa_same ";
 									$q.= "FROM resa_planning left join empr on resa_idempr=id_empr ";
 									$q.= "where resa_idnotice=$statut->notice_id and resa_idbulletin=$statut->bulletin_id ";
@@ -292,7 +256,7 @@ function magnetise(commande){
 									if ($pmb_location_resa_planning) {
 										$q.= "and resa_loc_retrait in (0,".$statut->expl_location.") ";
 									}
-									$r = pmb_mysql_query($q, $dbh);
+									$r = pmb_mysql_query($q);
 									if (pmb_mysql_num_rows($r)) {
 										$warning_text.= "<div id='erreur-child' class='erreur-child'>";
 										while ($resa = pmb_mysql_fetch_array($r)) {
@@ -326,19 +290,7 @@ function magnetise(commande){
 								} //if ($statut -> flag & HAS_RESA_PLANNED_FALSE)
 								if ($statut->flag & IS_TRUSTED ) {
 									// le document est monopolisé
-									$nd=0;
-									if ($statut->notice_id || $statut->bulletin_id) {
-										if ($statut->notice_id) {
-											$qd = "select count(*) from exemplaires join docs_statut on idstatut=expl_statut and pret_flag=1 where expl_notice=".$statut->notice_id;
-										} else if ($statut->bulletin_id) {
-											$qd = "select count(*) from exemplaires join docs_statut on idstatut=expl_statut and pret_flag=1 where expl_bulletin=".$statut->bulletin_id;
-										}
-										$rd = pmb_mysql_query($qd,$dbh);
-										if (pmb_mysql_num_rows($rd)) {
-											$nd = pmb_mysql_result($rd,0,0);
-										}
-									}
-									$warning_text.= sprintf("<br />".$msg['loan_trust_warning'],$pmb_loan_trust_management,$nd);
+								    $warning_text.= '<br />' . get_loan_trust_message($statut->notice_id, $statut->bulletin_id);
 									$serious = TRUE;
 								}
 								$erreur_affichage = "<hr />
@@ -346,17 +298,16 @@ function magnetise(commande){
 									$information_text
 									</div>
 									<div class='row' >
-									<div class='colonne10' ><img src='./images/quest.png' /></div>
+									<div class='colonne10' ><img src='".get_url_icon('quest.png')."' /></div>
 									<div class='colonne-suite'>$titre_prete : <span class='erreur' >$warning_text</span><br />";
 
 								$alert_sound_list[]="question";
-								$erreur_affichage.= "<input type='button' class='bouton' value='${msg[76]}' onClick=\"document.location='./circ.php?categ=pret&id_empr=$id_empr".(($pmb_short_loan_management==1)?"&short_loan='+document.getElementById('short_loan').value;":"'")."\" />";
+								$erreur_affichage.= "<input type='button' class='bouton' value='${msg[76]}' onClick=\"document.location='./circ.php?categ=pret&id_empr=$id_empr".(($pmb_short_loan_management==1) ? "&short_loan=$short_loan" : "")."'\" />";
 								$confirm = $statut -> flag ;
-								$erreur_affichage.= "&nbsp;<input type='button' class='bouton' value='${msg[389]}' onClick=\"document.location='./circ.php?categ=pret&id_empr=$id_empr&cb_doc=$cb_doc&expl_todo=$expl_todo&confirm=$confirm&quota=$quota&pret_arc=$pret_arc".(($pmb_short_loan_management==1)?"&short_loan='+document.getElementById('short_loan').value;":"'")."\" />";
+								$erreur_affichage.= "&nbsp;<input type='button' class='bouton' value='${msg[389]}' onClick=\"document.location='./circ.php?categ=pret&id_empr=$id_empr&cb_doc=$cb_doc&expl_todo=$expl_todo&confirm=$confirm&quota=$quota&pret_arc=$pret_arc".(($pmb_short_loan_management==1) ? "&short_loan=$short_loan" : "")."'\" />";
 								$erreur_affichage.= "&nbsp;<input class='bouton' type='button' value=\"".$msg[375]."\" onClick=\"document.location='circ.php?categ=visu_ex&form_cb_expl=".$cb_doc."';\" />";
 								$erreur_affichage.= "</div></div><br />";
-								$empr = new emprunteur($id_empr, $erreur_affichage, FALSE, 1);
-								$affichage = $empr -> fiche;
+								$affichage = emprunteur::get_display_card($id_empr, $erreur_affichage);
 							} else { // else if !confirm
 								// il y a eu confirmation du prêt
 								if ($statut -> flag == $confirm) {
@@ -369,9 +320,9 @@ function magnetise(commande){
 									if ($statut -> flag & HAS_RESA_GOOD) {
 										// archivage resa
 										$rqt_arch = "UPDATE resa_archive, resa SET resarc_pretee = 1 WHERE id_resa = '".$statut->id_resa."' AND resa_arc = resarc_id ";
-										pmb_mysql_query($rqt_arch, $dbh);
+										pmb_mysql_query($rqt_arch);
 										$rqt_arch = "select resarc_id from resa_archive, resa WHERE id_resa = '".$statut->id_resa."' AND resa_arc = resarc_id ";
-										$resarc_res=pmb_mysql_query($rqt_arch, $dbh);
+										$resarc_res=pmb_mysql_query($rqt_arch);
 										$resarc = pmb_mysql_fetch_object($resarc_res);
 										$resarc_id = $resarc->resarc_id;
 
@@ -383,47 +334,43 @@ function magnetise(commande){
 										if ($statut->resa_cb == $statut->expl_cb) {
 											// la résa prioritaire avait déjà un CB identique : il suffit de la dévalider
 											$rqt_invalide_resa = "update resa set resa_date_debut='0000-00-00', resa_date_fin='0000-00-00', resa_cb='' where id_resa = '".$statut->id_resa."' " ;
-											$truc_vide = pmb_mysql_query($rqt_invalide_resa, $dbh) ;
+											$truc_vide = pmb_mysql_query($rqt_invalide_resa) ;
 										} // sinon rien à faire, la résa était validée avec autre chose, elle le reste
 										// archivage resa
 										$rqt_arch = "UPDATE resa_archive, resa SET resarc_pretee = 2 WHERE id_resa = '".$statut->id_resa."' AND resa_arc = resarc_id ";
-										pmb_mysql_query($rqt_arch, $dbh);
+										pmb_mysql_query($rqt_arch);
 										$rqt_arch = "select resarc_id from resa_archive, resa WHERE id_resa = '".$statut->id_resa."' AND resa_arc = resarc_id ";
-										$resarc_res=pmb_mysql_query($rqt_arch, $dbh);
+										$resarc_res=pmb_mysql_query($rqt_arch);
 										$resarc = pmb_mysql_fetch_object($resarc_res);
 										$resarc_id = $resarc->resarc_id;
 										del_resa($id_empr, $statut -> idnotice, $statut -> idbulletin, $statut -> expl_cb);
 									}
 									del_resa($id_empr, $statut -> idnotice, $statut -> idbulletin, $statut -> expl_cb);
 									add_pret($id_empr, $id_expl, $cb_doc, $resarc_id, $short_loan);
-									// mise à jour de l'affichage
-									// ER ici ajout du bouton d'annulation violente
-									/*
-									$rqt = "SELECT notice_m.tit1, notices_s.tit1 ";
-									$rqt.= "FROM ((exemplaires LEFT JOIN notices AS notice_m ON expl_notice = notice_m.notice_id) LEFT JOIN bulletins ON expl_bulletin = bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id ";
-									$rqt.= "WHERE expl_id='".$id_expl."' ";
-
-									$result_pret = pmb_mysql_query($rqt, $dbh);
-									$titre_prete = pmb_mysql_result($result_pret, 0, 0).pmb_mysql_result($result_pret, 0, 1);
-									*/
+									$information_loan_trust_management_not_blocking = '';
+									if (isset($loan_trust_management_not_blocking) && $loan_trust_management_not_blocking) {
+									    $information_loan_trust_management_not_blocking = "<span class='erreur'>" . get_loan_trust_message($statut->notice_id, $statut->bulletin_id) . '</span><br/>';
+									}	
+									$information_group = "";
 									if($pmb_pret_groupement){
 										if($id_group=groupexpls::get_group_expl($cb_doc)){
 											// ce document appartient à un groupe
 											$is_doc_group=1;
-											$groupexpl=new groupexpl($id_group);$information_text.= $groupexpl->get_confirm_form($cb_doc);
+											$groupexpl=new groupexpl($id_group);
+											$information_text.= $groupexpl->get_confirm_form($cb_doc);
 											$information_group= $groupexpl->get_confirm_form($cb_doc);
 											//	$statut->flag+=IS_GROUP; client ne veut pas de comfirmation
 										}
 									}
-									$erreur_affichage = $information_group."<hr />
+									$erreur_affichage = $information_loan_trust_management_not_blocking . $information_group."<hr />
 										<div class='row'>
-										<div class='colonne10'><img src='./images/info.png' /></div>
+										<div class='colonne10'><img src='".get_url_icon('info.png')."' /></div>
 										<div class='colonne-suite'>".$titre_prete." : <span class='erreur'>".$msg[384]."</span><br />
 										";
-									$erreur_affichage .= get_display_custom_fields($id_empr,$id_expl);
+									$erreur_affichage .= pret::get_display_custom_fields($id_empr,$id_expl);
 									$alert_sound_list[]="information";
 									$erreur_affichage.= "<input type='button' class='bouton' value='${msg[76]}' onClick=\"document.location='circ.php?categ=pret&sub=pret_annulation&id_empr=".$id_empr."&id_expl=".$id_expl."&cb_doc=".$cb_doc."&short_loan=".$short_loan."'\" />";
-									$erreur_affichage.= "&nbsp;<input type='button' class='bouton' value='${msg[1300]}' onclick=\"openPopUp('./pdf.php?pdfdoc=ticket_pret&cb_doc=$cb_doc&id_empr=$id_empr', 'ticket', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\" />";
+									$erreur_affichage.= "&nbsp;<input type='button' class='bouton' value='${msg[1300]}' onclick=\"openPopUp('./pdf.php?pdfdoc=ticket_pret&cb_doc=$cb_doc&id_empr=$id_empr', 'print_PDF')\" />";
 									$erreur_affichage.= "</div></div>";
 									if ($statut->expl_comment) $erreur_affichage.= "<div class='expl_comment'>".$statut->expl_comment."</div>";
 
@@ -438,156 +385,138 @@ function magnetise(commande){
 									// prise en compte du param popup_ticket
 									if ($param_popup_ticket == 1) {
 										if(!$pmb_printer_ticket_url) {
-											print "<script type='text/javascript'>openPopUp('./pdf.php?pdfdoc=ticket_pret&cb_doc=$cb_doc&id_empr=$id_empr', 'ticket', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes');</script>";
+											print "<script type='text/javascript'>openPopUp('./pdf.php?pdfdoc=ticket_pret&cb_doc=$cb_doc&id_empr=$id_empr', 'print_PDF');</script>";
 										} else {
 											$affichage.="<script type='text/javascript'>print_ticket('./ajax.php?module=circ&categ=print_pret&sub=one&id_empr=".$id_empr."&id_expl=".$id_expl."&cb_doc=$cb_doc');</script>";
 										}
 									}
 								} else {
-									$erreur_affichage = "<hr />
-										<div class='row'>
-										<div class='colonne10'><img src='./images/info.png' /></div>
-										<div class='colonne-suite'>$titre_prete : <span class='erreur'>$msg[384]</span></div>
-										</div><br />";
-									$erreur_affichage .= get_display_custom_fields($id_empr,$id_expl);
-									$alert_sound_list[]="information";
+									$erreur_affichage = pret::get_display_info($titre_prete, $msg[384]);
+									$erreur_affichage .= pret::get_display_custom_fields($id_empr,$id_expl);
 
-									$empr = new emprunteur($id_empr, $erreur_affichage, FALSE, 1);
-									$affichage = $empr -> fiche;
+									$affichage = emprunteur::get_display_card($id_empr, $erreur_affichage);
 								} // fin else if ($statut -> flag == $confirm)
 							} // fin if else !confirm
 						} else {
 							if ($statut -> flag & ALREADY_LOANED || $statut -> flag & ALREADY_BORROWED) {
 								if ($statut -> flag & ALREADY_LOANED) {
-									$erreur_affichage = "<hr />
-									<div class='row'>
-									<div class='colonne10'><img src='./images/error.png' /></div>
-									<div class='colonne-suite'>$titre_prete : <span class='erreur'>$msg[386]</span></div>
-									</div><br />";
-									$alert_sound_list[]="critique";
+									$erreur_affichage = pret::get_display_error($titre_prete, $msg[386]);
 								}
 								if ($statut -> flag & ALREADY_BORROWED) {
+									// Proposer de faire le retour et de refaire le prêt 
+									$pret_already_borrowed_action='';
+									if($pmb_pret_already_borrowed) {
+										$pret_already_borrowed_action="
+											&nbsp;<input type='button' class='bouton' value='".$msg['pret_do_retour']."' onClick=\"document.location='./circ.php?categ=retour&id_empr_to_do_pret=$id_empr&form_cb_expl=$cb_doc'\" />";
+									}
 									$erreur_affichage = "<hr />
 									<div class='row'>
-									<div class='colonne10'><img src='./images/error.png' /></div>
+									<div class='colonne10'><img src='".get_url_icon('error.png')."' /></div>
 									<div class='colonne-suite'>$titre_prete : <span class='erreur'>$msg[387]</span></div>
 									<input class='bouton' type='button' value=\"".$msg[375]."\" onClick=\"document.location='circ.php?categ=visu_ex&form_cb_expl=$cb_doc';\" />
+									".$pret_already_borrowed_action."									
 									</div><br />";
 									$alert_sound_list[]="critique";
 								}
-								$empr = new emprunteur($id_empr, $erreur_affichage, FALSE, 1);
-								$affichage = $empr -> fiche;
+								$affichage = emprunteur::get_display_card($id_empr, $erreur_affichage);
 							} else {
-									if ($statut -> flag && ($statut -> flag & HAS_RESA_GOOD)) {
-										// archivage resa
-										$rqt_arch = "UPDATE resa_archive, resa SET resarc_pretee = 1 WHERE id_resa = '".$statut->id_resa."' AND resa_arc = resarc_id ";
-										pmb_mysql_query($rqt_arch, $dbh);
-										$rqt_arch = "select resarc_id from resa_archive, resa WHERE id_resa = '".$statut->id_resa."' AND resa_arc = resarc_id ";
-										$resarc_res=pmb_mysql_query($rqt_arch, $dbh);
-										$resarc = pmb_mysql_fetch_object($resarc_res);
-										$resarc_id = $resarc->resarc_id;
-										// suppression de la resa pour ce lecteur
-										del_resa($id_empr, $statut -> idnotice, $statut -> idbulletin, $statut -> expl_cb);
-									}
-									// ajout du prêt
+								if ($statut -> flag && ($statut -> flag & HAS_RESA_GOOD)) {
+									// archivage resa
+									$rqt_arch = "UPDATE resa_archive, resa SET resarc_pretee = 1 WHERE id_resa = '".$statut->id_resa."' AND resa_arc = resarc_id ";
+									pmb_mysql_query($rqt_arch);
+									$rqt_arch = "select resarc_id from resa_archive, resa WHERE id_resa = '".$statut->id_resa."' AND resa_arc = resarc_id ";
+									$resarc_res=pmb_mysql_query($rqt_arch);
+									$resarc = pmb_mysql_fetch_object($resarc_res);
+									$resarc_id = $resarc->resarc_id;
+									// suppression de la resa pour ce lecteur
 									del_resa($id_empr, $statut -> idnotice, $statut -> idbulletin, $statut -> expl_cb);
-									add_pret($id_empr, $id_expl, $cb_doc,$resarc_id,$short_loan);
-									// mise à jour de l'affichage
-									if($pmb_pret_groupement){
-										if($id_group=groupexpls::get_group_expl($cb_doc)){
-											// ce document appartient à un groupe
-											$is_doc_group=1;
-											$groupexpl=new groupexpl($id_group);$information_text.= $groupexpl->get_confirm_form($cb_doc);
-											$information_group= $groupexpl->get_confirm_form($cb_doc);
-											//	$statut->flag+=IS_GROUP; client ne veut pas de comfirmation
+								} else {
+									$resarc_id = 0;
+								}
+								// ajout du prêt
+								del_resa($id_empr, $statut -> idnotice, $statut -> idbulletin, $statut -> expl_cb);
+								add_pret($id_empr, $id_expl, $cb_doc,$resarc_id,$short_loan);
+								// mise à jour de l'affichage								
+								$information_loan_trust_management_not_blocking = '';
+								if (isset($loan_trust_management_not_blocking) && $loan_trust_management_not_blocking) {
+								    $information_loan_trust_management_not_blocking = "<span class='erreur'>" . get_loan_trust_message($statut->notice_id, $statut->bulletin_id) . '</span><br/>';
+								}								
+								$information_group = "";
+								if($pmb_pret_groupement){
+									if($id_group=groupexpls::get_group_expl($cb_doc)){
+										// ce document appartient à un groupe
+										$is_doc_group=1;
+										$groupexpl=new groupexpl($id_group);
+										$information_text.= $groupexpl->get_confirm_form($cb_doc);
+										$information_group= $groupexpl->get_confirm_form($cb_doc);
+										//	$statut->flag+=IS_GROUP; client ne veut pas de comfirmation
+									}
+								}
+								// ajout du bouton d'annulation violente
+								$erreur_affichage = $information_loan_trust_management_not_blocking . $information_group."<hr />
+									<div class='row'>
+									<div class='colonne10'><img src='".get_url_icon('info.png')."' /></div>
+									<div class='colonne-suite'>$titre_prete : <span class='erreur'>".$msg[384]."</span><br />
+									";
+								$erreur_affichage .= pret::get_display_custom_fields($id_empr,$id_expl);
+								if($pmb_play_pret_sound)$alert_sound_list[]="information";
+								$erreur_affichage.= "<input type='button' class='bouton' value='${msg[76]}' onClick=\"document.location='circ.php?categ=pret&sub=pret_annulation&id_empr=".$id_empr."&id_expl=".$id_expl."&cb_doc=".$cb_doc."&short_loan=".$short_loan."'\" />";
+
+								if($pmb_printer_ticket_url) $erreur_affichage.="&nbsp;<a href='#' onclick=\"print_ticket('./ajax.php?module=circ&categ=print_pret&sub=one&id_empr=".$id_empr."&id_expl=".$id_expl."&cb_doc=$cb_doc'); return false;\"><img src='".get_url_icon('print.gif')."' alt='Imprimer...' title='Imprimer...' class='align_middle' border='0'></a>";
+								else $erreur_affichage.= "&nbsp;<input type='button' class='bouton' value='".$msg["imprimer"]."' onclick=\"openPopUp('./pdf.php?pdfdoc=ticket_pret&cb_doc=$cb_doc&id_empr=$id_empr', 'print_PDF')\" /><a href='#' onclick=\"printer_jzebra_print_ticket('./ajax.php?module=circ&categ=zebra_print_pret&sub=one&id_empr=".$id_empr."&id_expl=".$id_expl."&cb_doc=$cb_doc'); return false;\"><img src='".get_url_icon('print.gif')."' alt='".htmlentities($msg['print_print'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['print_print'],ENT_QUOTES,$charset)."' class='align_middle' border='0'></a>";
+								$erreur_affichage.= "</div></div>";
+								if ($statut->expl_comment) $erreur_affichage.= "<div class='expl_comment'>".$statut->expl_comment."</div>";
+
+								$affichage = emprunteur::get_display_card($id_empr, $erreur_affichage);
+								// prise en compte du param d'envoi de ticket de prêt électronique
+								if ($empr_electronic_loan_ticket && $param_popup_ticket) {
+									electronic_ticket($id_empr, $cb_doc);
+								}
+
+								// prise en compte du param popup_ticket
+								if ($param_popup_ticket == 1) {
+									if(!$pmb_printer_ticket_url) {
+										if ($pmb_printer_name) {
+											$affichage.= "<script type='text/javascript'>printer_jzebra_print_ticket('./ajax.php?module=circ&categ=zebra_print_pret&sub=one&id_empr=".$id_empr."&id_expl=".$id_expl."&cb_doc=$cb_doc');</script>";
+										} else {
+											print "<script type='text/javascript'>openPopUp('./pdf.php?pdfdoc=ticket_pret&cb_doc=$cb_doc&id_empr=$id_empr', 'print_PDF');</script>";
 										}
+									} else {
+										$affichage.= "<script type='text/javascript'>print_ticket('./ajax.php?module=circ&categ=print_pret&sub=one&id_empr=".$id_empr."&id_expl=".$id_expl."&cb_doc=$cb_doc');</script>";
 									}
-									// ajout du bouton d'annulation violente
-									$erreur_affichage = $information_group."<hr />
-										<div class='row'>
-										<div class='colonne10'><img src='./images/info.png' /></div>
-										<div class='colonne-suite'>$titre_prete : <span class='erreur'>".$msg[384]."</span><br />
-										";
-									$erreur_affichage .= get_display_custom_fields($id_empr,$id_expl);
-									if($pmb_play_pret_sound)$alert_sound_list[]="information";
-									$erreur_affichage.= "<input type='button' class='bouton' value='${msg[76]}' onClick=\"document.location='circ.php?categ=pret&sub=pret_annulation&id_empr=".$id_empr."&id_expl=".$id_expl."&cb_doc=".$cb_doc."&short_loan=".$short_loan."'\" />";
-
-									if($pmb_printer_ticket_url) $erreur_affichage.="&nbsp;<a href='#' onclick=\"print_ticket('./ajax.php?module=circ&categ=print_pret&sub=one&id_empr=".$id_empr."&id_expl=".$id_expl."&cb_doc=$cb_doc'); return false;\"><img src='./images/print.gif' alt='Imprimer...' title='Imprimer...' align='middle' border='0'></a>";
-									else $erreur_affichage.= "&nbsp;<input type='button' class='bouton' value='${msg[1300]}' onclick=\"openPopUp('./pdf.php?pdfdoc=ticket_pret&cb_doc=$cb_doc&id_empr=$id_empr', 'ticket', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\" />";
-									$erreur_affichage.= "</div></div>";
-									if ($statut->expl_comment) $erreur_affichage.= "<div class='expl_comment'>".$statut->expl_comment."</div>";
-
-									$empr = new emprunteur($id_empr, $erreur_affichage, FALSE, 1);
-									$affichage = $empr -> fiche;
-									// prise en compte du param d'envoi de ticket de prêt électronique
-									if ($empr_electronic_loan_ticket && $param_popup_ticket) {
-										electronic_ticket($id_empr, $cb_doc);
-									}
-
-									// prise en compte du param popup_ticket
-									if ($param_popup_ticket == 1)
-										if(!$pmb_printer_ticket_url)
-											print "<script type='text/javascript'>openPopUp('./pdf.php?pdfdoc=ticket_pret&cb_doc=$cb_doc&id_empr=$id_empr', 'ticket', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes');</script>";
-										else
-											$affichage.= "<script type='text/javascript'>print_ticket('./ajax.php?module=circ&categ=print_pret&sub=one&id_empr=".$id_empr."&id_expl=".$id_expl."&cb_doc=$cb_doc');</script>";
-									} // fin else if ($statut -> flag & ALREADY_LOANED || $statut -> flag & ALREADY_BORROWED) {
+								}
+							} // fin else if ($statut -> flag & ALREADY_LOANED || $statut -> flag & ALREADY_BORROWED) {
 						} // fin de quoi ???
 					} else { // pas d'exemplaire avec ce code-barre
-						$erreur_affichage = "<hr />
-						<div class='row'>
-						<div class='colonne10'><img src='./images/error.png' /></div>
-						<div class='colonne-suite'><b>$cb_doc</b> : <span class='erreur'>$msg[367]</span></div>
-						</div><br />";
+						$erreur_affichage = pret::get_display_error("<b>".$cb_doc."</b>", $msg[367]);
 						// on a un code-barres, est-ce un cb empr ?
 						$query_empr = "select id_empr, empr_cb from empr where empr_cb='".$cb_doc."' ";
-						$result_empr = pmb_mysql_query($query_empr, $dbh);
+						$result_empr = pmb_mysql_query($query_empr);
 						if(pmb_mysql_num_rows($result_empr)) {
 							$erreur_affichage.="<script type=\"text/javascript\">document.location='./circ.php?categ=pret&form_cb=$cb_doc'</script>";
-							}
+						}
 						$alert_sound_list[]="critique";
-
-						$empr = new emprunteur($id_empr, $erreur_affichage, FALSE, 1);
-						$affichage = $empr -> fiche;
+						$affichage = emprunteur::get_display_card($id_empr, $erreur_affichage);
 					}
 				} else { // aucun $id_expl ni de $cd_doc
-					$erreur_affichage = "<hr />
-					<div class='row'>
-					<div class='colonne10'></div>
-					<div class='colonne-suite'><span class='erreur'></span></div>
-					</div><br />";
-					$empr = new emprunteur($id_empr, $erreur_affichage, FALSE, 1);
-					$affichage = $empr -> fiche;
+					$erreur_affichage = pret::get_display_error();
+					$affichage = emprunteur::get_display_card($id_empr, $erreur_affichage);
 				}
 			} else { // date adhésion dépassée et ici on bloque !!!
-				$erreur_affichage = "<hr />
-				<div class='row'>
-				<div class='colonne10'></div>
-				<div class='colonne-suite'><span class='erreur'>$msg[pret_impossible_adhesion]</span></div>
-				</div><br />";
-				$empr = new emprunteur($id_empr, $erreur_affichage, FALSE, 1);
-				$affichage = $empr -> fiche;
+				$erreur_affichage = pret::get_display_error('', $msg['pret_impossible_adhesion']);
+				$affichage = emprunteur::get_display_card($id_empr, $erreur_affichage);
 			}
 		} else {
 			// afficher 'lecteur inconnu'
-			$erreur_affichage = "<hr />
-			<div class='row'>
-			<div class='colonne10'><img src='./images/error.png' /></div>
-			<div class='colonne-suite'><span class='erreur'>$msg[388]</span></div>
-			</div><br />";
-			$alert_sound_list[]="critique";
+			$erreur_affichage = pret::get_display_error('', $msg[388]);
 			print $erreur_affichage;
 		}
-
 	} else { // pas d'idempr
 		$query = "select id_empr as id from empr where empr_cb='$form_cb' ";
-		$result = pmb_mysql_query($query, $dbh);
+		$result = pmb_mysql_query($query);
 		$id = @ pmb_mysql_result($result, '0', 'id');
 		if (($id) && ($form_cb)) {
-			$erreur_affichage = "<hr />
-			<div class='row'>
-			<div class='colonne10'></div>
-			<div class='colonne-suite'><span class='erreur'></span></div>
-			</div><br />";
+			$erreur_affichage = pret::get_display_error();
 			if ($id_notice || $id_bulletin) {
 				if ($type_resa) {
 					echo "<script type='text/javascript'> parent.location.href='./circ.php?categ=resa_planning&resa_action=add_resa&id_empr=$id&groupID=$groupID&id_notice=$id_notice&id_bulletin=$id_bulletin'; </script>";
@@ -595,32 +524,31 @@ function magnetise(commande){
 					echo "<script type='text/javascript'> parent.location.href='./circ.php?categ=resa&id_empr=$id&groupID=$groupID&id_notice=$id_notice&id_bulletin=$id_bulletin'; </script>";
 				}
 			} else {
-				if($serialcirc_action == "delete"){
+				if ($serialcirc_action == "delete") {
 					$serialcirc_empr = new serialcirc_empr($id);
 					$msgs = $serialcirc_empr->unsbuscribe($serialcirc);
-					if(count($msgs['errors'])){
+					if(is_array($msgs['errors']) && count($msgs['errors'])){
 						$affichage.= return_error_message($msg['540'], implode("<br />",$msgs['errors']));
 						$affichage.=" <div class='row'>&nbsp;</div>";
 					}
-				}else if($serialcirc_action == "tr"){
+				} else if (($serialcirc_action == "tr") || ($serialcirc_action == "dup")) {
 					$serialcirc_empr = new serialcirc_empr($id);
-					$msgs = $serialcirc_empr->forward($serialcirc,$serialcirc_new_empr);
-					if(count($msgs['messages'])){
+					$msgs = $serialcirc_empr->forward($serialcirc, $serialcirc_new_empr, ($serialcirc_action == 'dup'));
+					if(is_array($msgs['messages']) && count($msgs['messages'])){
 						$affichage.="
 						<table>
 							<tr>
-								<td><img src='./images/idea.gif' align='left'></td>
+								<td><img src='".get_url_icon('idea.gif')."' class='align_left'></td>
 								<td><p><strong>". implode("<br>",$msgs['messages'])."</strong></p></td>
 							</tr>
 						</table>";
 						$affichage.=" <div class='row'>&nbsp;</div>";
-					}if(count($msgs['errors'])){
+					}if(is_array($msgs['errors']) && count($msgs['errors'])){
 						$affichage.= return_error_message($msg['540'], implode("<br>",$msgs['errors']));
 						$affichage.=" <div class='row'>&nbsp;</div>";
 					}
 				}
-				$empr = new emprunteur($id, $erreur_affichage, FALSE, 1);
-				$affichage.= $empr -> fiche;
+				$affichage.= emprunteur::get_display_card($id, $erreur_affichage);
 			}
 		} else {
 			include ('./circ/empr/empr_list.inc.php');
@@ -632,7 +560,7 @@ if(SESSrights & ACQUISITION_AUTH){
 	global $nb_per_page;
 	$ori = ($id_empr ? $id_empr : $id);
 	$req = "select count(id_suggestion) as nb, sugg_location from suggestions, suggestions_origine where num_suggestion=id_suggestion and origine='".$ori."' and type_origine='1'  ";
-	$res=pmb_mysql_query($req,$dbh);
+	$res=pmb_mysql_query($req);
 	$btn_sug = "";
 	if($res && pmb_mysql_num_rows($res)){
 		$sug = pmb_mysql_fetch_object($res);
@@ -647,49 +575,24 @@ if(SESSrights & ACQUISITION_AUTH){
 //print $erreur_affichage ;
 print pmb_bidi($affichage);
 
-// <-------------- do_confirm_box() ------------>
-// fabrique une boite de confirmation pour la fiche lecteur
-function do_confirm_box($id_empr, $id_expl, $cb_doc, $message, $confirm_flag) {
-	global $confirm;
-	global $msg;
-	global $alert_sound_list;// l'utilisateur veut-il les sons d'alerte
-	global $quota,$pret_arc;
-
-	$alert_sound_list[]="question";
-
-	$warning.= "<table border='0' cellpadding='3' width='100%'>
-			<tr>
-				<td>
-					<span><img src='./images/error.gif' />document $cb_doc</span>
-				</td>
-			</tr>
-			<tr>
-				<td>
-					$message
-				</td>
-			</tr>
-			<tr>
-				<td>
-					<input type='button' class='bouton' value='${msg[76]}' onClick=\"document.location='./circ.php?categ=pret&id_empr=$id_empr'\" />";
-	$confirm = $confirm + $confirm_flag;
-	$warning.= "&nbsp;
-					<input type='button' class='bouton' value='${msg[389]}' onClick=\"document.location='./circ.php?categ=pret&id_empr=$id_empr&cb_doc=$cb_doc&confirm=$confirm&quota=$quota&pret_arc=$pret_arc'\" />
-				</td>
-			</tr>
-			</table>";
-	return $warning;
-}
-
-// <-------------- check_empr --------------->
-// teste l'id_empr passée en paramètre (check si l'emprunteur existe)
-function check_empr($id) {
-	global $dbh;
-	if (!$id)
-		return FALSE;
-	$query = "select count(1) as qte from empr where id_empr='$id' ";
-	$result = pmb_mysql_query($query, $dbh);
-	return pmb_mysql_result($result, 0, 0);
-
+function get_loan_trust_message($notice_id, $bulletin_id) {
+    global $pmb_loan_trust_management, $msg;
+    
+    if ($notice_id || $bulletin_id) {
+        if ($notice_id) {
+            $qd = "select count(*) from exemplaires join docs_statut on idstatut=expl_statut and pret_flag=1 where expl_notice=".$notice_id;
+        } else if ($bulletin_id) {
+            $qd = "select count(*) from exemplaires join docs_statut on idstatut=expl_statut and pret_flag=1 where expl_bulletin=".$bulletin_id;
+        }
+        $rd = pmb_mysql_query($qd);
+        if (pmb_mysql_num_rows($rd)) {
+            $nd = pmb_mysql_result($rd,0,0);
+            $param = explode(',', $pmb_loan_trust_management);
+            $loan_trust_management = $param[0];
+            return sprintf("<br />".$msg['loan_trust_warning'],$loan_trust_management, $nd);
+        }
+    }
+    return '';
 }
 
 // <------------- check_quota --------------->
@@ -697,7 +600,8 @@ function check_empr($id) {
 function check_quota($id_empr, $id_expl) {
 	global $msg;
 	global $pmb_quotas_avances, $pmb_short_loan_management, $short_loan;
-
+	
+	$error = '';
 	if ($pmb_quotas_avances) {
 		//Initialisation des quotas pour nombre de documents prêtables
 		if ($pmb_short_loan_management && $short_loan) {
@@ -718,18 +622,6 @@ function check_quota($id_empr, $id_expl) {
 	return $error;
 }
 
-// <-------------- get_expl_id_from_cb() --------------->
-// récupère l'id d'un exemplaire d'après son code barre
-function get_expl_id_from_cb($cb) {
-	global $dbh;
-	if (!$cb)
-		return FALSE;
-	$query = "select expl_id as id from exemplaires where expl_cb='$cb' limit 1";
-	$result = pmb_mysql_query($query, $dbh);
-	return @ pmb_mysql_result($result, '0', 'id');
-
-}
-
 // <-------------- check_document() --------------->
 // récupère différents paramètres sur le document à emprunter
 /* ce qui nous intéresse :
@@ -747,10 +639,10 @@ function get_expl_id_from_cb($cb) {
 
 
 function check_document($id_expl, $id_empr) {
-
-	global $dbh;
 	global $pmb_resa_planning,$pmb_location_resa_planning;
 	global $empr_archivage_prets, $pmb_loan_trust_management;
+	global $loan_trust_management_not_blocking;
+	
 	$retour = new stdClass();
 	$retour -> flag = 0;
 
@@ -766,7 +658,7 @@ function check_document($id_expl, $id_empr) {
 	$query.= " and l.idlocation=e.expl_location";
 	$query.= " and t.idtyp_doc =e.expl_typdoc";
 	$query.= " limit 1";
-	$result = pmb_mysql_query($query, $dbh);
+	$result = pmb_mysql_query($query);
 
 	// exemplaire inconnu
 	if (!pmb_mysql_num_rows($result)) {
@@ -787,7 +679,7 @@ function check_document($id_expl, $id_empr) {
 	$retour->reservable=$expl->reservable;
 	// une autre query pour savoir si l'exemplaire est en prêt...
 	$query = "select pret_idempr from pret where pret_idexpl=$id_expl limit 1";
-	$result = pmb_mysql_query($query, $dbh);
+	$result = pmb_mysql_query($query);
 	if (@ pmb_mysql_num_rows($result)) {
 		// l'exemplaire est déjà en prêt
 		$empr = pmb_mysql_result($result, '0', 'pret_idempr');
@@ -799,8 +691,8 @@ function check_document($id_expl, $id_empr) {
 	// cas de l'exemplaire qui a une note
 	if ($expl -> note) {
 		$retour -> flag += HAS_NOTE;
-		$retour -> note = $expl -> note;
 	}
+	$retour->note = $expl->note;
 
 	// cas de l'exemplaire en consultation sur place
 	if (!$expl -> pretable) {
@@ -813,8 +705,8 @@ function check_document($id_expl, $id_empr) {
 
 	// cas des réservations
 	// on checke si l'exemplaire a une réservation
-	$query = "select resa_idempr as empr, id_resa, resa_cb, concat(ifnull(concat(empr_nom,' '),''),empr_prenom) as nom_prenom, empr_cb from resa left join empr on resa_idempr=id_empr where resa_idnotice='$expl->notice' and resa_idbulletin='$expl->bulletin' order by resa_date limit 1";
-	$result = pmb_mysql_query($query, $dbh);
+	$query = "select resa_idempr as empr, id_resa, resa_cb, concat(ifnull(concat(empr_nom,' '),''),empr_prenom) as nom_prenom, empr_cb from resa left join empr on resa_idempr=id_empr where resa_idnotice='$expl->notice' and resa_idbulletin='$expl->bulletin' and resa_cb='$expl->cb' order by resa_date limit 1";
+	$result = pmb_mysql_query($query);
 	if (pmb_mysql_num_rows($result)) {
 		$reservataire = pmb_mysql_result($result, 0, 'empr');
 		$id_resa = pmb_mysql_result($result, 0, 'id_resa');
@@ -836,6 +728,27 @@ function check_document($id_expl, $id_empr) {
 			$reservataire_nom_prenom = $nom_prenom ;
 			$reservataire_empr_cb = $empr_cb ;
 		}
+	}else{
+		//réservation non validée sur la notice pour cet emprunteur ?
+		$query = "select resa_idempr as empr, id_resa, resa_cb, concat(ifnull(concat(empr_nom,' '),''),empr_prenom) as nom_prenom, empr_cb from resa left join empr on resa_idempr=id_empr where resa_idnotice='$expl->notice' and resa_idbulletin='$expl->bulletin' and resa_cb='' and resa_idempr=".$id_empr." order by resa_date limit 1";
+		$result = pmb_mysql_query($query);
+		if (pmb_mysql_num_rows($result)) {
+			$reservataire = pmb_mysql_result($result, 0, 'empr');
+			$id_resa = pmb_mysql_result($result, 0, 'id_resa');
+			$resa_cb = pmb_mysql_result($result, 0, 'resa_cb');
+			$nom_prenom = pmb_mysql_result($result, 0, 'nom_prenom');
+			$empr_cb = pmb_mysql_result($result, 0, 'empr_cb');
+			$retour -> idnotice = $expl -> notice;
+			$retour -> idbulletin = $expl -> bulletin;
+			$retour -> id_resa = $id_resa ;
+			$retour -> resa_cb = $resa_cb ;
+			// la réservation est pour ce lecteur
+			$retour -> flag += HAS_RESA_GOOD;
+		} else {
+			$retour -> idnotice = 0;
+			$retour -> idbulletin = 0;
+			$retour -> id_resa = 0;
+		}
 	}
 
 	// cas des prévisions
@@ -850,7 +763,7 @@ function check_document($id_expl, $id_empr) {
 			$q.= "and resa_loc_retrait in (0,$expl->expl_location) ";
 		}
 		$q.= "and resa_date_fin >= curdate() ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		$nb_resa = pmb_mysql_result($r,0,0);
 
 		// On compte les exemplaires disponibles et réservables pour cette localisation
@@ -862,7 +775,7 @@ function check_document($id_expl, $id_empr) {
 		if ($pmb_location_resa_planning) {
 			$q.= "and expl_location=".$expl->expl_location." ";
 		}
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		$nb_dispo = pmb_mysql_result($r, 0, 0);
 		
 		if (($nb_dispo-$nb_resa) <= 0 ) {
@@ -871,21 +784,31 @@ function check_document($id_expl, $id_empr) {
 	}
 
 	//cas du non monopole
+	$loan_trust_management_not_blocking = 0;
 	if ($pmb_loan_trust_management) {
+	    $param = explode(',', $pmb_loan_trust_management);
+	    $loan_trust_management = $param[0];
+	    if (count($param) == 2) {
+	        if ($param[1]) {
+	            $loan_trust_management_not_blocking = 1;
+	        }
+	    }
 		$np=0;
 		$npa=0;
 		$qp = "select count(*) from pret join exemplaires on pret_idexpl=expl_id where pret_idempr='".$id_empr."' ";
 		$qp.= (($expl->notice)?"and expl_notice='".$expl->notice."' ":"and expl_bulletin='".$expl->bulletin."' ");
-		$rp = pmb_mysql_query($qp, $dbh);
+		$rp = pmb_mysql_query($qp);
 		$np=pmb_mysql_result($rp,0,0);
 		if($empr_archivage_prets) {
 			$qpa = "select count(*) from pret_archive where arc_id_empr='".$id_empr."' ";
 			$qpa.= (($expl->notice)?"and arc_expl_notice='".$expl->notice."' ":"and arc_expl_bulletin='".$expl->bulletin."' ");
-			$qpa.= "and date_add(arc_fin, interval ".$pmb_loan_trust_management." day) >= now()";
-			$rpa = pmb_mysql_query($qpa, $dbh);
+			$qpa.= "and date_add(arc_fin, interval ".$loan_trust_management." day) >= now()";
+			$rpa = pmb_mysql_query($qpa);
 			$npa=pmb_mysql_result($rpa,0,0);
 		}
-		if ($np || $npa) {
+		if (!($np || $npa)) {
+		    $loan_trust_management_not_blocking = 0;   
+		} elseif (($np || $npa) && !$loan_trust_management_not_blocking) {
 			$retour -> flag += IS_TRUSTED;
 		}
 	}
@@ -896,8 +819,7 @@ function check_document($id_expl, $id_empr) {
 
 // ajoute le prêt en table
 function add_pret($id_empr, $id_expl, $cb_doc,$resarc_id=0,$short_loan=0) {
-	// le lien MySQL
-	global $dbh, $msg;
+	global $msg;
 	global $pmb_quotas_avances, $pmb_utiliser_calendrier;
 	global $pmb_gestion_financiere,$pmb_gestion_tarif_prets;
 	global $include_path,$lang;
@@ -916,7 +838,7 @@ function add_pret($id_empr, $id_expl, $cb_doc,$resarc_id=0,$short_loan=0) {
 	// calcul de la duree du pret si la date de fin est definie par les previsions
 	if($resarc_id && $pmb_resa_planning==1) {
 		$q = 'select datediff(resarc_fin,"'.$pret_date.'") from resa_archive where resarc_id ='.$resarc_id.' and resarc_resa_planning_id_resa!=0 limit 1';
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		if(pmb_mysql_num_rows($r)) {
 			$duree_pret = pmb_mysql_result($r,0,0);
 		}
@@ -936,7 +858,7 @@ function add_pret($id_empr, $id_expl, $cb_doc,$resarc_id=0,$short_loan=0) {
 				$query.= " FROM exemplaires, docs_type";
 				$query.= " WHERE expl_id='".$id_expl;
 				$query.= "' and idtyp_doc=expl_typdoc LIMIT 1";
-				$result = @ pmb_mysql_query($query, $dbh) or die("can't SELECT exemplaires ".$query);
+				$result = @ pmb_mysql_query($query) or die("can't SELECT exemplaires ".$query);
 				$expl_properties = pmb_mysql_fetch_object($result);
 				$duree_pret = $expl_properties -> duree_pret;
 			}
@@ -953,7 +875,7 @@ function add_pret($id_empr, $id_expl, $cb_doc,$resarc_id=0,$short_loan=0) {
 					$query.= " FROM exemplaires, docs_type";
 					$query.= " WHERE expl_id='".$id_expl;
 					$query.= "' and idtyp_doc=expl_typdoc LIMIT 1";
-					$result = @ pmb_mysql_query($query, $dbh) or die("can't SELECT exemplaires ".$query);
+					$result = @ pmb_mysql_query($query) or die("can't SELECT exemplaires ".$query);
 					$expl_properties = pmb_mysql_fetch_object($result);
 					$duree_pret = $expl_properties -> duree_pret;
 			}
@@ -978,13 +900,17 @@ function add_pret($id_empr, $id_expl, $cb_doc,$resarc_id=0,$short_loan=0) {
 		if (($pret_depasse_adhes==0) || $pmb_pret_date_retour_adhesion_depassee) {
 			$rqt_date = "select date_ouverture from ouvertures where ouvert=1 and to_days(date_ouverture)>=to_days('$date_retour') and num_location=$deflt2docs_location order by date_ouverture ";
 			$resultatdate=pmb_mysql_query($rqt_date);
-			$res=@pmb_mysql_fetch_object($resultatdate) ;
-			if ($res->date_ouverture) $date_retour=$res->date_ouverture ;
+			if(pmb_mysql_num_rows($resultatdate)) {
+				$res = pmb_mysql_fetch_object($resultatdate) ;
+				if ($res->date_ouverture) $date_retour=$res->date_ouverture ;
+			}
 		} else {
 			$rqt_date = "select date_ouverture from ouvertures where date_ouverture>=sysdate() and ouvert=1 and to_days(date_ouverture)<=to_days('$date_retour') and num_location=$deflt2docs_location order by date_ouverture DESC";
 			$resultatdate=pmb_mysql_query($rqt_date);
-			$res=@pmb_mysql_fetch_object($resultatdate) ;
-			if ($res->date_ouverture) $date_retour=$res->date_ouverture ;
+			if(pmb_mysql_num_rows($resultatdate)) {
+				$res = pmb_mysql_fetch_object($resultatdate) ;
+				if ($res->date_ouverture) $date_retour=$res->date_ouverture ;
+			}
 		}
 		// Si la date_retour, calculée ci-dessus d'après le calendrier, dépasse l'adhésion, alors que c'est interdit,
 		// la date de retour doit etre le dernier jour ouvert
@@ -1009,7 +935,7 @@ function add_pret($id_empr, $id_expl, $cb_doc,$resarc_id=0,$short_loan=0) {
 	$query.= "pret_retour = '$date_retour', ";
 	$query.= "retour_initial = '$date_retour', ";
 	$query.= "short_loan_flag = ".(($pmb_short_loan_management && $short_loan)?"'1'":"'0'");
-	$result = @ pmb_mysql_query($query, $dbh) or die(pmb_mysql_error()."<br />can't INSERT into pret".$query);
+	pmb_mysql_query($query) or die(pmb_mysql_error()."<br />can't INSERT into pret".$query);
 
 	// insérer la trace en stat, récupérer l'id et le mettre dans la table des prêts pour la maj ultérieure
 	$stat_avant_pret = pret_construit_infos_stat ($id_expl) ;
@@ -1017,7 +943,7 @@ function add_pret($id_empr, $id_expl, $cb_doc,$resarc_id=0,$short_loan=0) {
 	$query = "update pret SET pret_arc_id='$stat_id' where ";
 	$query.= "pret_idempr = '".$id_empr."' and ";
 	$query.= "pret_idexpl = '".$id_expl."' ";
-	$result = @ pmb_mysql_query($query, $dbh) or die("can't update pret for stats ".$query);
+	pmb_mysql_query($query) or die("can't update pret for stats ".$query);
 	audit::insert_creation (AUDIT_PRET, $stat_id) ;
 
 	//enregistrer les champs perso pret
@@ -1026,26 +952,26 @@ function add_pret($id_empr, $id_expl, $cb_doc,$resarc_id=0,$short_loan=0) {
 	
 	if($resarc_id){
 		$rqt_arch = "UPDATE resa_archive SET resarc_arcpretid = $stat_id WHERE resarc_id = '".$resarc_id."' ";
-		@ pmb_mysql_query($rqt_arch, $dbh);
+		pmb_mysql_query($rqt_arch);
 	}
 	$query = "update exemplaires SET ";
 	$query.= "last_loan_date = sysdate() ";
 	$query.= "where expl_id= '".$id_expl."' ";
-	$result = @ pmb_mysql_query($query, $dbh) or die("can't update last_loan_date in exemplaires : ".$query);
+	pmb_mysql_query($query) or die("can't update last_loan_date in exemplaires : ".$query);
 
 	$query = "update exemplaires SET ";
 	$query.= "expl_retloc=0 ";
 	$query.= "where expl_id= '".$id_expl."' ";
-	$result = @ pmb_mysql_query($query, $dbh) or die("can't update expl_retloc in exemplaires : ".$query);
+	pmb_mysql_query($query) or die("can't update expl_retloc in exemplaires : ".$query);
 
 	$query = "update empr SET ";
 	$query.= "last_loan_date = sysdate() ";
 	$query.= "where id_empr= '".$id_empr."' ";
-	$result = @ pmb_mysql_query($query, $dbh) or die("can't update last_loan_date in empr : ".$query);
+	pmb_mysql_query($query) or die("can't update last_loan_date in empr : ".$query);
 
 	$query = "delete from resa_ranger ";
 	$query .= "where resa_cb='".$cb_doc."'";
-	$result = @ pmb_mysql_query($query, $dbh) or die("can't delete cb_doc in resa_ranger : ".$query);
+	pmb_mysql_query($query) or die("can't delete cb_doc in resa_ranger : ".$query);
 
 
 	//Débit du compte lecteur si nécessaire
@@ -1059,16 +985,13 @@ function add_pret($id_empr, $id_expl, $cb_doc,$resarc_id=0,$short_loan=0) {
 				$query.= " WHERE expl_id='".$id_expl;
 				$query.= "' and idtyp_doc=expl_typdoc LIMIT 1";
 
-				$result = @ pmb_mysql_query($query, $dbh) or die("can't SELECT exemplaires ".$query);
+				$result = @ pmb_mysql_query($query) or die("can't SELECT exemplaires ".$query);
 				$expl_tarif = pmb_mysql_fetch_object($result);
 				$tarif_pret = $expl_tarif -> tarif_pret;
 
 				break;
 			case 2:
 				//Gestion avancée
-				//Initialisation Quotas
-				global $_parsed_quotas_;
-				$_parsed_quotas_=false;
 				$qt_tarif=new quota("COST_LEND_QUOTA","$include_path/quotas/own/$lang/finances.xml");
 				$struct["READER"]=$id_empr;
 				$struct["EXPL"]=$id_expl;
@@ -1126,81 +1049,66 @@ function add_pret($id_empr, $id_expl, $cb_doc,$resarc_id=0,$short_loan=0) {
 		etat_demande != 3 and etat_demande!=2 and etat_demande!=5 and
 		num_expl =$id_expl and etat_transfert=0 and sens_transfert=0
 		";
-		pmb_mysql_query($req, $dbh);
+		pmb_mysql_query($req);
 	}
 	// invalidation des résas avec ce code-barre, au cas où
 	// $query = "update resa SET resa_cb='' where resa_cb='".$cb_doc."' ";
-	// $result = @ pmb_mysql_query($query, $dbh) or die("can't update resa ".$query);
+	// $result = @ pmb_mysql_query($query) or die("can't update resa ".$query);
+	
+	
+	/**
+	 * Publication d'un évenement à l'enregistrement du prêt en base (pièges passés et prêt validé (quotas etc..) )
+	 */
+	$evt_handler = events_handler::get_instance();
+	$event = new event_loan("loan", "add_loan");
+	$event->set_id_loan($stat_id);
+	$event->set_id_empr($id_empr);
+	$evt_handler->send($event);
 
 }
 
 // efface une résa pour un emprunteur donné et réaffecte le cb éventuellement
 function del_resa($id_empr, $id_notice, $id_bulletin, $cb_encours_de_pret) {
-
-	global $dbh;
-
 	if (!$id_empr || (!$id_notice && !$id_bulletin))
 		return FALSE;
 
-	if (!$id_notice)
-		$id_notice = 0;
-	if (!$id_bulletin)
-		$id_bulletin = 0;
+	$id_notice += 0;
+	$id_bulletin += 0;
 	$rqt = "select resa_cb, id_resa, resa_planning_id_resa from resa where resa_idnotice='".$id_notice."' and resa_idbulletin='".$id_bulletin."'  and resa_idempr='".$id_empr."' ";
-	$res = pmb_mysql_query($rqt, $dbh);
-	$obj = pmb_mysql_fetch_object($res);
-	$cb_recup = $obj->resa_cb;
-	$id_resa = $obj->id_resa;
-
-	// suppression resa
-	$rqt = "delete from resa where id_resa='".$id_resa."' ";
-	$res = pmb_mysql_query($rqt, $dbh);
-
-	// suppression de la prévision associée à la resa
-	resa_planning::delete($obj->resa_planning_id_resa);
-
-	// si on delete une resa à partir d'un prêt, on invalide la résa qui était validée avec le cb, mais on ne change pas les dates, ça sera fait par affect_cb
-	$rqt_invalide_resa = "update resa set resa_cb='' where resa_cb='".$cb_encours_de_pret."' " ;
-	$res = pmb_mysql_query($rqt_invalide_resa, $dbh) ;
-
-	// réaffectation du doc éventuellement
-	if ($cb_recup != $cb_encours_de_pret) {
-		// les cb sont différents
-		if (!verif_cb_utilise($cb_recup)) {
-			// le cb qui était affecté à la résa qu'on vient de supprimer n'est pas utilisé
-			// on va affecter le cb_récupéré à une resa non validée
-			$res_affectation = affecte_cb($cb_recup) ;
-			if (!$res_affectation && $cb_recup) {
-				// cb non réaffecté, il faut transférer les infos de la résa dans la table des docs à ranger
-				$rqt = "insert into resa_ranger (resa_cb) values ('".$cb_recup."') ";
-				$res = pmb_mysql_query($rqt, $dbh);
+	$res = pmb_mysql_query($rqt);
+	if(pmb_mysql_num_rows($res)) {
+		$obj = pmb_mysql_fetch_object($res);
+		$cb_recup = $obj->resa_cb;
+		$id_resa = $obj->id_resa;
+	
+		// suppression resa
+		$rqt = "delete from resa where id_resa='".$id_resa."' ";
+		pmb_mysql_query($rqt);
+	
+		// suppression de la prévision associée à la resa
+		resa_planning::delete($obj->resa_planning_id_resa);
+		
+		// réaffectation du doc éventuellement
+		if ($cb_recup != $cb_encours_de_pret) {
+			// les cb sont différents
+			if (!verif_cb_utilise($cb_recup)) {
+				// le cb qui était affecté à la résa qu'on vient de supprimer n'est pas utilisé
+				// on va affecter le cb_récupéré à une resa non validée
+				$res_affectation = affecte_cb($cb_recup) ;
+				if (!$res_affectation && $cb_recup) {
+					// cb non réaffecté, il faut transférer les infos de la résa dans la table des docs à ranger
+					$rqt = "insert into resa_ranger (resa_cb) values ('".$cb_recup."') ";
+					pmb_mysql_query($rqt);
 				}
 			}
-		}
-	// Au cas où il reste des résa invalidées par resa_cb, on leur colle les dates comme il faut...
-	$rqt_invalide_resa = "update resa set resa_date_debut='0000-00-00', resa_date_fin='0000-00-00' where resa_cb='' " ;
-	$res = pmb_mysql_query($rqt_invalide_resa, $dbh) ;
-	return TRUE;
-}
-
-function get_display_custom_fields($id_empr,$id_expl) {
-	$p_perso=new pret_parametres_perso("pret");
-	if(!$p_perso->no_special_fields) {
-		$query_custom = "select pret_arc_id from pret
-			where pret_idempr='".$id_empr."' and pret_idexpl='".$id_expl."'";
-		$result_custom = pmb_mysql_query($query_custom);
-		if ($result_custom && pmb_mysql_result($result_custom,0,0)) {
-			$pret_arc_id = pmb_mysql_result($result_custom,0,0);
-			$perso_ = $p_perso->show_fields($pret_arc_id);
-			$perso="";
-			if (count($perso_["FIELDS"])) {
-				for ($i=0; $i<count($perso_["FIELDS"]); $i++) {
-					$perso .= "<div class='row'>".$perso_["FIELDS"][$i]["TITRE"];
-					$perso .= $perso_["FIELDS"][$i]["AFF"]."</div>";
-				}
-				$perso."<br />";
-			}
-			return $perso;
 		}
 	}
+	// si on delete une resa à partir d'un prêt, on invalide la résa qui était validée avec le cb, mais on ne change pas les dates, ça sera fait par affect_cb
+	$rqt_invalide_resa = "update resa set resa_cb='' where resa_cb='".$cb_encours_de_pret."' " ;
+	pmb_mysql_query($rqt_invalide_resa) ;
+	
+	// Au cas où il reste des résa invalidées par resa_cb, on leur colle les dates comme il faut...
+	$rqt_invalide_resa = "update resa set resa_date_debut='0000-00-00', resa_date_fin='0000-00-00' where resa_cb='' " ;
+	pmb_mysql_query($rqt_invalide_resa) ;
+	return TRUE;
 }

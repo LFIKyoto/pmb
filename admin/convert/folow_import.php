@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: folow_import.php,v 1.12 2015-06-19 07:35:06 vtouchard Exp $
+// $Id: folow_import.php,v 1.13 2018-02-26 17:01:59 apetithomme Exp $
 
 //Transmission ensuite du fichier converti
 $base_path = "../..";
@@ -39,7 +39,7 @@ if ($deliver==3) {
 		header("Content-Type: ".$mimetype);
 	}
 	header("Content-Length: ".filesize("$base_path/temp/$file_out"));
-	header("Content-Disposition: attachment; filename=".implode(".", $f).".$suffix");
+	header('Content-Disposition: attachment; filename="'.implode(".", $f).'.'.$suffix.'"');
 	@readfile("$base_path/temp/$file_out");
 	@unlink("$base_path/temp/$file_out");
 } else {

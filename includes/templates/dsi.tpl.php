@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dsi.tpl.php,v 1.72.2.1 2015-08-11 10:33:33 dgoron Exp $
+// $Id: dsi.tpl.php,v 1.91 2018-12-19 10:15:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -36,7 +36,9 @@ $dsi_menu = "
 <h3 onclick='menuHide(this,event)'>$msg[dsi_menu_docwatch]</h3>
 <ul>
 <li><a href='./dsi.php?categ=docwatch'>".$msg['dsi_menu_docwatch_definition']."</a></li>
-</ul>
+</ul>";
+$plugins = plugins::get_instance();
+$dsi_menu.= $plugins->get_menu('dsi')."
 </div>
 ";
 
@@ -77,23 +79,31 @@ $dsi_search_bannette_tmpl = "
 <h3>!!titre_formulaire!!</h3>
 <div class='form-contenu'>
 <div class='row'>
-	<div class='colonne2'>
+	<div class='colonne3'>
 		<div class='row'>
 			<label class='etiquette' for='form_cb'>!!message!!</label>
-			</div>
+		</div>
 		<div class='row'>
 			<input class='saisie-20em' id='form_cb' type='text' name='form_cb' value=\"!!cb_initial!!\" title='$msg[3000]' />
-			</div>
-		</div>
-	<div class='colonne_suite'>
-		<div class='row'>
-			<label class='etiquette' for='form_classement'>".$msg['dsi_classement']."</label>
-			</div>
-		<div class='row'>
-			!!classement!!
-			</div>
 		</div>
 	</div>
+	<div class='colonne3'>
+		<div class='row'>
+			<label class='etiquette' for='form_classement'>".$msg['dsi_classement']."</label>
+		</div>
+		<div class='row'>
+			!!classement!!
+		</div>
+	</div>
+	<div class='colonne_suite'>
+		<div class='row'>
+			<label class='etiquette' for='form_classement'>".$msg['dsi_nb_ban_par_page']."</label>
+		</div>
+		<div class='row'>
+			<input class='saisie-5em' id='nb_per_page' type='text' name='nb_per_page' value=\"!!nb_per_page!!\" title='".$msg['dsi_nb_ban_par_page']."' />
+		</div>
+	</div>
+</div>
 <div class='row'></div>
 </div>
 
@@ -144,7 +154,7 @@ document.forms['saisie_cb_ex'].elements['form_cb'].focus();
 
 // template pour la liste emprunteurs, bannettes ou équations
 $dsi_list_tmpl = "
-<h1>!!message_trouve!!</h1>
+<h3>!!message_trouve!!</h3>
 <script type='text/javascript' src='./javascript/sorttable.js'></script>
 <table border='0' width='100%' class='sortable'>
 !!list!!
@@ -153,8 +163,6 @@ $dsi_list_tmpl = "
 !!nav_bar!!
 </div>
 ";
-
-$selector_prop = "toolbar=no, dependent=yes, width=$selector_x_size, height=$selector_y_size, resizable=yes, scrollbars=yes";
 
 $dsi_desc_field = "
 <script src='javascript/ajax.js'></script>
@@ -172,73 +180,29 @@ $dsi_desc_field = "
 	</div>
 </div>
 <script type='text/javascript'>
-
+	ajax_parse_dom();
 	function add_categ() {
-		template = document.getElementById('addcateg');
-		categ=document.createElement('div');
-		categ.className='row';
-			
-		suffixe = eval('document.saisie_bannette.max_categ.value')
-		nom_id = 'f_categ'+suffixe
-		f_categ = document.createElement('input');
-		f_categ.setAttribute('name',nom_id);
-		f_categ.setAttribute('id',nom_id);
-		f_categ.setAttribute('type','text');
-		f_categ.className='saisie-80emr';
-		f_categ.setAttribute('value','');
-		f_categ.setAttribute('completion','categories_mul');
-		f_categ.setAttribute('autfield','f_categ_id'+suffixe);
-		
-		del_f_categ = document.createElement('input');
-		del_f_categ.setAttribute('id','del_f_categ'+suffixe);
-		del_f_categ.onclick=fonction_raz_categ;
-		del_f_categ.setAttribute('type','button');
-		del_f_categ.className='bouton';
-		del_f_categ.setAttribute('readonly','');
-		del_f_categ.setAttribute('value','$msg[raz]');
-			
-		f_categ_id = document.createElement('input');
-		f_categ_id.name='f_categ_id'+suffixe;
-		f_categ_id.setAttribute('type','hidden');
-		f_categ_id.setAttribute('id','f_categ_id'+suffixe);
-		f_categ_id.setAttribute('value','');
-			
-		categ.appendChild(f_categ);
-		space=document.createTextNode(' ');
-		categ.appendChild(space);
-		categ.appendChild(del_f_categ);
-		categ.appendChild(f_categ_id);
-			
-		template.appendChild(categ);
-		
-		document.saisie_bannette.max_categ.value=suffixe*1+1*1 ;
-		ajax_pack_element(f_categ);
+		templates.add_completion_field('f_categ', 'f_categ_id', 'categories_mul');
 	}
 	function fonction_selecteur_categ() {
 		name=this.getAttribute('id').substring(4);
 		name_id = name.substr(0,7)+'_id'+name.substr(7);
-		openPopUp('./select.php?what=categorie&caller=saisie_bannette&p1='+name_id+'&p2='+name+'&dyn=1', 'select_categ', 700, 500, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes');
-	}
-	function fonction_raz_categ() {
-		name=this.getAttribute('id').substring(4);
-		name_id = name.substr(0,7)+'_id'+name.substr(7);
-		document.getElementById(name_id).value=0;
-		document.getElementById(name).value='';
+		openPopUp('./select.php?what=categorie&caller=saisie_bannette&p1='+name_id+'&p2='+name+'&dyn=1', 'selector_category');
 	}
 </script>";
 $dsi_desc_first_desc = "
 <div class='row'>
-	<input type='hidden' name='max_categ' value=\"!!max_categ!!\" />
-	<input type='text' class='saisie-80emr' id='f_categ!!icateg!!' name='f_categ!!icateg!!' value=\"!!categ_libelle!!\" completion=\"categories_mul\" autfield=\"f_categ_id!!icateg!!\" />
+	<input type='hidden' id='max_categ' name='max_categ' value=\"!!max_categ!!\" />
+	<input type='text' class='saisie-30emr' id='f_categ!!icateg!!' name='f_categ!!icateg!!' value=\"!!categ_libelle!!\" completion=\"categories_mul\" autfield=\"f_categ_id!!icateg!!\" />
 		
-	<input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=categorie&caller='+this.form.name+'&p1=f_categ_id!!icateg!!&p2=f_categ!!icateg!!&dyn=1&parent=0&deb_rech=', 'select_categ', 700, 500, -2, -2, '$select_categ_prop')\" />
+	<input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=categorie&caller='+this.form.name+'&p1=f_categ_id!!icateg!!&p2=f_categ!!icateg!!&dyn=1&parent=0&deb_rech=', 'selector_category')\" />
 	<input type='button' class='bouton' value='$msg[raz]' onclick=\"this.form.f_categ!!icateg!!.value=''; this.form.f_categ_id!!icateg!!.value='0'; \" />
 	<input type='hidden' name='f_categ_id!!icateg!!' id='f_categ_id!!icateg!!' value='!!categ_id!!' />
 	<input type='button' class='bouton' value='+' onClick=\"add_categ();\"/>
 </div>";
 $dsi_desc_other_desc = "
 <div class='row'>
-	<input type='text' class='saisie-80emr' id='f_categ!!icateg!!' name='f_categ!!icateg!!' value=\"!!categ_libelle!!\" completion=\"categories_mul\" autfield=\"f_categ_id!!icateg!!\" />
+	<input type='text' class='saisie-30emr' id='f_categ!!icateg!!' name='f_categ!!icateg!!' value=\"!!categ_libelle!!\" completion=\"categories_mul\" autfield=\"f_categ_id!!icateg!!\" />
 		
 	<input type='button' class='bouton' value='$msg[raz]' onclick=\"this.form.f_categ!!icateg!!.value=''; this.form.f_categ_id!!icateg!!.value='0'; \" />
 	<input type='hidden' name='f_categ_id!!icateg!!' id='f_categ_id!!icateg!!' value='!!categ_id!!' />
@@ -255,13 +219,13 @@ $dsi_bannette_form = "
 	{
 		if(form.nom_bannette.value.replace(/^\s+|\s+$/g, '').length == 0)
 			{
-				alert(\"${msg[dsi_ban_nom_oblig]}\");
+				alert(\"".$msg['dsi_ban_nom_oblig']."\");
 				return false;
 			}
 		return true;
 	}
 function confirm_delete() {
-        result = confirm(\"${msg[confirm_suppr]}\");
+        result = confirm(\"".$msg['confirm_suppr']."\");
         if(result)
             document.location='./dsi.php?categ=bannettes&suite=delete&sub=!!type!!&id_bannette=!!id_bannette!!';
         else
@@ -390,70 +354,83 @@ function confirm_delete() {
 		</div>
 	</div>
 <div class='row'>
-	<div class='colonne2'>
+	<div class='colonne3'>
 		<label for='diffusion_email' class='etiquette'>$msg[dsi_ban_form_diff_email]</label>
 		<input type='checkbox' name='diffusion_email' !!diffusion_email!! value=\"1\" />
-		</div>
-	<div class='colonne_suite'>
-		<label for='bannette_nb_notices_diff' class='etiquette'>$msg[dsi_ban_form_nb_notices_diff]</label>
-		<input type='text' name='nb_notices_diff' value=\"!!nb_notices_diff!!\" />
-		</div>
 	</div>
+	<div class='colonne3'>
+		<label for='bannette_nb_notices_diff' class='etiquette'>$msg[dsi_ban_form_nb_notices_diff]</label>
+		<input type='text' name='nb_notices_diff' class='saisie-5em' value=\"!!nb_notices_diff!!\" />
+	</div>
+	<div class='colonne3'>		
+		<label for='bannette_aff_notice_number' class='etiquette'>".$msg["dsi_bannette_aff_notice_number"]."</label>
+		<input type='checkbox' name='bannette_aff_notice_number' !!bannette_aff_notice_number!! value=\"1\" />
+	</div>
+</div>
 <div class='row'>
-		<label for='update_type' class='etiquette'>$msg[dsi_ban_update_type]</label>
-		!!update_type!!
-		</div>
+	<label for='update_type' class='etiquette'>$msg[dsi_ban_update_type]</label>
+	!!update_type!!
+</div>
 <div class='row'>
+	<div class='colonne3'>
 		<label for='statut_not_account' class='etiquette'>".$msg["dsi_ban_statut_not_account"]."</label>
 		<input type='checkbox' name='statut_not_account' !!statut_not_account!! value=\"1\" />
+	</div>
+	<div class='colonne3'>
+		<label for='associated_campaign' class='etiquette'>".$msg["dsi_ban_associated_campaign"]."</label>
+		<input type='checkbox' name='associated_campaign' !!associated_campaign!! value=\"1\" />
+	</div>
 </div>
 <div class='row'><hr /></div>
 
 <div class='row'>
-	<label for='categorie_lecteurs' class='etiquette'>$msg[dsi_ban_form_categ_lect]</label>
-	!!categorie_lecteurs!!
-	<input type='hidden' name='majautocateg' value=\"0\" />
+	<div class='colonne3'>
+		<label for='categorie_lecteurs' class='etiquette'>$msg[dsi_ban_form_categ_lect]</label><br />
+		!!categorie_lecteurs!!
 	</div>
-<div class='row'>&nbsp;</div>
-<div class='row'>
-	<label for='groupe_lecteurs' class='etiquette'>$msg[dsi_ban_form_groupe_lect]</label>
-	!!groupe_lecteurs!!
-	<input type='hidden' name='majautogroupe' value=\"0\" />
+	<div class='colonne3'>
+		<label for='groupe_lecteurs' class='etiquette'>$msg[dsi_ban_form_groupe_lect]</label><br />
+		!!groupe_lecteurs!!
 	</div>
-
-
+	<div class='colonne3'>
+		<label for='majautocateg' class='etiquette'>".$msg['dsi_ban_confirm_modif_categ']."</label>
+		<input type='checkbox' name='majautocateg' value='1' /><br />
+		<label for='majautogroupe' class='etiquette'>".$msg['dsi_ban_confirm_modif_group']."</label>
+		<input type='checkbox' name='majautogroupe' value='1' /><br />
+	</div>
+</div>
+<div class='row'>	
+	<label for='bannette_opac_page_accueil' class='etiquette'>".$msg['bannette_opac_page_accueil']."</label>
+	<input type='checkbox' name='bannette_opac_accueil' !!bannette_opac_accueil_check!! value=\"1\" />
+</div>
 <div class='row'><hr /></div>	
 	!!desc_fields!!
 <div class='row'><hr /></div>
 
 <div class='row'>
-	<label for='num_panier' class='etiquette'>$msg[dsi_panier_diffuser]</label>
+	<label for='num_panier' class='etiquette'>".$msg['dsi_panier_diffuser']."</label>
 	!!num_panier!!
 	</div>
 <div class='row'>&nbsp;</div>
 <div class='row'>
-	<label for='limite_type' class='etiquette'>".$msg[dsi_ban_type_cumul]." : </label>
+	<label for='limite_type' class='etiquette'>".$msg['dsi_ban_type_cumul']." : </label>
 		!!limite_type!!
-	<label for='limite_nombre' class='etiquette'>".$msg[dsi_ban_cumul_taille]." : </label>
+	<label for='limite_nombre' class='etiquette'>".$msg['dsi_ban_cumul_taille']." : </label>
 		<input type='text' name='limite_nombre' class='saisie-5em' value=\"!!limite_nombre!!\" />
 	</div>
 
 <div class='row'>&nbsp;</div>
 <div class='row'>
 	<div class='colonne2'>
-	<label for='typeexport' class='etiquette'>".$msg[dsi_ban_typeexport]." : </label>
+	<label for='typeexport' class='etiquette'>".$msg['dsi_ban_typeexport']." : </label>
 		!!typeexport!!
 	</div>
 	<div class='colonne_suite'>
-	<label for='prefixe_fichier' class='etiquette'>".$msg[dsi_ban_prefixe_fichier]." : </label>
+	<label for='prefixe_fichier' class='etiquette'>".$msg['dsi_ban_prefixe_fichier']." : </label>
 		<input type='text' name='prefixe_fichier' class='saisie-15em' value=\"!!prefixe_fichier!!\" />
 	</div>
 	<div class='row'></div>
 </div>
-<div class='row'>	
-	<label for='bannette_opac_page_accueil' class='etiquette'>".$msg['bannette_opac_page_accueil']."</label>
-	<input type='checkbox' name='bannette_opac_accueil' !!bannette_opac_accueil_check!! value=\"1\" />
-</div>	
 
 <div class='row' id='liste_parametre' style='!!display_liste_param!!'>&nbsp;!!form_param!!</div>
 
@@ -522,13 +499,13 @@ $dsi_bannette_form_abo = "
 	{
 		if(form.nom_bannette.value.replace(/^\s+|\s+$/g, '').length == 0)
 			{
-				alert(\"${msg[dsi_ban_nom_oblig]}\");
+				alert(\"".$msg['dsi_ban_nom_oblig']."\");
 				return false;
 			}
 		return true;
 	}
 function confirm_delete() {
-        result = confirm(\"${msg[confirm_suppr]}\");
+        result = confirm(\"".$msg['confirm_suppr']."\");
         if(result)
             document.location='./dsi.php?categ=bannettes&suite=delete&sub=!!type!!&id_bannette=!!id_bannette!!&id_empr=!!id_empr!!';
         else
@@ -570,6 +547,10 @@ function confirm_delete() {
 	</div>
 <div class='row'></div>
 
+<div class='row'>
+	<label for='comment_public' class='etiquette'>$msg[dsi_ban_form_tpl]</label>
+	!!bannette_tpl_list!!
+	</div>
 <div class='row'>
 	<label for='entete_mail' class='etiquette'>$msg[dsi_ban_form_entete_mail]</label>
 	</div>
@@ -632,12 +613,18 @@ function confirm_delete() {
 		</div>
 	<div class='colonne_suite'>
 		<label for='bannette_nb_notices_diff' class='etiquette'>$msg[dsi_ban_form_nb_notices_diff]</label>
-		<input type='text' name='nb_notices_diff' value=\"!!nb_notices_diff!!\" />
+		<input type='text' class='saisie-5em' name='nb_notices_diff' value=\"!!nb_notices_diff!!\" />
 		</div>
 	</div>
 <div class='row'>	
-	<label for='update_type' class='etiquette'>$msg[dsi_ban_update_type]</label>
-	!!update_type!!
+	<div class='colonne3'>
+		<label for='update_type' class='etiquette'>$msg[dsi_ban_update_type]</label>
+		!!update_type!!
+	</div>	
+	<div class='colonne_suite'>		
+		<label for='bannette_aff_notice_number' class='etiquette'>".$msg["dsi_bannette_aff_notice_number"]."</label>
+		<input type='checkbox' name='bannette_aff_notice_number' !!bannette_aff_notice_number!! value=\"1\" />
+	</div>
 </div>	
 
 <div class='row'>
@@ -651,11 +638,11 @@ function confirm_delete() {
 
 <div class='row'>
 	<div class='colonne2'>
-	<label for='typeexport' class='etiquette'>".$msg[dsi_ban_typeexport]." : </label>
+	<label for='typeexport' class='etiquette'>".$msg['dsi_ban_typeexport']." : </label>
 		!!typeexport!!
 	</div>
 	<div class='colonne_suite'>
-	<label for='prefixe_fichier' class='etiquette'>".$msg[dsi_ban_prefixe_fichier]." : </label>
+	<label for='prefixe_fichier' class='etiquette'>".$msg['dsi_ban_prefixe_fichier']." : </label>
 		<input type='text' name='prefixe_fichier' class='saisie-15em' value=\"!!prefixe_fichier!!\" />
 	</div>
 </div>
@@ -687,13 +674,13 @@ $dsi_classement_form = "
 	{
 		if(form.nom_classement.value.replace(/^\s+|\s+$/g, '').length == 0)
 			{
-				alert(\"${msg[dsi_clas_nom_oblig]}\");
+				alert(\"".$msg['dsi_clas_nom_oblig']."\");
 				return false;
 			}
 		return true;
 	}
 function confirm_delete() {
-        result = confirm(\"${msg[confirm_suppr]}\");
+        result = confirm(\"".$msg['confirm_suppr']."\");
         if(result)
             document.location='./dsi.php?categ=options&suite=delete&sub=classements&id_classement=!!id_classement!!';
         else
@@ -707,7 +694,7 @@ function confirm_delete() {
 <div class='row'>
 	<div class='colonne2'>
 		<div class='row'>
-			<label class='etiquette' for='nom_bannette'>$msg[dsi_clas_form_nom]</label>
+			<label class='etiquette' for='nom_classement'>$msg[dsi_clas_form_nom]</label>
 			</div>
 		<div class='row'>
 			<input type='text' class='saisie-30em' name='nom_classement' value=\"!!nom_classement!!\" />
@@ -722,6 +709,16 @@ function confirm_delete() {
 			</div>
 		</div>
 	</div>
+<div class='row'>
+	<div class='colonne2'>
+		<div class='row'>
+			<label class='etiquette' for='nom_classement_opac'>$msg[dsi_clas_form_nom_opac]</label>
+		</div>
+		<div class='row'>
+			<input type='text' class='saisie-30em' name='nom_classement_opac' value=\"!!nom_classement_opac!!\" />
+		</div>
+	</div>
+</div>
 <div class='row'></div>
 </div>
 <div class='row'>
@@ -744,17 +741,16 @@ function confirm_delete() {
 $dsi_equation_form = "
 <script type='text/javascript'>
 <!--
-	function test_form(form)
-	{
+	function test_form(form) {
 		if(form.nom_equation.value.replace(/^\s+|\s+$/g, '').length == 0)
 			{
-				alert(\"${msg[dsi_ban_nom_oblig]}\");
+				alert(\"".$msg['dsi_ban_nom_oblig']."\");
 				return false;
 			}
 		return true;
 	}
 function confirm_delete() {
-        result = confirm(\"${msg[confirm_suppr]}\");
+        result = confirm(\"".$msg['confirm_suppr']."\");
         if(result)
             document.location='./dsi.php?categ=equations&suite=delete&id_equation=!!id_equation!!';
         else
@@ -768,7 +764,7 @@ function confirm_delete() {
 <div class='row'>
 	<div class='colonne2'>
 		<div class='row'>
-			<label class='etiquette' for='nom_equation'>$msg[dsi_equ_form_nom]</label>
+			<label class='etiquette' for='nom_equation'>".$msg['dsi_equ_form_nom']."</label>
 			</div>
 		<div class='row'>
 			<input type='text' class='saisie-30em' name='nom_equation' value=\"!!nom_equation!!\" />
@@ -776,7 +772,7 @@ function confirm_delete() {
 		</div>
 	<div class='colonne_suite'>
 		<div class='row'>
-			<label class='etiquette' for='num_classement'>$msg[dsi_equ_form_classement]</label>
+			<label class='etiquette' for='num_classement'>".$msg['dsi_equ_form_classement']."</label>
 			</div>
 		<div class='row'>
 			!!num_classement!!
@@ -784,7 +780,7 @@ function confirm_delete() {
 		</div>
 	</div>
 <div class='row'>
-	<label for='comment_equation' class='etiquette'>$msg[dsi_ban_form_com_gestion]</label>
+	<label for='comment_equation' class='etiquette'>".$msg['dsi_ban_form_com_gestion']."</label>
 	</div>
 <div class='row'>
 	<textarea id='comment_equation' class='saisie-80em' name='comment_equation' cols='62' rows='2' wrap='virtual'>!!comment_equation!!</textarea>
@@ -792,7 +788,7 @@ function confirm_delete() {
 <div class='row'></div>
 
 <div class='row'>
-	<label for='requete' class='etiquette'>$msg[dsi_equ_form_requete]</label>
+	<label for='requete' class='etiquette'>".$msg['dsi_equ_form_requete']."</label>
 	</div>
 <div class='row'>
 	!!requete_human!!<input type='hidden' name='requete' value=\"!!requete!!\" />!!bouton_modif_requete!!
@@ -800,7 +796,7 @@ function confirm_delete() {
 <div class='row'></div>
 
 <div class='row'>
-	<label for='proprio_equation' class='etiquette'>$msg[dsi_ban_proprio_bannette]</label>
+	<label for='proprio_equation' class='etiquette'>".$msg['dsi_ban_proprio_bannette']."</label>
 	!!proprio_equation!!
 	</div>
 <div class='row'></div>
@@ -808,8 +804,9 @@ function confirm_delete() {
 </div>
 <div class='row'>
 	<div class='left'>
+		<input type='button' class='bouton' value='$msg[76]' onClick=\"document.location='./dsi.php?categ=equations&sub=gestion';\" />
 		<input type='submit' value='$msg[77]' class='bouton' onClick=\"return test_form(this.form)\" />
-		<input type='button' class='bouton' value='$msg[76]' onClick=\"document.location='./dsi.php?categ=equations&sub=!!type!!&id_equation=';\" />
+		!!duplicate!!
 		</div>
 	<div class='right'>
 		!!delete!!
@@ -841,92 +838,7 @@ $dsi_bannette_equation_assoce = "
 		<input type='button' class='bouton' value=\"$msg[bt_retour]\" onClick=\"document.location='./dsi.php?categ=bannettes&sub=pro&id_bannette=&suite=search!!link_pagination!!&form_cb=!!form_cb!!';\" />
 		</div>
 	<div class='right'>
-		<input type='button' class='bouton' value=\"".$msg[dsi_ban_affect_lecteurs]."\" onclick=\"document.location='./dsi.php?categ=bannettes&sub=pro&suite=affect_lecteurs!!link_pagination!!&id_bannette=!!id_bannette!!&form_cb=!!form_cb!!'\"/>
-		</div>
-	</div>
-<div class='row'></div>
-</form>" ;
-
-// $dsi_bannette_lecteurs_assoce : template pour association des lecteurs/bannette
-$dsi_bannette_lecteurs_assoce = "
-<script type='text/javascript'>
-
-	var check = true;
-
-	//Coche et décoche les éléments de la liste
-	function checkAll(the_form, the_objet, do_check) {
-	
-		var elts = document.forms[the_form].elements[the_objet+'[]'] ;
-		var elts_cnt  = (typeof(elts.length) != 'undefined')
-	              ? elts.length
-	              : 0;
-	
-		if (elts_cnt) {
-			for (var i = 0; i < elts_cnt; i++) {
-				elts[i].checked = do_check;
-			} 
-		} else {
-			elts.checked = do_check;
-		}
-		if (check == true) {
-			check = false;
-			document.getElementById('bt_chk').value = '".$msg['acquisition_sug_uncheckAll']."';
-		} else {
-			check = true;
-			document.getElementById('bt_chk').value = '".$msg['acquisition_sug_checkAll']."';	
-		}
-		return true;
-	}
-
-
-</script>
-<form class='form-$current_module' id='bannette_lecteurs_assoce' name='bannette_lecteurs_assoce' method='post' action='!!form_action!!' >
-<h3>$msg[dsi_ban_lec_assoce] : !!nom_bannette!!</h3>
-<div class='form-contenu'>
-	!!bannette_lecteurs_saved!!
-	<div class='row'>
-		<div class='colonne3'>
-			<div class='row'><label class='etiquette'>$msg[dsi_ban_form_categ_lect]</label></div>
-			<div class='row'>!!classement!!</div>
-		</div>
-		<div class='colonne_suite'>
-			<div class='row'><label class='etiquette'>$msg[dsi_ban_form_groupe_lect]</label></div>
-			<div class='row'>!!groupe!!</div>
-		</div>
-	</div>
-	<div class='row'>
-		<div class='colonne_suite'>
-			<div class='row'><label class='etiquette'>$msg[dsi_ban_abo_empr_nom]</label></div>
-			<div class='row'><input type='text' class='10em' name='lect_restrict' value=\"!!lect_restrict!!\" onchange=\"this.form.faire.value=''; this.form.submit();\" /> !!restrict_location!!
-			</div>
-		</div>
-	</div>
-	<div class='row'>
-		<div class='colonne_suite'>
-			<div class='row'>
-				<label for='mail_abon'>$msg[dsi_ban_abo_mail]</label>
-				<input type='checkbox' name='mail_abon' value='1' !!mail_abon_checked!! onchange=\"this.form.faire.value=''; this.form.submit();\" />
-			</div>
-		</div>
-	</div>
-	<div class='row'>&nbsp;</div>
-	<div class='row'>!!limitation!!</div>
-	<div class='row'>
-		!!lecteurs!!
-		</div>
-	</div>
-<div class='row'>
-	<div class='left'>
-		<input type='button' id='bt_chk' class='bouton' value='".$msg['acquisition_sug_checkAll']."' onClick=\"checkAll('bannette_lecteurs_assoce', 'bannette_abon', check); return false;\" />
-		<input type='submit' class='bouton' value='$msg[77]' />
-		<input type='hidden' name='id_bannette' value='!!id_bannette!!' />
-		<input type='hidden' name='quoi' value=\"!!selected!!\" />
-		<input type='hidden' name='faire' value='enregistrer' />
-		<input type='hidden' name='form_cb' value=\"!!form_cb_hidden!!\" />
-		<input type='button' class='bouton' value=\"$msg[bt_retour]\" onClick=\"document.location='./dsi.php?categ=bannettes&sub=pro&id_bannette=&suite=search!!link_pagination!!&form_cb=!!form_cb!!';\" />
-		</div>
-	<div class='right'>
-		<input type='button' class='bouton' value=\"".$msg[dsi_ban_affect_equation]."\" onclick=\"document.location='./dsi.php?categ=bannettes&sub=pro&suite=affect_equation!!link_pagination!!&id_bannette=!!id_bannette!!&form_cb=!!form_cb!!'\"/>
+		<input type='button' class='bouton' value=\"".$msg['dsi_ban_affect_lecteurs']."\" onclick=\"document.location='./dsi.php?categ=bannettes&sub=pro&suite=affect_lecteurs!!link_pagination!!&id_bannette=!!id_bannette!!&form_cb=!!form_cb!!'\"/>
 		</div>
 	</div>
 <div class='row'></div>
@@ -937,21 +849,21 @@ $dsi_ban_list_diff = "
 <h1>!!titre!!</h1>
 <form class='form-$current_module' id='bannette_lecteurs_assoce' name='bannette_lecteurs_assoce' method='post' action='!!form_action!!' >
 <h3>$msg[dsi_dif_act_ban_contenu]
-		<input type='button' class='bouton_small' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);' align='middle'>
-		<input type='button' class='bouton_small' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);' align='middle'>
+		<input type='button' class='bouton_small align_middle' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);'>
+		<input type='button' class='bouton_small align_middle' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);'>
 </h3>
 <div class='form-contenu'>
 	<script type='text/javascript' src='./javascript/sorttable.js'></script>
 	<script>	
 		function confirm_dsi_ban_diffuser() {
-       		result = confirm(\"${msg[confirm_dsi_ban_diffuser]}\");
+       		result = confirm(\"".$msg['confirm_dsi_ban_diffuser']."\");
        		if(result) {
        			return true;
 			} else
            		return false;
     	}
     	function confirm_dsi_dif_full_auto() {
-       		result = confirm(\"${msg[confirm_dsi_dif_full_auto]}\");
+       		result = confirm(\"".$msg['confirm_dsi_dif_full_auto']."\");
        		if(result) {
        			return true;
 			} else
@@ -976,7 +888,7 @@ $dsi_ban_list_diff = "
 		</div>
 	<div class='right'>
 		<input type='button' class='bouton' name='gen_document' value=\"".$msg["dsi_ban_gen_document"]."\" onclick=\"this.form.suite.value='gen_document'; this.form.submit();\" />	
-		<input type='button' class='bouton' name='bt_exporter' value=\"".$msg[dsi_ban_exporter_diff]."\" onclick=\"this.form.suite.value='exporter'; this.form.submit();\" />
+		<input type='button' class='bouton' name='bt_exporter' value=\"".$msg['dsi_ban_exporter_diff']."\" onclick=\"this.form.suite.value='exporter'; this.form.submit();\" />
 		</div>
 	</div>
 <div class='row'></div>
@@ -1015,13 +927,13 @@ $dsi_flux_form = "
 <!--
 	function test_form(form) {
 		if(form.nom_rss_flux.value.replace(/^\s+|\s+$/g, '').length == 0) {
-			alert(\"${msg[dsi_flux_nom_oblig]}\");
+			alert(\"".$msg['dsi_flux_nom_oblig']."\");
 			return false;
 		}
 		return true;
 	}
 function confirm_delete() {
-        result = confirm(\"${msg[confirm_suppr]}\");
+        result = confirm(\"".$msg['confirm_suppr']."\");
         if(result)
             document.location='./dsi.php?categ=fluxrss&suite=delete&id_rss_flux=!!id_rss_flux!!';
         else
@@ -1210,6 +1122,9 @@ $dsi_bannette_form_selvars="
 	<option value=!!empr_name_and_adress!!>".$msg["selvars_empr_name_and_adress"]."</option>
 	<option value=!!empr_all_information!!>".$msg["selvars_empr_all_information"]."</option>
 	<option value='".htmlentities("<a href='".$opac_url_base."empr.php?code=!!code!!&emprlogin=!!login!!&date_conex=!!date_conex!!'>".$msg["selvars_empr_auth_opac"]."</a>",ENT_QUOTES, $charset)."'>".$msg["selvars_empr_auth_opac"]."</option>
+	<option value=!!public!!>".$msg["selvars_public"]."</option>
+	<option value=!!date!!>".$msg["selvars_date"]."</option>
+	<option value=!!equation!!>".$msg["selvars_equation"]."</option>
 </select>
 <input type='button' class='bouton' value=\" ".$msg["admin_mailtpl_form_selvars_insert"]." \" onClick=\"insert_vars(document.getElementById('selvars_id'), document.getElementById('entete_mail')); return false; \" />
 <script type='text/javascript'>
@@ -1230,7 +1145,7 @@ $dsi_bannette_form_selvars="
 		    var end_text = dest.value.substring(start);
 		    dest.value = start_text+selvars+end_text;
 		}else{
-			tinyMCE.execCommand('mceInsertContent',false,selvars);
+			tinyMCE_execCommand('mceInsertContent',false,selvars);
 		}
 	}
 

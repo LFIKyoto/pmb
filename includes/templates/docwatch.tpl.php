@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch.tpl.php,v 1.21 2015-05-21 15:43:05 dgoron Exp $
+// $Id: docwatch.tpl.php,v 1.26 2018-08-21 15:38:44 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -39,10 +39,10 @@ $docwatch_new_source_form_tpl = '
 	<h3>'.$msg["dsi_docwatch_add_source"].'</h3>
 	<div class="form-contenu">
 		<select name="selector_choice" data-dojo-type="dijit/form/Select" style="width:auto">
-			<option value="0">'.$msg['dsi_'].'</option>';
-foreach(docwatch_watch::get_available_datasources() as $class => $label){
+			<option value="0"></option>';
+foreach(docwatch_watch::get_available_datasources() as $datasource){
 	$docwatch_new_source_form_tpl.= '
-			<option value="'.$class.'">'.$label.'</option>';
+			<option value="'.$datasource['class'].'">'.$datasource['label'].'</option>';
 } 		
 	
 $docwatch_new_source_form_tpl.= '
@@ -53,7 +53,7 @@ $docwatch_new_source_form_tpl.= '
 
 $docwatch_watch_form_tpl = '
 <div style="width: 400px; height: 500px; overflow: auto;">
-<form data-dojo-attach-point="containerNode" data-dojo-attach-event="onreset:_onReset,onsubmit:_onSubmit" ${!nameAttrSetting}>	
+<form name ="new_watch_form" data-dojo-attach-point="containerNode" data-dojo-attach-event="onreset:_onReset,onsubmit:_onSubmit" ${!nameAttrSetting}>	
 	<div class="form-contenu">
 		<input type="hidden" name="id" id="id" value=""/>
 		<div class="row">
@@ -80,12 +80,14 @@ $docwatch_watch_form_tpl = '
 		<div class="row">		
 			<input type="text" id="desc" name="desc" data-dojo-type="dijit/form/Textarea"/>
 		</div>
+		<div id="docwatch_logo"></div>
 		<div class="row">
 			<label>'.encoding_normalize::utf8_normalize($msg['dsi_docwatch_watch_form_logo_url']).'</label>
 		</div>
 		<div class="row">		
 			<input type="text" id="logo_url" name="logo_url" data-dojo-type="dijit/form/TextBox"/>
 		</div>
+		<div class="row">!!options_rss!!</div>
 		<div class="row">
 			<label>'.encoding_normalize::utf8_normalize($msg['dsi_docwatch_watch_form_rights']).'</label>
 		</div>
@@ -120,6 +122,12 @@ $docwatch_watch_form_tpl = '
 		<div class="row">!!options_record!!</div>
 		<div class="row">!!options_article!!</div>
 		<div class="row">!!options_section!!</div>
+		<div class="row">
+			<label>'.encoding_normalize::utf8_normalize($msg['dsi_docwatch_watch_form_boolean_expression']).'</label>
+		</div>
+		<div class="row">
+			<input type="text" id="boolean_expression" name="boolean_expression" data-dojo-type="dijit/form/TextBox" /> 
+		</div>
 		</div>
 	<div class="row">	
 		<div class="left">

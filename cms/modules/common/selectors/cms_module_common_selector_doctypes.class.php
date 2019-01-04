@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_doctypes.class.php,v 1.1.2.1 2015-09-30 14:17:59 apetithomme Exp $
+// $Id: cms_module_common_selector_doctypes.class.php,v 1.3 2015-10-07 14:36:00 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -54,7 +54,10 @@ class cms_module_common_selector_doctypes extends cms_module_common_selector{
 	}
 	
 	public function save_form(){
-		$this->parameters = $this->get_value_from_form("doctypes");
+		$this->parameters = array();
+		if($this->get_value_from_form("doctypes")){
+			$this->parameters = $this->get_value_from_form("doctypes");
+		}
 		return parent ::save_form();
 	}
 	

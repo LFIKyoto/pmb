@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: account.tpl.php,v 1.19 2009-05-16 11:19:55 dbellamy Exp $
+// $Id: account.tpl.php,v 1.22 2017-11-30 16:11:43 wlair Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -68,86 +68,90 @@ $account_form ="
 <div class='form-contenu'>
 
 <!--	Mot de passe	-->
-<div class='colonne4'>
-	<div class='row'>
-		<label class='etiquette' for='form_pwd'>$msg[87]</label>
+<div class='row'>
+	<div class='colonne4'>
+		<div class='row'>
+			<label class='etiquette' for='form_pwd'>$msg[87]</label>
+		</div>
+	</div>
+	<div class='colonne_suite'>
+		<div class='row'>
+			<input class='saisie-20em' type='password' id='form_pwd' name='form_pwd' value='' autocomplete='off'>
+		</div>
 	</div>
 </div>
-<div class='colonne_suite'>
-	<div class='row'>
-		<input class='saisie-20em' type='password' id='form_pwd' name='form_pwd' value=''>
+<div class='row'>
+	<!--	Confirmation	-->
+	<div class='colonne4'>
+		<div class='row'>
+			<label class='etiquette' for='passw2'>$msg[88]</label>
+		</div>
 	</div>
-</div>
-<div class='row'></div>
-
-<!--	Confirmation	-->
-<div class='colonne4'>
-	<div class='row'>
-		<label class='etiquette' for='passw2'>$msg[88]</label>
+	<div class='colonne_suite'>
+		<div class='row'>
+			<input type='password' id='passw2' name='passw2' value='' class='saisie-20em'>
+		</div>
 	</div>
+	<hr />
 </div>
-<div class='colonne_suite'>
-	<div class='row'>
-		<input type='password' id='passw2' name='passw2' value='' class='saisie-20em'>
-	</div>
-</div>
-<div class='row'><hr /></div>
 
 <!--	Langue	-->
-<div class='colonne3'>
-	<div class='row'>
-		<label for='' class='etiquette'>$msg[user_langue]</label>
-	</div>
-	<div class='row'>
-		!!combo_user_lang!!
-	</div>
-</div>
-<div class='colonne_suite'>
-<!--	Style/thème	-->
-	<div class='row'>
-		<label class='etiquette' for=''>$msg[935]</label>
-	</div>
-	<div class='row'>
-		!!combo_user_style!!
-	</div>
-</div>
-
-<div class='row'><hr /></div>
-
-<div class='colonne4'>
-	<div class='row'>
-		<label class='etiquette' for='form_nb_per_page_search'>$msg[nb_enreg_par_page]</label>
-	</div>
-</div>
-<div class='colonne4'>
-	<!--	Nombre d'enregistrements par page en recherche	-->
-	<div class='row'>
-		<label class='etiquette' for='form_nb_per_page_search'>$msg[900]</label>
-	</div>
-	<div class='row'>
-		<input type='text' class='saisie-5em' name='form_nb_per_page_search' value='!!nb_per_page_search!!' size='4' />
-	</div>
-</div>	
-<div class='colonne4'>
-	<!--	Nombre d'enregistrements par page en sélection d'autorités	-->
-	<div class='row'>
-		<label class='etiquette'>${msg[901]}</label>
-	</div>
-	<div class='row'>
-		<input class='saisie-5em' type='text' id='form_nb_per_page_select' name='form_nb_per_page_select' value='!!nb_per_page_select!!' size='4' />
-	</div>
-</div>	
-<div class='colonne4'>
-	<div class='row'>
-		<label class='etiquette' for='form_nb_per_page_gestion'>${msg[902]}</label>
-	</div>
-	<div class='row'>
-		<input type='text' class='saisie-5em' id='form_nb_per_page_gestion' name='form_nb_per_page_gestion' value='!!nb_per_page_gestion!!' size='4' />
-	</div>
-</div>
-
-
 <div class='row'>
+	<div class='colonne3'>
+		<div class='row'>
+			<label for='' class='etiquette'>$msg[user_langue]</label>
+		</div>
+		<div class='row'>
+			!!combo_user_lang!!
+		</div>
+	</div>
+	<div class='colonne_suite'>
+	<!--	Style/thème	-->
+		<div class='row'>
+			<label class='etiquette' for=''>$msg[935]</label>
+		</div>
+		<div class='row'>
+			!!combo_user_style!!
+		</div>
+	</div>
+	<hr />
+</div>
+<div class='row'>
+	<div class='colonne4'>
+		<div class='row'>
+			<label class='etiquette' for='form_nb_per_page_search'>$msg[nb_enreg_par_page]</label>
+		</div>
+	</div>
+	<div class='colonne4'>
+		<!--	Nombre d'enregistrements par page en recherche	-->
+		<div class='row'>
+			<label class='etiquette' for='form_nb_per_page_search'>$msg[900]</label>
+		</div>
+		<div class='row'>
+			<input type='text' class='saisie-5em' name='form_nb_per_page_search' value='!!nb_per_page_search!!' size='4' />
+		</div>
+	</div>	
+	<div class='colonne4'>
+		<!--	Nombre d'enregistrements par page en sélection d'autorités	-->
+		<div class='row'>
+			<label class='etiquette'>${msg[901]}</label>
+		</div>
+		<div class='row'>
+			<input class='saisie-5em' type='text' id='form_nb_per_page_select' name='form_nb_per_page_select' value='!!nb_per_page_select!!' size='4' />
+		</div>
+	</div>	
+	<div class='colonne4'>
+		<div class='row'>
+			<label class='etiquette' for='form_nb_per_page_gestion'>${msg[902]}</label>
+		</div>
+		<div class='row'>
+			<input type='text' class='saisie-5em' id='form_nb_per_page_gestion' name='form_nb_per_page_gestion' value='!!nb_per_page_gestion!!' size='4' />
+		</div>
+	</div>
+</div>
+
+
+<div class='row allUserParam-container'>
 	!!all_user_param!!
 </div>
 
@@ -183,7 +187,7 @@ $user_acquisition_adr_form = "
 				<textarea  id='adr_liv[!!id_bibli!!]' name='adr_liv[!!id_bibli!!]' class='saisie-30emr' readonly='readonly' cols='50' rows='6' wrap='virtual'>!!adr_liv!!</textarea>&nbsp;
 			</div>
 			<div class='colonne_suite' >
-				<input type='button' class='bouton_small' tabindex='1' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=coord&caller=!!form_name!!&param1=id_adr_liv[!!id_bibli!!]&param2=adr_liv[!!id_bibli!!]&id_bibli=!!id_bibli!!', 'select_adresse', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes'); \" />&nbsp;
+				<input type='button' class='bouton_small' tabindex='1' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=coord&caller=!!form_name!!&param1=id_adr_liv[!!id_bibli!!]&param2=adr_liv[!!id_bibli!!]&id_bibli=!!id_bibli!!', 'selector'); \" />&nbsp;
 				<input type='button' class='bouton_small' tabindex='1' value='X' onclick=\"document.getElementById('id_adr_liv[!!id_bibli!!]').value='0';document.getElementById('adr_liv[!!id_bibli!!]').value='';\" />
 			</div>
 		</div>
@@ -193,7 +197,7 @@ $user_acquisition_adr_form = "
 				<textarea id='adr_fac[!!id_bibli!!]' name='adr_fac[!!id_bibli!!]'  class='saisie-30emr' readonly='readonly' cols='50' rows='6' wrap='virtual'>!!adr_fac!!</textarea>&nbsp;
 			</div>
 			<div class='colonne_suite'>
-				<input type='button' class='bouton_small' tabindex='1' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=coord&caller=!!form_name!!&param1=id_adr_fac[!!id_bibli!!]&param2=adr_fac[!!id_bibli!!]&id_bibli=!!id_bibli!!', 'select_adresse', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes'); \" />&nbsp;
+				<input type='button' class='bouton_small' tabindex='1' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=coord&caller=!!form_name!!&param1=id_adr_fac[!!id_bibli!!]&param2=adr_fac[!!id_bibli!!]&id_bibli=!!id_bibli!!', 'selector'); \" />&nbsp;
 				<input type='button' class='bouton_small' tabindex='1' value='X' onclick=\"document.getElementById('id_adr_fac[!!id_bibli!!]').value='0';document.getElementById('adr_fac[!!id_bibli!!]').value='';\" />
 			</div>
 		</div>

@@ -2,9 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.18 2009-05-16 11:12:02 dbellamy Exp $
+// $Id: main.inc.php,v 1.22 2017-10-18 14:55:50 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($id_thes)) $id_thes = 0;
+if(!isset($search_term)) $search_term = '';
+if(!isset($recalled)) $recalled = '';
+if(!isset($page_search)) $page_search = '';
+if(!isset($term_click)) $term_click = '';
 
 // page de switch recherche sujets
 
@@ -43,38 +49,17 @@ $search_form_term = "
 	</form>
 	<script type='text/javascript'>
 		document.forms['term_search_form'].elements['search_term'].focus();
-		function aide_regex()
-			{
-				var fenetreAide;
-				fenetreAide = openPopUp('./help.php?whatis=regex', 'regex_howto', 500, 400, -2, -2, 'scrollbars=yes, resizable=yes');
-			}
 		</script>
 	<br />
 	";
 	
 	
 //affichage du selectionneur de thesaurus et du lien vers les thésaurus
-$liste_thesaurus = thesaurus::getThesaurusList();
-$sel_thesaurus = '';
 $lien_thesaurus = '';
-
 if ($thesaurus_mode_pmb != 0) {	 //la liste des thesaurus n'est pas affichée en mode monothesaurus
-	$sel_thesaurus = "<select class='saisie-30em' id='id_thes' name='id_thes' ";
-	$sel_thesaurus.= "onchange = \"document.location = './catalog.php?categ=search&mode=5&id_thes='+document.getElementById('id_thes').value; \">" ;
-	foreach($liste_thesaurus as $id_thesaurus=>$libelle_thesaurus) {
-		$sel_thesaurus.= "<option value='".$id_thesaurus."' "; ;
-		if ($id_thesaurus == $id_thes) $sel_thesaurus.= " selected";
-		$sel_thesaurus.= ">".htmlentities($libelle_thesaurus,ENT_QUOTES,$charset)."</option>";
-	}
-	$sel_thesaurus.= "<option value=-1 ";
-	if ($id_thes == -1) $sel_thesaurus.= "selected ";
-	$sel_thesaurus.= ">".htmlentities(addslashes($msg['thes_all']),ENT_QUOTES,$charset)."</option>";
-	$sel_thesaurus.= "</select>&nbsp;";
-
-	$lien_thesaurus = "<a href='./autorites.php?categ=categories&sub=thes'>".$msg[thes_lien]."</a>";
-
+	$lien_thesaurus = "<a href='./autorites.php?categ=categories&sub=thes'>".$msg['thes_lien']."</a>";
 }	
-$search_form_term=str_replace("<!-- sel_thesaurus -->",$sel_thesaurus,$search_form_term);
+$search_form_term=str_replace("<!-- sel_thesaurus -->",thesaurus::getSelector($id_thes, './catalog.php?categ=search&mode=5'),$search_form_term);
 $search_form_term=str_replace("<!-- lien_thesaurus -->",$lien_thesaurus,$search_form_term);
 
 

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: autoindex_document.class.php,v 1.9 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: autoindex_document.class.php,v 1.12 2017-10-24 10:39:05 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -28,6 +28,7 @@ $autoindex_params = array(
 		'autoindex_distance_ratio'=>0.5,
 );
 
+global $thesaurus_auto_index_search_param;
 if($thesaurus_auto_index_search_param){
 	
 	$tmp = explode(";",$thesaurus_auto_index_search_param);
@@ -47,7 +48,7 @@ if($thesaurus_auto_index_search_param){
 }
 
 foreach($autoindex_params as $p=>$v) {
-	$$p=$v;
+	${$p}=$v;
 }
 
 
@@ -65,6 +66,8 @@ class autoindex_document {
 	 * 
 	 */
 	protected $clean_text='';
+	
+	protected $full_clean_text='';
 	
 	/**
 	 * langue du document
@@ -198,7 +201,7 @@ class autoindex_document {
 				if (count($tab_clean_text)) {
 					foreach($tab_clean_text as $v) {
 						if ($v!=='') {
-							if (!$tab_words[$v]) {
+							if (!isset($tab_words[$v]) || !$tab_words[$v]) {
 								$tab_words[$v]['frequency'] = 0;
 								$tab_words[$v]['pond'] = 0;
 							} 
@@ -257,7 +260,7 @@ class autoindex_document {
 		$tab_stems = array();
 		if(count($tmp_words)) {
 			foreach($tmp_words as $k=>$word) {
-				if (!$tab_stems[$word->stem]) {
+				if (!isset($tab_stems[$word->stem]) || !$tab_stems[$word->stem]) {
 					$tab_stems[$word->stem]['frequency']=0;
 					$tab_stems[$word->stem]['pond'] = 0;
 				} 
@@ -362,7 +365,7 @@ class autoindex_document {
 				$r1 = pmb_mysql_query($q1, $dbh);
 				if(pmb_mysql_num_rows($r1)) {
 					while($row1 = pmb_mysql_fetch_object($r1)) {
-						if(!$terms[$row1->num_noeud]) {
+						if(!isset($terms[$row1->num_noeud]) || !$terms[$row1->num_noeud]) {
 // $terms1[]=$row1->libelle_categorie;
 							$terms[$row1->num_noeud]['label']=$row1->libelle_categorie;
 							$terms[$row1->num_noeud]['see']=$row1->num_renvoi_voir;

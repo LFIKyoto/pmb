@@ -2,10 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: actes.tpl.php,v 1.19 2015-02-05 15:38:36 jpermanne Exp $
+// $Id: actes.tpl.php,v 1.21 2017-10-19 14:42:59 dgoron Exp $
 
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $search_form_actes;
 
 //	------------------------------------------------------------------------------
 //	$search_form : template de recherche pour les actes
@@ -17,7 +19,18 @@ $search_form_actes = "
 	<div class='form-contenu'>
 		<div class='row'>
 			<div class='colonne2'>
+				<label class='etiquette'>&nbsp;</label>
+			</div>
+			<div class='colonne2'>
+				<label class='etiquette'><!-- sel_exercice_label --></label>
+			</div>
+		</div>
+		<div class='row'>
+			<div class='colonne2'>
 				<input type='text' class='saisie-30em' id='user_input' name='user_input' value='!!user_input!!'/>
+			</div>
+			<div class='colonne2'>
+				<!-- sel_exercice -->
 			</div>
 		</div>
 		<div class='row'>

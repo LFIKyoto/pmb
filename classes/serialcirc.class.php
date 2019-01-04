@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc.class.php,v 1.31 2015-07-16 09:37:06 jpermanne Exp $
+// $Id: serialcirc.class.php,v 1.46 2018-11-22 13:35:23 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -17,14 +17,16 @@ require_once($include_path."/h2o/h2o.php");
 require_once("$class_path/aut_link.class.php");
 
 class serialcirc {
-	var $info_expl=array();		
-	var $classement=array();
-	var $info_copy=array();
-	var $info_resa=array();
-	var $info_circ=array();
-	var $id_location=0;
+	public $info_expl=array();		
+	public $classement=array();
+	public $info_copy=array();
+	public $info_resa=array();
+	public $info_circ=array();
+	public $id_location=0;
 	
-	function serialcirc($id_location) {
+	protected static $emprs_infos = array();
+	
+	public function __construct($id_location) {
 		global $pmb_lecteurs_localises,$deflt_docs_location;
 		$this->id_location=0;
 		if($pmb_lecteurs_localises){
@@ -35,7 +37,7 @@ class serialcirc {
 		$this->fetch_data();
 	}
 	
-	function fetch_data() {
+	public function fetch_data() {
 		$this->info_expl=array();
 		$this->info_circ=array();
 		$this->classement['alert']=array();
@@ -43,10 +45,16 @@ class serialcirc {
 		$this->classement['in_circ']=array();
 		$this->classement['retard']=array();
 		$this->classement['reproduction_ask']=array();
-		$this->classement['is_in_resa_ask']=array();		
+		$this->classement['is_in_resa_ask']=array();
+		$restrict = '';
 		if($this->id_location) $restrict=" and expl_location=".$this->id_location;
-		$req="select * from serialcirc_expl,exemplaires,bulletins where expl_id=num_serialcirc_expl_id and expl_bulletin=bulletin_id $restrict";
-		$resultat=pmb_mysql_query($req);	
+		$req="select * from serialcirc_expl 
+				join exemplaires on serialcirc_expl.num_serialcirc_expl_id = exemplaires.expl_id
+				join bulletins on exemplaires.expl_bulletin = bulletins.bulletin_id
+				join serialcirc on serialcirc_expl.num_serialcirc_expl_serialcirc = serialcirc.id_serialcirc
+				left join abts_abts on exemplaires.expl_abt_num = abts_abts.abt_id
+				where 1 ".$restrict." order by date_date DESC";
+		$resultat=pmb_mysql_query($req);
 		if ($resultat && pmb_mysql_num_rows($resultat)) {
 			while($r=pmb_mysql_fetch_object($resultat)){	
 				$this->info_expl[$r->expl_id]['expl_cb']= $r->expl_cb;	
@@ -54,16 +62,20 @@ class serialcirc {
 				$this->info_expl[$r->expl_id]['expl_statut']= $r->expl_statut;
 				$this->info_expl[$r->expl_id]['expl_location']= $r->expl_location;
 				
-				
 				$rqtSite = "SELECT location_libelle FROM docs_location WHERE idlocation=".$r->expl_location;
 				$resSite = pmb_mysql_result(pmb_mysql_query($rqtSite),0);
 				$this->info_expl[$r->expl_id]['expl_location_name']= $resSite;
 				
+				$rqtSite = "SELECT lender_libelle FROM lenders WHERE idlender=".$r->expl_owner;
+				$resSite = pmb_mysql_result(pmb_mysql_query($rqtSite),0);
+				$this->info_expl[$r->expl_id]['expl_owner']= $resSite;
+				
 				$this->info_expl[$r->expl_id]['expl_cote']= $r->expl_cote;
 				
 				$this->info_expl[$r->expl_id]['bulletine_date']= $r->serialcirc_expl_bulletine_date;
-				$this->info_expl[$r->expl_id]['num_diff']= $r->num_serialcirc_expl_serialcirc_diff;	
-				$this->info_expl[$r->expl_id]['expl_abt_num']= $r->expl_abt_num;							
+				$this->info_expl[$r->expl_id]['num_diff']= $r->num_serialcirc_expl_serialcirc_diff;
+				$this->info_expl[$r->expl_id]['expl_abt_num']= $r->expl_abt_num;
+				$this->info_expl[$r->expl_id]['expl_abt_name']= $r->abt_name;
 				
 				$this->info_expl[$r->expl_id]['numero']= $r->bulletin_numero;
 				$this->info_expl[$r->expl_id]['mention_date']= $r->mention_date;
@@ -83,7 +95,10 @@ class serialcirc {
 					$this->info_expl[$r->expl_id]['serial_title']=$r_serial->tit1;					
 				}				
 				
-				$this->info_expl[$r->expl_id]['num_serialcirc']= $r->num_serialcirc_expl_serialcirc;
+				$this->info_expl[$r->expl_id]['num_serialcirc']= $r->id_serialcirc;
+				$this->info_expl[$r->expl_id]['serialcirc_type']= $r->serialcirc_type;
+				$this->info_expl[$r->expl_id]['serialcirc_checked']= $r->serialcirc_checked;
+				$this->info_expl[$r->expl_id]['serialcirc_expl_statut_circ_after']= $r->serialcirc_expl_statut_circ_after;
 				$this->info_expl[$r->expl_id]['serialcirc_diff'] = new serialcirc_diff($r->num_serialcirc_expl_serialcirc);
 				$this->info_expl[$r->expl_id]['state_circ']= $r->serialcirc_expl_state_circ;
 			//	$this->info_expl[$r->expl_id]['diff']= $r->num_serialcirc_expl_serialcirc_diff;
@@ -122,11 +137,9 @@ class serialcirc {
 		}
 		$this->fetch_data_copy() ;	
 		$this->fetch_data_resa() ;
-		// printr($this->info_expl);
-		// print"<pre>";print_r($this->info_expl);print_r($this->classement);print"</pre>";
 	}
 	
-	function fetch_data_copy(){
+	public function fetch_data_copy(){
 		global $opac_url_base;
 		$this->info_copy=array();		
 		$req="select * from serialcirc_copy ,bulletins, notices where num_serialcirc_copy_bulletin=bulletin_id and bulletin_notice=notice_id order by serialcirc_copy_date ";
@@ -154,7 +167,7 @@ class serialcirc {
 		}	
 	}
 	
-	function fetch_data_resa(){
+	public function fetch_data_resa(){
 		
 		$this->info_resa=array();		
 		$req="select * from serialcirc_circ, exemplaires, bulletins, notices where serialcirc_circ_hold_asked=1 and num_serialcirc_circ_expl=expl_id and expl_bulletin=bulletin_id and bulletin_notice=notice_id order by num_serialcirc_circ_expl,serialcirc_circ_order ";
@@ -175,11 +188,11 @@ class serialcirc {
 		}
 		
 	}	
-	function fetch_info_circ($id_expl){
+	public function fetch_info_circ($id_expl){
 		$this->info_circ[$id_expl]=array();		
 		$req="select *,DATEDIFF(serialcirc_circ_expected_date,CURDATE())as late_diff from serialcirc_circ where num_serialcirc_circ_expl=$id_expl order by serialcirc_circ_order ";
 		$resultat=pmb_mysql_query($req);
-		
+		$last_owner = 0;
 		if ($resultat && pmb_mysql_num_rows($resultat)) {
 			while($r=pmb_mysql_fetch_object($resultat)){				
 				$this->info_circ[$id_expl][$r->num_serialcirc_circ_empr]['id']=$r->id_serialcirc_circ;			
@@ -194,39 +207,48 @@ class serialcirc {
 				$this->info_circ[$id_expl][$r->num_serialcirc_circ_empr]['trans_asked']=$r->serialcirc_circ_trans_asked;		
 				$this->info_circ[$id_expl][$r->num_serialcirc_circ_empr]['doc_asked']=$r->serialcirc_circ_trans_doc_asked;		
 				$this->info_circ[$id_expl][$r->num_serialcirc_circ_empr]['expected_date']=$r->serialcirc_circ_expected_date;
-				$this->info_circ[$id_expl][$r->num_serialcirc_circ_empr]['pointed_date']=$r->serialcirc_circ_pointed_date;		
+				$this->info_circ[$id_expl][$r->num_serialcirc_circ_empr]['pointed_date']=$r->serialcirc_circ_pointed_date;
+				if ($r->serialcirc_circ_pointed_date) {
+					$last_owner = $r->num_serialcirc_circ_empr;
+				}
+				$this->info_circ[$id_expl][$r->num_serialcirc_circ_empr]['group_name']=$r->serialcirc_circ_group_name;
+				$this->info_circ[$id_expl][$r->num_serialcirc_circ_empr]['current_owner']=0;
 				$this->info_circ[$id_expl][$r->num_serialcirc_circ_empr]['late_diff']=$r->late_diff;
 				if($this->info_circ[$id_expl][$r->num_serialcirc_circ_empr]['late_diff'] <0 && !$this->info_circ[$id_expl][$r->num_serialcirc_circ_empr]['pointed_date']){
 					$this->info_expl[$id_expl]['is_late']=1;
 				}else{
 					$this->info_expl[$id_expl]['is_late']=0;
-				}				
-				
-			}			
+				}
+			}
+			if ($last_owner) {
+				$this->info_circ[$id_expl][$last_owner]['current_owner']=1;
+			}
 		}
-	//	$this->get_next_diff_id($id_expl);	
 		return $this->info_circ[$id_expl];
 	}	
 		
-	function empr_info($id){
-		global $dbh;
-		$info=array();
-		$req="select empr_cb, empr_nom ,  empr_prenom, empr_mail from empr where id_empr=".$id;
+	public function empr_info($id){
+		if (isset(self::$emprs_infos[$id])) {
+			return self::$emprs_infos[$id];
+		}
+		$info = array();
+		$req="select empr_cb, empr_nom ,  empr_prenom, empr_mail, empr_login from empr where id_empr=".$id;
 		$res_empr=pmb_mysql_query($req);
 		if ($empr=pmb_mysql_fetch_object($res_empr)) {			
 			$info['cb'] = $empr->empr_cb;
-			$info['nom'] = $empr->empr_nom; 
-			$info['prenom'] = $empr->empr_prenom;  
-			$info['mail'] = $empr->empr_mail;  		
-			$info['id_empr']=$id;	
+			$info['nom'] = $empr->empr_nom;
+			$info['prenom'] = $empr->empr_prenom;
+			$info['mail'] = $empr->empr_mail;
+			$info['empr_login'] = $empr->empr_login;
+			$info['id_empr']=$id;
 			$info['view_link']='./circ.php?categ=pret&form_cb='.$empr->empr_cb;
 			$info['empr_libelle']=$info['nom']." ".$info['prenom']." ( ".$info['cb'] ." ) ";
 		}
-		return $info;
+		self::$emprs_infos[$id] = $info;
+		return self::$emprs_infos[$id];
 	}		
 	
-	function expl_info($id){
-		global $dbh;
+	public function expl_info($id){
 		$info=array();
 		$req="select * from exemplaires, bulletins, notices where expl_id=$id and expl_bulletin=bulletin_id and bulletin_notice=notice_id ";
 		$resultat=pmb_mysql_query($req);
@@ -234,7 +256,7 @@ class serialcirc {
 		if($r=pmb_mysql_fetch_object($resultat)){				
 			$info['id']=$id;				
 			$info['cb']=$r->expl_cb;			
-			$info['id_bulletin']=$r->num_serialcirc_copy_bulletin;
+			$info['id_bulletin']=$r->expl_bulletin;
 			$info['perio']=$r->tit1;
 			$info['numero']= $r->bulletin_numero;
 			$info['mention_date']= $r->mention_date;				
@@ -243,7 +265,7 @@ class serialcirc {
 		return $info;
 	}	
 	
-	function is_in_alert($expl_id){
+	public function is_in_alert($expl_id){
 		if($this->info_expl[$expl_id]['serialcirc_diff']->virtual_circ){
 			if( $this->info_expl[$expl_id]['start_date']=="0000-00-00")$start_date=$this->info_expl[$expl_id]['bulletine_date'];
 			else $start_date=$this->info_expl[$expl_id]['start_date'];
@@ -259,30 +281,28 @@ class serialcirc {
 		return false;
 	}	
 	
-	function is_alerted($expl_id){
+	public function is_alerted($expl_id){
 		//if($this->is_in_alert($expl_id)) return false;
 		if($this->info_expl[$expl_id]['start_date']!="0000-00-00")	return true;
-
 		return false;
 	}
 		
-	function is_in_to_be_circ($expl_id){	
+	public function is_in_to_be_circ($expl_id){	
 		if($this->is_in_alert($expl_id) && $this->is_alerted($expl_id))	 return false;
 		if(!$this->info_expl[$expl_id]['state_circ'] && !$this->info_expl[$expl_id]['num_diff']){
 			return true;
 		}	
-
 		return false;
 	}
 	
-	function is_in_circ($expl_id){
-		if($this->info_expl[$expl_id]['num_diff']){
+	public function is_in_circ($expl_id){
+		if($this->info_expl[$expl_id]['state_circ']){
 			return true;			
 		}
 		return false;
 	}
 
-	function empr_is_subscribe($empr_id, $expl_id){		
+	public function empr_is_subscribe($empr_id, $expl_id){		
 		if( !$this->info_expl[$expl_id]['circ'][$empr_group['num_empr'] ]){
 			return true;			
 		} elseif( !$this->info_expl[$expl_id]['circ'][$empr_group['num_empr'] ]['no_subscription']){
@@ -291,25 +311,22 @@ class serialcirc {
 		return false;
 	}	
 
-	function is_in_late($expl_id){
-		if(!$this->info_expl[$expl_id]['serialcirc_diff']->checked) return false;	
+	public function is_in_late($expl_id){
+		if(!$this->info_expl[$expl_id]['serialcirc_checked']) return false;	
 		if( $this->info_expl[$expl_id]['start_date']=="0000-00-00") return false;	
 		return $this->info_expl[$expl_id]['is_late'];
 	}
 	
-	function is_in_reproduction_ask($expl_id){
+	public function is_in_reproduction_ask($expl_id){
 		if(!$this->info_expl[$expl_id]['state_circ'] && !$this->info_expl[$expl_id]['num_diff']){
 			return true;
 		}					
 	}
 	
-	function is_in_resa_ask($expl_id){
-		
+	public function is_in_resa_ask($expl_id){
 	}
 
-	function delete_diffusion($expl_id){
-		global $dbh;
-		
+	public function delete_diffusion($expl_id){
 		$status=1;
 		if (!$this->info_expl[$expl_id]) return 0;
 		// Traitement des résa
@@ -322,59 +339,70 @@ class serialcirc {
 				$resa->add();
 			}
 		}
+		
 		$req="delete from serialcirc_expl where num_serialcirc_expl_id =$expl_id";
 		pmb_mysql_query($req);		
 		$req="delete from serialcirc_circ where num_serialcirc_circ_expl =$expl_id";
 		pmb_mysql_query($req);
 		
+		// On nettoie la table serialcirc, on regarde les listes qui ne sont plus attachées à des abonnements et plus utilisées dans des circultation en cours
+		$req = 'delete from serialcirc where num_serialcirc_abt = 0 and id_serialcirc not in (select distinct num_serialcirc_expl_serialcirc from serialcirc_expl)';
+		pmb_mysql_query($req);
+		
 		// on change le statut si demandé
-		if($this->info_expl[$expl_id]['serialcirc_diff']->expl_statut_circ_after){
-			$req="update exemplaires set expl_statut=".$this->info_expl[$expl_id]['serialcirc_diff']->expl_statut_circ_after." where expl_id=".$expl_id;
-			pmb_mysql_query($req);	
+		if($this->info_expl[$expl_id]['serialcirc_expl_statut_circ_after']){
+			$req="update exemplaires set expl_statut=".$this->info_expl[$expl_id]['serialcirc_expl_statut_circ_after']." where expl_id=".$expl_id;
+			pmb_mysql_query($req);
 		}
 		
 		// traitement résa 
 		$query = "select count(1) from resa where resa_idbulletin=".$this->info_expl[$expl_id]['bulletin_id'];
-		$result = @pmb_mysql_query($query, $dbh);
+		$result = @pmb_mysql_query($query);
 		if(@pmb_mysql_result($result, 0, 0)) {
 			$status=2;// mail de résa sera envoyé à l'affectation dans résa à traiter
 		}
 		return $status;
 	}
 
-	static function delete_expl($expl_id){
+	static public function delete_expl($expl_id){
 		$req="delete from serialcirc_expl where num_serialcirc_expl_id =$expl_id";
-		pmb_mysql_query($req);		
+		pmb_mysql_query($req);
 		$req="delete from serialcirc_circ where num_serialcirc_circ_expl =$expl_id";
 		pmb_mysql_query($req);
 	}
 	
-	function copy_accept($copy_id){	
-		global $serialcirc_copy_accepted_mail,$msg,$biblio_name, $biblio_email,$PMBuseremailbcc;
+	public function copy_accept($copy_id){	
+		global $msg, $biblio_name, $biblio_email, $PMBuseremailbcc;
 		
 		if(!$this->index_info_copy[$copy_id]) return false;			
-		$copy=$this->index_info_copy[$copy_id];		
-		$texte_mail=$serialcirc_copy_accepted_mail;
-		$texte_mail=str_replace("!!issue!!", $copy['perio']."-".$copy['numero'], $texte_mail);			
-		mailpmb($copy['empr']["prenom"]." ".$copy['empr']["nom"], $copy['empr']["mail"],	$msg["serialcirc_circ_title"],	$texte_mail, $biblio_name, $biblio_email,"", "", $PMBuseremailbcc,1);
+		$copy=$this->index_info_copy[$copy_id];
+
+		$objet=$msg["serialcirc_circ_title"];
+		$texte_mail = $msg["serialcirc_copy_accepted_mail_text"];
+		$texte_mail = str_replace("!!issue!!", $copy['perio']."-".$copy['numero'], $texte_mail);
+		$texte_mail = str_replace("!!biblio_name!!", $biblio_name, $texte_mail);
+					
+		mailpmb($copy['empr']["prenom"]." ".$copy['empr']["nom"], $copy['empr']["mail"], $objet, $texte_mail, $biblio_name, $biblio_email,"", "", $PMBuseremailbcc,1);
 		
 		$req="update serialcirc_copy set serialcirc_copy_state=1  where id_serialcirc_copy=$copy_id ";
 		pmb_mysql_query($req);					
 		return true;
 	}		
-	
-	function copy_isdone($bul_id){	
-		global $serialcirc_copy_isdone_mail,$msg,$biblio_name, $biblio_email,$PMBuseremailbcc;
+
+	public function copy_isdone($bul_id){	
+		global $msg,$biblio_name, $biblio_email,$PMBuseremailbcc;
 		$req="select * from serialcirc_copy where num_serialcirc_copy_bulletin=$bul_id ";
 		$resultat=pmb_mysql_query($req);		
 		if ($resultat && pmb_mysql_num_rows($resultat)) {
 			while($r=pmb_mysql_fetch_object($resultat)){
 				// envoit des mails
-				if($copy=$this->index_info_copy[$r->id_serialcirc_copy]){		
-					$texte_mail=$serialcirc_copy_isdone_mail;
-					$texte_mail=str_replace("!!issue!!", $copy['perio']."-".$copy['numero'], $texte_mail);		
-					$texte_mail=str_replace("!!see!!", "<a href='".$copy['opac_link']."'>".$copy['numero']."</a>", $texte_mail);		
-					mailpmb($copy['empr']["prenom"]." ".$copy['empr']["nom"], $copy['empr']["mail"], $msg["serialcirc_circ_title"],	$texte_mail, $biblio_name, $biblio_email,"", "", $PMBuseremailbcc,1);
+				if($copy=$this->index_info_copy[$r->id_serialcirc_copy]){
+					$objet=$msg["serialcirc_circ_title"];
+					$texte_mail = $msg['serialcirc_copy_isdone_mail_text'];
+					$texte_mail = str_replace("!!issue!!", $copy['perio']."-".$copy['numero'], $texte_mail);		
+					$texte_mail = str_replace("!!see!!", "<a href='".$copy['opac_link']."'>".$copy['numero']."</a>", $texte_mail);
+					$texte_mail = str_replace("!!biblio_name!!", $biblio_name, $texte_mail);
+					mailpmb($copy['empr']["prenom"]." ".$copy['empr']["nom"], $copy['empr']["mail"], $objet, $texte_mail, $biblio_name, $biblio_email,"", "", $PMBuseremailbcc,1);
 				}				
 			}
 			// on efface 
@@ -383,30 +411,36 @@ class serialcirc {
 		}		
 	}
 
-	function copy_none($copy_id){
-		global $serialcirc_copy_no_mail,$msg,$biblio_name, $biblio_email,$PMBuseremailbcc;		
+	public function copy_none($copy_id){
+		global $msg, $biblio_name, $biblio_email, $PMBuseremailbcc;		
 			
 		if(!$this->index_info_copy[$copy_id]) return false;			
 		$req="delete from serialcirc_copy where id_serialcirc_copy=$copy_id";
 		pmb_mysql_query($req);		
-		$copy=$this->index_info_copy[$copy_id];		
-		$texte_mail=$serialcirc_copy_no_mail;
-		$texte_mail=str_replace("!!issue!!", $copy['perio']."-".$copy['numero'], $texte_mail);			
-		mailpmb($copy['empr']["prenom"]." ".$copy['empr']["nom"], $copy['empr']["mail"], $msg["serialcirc_circ_title"],	$texte_mail, $biblio_name, $biblio_email,"", "", $PMBuseremailbcc,1);
+		$copy=$this->index_info_copy[$copy_id];
+			
+		$objet = $msg["serialcirc_circ_title"];
+		$texte_mail=$msg['serialcirc_copy_no_mail_text'];
+		$texte_mail=str_replace("!!issue!!", $copy['perio']."-".$copy['numero'], $texte_mail);
+		$texte_mail = str_replace("!!biblio_name!!", $biblio_name, $texte_mail);
+				
+		mailpmb($copy['empr']["prenom"]." ".$copy['empr']["nom"], $copy['empr']["mail"], $objet, $texte_mail, $biblio_name, $biblio_email,"", "", $PMBuseremailbcc,1);
 				
 		return true;
 	}	
 	
-	function ask_send_mail($expl_id,$empr_id,$objet,$texte_mail){
+	public function ask_send_mail($expl_id,$empr_id,$objet,$texte_mail){
 		global $biblio_name,$biblio_email,$PMBuseremailbcc;
+		
 		$expl_info=$this->expl_info($expl_id);
 		$empr_info=$this->empr_info($empr_id);
-		$texte_mail=str_replace("!!issue!!", $expl_info['perio']."-".$expl_info['numero'], $texte_mail);			
+		$texte_mail=str_replace("!!issue!!", $expl_info['perio']."-".$expl_info['numero'], $texte_mail);
+		$texte_mail = str_replace("!!biblio_name!!", $biblio_name, $texte_mail);
 		mailpmb($empr_info["prenom"]." ".$empr_info["nom"], $empr_info["mail"], $objet,	$texte_mail, $biblio_name, $biblio_email,"", "", $PMBuseremailbcc,1);	
 		return true;
 	}
 	
-	function resa_accept($expl_id,$empr_id){		
+	public function resa_accept($expl_id,$empr_id){		
 	
 		$req="select * from bulletins, exemplaires where bulletin_id=expl_bulletin and expl_id=$expl_id";
 		$res=pmb_mysql_query($req);
@@ -421,21 +455,21 @@ class serialcirc {
 		return true;
 	}	
 	
-	function resa_none($expl_id,$empr_id){
-		global $serialcirc_resa_no_mail,$msg;			
+	public function resa_none($expl_id,$empr_id){
+		global $msg;			
 		$req="update serialcirc_circ set serialcirc_circ_hold_asked=0 where
 		num_serialcirc_circ_expl=$expl_id and num_serialcirc_circ_empr=$empr_id";
 		$res=pmb_mysql_query($req);
 			
 		// mail 
-		$this->ask_send_mail($expl_id,$empr_id,$msg["serialcirc_circ_title"],$serialcirc_resa_no_mail);		
+		$this->ask_send_mail($expl_id,$empr_id,$msg["serialcirc_circ_title"],$msg['serialcirc_resa_no_mail_text']);		
 		return true;
 	}	
-	function get_all_next_empr_id($expl_id){
+	public function get_all_next_empr_id($expl_id){
 	
 	}
-	function get_next_diff_id($expl_id){
-		$found=0;	
+	public function get_next_diff_id($expl_id){
+		$found=0;
 		foreach($this->info_expl[$expl_id]['serialcirc_diff']->diffusion as $id_diff => $diffusion){
 			// pas en circ on retourne le premier
 			if(!$this->info_expl[$expl_id]['num_diff']) return $id_diff;			
@@ -448,23 +482,45 @@ class serialcirc {
 		return 0;		
 	}
 	
+	public function get_next_empr_id($expl_id) {
+		$found = 0;
+		$current_group = '';
+		foreach ($this->info_circ[$expl_id] as $empr_id => $info_circ) {
+			if ($found && (!$current_group || ($current_group != $info_circ['group_name']))) {
+				// On a trouvé au tour d'avant et cet utilisateur n'est pas du même groupe
+				return $empr_id;
+			}
+			if (!$this->info_expl[$expl_id]['current_empr']) {
+				// Premier retour, on passe au deuxième emprunteur
+				$found = 1;
+				continue;
+			}
+			if ($this->info_expl[$expl_id]['current_empr'] == $empr_id) {
+				$current_group = $info_circ['group_name'];
+				$found = 1;
+			}
+		}
+		return 0;
+	}
 
 	// l'exemplaire revient à la bib
-	function return_expl($expl_id){
+	public function return_expl($expl_id){
 		global $msg;
 		
-		if($this->info_expl[$expl_id]['serialcirc_diff']->circ_type == SERIALCIRC_TYPE_rotative){
+		if($this->info_expl[$expl_id]['serialcirc_type'] == SERIALCIRC_TYPE_rotative){
 			// delete et changement de statut éventuel
 			$status=$this->delete_diffusion($expl_id);
 		}else{// SERIALCIRC_TYPE_star
 			// envoi au empr suivant
-			if($next_diff_id=$this->get_next_diff_id($expl_id)){	
+			$next_diff_id = $this->get_next_diff_id($expl_id);
+			$next_empr_id = $this->get_next_empr_id($expl_id);
+			if($next_empr_id){	
 				$req="UPDATE serialcirc_expl SET num_serialcirc_expl_serialcirc_diff=".$next_diff_id.",
 				serialcirc_expl_state_circ=1,
 				serialcirc_expl_ret_asked=0,
 				serialcirc_expl_trans_asked=0,
 				serialcirc_expl_trans_doc_asked=0,
-				num_serialcirc_expl_current_empr=0
+				num_serialcirc_expl_current_empr=".$next_empr_id."
 				where num_serialcirc_expl_id= $expl_id";
 				
 				pmb_mysql_query($req);
@@ -485,7 +541,7 @@ class serialcirc {
 		return $info;
 	}
 		
-	function print_diffusion($expl_id,$start_diff_id){	
+	public function print_diffusion($expl_id,$start_diff_id){	
 		$tpl=$this->build_print_diffusion($expl_id,$start_diff_id);		
 		global $class_path;
 		require_once($class_path.'/html2pdf/html2pdf.class.php');	
@@ -494,7 +550,7 @@ class serialcirc {
 	    $html2pdf->Output('diffusion.pdf');		
 	}
 	
-	function print_sel_diffusion($list){
+	public function print_sel_diffusion($list){
 		foreach($list as $circ){		
 			$expl_id=$circ['expl_id'];
 			$start_diff_id=$circ['start_diff_id'];
@@ -508,16 +564,39 @@ class serialcirc {
 	    $html2pdf->Output('diffusion.pdf');				
 	}
 	
-	function build_print_diffusion($expl_id,$start_diff_id){
+	public function build_print_diffusion($expl_id,$start_diff_id){
 		global $serialcirc_circ_pdf_diffusion,$charset,$serialcirc_circ_pdf_diffusion_destinataire;
 		global $msg;
-		if(!$start_diff_id){
-			foreach($this->info_expl[$expl_id]['serialcirc_diff']->diffusion as $diff_id => $diffusion){
-				$start_diff_id=$diff_id;
-				break;
-			}	
+		// AP : start_diff_id est en fait maintenant l'id de l'emprunteur
+		// Si la circulation est déjà lancée, on passe par la table serialcirc_circ
+		if (count($this->info_circ[$expl_id])) {
+			return $this->build_print_diffusion_from_current_circ($expl_id,$start_diff_id);
 		}
-		if (!$this->info_expl[$expl_id]) return false;
+		$end = false;
+		// On remet l'identifiant de diffusion pour garder le fonctionnement précédent
+		if(is_array($this->info_expl[$expl_id]['serialcirc_diff']->diffusion)) {
+			foreach($this->info_expl[$expl_id]['serialcirc_diff']->diffusion as $diff_id => $diffusion){
+				// Si l'identifiant n'est pas transmis on prend le premier
+				// Si l'identifiant correspond à l'identifiant courant, on récupère l'identifiant de la diffusion
+				if(!$start_diff_id || (($diffusion["empr_type"] == SERIALCIRC_EMPR_TYPE_empr) && ($start_diff_id == $diffusion['num_empr']))){
+					$start_diff_id = $diff_id;
+					break;
+				}
+				// Si c'est un groupe, on le parcourt
+				if(($diffusion["empr_type"] == SERIALCIRC_EMPR_TYPE_group)) {
+					foreach ($diffusion['group'] as $empr) {
+						if ($start_diff_id == $empr['num_empr']) {
+							$start_diff_id = $diff_id;
+							//break 2;
+							$end = true;
+							break;
+						}
+					}
+					if($end) break;
+				}
+			}
+		}
+		if (!$this->info_expl[$expl_id]) return '';
 		$req="UPDATE serialcirc_expl SET num_serialcirc_expl_serialcirc_diff=".$start_diff_id.",
 		serialcirc_expl_state_circ=1,
 		serialcirc_expl_start_date=CURDATE()
@@ -527,7 +606,7 @@ class serialcirc {
 		$req="select date_format(CURDATE(), '".$msg["format_date"]."') as print_date";	
 		$result = pmb_mysql_query($req);
 		$obj = pmb_mysql_fetch_object($result);
-		$print_date=$obj->print_date;
+		$print_date = $obj->print_date;
 		
 		$tpl = $serialcirc_circ_pdf_diffusion;
 		$tpl=str_replace("!!expl_cb!!", htmlentities($this->info_expl[$expl_id]['expl_cb'],ENT_QUOTES,$charset), $tpl);			
@@ -537,10 +616,16 @@ class serialcirc {
 		$tpl=str_replace("!!print_date!!", htmlentities($print_date,ENT_QUOTES,$charset), $tpl);	
 	//	$tpl=str_replace("!!abonnement!!", htmlentities($this->info_expl[$expl_id]['serialcirc_diff']->abt_name,ENT_QUOTES,$charset), $tpl);	
 		
-		if($start_diff_id) $found=0;else $found=1;
+		if($start_diff_id) {
+			$found = 0;
+		} else {
+			$found = 1;
+		}
+		$empr_list = array();
+		$empr_list_to_print = array();
 		foreach($this->info_expl[$expl_id]['serialcirc_diff']->diffusion as $diff_id => $diffusion){
 			
-			if($start_diff_id && !$found){				
+			if($start_diff_id && !$found){
 				if($start_diff_id==$diff_id)$found=1;
 			}
 			if($found){
@@ -559,7 +644,7 @@ class serialcirc {
 						if($diffusion['type_diff']==1 && !$empr_group["responsable"]){	
 							// groupe marguerite: on n'imprimera pas ce lecteur sauf le responsable
 							//$empr_no_display[$empr_group["num_empr"]]=1;
-						}	
+						}
 					}
 				}else  {
 					$name=$this->info_expl[$expl_id]['serialcirc_diff']->empr_info[$diffusion["num_empr"]]["empr_libelle"];
@@ -567,27 +652,35 @@ class serialcirc {
 					if($diffusion["duration"])	$empr_days[$diffusion["num_empr"]]=$diffusion["duration"]; // durée de consultation particulière
 					else $empr_days[$diffusion["num_empr"]]=$this->info_expl[$expl_id]['serialcirc_diff']->duration;
 				}	
-				if($this->info_expl[$expl_id]['serialcirc_diff']->circ_type == SERIALCIRC_TYPE_star){
+				if(($this->info_expl[$expl_id]['serialcirc_diff']->circ_type == SERIALCIRC_TYPE_star) && !count($empr_list_to_print)){
 					// on n'imprime que le suivant dans la liste
-					break;
+					$empr_list_to_print = $empr_list;
 				}				
 			}
 			$last_empr=$this->info_expl[$expl_id]['serialcirc_diff']->empr_info[$diffusion["num_empr"]];
-		}		
+		}
+		if (!count($empr_list_to_print)) {
+			$empr_list_to_print = $empr_list;
+		}
 		$this->gen_circ($empr_list,$empr_days, $expl_id);
 		
 		$gen_tpl= new serialcirc_print_fields($this->info_expl[$expl_id]['num_serialcirc']);
+		if (!$gen_tpl->circ_tpl) {
+			$gen_tpl->circ_tpl = serialcirc_print_fields::get_default_tpl();
+		}
 		$header_list=$gen_tpl->get_header_list();	
 		$nb_col=count($header_list);
+		if (!$nb_col) return '';
 		$width_col=(int) (100/$nb_col);
 		
+		$th = "";
 		foreach($header_list as $titre){
 			$th.="<th style='width: $width_col%; text-align: left'>".htmlentities($titre,ENT_QUOTES,$charset)."</th>";
 		}
 		$tpl=str_replace("!!th!!", $th, $tpl);
 		$tr_list="";
-		foreach($empr_list as $empr_id=>$diff_id){
-			if($empr_no_display[$empr_id]) continue;
+		foreach($empr_list_to_print as $empr_id=>$diff_id){
+			if(isset($empr_no_display[$empr_id]) && $empr_no_display[$empr_id]) continue;
 			$data['empr_id']=$empr_id;
 			$data_fields=$gen_tpl->get_line($data);		
 			$td_list="";
@@ -616,9 +709,94 @@ class serialcirc {
 			$tpl=utf8_encode($tpl);
 		}
 		return $tpl;
-	}	
+	}
 	
-	function gen_circ($empr_list, $empr_days,$expl_id){
+	public function build_print_diffusion_from_current_circ($expl_id,$start_empr_id){
+		global $serialcirc_circ_pdf_diffusion,$charset,$serialcirc_circ_pdf_diffusion_destinataire;
+		global $msg;
+
+		if (!$this->info_expl[$expl_id]) return '';
+		$req="UPDATE serialcirc_expl SET
+		num_serialcirc_expl_current_empr = ".$start_empr_id.",
+		serialcirc_expl_state_circ=1,
+		serialcirc_expl_start_date=CURDATE()
+		where num_serialcirc_expl_id= $expl_id";
+		pmb_mysql_query($req);
+	
+		$req="select date_format(CURDATE(), '".$msg["format_date"]."') as print_date";
+		$result = pmb_mysql_query($req);
+		$obj = pmb_mysql_fetch_object($result);
+		$print_date = $obj->print_date;
+	
+		$tpl = $serialcirc_circ_pdf_diffusion;
+		$tpl=str_replace("!!expl_cb!!", htmlentities($this->info_expl[$expl_id]['expl_cb'],ENT_QUOTES,$charset), $tpl);
+		$tpl=str_replace("!!date!!", htmlentities($this->info_expl[$expl_id]['mention_date'],ENT_QUOTES,$charset), $tpl);
+		$tpl=str_replace("!!periodique!!", htmlentities($this->info_expl[$expl_id]['serial_title'],ENT_QUOTES,$charset), $tpl);
+		$tpl=str_replace("!!numero!!", htmlentities($this->info_expl[$expl_id]['numero'],ENT_QUOTES,$charset), $tpl);
+		$tpl=str_replace("!!print_date!!", htmlentities($print_date,ENT_QUOTES,$charset), $tpl);
+	
+		$found = 0;
+		if(!$start_empr_id) {
+			$found = 1;
+		}
+	
+		$gen_tpl = new serialcirc_print_fields($this->info_expl[$expl_id]['num_serialcirc']);
+		if (!$gen_tpl->circ_tpl) {
+			$gen_tpl->circ_tpl = serialcirc_print_fields::get_default_tpl();
+		}
+		$header_list = $gen_tpl->get_header_list();
+		$nb_col = count($header_list);
+		if (!$nb_col) return '';
+		$width_col = (int) (100/$nb_col);
+		$th = '';
+	
+		foreach($header_list as $titre){
+			$th.= "<th style='width: $width_col%; text-align: left'>".htmlentities($titre,ENT_QUOTES,$charset)."</th>";
+		}
+		
+		$tpl = str_replace("!!th!!", $th, $tpl);
+		$tr_list = "";
+		$current_group = '';
+		
+		foreach ($this->info_circ[$expl_id] as $empr_id => $info_circ) {
+			if($found && ($this->info_expl[$expl_id]['serialcirc_type'] == SERIALCIRC_TYPE_star) && $current_group && ($current_group != $info_circ['group_name'])){
+				// On a changé de groupe et on est en circulation en étoile, on s'arrête là
+				break;
+			}
+			$current_group = $info_circ['group_name'];
+			if ($start_empr_id && !$found && ($start_empr_id == $empr_id)) {
+				$found = 1;
+			}
+			if (!$found) {
+				continue;
+			}
+			$data['empr_id'] = $empr_id;
+			$data_fields = $gen_tpl->get_line($data);
+			$td_list="";
+			foreach($data_fields as $field){
+				$td_list.="<td style='width: ".$width_col."%; text-align: left;'>".htmlentities($field,ENT_QUOTES,$charset)."</td>";
+			}
+			$tr_list.="<tr>".$td_list."</tr>";
+			if(($this->info_expl[$expl_id]['serialcirc_type'] == SERIALCIRC_TYPE_star) && !$current_group){
+				// On n'est pas dans un groupe et on est en circulation en étoile, on s'arrête là
+				break;
+			}
+		}
+		$tpl=str_replace("!!table_contens!!", $tr_list, $tpl);
+		
+		if ($gen_tpl->piedpage) {
+			$data = array();
+			$data['expl'] = $this->info_expl[$expl_id];
+			$data['last_empr'] = $last_empr;
+			$tpl.= H2o::parseString($gen_tpl->piedpage)->render($data);
+		}
+		if($charset != "utf-8"){
+			$tpl = utf8_encode($tpl);
+		}
+		return $tpl;
+	}
+	
+	public function gen_circ($empr_list, $empr_days,$expl_id){
 		$order=0;
 		$nb_days=0;	
 		if($this->info_expl[$expl_id]['serialcirc_diff']->virtual_circ){
@@ -649,7 +827,8 @@ class serialcirc {
 				serialcirc_circ_subscription=1,
 				serialcirc_circ_order=". $order.",
 				serialcirc_circ_expected_date=DATE_ADD(CURDATE(),INTERVAL $nb_days DAY),
-				num_serialcirc_circ_serialcirc=".$this->info_expl[$expl_id]['num_serialcirc'];
+				num_serialcirc_circ_serialcirc=".$this->info_expl[$expl_id]['num_serialcirc'].",
+				serialcirc_circ_group_name='".$this->info_expl[$expl_id]['serialcirc_diff']->diffusion[$diff_id]['empr_name']."'";
 				pmb_mysql_query($req);
 				$order++;
 				$nb_days+=$empr_days[$empr_id];
@@ -662,28 +841,27 @@ class serialcirc {
 		}	
 	}
 	
-	function send_mail($expl_id,$objet,$texte_mail){
+	public function send_mail($expl_id,$objet,$texte_mail){
 		global $biblio_name,$biblio_email,$PMBuseremailbcc;
 		if (!$this->info_expl[$expl_id]) return false;
 		// Si pas encore recu par l'emprunteur on ne fait rien... 
-		if(!$empr_id=$this->info_expl[$expl_id]['current_empr']) return false;
-		$empr_info=$this->info_expl[$expl_id]['serialcirc_diff']->empr_info($empr_id);
+		if(!$empr_id = $this->info_expl[$expl_id]['current_empr']) return false;
+		$empr_info = $this->empr_info($empr_id);
 		$texte_mail=str_replace("!!issue!!", $this->info_expl[$expl_id]["serial_title"]." - ".$this->info_expl[$expl_id]['numero'], $texte_mail);			
 		return mailpmb($empr_info["prenom"]." ".$empr_info["nom"], $empr_info["mail"], $objet,	$texte_mail, $biblio_name, $biblio_email,"", "", $PMBuseremailbcc,1);
 	}
 	
-	function send_alert($expl_id){
-		global $serialcirc_send_alert_mail;
-		global $biblio_name,$biblio_email,$PMBuseremailbcc;
+	public function send_alert($expl_id){
+		global $biblio_name, $biblio_email, $PMBuseremailbcc, $msg, $opac_url_base, $opac_connexion_phrase;
 		
-		$req=" delete from serialcirc_circ where num_serialcirc_circ_expl=".$expl_id  ;
-		pmb_mysql_query($req);	
+		$req=" delete from serialcirc_circ where num_serialcirc_circ_expl=".$expl_id;
+		pmb_mysql_query($req);
 		
 		foreach($this->info_expl[$expl_id]['serialcirc_diff']->diffusion as $diff_id => $diffusion){
 
 			$diff_list[]=$diff_id;
 		
-			if($diffusion["empr_type"]== SERIALCIRC_EMPR_TYPE_group ){					
+			if($diffusion["empr_type"]== SERIALCIRC_EMPR_TYPE_group ){
 				foreach($diffusion['group'] as $empr_group){
 					$empr_list[$empr_group["num_empr"]]=$diff_id;
 				}
@@ -707,24 +885,33 @@ class serialcirc {
 			num_serialcirc_circ_empr=". $empr_id.",
 			serialcirc_circ_subscription=0,
 			serialcirc_circ_order=". $order.",
-			num_serialcirc_circ_serialcirc=".$this->info_expl[$expl_id]['num_serialcirc'];
+			num_serialcirc_circ_serialcirc=".$this->info_expl[$expl_id]['num_serialcirc'].",
+			serialcirc_circ_group_name='".$this->info_expl[$expl_id]['serialcirc_diff']->diffusion[$diff_id]['empr_name']."'";
 			pmb_mysql_query($req);
 			$order++;
 			
-			// envoit mail alert
-			$texte_mail=$serialcirc_send_alert_mail;		
+			// envoi email alerte
 			$expl_info=$this->expl_info($expl_id);
 			$empr_info=$this->empr_info($empr_id);
-			$texte_mail=str_replace("!!issue!!", $expl_info['perio']."-".$expl_info['numero'], $texte_mail);			
-			mailpmb($empr_info["prenom"]." ".$empr_info["nom"], $empr_info["mail"], $objet,	$texte_mail, $biblio_name, $biblio_email,"", "", $PMBuseremailbcc,1);	
+			$dates = time();
+			$login = $empr_info['empr_login'];
+			$code=md5($opac_connexion_phrase.$login.$dates);
+			$texte = str_replace('!!date_conex!!',$dates,$texte);
 			
+			$issue = "<a href='".$opac_url_base."index.php?lvl=bulletin_display&id=".$expl_info['id_bulletin']."&code=".$code."&emprlogin=".$login."&date_conex=".$dates."'>".$expl_info['perio']."-".$expl_info['numero']."</a>";
 			
-		}	
+			$objet = $msg['serialcirc_send_alert_mail_object'];
 
+			$texte_mail = $msg['serialcirc_send_alert_mail_text'];
+			$texte_mail = str_replace("!!issue!!", $issue, $texte_mail);
+			$texte_mail = str_replace("!!biblio_name!!", $biblio_name, $texte_mail);
+						
+			mailpmb($empr_info["prenom"]." ".$empr_info["nom"], $empr_info["mail"], $objet,	$texte_mail, $biblio_name, $biblio_email,"", "", $PMBuseremailbcc,1);	
+		}	
 	}	
 	
-	function call_expl($expl_id){
-		global $mail_, $serialcirc_call_mail,$msg;
+	public function call_expl($expl_id){
+		global $mail_, $biblio_name, $msg;
 		
 		$req="UPDATE serialcirc_expl SET 
 		serialcirc_expl_ret_asked=1
@@ -738,14 +925,18 @@ class serialcirc {
 		where num_serialcirc_circ_expl= $expl_id and num_serialcirc_circ_empr=$empr_id";
 		pmb_mysql_query($req);
 
+		$expl_info=$this->expl_info($expl_id);
 		$objet=$msg["serialcirc_circ_title"];
-		$texte_mail=$serialcirc_call_mail;
+		$texte_mail = $msg["serialcirc_call_mail_text"];
+		$texte_mail = str_replace("!!issue!!", $expl_info['perio']."-".$expl_info['numero'], $texte_mail);
+		$texte_mail = str_replace("!!biblio_name!!", $biblio_name, $texte_mail);
+		
 		$status=$this->send_mail($expl_id,$objet,$texte_mail);
 		return $status;
 	}
 	
-	function call_insist($expl_id){
-		global $mail_ ,$serialcirc_call_mail,$msg,$serialcirc_transmission_mail;
+	public function call_insist($expl_id){
+		global $mail_ ,$msg, $biblio_name;
 
 		$req="UPDATE serialcirc_expl SET 
 		serialcirc_expl_trans_doc_asked=1
@@ -758,15 +949,19 @@ class serialcirc {
 		serialcirc_circ_trans_doc_asked = serialcirc_circ_trans_doc_asked+1
 		where num_serialcirc_circ_expl= $expl_id and num_serialcirc_circ_empr=$empr_id";
 		pmb_mysql_query($req);
-				
+
+		$expl_info=$this->expl_info($expl_id);
 		$objet=$msg["serialcirc_circ_title"];
-		$texte_mail=$serialcirc_transmission_mail;
+		$texte_mail = $msg["serialcirc_transmission_mail_text"];
+		$texte_mail = str_replace("!!issue!!", $expl_info['perio']."-".$expl_info['numero'], $texte_mail);
+		$texte_mail = str_replace("!!biblio_name!!", $biblio_name, $texte_mail);
+		
 		$status=$this->send_mail($expl_id,$objet,$texte_mail);
 		return $status;
 	}
 	
-	function do_trans($expl_id){
-		global $serialcirc_transmission_mail,$serialcirc_call_mail,$msg;
+	public function do_trans($expl_id){
+		global $msg, $biblio_name;
 		$req="UPDATE serialcirc_expl SET 
 		serialcirc_expl_trans_doc_asked=2
 		where num_serialcirc_expl_id= $expl_id";
@@ -777,76 +972,98 @@ class serialcirc {
 		$req="UPDATE serialcirc_circ SET 
 		serialcirc_circ_trans_doc_asked = serialcirc_circ_trans_doc_asked+1
 		where num_serialcirc_circ_expl= $expl_id and num_serialcirc_circ_empr=$empr_id";
-		pmb_mysql_query($req);				
+		pmb_mysql_query($req);	
+
+		$expl_info=$this->expl_info($expl_id);
 		$objet=$msg["serialcirc_circ_title"];
-		$texte_mail=$serialcirc_transmission_mail;
+		$texte_mail = $msg["serialcirc_transmission_mail_text"];
+		$texte_mail = str_replace("!!issue!!", $expl_info['perio']."-".$expl_info['numero'], $texte_mail);
+		$texte_mail = str_replace("!!biblio_name!!", $biblio_name, $texte_mail);
+		
 		$status=$this->send_mail($expl_id,$objet,$texte_mail);
 		return $status;
 	}
 
-	function build_diff_sel($expl_id){		
+	public function build_diff_sel($expl_id){		
 		global $charset;
 		$tpl="
 			<select name='!!zone!!_group_circ_select_$expl_id' id='!!zone!!_group_circ_select_$expl_id' >
 				!!diff_select!!
-			</select>"
-		;
+			</select>";
+		$list="";
+		if (count($this->info_circ[$expl_id])) {
+			$current_group = '';
+			$current_group_first_empr = 0;
+			$checked = '';
+			foreach ($this->info_circ[$expl_id] as $empr_id => $info_circ) {
+				if ($current_group && ($info_circ['group_name'] != $current_group)) {
+					// On a fini le parcourt d'un groupe, on l'affiche, on réinitialise
+					$list.="<option value='".$current_group_first_empr."' $checked >".htmlentities($current_group, ENT_QUOTES, $charset)."</option>";
+					$current_group = '';
+					$current_group_first_empr = 0;
+					$checked = '';
+				}
+				if ($info_circ['current_owner'] || ($this->info_expl[$expl_id]['current_empr'] == $empr_id)) {
+					$checked = " selected='selected' ";
+				}
+				if ($info_circ['group_name'] && ($info_circ['group_name'] == $current_group)) {
+					// On est toujours dans le groupe, on ne fait rien
+					continue;
+				}
+				if ($info_circ['group_name']) {
+					// On rentre dans un groupe, on le stocke, on n'affiche rien pour l'instant
+					$current_group = $info_circ['group_name'];
+					$current_group_first_empr = $empr_id;
+					continue;
+				}
+				// Si on arrive ici, on est dans le cas d'un emprunteur sans groupe
+				$empr_infos = $this->empr_info($empr_id);
+				$list.="<option value='".$empr_id."' $checked >".htmlentities($empr_infos['empr_libelle'], ENT_QUOTES, $charset)."</option>";
+				$checked = '';
+			}
+			$tpl=str_replace("!!diff_select!!", $list, $tpl);
+			return $tpl;
+		}
 		foreach($this->info_expl[$expl_id]['serialcirc_diff']->diffusion as $diffusion){
 			if($diffusion["empr_type"]== SERIALCIRC_EMPR_TYPE_empr && $this->info_expl[$expl_id]['serialcirc_diff']->virtual_circ ){
 				if( !$this->info_circ[$expl_id][$diffusion["num_empr"]]['subscription'])	continue;			
 			}
-			if($diffusion["empr_type"]== SERIALCIRC_EMPR_TYPE_group )$name=$diffusion["empr_name"];
-			else  $name=$this->info_expl[$expl_id]['serialcirc_diff']->empr_info[$diffusion["num_empr"]]["empr_libelle"];
-			if($this->info_expl[$expl_id]['num_diff'] == $diffusion['id']) $checked=" selected='selected' ";
-			else $checked="";
-			$list.="<option value='".$diffusion['id']."' $checked >".htmlentities($name, ENT_QUOTES, $charset)."</option>";
+			if($diffusion["empr_type"]== SERIALCIRC_EMPR_TYPE_group ) {
+				$name=$diffusion["empr_name"];
+				// On récupère le premier emprunteur du groupe
+				$num_empr = $diffusion['group'][0]['num_empr'];
+			} else {
+				$name=$this->info_expl[$expl_id]['serialcirc_diff']->empr_info[$diffusion["num_empr"]]["empr_libelle"];
+				$num_empr = $diffusion['num_empr'];
+			}
+			if($this->info_expl[$expl_id]['num_diff'] == $diffusion['id']) {
+				$checked=" selected='selected' ";
+			} else {
+				$checked="";
+			}
+			$list.="<option value='".$num_empr."' $checked >".htmlentities($name, ENT_QUOTES, $charset)."</option>";
 		}
-		$tpl=str_replace("!!diff_select!!", $list, $tpl);	
-/*		
-		// on liste les empr réel et ceux du group
-		$name_list="";
-		foreach($this->info_expl[$expl_id]['serialcirc_diff']->diffusion as $diffusion){
-			if($diffusion["empr_type"]== SERIALCIRC_EMPR_TYPE_group ){
-				$group_name=$diffusion["empr_name"];
-				foreach($diffusion['group'] as $empr_group){
-					$name.="<a href='".$empr_group['view_link']."'>".htmlentities("[".$group_name."]".$empr_group['empr'],ENT_QUOTES,$charset)."</a><br />";
-				}		
-			} else{				
-				$name="<a href='".$empr_group['view_link']."'>".htmlentities($this->info_expl[$expl_id]['serialcirc_diff']->empr_info[$diffusion["num_empr"]]["empr_libelle"],ENT_QUOTES,$charset)."</a><br />";
-			}
-			if($this->info_expl[$expl_id]['num_diff'] == $diffusion['id'])	 {
-				$name="<span class='erreur'>". $name	."</span>";
-			}
-			$name_list.=$name;	
-		}	
-		$tpl=str_replace("!!empr_list!!", $name_list, $tpl);	
-*/		
+		$tpl=str_replace("!!diff_select!!", $list, $tpl);
 		return $tpl;
 	}
 	
-	function build_empr_list($expl_id){		
+	public function build_empr_list($expl_id){		
 		global $charset;
 		// on liste les empr réel et ceux du group
 		$name_list="";
-		foreach($this->info_expl[$expl_id]['serialcirc_diff']->diffusion as $diffusion){
-			if($diffusion["empr_type"]== SERIALCIRC_EMPR_TYPE_group ){
-				$group_name=$diffusion["empr_name"];
-				$name="";
-				foreach($diffusion['group'] as $empr_group){
-					$name.= "<a href='".$empr_group['empr']['view_link']."'>".htmlentities("[".$group_name."]".$empr_group['empr']["empr_libelle"],ENT_QUOTES,$charset)."</a><br />";
-				}		
-			} else{				
-				$name="<a href='".$this->info_expl[$expl_id]['serialcirc_diff']->empr_info[$diffusion["num_empr"]]['view_link']."'>". htmlentities($this->info_expl[$expl_id]['serialcirc_diff']->empr_info[$diffusion["num_empr"]]["empr_libelle"],ENT_QUOTES,$charset)."</a><br />";
-			}				
-			if($this->info_expl[$expl_id]['num_diff'] == $diffusion['id'])	 {
-				$name="<span class='erreur'>". $name	."</span>";
+		
+		foreach ($this->info_circ[$expl_id] as $empr_id => $info_circ) {
+			$empr_infos = $this->empr_info($empr_id);
+			$name = "<a href='".$empr_infos['view_link']."'>".htmlentities(($info_circ['group_name'] ? '('.$info_circ['group_name'].') ' : '').$empr_infos["empr_libelle"],ENT_QUOTES,$charset)."</a><br />";
+			if ($info_circ['current_owner'] || ($this->info_expl[$expl_id]['current_empr'] == $empr_id))	 {
+				$name = "<span class='erreur'>".$name."</span>";
 			}
-			$name_list.=$name;			
-		}			
+			$name_list.= $name;
+		}
 		return $name_list;
 	}
 		
-	function build_expl_form($expl_id,$tpl,$zone=''){		
+	public function build_expl_form($expl_id,$tpl,$zone=''){
 		global $charset;
 		$tpl=str_replace("!!expl_id!!", $expl_id, $tpl);
 		$tpl=str_replace("!!bull_id!!", $this->info_expl[$expl_id]['bulletin_id'], $tpl);	
@@ -854,14 +1071,14 @@ class serialcirc {
 		$tpl=str_replace("!!date!!", htmlentities($this->info_expl[$expl_id]['mention_date'],ENT_QUOTES,$charset)."</a>", $tpl);	
 		$tpl=str_replace("!!periodique!!","<a href='".$this->info_expl[$expl_id]['serial_link']."'>". htmlentities( $this->info_expl[$expl_id]['serial_title'],ENT_QUOTES,$charset), $tpl);	
 		$tpl=str_replace("!!numero!!","<a href='".$this->info_expl[$expl_id]['bull_link']."'>". htmlentities($this->info_expl[$expl_id]['numero'],ENT_QUOTES,$charset)."</a>", $tpl);	
-		$tpl=str_replace("!!abonnement!!",  "<a href='".$this->info_expl[$expl_id]['cirdiff_link']."'>".htmlentities( $this->info_expl[$expl_id]['serialcirc_diff']->abt_name,ENT_QUOTES,$charset)."</a>", $tpl);	
+		$tpl=str_replace("!!abonnement!!",  "<a href='".$this->info_expl[$expl_id]['cirdiff_link']."'>".htmlentities( $this->info_expl[$expl_id]['expl_abt_name'],ENT_QUOTES,$charset)."</a>", $tpl);	
 		$tpl=str_replace("!!destinataire!!",$this->build_diff_sel($expl_id), $tpl);
 		$tpl=str_replace("!!empr_list!!", $this->build_empr_list($expl_id), $tpl);
 		$tpl=str_replace("!!zone!!", $zone, $tpl);													
 		return $tpl;		
 	}
 	
-	function gen_circ_form($cb="") {
+	public function gen_circ_form($cb="") {
 		global $charset, $serialcirc_circ_form,$serialcirc_circ_liste;
 		global $serialcirc_circ_liste_alerter,$serialcirc_circ_liste_alerter_tr,$serialcirc_circ_liste_is_alerted_tr;
 		global $serialcirc_circ_liste_circuler,$serialcirc_circ_liste_circuler_tr;
@@ -876,8 +1093,11 @@ class serialcirc {
 		$circ_form.=$serialcirc_circ_liste;
 		
 		// select "localisation"
-		if($pmb_lecteurs_localises)$circ_form = str_replace("!!localisation!!", gen_liste ("select distinct idlocation, location_libelle from docs_location, docsloc_section where num_location=idlocation order by 2 ", "idlocation", "location_libelle", 'location_id', "document.forms['form_pointage'].submit();", $this->id_location, "", "","","",0),	$circ_form);
-		else $circ_form=str_replace("!!localisation!!","",$circ_form);
+		if($pmb_lecteurs_localises){
+			$circ_form = str_replace("!!localisation!!", gen_liste ("select distinct idlocation, location_libelle from docs_location, docsloc_section where num_location=idlocation order by 2 ", "idlocation", "location_libelle", 'location_id', "document.forms['form_pointage'].submit();", $this->id_location, "", "","","",0),	$circ_form);
+			//mise en session pour passer la localisation à l'impression des fiches de circulation
+			$_SESSION['serialcirc_location']=$this->id_location;
+		} else $circ_form=str_replace("!!localisation!!","",$circ_form);
 		
 		$liste_alerter=$tr_list="";
 		if($nb_liste_alerter=count($this->classement['alert'])){
@@ -910,7 +1130,7 @@ class serialcirc {
 				}else{					
 					$tr=$serialcirc_circ_liste_circulation_star_tr;
 				}	
-				if ($this->info_expl[$expl_id]['serialcirc_diff']->checked) {
+				if ($this->info_expl[$expl_id]['serialcirc_checked']) {
 					$tr=str_replace("!!bt_rappel_perio!!","<input type=\"button\" class='bouton' value='".htmlentities($msg["serialcirc_circ_list_bull_circulation_call_bt"],ENT_QUOTES,$charset)."' onClick=\"my_serialcirc_call_expl('!!zone!!','!!expl_id!!'); return false;\"/>&nbsp;",$tr);
 					$tr=str_replace("!!bt_exige_transmission!!","<input type=\"button\" class='bouton' value='".htmlentities($msg["serialcirc_circ_list_bull_circulation_go_bt"],ENT_QUOTES,$charset)."' onClick=\"my_serialcirc_do_trans('!!zone!!','!!expl_id!!'); return false;\"/>&nbsp;",$tr);
 				} else {
@@ -995,7 +1215,7 @@ class serialcirc {
 
 		
 	
-	function gen_pointage_form($point_expl_id) {
+	public function gen_pointage_form($point_expl_id) {
 		global $charset, $serialcirc_pointage_form,$serialcirc_circ_liste;
 		global $serialcirc_circ_liste_alerter,$serialcirc_circ_liste_alerter_tr,$serialcirc_circ_liste_is_alerted_tr;
 		global $serialcirc_circ_liste_circuler,$serialcirc_circ_liste_circuler_tr;
@@ -1008,6 +1228,10 @@ class serialcirc {
 		$circ_form=$serialcirc_pointage_form;
 	
 		$liste_alerter=$tr_list="";
+		$nb_liste_circuler = 0;
+		$nb_liste_retard = 0;
+		$nb_liste_circulation = 0;
+		
 		foreach($this->classement['alert'] as $expl_id){
 			if($expl_id==$point_expl_id){
 				$nb_liste_alerter=1;
@@ -1027,7 +1251,6 @@ class serialcirc {
 				$liste_circuler=$serialcirc_circ_liste_circuler;
 				foreach($this->classement['to_be_circ'] as $expl_id){
 					$tr=$serialcirc_circ_liste_circuler_tr;
-					
 					$tr_list.=$this->build_expl_form($expl_id,$tr,"to_be_circ");
 				}
 				$liste_circuler=str_replace("!!liste_circuler!!",$tr_list , $liste_circuler);
@@ -1092,7 +1315,7 @@ class serialcirc {
 	}
 	
 			
-	function gen_circ_cb($cb) {
+	public function gen_circ_cb($cb) {
 		global $serialcirc_circ_cb_notfound, $serialcirc_circ_cb_info;
 		$info="";
 		$req="select * from serialcirc_expl,exemplaires where expl_cb='$cb' and expl_id=num_serialcirc_expl_id ";
@@ -1149,43 +1372,43 @@ class serialcirc_subst extends serialcirc {
 			<table>
 				<tr>
 					<td></td>
-					<td valign='top'>Colonne 1</td> 	
-					<td valign='top'>Colonne 2</td> 				
+					<td style='vertical-align:top'>Colonne 1</td> 	
+					<td style='vertical-align:top'>Colonne 2</td> 				
 				</tr>
 				<tr>	
 					<td>1</td>
-					<td valign='top'><input type='radio' name='index_start'   value='1' checked='checked' /></td> 
-					<td valign='top'><input type='radio' name='index_start'   value='2' /></td> 
+					<td style='vertical-align:top'><input type='radio' name='index_start'   value='1' checked='checked' /></td> 
+					<td style='vertical-align:top'><input type='radio' name='index_start'   value='2' /></td> 
 				</tr>
 				<tr>	
 					<td>2</td>
-					<td valign='top'><input type='radio' name='index_start'   value='3'  /></td> 
-					<td valign='top'><input type='radio' name='index_start'   value='4' /></td> 
+					<td style='vertical-align:top'><input type='radio' name='index_start'   value='3'  /></td> 
+					<td style='vertical-align:top'><input type='radio' name='index_start'   value='4' /></td> 
 				</tr>
 				<tr>	
 					<td>3</td>
-					<td valign='top'><input type='radio' name='index_start'   value='5'  /></td> 
-					<td valign='top'><input type='radio' name='index_start'   value='6' /></td> 
+					<td style='vertical-align:top'><input type='radio' name='index_start'   value='5'  /></td> 
+					<td style='vertical-align:top'><input type='radio' name='index_start'   value='6' /></td> 
 				</tr>
 				<tr>	
 					<td>4</td>
-					<td valign='top'><input type='radio' name='index_start'   value='7'  /></td> 
-					<td valign='top'><input type='radio' name='index_start'   value='8' /></td> 
+					<td style='vertical-align:top'><input type='radio' name='index_start'   value='7'  /></td> 
+					<td style='vertical-align:top'><input type='radio' name='index_start'   value='8' /></td> 
 				</tr>
 				<tr>	
 					<td>5</td>
-					<td valign='top'><input type='radio' name='index_start'   value='9'  /></td> 
-					<td valign='top'><input type='radio' name='index_start'   value='10' /></td> 
+					<td style='vertical-align:top'><input type='radio' name='index_start'   value='9'  /></td> 
+					<td style='vertical-align:top'><input type='radio' name='index_start'   value='10' /></td> 
 				</tr>
 				<tr>	
 					<td>6</td>
-					<td valign='top'><input type='radio' name='index_start'   value='11'  /></td> 
-					<td valign='top'><input type='radio' name='index_start'   value='12' /></td> 
+					<td style='vertical-align:top'><input type='radio' name='index_start'   value='11'  /></td> 
+					<td style='vertical-align:top'><input type='radio' name='index_start'   value='12' /></td> 
 				</tr>
 				<tr>	
 					<td>7</td>
-					<td valign='top'><input type='radio' name='index_start'   value='13'  /></td> 
-					<td valign='top'><input type='radio' name='index_start'   value='14' /></td> 
+					<td style='vertical-align:top'><input type='radio' name='index_start'   value='13'  /></td> 
+					<td style='vertical-align:top'><input type='radio' name='index_start'   value='14' /></td> 
 				</tr>
 			</table>
 			<input type='submit' class='bouton' value='Imprimer'  />

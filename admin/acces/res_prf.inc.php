@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: res_prf.inc.php,v 1.7 2015-04-03 11:16:27 jpermanne Exp $
+// $Id: res_prf.inc.php,v 1.8 2017-08-23 07:57:24 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -15,7 +15,7 @@ if (!$ac) {
 	$ac= new acces();
 	$t_cat= $ac->getCatalog();
 }
-if (!$dom) {
+if (empty($dom)) {
 	$dom=$ac->setDomain($id);
 }
 
@@ -298,6 +298,9 @@ switch ($action) {
 		break;
 
 	case 'update' :
+		if (!isset($unused_prf_id)) {
+			$unused_prf_id = array();
+		}
 		$dom->saveResourceProfiles($prf_id, $prf_lib, $prf_rule, $prf_hrule, $prf_used, $unused_prf_id);
 		show_res_prf_list($id,true);
 		break;

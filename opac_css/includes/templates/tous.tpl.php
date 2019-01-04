@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: tous.tpl.php,v 1.6 2012-07-30 12:22:58 ngantier Exp $
+// $Id: tous.tpl.php,v 1.9 2018-04-18 14:08:59 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
@@ -64,6 +64,22 @@ if ( ! defined( 'TOUS_TMPL' ) ) {
 //
 // A ajouter à ces variables, les variables de localisation qui permettent de fixer des termes d'intro et de fin
 // ex : !!notice_id_start!! ou !!notice_id_end!!
+
+global $notice_level1_display;
+global $notice_level1_no_coll_info;
+global $notice_level1_no_author_info;
+global $notice_level1_no_authors_info;
+global $notice_level1_no_publisher_info;
+global $notice_level2_display;
+global $oldnotice_level2_display;
+global $notice_level2_no_coll_info;
+global $notice_level2_no_author_info;
+global $notice_level2_no_authors_info;
+global $notice_level2_no_publisher_info;
+global $notice_level3_display;
+global $notice_level4_display;
+global $notice_level5_display;
+global $largeur;  
 
 // level 1 : affichage sur une ligne titre, auteur principal, disponibilité
 $notice_level1_display = "
@@ -137,7 +153,7 @@ NON UTILISE POUR L INSTANT voir 'list notices.inc.php' effacé par ER le 04/09/20
 
 // level 5 : affichage intermarc
 $notice_level5_display = "
-<table border='0' width='$largeur'>
+<table style='border:0px' width='$largeur'>
 			<tr>
 				<td class='listheader' colspan='2'>
 				<h3>".$msg["notice_display_intermarc"]."</h3>

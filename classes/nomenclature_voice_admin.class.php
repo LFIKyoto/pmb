@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_voice_admin.class.php,v 1.4 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: nomenclature_voice_admin.class.php,v 1.5 2016-03-30 14:34:53 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -57,7 +57,7 @@ class nomenclature_voice_admin {
 	}
 
 	public function save() {
-		global $dbh;
+		global $dbh, $msg;
 		global $name;
 		global $code;
 			
@@ -76,6 +76,7 @@ class nomenclature_voice_admin {
 			pmb_mysql_query($req, $dbh);				
 		}	
 		$this->fetch_data();
+		print display_notification($msg['account_types_success_saved']);
 	}	
 	
 	public function delete() {

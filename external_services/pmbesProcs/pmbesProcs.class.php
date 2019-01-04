@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesProcs.class.php,v 1.4.4.3 2015-10-15 12:17:07 dbellamy Exp $
+// $Id: pmbesProcs.class.php,v 1.11 2017-10-18 13:38:33 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], '.class.php')) die('no access');
 
@@ -13,22 +13,20 @@ if(!defined('INTERNAL')) {define ('INTERNAL',1);}
 if(!defined('EXTERNAL')) {define ('EXTERNAL',2);}
 
 class pmbesProcs extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message='';	//Message correspondant à l'erreur
 
-	function restore_general_config() {
+	public function restore_general_config() {
 
 	}
 
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 
-	function save_general_config() {
+	public function save_general_config() {
 
 	}
 
-	function listProcs() {
+	public function listProcs() {
 		global $dbh;
 
 		if (SESSrights & ADMINISTRATION_AUTH) {
@@ -40,9 +38,9 @@ class pmbesProcs extends external_services_api_class {
 			while ($row = pmb_mysql_fetch_assoc($res)) {
 				$result[] = array (
 					'idproc' => $row->idproc,
-					'name' => $row->name,
-					'requete' => $row->requete,
-					'comment' => $row->comment,
+					'name' => utf8_normalize($row->name),
+					'requete' => utf8_normalize($row->requete),
+					'comment' => utf8_normalize($row->comment),
 				);
 			}
 			return $result;
@@ -54,7 +52,7 @@ class pmbesProcs extends external_services_api_class {
 	/*
 	 *
 	 */
-	function executeProc($procedure, $idProc, $tparams) {
+	public function executeProc($procedure, $idProc, $tparams) {
 		global $msg,$dbh, $charset, $PMBuserid;
 		global $pmb_procedure_server_credentials,$pmb_procedure_server_address;
 
@@ -63,8 +61,8 @@ class pmbesProcs extends external_services_api_class {
 			$report = '';
 			if ($tparams['envt']) {
 				foreach ($tparams['envt'] as $aparam=>$vparam) {
-					global $$aparam;
-					$$aparam = $vparam;
+					global ${$aparam};
+					${$aparam} = $vparam;
 				}
 			}
 
@@ -84,8 +82,8 @@ class pmbesProcs extends external_services_api_class {
 						if ($procedure['error_message']) {
 							$report = htmlentities($msg['remote_procedures_error_server'], ENT_QUOTES, $charset).':<br /><i>'.$procedure['error_message'].'</i>';
 							$result = array(
-								'name' => $the_procedure->name,
-								'report' => $report
+								'name' => utf8_normalize($the_procedure->name),
+								'report' => utf8_normalize($report)
 							);
 							return $result;
 						} else if ($the_procedure->params && ($the_procedure->params != 'NULL')) {
@@ -122,8 +120,8 @@ class pmbesProcs extends external_services_api_class {
 					$report = $msg[11];
 //					throw new Exception($message, $code);
 					$result = array(
-						'name' => $name,
-						'report' => $report
+						'name' => utf8_normalize($name),
+						'report' => utf8_normalize($report)
 					);
 					return $result;
 				}
@@ -153,7 +151,7 @@ class pmbesProcs extends external_services_api_class {
 							$report .= "<table >";
 							for($i=0; $i < $nbr_champs; $i++) {
 								$fieldname = pmb_mysql_field_name($res, $i);
-								$report .= "<th>${fieldname}</th>";
+								$report .= "<th>".$fieldname."</th>";
 							}
 
 							for($i=0; $i < $nbr_lignes; $i++) {
@@ -166,14 +164,14 @@ class pmbesProcs extends external_services_api_class {
 								$report .= "</tr>";
 							}
 							$report .= "</table><hr />";
-							$report .= "<font color='#ff0000'>".$msg['admin_misc_lignes']." ".pmb_mysql_affected_rows($dbh)."</font>";
+							$report .= "<span style='color:#ff0000'>".$msg['admin_misc_lignes']." ".pmb_mysql_affected_rows($dbh)."</span>";
 
 						} else {
 
-							$report .= "<br /><font color='#ff0000'>".$msg['admin_misc_lignes']." ".pmb_mysql_affected_rows($dbh);
+							$report .= "<br /><span style='color:#ff0000'>".$msg['admin_misc_lignes']." ".pmb_mysql_affected_rows($dbh);
 							$err = pmb_mysql_error($dbh);
 							if ($err) $report .= "<br />$err";
-							$report .= "</font><hr />";
+							$report .= "</span><hr />";
 
 						}
 
@@ -219,8 +217,8 @@ class pmbesProcs extends external_services_api_class {
 			}
 
 			$result = array(
-				'name' => $name,
-				'report' => $report
+				'name' => utf8_normalize($name),
+				'report' => utf8_normalize($report)
 			);
 			return $result;
 		}

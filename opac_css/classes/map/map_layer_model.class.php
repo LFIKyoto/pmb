@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_layer_model.class.php,v 1.3 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: map_layer_model.class.php,v 1.5 2016-11-05 14:49:08 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($class_path."/map/map_hold.class.php");
@@ -73,8 +73,6 @@ class map_layer_model {
   public function get_bounding_box() {
   	global $dbh;
   	
-  	
-  	
   	if(!$this->bounding_box){
 	  	//on teste la manière forte !
 	  	$collection = $global_collection = "";
@@ -83,7 +81,7 @@ class map_layer_model {
 	  		if($collection) $collection.=",";
 	  		$collection.=$hold->get_wkt();
 	  		$i++;
-	  		if($i=500){
+	  		if($i == 500){
 	  			$query = "select astext(envelope(geomfromtext('geometrycollection(".$collection.")'))) as bounding_box";
 	  			$result = pmb_mysql_query($query,$dbh) or die(pmb_mysql_error());
 	  			if(pmb_mysql_num_rows($result)){
@@ -93,7 +91,6 @@ class map_layer_model {
 	  			$i=0;
 	  			$collection ="";
 	  		}
-	  		
 	  	}
 	  	
 	  	if($collection){
@@ -112,6 +109,7 @@ class map_layer_model {
 		  		$this->bounding_box = new map_hold_polygon("bounding", 0,pmb_mysql_result($result,0,0));
 		  	}
 	  	}
+	  	
 	  	if(!$this->bounding_box){
 	  		return false;
 	  	}
@@ -132,14 +130,14 @@ class map_layer_model {
   } // end of member function calc_bounding_box
 
 
-  public function  get_holds(){
-  	return $this->holds;
-  }
+	public function  get_holds(){
+  		return $this->holds;
+  	}
 
 	public function get_informations(){
  		return array(
 			'type' => $this->get_layer_model_type(),
- 			'name' => $this->get_layer_model_type(),
+ 			'name' => $this->get_layer_model_name(),
  			'color' => $this->color,
  			'field_id'=> $this->get_layer_model_type()."_hidden_field"
  		);
@@ -151,4 +149,5 @@ class map_layer_model {
 		}
 		return false;
 	}
+	
 } // end of map_layer_model

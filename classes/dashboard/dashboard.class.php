@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dashboard.class.php,v 1.2 2015-01-21 11:16:13 mbertin Exp $
+// $Id: dashboard.class.php,v 1.5 2018-01-03 15:34:22 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -92,6 +92,9 @@ class dashboard {
 				case "edit" :
 					if(SESSrights & EDIT_AUTH && file_exists($class_path."/dashboard/dashboard_module_".$module.".class.php")) $authorized_modules[] = $module;
 					break;
+				case "admin" :
+					if(SESSrights & ADMINISTRATION_AUTH && file_exists($class_path."/dashboard/dashboard_module_".$module.".class.php")) $authorized_modules[] = $module;
+					break;
 			}
 		}
 		$this->dashboard_modules = $authorized_modules;
@@ -102,14 +105,14 @@ class dashboard {
 			$this->dashboard_modules[] = "dashboard";
 			$this->dashboard_modules[] = "circ";
 			$this->dashboard_modules[] = "catalog";
-			$this->dashboard_modules[] = "admin";
-			$this->dashboard_modules[] = "demandes";
-			$this->dashboard_modules[] = "acquisition";
-			$this->dashboard_modules[] = "fichier";
-			$this->dashboard_modules[] = "edit";
-			$this->dashboard_modules[] = "cms";	
-			$this->dashboard_modules[] = "dsi";
 	 		$this->dashboard_modules[] = "autorites";
+			$this->dashboard_modules[] = "edit";
+			$this->dashboard_modules[] = "dsi";
+			$this->dashboard_modules[] = "acquisition";
+			$this->dashboard_modules[] = "demandes";
+			$this->dashboard_modules[] = "fichier";
+			$this->dashboard_modules[] = "cms";	
+			$this->dashboard_modules[] = "admin";
 	}
 	
 	private function choose_layout(){
@@ -166,6 +169,7 @@ class dashboard {
 			}
 			//on cherche le template qui va bien...
 			$html_templates = $xml_template->getElementsByTagName("content");
+			$end = false;
 			for($i=0 ; $i<$html_templates->length ; $i++){
 				if($i == 0 || $html_templates->length == 1){
 					$template = $this->charset_normalize($html_templates->item($i)->nodeValue,"utf-8");
@@ -176,7 +180,9 @@ class dashboard {
 						$current_lang = $this->charset_normalize($attributes->item($j)->nodeValue,"utf-8");
 						if($current_lang == $lang){
 							$template = $this->charset_normalize($html_templates->item($i)->nodeValue,"utf-8");
-							break(2);
+							//break(2);
+							$end = true;
+							break;
 						}
 					}
 					if($attributes->item($j)->nodeName == "default_lang"){
@@ -187,6 +193,7 @@ class dashboard {
 						}
 					}
 				}
+				if($end) break;				
 			}
 			@ini_set("zend.ze1_compatibility_mode", "1");
 		}
@@ -208,6 +215,7 @@ class dashboard {
 		return $elem;
 	}
 	protected static function clean_cp1252($str,$charset){
+		$cp1252_map = array();
 		switch($charset){
 			case "utf-8" :
 				$cp1252_map = array(
@@ -241,6 +249,7 @@ class dashboard {
 				);
 				break;
 			case "iso8859-1" :
+			case "iso-8859-1" :
 				$cp1252_map = array(
 				"\x80" => "EUR", /* EURO SIGN */
 				"\x82" => "\xab", /* SINGLE LOW-9 QUOTATION MARK */

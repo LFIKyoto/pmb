@@ -2,15 +2,18 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: livraisons.tpl.php,v 1.25 2009-06-03 06:06:35 dbellamy Exp $
+// $Id: livraisons.tpl.php,v 1.30 2017-11-21 12:00:58 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+if(!isset($id_bibli)) $id_bibli = 0;
+if(!isset($id_cde)) $id_cde = 0;
+if(!isset($id_liv)) $id_liv = 0;
 
 $livlist_form = "
 <form class='form-$current_module' id='act_list_form' name='act_list_form' method='post' action=\"\" >
 	<div class='form-contenu'>
-		<table width='100%' ><tbody>
+		<table style='width:100%' ><tbody>
 			<tr>
 			<th>".htmlentities($msg['38'], ENT_QUOTES, $charset)."</th>
 			<th>".htmlentities($msg['acquisition_act_num_cde'],ENT_QUOTES, $charset)."</th>
@@ -121,7 +124,7 @@ $livr_modif_form = "
 		<br /> 
 
 		<div class='row'>
-			<img id='comment_Img' src='./images/plus.gif' class='img_plus' onclick=\"javascript:expandBase('comment_', true);\"/>
+			<img id='comment_Img' src='".get_url_icon('plus.gif')."' class='img_plus' onclick=\"javascript:expandBase('comment_', true);\"/>
     		<label class='etiquette'>".htmlentities($msg['acquisition_commentaires'], ENT_QUOTES, $charset)."</label>&nbsp;
 		</div>
 		<div class='row' style='margin-left:30px'>
@@ -156,18 +159,18 @@ $livr_modif_form = "
 		
 		<!-- form_search -->
 		<div>
-			<table width='100%' frame='all' style='table-layout:fixed; '>
+			<table frame='all' style='table-layout:fixed; width:100%'>
 				<tr>
-					<th width='3%'>&nbsp;</th>
-					<th width='12%'>".htmlentities($msg['acquisition_act_tab_code'], ENT_QUOTES, $charset)."</th>
-					<th width='45%'>".htmlentities($msg['acquisition_act_tab_lib'], ENT_QUOTES, $charset)."</th>
-					<th width='20%'>".htmlentities($msg['acquisition_act_tab_sol'], ENT_QUOTES, $charset)."</th>
-					<th width='20%'>".htmlentities($msg['acquisition_act_tab_rec'], ENT_QUOTES, $charset)."</th>
+					<th style='width:3%'>&nbsp;</th>
+					<th style='width:12%'>".htmlentities($msg['acquisition_act_tab_code'], ENT_QUOTES, $charset)."</th>
+					<th style='width:45%'>".htmlentities($msg['acquisition_act_tab_lib'], ENT_QUOTES, $charset)."</th>
+					<th style='width:20%'>".htmlentities($msg['acquisition_act_tab_sol'], ENT_QUOTES, $charset)."</th>
+					<th style='width:20%'>".htmlentities($msg['acquisition_act_tab_rec'], ENT_QUOTES, $charset)."</th>
 				</tr>
 			</table>
 		</div>
 
-		<iframe class='acquisition' name='list_lig' id='list_lig' width='100%' height='350' ></iframe>		
+		<iframe class='acquisition' name='list_lig' id='list_lig' width='100%' height='350px' ></iframe>		
 			
 		<div class='row'></div>
 	
@@ -210,7 +213,7 @@ try {
 //	template de création/modification pour les lignes de livraisons
 //	------------------------------------------------------------------------------
 $frame_modif = " 
-<table width='100%' frame='all' style='table-layout:fixed;background-color:transparent;' >
+<table frame='all' style='table-layout:fixed;background-color:inherit; width:100%' >
 
 	<form id='frame_modif' name='frame_modif' method='post' action=\"\" >
 		<input type='hidden' id='max_lig' name='max_lig' value='!!max_lig!!' />
@@ -261,24 +264,24 @@ function maj_parent () {
 
 $frame_row = "
 <tr>
-	<td width='3%'>
+	<td style='width:3%'>
 		<label class='etiquette' >!!no!!</label>
 		<input type='hidden' id='id_lig[!!no!!]' name='id_lig[!!no!!]' value='!!id_lig!!' /> 
 		<input type='hidden' id='id_prod[!!no!!]' name='id_prod[!!no!!]' value='!!id_prod!!' />
 	</td>
-	<td width='12%' valign='top' style='overflow:hidden;' >
+	<td style='width:12%; vertical-align:top; overflow:hidden;' >
 		<input type='hidden' id='code[!!no!!]' name='code[!!no!!]' value='!!code!!' />\n
 		!!code!!
 	</td>
-	<td width='45%' valign='top' style='overflow:hidden;' >
+	<td style='width:45%; vertical-align:top; overflow:hidden;' >
 		<input type='hidden' id='lib[!!no!!]' name='lib[!!no!!]' value='!!hidden_lib!!' />
 		!!lib!!
 	</td>
-	<td width='20%' valign='top' style='text-align:right;padding-right:5px;' >
+	<td style='width:20%; vertical-align:top; text-align:right;padding-right:5px;' >
 		<input type='hidden' id='sol[!!no!!]' name='sol[!!no!!]' value='!!sol!!' />
 		!!sol!!
 	</td>
-	<td width='20%' valign='top'>
+	<td style='width:20%; vertical-align:top; '>
 		<a name='ancre[!!no!!]'></a>
 		<input type='text' id='rec[!!no!!]' name='rec[!!no!!]' style='text-align:right;width:95%' tabindex='1' value='!!rec!!' />
 	</td>
@@ -286,27 +289,27 @@ $frame_row = "
 ";
 
 
-$frame_row_bl_header="<tr class='tab_sep'><td width='3%'>&nbsp;</td><td width='12%'>&nbsp;</td><td width='45%'><strong>".htmlentities($msg['acquisition_liv_sai'], ENT_QUOTES, $charset)."</strong></td><td width='20%'>&nbsp;</td><td width='20%'>&nbsp;</td></tr>";
+$frame_row_bl_header="<tr class='tab_sep'><td style='width:3%'>&nbsp;</td><td style='width:12%'>&nbsp;</td><td style='width:45%'><strong>".htmlentities($msg['acquisition_liv_sai'], ENT_QUOTES, $charset)."</strong></td><td style='width:20%'>&nbsp;</td><td style='width:20%'>&nbsp;</td></tr>";
 
 $frame_row_bl = "
 <tr>
-	<td width='3%'>
+	<td style='width:3%'>
 		<input type='checkbox' tabindex='-1' id='chk[!!no!!]' name='chk[!!no!!]' value='1' />			
 		<input type='hidden' id='id_lig[!!no!!]' name='id_lig[!!no!!]' value='!!id_lig!!' /> 
 		<input type='hidden' id='id_prod[!!no!!]' name='id_prod[!!no!!]' value='!!id_prod!!' />
 	</td>
-	<td width='12%' valign='top' style='overflow:hidden;' >
+	<td style='width:12%; vertical-align:top; overflow:hidden;' >
 		<input type='hidden' id='code[!!no!!]' name='code[!!no!!]' value='!!code!!' />\n
 		!!code!!
 	</td>
-	<td width='45%' valign='top' style='overflow:hidden;' >
+	<td style='width:45%; vertical-align:top; overflow:hidden;' >
 		<input type='hidden' id='lib[!!no!!]' name='lib[!!no!!]' value='!!hidden_lib!!' />
 		!!lib!!
 	</td>
-	<td width='20%' valign='top' >
+	<td style='width:20%; vertical-align:top; ' >
 		&nbsp;
 	</td>
-	<td width='20%' valign='top' style='text-align:right;padding-right:5px;' >
+	<td style='width:20%; vertical-align:top; text-align:right;padding-right:5px;' >
 		<input type='hidden' id='rec[!!no!!]' name='rec[!!no!!]' value='!!rec!!' />
 		!!rec!!
 	</td>
@@ -316,19 +319,19 @@ $frame_row_bl = "
 
 $frame_row_arc="
 <tr>
-	<td width='3%'>
+	<td style='width:3%'>
 		<label class='etiquette' >!!no!!</label>
 	</td>
-	<td width='12%' valign='top' style='overflow:hidden;' >
+	<td style='width:12%; vertical-align:top; overflow:hidden;' >
 		!!code!!
 	</td>
-	<td width='45%' valign='top' style='overflow:hidden;' >
+	<td style='width:45%; vertical-align:top; overflow:hidden;' >
 		!!lib!!
 	</td>
-	<td width='20%' valign='top' style='text-align:right;padding-right:5px;' >
+	<td style='width:20%; vertical-align:top; text-align:right;padding-right:5px;' >
 		!!sol!!
 	</td>
-	<td width='20%' valign='top' style='text-align:right;padding-right:5px;' >
+	<td style='width:20%; vertical-align:top; text-align:right;padding-right:5px;' >
 		!!rec!!
 	</td>
 </tr>			
@@ -357,7 +360,7 @@ $bt_enr = "<input type='button' class='bouton' value='".$msg['77']."' onclick=\"
 				list_lig.document.forms['frame_modif'].submit(); 
 				return false;\" />";
 
-$bt_audit = "<input type='button' class='bouton' value='".$msg['audit_button']."' onClick=\"openPopUp('./audit.php?type_obj=4&object_id=".$id_liv."', 'audit_popup', 700, 500, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes')\" title='".$msg['audit_button']."' />";
+$bt_audit = "<input type='button' class='bouton' value='".$msg['audit_button']."' onClick=\"openPopUp('./audit.php?type_obj=4&object_id=".$id_liv."', 'audit_popup')\" title='".$msg['audit_button']."' />";
 
 $form_search = "	<hr />
 			<div class='row'>

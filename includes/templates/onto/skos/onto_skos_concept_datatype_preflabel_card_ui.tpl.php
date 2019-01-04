@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_skos_concept_datatype_preflabel_card_ui.tpl.php,v 1.1 2014-08-04 07:48:38 apetithomme Exp $
+// $Id: onto_skos_concept_datatype_preflabel_card_ui.tpl.php,v 1.3 2018-11-26 10:04:59 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -83,8 +83,9 @@ $ontology_tpl['skos_concept_card_ui_wrapper']='
 </div>
 <input type="hidden" id="!!instance_name!!_!!property_name!!_is_composed" name="!!instance_name!!_!!property_name!!_is_composed" value="!!is_composed!!"/>
 <div !!skos_concept_card_ui_parent_visible!! id="skos_concept_card_ui_parent">
-!!skos_concept_card_ui_parent_form!!</div>
+	!!skos_concept_card_ui_parent_form!!
+</div>
 <div !!skos_concept_card_ui_derived_visible!! id="skos_concept_card_ui_derived">
-!!onto_row_label!!
-!!skos_concept_card_ui_derived_form!!</div>
+	!!skos_concept_card_ui_derived_form!!
+</div>
 ';

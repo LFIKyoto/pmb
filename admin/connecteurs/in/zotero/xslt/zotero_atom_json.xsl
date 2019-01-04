@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- feuille de transformation xslt pour le connecteur entrant zotero
+****************************************************************************************
+© 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+****************************************************************************************
+$Id: zotero_atom_json.xsl,v 1.4 2018-01-09 14:05:11 jpermanne Exp $ -->
+
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 	
 	<xsl:output method="xml" indent="yes"/>
@@ -858,9 +865,6 @@
 		</xsl:call-template>
 		<xsl:call-template name="do_identifier"/>
 		<xsl:call-template name="do_doctype"/>
- 		<xsl:call-template name="do_issn">
-			<xsl:with-param name="issn" select="ISSN"/>
-		</xsl:call-template>
 		<xsl:call-template name="do_language">
 			<xsl:with-param name="lang" select="language"/>
 		</xsl:call-template>
@@ -955,9 +959,6 @@
 		</xsl:call-template>
 		<xsl:call-template name="do_identifier"/>
 		<xsl:call-template name="do_doctype"/>
- 		<xsl:call-template name="do_issn">
-			<xsl:with-param name="issn" select="ISSN"/>
-		</xsl:call-template>
 		<xsl:call-template name="do_language">
 			<xsl:with-param name="lang" select="language"/>
 		</xsl:call-template>
@@ -1289,9 +1290,6 @@
 		</xsl:call-template>
 		<xsl:call-template name="do_identifier"/>
 		<xsl:call-template name="do_doctype"/>
- 		<xsl:call-template name="do_issn">
-			<xsl:with-param name="issn" select="ISSN"/>
-		</xsl:call-template>
 		<xsl:call-template name="do_language">
 			<xsl:with-param name="lang" select="language"/>
 		</xsl:call-template>
@@ -1930,7 +1928,7 @@
 				</xsl:choose>
 			</s>
 			<xsl:if test="$serial_issn!=''">
-				<s c="t">
+				<s c="x">
 					<xsl:value-of select="$serial_issn"/>
 				</s>
 			</xsl:if>
@@ -1963,15 +1961,11 @@
 			</s>
 			<xsl:if test="$issue_date!=''">
  				<s c="d">
- 					<xsl:call-template name="do_display_date">
- 						<xsl:with-param name="date" select="$issue_date"/>
- 					</xsl:call-template>
+ 					<xsl:value-of select="$issue_date"/>
   				</s>
   				
  				<s c="e">
- 					<xsl:call-template name="do_machine_date">
- 						<xsl:with-param name="date" select="$issue_date"/>
- 					</xsl:call-template>
+ 					<xsl:value-of select="$issue_date"/>
  				</s>
 			</xsl:if>
 			<s c="9">lnk:bull</s>

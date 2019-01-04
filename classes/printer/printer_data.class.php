@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: printer_data.class.php,v 1.4 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: printer_data.class.php,v 1.5 2017-09-18 13:20:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -48,23 +48,7 @@ class printer_data {
 		$expl = pmb_mysql_fetch_object($res);
 		
 		$responsabilites = get_notice_authors(($expl->m_id+$expl->s_id)) ;
-		$as = array_search ("0", $responsabilites["responsabilites"]) ;
-		if ($as!== FALSE && $as!== NULL) {
-			$auteur_0 = $responsabilites["auteurs"][$as] ;
-			$auteur = new auteur($auteur_0["id"]);
-			$header_aut .= $auteur->isbd_entry;
-		} else {
-			$aut1_libelle=array();
-			$as = array_keys ($responsabilites["responsabilites"], "1" ) ;
-			for ($i = 0 ; $i < count($as) ; $i++) {
-				$indice = $as[$i] ;
-				$auteur_1 = $responsabilites["auteurs"][$indice] ;
-				$auteur = new auteur($auteur_1["id"]);
-				$aut1_libelle[]= $auteur->isbd_entry;
-			}
-		
-			$header_aut .= implode (", ",$aut1_libelle) ;
-		}
+		$header_aut = gen_authors_header($responsabilites);
 		//$header_aut ? $auteur=" / ".$header_aut : $auteur="";
 		
 		$rqt_detail = "select resa_confirmee, resa_cb,location_libelle, expl_cote from resa

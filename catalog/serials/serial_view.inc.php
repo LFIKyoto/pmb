@@ -2,12 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serial_view.inc.php,v 1.12 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: serial_view.inc.php,v 1.13 2017-02-17 15:34:01 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+if(!isset($page)) $page = 0;
+if(!isset($nbr_lignes)) $nbr_lignes = 0;
+
 // résultat de recherche pour gestion des périodiques
-echo str_replace('!!page_title!!', $msg[4000].$msg[1003].$msg[show], $serial_header);
+echo str_replace('!!page_title!!', $msg[4000].$msg[1003].$msg['show'], $serial_header);
 		
 //print $serial_access_form;
 

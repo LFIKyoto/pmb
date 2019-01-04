@@ -2,13 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_selector.php,v 1.59 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: ajax_selector.php,v 1.111 2018-12-20 11:00:19 mbertin Exp $
 
 $base_path=".";
 $base_noheader=1;
 $base_nobody=1;
 //$base_nocheck=1;
-
 
 require_once("includes/init.inc.php");
 require_once("$class_path/marc_table.class.php");
@@ -18,15 +17,19 @@ header("Content-Type: text/html; charset=$charset");
 $start=stripslashes($datas);
 $start = str_replace("*","%",$start);
 $insert_between_separator = "";
+$taille_search = "";
+if($att_id_filter == 'null'){
+    $att_id_filter = null;
+}
 
 switch($completion):
 	case 'categories':
 		/* Pas utilisé en gestion Matthieu 02/08/2012 */
 		$array_selector=array();
-		require_once("$class_path/thesaurus.class.php");
-		require_once("$class_path/categories.class.php");
+		require_once($class_path."/thesaurus.class.php");
+		require_once($class_path."/categories.class.php");
 		if ($thesaurus_mode_pmb==1) $id_thes=-1;
-			else $id_thes=$thesaurus_defaut;
+		else $id_thes=$thesaurus_defaut;
 
 		$aq=new analyse_query($start);
 
@@ -49,7 +52,7 @@ switch($completion):
 		while(($categ=pmb_mysql_fetch_object($res))) {
 			$display_temp = "" ;
 			$lib_simple="";
-			$tab_lib_categ="";
+			$tab_lib_categ=array();
 			$temp = new categories($categ->categ_id, $categ->langue);
 			if ($id_thes == -1) {
 				$thes = new thesaurus($categ->num_thesaurus);
@@ -77,6 +80,7 @@ switch($completion):
 		break;
 	case 'categories_mul':
 		$array_selector=array();
+		$array_prefix=array();
 		require_once("$class_path/thesaurus.class.php");
 		require_once("$class_path/categories.class.php");
 		if ($thesaurus_mode_pmb==1){
@@ -128,7 +132,7 @@ switch($completion):
 		while(($categ=pmb_mysql_fetch_object($res))) {
 			$display_temp = "" ;
 			$lib_simple="";
-			$tab_lib_categ="";
+			$tab_lib_categ=array();
 			$temp = new categories($categ->categ_id, $categ->langue);
 			if ($id_thes == -1) {//Si mode multi-thésaurus
 				$thes = new thesaurus($categ->num_thesaurus);
@@ -197,26 +201,31 @@ switch($completion):
 		break;
 	case 'authors':
 		if ($autexclude) $restrict = " AND author_id not in ($autexclude) ";
-		$requete="select if(author_date!='',concat(if(author_rejete is not null and author_rejete!='',concat(author_name,', ',author_rejete),author_name),' (',author_date,')'),if(author_rejete is not null and author_rejete!='',concat(author_name,', ',author_rejete),author_name)) as author,author_id from authors where if(author_rejete is not null and author_rejete!='',concat(author_name,', ',author_rejete),author_name) like '".addslashes($start)."%' $restrict order by 1 limit 20";	
+		else $restrict = "";
+		$requete="select if(author_date!='',concat(if(author_rejete is not null and author_rejete!='',concat(author_name,', ',author_rejete),author_name),' (',author_date,')'),if(author_rejete is not null and author_rejete!='',concat(author_name,', ',author_rejete),author_name)) as author,author_id from authors where if(author_rejete is not null and author_rejete!='',concat(author_name,', ',author_rejete),author_name) like '".addslashes($start)."%' $restrict order by 1 limit 20";
 		$origine = "SQL" ;
 		break;
 	case 'authors_person':
 		if ($autexclude) $restrict = " AND author_id not in ($autexclude) ";
+		else $restrict = "";
 		$requete="select if(author_date!='',concat(if(author_rejete is not null and author_rejete!='',concat(author_name,', ',author_rejete),author_name),' (',author_date,')'),if(author_rejete is not null and author_rejete!='',concat(author_name,', ',author_rejete),author_name)) as author,author_id from authors where author_type='70' and if(author_rejete is not null and author_rejete!='',concat(author_name,', ',author_rejete),author_name) like '".addslashes($start)."%' $restrict order by 1 limit 20";	
 		$origine = "SQL" ;
 		break;
 	case 'congres_name':
 		if ($autexclude) $restrict = " AND author_id not in ($autexclude) ";
+		else $restrict = "";
 		$requete="select distinct author_name from authors where  author_type='72' and author_name like '".addslashes($start)."%' $restrict order by 1 limit 20";	
 		$origine = "SQL" ;
 		break;	
 	case 'collectivite_name':
 		if ($autexclude) $restrict = " AND author_id not in ($autexclude) ";
+		else $restrict = "";
 		$requete="select distinct author_name from authors where  author_type='71' and author_name like '".addslashes($start)."%' $restrict order by 1 limit 20";	
 		$origine = "SQL" ;
 		break;	
 	case 'publishers':
 		if ($autexclude) $restrict = " AND ed_id not in ($autexclude) ";
+		else $restrict = "";
 		$requete="select concat(
 					ed_name,
 					if((ed_ville is not null and ed_ville!='') or (ed_pays is not null and ed_pays!=''),' (',''), 
@@ -235,24 +244,37 @@ switch($completion):
 		$origine = "SQL" ;
 		break;
 	case 'titre_uniforme':
+		require_once($class_path.'/authority.class.php');
 		if ($autexclude) $restrict = " AND tu_id not in ($autexclude) ";
-		$requete="select tu_name as titre_uniforme,tu_id from titres_uniformes where tu_name like '".addslashes($start)."%' $restrict order by 1 limit 20";		
-		$origine = "SQL" ;
+		else $restrict = "";
+		if($att_id_filter){
+		    $restrict.= " and tu_oeuvre_nature='".$att_id_filter."' ";
+		}
+		$query = "select tu_id from titres_uniformes where tu_name like '".addslashes($start)."%' ".$restrict." order by 1 limit 20"; 
+		$result = pmb_mysql_query($query);
+		while($row = pmb_mysql_fetch_object($result)) {
+			$authority_instance_from_selector = authorities_collection::get_authority(AUT_TABLE_AUTHORITY, 0, [ 'num_object' => $row->tu_id, 'type_object' => AUT_TABLE_TITRES_UNIFORMES]);
+			$array_selector[$row->tu_id] = $authority_instance_from_selector->get_isbd();
+		}
+		$origine = "ARRAY" ;
 		break;		
 	case 'collections':
 		if ($autexclude) $restrict = " AND collection_id not in ($autexclude) ";
+		else $restrict = "";
 		if ($linkfield) $restrict .= " AND collection_parent ='$linkfield' ";
 		$requete="select if(collection_issn is not null and collection_issn!='',concat(collection_name,', ',collection_issn),collection_name) as coll,collection_id from collections where if(collection_issn is not null and collection_issn!='',concat(collection_name,', ',collection_issn),collection_name) like '".addslashes($start)."%' $restrict order by index_coll limit 20";
 		$origine = "SQL" ;
 		break;
 	case 'subcollections':
 		if ($autexclude) $restrict = " AND sub_coll_id not in ($autexclude) ";
+		else $restrict = "";
 		if ($linkfield) $restrict .= " AND sub_coll_parent ='$linkfield' ";
 		$requete="select if(sub_coll_issn is not null and sub_coll_issn!='',concat(sub_coll_name,', ',sub_coll_issn),sub_coll_name) as subcoll,sub_coll_id from sub_collections where if(sub_coll_issn is not null and sub_coll_issn!='',concat(sub_coll_name,', ',sub_coll_issn),sub_coll_name) like '".addslashes($start)."%' $restrict order by 1 limit 20";	
 		$origine = "SQL" ;
 		break;
 	case 'indexint':
 		if ($autexclude) $restrict = " AND indexint_id not in ($autexclude) ";
+		else $restrict = "";
 		if ($thesaurus_classement_mode_pmb != 0) { //classement indexation décimale autorisé en parametrage
 			$requete="select if(indexint_comment is not null and indexint_comment!='',concat('[',name_pclass,'] ',indexint_name,' - ',indexint_comment),
 			concat('[',name_pclass,'] ',indexint_name)) as indexint,indexint_id
@@ -269,6 +291,7 @@ switch($completion):
 		break;
 	case 'indexint_mul':
 		if ($autexclude) $restrict = " AND indexint_id not in ($autexclude) ";
+		else $restrict = "";
 		if ($thesaurus_classement_mode_pmb != 0) { //classement indexation décimale autorisé en parametrage
 			$requete="select if(indexint_comment is not null and indexint_comment!='',concat('[',name_pclass,'] ',indexint_name,' - ',indexint_comment),
 			concat('[',name_pclass,'] ',indexint_name)) as indexint,indexint_id, concat( indexint_name,' ',indexint_comment) as indexsimple
@@ -284,8 +307,10 @@ switch($completion):
 		$origine = "SQL" ;
 		break;
 	case 'notice':
+	case 'tu_notices':
 		require_once('./includes/isbn.inc.php');
 		if ($autexclude) $restrict = " AND notice_id not in ($autexclude) ";
+		else $restrict = "";
 		$requete = "select if(serie_name is not null,if(tnvol is not null,concat(serie_name,', ',tnvol,'. ',tit1),concat(serie_name,'. ',tit1)),tit1), notice_id from notices left join series on serie_id=tparent_id where (index_sew like ' ".addslashes(strip_empty_words($start))."%' or TRIM(index_wew) like '".addslashes($start)."%' or tit1 like '".addslashes($start)."%' or (code like '".traite_code_isbn(addslashes($start))."'";
 		if (isISBN(traite_code_isbn($start))) {
 			if (strlen(traite_code_isbn($start))==13)
@@ -297,20 +322,28 @@ switch($completion):
 		break;
 	case 'serie':
 		if ($autexclude) $restrict = " AND serie_id not in ($autexclude) ";
+		else $restrict = "";
 		$requete="select serie_name,serie_id from series where serie_name like '".addslashes($start)."%' $restrict order by 1 limit 20";
 		$origine = "SQL" ;
 		break;
 	case 'fonction':
 		// récupération des codes de fonction
-		if (!count($s_func )) {
+		if (!isset($s_func )) {
 			$s_func = new marc_list('function');
 		}
 		$origine = "TABLEAU" ;
 		break;
 	case 'langue':
 		// récupération des codes de langue
-		if (!count($s_func )) {
+		if (!isset($s_func )) {
 			$s_func = new marc_list('lang');
+		}
+		$origine = "TABLEAU" ;
+		break;	
+	case 'country':
+		// récupération des codes de langue
+		if (!isset($s_func )) {
+			$s_func = new marc_list('country');
 		}
 		$origine = "TABLEAU" ;
 		break;
@@ -343,9 +376,14 @@ switch($completion):
 		$origine = "SQL";
 		break;
 	case 'bull':
-		$link_bull = " and bulletin_notice ='".$linkfield."'";
-		$requete = "select bulletin_numero, bulletin_id from bulletins where (bulletin_numero like '".addslashes($start)."%' or bulletin_titre like '".addslashes($start)."%')  $link_bull order by 1 limit 20";
+		if($linkfield) $link_bull = " and bulletin_notice ='".$linkfield."'";
+		$requete = "select if(bulletin_titre is not null and bulletin_titre!='',concat(bulletin_titre,' - ',bulletin_numero),bulletin_numero) as bulletin_numero, bulletin_id from bulletins where (bulletin_numero like '".addslashes($start)."%' or bulletin_titre like '".addslashes($start)."%')  $link_bull order by 1 limit 20";
 		$origine = "SQL";
+		break;
+	case 'bull_num':
+		$id_notice = substr($id,13);
+		$requete = "select bulletin_numero, date_date from bulletins where bulletin_notice='$id_notice' and bulletin_numero like '%".addslashes($start)."%' order by 1 limit 20";
+		$origine = "SQL"; 
 		break;		
 	case 'expl_cote':	
 		if($pmb_prefill_cote_ajax){
@@ -366,6 +404,11 @@ switch($completion):
 		$requete.= "order by 1 limit 20";
 		$origine = "SQL";
 		break;
+	case 'empr':		
+		$requete = "select concat(empr_nom,' ',empr_prenom), id_empr as id from empr where empr_nom like '".addslashes($start)."%' ";
+		$requete.= "order by 1 limit 20";
+		$origine = "SQL";
+		break;
 	case 'rubrique':
 		$requete = "select concat('[',budgets.libelle,']',rubriques.libelle) as lib, id_rubrique as id, rubriques.libelle as lib2 from rubriques join budgets on num_budget=id_budget where autorisations like ' %".SESSuserid."% ' ";
 		if ($linkfield) $requete.= "and num_exercice='".$linkfield."' ";
@@ -377,11 +420,38 @@ switch($completion):
 		// $param1 : id_entite
 		// $param2 : id_exercice
 		require_once($class_path.'/rubriques.class.php');
-		$array_selector=array();
+		require_once($class_path.'/entites.class.php');
+		
+		//on cherche toutes les rubriques correspondant à la recherche
+		$q = "select rubriques.id_rubrique from budgets, rubriques ";
+		$q.= "where budgets.statut = '1' and budgets.num_entite = '".$param1."'  and budgets.num_exercice = '".$param2."' and rubriques.num_budget = budgets.id_budget ";
+		$q.= "and rubriques.libelle like '".addslashes($start)."%' ";
+		$r = pmb_mysql_query($q, $dbh);
+		
+		//on liste toutes les rubriques finales correspondantes
+		$array_rubriques_finales = array();
+		if (pmb_mysql_num_rows($r)) {
+			while ($row = pmb_mysql_fetch_object($r)) {
+				$rub_finales = entites::findRubriquesFinales($row->id_rubrique);
+				if (count($rub_finales)) {
+					foreach ($rub_finales as $id_rub_finale) {
+						if ((!count($array_rubriques_finales)) || (!in_array($id_rub_finale,$array_rubriques_finales))) {
+							$array_rubriques_finales[] = $id_rub_finale;
+						}
+					}
+				}
+			}
+		}
+		
+		//on retourne le recordset des rubriques finales
 		$requete = "select budgets.libelle as lib_bud, rubriques.* from budgets, rubriques left join rubriques as rubriques2 on rubriques.id_rubrique=rubriques2.num_parent ";
 		$requete.= "where budgets.statut = '1' and budgets.num_entite = '".$param1."'  and budgets.num_exercice = '".$param2."' and rubriques.num_budget = budgets.id_budget and rubriques2.num_parent is NULL ";
+		if (count($array_rubriques_finales)) {
+			$requete.= "and rubriques.id_rubrique in (".implode(",",$array_rubriques_finales).") ";
+		} else {
+			$requete.= "and rubriques.id_rubrique = 0 "; //Pas de rubrique trouvée
+		}
 		$requete.= "and rubriques.autorisations like(' %".SESSuserid."% ') ";
-		$requete.= "and rubriques.libelle like '".addslashes($start)."%' ";
 		$requete.= "order by budgets.libelle, rubriques.id_rubrique ";
 		$res=pmb_mysql_query($requete);
 		while($row = pmb_mysql_fetch_object($res)) {
@@ -394,36 +464,6 @@ switch($completion):
 			$array_selector[$row->id_rubrique]=htmlentities($row->lib_bud, ENT_QUOTES, $charset).":".$lib_rub;
 		}
 		$origine="ARRAY";
-		break;
-	case 'perso_notices':
-		require_once($class_path.'/parametres_perso.class.php');
-		$p_perso = new parametres_perso('notices');
-		$array_selector=$p_perso->get_ajax_list($persofield,$start);
-		$origine='ARRAY';
-		break;
-	case 'perso_expl':
-		require_once($class_path.'/parametres_perso.class.php');
-		$p_perso = new parametres_perso('notices');
-		$array_selector=$p_perso->get_ajax_list($persofield,$start);
-		$origine='ARRAY';
-		break;
-	case 'perso_empr':
-		require_once($class_path.'/parametres_perso.class.php');
-		$p_perso = new parametres_perso('notices');
-		$array_selector=$p_perso->get_ajax_list($persofield,$start);
-		$origine='ARRAY';
-		break;
-	case 'perso_gestfic0':
-		require_once($class_path.'/parametres_perso.class.php');
-		$p_perso = new parametres_perso('notices');
-		$array_selector=$p_perso->get_ajax_list($persofield,$start);
-		$origine='ARRAY';
-		break;
-	case 'perso_collstate':
-		require_once($class_path.'/parametres_perso.class.php');
-		$p_perso = new parametres_perso('notices');
-		$array_selector=$p_perso->get_ajax_list($persofield,$start);
-		$origine='ARRAY';
 		break;
 	case 'types_produits':
 		// $param1 : id_fournisseur
@@ -473,7 +513,7 @@ switch($completion):
 		$origine="ARRAY";
 		break;
 	case 'onto':
-		if(!is_object($autoloader)){
+		if(!isset($autoloader) || !is_object($autoloader)){
 			require_once($class_path."/autoloader.class.php");	
 			$autoloader = new autoloader();
 		}
@@ -512,6 +552,9 @@ switch($completion):
 				"xsd"	=> "http://www.w3.org/2001/XMLSchema#",
 				"pmb"	=> "http://www.pmbservices.fr/ontology#"
 		);
+		if($linkfield && !$param1) {
+			$param1 = $linkfield;
+		}
 		$params=new onto_param(
 			array(
 				'autexclude' => "",
@@ -522,22 +565,35 @@ switch($completion):
 				'listfield' => "",
 				'callback' => "",
 				'datas' => "",
+				'concept_scheme' => $param1,
+				'return_concept_id' => $param2,
 				'action'=>'ajax_selector'
 			)
 		);
-		
+		//HACK pas hyper hyper générique, mais ca fait le job!
+		if(isset($param1) && $param1){
+			global $concept_scheme;
+			if($param1 == -1 || $param1 > 0) {
+				$concept_scheme = $param1;
+			}else {
+				$concept_scheme = (($params->concept_scheme !== '') ? $params->concept_scheme : null);
+			}
+			$params->return_concept_id = true;
+		}
 		$onto_ui = new onto_ui($class_path."/rdf/skos_pmb.rdf", "arc2", $onto_store_config, "arc2", $data_store_config,$tab_namespaces,'http://www.w3.org/2004/02/skos/core#prefLabel',$params);
 		$list_results = $onto_ui->proceed();
-		$array_prefix = $list_results['prefix'];
-		$array_selector = $list_results['elements'];
+		$array_prefix = (isset($list_results['prefix']) ? $list_results['prefix'] : '');
+		$array_selector = (isset($list_results['elements']) ? $list_results['elements'] : '');
 		$origine='ONTO_ARRAY';
 		break;
 		
 	case 'instruments':
 		// $param1 : id du pupitre préféré. si 0 on retourne tous les instruments
+		// $param1 = workshop: Signifie qu'il faut aller chercher le(s) pupitre(s) associés aux ateliers
 		// $param2 = 0: Instruments du pupitre préféré seulement
 		// $param2 = 1: Instruments du pupitre préféré en premier, puis les autres
 		if ($autexclude) $restrict = " AND id_instrument not in ($autexclude) ";
+		else $restrict = "";
 		if(strlen($start)==$pos_cursor){
 			$liste_mots=explode("/",$start);
 			$start = array_pop($liste_mots);
@@ -546,42 +602,149 @@ switch($completion):
 			$start = array_pop($liste_mots);
 		}
 		
-		if ($param1 && !$param2){ // que ceux du pupitre
-			$restrict .= " AND instrument_musicstand_num ='$param1' ";
+		$origine = "SQL" ;
+		$musicstands = array();
+		if($param1 == 'workshop') {
+			$query = "select id_musicstand from nomenclature_musicstands where musicstand_workshop = 1";
+			$result = pmb_mysql_query($query);
+			if($result) {
+				while($row = pmb_mysql_fetch_object($result)) {
+					$musicstands[] = $row->id_musicstand;
+				}
+			}
+		} elseif($param1) {
+			$musicstands[] = $param1;
+		}
+		if (count($musicstands) && !$param2){ // que ceux du pupitre
+			$restrict .= " AND instrument_musicstand_num IN (".implode(',', $musicstands).") ";
 			
 			$requete="
 			select if(instrument_name is not null and instrument_name!='',concat(instrument_code,' - ',instrument_name),instrument_code) as instrument_lib, id_instrument, instrument_code from nomenclature_instruments 
 			where ( instrument_code like '".addslashes($start)."%' or instrument_name like '".addslashes($start)."%' ) $restrict order by 1 limit 20";
 		
-		}elseif($param1 && $param2){//  que ceux du pupitre en premier, puis les autres
-			$restrict.= " AND instrument_musicstand_num ='$param1' ";
-			$restrict2= $restrict." AND instrument_musicstand_num !='$param1' ";								
-			
-			$requete="( 
-				select if(instrument_name is not null and instrument_name!='',concat(instrument_code,' - ',instrument_name),instrument_code) as instrument_lib, id_instrument, instrument_code from nomenclature_instruments 
-			 	where ( instrument_code like '".addslashes($start)."%' or instrument_name like '".addslashes($start)."%' ) $restrict order by 1 
-			) 
-			union ( 
-				select if(instrument_name is not null and instrument_name!='',concat(instrument_code,' - ',instrument_name),instrument_code) as instrument_lib, id_instrument, instrument_code from nomenclature_instruments 
-				where ( instrument_code like '".addslashes($start)."%' or instrument_name like '".addslashes($start)."%' ) $restrict2 order by 1 limit 20 
-			)
-			";
+		}elseif(count($musicstands) && $param2){//  que ceux du pupitre en premier, puis les autres
+			$restrict1 = $restrict." AND instrument_musicstand_num IN (".implode(',', $musicstands).") ";
+			$restrict2 = $restrict." AND instrument_musicstand_num NOT IN (".implode(',', $musicstands).") ";
+			$requetes = array();
+			$requetes[] = "select if(instrument_name is not null and instrument_name!='',concat(instrument_code,' - ',instrument_name),instrument_code) as instrument_lib, id_instrument, instrument_code from nomenclature_instruments 
+			 	where ( instrument_code like '".addslashes($start)."%' or instrument_name like '".addslashes($start)."%' ) $restrict1 order by 1";
+			$requetes[] = "select if(instrument_name is not null and instrument_name!='',concat(instrument_code,' - ',instrument_name),instrument_code) as instrument_lib, id_instrument, instrument_code from nomenclature_instruments 
+				where ( instrument_code like '".addslashes($start)."%' or instrument_name like '".addslashes($start)."%' ) $restrict2 order by 1 limit 20";
+			$origine = "SQL_GROUP" ;
 		}else{ // tous les instruments
 			$requete="
 			select if(instrument_name is not null and instrument_name!='',concat(instrument_code,' - ',instrument_name),instrument_code) as instrument_lib, id_instrument, instrument_code from nomenclature_instruments
 			where ( instrument_code like '".addslashes($start)."%' or instrument_name like '".addslashes($start)."%' ) $restrict order by 1 limit 20";
 		}
 		$insert_between_separator = "/";
-		$origine = "SQL" ;
 		break;
 	case 'voices':
 		if ($autexclude) $restrict = " AND id_voice not in ($autexclude) ";
+		else $restrict = "";
 		//On récupère toutes les voix
 		$requete="
 			select if(voice_name is not null and voice_name!='',concat(voice_code,' - ',voice_name),voice_code) as voice_lib, id_voice, voice_code from nomenclature_voices
 			where ( voice_code like '".addslashes($start)."%' or voice_name like '".addslashes($start)."%' ) $restrict order by 1 limit 20";
 		
 		$insert_between_separator = "/";
+		$origine = "SQL" ;
+		break;
+	case 'music_key':
+		// récupération des codes
+		if (!isset($s_func )) {
+			$s_func = new marc_list('music_key');
+		}
+		$origine = "TABLEAU" ;
+		break;
+	case 'music_form':
+		// récupération des codes
+		if (!isset($s_func )) {
+			$s_func = new marc_list('music_form');
+		}
+		$origine = "TABLEAU" ;
+		break;
+	case 'oeuvre_event':
+		require_once($class_path.'/authperso.class.php');
+		$array_selector=authperso::get_ajax_list_oeuvre_events($start);
+		$origine='ARRAY';
+		break;
+	case 'vedette':
+	    /**
+	     * modification de la requête pour utiliser le label plutot que l'id de la vedette.
+	     * cela evite d'avoir des doublons dans l'autocomplétion en RMC
+	     * à voir si l'id_vedette est nécessaire dans certains cas
+	     */	    
+		$requete = "select distinct label, label from vedette where label like '".addslashes($start)."%'";
+		if($linkfield) {
+			$requete .= " and grammar in ('".implode("','",explode(',',$linkfield))."')";
+		}
+		$requete .= " order by 1 limit 20";
+		$origine = "SQL";
+		break;
+	case 'concepts':
+		$requete="select distinct value, num_concept from index_concept join skos_fields_global_index on num_concept = id_item and code_champ = 1 where value like '".addslashes($start)."%' $restrict group by num_object order by 1 limit 20";
+		$origine = "SQL" ;
+		break;
+	case 'empr_mail':
+		$requetes = array();
+		$query = "drop table if exists temp_empr_mail";
+		pmb_mysql_query($query);
+		$query = "drop table if exists temp_empr_name";
+		pmb_mysql_query($query);
+		$query = "create temporary table temp_empr_mail as select concat(empr_mail, ' (',empr_nom,' ',empr_prenom,')'), id_empr as id
+				from empr where empr_mail like '".addslashes($start)."%' and empr_mail !='' order by 1 limit 20";
+		pmb_mysql_query($query);
+		$requetes[] = "select * from temp_empr_mail";
+		$query = "create temporary table temp_empr_name as select concat(empr_mail, ' (',empr_nom,' ',empr_prenom,')'), id_empr as id 
+				from empr where empr_nom like '".addslashes($start)."%' and empr_mail !='' and id_empr not in (select id from temp_empr_mail) order by 1 limit 20";
+		pmb_mysql_query($query);
+		$requetes[] = "select * from temp_empr_name";
+		$requetes[] = "select concat(empr_mail, ' (',empr_nom,' ',empr_prenom,')'), id_empr as id
+				from empr where empr_prenom like '".addslashes($start)."%' and empr_mail !='' and id_empr not in (select id from temp_empr_name) and id_empr not in (select id from temp_empr_mail) order by 1 limit 20";
+		$origine = "SQL_GROUP";
+		break;
+	case 'query_list':
+	case 'list':
+	case 'marc_list':
+		$array_selector = array();
+		$search = new search($param1);
+		$p=explode('_', $param2);
+		if($p[0] == 'f') {
+			$start = str_replace('%', '', $start);
+			$array_selector = $search->get_options_list_field($search->fixedfields[$p[1]], $start, 20);
+		}
+		$origine = "ARRAY" ;
+		break;
+	case 'profession':
+		$requete="select distinct empr_prof, 'dummy' as dummy_id from empr where empr_prof like '".addslashes($start)."%' order by 1 limit 20";
+		$origine = "SQL" ;
+		break;
+	case 'fields_global_index':
+		if(isset($param1) && isset($param2)) {
+			$code_champ = explode("_", $param2)[1];
+			$code_ss_champ = explode("_", $param2)[2];
+			$requete="select distinct value from ".$param1."_fields_global_index where value like '".addslashes($start)."%' and code_champ = '".$code_champ."' and code_ss_champ = '".$code_ss_champ."' order by 1 limit 20";
+			$origine = "SQL" ;
+		}
+		break;
+	case 'custom_classements':
+		if(isset($param1)) {
+			$requete = "select distinct custom_classement from ".$param1."_custom where custom_classement like '".addslashes($start)."%'";
+			$origine = "SQL" ;
+		}
+		break;
+	case 'campaigns_descriptors':
+		$requete = "select libelle_categorie, categories.num_noeud from categories JOIN campaigns_descriptors ON campaigns_descriptors.num_noeud = categories.num_noeud where libelle_categorie like '".addslashes($start)."%' AND langue = '".$lang."' ";
+		$requete.= "order by 1 limit 20";
+		$origine = "SQL";
+		break;
+	case 'campaigns_tags':
+		$requete = "select tags.libelle, tags.id_tag from tags join campaigns_tags ON campaigns_tags.num_tag = tags.id_tag where tags.libelle like '".addslashes($start)."%' ";
+		$requete.= "order by 1 limit 20";
+		$origine = "SQL";
+		break;
+	case 'groups':
+		$requete="select distinct libelle_groupe, id_groupe from groupe where libelle_groupe like '".addslashes($start)."%' order by 1 limit 20";
 		$origine = "SQL" ;
 		break;
 	default: 
@@ -592,9 +755,32 @@ switch($completion):
 					require_once($class_path.'/authperso.class.php');
 					$authperso = new authperso($p[1]);
 					$array_selector=$authperso->get_ajax_list($start);
-					$origine='ARRAY';					
-				break;
-			}			
+					$origine='ARRAY';
+					break;
+				case 'perso':
+					switch ($p[1]){
+						case 'cms':
+ 							require_once($class_path.'/cms/cms_editorial_parametres_perso.class.php');
+							$cms_type = cms_editorial_parametres_perso::get_num_type_from_name($persofield);
+ 							$p_perso = new cms_editorial_parametres_perso($cms_type);
+							$array_selector=$p_perso->get_ajax_list($persofield,$start);
+							$origine='ARRAY';
+							break;
+						case 'pret':
+							require_once($class_path.'/pret_parametres_perso.class.php');
+							$p_perso = new pret_parametres_perso($p[1]);
+							$array_selector=$p_perso->get_ajax_list($persofield,$start);
+							$origine='ARRAY';
+							break;
+						default:
+							require_once($class_path.'/parametres_perso.class.php');
+							$p_perso = new parametres_perso($p[1]);
+							$array_selector=$p_perso->get_ajax_list($persofield,$start);
+							$origine='ARRAY';
+							break;
+					}
+					break;
+			}
 		}
 		break;
 endswitch;
@@ -605,21 +791,39 @@ switch ($origine):
 		$resultat=pmb_mysql_query($requete) or die(pmb_mysql_error()."<br />$requete") ;
 		$i=1;
 		while($r=@pmb_mysql_fetch_array($resultat)) {
-			if($r[2])
+			if(isset($r[2]) && $r[2])
 				echo "<div id='"."c".$id."_".$i."' style='display:none'>$r[2]</div>";
 			echo "<div id='l".$id."_".$i."'";
 			if ($autfield) echo " autid='".$r[1]."'";
-			echo " style='cursor:default;font-family:arial,helvetica;font-size:10px;width:100%' onClick='if(document.getElementById(\"c".$id."_".$i."\")) ajax_set_datas(\"c".$id."_".$i."\",\"$id\",\"$insert_between_separator\"); else ajax_set_datas(\"l".$id."_".$i."\",\"$id\",\"$insert_between_separator\");'>".$r[0]."</div>";
+			echo " class='ajax_selector_normal' onmouseover='this.className=\"ajax_selector_surbrillance\";' onmouseout='this.className=\"ajax_selector_normal\";' onClick='if(document.getElementById(\"c".$id."_".$i."\")) ajax_set_datas(\"c".$id."_".$i."\",\"$id\",\"$insert_between_separator\"); else ajax_set_datas(\"l".$id."_".$i."\",\"$id\",\"$insert_between_separator\");'>".$r[0]."</div>";
 			$i++;
+		}
+		break;
+	case 'SQL_GROUP':
+		$i=1;
+		foreach ($requetes as $requete) {
+			$resultat=pmb_mysql_query($requete) or die(pmb_mysql_error()."<br />$requete") ;
+			if($resultat && pmb_mysql_num_rows($resultat)) {
+				if($i > 1) echo "<hr style='margin:1px 0px' />";
+				while($r=@pmb_mysql_fetch_array($resultat)) {
+					if(isset($r[2]) && $r[2])
+						echo "<div id='"."c".$id."_".$i."' style='display:none'>$r[2]</div>";
+					echo "<div id='l".$id."_".$i."'";
+					if ($autfield) echo " autid='".$r[1]."'";
+					echo " class='ajax_selector_normal' onmouseover='this.className=\"ajax_selector_surbrillance\";' onmouseout='this.className=\"ajax_selector_normal\";' onClick='if(document.getElementById(\"c".$id."_".$i."\")) ajax_set_datas(\"c".$id."_".$i."\",\"$id\",\"$insert_between_separator\"); else ajax_set_datas(\"l".$id."_".$i."\",\"$id\",\"$insert_between_separator\");'>".$r[0]."</div>";
+					$i++;
+				}
+			}
 		}
 		break;
 	case 'TABLEAU':
 		$i=1;
+		$start_converted = convert_diacrit($start);
 		while(list($index, $value) = each($s_func->table)) {
-			if (strtolower(substr($value,0,strlen($start)))==strtolower($start)) {
+			if (strtolower(substr(convert_diacrit($value),0,strlen($start_converted)))==strtolower($start_converted)) {
 				echo "<div id='l".$id."_".$i."'";
 				if ($autfield) echo " autid='".$index."'";
-				echo " style='cursor:default;font-family:arial,helvetica;font-size:10px;width:100%' onClick='ajax_set_datas(\"l".$id."_".$i."\",\"$id\")'>".$value."</div>";
+				echo " class='ajax_selector_normal' onmouseover='this.className=\"ajax_selector_surbrillance\";' onmouseout='this.className=\"ajax_selector_normal\";' onClick='ajax_set_datas(\"l".$id."_".$i."\",\"$id\")'>".$value."</div>";
 				$i++;
 			}
 		}
@@ -629,18 +833,26 @@ switch ($origine):
 			$i=1;
 			while(list($index, $value) = each($array_selector)) {			
 				$lib_liste="";
-				$thesaurus_lib = $array_prefix[$index]['libelle'];
-				$thesaurus_id = $array_prefix[$index]['id'];
+				if(isset($array_prefix[$index]['libelle'])) {
+					$thesaurus_lib = $array_prefix[$index]['libelle'];
+				} else {
+					$thesaurus_lib = '';
+				}
+				if(isset($array_prefix[$index]['id'])) {
+					$thesaurus_id = $array_prefix[$index]['id'];
+				} else {
+					$thesaurus_id = 0;
+				}
 				if(is_array($value)){
 					foreach($value as $k=>$v){
 						$lib_liste = $k;
-						echo "<div id='"."c".$id."_".$i."' style='display:none' nbcar='$taille_search'>".$v."</div>";
+						echo "<div id='"."c".$id."_".$i."' style='display:none' nbcar='".$taille_search."'>".$v."</div>";
 					}
 				} else $lib_liste=$value;
 				echo "<div id='l".$id."_".$i."'";
 				if ($autfield) echo " autid='".$index."'";
 				if ($thesaurus_id) echo " thesid='".$thesaurus_id."'";
-				echo " style='cursor:default;font-family:arial,helvetica;font-size:10px;width:100%' onClick='if(document.getElementById(\"c".$id."_".$i."\")) ajax_set_datas(\"c".$id."_".$i."\",\"$id\"); else ajax_set_datas(\"l".$id."_".$i."\",\"$id\");'>".trim($thesaurus_lib." ".$lib_liste)."</div>";
+				echo " class='ajax_selector_normal' onmouseover='this.className=\"ajax_selector_surbrillance\";' onmouseout='this.className=\"ajax_selector_normal\";' onClick='if(document.getElementById(\"c".$id."_".$i."\")) ajax_set_datas(\"c".$id."_".$i."\",\"$id\"); else ajax_set_datas(\"l".$id."_".$i."\",\"$id\");'>".trim($thesaurus_lib." ".$lib_liste)."</div>";
 				$i++;	
 			}
 		}
@@ -650,25 +862,41 @@ switch ($origine):
 			$i=1;
 			while(list($index, $value) = each($array_selector)) {
 				$lib_liste="";
-				$type_label = $array_prefix[$index]['libelle'];
-				$type_uri= $array_prefix[$index]['id'];
+				if(isset($array_prefix[$index]['libelle'])) {
+					$type_label = $array_prefix[$index]['libelle'];
+				} else {
+					$type_label = '';
+				}
+				if(isset($array_prefix[$index]['id'])) {
+					$type_uri = $array_prefix[$index]['id'];
+				} else {
+					$type_uri = '';
+				}
 				if(!$type_uri) $type_uri = $att_id_filter;
 				if(is_array($value)){
 					foreach($value as $k=>$v){
 						$lib_liste = $k;
-						echo "<div id='"."c".$id."_".$i."' style='display:none' nbcar='$taille_search'>".$v."</div>";
+						echo "<div id='"."c".$id."_".$i."' style='display:none' nbcar='".$taille_search."'>".$v."</div>";
 					}
 				} else $lib_liste=$value;
 				echo "<div id='l".$id."_".$i."'";
 				if ($autfield) echo " autid='".$index."'";
 				if ($type_uri) echo " typeuri='".$type_uri."'";
-				echo " style='cursor:default;font-family:arial,helvetica;font-size:10px;width:100%' onClick='if(document.getElementById(\"c".$id."_".$i."\")) ajax_set_datas(\"c".$id."_".$i."\",\"$id\"); else ajax_set_datas(\"l".$id."_".$i."\",\"$id\");'>".trim($type_label." ".$lib_liste)."</div>";
+				echo " class='ajax_selector_normal' onmouseover='this.className=\"ajax_selector_surbrillance\";' onmouseout='this.className=\"ajax_selector_normal\";' onClick='if(document.getElementById(\"c".$id."_".$i."\")) ajax_set_datas(\"c".$id."_".$i."\",\"$id\"); else ajax_set_datas(\"l".$id."_".$i."\",\"$id\");'>".trim($type_label." ".$lib_liste)."</div>";
 				$i++;
 			}
 		}
-		break;
+		break;	
 	default: 
 		break;
 endswitch;
 
+switch($completion){
+	case 'instruments':
+		if (SESSrights & ADMINISTRATION_AUTH) {
+			require_once($class_path."/nomenclature/nomenclature_instrument.class.php");
+			echo "<div id='l".$id."_add_instrument' class='ajax_selector_normal ajax_selector_instruments' onmouseover='this.className=\"ajax_selector_surbrillance ajax_selector_instruments\";' onmouseout='this.className=\"ajax_selector_normal ajax_selector_instruments\";' onClick='ajax_insert_element(\"$id\");'>".$msg['nomenclature_js_dialog_add_instrument']."</div>";
+		}
+		break;
+}
 

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: test_ftp.php,v 1.7 2007-10-27 08:04:40 touraine37 Exp $
+// $Id: test_ftp.php,v 1.9 2017-10-19 08:41:56 ngantier Exp $
 
 require_once ("../../../includes/error_report.inc.php") ;
 require_once ("../../../includes/global_vars.inc.php") ;
@@ -56,12 +56,12 @@ require("$include_path/templates/common.tpl.php");
 
 header ("Content-Type: text/html; charset=".$charset);
 
-print "
-<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN'
- 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
-<html xmlns='http://www.w3.org/1999/xhtml' lang='$msg[1002]' charset='".$charset."'>
+print "<!DOCTYPE html>
+<html>
+<head>
+	<meta charset=\"".$charset."\" />
 	<meta http-equiv='Pragma' content='no-cache'>
-		<meta http-equiv='Cache-Control' content='no-cache'>";
+	<meta http-equiv='Cache-Control' content='no-cache'>";
 print link_styles($stylesheet) ;
 print "	</head>
 	<body>";
@@ -69,8 +69,8 @@ print "	</head>
 
 
 
-echo "<center><small><b>".$msg["sauv_ftp_test_running"]."</b></small></center>";
-echo "<center><img src=\"connect.gif\"></center>";
+echo "<span class='center'><small><b>".$msg["sauv_ftp_test_running"]."</b></small></span>";
+echo "<span class='center'><img src=\"connect.gif\"></span>";
 flush();
 $msg_="";
 if ($chemin=="") $chemin="/";

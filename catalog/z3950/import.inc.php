@@ -4,33 +4,26 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: import.inc.php,v 1.36 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: import.inc.php,v 1.43 2018-09-25 07:45:41 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+if(!isset($f_ex_cb)) $f_ex_cb = '';
+
 // définition du minimum nécéssaire 
-include("$include_path/marc_tables/$pmb_indexation_lang/empty_words");
-include("$class_path/iso2709.class.php");
-include("$class_path/author.class.php");
-include("$class_path/serie.class.php");
-include("$class_path/editor.class.php");
-include("$class_path/collection.class.php");
-include("$class_path/subcollection.class.php");
-include("$class_path/origine_notice.class.php");
-include("$class_path/audit.class.php");
-require ("notice.inc.php");
-include("$class_path/expl.class.php");
-include("$include_path/templates/expl.tpl.php");
-
-if ($notice_org) {
-	$requete="select z_marc,fichier_func from z_notices, z_bib where znotices_id='".$notice_org."' and znotices_bib_id=bib_id";
-	$resultat=pmb_mysql_query($requete);
-	$notice_org=@pmb_mysql_result($resultat,0,0);
-	$modele=@pmb_mysql_result($resultat,0,1);
-}
-
-//$modele utilisée dans la classe z3950_notice
-include ("$class_path/z3950_notice.class.php");
+require_once("$include_path/marc_tables/$pmb_indexation_lang/empty_words");
+require_once("$class_path/iso2709.class.php");
+require_once("$class_path/author.class.php");
+require_once("$class_path/serie.class.php");
+require_once("$class_path/editor.class.php");
+require_once("$class_path/collection.class.php");
+require_once("$class_path/subcollection.class.php");
+require_once("$class_path/origine_notice.class.php");
+require_once("$class_path/audit.class.php");
+require_once("notice.inc.php");
+require_once("$class_path/expl.class.php");
+require_once("$include_path/templates/expl.tpl.php");
+require_once("$class_path/z3950_notice.class.php");
 
 if (!$id_notice) {
 	print "<h1>$msg[z3950_integr_catal]</h1>";
@@ -40,6 +33,7 @@ if (!$id_notice) {
 
 $resultat=pmb_mysql_query("select znotices_id, znotices_bib_id, isbd, isbn, titre, auteur, z_marc from z_notices where znotices_id='$znotices_id' AND znotices_query_id='$last_query_id'");
 
+$test_resultat=0;
 $integration_OK="";
 $integrationexpl_OK="";
 
@@ -82,6 +76,15 @@ while (($ligne=pmb_mysql_fetch_array($resultat))) {
 			}
 			// if ($not_id) METTRE ICI TRAITEMENT DU CHOIX DU DOUBLON echo "<script> alert('Existe déjà'); </script>" ;
 			$notice = new z3950_notice ($format, $ligne['z_marc']);
+			//Si pas d'origine renseignée en 801, on reprend le nom de la source
+			if (!count($notice->origine_notice)) {
+				$requete = "SELECT bib_nom FROM z_bib WHERE bib_id=".$ligne['znotices_bib_id'];
+				$myQuery = pmb_mysql_query($requete);
+				if (pmb_mysql_num_rows($myQuery)) {
+					$myRow = pmb_mysql_fetch_object($myQuery) ;
+					$notice->origine_notice['nom'] = $myRow->bib_nom;
+				}
+			}
 		}
 	}
 	
@@ -110,7 +113,7 @@ while (($ligne=pmb_mysql_fetch_array($resultat))) {
 				$integration_OK = "OK";
 				$num_notice = $notice_nbr;
 				$formlocid="f_ex_section".$f_ex_location ;
-				$f_ex_section=$$formlocid;
+				$f_ex_section=${$formlocid};
 				$res_integrationexpl = create_expl($f_ex_cb, $num_notice, $f_ex_typdoc, $f_ex_cote, $f_ex_section, $f_ex_statut, $f_ex_location, $f_ex_cstat, $f_ex_note, $f_ex_prix, $f_ex_owner, $f_ex_comment );
 				$new_expl=$res_integrationexpl[0];
 				$num_expl=$res_integrationexpl[1];
@@ -123,10 +126,10 @@ while (($ligne=pmb_mysql_fetch_array($resultat))) {
 		}
 		/* ----------------------------------- */
 
-	$msg[z3950_integr_expl_ok]       = str_replace ("!!f_ex_cb!!", $f_ex_cb, $msg[z3950_integr_expl_ok]      );
-	$msg[z3950_integr_expl_existait] = str_replace ("!!f_ex_cb!!", $f_ex_cb, $msg[z3950_integr_expl_existait]);
-	$msg[z3950_integr_expl_newrate]  = str_replace ("!!f_ex_cb!!", $f_ex_cb, $msg[z3950_integr_expl_newrate] );
-	$msg[z3950_integr_expl_echec]    = str_replace ("!!f_ex_cb!!", $f_ex_cb, $msg[z3950_integr_expl_echec]   );
+	$msg['z3950_integr_expl_ok']       = str_replace ("!!f_ex_cb!!", $f_ex_cb, $msg['z3950_integr_expl_ok']      );
+	$msg['z3950_integr_expl_existait'] = str_replace ("!!f_ex_cb!!", $f_ex_cb, $msg['z3950_integr_expl_existait']);
+	$msg['z3950_integr_expl_newrate']  = str_replace ("!!f_ex_cb!!", $f_ex_cb, $msg['z3950_integr_expl_newrate'] );
+	$msg['z3950_integr_expl_echec']    = str_replace ("!!f_ex_cb!!", $f_ex_cb, $msg['z3950_integr_expl_echec']   );
 
 	switch ($integrationexpl_OK) {
 		case "OK" :
@@ -159,42 +162,48 @@ while (($ligne=pmb_mysql_fetch_array($resultat))) {
 					break;
 			}
 			print "<hr />
-					<span class='msg-perio'>".$msg[z3950_integr_not_ok]."</span>
+					<span class='msg-perio'>".$msg['z3950_integr_not_ok']."</span>
 					&nbsp;<a id='liensuite' href=\"javascript:top.document.location='$url_view'\">$msg[z3950_integr_not_lavoir]</a>";
 			print "<script type='text/javascript'>document.getElementById('liensuite').focus();</script>" ;
 			break;
 		case "UPDATE_OK" :
 			print "<hr />
-					<span class='msg-perio'>".$msg[z3950_update_not_ok]."</span>
+					<span class='msg-perio'>".$msg['z3950_update_not_ok']."</span>
 					&nbsp;<a id='liensuite' href=\"javascript:top.document.location='./catalog.php?categ=isbd&id=$num_notice'\">$msg[z3950_integr_not_lavoir]</a>";
 			print "<script type='text/javascript'>document.getElementById('liensuite').focus();</script>" ;
 			break;
 		case "EXISTAIT" :
 			if ($action=="integrer") {
 				print "<hr />
-					<span class='msg-perio'>".$msg[z3950_integr_not_existait]."</span>
+					<span class='msg-perio'>".$msg['z3950_integr_not_existait']."</span>
 					&nbsp;<a id='liensuite' href=\"javascript:top.document.location='./catalog.php?categ=isbd&id=$num_notice'\">$msg[z3950_integr_not_lavoir]</a>";
 				print "<script type='text/javascript'>document.getElementById('liensuite').focus();</script>" ;
 			}
 			break;
 		case "NEWRATE" :
 			if ($action=="integrer") print "<hr />
-					<span class='msg-perio'>".$msg[z3950_integr_not_newrate]."</span>";
+					<span class='msg-perio'>".$msg['z3950_integr_not_newrate']."</span>";
 			break;
 		case "ECHEC" :
 			if ($action=="integrer") print "<hr />
-					<span class='msg-perio'>".$msg[z3950_integr_not_echec]."</span>";
+					<span class='msg-perio'>".$msg['z3950_integr_not_echec']."</span>";
 			break;
 	}
 
 	if ($integration_OK == "PASFAIT") {
-		echo $notice->get_form ("./catalog.php?categ=z3950&".
-			"znotices_id=$znotices_id&last_query_id=$last_query_id&action=integrer&source=form&".
-			"tri1=$tri1&tri2=$tri2", $id_notice, 'link');
+	    $entity_locking = new entity_locking($id_notice, TYPE_NOTICE);
+	    if(!$entity_locking->is_locked()){
+	        echo $notice->get_form ("./catalog.php?categ=z3950&".
+	            "znotices_id=$znotices_id&last_query_id=$last_query_id&action=integrer&source=form&".
+	            "tri1=$tri1&tri2=$tri2", $id_notice, 'link');
+	    }else{
+	        echo $entity_locking->get_locked_form();
+	    }
+		
 	}
 	if (($integration_OK == "OK") | ($integration_OK == "EXISTAIT") | ($integration_OK == "UPDATE_OK")) {
 		print "<hr />
-					<span class='right'><a id='liensuite' href='./catalog.php?categ=z3950&action=display&last_query_id=".$last_query_id."&tri1=auteur&tri2=auteur'>".$msg[z3950_retour_a_resultats]."</a></span>";
+					<span class='right'><a id='liensuite' href='./catalog.php?categ=z3950&action=display&last_query_id=".$last_query_id."&tri1=auteur&tri2=auteur'>".$msg['z3950_retour_a_resultats']."</a></span>";
 		print "<script type='text/javascript'>document.getElementById('liensuite').focus();</script>" ;
 					
 		//$nex = new exemplaire('', 0, $num_notice);

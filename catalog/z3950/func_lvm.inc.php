@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: func_lvm.inc.php,v 1.2.2.1 2015-09-02 09:32:05 mbertin Exp $
+// $Id: func_lvm.inc.php,v 1.3 2015-09-02 09:26:54 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 

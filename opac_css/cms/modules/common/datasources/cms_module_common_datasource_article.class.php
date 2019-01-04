@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_article.class.php,v 1.8 2015-06-08 09:12:09 arenou Exp $
+// $Id: cms_module_common_datasource_article.class.php,v 1.9 2016-09-20 14:33:53 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -40,9 +40,9 @@ class cms_module_common_datasource_article extends cms_module_common_datasource{
 		//on commence par récupérer l'identifiant retourné par le sélecteur...
 		$selector = $this->get_selected_selector();
 		if($selector){
-			$article_ids = $this->filter_datas("articles",array($selector->get_value()));
+			$article_ids = $this->filter_datas("articles",array($selector->get_value()*1));
 			if($article_ids[0]){
-				$article = cms_provider::get_instance("article",$article_ids[0]);
+				$article = cms_provider::get_instance("article",$article_ids[0]*1);
 				return $article->format_datas();
 			}
 		}

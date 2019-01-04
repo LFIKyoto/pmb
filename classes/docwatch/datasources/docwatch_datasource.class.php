@@ -2,13 +2,14 @@
 // +-------------------------------------------------+
 // Â© 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_datasource.class.php,v 1.36 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: docwatch_datasource.class.php,v 1.41 2018-05-02 10:22:47 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/docwatch/docwatch_root.class.php");
 require_once($class_path."/docwatch/docwatch_item.class.php");
 require_once($class_path."/docwatch/docwatch_category.class.php");
+require_once($class_path."/docwatch/docwatch_watches.class.php");
 
 /**
  * class docwatch_datasource
@@ -72,6 +73,14 @@ class docwatch_datasource extends docwatch_root{
 	protected $clean_html = 1;
 	
 	/**
+	 * Expression booléènne
+	 * @access protected
+	 */
+	protected $boolean_expression = '';
+	
+	protected $aq_members;
+	
+	/**
 	 * Identifiant de la veille liée
 	 * @access protected
 	 */
@@ -130,8 +139,9 @@ class docwatch_datasource extends docwatch_root{
 				$this->num_watch = $row->datasource_num_watch;
 				$this->default_interesting = $row->datasource_default_interesting;
 				$this->clean_html = $row->datasource_clean_html;
+				$this->boolean_expression = $row->datasource_boolean_expression;
 				
-// 				//on va chercher les infos des sélecteurs...
+ 				//on va chercher les infos des sélecteurs...
 				$query = "select id_selector, selector_type from docwatch_selectors where selector_num_datasource = ".$this->id;
 				$result = pmb_mysql_query($query,$dbh);
 				if(pmb_mysql_num_rows($result)){
@@ -152,6 +162,10 @@ class docwatch_datasource extends docwatch_root{
 	 */
 	public function get_form() {
 		global $msg,$charset;
+		
+		if(!isset($this->parameters['selector'][0])) $this->parameters['selector'][0]='';
+		if(!isset($this->selectors[$this->parameters['selector'][0]])) $this->selectors[$this->parameters['selector'][0]]='';
+		
 		$form = "
 		<form action='' method='post' data-dojo-type='apps/docwatch/form/Source' name='docwatch_datasource'>
 			<h3>".htmlentities($msg['dsi_'.get_class($this)],ENT_QUOTES,$charset)."</h3>
@@ -225,6 +239,13 @@ class docwatch_datasource extends docwatch_root{
 		<div class='row'>
 			".$msg['39']."<input ".($this->get_clean_html() ? "":"checked='checked'")." type='radio' data-dojo-type='dijit/form/RadioButton' name='docwatch_datasource_clean_html' value='0' />&nbsp;
 			".$msg['40']."<input ".($this->get_clean_html() ? "checked='checked'":"")." type='radio' data-dojo-type='dijit/form/RadioButton' name='docwatch_datasource_clean_html' value='1' /> 
+		</div>
+		<div class='row'>&nbsp;</div>
+		<div class='row'>
+			<label for='docwatch_datasource_boolean_expression'>".htmlentities($msg['dsi_docwatch_datasource_boolean_expression'],ENT_QUOTES,$charset)."</label>
+		</div>
+		<div class='row'>
+			<input type='text' data-dojo-type='dijit/form/TextBox' name='docwatch_datasource_boolean_expression' value=\"".$this->get_boolean_expression()."\" /> 
 		</div>";
 		return $form;
 	}
@@ -242,6 +263,7 @@ class docwatch_datasource extends docwatch_root{
 		global $docwatch_datasource_num_category;
 		global $docwatch_datasource_default_interesting;
 		global $docwatch_datasource_clean_html;
+		global $docwatch_datasource_boolean_expression;
 		
 		if (is_array($selector_choice) && count($selector_choice)) {
 			$this->parameters['selector'] = array();
@@ -255,6 +277,7 @@ class docwatch_datasource extends docwatch_root{
 		$this->category = $docwatch_datasource_num_category;
 		$this->default_interesting = $docwatch_datasource_default_interesting;
 		$this->clean_html = $docwatch_datasource_clean_html;
+		$this->boolean_expression = stripslashes($docwatch_datasource_boolean_expression);
 	} // end of member function set_from_form
 	
 	/**
@@ -282,6 +305,7 @@ class docwatch_datasource extends docwatch_root{
 				datasource_num_category = '".$this->num_category."',
 				datasource_default_interesting = '".$this->default_interesting."',
 				datasource_clean_html = '".$this->clean_html."',
+				datasource_boolean_expression = '".addslashes($this->boolean_expression)."',
 				datasource_num_watch = '".$this->num_watch."'
 				".$clause;
 			$result = pmb_mysql_query($query,$dbh);
@@ -360,9 +384,18 @@ class docwatch_datasource extends docwatch_root{
 		
 	public function sync($watch_owner){
 		if(docwatch_watch::check_watch_rights($this->num_watch)){
-			//TODO: utiliser le watch_owner passé en parametre pour requeter sur la base avec les bons droits
-			$this->get_new_items($watch_owner);
-			$this->update_last_date();
+			//TODO: utiliser le watch_owner passé en parametre pour requeter sur la base avec les bons droits		 
+			$updating_date = new DateTime(date($this->last_date));
+			$interval = new DateInterval('PT'.$this->ttl.'H');			
+			$updating_date->add($interval);
+			
+			$now = date("Y-m-d H:i:s");
+			$now = new DateTime($now);	
+			
+			if($now>=$updating_date){					
+				$this->get_new_items($watch_owner);
+				$this->update_last_date();
+			}
 		}
 		
 	}
@@ -377,6 +410,33 @@ class docwatch_datasource extends docwatch_root{
 			}
 		}
 		return $datasource_items;
+	}
+	
+	public function contains_boolean_expression($item_id) {
+		$contains = true;
+		if($this->boolean_expression != '') {
+			if(!isset($this->aq_members)) {
+				$aq=new analyse_query($this->boolean_expression);
+				if (!$aq->error) {
+					$this->aq_members=$aq->get_query_members("docwatch_items","item_index_wew","item_index_sew","id_item");
+				} else {
+					$this->aq_members=false;
+				}
+			}
+			if(is_array($this->aq_members)) {
+				$query = "select id_item from docwatch_items where id_item=".$item_id." and ".$this->aq_members["where"]." ";
+				$result = pmb_mysql_query($query);
+				if($result) {
+					if(!pmb_mysql_num_rows($result)) {
+						$contains = false;
+					}
+				}
+			}
+		}
+		if($contains) {
+			$contains = docwatch_watches::contains_boolean_expression($item_id, $this->num_watch);
+		}
+		return $contains;
 	}
 	
 	public function get_new_items($watch_owner){
@@ -405,17 +465,27 @@ class docwatch_datasource extends docwatch_root{
 				$item->set_publication_date($items_datas[$i]['publication_date']);
 				$item->set_url($items_datas[$i]['url']);
 				$item->set_logo_url($items_datas[$i]['logo_url']);
+				if(!isset($items_datas[$i]['num_notice'])) $items_datas[$i]['num_notice'] = 0;
 				$item->set_num_notice($items_datas[$i]['num_notice']);
 				$item->set_source_id($this->id);
 				$item->set_num_watch($this->num_watch);
+				if(!isset($items_datas[$i]['num_article'])) $items_datas[$i]['num_article'] = 0;
 				$item->set_num_article($items_datas[$i]['num_article']);
+				if(!isset($items_datas[$i]['num_section'])) $items_datas[$i]['num_section'] = 0;
 				$item->set_num_section($items_datas[$i]['num_section']);
+				if(!isset($items_datas[$i]['descriptors'])) $items_datas[$i]['descriptors'] = array();
+				$item->set_descriptors($items_datas[$i]['descriptors']);
 				$item->gen_hash();
 				if(!in_array($item->get_hash(), $datasource_items)){
 					$query_hash = "select id_item from docwatch_items where item_hash = '".$item->get_hash()."'";
 					$resultat = pmb_mysql_query($query_hash, $dbh);
 					if (!pmb_mysql_num_rows($resultat)){
-						$item->save();
+						$saved = $item->save();
+						if($saved) {
+							if(!$this->contains_boolean_expression($item->get_id())) {
+								$item->mark_as_deleted();
+							}
+						}
 					}
 				}else{
 					$key = array_search($item->get_hash(), $datasource_items);
@@ -427,12 +497,12 @@ class docwatch_datasource extends docwatch_root{
 				foreach($datasource_items as $key => $value){
 					$item = new docwatch_item($key);
 					//On peut supprimer directement
-					if($item->get_status>1){
+					if($item->get_status()>1){
 						$item->delete();
 					}else{//Check le ttl
 						$query = "select docwatch_items.id_item from docwatch_items join docwatch_watches on docwatch_watches.id_watch=".$this->num_watch." where id_item = '".$item->get_id()."' and date_add(docwatch_items.item_added_date, interval docwatch_watches.watch_ttl hour) < now()";					
 						$result = pmb_mysql_query($query, $dbh);
-						if($result){
+						if($result && pmb_mysql_num_rows($result)){
 							$item->delete();
 						}
 					}
@@ -511,6 +581,14 @@ class docwatch_datasource extends docwatch_root{
 	
 	public function set_clean_html($clean_html) {
 		$this->clean_html = $clean_html;
+	}
+	
+	public function get_boolean_expression() {
+		return $this->boolean_expression;
+	}
+	
+	public function set_boolean_expression($boolean_expression) {
+		$this->boolean_expression = $boolean_expression;
 	}
 	
 	public function get_num_watch() {

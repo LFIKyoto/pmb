@@ -2,28 +2,27 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bannette_facettes.class.php,v 1.1.2.3 2015-10-06 15:36:18 dgoron Exp $
+// $Id: bannette_facettes.class.php,v 1.9 2018-02-09 11:00:41 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/notice_tpl_gen.class.php");
-require_once($class_path."/notice_tpl_gen.class.php");
 
 class bannette_facettes{
-	var $id=0;// $id bannette
-	var $facettes=array(); // facettes associées à la bannette
-	var $environement=array(); // affichage des notices
-	var $noti_tpl_document=0; // template de notice
-	var $bannette_display_notice_in_every_group=0;
-	var $bannette_document_group=0;
-	var $sommaires=array(); // donnée du document à générer par un templatze
+	public $id=0;// $id bannette
+	public $facettes=array(); // facettes associées à la bannette
+	public $environement=array(); // affichage des notices
+	public $noti_tpl_document=0; // template de notice
+	public $bannette_display_notice_in_every_group=0;
+	public $bannette_document_group=0;
+	public $sommaires=array(); // donnée du document à générer par un templatze
 	
-	function bannette_facettes($id) {  // $id bannette
+	public function __construct($id) {  // $id bannette
 		$this->id=$id+0;		
 		$this->fetch_data();
 	}
 	
-	function fetch_data() {		
+	public function fetch_data() {		
 		global $msg,$dbh,$charset;
 		$this->facettes=array();
 		$req="select bannette_facettes.*,bannettes.display_notice_in_every_group,bannettes.document_group from bannette_facettes
@@ -51,14 +50,41 @@ class bannette_facettes{
 		}
 	}	
 	
-	function build_notice($notice_id){
+	public function delete(){
+		$del = "delete from bannette_facettes where num_ban_facette = '".$this->id."'";
+		pmb_mysql_query($del);
+	}
+	
+	public function save(){
+		global $max_facette;
+	
+		$this->delete();
+	
+		$order=0;
+		for($i=0;$i<$max_facette;$i++){
+			$critere = 'list_crit_'.$i;
+			global ${$critere};
+			if(${$critere} > 0){
+				$ss_critere = 'list_ss_champs_'.$i;
+				global ${$ss_critere};
+	
+				$rqt = "insert into bannette_facettes set num_ban_facette = '".$this->id."', ban_facette_critere = '".${$critere}."', ban_facette_ss_critere='".${$ss_critere}."', ban_facette_order='".$order."' ";
+				pmb_mysql_query($rqt);
+				$order++;
+			}
+		}
+	}
+	
+	public function build_notice($notice_id, $id_bannette = 0){
 		global $deflt2docs_location,$url_base_opac;
 		global $use_opac_url_base; $use_opac_url_base=1;
 		global $use_dsi_diff_mode; $use_dsi_diff_mode=1;
 		global $opac_notice_affichage_class;
 		
 		if($this->noti_tpl_document) {
-			$tpl_document=$this->noti_tpl_document->build_notice($notice_id,$deflt2docs_location);
+			$tpl_document=$this->noti_tpl_document->build_notice($notice_id, $deflt2docs_location, false, $id_bannette);
+		} else {
+			$tpl_document='';
 		}
 		if(!$tpl_document) {
 			if (!$opac_notice_affichage_class) $opac_notice_affichage_class="notice_affichage";
@@ -69,7 +95,7 @@ class bannette_facettes{
 		 return $tpl_document."\r\n";
 	}
 		
-	function filter_facettes_search($facettes_list,$notice_ids){
+	public function filter_facettes_search($facettes_list,$notice_ids){
 		global $dbh;
 		global $lang;
 		global $msg;
@@ -124,10 +150,11 @@ class bannette_facettes{
 		return $res_notice_ids;
 	}
 	
-	function filter_facettes_print($res_notice_ids, $rang=1,$notfound=array(),$gen_document=0,&$already_printed=array()){
+	public function filter_facettes_print($res_notice_ids, $rang=1,$notfound=array(),$gen_document=0,&$already_printed=array()){
 		global $dbh, $msg, $charset;
 		global $lang;
 		
+		$tpl = "";
 		if(count($res_notice_ids["notfound"])){
 			$tpl.="<p$rang class='dsi_notices_no_class_rang_$rang'>";
 			foreach($res_notice_ids["notfound"] as $notice_id){
@@ -154,7 +181,7 @@ class bannette_facettes{
 						$this->summary.="<a href='#[".$this->index."]' class='summary_elt'>".htmlentities($this->index." - ".$folder,ENT_QUOTES,$charset)."</a><br />";
 							
 						if(!$gen_document || ($gen_document && $this->bannette_document_group)){
-							$tpl.="<a name='[".$this->index."]'></a><h1><h$rang class='dsi_rang_$rang'>".htmlentities($folder,ENT_QUOTES,$charset)."</h$rang>";
+							$tpl.="<a name='[".$this->index."]'></a><h$rang class='dsi_rang_$rang'>".htmlentities($folder,ENT_QUOTES,$charset)."</h$rang>";
 						}
 					}else{
 						if(!$gen_document || ($gen_document && $this->bannette_document_group)){
@@ -173,7 +200,7 @@ class bannette_facettes{
 							$already_printed[]=$notice_id;
 						}
 					}
-					if(count($contens["notfound"])){
+					if(isset($contens["notfound"]) && count($contens["notfound"])){
 						foreach($contens["notfound"] as $notice_id){
 							if( !in_array($notice_id, $notfound) )
 								$tpl.=$this->build_notice($notice_id)."<br />" ;						
@@ -184,13 +211,13 @@ class bannette_facettes{
 					$tpl.="</p$rang>";
 					
 					//printr($contens["folder"]);
-					if(count($contens["folder"])){
+					if(isset($contens["folder"]) && count($contens["folder"])){
 						$rang++;
 						// c'est une arborescence. Construction du titre
 						$tpl.=$this->filter_facettes_print($contens,$rang,$notfound,$gen_document,$already_printed);
 						$rang--;
 					}	
-				}elseif(count($contens["folder"])){
+					}elseif(isset($contens["folder"]) && count($contens["folder"])){
 					
 					foreach($contens['folder'] as $folder2=>$values2){
 						if(!sizeof($already_printed) || sizeof(array_diff($values2["values"],$already_printed))){
@@ -221,15 +248,11 @@ class bannette_facettes{
 		return $tpl;
 	}
 	
-	function build_document_data($notice_ids,$notice_tpl=""){
+	public function build_document_data($notice_ids,$notice_tpl=""){
 		$this->sommaires=array();
 		if($notice_tpl){
-			$this->noti_tpl_document=new notice_tpl_gen($notice_tpl);
+			$this->noti_tpl_document = notice_tpl_gen::get_instance($notice_tpl);
 		} else $this->noti_tpl_document="";
-		// paramétrage :
-		$this->environement["short"] = 6 ;
-		$this->environement["ex"] = 0 ;
-		$this->environement["exnum"] = 1 ;
 	
 		$facettes_list=$this->facettes;
 		$this->index=0;
@@ -239,15 +262,15 @@ class bannette_facettes{
 		return $this->sommaires;
 	}
 	
-	function filter_facettes_data($res_notice_ids, $rang=1,$notfound=array(),$gen_document=0,&$already_printed=array()){
+	public function filter_facettes_data($res_notice_ids, $rang=1,$notfound=array(),$gen_document=0,&$already_printed=array()){
 		global $dbh, $msg, $charset;
 		global $lang;
 	
 		if(count($res_notice_ids["notfound"])){
-			$this->sommaires[$this->index]['level']=$rang;
+			//$this->sommaires[$this->index]['level']=$rang;
 			foreach($res_notice_ids["notfound"] as $notice_id){
 				if( !in_array($notice_id, $notfound) )					
-					$this->sommaires[$this->index]['records'][]['render']=$charset!= "utf-8" ? utf8_encode($this->build_notice($notice_id)) : $this->build_notice($notice_id);				
+					$this->sommaires[$this->index]['records'][]['render']=$this->build_notice($notice_id);				
 				$notfound[]=$notice_id;
 			}
 		}	
@@ -260,34 +283,34 @@ class bannette_facettes{
 				}	
 				if(!sizeof($already_printed) || sizeof(array_diff($contens["values"],$already_printed))){					
 					$this->index++;
-					$this->sommaires[$this->index]['title']=$charset!= "utf-8" ? utf8_encode($folder) : $folder;
+					$this->sommaires[$this->index]['title']=$folder;
 					$this->sommaires[$this->index]['level']=$rang;												
 					foreach($contens["values"] as $notice_id){
 						if(!in_array($notice_id,$already_printed)){
-							$this->sommaires[$this->index]['records'][]['render']=$charset!= "utf-8" ? utf8_encode($this->build_notice($notice_id)) : $this->build_notice($notice_id);
+							$this->sommaires[$this->index]['records'][]['render']=$this->build_notice($notice_id);
 							$already_printed[]=$notice_id;
 						}
 					}
-					if(count($contens["notfound"])){
+					if(isset($contens["notfound"]) && count($contens["notfound"])){
 						foreach($contens["notfound"] as $notice_id){
 							if( !in_array($notice_id, $notfound) )
-							$this->sommaires[$this->index]['records'][]['render']=$charset!= "utf-8" ? utf8_encode($this->build_notice($notice_id)) : $this->build_notice($notice_id);
+							$this->sommaires[$this->index]['records'][]['render']=$this->build_notice($notice_id);
 							$notfound[]=$notice_id;
 						}
 					}											
 					//printr($contens["folder"]);
-					if(count($contens["folder"])){
+					if(isset($contens["folder"]) && count($contens["folder"])){
 						$rang++;
 						// c'est une arborescence. Construction du titre
 						$this->filter_facettes_data($contens,$rang,$notfound,$gen_document,$already_printed);
 						$rang--;
 					}
-				}elseif(count($contens["folder"])){
+				}elseif(isset($contens["folder"]) && count($contens["folder"])){
 						
 					foreach($contens['folder'] as $folder2=>$values2){
 						if(!sizeof($already_printed) || sizeof(array_diff($values2["values"],$already_printed))){
 							$this->index++;
-							$this->sommaires[$this->index]['title']=$charset!= "utf-8" ? utf8_encode($folder) : $folder;
+							$this->sommaires[$this->index]['title']=$folder;
 							$this->sommaires[$this->index]['level']=$rang;						
 							break;
 						}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum_associate_svg.class.php,v 1.4 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: explnum_associate_svg.class.php,v 1.6 2017-11-30 10:00:36 dgoron Exp $
 
 
 if (stristr ($_SERVER['REQUEST_URI'], ".class.php"))
@@ -213,7 +213,7 @@ class explnum_associate_svg {
 				</text>';
 			if ($edit) {
 				$this->svg .= '
-				<image id="explnum_del_associate_speaker_'.$id.'" title="'.$msg['explnum_del_associate_speaker'].'" xlink:href="./images/trash.gif" y="'.($y + $this->dimensions['speakerTextY'] - $this->dimensions['speakerTextFontSize']).'" x="'.($this->dimensions['speakerWidth'] - 12).'" width="12" height="12" style="cursor:pointer;"/>';
+				<image id="explnum_del_associate_speaker_'.$id.'" title="'.$msg['explnum_del_associate_speaker'].'" xlink:href="'.get_url_icon('trash.gif').'" y="'.($y + $this->dimensions['speakerTextY'] - $this->dimensions['speakerTextFontSize']).'" x="'.($this->dimensions['speakerWidth'] - 12).'" width="12" height="12" style="cursor:pointer;"/>';
 			}
 		}
 		
@@ -465,7 +465,7 @@ class explnum_associate_svg {
 		// Fonction d'ouverture du popup
 		$this->js .= "
 		function openPopUpCall(id) {
-			openPopUp('./select.php?what=auteur&callback=update_associate_author&caller=explnum_associate_speaker_' + id + '&param1=aut' + id + '_id&param2=aut' + id + '&deb_rech='+encodeURIComponent(document.getElementById('aut' + id).value), 'select_author0', 500, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes');
+			openPopUp('./select.php?what=auteur&callback=update_associate_author&caller=explnum_associate_speaker_' + id + '&param1=aut' + id + '_id&param2=aut' + id + '&deb_rech='+encodeURIComponent(document.getElementById('aut' + id).value), 'selector');
 		}";
 		
 		// Réinitialisation du formulaire
@@ -521,7 +521,7 @@ class explnum_associate_svg {
 				label.innerHTML = '".$msg['234']."';
 				
 				var img = document.createElement('img');
-				img.src = './images/close.png';
+				img.src = '".get_url_icon('close.png')."';
 				img.alt = '".$msg['197']."';
 				img.title = '".$msg['197']."';
 				img.className = 'right';

@@ -2,279 +2,435 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mysql_functions.inc.php,v 1.1 2015-04-03 11:16:16 jpermanne Exp $
+// $Id: mysql_functions.inc.php,v 1.9 2018-06-14 13:05:25 dgoron Exp $
 
+require_once($class_path.'/pmb_mysqli.class.php');
+
+define("PMB_MYSQL_ASSOC", MYSQLI_ASSOC);
+define("PMB_MYSQL_BOTH", MYSQLI_BOTH);
+define("PMB_MYSQL_NUM", MYSQLI_NUM);
+
+/**
+ * 
+ * @param resource $link_identifier
+ */
 function pmb_mysql_affected_rows($link_identifier = null){
-	global $dbh;
-
-	if ($link_identifier == null) {
-		$link_identifier = $dbh;
-	}
-	$res = mysql_affected_rows($link_identifier);
-
-	return $res;
+	return pmb_mysqli::get_connection($link_identifier)->affected_rows;
 }
 
+/**
+ *
+ * @param resource $link_identifier
+ */
 function pmb_mysql_close($link_identifier = null){
-	global $dbh;
+	return pmb_mysqli::get_connection($link_identifier)->close();
+}
 
-	if ($link_identifier == null) {
-		$link_identifier = $dbh;
+/**
+ * 
+ * @param string $server
+ * @param string $username
+ * @param string $password
+ * @param string $dbname
+ * @param string $port
+ * @param string $socket
+ * @return mysqli
+ */
+function pmb_mysql_connect($server = null, $username = null, $password = null, $dbname = null, $port = null, $socket = null){
+	$res = pmb_mysqli::init_connection($server, $username, $password, $dbname, $port, $socket);
+	if ($res->connect_error) {
+		return 0;
 	}
-	$res = mysql_close($link_identifier);
-
 	return $res;
 }
 
-function pmb_mysql_connect($server = null, $username = null, $password = null, $new_link = false, $client_flags = 0){
-	if ($server == null) {
-		$res = mysql_connect();
-	} elseif ($username == null) {
-		$res = mysql_connect($server);
-	} elseif ($password == null) {
-		$res = mysql_connect($server, $username);
-	} else {
-		$res = mysql_connect($server, $username, $password, $new_link, $client_flags);
-	}
-
-	return $res;
-}
-
+/**
+ * 
+ * @param mysqli_result $result
+ * @param int $row_number
+ */
 function pmb_mysql_data_seek($result , $row_number){
-	$res = mysql_data_seek($result , $row_number);
-
-	return $res;
+	if($result === false){
+		return false;
+	}
+	return $result->data_seek($row_number);
 }
 
+/**
+ * 
+ * @param resource $link_identifier
+ */
 function pmb_mysql_errno($link_identifier = null){
-	global $dbh;
-
-	if ($link_identifier == null) {
-		$link_identifier = $dbh;
-	}
-	$res = mysql_errno($link_identifier);
-
-	return $res;
+	return pmb_mysqli::get_connection($link_identifier)->errno;
 }
 
-function pmb_mysql_error($link_identifier = null){
-	global $dbh;
-
-	if ($link_identifier == null) {
-		$link_identifier = $dbh;
+/**
+ *
+ * @param resource $link_identifier
+ */
+function pmb_mysql_error($link_identifier = null){	
+	if (is_object($link_identifier)) {
+		return $link_identifier->error;
 	}
-	$res = mysql_error($link_identifier);
-
-	return $res;
+	return pmb_mysqli::get_connection($link_identifier)->error;	
 }
 
+/**
+ * 
+ * @param string $unescaped_string
+ */
 function pmb_mysql_escape_string($unescaped_string){
-	$res = mysql_escape_string($unescaped_string);
-
-	return $res;
+	return pmb_mysqli::get_connection()->escape_string($unescaped_string);
 }
 
-function pmb_mysql_fetch_array($result, $result_type = MYSQL_BOTH){
-	$res = mysql_fetch_array($result, $result_type);
-
-	return $res;
+/**
+ * 
+ * @param mysqli_result $result
+ * @param string $result_type
+ */
+function pmb_mysql_fetch_all($result, $result_type = PMB_MYSQL_NUM) {
+	if($result === false){
+		return false;
+	}
+	return $result->fetch_all($result_type);
+}
+/**
+ * 
+ * @param mysqli_result $result
+ * @param string $result_type
+ */
+function pmb_mysql_fetch_array($result, $result_type = PMB_MYSQL_BOTH){
+	if($result === false){
+		return false;
+	}
+	return $result->fetch_array($result_type);
 }
 
+/**
+ * 
+ * @param mysqli_result $result
+ */
 function pmb_mysql_fetch_assoc($result){
-	$res = mysql_fetch_assoc($result);
-
-	return $res;
+	if($result === false){
+		return false;
+	}
+	return $result->fetch_assoc();
 }
 
+/**
+ * 
+ * @param mysqli_result $result
+ * @param number $field_offset
+ * @return unknown
+ */
 function pmb_mysql_fetch_field($result, $field_offset = 0){
-	$res = mysql_fetch_field($result, $field_offset);
-
-	return $res;
+	if($result === false){
+		return false;
+	}
+	if ($field_offset !== null) {
+		$res = $result->field_seek($field_offset);
+		if (!$res) {
+			return $res;
+		}
+	}	
+	return $result->fetch_field();
 }
 
+/**
+ * 
+ * @param mysqli_result $result
+ * @param string $class_name
+ * @param array $params
+ */
 function pmb_mysql_fetch_object($result, $class_name = "", $params = array()){
+	if($result === false){
+		return false;
+	}
 	if (!$class_name) {
-		$res = mysql_fetch_object($result);
+		return $result->fetch_object();
 	} elseif (!count($params)) {
-		$res = mysql_fetch_object($result, $class_name);
+		return $result->fetch_object($class_name);
 	} else {
-		$res = mysql_fetch_object($result, $class_name, $params);
+		return $result->fetch_object($class_name, $params);
 	}
-
-	return $res;
 }
 
+/**
+ * 
+ * @param mysqli_result $result
+ */
 function pmb_mysql_fetch_row($result){
-	$res = mysql_fetch_row($result);
-
-	return $res;
-}
-
-function pmb_mysql_field_flags($result, $field_offset){
-	$res = mysql_field_flags($result, $field_offset);
-
-	return $res;
-}
-
-function pmb_mysql_field_len($result, $field_offset){
-	$res = mysql_field_len($result, $field_offset);
-
-	return $res;
-}
-
-function pmb_mysql_field_name($result, $field_offset){
-	$res = mysql_field_name($result, $field_offset);
-
-	return $res;
-}
-
-function pmb_mysql_field_table($result, $field_offset){
-	$res = mysql_field_table($result, $field_offset);
-
-	return $res;
-}
-
-function pmb_mysql_field_type($result, $field_offset){
-	$res = mysql_field_type($result, $field_offset);
-
-	return $res;
-}
-
-function pmb_mysql_free_result($result){
-	$res = mysql_free_result($result);
-
-	return $res;
-}
-
-function pmb_mysql_get_client_info(){
-	$res = mysql_get_client_info();
-
-	return $res;
-}
-
-function pmb_mysql_get_host_info($link_identifier = null){
-	global $dbh;
-
-	if($link_identifier == null){
-		$link_identifier = $dbh;
+	if($result === false){
+		return false;
 	}
-	$res = mysql_get_host_info($link_identifier);
-
-	return $res;
+	return $result->fetch_row();
 }
 
-function pmb_mysql_get_proto_info($link_identifier = null){
-	global $dbh;
-
-	if($link_identifier == null){
-		$link_identifier = $dbh;
+/**
+ * 
+ * @param mysqli_result $result
+ * @param number $field_offset
+ * @return string
+ */
+function pmb_mysql_field_flags($result, $field_offset){	
+	if($result === false){
+		return false;
 	}
-	$res = mysql_get_proto_info($link_identifier);
-
-	return $res;
-}
-
-function pmb_mysql_get_server_info($link_identifier = null){
-	global $dbh;
-
-	if($link_identifier == null){
-		$link_identifier = $dbh;
+	$flags_num = $result->fetch_field_direct($field_offset)->flags;
+	
+	$res = "";
+	foreach (pmb_mysqli::get_mysqli_flags() as $n => $t) {
+		if ($flags_num & $n) {
+			$res .= ' '.$t;
+		}
 	}
-	$res = mysql_get_server_info($link_identifier);
-
-	return $res;
-}
-
-function pmb_mysql_insert_id($link_identifier = null){
-	global $dbh;
-
-	if($link_identifier == null){
-		$link_identifier = $dbh;
-	}
-	$res = mysql_insert_id($link_identifier);
-
-	return $res;
-}
-
-function pmb_mysql_list_tables($database, $link_identifier = null){
-	global $dbh;
-
-	if($link_identifier == null){
-		$link_identifier = $dbh;
-	}
-	$res = mysql_list_tables($database, $link_identifier);
-
-	return $res;
-}
-
-function pmb_mysql_num_fields($result){
-	$res = mysql_num_fields($result);
-
-	return $res;
-}
-
-function pmb_mysql_num_rows($result){
-	$res = mysql_num_rows($result);
-
-	return $res;
-}
-
-function pmb_mysql_query($query, $link_identifier = null){
-	global $dbh;
-
-	if($link_identifier == null){
-		$link_identifier = $dbh;
-	}
-	$res = mysql_query($query, $link_identifier);
-
-	return $res;
-}
-
-function pmb_mysql_real_escape_string($unescaped_string, $link_identifier = null){
-	global $dbh;
-
-	if($link_identifier == null){
-		$link_identifier = $dbh;
-	}
-	$res = mysql_real_escape_string($unescaped_string, $link_identifier);
-
-	return $res;
-}
-
-function pmb_mysql_result($result, $row, $field = 0){
-	$res = mysql_result($result, $row, $field);
-
-	return $res;
-}
-
-function pmb_mysql_select_db($database_name, $link_identifier = null){
-	global $dbh;
-
-	if ($link_identifier == null) {
-		$link_identifier = $dbh;
-	}
-	if ($link_identifier == null) {
-		$res = mysql_select_db($database_name);
+	
+	if (empty($res)) {
+		return $res;
 	} else {
-		$res = mysql_select_db($database_name, $link_identifier);
+		return substr($res,1);
 	}
+}
+
+/**
+ * 
+ * @param mysqli_result $result
+ * @param number $field_offset
+ * @return NULL
+ */
+function pmb_mysql_field_len($result, $field_offset){
+	if($result === false){
+		return false;
+	}
+    $properties = $result->fetch_field_direct($field_offset);
+    return is_object($properties) ? $properties->length : null;
+}
+
+/**
+ *
+ * @param mysqli_result $result
+ * @param number $field_offset
+ * @return NULL
+ */
+function pmb_mysql_field_name($result, $field_offset){
+	if($result === false){
+		return false;
+	}
+    $properties = $result->fetch_field_direct($field_offset);
+    return is_object($properties) ? $properties->name : null;
+}
+
+/**
+ *
+ * @param mysqli_result $result
+ * @param number $field_offset
+ * @return NULL
+ */
+function pmb_mysql_field_table($result, $field_offset){
+	if($result === false){
+		return false;
+	}
+    $properties = $result->fetch_field_direct($field_offset);
+    return is_object($properties) ? $properties->table : null;
+}
+
+/**
+ *
+ * @param mysqli_result $result
+ * @param number $field_offset
+ * @return NULL
+ */
+function pmb_mysql_field_type($result, $field_offset){
+	if($result === false){
+		return false;
+	}
+    $type_id = $result->fetch_field_direct($field_offset)->type;
+    return array_key_exists($type_id, pmb_mysqli::get_mysqli_types())? pmb_mysqli::get_mysqli_types()[$type_id] : NULL;
+}
+
+/**
+ *
+ * @param mysqli_result $result
+ */
+function pmb_mysql_free_result($result){
+	if($result === false){
+		return false;
+	}
+	return $result->free_result();
+}
+
+/**
+ * 
+ * @return string
+ */
+function pmb_mysql_get_client_info(){
+	return pmb_mysqli::get_connection()->get_client_info();
+}
+
+/**
+ * 
+ * @param resource $link_identifier
+ */
+function pmb_mysql_get_host_info($link_identifier = null){
+	return pmb_mysqli::get_connection($link_identifier)->host_info;
+}
+
+/**
+ *
+ * @param resource $link_identifier
+ */
+function pmb_mysql_get_proto_info($link_identifier = null){
+	return pmb_mysqli::get_connection($link_identifier)->protocol_version;
+}
+
+/**
+ *
+ * @param resource $link_identifier
+ */
+function pmb_mysql_get_server_info($link_identifier = null){
+	return pmb_mysqli::get_connection($link_identifier)->server_info;
+}
+
+/**
+ *
+ * @param resource $link_identifier
+ */
+function pmb_mysql_insert_id($link_identifier = null){
+	return pmb_mysqli::get_connection($link_identifier)->insert_id;
+}
+
+/**
+ * 
+ * @param string $database
+ * @param resource $link_identifier
+ * @return mixed
+ */
+function pmb_mysql_list_tables($database, $link_identifier = null){
+	$res = pmb_mysql_query("SHOW TABLES FROM ".$database, $link_identifier);
 
 	return $res;
 }
 
+/**
+ * 
+ * @param mysqli_result $result
+ */
+function pmb_mysql_num_fields($result){
+	if($result === false){
+		return false;
+	}
+	return $result->field_count;
+}
+
+/**
+ *
+ * @param mysqli_result $result
+ */
+function pmb_mysql_num_rows($result){
+	if($result === false){
+		return false;
+	}
+	return $result->num_rows;
+}
+
+/**
+ * 
+ * @param string $query
+ * @param resource $link_identifier
+ * @param string $resultmode
+ * @return mixed
+ */
+function pmb_mysql_query($query, $link_identifier = null, $resultmode = null){
+	if(!isset($result_mode) || $result_mode === null){
+		$result = pmb_mysqli::get_connection($link_identifier)->query($query);
+		if(!$result) {
+			print pmb_mysql_debug(debug_backtrace()[0]);
+		}
+		return $result;
+	} else {
+		return pmb_mysqli::get_connection($link_identifier)->query($query, $resultmode);
+	}	
+}
+
+/**
+ * 
+ * @param string $unescaped_string
+ * @param resource $link_identifier
+ * @return string
+ */
+function pmb_mysql_real_escape_string($unescaped_string, $link_identifier = null){
+	return pmb_mysqli::get_connection($link_identifier)->real_escape_string($unescaped_string);
+}
+
+/**
+ * 
+ * @param mysqli_result $result
+ * @param number $row
+ * @param number $field
+ * @return string
+ */
+function pmb_mysql_result($result, $row, $field = 0){
+	if($result === false){
+		return false;
+	}
+	if($result->num_rows==0) {
+		return null;
+	}
+	$result->data_seek($row);
+	$res = $result->fetch_array(PMB_MYSQL_BOTH);
+	return $res[$field];	
+}
+
+/**
+ * 
+ * @param string $database_name
+ * @param resource $link_identifier
+ * @return boolean
+ */
+function pmb_mysql_select_db($database_name, $link_identifier = null){
+	return pmb_mysqli::get_connection($link_identifier)->select_db($database_name);
+}
+
+/**
+ * 
+ * @param resource $link_identifier
+ * @return string
+ */
 function pmb_mysql_stat($link_identifier = null){
-	global $dbh;
+	return pmb_mysqli::get_connection($link_identifier)->stat;
+}
 
-	if($link_identifier == null){
-		$link_identifier = $dbh;
+/**
+ * 
+ * @param mysqli_result $result
+ * @param int $i
+ * @return string
+ */
+function pmb_mysql_tablename($result, $i){
+	if($result === false){
+		return false;
 	}
-	$res = mysql_stat($link_identifier);
-
+	$res = pmb_mysql_result($result, $i);
 	return $res;
 }
 
-function pmb_mysql_tablename($result, $i){
-	$res = mysql_tablename($result, $i);
+function pmb_mysql_debug($backtrace) {
+	global $msg;
+	global $opac_display_errors;
 
+	$res = "";
+	if($opac_display_errors) {
+		$res = "
+		<div class='erreur'>SQL Error</div>
+		<div class='row pmb_mysql_debug'>
+			<div class='colonne10'>
+				<img src='".get_url_icon('error.png')."'>
+			</div>
+			<div class='pmb_mysql_debug_content'>
+				<strong>".$backtrace['file'].":".$backtrace['line']."</strong>
+				<p>".$backtrace['args'][0]."</p>
+			</div>
+		</div>";
+	}
 	return $res;
 }

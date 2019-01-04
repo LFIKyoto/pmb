@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_editorial_tree.tpl.php,v 1.4 2015-05-28 15:18:51 apetithomme Exp $
+// $Id: cms_editorial_tree.tpl.php,v 1.5 2017-08-18 09:24:12 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 global $base_path;
@@ -25,8 +25,8 @@ $cms_editorial_tree_layout= "
 		</div>";
 
 $cms_editorial_tree_content ="
-		<img class='dijitTreeExpando dijitTreeExpandoClosed' onClick='dijit.byId(\"section_tree\").expandAll();' role='presentation' data-dojo-attach-point='expandoNode' alt='' src='".$base_path."/images/expand_all.gif'>
-		<img class='dijitTreeExpando dijitTreeExpandoOpened' onClick='dijit.byId(\"section_tree\").collapseAll();' role='presentation' data-dojo-attach-point='expandoNode' alt='' src='".$base_path."/images/collapse_all.gif'>
+		<img class='dijitTreeExpando dijitTreeExpandoClosed' onClick='dijit.byId(\"section_tree\").expandAll();' role='presentation' data-dojo-attach-point='expandoNode' alt='' src='".get_url_icon("expand_all.gif")."'>
+		<img class='dijitTreeExpando dijitTreeExpandoOpened' onClick='dijit.byId(\"section_tree\").collapseAll();' role='presentation' data-dojo-attach-point='expandoNode' alt='' src='".get_url_icon("collapse_all.gif")."'>
 		<span id='add_buttons'>
 			&nbsp;<a id='add_section_button' href='$base_path/cms.php?categ=section&sub=edit&id=new'>".$msg['cms_editorial_form_new_section_from_section']."</a>
 			&nbsp;<a id='add_article_button' href='$base_path/cms.php?categ=article&sub=edit&id=new'>".$msg['cms_editorial_form_new_article_from_section']."</a>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: crypt.php,v 1.7 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: crypt.php,v 1.8 2017-10-23 10:13:00 ngantier Exp $
 
 //Cryptage d'un fichier
 $base_path="../..";
@@ -18,7 +18,7 @@ print "<div id=\"contenu-frame\">\n";
 echo "<h1>".$msg["sauv_misc_export_running"]."</h1>\n";
 echo "<form class='form-$current_module' name=\"sauv\" action=\"\" method=\"post\">\n";
 echo "<br /><br />";
-echo "<center><input type=\"button\" value=\"".$msg["sauv_annuler"]."\" onClick=\"document.location='launch.php';\" class=bouton></center>\n";
+echo "<input type=\"button\" value=\"".$msg["sauv_annuler"]."\" onClick=\"document.location='launch.php';\" class=bouton>\n";
 
 //Jeux à venir
 for ($i=0; $i<count($sauvegardes); $i++) {
@@ -40,7 +40,7 @@ echo "<input type=\"hidden\" name=\"filename\" value=\"".$filename."\">\n";
 echo "<input type=\"hidden\" name=\"logid\" value=\"".$logid."\">\n";
 echo "<input type=\"hidden\" name=\"sauv_sauvegarde_nom\" value=\"".$sauv_sauvegarde_nom."\">\n";
 echo "<input type=\"hidden\" name=\"temp_file\" value=\"$temp_file\">";
-echo "<center><h2>".sprintf($msg["sauv_misc_crypting"],$sauv_sauvegarde_nom)."</h2></center>";
+echo "<h2>".sprintf($msg["sauv_misc_crypting"],$sauv_sauvegarde_nom)."</h2>";
 
 //Ajout du cryptage
 $fe=@fopen($filename,"a");

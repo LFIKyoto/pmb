@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_breadcrumb_datasource_sections.class.php,v 1.3 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: cms_module_breadcrumb_datasource_sections.class.php,v 1.7 2017-07-25 07:42:48 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,7 +16,8 @@ class cms_module_breadcrumb_datasource_sections extends cms_module_common_dataso
 		return array(
 			'cms_module_common_selector_section',
 			'cms_module_common_selector_env_var',
-			'cms_module_common_selector_generic_parent_section'
+			'cms_module_common_selector_generic_parent_section',
+			'cms_module_common_selector_global_var'
 		);
 	}
 	
@@ -29,26 +30,29 @@ class cms_module_breadcrumb_datasource_sections extends cms_module_common_dataso
 		if($selector){
 			$section_id = $selector->get_value();
 			$section_ids = $this->filter_datas("sections",array($section_id));
-			if($section_ids[0]){
+			if(isset($section_ids[0]) && $section_ids[0]){
 				$sections = array();
 				$section_id = $section_ids[0];
-				$datas = array();
+				$datas = array(
+					'sections' => array()
+				);
 				$i=0;
 				do {
 					$i++;
-					$query = "select id_section,section_num_parent from cms_sections where id_section = ".$section_id;
+					$query = "select id_section,section_num_parent from cms_sections where id_section = '".($section_id*1)."'";
 					$result = pmb_mysql_query($query);
 					if(pmb_mysql_num_rows($result)){
 						$row = pmb_mysql_fetch_object($result);
 						$section_id = $row->section_num_parent;
-						$datas[] = $row->id_section;
+						$datas['sections'][] = $row->id_section;
 						
 					}else{
 						break;
 					}
 				//en théorie on sort toujours, mais comme c'est un pays formidable, on lock à 100 itérations...
 				}while ($row->section_num_parent != 0 || $i>100);
-				return array_reverse($datas);
+				$datas['sections'] = array_reverse($datas['sections']);
+				return $datas;
 			}
 		}
 		return false;

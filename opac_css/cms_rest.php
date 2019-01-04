@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_rest.php,v 1.1.2.3 2015-12-11 09:22:02 arenou Exp $
+// $Id: cms_rest.php,v 1.2 2015-10-07 14:36:00 arenou Exp $
 
 $base_path = ".";
 $base_noheader = 1;
@@ -22,19 +22,21 @@ if($charset != "utf-8"){
 //$_GET = array_uft8_decode($_GET);
 
 require_once($base_path."/includes/global_vars.inc.php");
-	
+
 require_once($base_path.'/includes/opac_mysql_connect.inc.php');
 $dbh = connection_mysql();
 
-require_once($base_path."/includes/rec_history.inc.php");
 //Sessions !! Attention, ce doit être impérativement le premier include (à cause des cookies)
 require_once($base_path."/includes/session.inc.php");
 
+
 require_once($base_path.'/includes/start.inc.php');
+
 require_once($base_path."/includes/check_session_time.inc.php");
 
 // récupération localisation
 require_once($base_path.'/includes/localisation.inc.php');
+require_once($base_path."/includes/rec_history.inc.php");
 
 require_once($base_path.'/includes/divers.inc.php');
 require_once($base_path."/includes/misc.inc.php");
@@ -94,6 +96,6 @@ if(file_exists('./temp/'.$elems[1])) {
  	$jsonsource = new $content['classname']($content['id']);
  	$jsonsource->set_datas($content['datas']);
  	$jsonsource->set_nb_row($content['nb_row']);
-//  	header('Content-Type: application/json');
+//   	header('Content-Type: application/json');
  	print encoding_normalize::json_encode($jsonsource->store_proceed($content));
 }

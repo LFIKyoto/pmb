@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: coordonnees.tpl.php,v 1.25 2013-11-28 15:51:51 dgoron Exp $
+// $Id: coordonnees.tpl.php,v 1.29 2017-11-22 11:07:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -17,7 +17,7 @@ $coord_form = "
 <div class='form-contenu'>
 
 	<div class='row'>
-		<label class='etiquette' for='raison'>".htmlentities($msg[acquisition_raison_soc],ENT_QUOTES,$charset)."</label>
+		<label class='etiquette' for='raison'>".htmlentities($msg['acquisition_raison_soc'],ENT_QUOTES,$charset)."</label>
 	</div>
 	<div class='row'>
 		<input type=text id='raison' name='raison' value=\"!!raison!!\" class='saisie-50em' />
@@ -27,14 +27,14 @@ $coord_form = "
 	</div>
 	<hr />
 	<div class='row'>
-		<label class='etiquette' for='comment'>".htmlentities($msg[acquisition_commentaires],ENT_QUOTES,$charset)."</label>
+		<label class='etiquette' for='comment'>".htmlentities($msg['acquisition_commentaires'],ENT_QUOTES,$charset)."</label>
 	</div>
 	<div class='row'>
 		<textarea id='comment' name='comment' class='saisie-80em' cols='62' rows='6' wrap='virtual'>!!commentaires!!</textarea>
 	</div>
 	<div class= 'colonne2'>
 		<div class='row'>
-			<label class='etiquette' for='siret'>".htmlentities($msg[acquisition_siret],ENT_QUOTES,$charset)."</label>
+			<label class='etiquette' for='siret'>".htmlentities($msg['acquisition_siret'],ENT_QUOTES,$charset)."</label>
 		</div>
 		<div class='row'>
 			<input type='text' id='siret' name='siret' value='!!siret!!' class='saisie-30em' />
@@ -43,7 +43,7 @@ $coord_form = "
 
 	<div class='colonne_suite'>
 		<div class='row'>
-			<label class='etiquette' for='rcs'>".htmlentities($msg[acquisition_rcs],ENT_QUOTES,$charset)."</label>
+			<label class='etiquette' for='rcs'>".htmlentities($msg['acquisition_rcs'],ENT_QUOTES,$charset)."</label>
 		</div>
 		<div class='row'>
 			<input type='text' id='rcs' name='rcs' value='!!rcs!!' class='saisie-30em' />
@@ -52,7 +52,7 @@ $coord_form = "
 
 	<div class= 'colonne2'>
 		<div class='row'>
-			<label class='etiquette' for='naf' >".htmlentities($msg[acquisition_naf],ENT_QUOTES,$charset)."</label>
+			<label class='etiquette' for='naf' >".htmlentities($msg['acquisition_naf'],ENT_QUOTES,$charset)."</label>
 		</div>
 		<div class='row'>
 			<input type='text' id='naf' name='naf' value='!!naf!!' class='saisie-10em' />
@@ -61,20 +61,20 @@ $coord_form = "
 
 	<div class='colonne_suite'>
 		<div class='row'>
-			<label class='etiquette' for='tva'>".htmlentities($msg[acquisition_tva],ENT_QUOTES,$charset)."</label>
+			<label class='etiquette' for='tva'>".htmlentities($msg['acquisition_tva'],ENT_QUOTES,$charset)."</label>
 		</div>
 		<div class='row'>
 			<input type='text' id='tva' name='tva' value='!!tva!!' class='saisie-30em' />
 		</div>
 	</div>
 	<div class='row'>
-		<label class='etiquette' for='site_web'>".htmlentities($msg[acquisition_site_web],ENT_QUOTES,$charset)."</label>
+		<label class='etiquette' for='site_web'>".htmlentities($msg['acquisition_site_web'],ENT_QUOTES,$charset)."</label>
 	</div>
 	<div class='row'>
 		<input type='text' id='site_web' name='site_web' value='!!site_web!!' class='saisie-30em' />
 	</div>
 	<div class='row'>
-		<label class='etiquette' for='co_logo'>".htmlentities($msg[acquisition_logo],ENT_QUOTES,$charset)."</label>
+		<label class='etiquette' for='co_logo'>".htmlentities($msg['acquisition_logo'],ENT_QUOTES,$charset)."</label>
 	</div>
 	<div class='row'>
 		<input type='text' id='co_logo' name='logo' value='!!logo!!' class='saisie-30em' />
@@ -84,8 +84,8 @@ $coord_form = "
 	<div class='row'>
 		<input type='hidden' id='auto_id_list' name='auto_id_list' value='!!auto_id_list!!' >
 		<label class='etiquette'>$msg[acquisition_autorisations]</label>
-		<input type='button' class='bouton_small' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);' align='middle'>
-		<input type='button' class='bouton_small' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);' align='middle'>
+		<input type='button' class='bouton_small align_middle' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);'>
+		<input type='button' class='bouton_small align_middle' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);'>
 	</div>
 	<div class='row'>
 		<!-- autorisations -->
@@ -120,15 +120,15 @@ $ptab[1] = "
 	<br />
     <input type='hidden' id='max_coord' name='max_coord' value='!!max_coord!!' />
 	<div class='colonne'>
-		<a href=\"javascript:expandAll()\"><img src='./images/expand_all.gif' border='0' id='expandall'></a>
-		<a href=\"javascript:collapseAll()\"><img src='./images/collapse_all.gif' border='0' id='collapseall'></a>
+		<a href=\"javascript:expandAll()\"><img src='".get_url_icon('expand_all.gif')."' border='0' id='expandall'></a>
+		<a href=\"javascript:collapseAll()\"><img src='".get_url_icon('collapse_all.gif')."' border='0' id='collapseall'></a>
 	</div>
 
 	<div id='el1Child' class='row'>
 		<input type='hidden' name='no_[1]' id='no_[1]' value='!!id1!!' /> 
 		<input type='hidden' name='mod_[1]' id='mod_[1]' value='0' />
    		<div class='colonne80'>
-			<img src='./images/plus.gif' class='img_plus' name='imEx' id='el_1_Img' border='0' onclick=\"expandBase('el_1_', true); return false;\" />
+			<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='el_1_Img' border='0' onclick=\"expandBase('el_1_', true); return false;\" />
 			<label class='etiquette'>!!adresse!!</label>
 		</div>
 	</div>
@@ -140,21 +140,21 @@ $ptab[1] = "
 		<div class ='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class ='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_coord_lib],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_coord_lib'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne_suite'>
 					<input type='text' class='saisie-60em' id='lib_[1]' name='lib_[1]' value='!!lib_1!!' onchange=\"mod_coord_el('1'); \" />
 				</div>
 			</div>
 			<div class='colonne_suite'>
-				<input type='button' 'id=raz_1' class='bouton' value='".$msg[raz]."' title='".$msg[acquisition_bt_raz_title]."' onclick=\"raz_coord_el('1'); \" />
+				<input type='button' 'id=raz_1' class='bouton' value='".$msg['raz']."' title='".$msg['acquisition_bt_raz_title']."' onclick=\"raz_coord_el('1'); \" />
 			</div>
 		</div>
 
 		<div class ='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class ='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_contact],ENT_QUOTES,$charset)." 
+					".htmlentities($msg['acquisition_contact'],ENT_QUOTES,$charset)." 
 				</div>
 				<div class='colonne_suite'>
 					<input type='text' class='saisie-60em' id='cta_[1]' name='cta_[1]' value='!!cta_1!!' onchange=\"mod_coord_el('1'); \" />
@@ -165,7 +165,7 @@ $ptab[1] = "
 		<div class ='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class ='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_adr],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_adr'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne_suite'>
 					<input type='text' class='saisie-60em' id='ad1_[1]' name='ad1_[1]' value='!!ad1_1!!' onchange=\"mod_coord_el('1'); \" />
@@ -187,13 +187,13 @@ $ptab[1] = "
 		<div class='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_cp],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_cp'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'> 
 					<input type='text' class='saisie-5em' id='cpo_[1]' name='cpo_[1]' value='!!cpo_1!!' onchange=\"mod_coord_el('1'); \" />
 				</div>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_ville],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_ville'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'> 
 					<input type='text' class='saisie-20em' id='vil_[1]' name='vil_[1]' value='!!vil_1!!' onchange=\"mod_coord_el('1'); \" />
@@ -204,13 +204,13 @@ $ptab[1] = "
 		<div class='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_etat],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_etat'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'> 
 					<input type='text' class='saisie-15em' id='eta_[1]' name='eta_[1]' value='!!eta_1!!' onchange=\"mod_coord_el('1'); \" />
 				</div>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_pays],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_pays'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'> 
 	 				<input type='text' class='saisie-20em' id='pay_[1]' name='pay_[1]' value='!!pay_1!!' onchange=\"mod_coord_el('1'); \" />
@@ -223,19 +223,19 @@ $ptab[1] = "
 		<div class='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_tel1],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_tel1'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'>
 					<input type='text' class='saisie-10em' id='te1_[1]' name='te1_[1]' value='!!te1_1!!' onchange=\"mod_coord_el('1'); \" />
 				</div>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_tel2],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_tel2'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'>
 					<input type='text' class='saisie-10em' id='te2_[1]' name='te2_[1]' value='!!te2_1!!' onchange=\"mod_coord_el('1'); \" />
 				</div>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_fax],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_fax'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'> 
 	 				<input type='text' class='saisie-10em' id='fax_[1]' name='fax_[1]' value='!!fax_1!!' onchange=\"mod_coord_el('1'); \" />
@@ -246,7 +246,7 @@ $ptab[1] = "
 		<div class='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_mail],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_mail'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne_suite'>
 					<input type='text' class='saisie-60em' id='ema_[1]' name='ema_[1]' value='!!ema_1!!' onchange=\"mod_coord_el('1'); \" />
@@ -263,8 +263,8 @@ $ptab[10] = "
 		<input type='hidden' name='no_[2]' id='no_[2]' value='!!id2!!' /> 
 		<input type='hidden' name='mod_[2]' id='mod_[2]' value='0' />
    		<div class='colonne80'>
-			<img src='./images/plus.gif' class='img_plus' name='imEx' id='el_2_Img' border='0' onclick=\"expandBase('el_2_', true); return false;\" />
-			<label class='etiquette'>".htmlentities($msg[acquisition_adr_liv],ENT_QUOTES,$charset)."</label>
+			<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='el_2_Img' border='0' onclick=\"expandBase('el_2_', true); return false;\" />
+			<label class='etiquette'>".htmlentities($msg['acquisition_adr_liv'],ENT_QUOTES,$charset)."</label>
 		</div>
 	</div>
 	
@@ -274,21 +274,21 @@ $ptab[10] = "
 		<div class='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class ='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_coord_lib],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_coord_lib'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne_suite'>
 					<input type='text' class='saisie-60em' id='lib_[2]' name='lib_[2]' value='!!lib_2!!' onchange=\"mod_coord_el('2'); \" />			
 				</div>
 			</div>
 			<div class='colonne_suite'>
-				<input type='button' id='raz_2' class='bouton' value='".$msg[raz]."' title='".$msg[acquisition_bt_raz_title]."' onclick=\"raz_coord_el('2'); \" />
+				<input type='button' id='raz_2' class='bouton' value='".$msg['raz']."' title='".$msg['acquisition_bt_raz_title']."' onclick=\"raz_coord_el('2'); \" />
 			</div>
 		</div>
 		
 		<div class ='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class ='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_contact],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_contact'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne_suite'>
 					<input type='text' class='saisie-60em' id='cta_[2]' name='cta_[2]' value='!!cta_2!!' onchange=\"mod_coord_el('2'); \" />
@@ -299,7 +299,7 @@ $ptab[10] = "
 		<div class ='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class ='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_adr],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_adr'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne_suite'>
 					<input type='text' class='saisie-60em' id='ad1_[2]' name='ad1_[2]' value='!!ad1_2!!' onchange=\"mod_coord_el('2'); \" />
@@ -321,13 +321,13 @@ $ptab[10] = "
 		<div class='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_cp],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_cp'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'> 
 					<input type='text' class='saisie-5em' id='cpo_[2]' name='cpo_[2]' value='!!cpo_2!!' onchange=\"mod_coord_el('2'); \" />
 				</div>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_ville],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_ville'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'> 
 					<input type='text' class='saisie-20em' id='vil_[2]' name='vil_[2]' value='!!vil_2!!' onchange=\"mod_coord_el('2'); \" />
@@ -338,13 +338,13 @@ $ptab[10] = "
 		<div class='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_etat],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_etat'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'> 
 					<input type='text' class='saisie-15em' id='eta_[2]' name='eta_[2]' value='!!eta_2!!' onchange=\"mod_coord_el('2'); \" />
 				</div>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_pays],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_pays'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'> 
 	 				<input type='text' class='saisie-20em' id='pay_[2]' name='pay_[2]' value='!!pay_2!!' onchange=\"mod_coord_el('2'); \" />
@@ -357,19 +357,19 @@ $ptab[10] = "
 		<div class='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_tel1],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_tel1'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'>
 					<input type='text' class='saisie-10em' id='te1_[2]' name='te1_[2]' value='!!te1_2!!' onchange=\"mod_coord_el('2'); \" />
 				</div>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_tel2],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_tel2'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'>	
 					<input type='text' class='saisie-10em' id='te2_[2]' name='te2_[2]' value='!!te2_2!!' onchange=\"mod_coord_el('2'); \" />
 				</div>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_fax],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_fax'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'> 
 	 				<input type='text' class='saisie-10em' id='fax_[2]' name='fax_[2]' value='!!fax_2!!' onchange=\"mod_coord_el('2'); \" />
@@ -380,7 +380,7 @@ $ptab[10] = "
 		<div class='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_mail],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_mail'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne_suite'>
 					<input type='text' class='saisie-60em' id='ema_[2]' name='ema_[2]' value='!!ema_2!!' onchange=\"mod_coord_el('2'); \" />
@@ -398,7 +398,7 @@ $ptab[11] = "
 	
 </div>
 <div class='row'>
-	<input type='button' class='bouton' value='".$msg[acquisition_bt_add]."' onclick=\"add_coord();\" />
+	<input type='button' class='bouton' value='".$msg['acquisition_bt_add']."' onclick=\"add_coord();\" />
 </div>
 
 ";
@@ -411,8 +411,8 @@ $ptab[2] = "
 		<input type='hidden' name='no_[!!no_X!!]' id='no_[!!no_X!!]' value='!!idX!!' /> 
 		<input type='hidden' name='mod_[!!no_X!!]' id='mod_[!!no_X!!]'value='0' />
 		<div class='colonne80'>
-			<img src='./images/plus.gif' class='img_plus' name='imEx' id='elX_!!no_X!!_Img' border='0' onclick=\"expandBase('elX_!!no_X!!_', true); return false;\" />
-			<label class='etiquette'>".htmlentities($msg[acquisition_adr].' !!no_X!!',ENT_QUOTES,$charset)."</label>
+			<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='elX_!!no_X!!_Img' border='0' onclick=\"expandBase('elX_!!no_X!!_', true); return false;\" />
+			<label class='etiquette'>".htmlentities($msg['acquisition_adr'].' !!no_X!!',ENT_QUOTES,$charset)."</label>
 		</div>
 	</div>	
 
@@ -422,21 +422,21 @@ $ptab[2] = "
 		<div class ='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class ='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_coord_lib],ENT_QUOTES,$charset)." 
+					".htmlentities($msg['acquisition_coord_lib'],ENT_QUOTES,$charset)." 
 				</div>
 				<div class='colonne_suite'>
 					<input type='text' class='saisie-60em' id='lib_[!!no_X!!]' name='lib_[!!no_X!!]' value='!!lib_X!!' onchange=\"mod_coord_el('!!no_X!!'); \" />
 				</div>
 			</div>
 			<div class='colonne_suite'>
-				<input type='button' id='raz_!!no_X!!' class='bouton' value='".$msg[raz]."' title='".$msg[acquisition_bt_raz_title]."' onclick=\"raz_coord_el('!!no_X!!'); \" />
+				<input type='button' id='raz_!!no_X!!' class='bouton' value='".$msg['raz']."' title='".$msg['acquisition_bt_raz_title']."' onclick=\"raz_coord_el('!!no_X!!'); \" />
 			</div>
 		</div>
 
 		<div class ='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class ='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_contact],ENT_QUOTES,$charset)." 
+					".htmlentities($msg['acquisition_contact'],ENT_QUOTES,$charset)." 
 				</div>
 				<div class='colonne_suite'>
 					<input type='text' class='saisie-60em' id='cta_[!!no_X!!]' name='cta_[!!no_X!!]' value='!!cta_X!!' onchange=\"mod_coord_el('!!no_X!!'); \" />
@@ -447,7 +447,7 @@ $ptab[2] = "
 		<div class ='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class ='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_adr],ENT_QUOTES,$charset)." 
+					".htmlentities($msg['acquisition_adr'],ENT_QUOTES,$charset)." 
 				</div>
 				<div class='colonne_suite'>
 					<input type='text' class='saisie-60em' id='ad1_[!!no_X!!]' name='ad1_[!!no_X!!]' value='!!ad1_X!!' onchange=\"mod_coord_el('!!no_X!!');\" />
@@ -469,13 +469,13 @@ $ptab[2] = "
 		<div class='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_cp],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_cp'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'> 
 					<input type='text' class='saisie-5em' id='cpo_[!!no_X!!]' name='cpo_[!!no_X!!]' value='!!cpo_X!!' onchange=\"mod_coord_el('!!no_X!!');\" />
 				</div>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_ville],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_ville'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'> 
 					<input type='text' class='saisie-20em' id='vil_[!!no_X!!]' name='vil_[!!no_X!!]' value='!!vil_X!!' onchange=\"mod_coord_el('!!no_X!!');\" />
@@ -486,13 +486,13 @@ $ptab[2] = "
 		<div class='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_etat],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_etat'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'> 
 					<input type='text' class='saisie-15em' id='eta_[!!no_X!!]' name='eta_[!!no_X!!]' value='!!eta_X!!' onchange=\"mod_coord_el('!!no_X!!');\" />
 				</div>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_pays],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_pays'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'> 
 	 				<input type='text' class='saisie-20em' id='pay_[!!no_X!!]' name='pay_[!!no_X!!]' value='!!pay_X!!' onchange=\"mod_coord_el('!!no_X!!');\" />
@@ -503,19 +503,19 @@ $ptab[2] = "
 		<div class='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_tel1],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_tel1'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'>
 					<input type='text' class='saisie-10em' id='te1_[!!no_X!!]' name='te1_[!!no_X!!]' value='!!te1_X!!' onchange=\"mod_coord_el('!!no_X!!');\" />
 				</div>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_tel2],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_tel2'],ENT_QUOTES,$charset)."
 				</div>	
 				<div class='colonne10'>				
 					<input type='text' class='saisie-10em' id='te2_[!!no_X!!]' name='te2_[!!no_X!!]' value='!!te2_X!!' onchange=\"mod_coord_el('!!no_X!!');\" />
 				</div>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_fax],ENT_QUOTES,$charset)." 
+					".htmlentities($msg['acquisition_fax'],ENT_QUOTES,$charset)." 
 		 		</div>
 				<div class='colonne10'>
 					<input type='text' class='saisie-10em' id='fax_[!!no_X!!]' name='fax_[!!no_X!!]' value='!!fax_X!!' onchange=\"mod_coord_el('!!no_X!!');\" />
@@ -526,7 +526,7 @@ $ptab[2] = "
 		<div class='row'>
 			<div class='colonne' style='width:95%;'>
 				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
-					".htmlentities($msg[acquisition_mail],ENT_QUOTES,$charset)."
+					".htmlentities($msg['acquisition_mail'],ENT_QUOTES,$charset)."
 				</div>
 				<div class='colonne10'>
 					<input type='text' class='saisie-60em' id='ema_[!!no_X!!]' name='ema_[!!no_X!!]' value='!!ema_X!!' onchange=\"mod_coord_el('!!no_X!!');\" />
@@ -564,7 +564,7 @@ function test_form(form)
 {
 	if(form.raison.value.replace(/^\s+|\s+$/g, '').length == 0)
 	{
-		alert('".$msg[acquisition_raison_soc_vide]."');
+		alert('".$msg['acquisition_raison_soc_vide']."');
 		document.forms['coordform'].elements['raison'].focus();
 		return false;	
 	}
@@ -650,7 +650,7 @@ function add_coord() {
 	    col11.className='colonne80';
 	    
 	    	img111 = document.createElement('img');
-	    	img111.setAttribute('src', './images/minus.gif');
+	    	img111.setAttribute('src', '".get_url_icon('minus.gif')."');
 	    	img111.setAttribute('name', 'imEx');
 	    	img111.setAttribute('id', 'elX_'+suffixe+'_Img');
 	    	img111.className='img_plus';
@@ -659,7 +659,7 @@ function add_coord() {
 				    	
 	    	lab111 = document.createElement('label');
 	    	lab111.className='etiquette';
-	    		lib1111=document.createTextNode(' ".$msg[acquisition_adr]." '+suffixe);
+	    		lib1111=document.createTextNode(' ".$msg['acquisition_adr']." '+suffixe);
 	    	lab111.appendChild(lib1111);
 	        		
 	    col11.appendChild(img111);
@@ -692,7 +692,7 @@ function add_coord() {
 				col311.className='colonne10';
 				col311.setAttribute('style','text-align:right;margin-right:0.25em;');
 				
-					lib3111=document.createTextNode(' ".$msg[acquisition_coord_lib]."');
+					lib3111=document.createTextNode(' ".$msg['acquisition_coord_lib']."');
 				
 				col311.appendChild(lib3111);
 				
@@ -718,8 +718,8 @@ function add_coord() {
 	 			bt321.setAttribute('type', 'button');
 	 			bt321.setAttribute('id', 'raz_'+suffixe)
 			 	bt321.className='bouton';
-			 	bt321.setAttribute('title', '".$msg[acquisition_bt_raz_title]."');
-			 	bt321.setAttribute('value', '".$msg[raz]."');
+			 	bt321.setAttribute('title', '".$msg['acquisition_bt_raz_title']."');
+			 	bt321.setAttribute('value', '".$msg['raz']."');
 			 	bt321.onclick = raz_coord;
 		
 			col32.appendChild(bt321);
@@ -739,7 +739,7 @@ function add_coord() {
 				col411.className='colonne10';
 				col411.setAttribute('style', 'text-align:right; margin-right:0.25em;');
 				
-					lib4111=document.createTextNode('".$msg[acquisition_contact]."');
+					lib4111=document.createTextNode('".$msg['acquisition_contact']."');
 		
 				col411.appendChild(lib4111);
 			
@@ -772,7 +772,7 @@ function add_coord() {
 				col511.className='colonne10';
 				col511.setAttribute('style', 'text-align:right; margin-right:0.25em;');
 											
-					lib5111=document.createTextNode('".$msg[acquisition_adr]."');
+					lib5111=document.createTextNode('".$msg['acquisition_adr']."');
 				
 				col511.appendChild(lib5111);
 				
@@ -838,7 +838,7 @@ function add_coord() {
 				col711.className='colonne10';
 				col711.setAttribute('style', 'text-align:right; margin-right:0.25em;');
 					
-					lib7111=document.createTextNode('".$msg[acquisition_cp]."');
+					lib7111=document.createTextNode('".$msg['acquisition_cp']."');
 			
 				col711.appendChild(lib7111);
 				
@@ -858,7 +858,7 @@ function add_coord() {
 				col713.className='colonne10';
 				col713.setAttribute('style', 'text-align:right; margin-right:0.25em;');
 				
-					lib7131=document.createTextNode('".$msg[acquisition_ville]."');
+					lib7131=document.createTextNode('".$msg['acquisition_ville']."');
 		
 				col713.appendChild(lib7131);
 			
@@ -893,7 +893,7 @@ function add_coord() {
 				col811.className='colonne10';
 				col811.setAttribute('style', 'text-align:right; margin-right:0.25em;');
 					
-					lib8111=document.createTextNode('".$msg[acquisition_etat]."');
+					lib8111=document.createTextNode('".$msg['acquisition_etat']."');
 			
 				col811.appendChild(lib8111);
 			
@@ -913,7 +913,7 @@ function add_coord() {
 				col813.className='colonne10';
 				col813.setAttribute('style', 'text-align:right; margin-right:0.25em;');
 				
-					lib8131=document.createTextNode('".$msg[acquisition_pays]."');
+					lib8131=document.createTextNode('".$msg['acquisition_pays']."');
 		
 				col813.appendChild(lib8131);
 			
@@ -948,7 +948,7 @@ function add_coord() {
 				col911.className='colonne10';
 				col911.setAttribute('style', 'text-align:right; margin-right:0.25em;');
 					
-					lib9111=document.createTextNode('".$msg[acquisition_tel1]."');
+					lib9111=document.createTextNode('".$msg['acquisition_tel1']."');
 			
 				col911.appendChild(lib9111);
 			
@@ -968,7 +968,7 @@ function add_coord() {
 				col913.className='colonne10';
 				col913.setAttribute('style', 'text-align:right; margin-right:0.25em;');
 					
-					lib9131=document.createTextNode('".$msg[acquisition_tel2]."');
+					lib9131=document.createTextNode('".$msg['acquisition_tel2']."');
 				
 				col913.appendChild(lib9131);
 				
@@ -989,7 +989,7 @@ function add_coord() {
 				col915.className='colonne10';
 				col915.setAttribute('style', 'text-align:right; margin-right:0.25em;');
 				
-					lib9151=document.createTextNode('".$msg[acquisition_fax]."');
+					lib9151=document.createTextNode('".$msg['acquisition_fax']."');
 				
 				col915.appendChild(lib9151);
 				
@@ -1027,7 +1027,7 @@ function add_coord() {
 				cola11.className='colonne10';
 				cola11.setAttribute('style', 'text-align:right; margin-right:0.25em;');
 				
-					liba111=document.createTextNode('".$msg[acquisition_mail]."');
+					liba111=document.createTextNode('".$msg['acquisition_mail']."');
 		
 				cola11.appendChild(liba111);
 			

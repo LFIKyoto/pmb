@@ -2,20 +2,20 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.class.php,v 1.2 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: search.class.php,v 1.4 2017-07-12 15:15:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 //Classe de gestion de la recherche spécial "combine"
 
 class periodique_search {
-	var $id;
-	var $n_ligne;
-	var $params;
-	var $search;
+	public $id;
+	public $n_ligne;
+	public $params;
+	public $search;
 
 	//Constructeur
-    function periodique_search($id,$n_ligne,$params,&$search) {
+    public function __construct($id,$n_ligne,$params,&$search) {
     	$this->id=$id;
     	$this->n_ligne=$n_ligne;
     	$this->params=$params;
@@ -23,21 +23,21 @@ class periodique_search {
     }
     
     //fonction de récupération des opérateurs disponibles pour ce champ spécial (renvoie un tableau d'opérateurs)
-    function get_op() {
+    public function get_op() {
     	$operators = array();
    		$operators["EQ"]="=";
     	return $operators;
     }
     
     //fonction de récupération de l'affichage de la saisie du critère
-    function get_input_box() {
+    public function get_input_box() {
     	global $msg;
     	global $charset;
 
     	//Récupération de la valeur de saisie
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
     	
     	//Affichage de la liste des périodiques
     	if (!$this->is_empty($valeur)) {
@@ -57,17 +57,17 @@ class periodique_search {
     }
     
     //fonction de conversion de la saisie en quelque chose de compatible avec l'environnement
-    function transform_input() {
+    public function transform_input() {
     }
     
     //fonction de création de la requête (retourne une table temporaire)
-    function make_search() {
+    public function make_search() {
     	global $opac_indexation_docnum_allfields;
     	
     	//Récupération de la valeur de saisie
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
     	
     	if (!$this->is_empty($valeur)) {
     		pmb_mysql_query("create temporary table t_s_perio (notice_id integer unsigned not null)");
@@ -79,14 +79,14 @@ class periodique_search {
     }
     
     //fonction de traduction littérale de la requête effectuée (renvoie un tableau des termes saisis)
-    function make_human_query() {
+    public function make_human_query() {
     	global $msg;
     	global $include_path;
     			
     	//Récupération de la valeur de saisie 
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
     	
     	$tit=array();
     	if (!$this->is_empty($valeur)) {
@@ -97,18 +97,18 @@ class periodique_search {
 		return $tit;    
     }
     
-    function make_unimarc_query() {
+    public function make_unimarc_query() {
     	//Récupération de la valeur de saisie
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
     	return "";
     }
     
     
     
 	//fonction de vérification du champ saisi ou sélectionné
-    function is_empty($valeur) {
+    public function is_empty($valeur) {
     	if (count($valeur)) {
     		if ($valeur[0]=="") return true;
     			else return ($valeur[0] === false);

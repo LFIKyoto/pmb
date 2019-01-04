@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: budgets.class.php,v 1.27 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: budgets.class.php,v 1.30 2017-04-19 12:37:03 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -18,33 +18,28 @@ if(!defined('STA_BUD_CLO')) define('STA_BUD_CLO', 2);	//				2 = Cloturé
 class budgets{
 	
 	
-	var $id_budget = 0;							//Identifiant de budget	
-	var $num_entite = 0;						//Identifiant de l'entité propriétaire du budget
-	var $num_exercice = 0;						//Numéro de l'exercice sur lequel le budget est affecté
-	var $libelle = '';							//Libellé du budget
-	var $commentaires = '';						//Commentaires sur le budget
-	var $montant_global = '000000.00';			//Montant global du budget
-	var $seuil_alerte = '000';					//Niveau d'alerte en % du montant global
-	var $statut = '0';							//Statut du budget (0=En préparation, 1=valide, 2=Cloturé)
-	var $type_budget = '0';						//Type de budget 0=Affectation par rubriques, 1=Affectation globale
+	public $id_budget = 0;							//Identifiant de budget	
+	public $num_entite = 0;						//Identifiant de l'entité propriétaire du budget
+	public $num_exercice = 0;						//Numéro de l'exercice sur lequel le budget est affecté
+	public $libelle = '';							//Libellé du budget
+	public $commentaires = '';						//Commentaires sur le budget
+	public $montant_global = '000000.00';			//Montant global du budget
+	public $seuil_alerte = '000';					//Niveau d'alerte en % du montant global
+	public $statut = '0';							//Statut du budget (0=En préparation, 1=valide, 2=Cloturé)
+	public $type_budget = '0';						//Type de budget 0=Affectation par rubriques, 1=Affectation globale
 	 
 	//Constructeur.	 
-	function budgets($id_budget= 0){ 
-		
-		if ($id_budget) {
-			$this->id_budget = $id_budget;
+	public function __construct($id_budget= 0){ 
+		$this->id_budget = $id_budget+0;
+		if ($this->id_budget) {
 			$this->load();	
 		}
 	}	
 	
-	
 	// charge un budget à partir de la base.
-	function load(){
-	
-		global $dbh;
-		
+	public function load(){
 		$q = "select * from budgets where id_budget = '".$this->id_budget."' ";
-		$r = pmb_mysql_query($q, $dbh) ;
+		$r = pmb_mysql_query($q) ;
 		$obj = pmb_mysql_fetch_object($r);
 		$this->num_entite = $obj->num_entite;
 		$this->num_exercice = $obj->num_exercice;
@@ -54,41 +49,30 @@ class budgets{
 		$this->seuil_alerte = $obj->seuil_alerte;
 		$this->statut = $obj->statut;
 		$this->type_budget = $obj->type_budget;
-
 	}
 
 	
 	// enregistre un budget en base.
-	function save(){
-		
-		global $dbh;
-		
+	public function save(){
 		if( $this->libelle == '' || !$this->num_entite || !$this->num_exercice ) die("Erreur de création budgets");
-		
 		if($this->id_budget) {
-		
 				$q = "update budgets set num_entite = '".$this->num_entite."', num_exercice = '".$this->num_exercice."', libelle = '".addslashes($this->libelle)."', ";
 				$q.= "commentaires = '".addslashes($this->commentaires)."', montant_global = '".$this->montant_global."', seuil_alerte = '".$this->seuil_alerte."', ";
 				$q.= "statut = '".$this->statut."', type_budget = '".$this->type_budget."' "; 
 				$q.= "where id_budget = '".$this->id_budget."' ";
-				pmb_mysql_query($q, $dbh);
-
+				pmb_mysql_query($q);
 		} else {
-
 			$q = "insert into budgets set num_entite = '".$this->num_entite."', num_exercice = '".$this->num_exercice."', libelle = '".addslashes($this->libelle)."', ";
 			$q.= "commentaires = '".addslashes($this->commentaires)."', montant_global = '".$this->montant_global."', seuil_alerte = '".$this->seuil_alerte."', ";
 			$q.= "statut = '".$this->statut."', type_budget = '".$this->type_budget."' "; 
-			pmb_mysql_query($q, $dbh);
-			$this->id_budget = pmb_mysql_insert_id($dbh);
-			
+			pmb_mysql_query($q);
+			$this->id_budget = pmb_mysql_insert_id();
 		}
 	}
 
 	// duplique un budget et l'enregistre en base.
-	static function duplicate($id_budget=0){
-		
-		global $dbh; 	
-
+	public static function duplicate($id_budget=0){
+		$id_budget += 0;
 		$new_bud = new budgets($id_budget);
 		$new_bud->id_budget = 0;
 
@@ -97,7 +81,7 @@ class budgets{
 		$q = "select if(max(substring(libelle, ".$l_lib."+1)) is null, 1, max(substring(libelle, ".$l_lib."+1))+1)  from budgets ";
 		$q.= "where substring(libelle, 1, ".$l_lib.") = '".addslashes($lib)."' ";
 		$q.= "and substring(libelle, ".$l_lib."+1) regexp '^[0-9]+\$' ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		$n=pmb_mysql_result($r, 0, 0);
 		$new_bud->libelle = $lib.$n;
 		
@@ -106,7 +90,7 @@ class budgets{
 		$id_new_bud = $new_bud->id_budget;
 		
 		$q = budgets::listAllRubriques($id_budget);
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		$tab_p = array();
 		while (($obj=pmb_mysql_fetch_object($r))) {
 			
@@ -120,89 +104,71 @@ class budgets{
 			
 		}
 		return $id_new_bud;
-					
 	}
 
-
 	//supprime un budget de la base
-	function delete($id_budget= 0) {
-		
-		global $dbh;
-
+	public function delete($id_budget= 0) {
+		$id_budget += 0;
 		if(!$id_budget) $id_budget = $this->id_budget; 	
 
 		$q = "delete from budgets where id_budget = '".$id_budget."' ";
-		pmb_mysql_query($q, $dbh);
+		pmb_mysql_query($q);
 		
 		//supprime les rubriques associées
 		$q = "delete from rubriques where num_budget = '".$id_budget."' ";
-		pmb_mysql_query($q, $dbh);
-				
+		pmb_mysql_query($q);
 	}
 
-
 	//retourne une requete pour liste des budgets de l'entité
-	static function listByEntite($id_entite) {
-		
+	public static function listByEntite($id_entite) {
+		$id_entite += 0;
 		$q = "select * from budgets where num_entite = '".$id_entite."' order by statut, libelle  ";
 		return $q;
 	}
 
-
 	//retourne la liste des budgets d'un exercice
-	static function listByExercice($num_exercice) {
-		
-		global $dbh;
-
-		$q = "select id_budget from budgets where num_exercice = '".$num_exercice."' ";
-		$r = pmb_mysql_query($q, $dbh);
+	public static function listByExercice($num_exercice) {
+		$num_exercice += 0;
+		$q = "select id_budget, libelle from budgets where num_exercice = '".$num_exercice."' ";
+		$r = pmb_mysql_query($q);
 		return $r;
-				
 	}
-
 
 	//Vérifie si un budget existe			
-	static function exists($id_budget){
-		
-		global $dbh;
+	public static function exists($id_budget){
+		$id_budget += 0;
 		$q = "select count(1) from budgets where id_budget = '".$id_budget."' ";
-		$r = pmb_mysql_query($q, $dbh); 
+		$r = pmb_mysql_query($q); 
 		return pmb_mysql_result($r, 0, 0);
-		
 	}
-	
 		
 	//Vérifie si le libellé d'un budget existe déjà pour une entité	et un même exercice		
-	static function existsLibelle($id_entite, $libelle, $id_exer, $id_budget=0){
-		
-		global $dbh;
+	public static function existsLibelle($id_entite, $libelle, $id_exer, $id_budget=0){
+		$id_entite += 0;
+		$id_exer += 0;
+		$id_budget += 0;
 		$q = "select count(1) from budgets where libelle = '".$libelle."' and num_entite = '".$id_entite."' ";
 		$q.= "and num_exercice = '".$id_exer."' ";
 		if ($id_budget) $q.= "and id_budget != '".$id_budget."' ";
-		$r = pmb_mysql_query($q, $dbh); 
+		$r = pmb_mysql_query($q); 
 		return pmb_mysql_result($r, 0, 0);
-		
 	}
 
-	
 	//compte le nb de budgets activés pour une entité			
-	static function countActifs($id_entite, $id_budget=0){
-		
-		global $dbh;
+	public static function countActifs($id_entite, $id_budget=0){
+		$id_entite += 0;
+		$id_budget += 0;
 		$q = "select count(1) from budgets where num_entite = '".$id_entite."' and statut = '1' ";
 		if ($id_budget) $q.= "and id_budget != '".$id_budget."' ";
-		$r = pmb_mysql_query($q, $dbh); 
+		$r = pmb_mysql_query($q); 
 		return pmb_mysql_result($r, 0, 0);
-		
 	}
 	
-
 	//Compte le nb de lignes d'actes affectées à un budget			
-	static function hasLignes($id_budget=0){
-		
-		global $dbh;
+	public static function hasLignes($id_budget=0){
+		$id_budget += 0;
 		$q = "select id_rubrique from rubriques where num_budget = '".$id_budget."' ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		$nb = pmb_mysql_num_rows($r);
 		
 		if ($nb != '0') {			
@@ -214,15 +180,15 @@ class budgets{
 			}
 			
 			$q = "select count(1) from lignes_actes where num_rubrique in (".$liste.") ";
-			$r = pmb_mysql_query($q, $dbh); 
+			$r = pmb_mysql_query($q); 
 			return pmb_mysql_result($r, 0, 0);
 		} else return '0';
-		
 	}	
 
-	
 	//Retourne une requete pour les rubriques d'un budget ayant pour parent la rubrique mentionnée
-	static function listRubriques($id_budget=0, $num_parent=0){
+	public static function listRubriques($id_budget=0, $num_parent=0){
+		$id_budget += 0;
+		$num_parent += 0;
 		$q = "select * from rubriques where num_budget = '".$id_budget."' ";
 		$q.= "and num_parent = '".$num_parent."' ";
 		$q.= "order by libelle ";
@@ -231,57 +197,28 @@ class budgets{
 
 
 	//Retourne une requete pour l'ensemble des rubriques d'un budget 	
-	static function listAllRubriques($id_budget=0){
+	public static function listAllRubriques($id_budget=0){
+		$id_budget += 0;
 		$q = "select * from rubriques where num_budget = '".$id_budget."' order by num_parent asc ";
 		return $q;
 	}
 
 
 	//Retourne le nombre de rubriques d'un budget	
-	static function countRubriques($id_budget=0){
-		
-		global $dbh;
+	public static function countRubriques($id_budget=0){
+		$id_budget += 0;
 		$q = "select count(1) from rubriques where num_budget = '".$id_budget."' ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		return pmb_mysql_result($r, 0, 0); 
-		
 	}
-
-
-	//Retourne le nombre de rubriques finales du budget specifie en fonction de l'utilisateur  	
-	static function countRubriquesFinales($id_budget=0, $userid=0){
-		
-		global $dbh;			
-		$q = "select count(1) from rubriques left join rubriques as rubriques2 on rubriques.id_rubrique=rubriques2.num_parent ";
-		$q.= "where rubriques.num_budget = '".$id_budget."' and rubriques2.num_parent is NULL ";
-		if($userid) {
-			$q.= "and rubriques.autorisations like('% ".$userid." %') ";			
-		}
-		$r = pmb_mysql_query($q, $dbh); 
-		return pmb_mysql_result($r, 0, 0);
-	}	
-	
-		
-	//Retourne une requete pour liste des identifiants des rubriques finales du budget specifie en fonction de l'utilisateur  	
-	static function listRubriquesFinales($id_budget=0, $userid=0){
-			
-		$q = "select rubriques.id_rubrique from rubriques left join rubriques as rubriques2 on rubriques.id_rubrique=rubriques2.num_parent ";
-		$q.= "where rubriques.num_budget = '".$id_budget."' and rubriques2.num_parent is NULL ";
-		if($userid) {
-			$q.= "and rubriques.autorisations like('% ".$userid." %') ";			
-		}
-		return $q;
-	}	
 	
 	
 	//calcule le montant engagé pour un budget 
-	static function calcEngagement($id_budget=0) {
-		
-		global $dbh;	
+	public static function calcEngagement($id_budget=0) {
 		//	Montant Total engagé pour un budget =
 		//	Somme des Montants engagés non facturés pour les rubriques du budget par ligne de commande		(nb_commandé-nb_facturé)*prix_commande*(1-remise_commande)
 		//+ Somme des Montants engagés pour les rubriques du budget par ligne de facture					(nb_facturé)*prix_facture*(1-remise_facture)
-
+		$id_budget += 0;
 		$q1 = "select ";
 		$q1.= "lignes_actes.id_ligne, lignes_actes.nb as nb, lignes_actes.prix as prix, lignes_actes.remise as rem ";
 		$q1.= "from actes, lignes_actes, rubriques ";
@@ -291,7 +228,7 @@ class budgets{
 		$q1.= "and rubriques.num_budget = '".$id_budget."' ";
 		$q1.= "and actes.id_acte = lignes_actes.num_acte ";
 		$q1.= "and lignes_actes.num_rubrique = rubriques.id_rubrique ";
-		$r1 = pmb_mysql_query($q1, $dbh);
+		$r1 = pmb_mysql_query($q1);
 
 		$tab_cde = array();
 		while (($row1 = pmb_mysql_fetch_object($r1))) {
@@ -309,7 +246,7 @@ class budgets{
 		$q2.= "actes.type_acte = '".TYP_ACT_FAC."' ";
 		$q2.= "and actes.id_acte = lignes_actes.num_acte ";
 		$q2.= "group by lignes_actes.lig_ref ";
-		$r2 = pmb_mysql_query($q2, $dbh);	
+		$r2 = pmb_mysql_query($q2);	
 
 		while(($row2 = pmb_mysql_fetch_object($r2))) {
 			if(array_key_exists($row2->lig_ref,$tab_cde)) {
@@ -325,7 +262,7 @@ class budgets{
 		$q3.= "and rubriques.num_budget = '".$id_budget."' ";
 		$q3.= "and actes.id_acte = lignes_actes.num_acte ";
 		$q3.= "and lignes_actes.num_rubrique = rubriques.id_rubrique ";
-		$r3 = pmb_mysql_query($q3, $dbh);
+		$r3 = pmb_mysql_query($q3);
 		$tab_fac = array();
 		while (($row3 = pmb_mysql_fetch_object($r3))) {
 			
@@ -348,13 +285,11 @@ class budgets{
 	
 
 	//Recalcul du montant global du budget
-	static function calcMontant($id_budget=0) {
-		
-		global $dbh;
-		
+	public static function calcMontant($id_budget=0) {
+		$id_budget += 0;
 		if($id_budget) {
 			$q = "select sum(montant) from rubriques where num_budget = '".$id_budget."' and num_parent = '0' ";
-			$r = pmb_mysql_query($q, $dbh);
+			$r = pmb_mysql_query($q);
 			$total = pmb_mysql_result($r,0,0);
 			$budget = new budgets($id_budget);
 			$budget->montant_global = $total;
@@ -364,15 +299,9 @@ class budgets{
 
 
 	//optimization de la table budgets
-	function optimize() {
-		
-		global $dbh;
-		
-		$opt = pmb_mysql_query('OPTIMIZE TABLE budgets', $dbh);
+	public function optimize() {
+		$opt = pmb_mysql_query('OPTIMIZE TABLE budgets');
 		return $opt;
-				
 	}
-	
-				
 }
 ?>

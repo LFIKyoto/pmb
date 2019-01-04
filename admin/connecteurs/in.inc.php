@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: in.inc.php,v 1.25 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: in.inc.php,v 1.30 2018-10-23 11:58:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($act)) $act = '';
+if(!isset($source_id)) $source_id = 0; else $source_id += 0;
 
 require_once($class_path."/connecteurs.class.php");
 
@@ -54,7 +57,7 @@ function show_connectors() {
 			$n_sources=count($conn->sources);
 		}
 	    $tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"if (event) e=event; else e=window.event; if (e.srcElement) target=e.srcElement; else target=e.target; if ((target.nodeName!='IMG')&&(target.nodeName!='INPUT')) document.location='./admin.php?categ=connecteurs&sub=in&act=modif&id=".$id."';\" ";
-	    print "<tr class='$pair_impair' $tr_javascript style='cursor: pointer' title='".htmlentities($sign,ENT_QUOTES,$charset)."' alter='".htmlentities($sign,ENT_QUOTES,$charset)."' id='tr$id'><td>".($n_sources?"<img src='images/plus.gif' class='img_plus' onClick='if (event) e=event; else e=window.event; e.cancelBubble=true; if (e.stopPropagation) e.stopPropagation(); show_sources(\"".addslashes($prop["NAME"])."\"); '/>":"&nbsp;")."</td><td>".htmlentities($comment,ENT_QUOTES,$charset)."</td>
+	    print "<tr class='$pair_impair' $tr_javascript style='cursor: pointer' title='".htmlentities($sign,ENT_QUOTES,$charset)."' alter='".htmlentities($sign,ENT_QUOTES,$charset)."' id='tr$id'><td>".($n_sources?"<img src='".get_url_icon('plus.gif')."' class='img_plus' onClick='if (event) e=event; else e=window.event; e.cancelBubble=true; if (e.stopPropagation) e.stopPropagation(); show_sources(\"".addslashes($prop["NAME"])."\"); '/>":"&nbsp;")."</td><td>".htmlentities($comment,ENT_QUOTES,$charset)."</td>
 		<td>".sprintf($msg["connecteurs_count_sources"],$n_sources)."</td><td style='text-align:right'><input type='button' value='".$msg["connecteurs_add_source"]."' class='bouton_small' onClick='document.location=\"admin.php?categ=connecteurs&sub=in&act=add_source&id=".$id."\"'/></td></tr>\n";
 		if ($n_sources) {
 			print "<tr class='$pair_impair' style='display:none' id='".$prop["NAME"]."'><td>&nbsp;</td><td colspan='3'><table style='border:1px solid'>";
@@ -164,14 +167,15 @@ switch ($act)  {
 				$conn->sources[$source_id]["REPOSITORY"]=$repository;
 				$conn->sources[$source_id]["NAME"]=stripslashes($name);
 				$conn->sources[$source_id]["COMMENT"]=stripslashes($comment);
-				$conn->sources[$source_id]["OPAC_ALLOWED"]=stripslashes($opac_allowed);
+				$conn->sources[$source_id]["OPAC_ALLOWED"]=(isset($opac_allowed) ? $opac_allowed*1 : 0);
 				$conn->sources[$source_id]["REP_UPLOAD"]=stripslashes($rep_upload);
-				$conn->sources[$source_id]["ENRICHMENT"]=stripslashes($enrichment);
+				$conn->sources[$source_id]["ENRICHMENT"]=(isset($enrichment) ? $enrichment*1 : 0);
 				$conn->sources[$source_id]["UPLOAD_DOC_NUM"]=stripslashes($upload_doc_num);
-				$conn->sources[$source_id]["OPAC_AFFILIATE_SEARCH"]=stripslashes($opac_affiliate_search);
-				$conn->sources[$source_id]["OPAC_SELECTED"]=stripslashes($opac_selected);
-				$conn->sources[$source_id]["TYPE_ENRICHMENT_ALLOWED"]=$type_enrichment_allowed;
-				$conn->sources[$source_id]["UPLOAD_DOC_NUM"]=stripslashes($upload_doc_num);
+				$conn->sources[$source_id]["OPAC_AFFILIATE_SEARCH"]=(isset($opac_affiliate_search) ? $opac_affiliate_search*1 : 0);
+				$conn->sources[$source_id]["OPAC_SELECTED"]=(isset($opac_selected) ? $opac_selected*1 : 0);
+				$conn->sources[$source_id]["GESTION_SELECTED"]=(isset($gestion_selected) ? $gestion_selected*1 : 0);
+				$conn->sources[$source_id]["TYPE_ENRICHMENT_ALLOWED"]=(isset($type_enrichment_allowed) ? $type_enrichment_allowed : array());
+				$conn->sources[$source_id]["UPLOAD_DOC_NUM"]=(isset($upload_doc_num) ? $upload_doc_num*1 : 0);
 				$conn->sources[$source_id]["ICO_NOTICE"]=stripslashes($ico_notice);
 				//Vérification du nom
 				$requete="select count(*) from connectors_sources where name='".$name."' and source_id!=$source_id and id_connector='".addslashes($contrs->catalog[$id]["NAME"])."'";
@@ -205,7 +209,7 @@ switch ($act)  {
 
 			//Si on doit afficher un formulaire de synchronisation
 			$syncr_form = $conn->form_pour_maj_entrepot($source_id);			
-			if (!$go && $syncr_form) {
+			if (empty($go) && $syncr_form) {
 				print '<form name="sync_form" action="'."admin.php?categ=connecteurs&sub=in&act=sync&source_id=".$source_id."&go=1&id=$id".'" method="POST"  enctype="multipart/form-data">';
 				print $syncr_form;
 				print "<input type='submit' class='bouton_small' value='".$msg["connecteurs_sync"]."'/>";

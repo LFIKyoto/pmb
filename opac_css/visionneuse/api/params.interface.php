@@ -2,78 +2,78 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: params.interface.php,v 1.6 2014-09-19 14:26:41 arenou Exp $
+// $Id: params.interface.php,v 1.11 2017-06-30 14:55:37 dgoron Exp $
  
  //on défini les méthodes à implémenter pour une classe de paramétrage...
 
 interface params{
  	//renvoi un paramètre
- 	function getParam($parameter);
+ 	public function getParam($parameter);
  	//renvoi le nombre de documents
- 	function getNbDocs();
+ 	public function getNbDocs();
  	//renvoi le document courant
- 	function getCurrentDoc();
+ 	public function getCurrentDoc();
  	//renvoi le suivant
- 	function getDoc($numDoc);
+ 	public function getDoc($numDoc);
 }
 
 class base_params implements params {
-	var $listeDocs = array();		//tableau de documents
-	var $listeMimetypes = array();	//tableau listant les différents mimetypes des documents
-	var $current = 0;				//position courante dans le tableau
-	var $currentDoc = "";			//Document courant
-	var $currentMimetype = "";		//mimetype courant
-	var $params;					//tableau de paramètres utiles pour la recontructions des requetes...et même voir plus
-	var $position = 0;				//
-	var $listeBulls = array();
-	var $listeNotices = array();
-	var $driver_name="";
+	public $listeDocs = array();		//tableau de documents
+	public $listeMimetypes = array();	//tableau listant les différents mimetypes des documents
+	public $current = 0;				//position courante dans le tableau
+	public $currentDoc = "";			//Document courant
+	public $currentMimetype = "";		//mimetype courant
+	public $params;					//tableau de paramètres utiles pour la recontructions des requetes...et même voir plus
+	public $position = 0;				//
+	public $listeBulls = array();
+	public $listeNotices = array();
+	public $driver_name="";
 	
-	function getParam($parameter){
+	public function getParam($parameter){
 		return $this->params[$parameter];
 	}
 	
-	function getNbDocs(){
+	public function getNbDocs(){
 		return sizeof($this->listeDocs);
 	}
 	
-	function getCurrentDoc(){
+	public function getCurrentDoc(){
 		return $this->currentDoc;
 	}
 
 	//renvoi un document précis sinon renvoi faux
- 	function getDoc($numDoc){
+ 	public function getDoc($numDoc){
  		if($numDoc >= 0 && $numDoc <= $this->getNbDocs()-1){
  			$this->current = $numDoc;
  			return $this->getCurrentDoc();
  		}else return false;
  	}
 	
- 	function isInCache($id){
+ 	public function isInCache($id){
  		global $visionneuse_path;
  		return file_exists($visionneuse_path."/temp/".$this->driver_name."_".$id);
   	}
  	
- 	function setInCache($id,$data){
+ 	public function setInCache($id,$data){
  		global $visionneuse_path;
  		$fdest = fopen($visionneuse_path."/temp/".$this->driver_name."_".$id,"w+");
  		fwrite($fdest,$data);
  		fclose($fdest);
  	}
  	
- 	function readInCache($id){
+ 	public function readInCache($id){
  		global $visionneuse_path;
   		$data = "";
   		$data = file_get_contents($visionneuse_path."/temp/".$this->driver_name."_".$id);	
  		return $data;	
  	}
  	
- 	function get_cached_filename($id){
+ 	public function get_cached_filename($id){
  		global $visionneuse_path;
- 		return $visionneuse_path."/temp/".$this->driver_name."_".$id;
+ 		return realpath($visionneuse_path)."/temp/".$this->driver_name."_".$id;
  	}
  	
- 	function cleanCache(){
+ 	public function cleanCache(){
  		global $visionneuse_path;
 
 	    $dh = opendir($visionneuse_path."/temp/");
@@ -82,7 +82,7 @@ class base_params implements params {
 	    $totalSize = 0;
 	
 	    while (($file = readdir($dh)) !== false){
-	        if ($file != "." && $file != "..") {
+	        if ($file != "." && $file != ".." && $file != "dummy.txt" && $file != "CVS") {
 		    	$stat = stat($visionneuse_path."/temp/".$file);
 	        	$files[$file] = array("mtime"=>$stat['mtime']);
 	        	$totalSize += $stat['size'];
@@ -92,7 +92,7 @@ class base_params implements params {
 		$deleteList = array();
 		foreach ($files as $file => $stat) {
 			//si le dernier accès au fichier est de plus de 3h, on vide...
-			if( ($file != "CVS") && (time() - $stat["mtime"] > (3600*3))){
+			if( (time() - $stat["mtime"] > (3600*3)) ){
 				if(is_dir($visionneuse_path."/temp/".$file)){
 					$this->rrmdir($visionneuse_path."/temp/".$file);
 				}else{
@@ -102,7 +102,7 @@ class base_params implements params {
 		}
  	}
  	
- 	function rrmdir($dir){
+ 	public function rrmdir($dir){
         if (is_dir($dir)) {
             $objects = scandir($dir);
             foreach ($objects as $object) {
@@ -119,14 +119,52 @@ class base_params implements params {
         }
     }
     
-	function is_allowed($doc_id){	
+	public function is_allowed($doc_id){	
 		$docnum_visible = true;
 		return $docnum_visible;
 	}
     
 	
-	function is_downloadable($doc_id){
+	public function is_downloadable($doc_id){
 		return true;
 	}
+	
+	public function getMimetypeConf(){
+		global $opac_visionneuse_params;
+		return unserialize(htmlspecialchars_decode($opac_visionneuse_params));
+	}
+	
+	public function getUrlImage($img){
+		global $opac_url_base;
+	
+		if($img !== "")
+			$img = $opac_url_base."images/".$img;
+			
+		return $img;
+	}
+	
+	public function getUrlBase(){
+		global $opac_url_base;
+		return $opac_url_base;
+	}
+	
+	public function getClassParam($class){
+		$params = serialize(array());
+		if($class != ""){
+			$req="SELECT visionneuse_params_parameters FROM visionneuse_params WHERE visionneuse_params_class LIKE '$class'";
+			if($res=pmb_mysql_query($req)){
+				if(pmb_mysql_num_rows($res)){
+					$result = pmb_mysql_fetch_object($res);
+					$params = htmlspecialchars_decode($result->visionneuse_params_parameters);
+				}
+			}
+		}
+		return $params;
+	}
+	
+	public function copyCurrentDocInCache(){
+		copy($this->currentDoc['path'],$this->get_cached_filename($this->currentDoc['id']));
+	}
+	
 }
 ?>

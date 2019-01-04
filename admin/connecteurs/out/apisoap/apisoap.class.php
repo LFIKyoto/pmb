@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: apisoap.class.php,v 1.8 2013-05-23 07:02:14 dbellamy Exp $
+// $Id: apisoap.class.php,v 1.10 2017-07-18 13:47:42 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,7 +13,7 @@ require_once($class_path."/external_services_esusers.class.php");
 
 class apisoap extends connecteur_out {
 	
-	function get_config_form() {
+	public function get_config_form() {
 		$this->config["cache_wsdl"] = isset($this->config["cache_wsdl"]) ? $this->config["cache_wsdl"] : true;
 		$result = "";
 		$result .=	'<div class=row><input id="cache_wsdl" '.($this->config["cache_wsdl"] ? 'checked' : '').' name="cache_wsdl" type="checkbox">'.'<label class="etiquette" for="cache_wsdl">'.$this->msg["apisoap_cache_wsdl"].'</label><br />';
@@ -21,22 +21,22 @@ class apisoap extends connecteur_out {
 		return $result;
 	}
 	
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		global $cache_wsdl;
 		$this->config["cache_wsdl"] = isset($cache_wsdl);
 		return;
 	}
 	
-	function instantiate_source_class($source_id) {
+	public function instantiate_source_class($source_id) {
 		return new apisoap_source($this, $source_id, $this->msg);
 	}
 	
 	//On chargera nous même les messages si on en a besoin
-	function need_global_messages() {
+	public function need_global_messages() {
 		return false;
 	}
 	
-	function process($source_id, $pmb_user_id) {
+	public function process($source_id, $pmb_user_id) {
 		global $base_path;
 		require_once ($base_path."/admin/connecteurs/out/apisoap/apisoap_soapserver.class.php");
 		
@@ -47,7 +47,7 @@ class apisoap extends connecteur_out {
 		return;
 	}
 	
-	function get_running_pmb_userid($source_id) {
+	public function get_running_pmb_userid($source_id) {
 		global $wsdl;
 		$get_wsdl = isset($wsdl);
 		
@@ -82,11 +82,11 @@ class apisoap extends connecteur_out {
 
 class apisoap_source extends connecteur_out_source {
 
-	function get_config_form() {
+	public function get_config_form() {
 		global $charset;
 		$result = parent::get_config_form();
 		
-		$api_catalog = new es_catalog();
+		$api_catalog = es_catalog::get_instance();
 		$api_functions = array();
 		foreach ($api_catalog->groups as $agroup) {
 			foreach ($agroup->methods as $amethod) {
@@ -149,7 +149,7 @@ class apisoap_source extends connecteur_out_source {
 		return $result;
 	}
 
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		parent::update_config_from_form();
 		global $api_exported_functions, $authentication_type, $authorized_groups;
 		
@@ -161,7 +161,7 @@ class apisoap_source extends connecteur_out_source {
 			$authorized_groups = array();
 		
 		//Récupérons la liste des fonctions pour virer de l'entrée les noms de fonctions qui n'existent pas
-		$api_catalog = new es_catalog();
+		$api_catalog = es_catalog::get_instance();
 		$api_functions = array();
 		foreach ($api_catalog->groups as $agroup) {
 			foreach ($agroup->methods as $amethod) {

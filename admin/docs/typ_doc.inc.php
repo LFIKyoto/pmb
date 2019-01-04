@@ -2,81 +2,16 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: typ_doc.inc.php,v 1.22 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: typ_doc.inc.php,v 1.24 2018-10-12 11:59:35 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-// modificato da MARCO VANINETTI
-// gestion des codes type document
-
+require_once($class_path."/list/configuration/docs/list_configuration_docs_typdoc_ui.class.php");
 
 function show_typdoc_list() {
-	global $dbh,$msg,$charset;
-	global $pmb_quotas_avances;
-	global $pmb_gestion_financiere,$pmb_gestion_tarif_prets;
-	global $pmb_short_loan_management;
-	
-	$form = '<table>
-				<tr>
-					<th>'.$msg[103].'</th>
-					<th>'.$msg[120].'</th>';
-		
-	if ($pmb_short_loan_management) {
-		$form.= '<th>'.$msg['short_loan_duration'].'</th>';
-	}
-	
-	$form.= '<th>'.$msg['duree_resa'].'</th>';
-
-	if (($pmb_gestion_financiere)&&($pmb_gestion_tarif_prets)) {
-		$form.= '<th>'.$msg['typ_doc_tarif'].'</th>';
-	}
-	
-	$form.= '<th>'.$msg['proprio_codage_proprio'].'</th>
-			<th>'.$msg['import_codage'].'</th>
-		</tr>';
-
-	$q = 'SELECT idtyp_doc, tdoc_libelle, duree_pret, duree_resa, tdoc_owner, tdoc_codage_import, lender_libelle, tarif_pret, short_loan_duration FROM docs_type left join lenders on tdoc_owner=idlender ORDER BY tdoc_libelle, idtyp_doc';
-	$res = pmb_mysql_query($q, $dbh);
-
-	$nbr = pmb_mysql_num_rows($res);
-
-	$parity=1;
-	for($i=0;$i<$nbr;$i++) {
-		$row=pmb_mysql_fetch_object($res);
-		$pair_impair = (($parity % 2)?'even':'odd');
-		$parity += 1;
-		$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./admin.php?categ=docs&sub=typdoc&action=modif&id=$row->idtyp_doc';\" ";
-		
-		if ($row->tdoc_owner) {
-			$form.= pmb_bidi("<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td><i>".htmlentities($row->tdoc_libelle,ENT_QUOTES,$charset)."</i></td>");
-		} else {
-			$form.= pmb_bidi("<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td><strong>".htmlentities($row->tdoc_libelle,ENT_QUOTES,$charset)."</strong></td>"); 	
-		}       
-		
-		$form.= '<td>'.((!$pmb_quotas_avances)?(htmlentities($row->duree_pret,ENT_QUOTES,$charset).' '.$msg[121]):($msg['quotas_see_quotas'])).'</td>';
-
-		if ($pmb_short_loan_management) {
-			$form.= '<td>'.((!$pmb_quotas_avances)?(htmlentities($row->short_loan_duration,ENT_QUOTES,$charset).' '.$msg[121]):($msg['quotas_see_quotas'])).'</td>';
-		}
-		
-		$form.= '<td>'.((!$pmb_quotas_avances)?(htmlentities($row->duree_resa,ENT_QUOTES,$charset).' '.$msg[121]):($msg['quotas_see_quotas'])).'</td>';
-
-		if (($pmb_gestion_financiere)&&($pmb_gestion_tarif_prets)) {
-			$form.= '<td>'.htmlentities((($pmb_gestion_tarif_prets==1)?($row->tarif_pret):($msg['finance_see_finance'])),ENT_QUOTES,$charset).'</td>';
-		}
-		$form.= pmb_bidi('<td>'.htmlentities($row->lender_libelle,ENT_QUOTES,$charset).'</td>');
-		$form.= pmb_bidi('<td>'.htmlentities($row->tdoc_codage_import,ENT_QUOTES,$charset).'</td>');
-		$form.='</tr>';
-	}
-	
-	$form.= "</table>
-		<input class='bouton' type='button' value='".$msg[122]."' onClick=\"document.location='./admin.php?categ=docs&sub=typdoc&action=add'\" />";
-	
-	print $form;
+	print list_configuration_docs_typdoc_ui::get_instance()->get_display_list();
 }
 
-	
-	
 function show_typdoc_form($libelle='', $pret='31', $short_loan_duration='1', $resa='15', $tdoc_codage_import='', $tdoc_owner=0, $id=0, $tarif='0.00') {
 	global $dbh,$msg,$charset;
 	global $admin_typdoc_form;
@@ -155,10 +90,10 @@ switch($action) {
 	case 'update':
 		// vérification validité des données fournies.
 		$id+=0;
-		$form_pret+=0;
-		$form_resa+=0;
-		$form_short_loan_duration+=0;
-		$form_tarif_pret+=0;
+		if(isset($form_pret)) $form_pret+=0; else $form_pret=0;
+		if(isset($form_resa)) $form_resa+=0; else $form_resa=0;
+		if(isset($form_short_loan_duration)) $form_short_loan_duration+=0; else $form_short_loan_duration=0;
+		if(isset($form_tarif_pret)) $form_tarif_pret+=0; else $form_tarif_pret=0;
 		$q = "SELECT count(1) FROM docs_type WHERE (tdoc_libelle='$form_libelle' AND idtyp_doc!='$id' )  LIMIT 1 ";
 		$res = pmb_mysql_query($q, $dbh);
 		$nbr = pmb_mysql_result($res, 0, 0);
@@ -211,7 +146,7 @@ switch($action) {
 				show_typdoc_list();
 			} else {
 				$msg_suppr_err = $admin_liste_jscript;
-				$msg_suppr_err .= $msg[1700]." <a href='#' onclick=\"showListItems(this);return(false);\" what='typdoc_docs' item='".$id."' total='".$total."' alt=\"".$msg["admin_docs_list"]."\" title=\"".$msg["admin_docs_list"]."\"><img src='./images/req_get.gif'></a>" ;
+				$msg_suppr_err .= $msg[1700]." <a href='#' onclick=\"showListItems(this);return(false);\" what='typdoc_docs' item='".$id."' total='".$total."' alt=\"".$msg["admin_docs_list"]."\" title=\"".$msg["admin_docs_list"]."\"><img src='".get_url_icon('req_get.gif')."'></a>" ;
 				error_message(	$msg[294], $msg_suppr_err, 1, 'admin.php?categ=docs&sub=typdoc&action=');
 			}
 		} else {

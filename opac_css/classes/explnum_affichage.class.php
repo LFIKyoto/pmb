@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum_affichage.class.php,v 1.12.4.1 2015-09-24 15:48:15 dgoron Exp $
+// $Id: explnum_affichage.class.php,v 1.17 2018-08-24 08:44:59 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -18,15 +18,15 @@ define(DOCNUM_SUGG,2);
  */
 class explnum_affichage{
 	
-	var $tableau_id = array();
-	var $display = "";
-	var $type_elt = "";
-	var $termes_recherche=""; //mots recherchés pour le pdf
+	public $tableau_id = array();
+	public $display = "";
+	public $type_elt = "";
+	public $termes_recherche=""; //mots recherchés pour le pdf
 	
 	/**
 	 * Constructeur
 	 */
-	function explnum_affichage($liste_id=array(),$type='',$searchterms=array()){		
+	public function __construct($liste_id=array(),$type='',$searchterms=array()){		
 			
 		$this->tableau_id = $liste_id;
 		$this->type_elt = $type;
@@ -38,7 +38,7 @@ class explnum_affichage{
 	/**
 	 * Affichage sous forme de tableau des exemplaires
 	 */
-	function construire_tableau(){
+	public function construire_tableau(){
 		
 		global $_mimetypes_bymimetype_, $_mimetypes_byext_, $dbh, $charset, $opac_url_base;
 		global $opac_visionneuse_allow;
@@ -92,9 +92,9 @@ class explnum_affichage{
 				
 				$alt = htmlentities($expl->explnum_nom." - ".$expl->explnum_mimetype,ENT_QUOTES, $charset) ;
 				
-				if ($expl->explnum_vignette) $obj="<img src='".$opac_url_base."/vig_num.php?explnum_id=$expl->explnum_id' alt='$alt' title='$alt' border='0'>";
+				if ($expl->explnum_vignette) $obj="<img src='".$opac_url_base."/vig_num.php?explnum_id=$expl->explnum_id' alt='$alt' title='$alt' style='border:0px'>";
 				else // trouver l'icone correspondant au mime_type
-					$obj="<img src='".get_url_icon('mimetype/'.icone_mimetype($expl->explnum_mimetype, $expl->explnum_extfichier), 1)."' alt='$alt' title='$alt' border='0'>";		
+					$obj="<img src='".get_url_icon('mimetype/'.icone_mimetype($expl->explnum_mimetype, $expl->explnum_extfichier), 1)."' alt='$alt' title='$alt' style='border:0px'>";		
 				
 				$lien="";
 				if($expl->explnum_notice)
@@ -118,10 +118,10 @@ class explnum_affichage{
 								}
 							}
 						</script>
-						<a href='#' onclick=\"open_visionneuse(sendToVisionneuse,".$expl->explnum_id.");return false;\" alt='$alt' title='$alt'>".$obj."</a><br />";
+						<a href='#' onclick=\"open_visionneuse(sendToVisionneuse,".$expl->explnum_id.");return false;\" title='$alt'>".$obj."</a><br />";
 					$expl_liste_obj .=$link;
 				} else {
-					$expl_liste_obj .= "<a href='".$opac_url_base.$url_docnum.$expl->explnum_id.$words_to_find."' alt='$alt' title='$alt' target='_blank'>".$obj."</a><br />" ;
+					$expl_liste_obj .= "<a href='".$opac_url_base.$url_docnum.$expl->explnum_id.$words_to_find."' title='$alt' target='_blank'>".$obj."</a><br />" ;
 				}
 				
 				if ($_mimetypes_byext_[$expl->explnum_extfichier]["label"]) $explmime_nom = $_mimetypes_byext_[$expl->explnum_extfichier]["label"] ;
@@ -154,14 +154,14 @@ class explnum_affichage{
 	/**
 	 * Affichage des exemplaires numériques
 	 */
-	function show_explnum(){
+	public function show_explnum(){
 		print $this->display;
 	}
 	
 	/**
 	 *  Récupération des infos des bulletins
 	 */	
-	function get_header_bulletin($id){
+	public function get_header_bulletin($id){
 		global $dbh;
 		
 		$req = "select bulletin_notice, bulletin_numero, date_date, mention_date, bulletin_titre from bulletins where bulletin_id='".$id."'";

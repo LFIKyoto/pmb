@@ -1,4 +1,4 @@
-<h1>Administration des services externes</h1>
+<h2>Administration des services externes</h2>
 
 <p>Les services externes sont des fonctions utilisables par d'autres programmes pour acc&eacute;der &agrave; des fonctionnalit&eacute;s de PMB de mani&egrave;re externe &agrave; l'application</p>
 

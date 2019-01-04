@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: show_log.php,v 1.6 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: show_log.php,v 1.7 2017-10-23 10:13:00 ngantier Exp $
 
 $base_path="../..";
 $base_auth="ADMINISTRATION_AUTH";
@@ -15,7 +15,7 @@ $log_file=pmb_mysql_result($resultat,0,0);
 $log_messages=pmb_mysql_result($resultat,0,1);
 
 print "<div id=\"contenu-frame\">\n";
-echo "<center><h1>".sprintf($msg["sauv_misc_logs"],$log_file)."</h1></center><br /><br />";
+echo "<h1>".sprintf($msg["sauv_misc_logs"],$log_file)."</h1><br /><br />";
 echo nl2br($log_messages);
 
 echo "</div>";

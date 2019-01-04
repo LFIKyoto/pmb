@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: cms_module_agenda_view_calendar_django.xml,v 1.1 2014-11-24 16:07:25 dgoron Exp $ -->
+$Id: cms_module_agenda_view_calendar_django.xml,v 1.2 2017-06-07 14:32:16 dgoron Exp $ -->
 
 <XMLlist>
 	<entry code='cms_module_agenda_view_calendar_django_nb_displayed_events_under'>Nombre d'évènements à afficher sous le calendrier</entry>
@@ -15,4 +15,5 @@ $Id: cms_module_agenda_view_calendar_django.xml,v 1.1 2014-11-24 16:07:25 dgoron
 	<entry code='cms_module_agenda_view_calendar_django_legends_desc'>Tableau des calendriers (légendes)</entry>
 	<entry code='cms_module_agenda_view_calendar_django_legend_calendar_desc'>Libellé d'un calendrier</entry>
 	<entry code='cms_module_agenda_view_calendar_django_legend_color_desc'>Couleur associée au calendrier</entry>
+	<entry code='cms_module_agenda_view_calendar_django_link_desc'>Lien vers l'évènement</entry>
 </XMLlist>

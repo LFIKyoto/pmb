@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: workflow.class.php,v 1.3 2014-04-01 10:09:29 abacarisse Exp $
+// $Id: workflow.class.php,v 1.4 2017-01-31 15:41:41 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,21 +11,21 @@ require_once($include_path.'/parser.inc.php');
 class workflow {
 	
 	
-	var $states_com = array();
-	var $object = array();
-	var $object_states = array();
-	var $object_states_by_id = array();	
-	var $object_types = array();
-	var $object_types_by_id = array();
-	var $object_name = '';
-	var $object_workflow = array();
-	var $object_startstate = array();
-	var $object_transitions = array();
+	public $states_com = array();
+	public $object = array();
+	public $object_states = array();
+	public $object_states_by_id = array();	
+	public $object_types = array();
+	public $object_types_by_id = array();
+	public $object_name = '';
+	public $object_workflow = array();
+	public $object_startstate = array();
+	public $object_transitions = array();
 	
 	/*
 	 * Constructeur
 	 */
-	function workflow($obj_name,$workflow_name=''){
+	public function __construct($obj_name,$workflow_name=''){
 		
 		global $include_path;
 		
@@ -62,46 +62,62 @@ class workflow {
 		for($i=0;$i<count($this->object['STATES'][0]['STATE']);$i++){
 			$this->object_states_by_id[$this->object['STATES'][0]['STATE'][$i]['ID']] = $this->object['STATES'][0]['STATE'][$i]['NAME'];
 			$this->object_states[$this->object['STATES'][0]['STATE'][$i]['NAME']]['ID'] = $this->object['STATES'][0]['STATE'][$i]['ID'];
-			$this->object_states[$this->object['STATES'][0]['STATE'][$i]['NAME']]['DEFAULT'] = $this->object['STATES'][0]['STATE'][$i]['DEFAULT'];
-			$this->object_states[$this->object['STATES'][0]['STATE'][$i]['NAME']]['IMAGE'] = $this->object['STATES'][0]['STATE'][$i]['IMAGE'];
+			if(isset($this->object['STATES'][0]['STATE'][$i]['DEFAULT'])) {
+				$this->object_states[$this->object['STATES'][0]['STATE'][$i]['NAME']]['DEFAULT'] = $this->object['STATES'][0]['STATE'][$i]['DEFAULT'];
+			} else {
+				$this->object_states[$this->object['STATES'][0]['STATE'][$i]['NAME']]['DEFAULT'] = '';
+			}
+			if(isset($this->object['STATES'][0]['STATE'][$i]['IMAGE'])) {
+				$this->object_states[$this->object['STATES'][0]['STATE'][$i]['NAME']]['IMAGE'] = $this->object['STATES'][0]['STATE'][$i]['IMAGE'];
+			} else {
+				$this->object_states[$this->object['STATES'][0]['STATE'][$i]['NAME']]['IMAGE'] = '';
+			}
 			$this->object_states[$this->object['STATES'][0]['STATE'][$i]['NAME']]['COMMENT'] = $this->getStateCommentById($this->object['STATES'][0]['STATE'][$i]['ID']);
 		}	
 		//Types
-		for($i=0;$i<count($this->object['TYPES'][0]['TYPE']);$i++){
-			$this->object_types_by_id[$this->object['TYPES'][0]['TYPE'][$i]['ID']] = $this->object['TYPES'][0]['TYPE'][$i]['NAME'];
-			$this->object_types[$this->object['TYPES'][0]['TYPE'][$i]['NAME']]['ID'] = $this->object['TYPES'][0]['TYPE'][$i]['ID'];
-			$this->object_types[$this->object['TYPES'][0]['TYPE'][$i]['NAME']]['DEFAULT'] = $this->object['TYPES'][0]['TYPE'][$i]['DEFAULT'];
-			$this->object_types[$this->object['TYPES'][0]['TYPE'][$i]['NAME']]['IMAGE'] = $this->object['TYPES'][0]['TYPE'][$i]['IMAGE'];
-			$this->object_types[$this->object['TYPES'][0]['TYPE'][$i]['NAME']]['COMMENT']= $this->object['TYPES'][0]['TYPE'][$i]['COMMENT'];
-		}	
+		if(isset($this->object['TYPES'][0]['TYPE'])) {
+			for($i=0;$i<count($this->object['TYPES'][0]['TYPE']);$i++){
+				$this->object_types_by_id[$this->object['TYPES'][0]['TYPE'][$i]['ID']] = $this->object['TYPES'][0]['TYPE'][$i]['NAME'];
+				$this->object_types[$this->object['TYPES'][0]['TYPE'][$i]['NAME']]['ID'] = $this->object['TYPES'][0]['TYPE'][$i]['ID'];
+				if(isset($this->object['TYPES'][0]['TYPE'][$i]['DEFAULT'])) {
+					$this->object_types[$this->object['TYPES'][0]['TYPE'][$i]['NAME']]['DEFAULT'] = $this->object['TYPES'][0]['TYPE'][$i]['DEFAULT'];
+				} else {
+					$this->object_types[$this->object['TYPES'][0]['TYPE'][$i]['NAME']]['DEFAULT'] = '';
+				}
+				$this->object_types[$this->object['TYPES'][0]['TYPE'][$i]['NAME']]['IMAGE'] = $this->object['TYPES'][0]['TYPE'][$i]['IMAGE'];
+				$this->object_types[$this->object['TYPES'][0]['TYPE'][$i]['NAME']]['COMMENT']= $this->object['TYPES'][0]['TYPE'][$i]['COMMENT'];
+			}
+		}
 		//Workflow
 		for($i=0;$i<count($this->object['WORKFLOW']);$i++){
 			if($this->object['WORKFLOW'][$i]['NAME'] == $workflow_name)
 				$this->object_workflow = $this->object['WORKFLOW'][$i];
 		}
 		//Transitions possibles
-		for($i=0;$i<count($this->object_workflow['SOURCE']);$i++) {
-			$cibles=array();
-			
-			for($j=0;$j<count($this->object_workflow['SOURCE'][$i]['TARGET']); $j++) {
-				$cibles[] = $this->object_workflow['SOURCE'][$i]['TARGET'][$j]['NAME'];
+		if(isset($this->object_workflow['SOURCE'])) {
+			for($i=0;$i<count($this->object_workflow['SOURCE']);$i++) {
+				$cibles=array();
+				
+				for($j=0;$j<count($this->object_workflow['SOURCE'][$i]['TARGET']); $j++) {
+					$cibles[] = $this->object_workflow['SOURCE'][$i]['TARGET'][$j]['NAME'];
+				}
+				$this->object_transitions[$this->object_workflow['SOURCE'][$i]['NAME']]=$cibles;
+	
 			}
-			$this->object_transitions[$this->object_workflow['SOURCE'][$i]['NAME']]=$cibles;
-
 		}
 	}
 	
 	/*
 	 * Retourne le nom d'un état en fonction de son id
 	 */
-	function getStatesById($state_id){
+	public function getStatesById($state_id){
 		return $this->object_states_by_id[$state_id];
 	}
 	
 	/*
 	 * Retourne le libellé associé à un état
 	 */
-	function getStateCommentById($state_id){
+	public function getStateCommentById($state_id){
 		global $msg;
 		
 		$message = explode(':',$this->states_com[$this->object_states_by_id[$state_id]]);
@@ -111,7 +127,7 @@ class workflow {
 	/*
 	 * Retourne le libellé associé à un type
 	 */
-	function getTypeCommentById($type_id){
+	public function getTypeCommentById($type_id){
 		
 		global $msg;
 		
@@ -123,7 +139,7 @@ class workflow {
 	/*
 	 * Retourne la liste des états joignables depuis un autre état
 	 */
-	function getStateList($state_id=-1){
+	public function getStateList($state_id=-1){
 		
 		$state_list = array();
 		
@@ -160,7 +176,7 @@ class workflow {
 	/*
 	 * Retourne la liste des types d'un objet
 	 */
-	function getTypeList(){
+	public function getTypeList(){
 		global $msg;
 		
 		$type_list = array();
@@ -171,6 +187,8 @@ class workflow {
 			$type_list[$i]['id'] = $value['ID'];
 			if( $value['DEFAULT']){
 				$type_list[$i]['default'] = $value['DEFAULT'];
+			} else {
+				$type_list[$i]['default'] = '';
 			}
 			if( $value['IMAGE']){
 				$type_list[$i]['image'] = $value['IMAGE'];

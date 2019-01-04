@@ -1,4 +1,4 @@
-<h1>Acquisitions</h1>
+<h2>Acquisitions</h2>
 </p><p>
 <b>Name</b> and <b>address</b> of the library.
 </p><p>

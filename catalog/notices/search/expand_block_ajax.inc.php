@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expand_block_ajax.inc.php,v 1.9 2014-03-07 11:34:29 dgoron Exp $
+// $Id: expand_block_ajax.inc.php,v 1.14 2017-11-21 12:01:00 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -23,12 +23,11 @@ function read_notice_contenu($cmd) {
 
 	$param=unserialize(stripslashes($cmd));
 	
-	$selector_prop = "toolbar=no, dependent=yes, width=500, height=400, resizable=yes, scrollbars=yes";
-	$cart_click = "onClick=\"openPopUp('./cart.php?object_type=NOTI&item=".$param['id']."', 'cart', 600, 700, -2, -2, '$selector_prop')\"";
+	$cart_click = "onClick=\"openPopUp('./cart.php?object_type=NOTI&item=".$param['id']."', 'cart')\"";
 
 	$current=$_SESSION["CURRENT"];
 	if ($current!==false) {
-		$print_action = "&nbsp;<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&notice_id=".$param['id']."&action_print=print_prepare','print',500,600,-2,-2,'scrollbars=yes,menubar=0'); w.focus(); return false;\"><img src='./images/print.gif' border='0' align='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"/></a>";
+		$print_action = "&nbsp;<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&notice_id=".$param['id']."&action_print=print_prepare','print'); w.focus(); return false;\"><img src='".get_url_icon('print.gif')."' style='border:0px' class='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"/></a>";
 	}		
 	$categ=$param['categ'];
 	$id_empr=$param['id_empr'];
@@ -42,7 +41,7 @@ function read_notice_contenu($cmd) {
 				$param['action_bulletin'], $param['lien_suppr_cart'], $param['lien_explnum'],$param['bouton_explnum'],
 				$param['print'],1,1, 1, 1);
 			if(SESSrights & CATALOGAGE_AUTH){
-				$display->result="	<img src='./images/basket_small_20x20.gif' align='middle' alt='basket' title=\"${msg[400]}\" $cart_click>$print_action !!serial_type!! !!ISBD!!";
+				$display->result="	<img src='".get_url_icon('basket_small_20x20.gif')."' class='align_middle' alt='basket' title=\"${msg[400]}\" $cart_click>$print_action !!serial_type!! !!ISBD!!";
 			}else{
 				$display->result="	$print_action !!serial_type!! !!ISBD!!";
 			}
@@ -55,7 +54,7 @@ function read_notice_contenu($cmd) {
 				$param['expl_link'], $param['lien_suppr_cart'], $param['explnum_link'],1,
 				$param['print'],1, 1, $param['anti_loop'], 1, false, true, 0, 1);	
 			if(SESSrights & CATALOGAGE_AUTH){
-				$display->result="	<img src='./images/basket_small_20x20.gif' align='middle' alt='basket' title=\"${msg[400]}\" $cart_click>$print_action !!ISBD!!";
+				$display->result="	<img src='".get_url_icon('basket_small_20x20.gif')."' class='align_middle' alt='basket' title=\"${msg[400]}\" $cart_click>$print_action !!ISBD!!";
 			}else{
 				$display->result="	$print_action !!ISBD!!";
 			}

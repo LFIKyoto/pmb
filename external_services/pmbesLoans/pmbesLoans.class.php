@@ -2,38 +2,34 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesLoans.class.php,v 1.3 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: pmbesLoans.class.php,v 1.8 2018-06-08 10:21:33 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/external_services.class.php");
-require_once($include_path."/templates/relance.tpl.php");
-require_once($include_path."/relance_func.inc.php");
 
 define('LOAN_ALL_ACTIONS','1');
 define('LOAN_PRINT_MAIL','2');
 define('LOAN_CSV_MAIL','3');
 
 class pmbesLoans extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	
 	//ex: "empr","empr_list","b,n,c,g","b,n,c,g".$localisation.",cs","n,g"
 	// correspondance : ./includes/filter_list/empr/empr_list.xml
 	// les 2 premiers params doivent-ils plutôt être forcées ??
-	function filterLoansReaders($filter_name,$filter_source="",$display,$filter,$sort,$parameters) {
+	public function filterLoansReaders($filter_name,$filter_source="",$display,$filter,$sort,$parameters) {
 		global $empr_sort_rows, $empr_show_rows, $empr_filter_rows,$pmb_lecteurs_localises;
 
 		if (SESSrights & CIRCULATION_AUTH) {
@@ -50,16 +46,16 @@ class pmbesLoans extends external_services_api_class {
 						foreach ($parameters[$filters_selectors] as $categ) {
 							$tableau[$categ] = $categ;
 						}
-						global $$filters_selectors;
-						$$filters_selectors = $tableau;
+						global ${$filters_selectors};
+						${$filters_selectors} = $tableau;
 					}
 				}
 				$t_sort = explode(",",$filter->sortablecolumns);
 				for ($j=0;$j<=count($t_sort)-1;$j++) {
 	    			$sort_selector="sort_list_".$j;
 	    			if ($parameters[$sort_selector]) {
-						global $$sort_selector;
-	    				$$sort_selector = $parameters[$sort_selector];    				
+						global ${$sort_selector};
+	    				${$sort_selector} = $parameters[$sort_selector];    				
 					}
 	    		}
 				$filter->activate_filters();
@@ -87,7 +83,7 @@ class pmbesLoans extends external_services_api_class {
 	
 	/*Dépend du paramétrage PMB
 	 * Retourne un chiffre >= 1 si des relances n'ont pas été envoyées par mail*/
-	function relanceLoansReaders($t_empr) {
+	public function relanceLoansReaders($t_empr) {
 
 		if (SESSrights & CIRCULATION_AUTH) {
 			$requete = "select id_empr from empr, pret, exemplaires where 1 ";
@@ -111,7 +107,7 @@ class pmbesLoans extends external_services_api_class {
 		}
 	}
 	
-	function exportCSV($t_empr) {
+	public function exportCSV($t_empr) {
 		
 		if (SESSrights & CIRCULATION_AUTH) {
 			$req="TRUNCATE TABLE cache_amendes";
@@ -154,11 +150,11 @@ class pmbesLoans extends external_services_api_class {
 	}
 	
 	//pour valider une action ...
-	function commitActionEmpr($id_empr, $cb, $last_level_commit,$next_level) {
+	public function commitActionEmpr($id_empr, $cb, $last_level_commit,$next_level) {
 		
 	}
 
-	function listLoansReaders($loan_type=0, $f_loc=0,$f_categ=0,$f_group=0,$f_codestat=0,$sort_by=0,$limite_mysql='',$limite_page='') {
+	public function listLoansReaders($loan_type=0, $f_loc=0,$f_categ=0,$f_group=0,$f_codestat=0,$sort_by=0,$limite_mysql='',$limite_page='') {
 		global $dbh, $msg, $pmb_lecteurs_localises;
 		
 		if (SESSrights & CIRCULATION_AUTH) {
@@ -251,7 +247,7 @@ class pmbesLoans extends external_services_api_class {
 		}
 	}
 	
-//	function listLoansReaders($loan_type, $empr_location_id,$limite_mysql='',$limite_page='') {
+//	public function listLoansReaders($loan_type, $empr_location_id,$limite_mysql='',$limite_page='') {
 //		global $dbh, $msg, $pmb_lecteurs_localises;
 //		
 ////		$empr = new emprunteur($empr_id);
@@ -312,7 +308,7 @@ class pmbesLoans extends external_services_api_class {
 //		return $results;
 //	}
 	
-	function listLoansGroups($loan_type=0, $limite_mysql='', $limite_page='') {
+	public function listLoansGroups($loan_type=0, $limite_mysql='', $limite_page='') {
 		global $dbh, $msg;
 		
 		if (SESSrights & CIRCULATION_AUTH) {
@@ -386,11 +382,11 @@ class pmbesLoans extends external_services_api_class {
 		}
 	}
 
-	function buildPdfLoansDelayReaders($t_empr, $f_loc=0, $niveau_relance=0) {
+	public function buildPdfLoansDelayReaders($t_empr, $f_loc=0, $niveau_relance=0) {
 		global $ourPDF,$fpdf,$pdflettreretard_1largeur_page, $pdflettreretard_1hauteur_page,$pdflettreretard_1format_page;
 		global $pmb_lecteurs_localises,$deflt2docs_location,$pdflettreretard_impression_tri;
 		global $empr_sms_activation, $empr_sms_msg_retard;
-		global $mailretard_priorite_email,$pmb_gestion_financiere,$pmb_gestion_amende;
+		global $mailretard_priorite_email, $mailretard_priorite_email_2, $pmb_gestion_financiere, $pmb_gestion_amende;
 		
 		$largeur_page=$pdflettreretard_1largeur_page;
 		$hauteur_page=$pdflettreretard_1hauteur_page;
@@ -427,7 +423,12 @@ class pmbesLoans extends external_services_api_class {
 				if ($printed==2) $printed=0;
 				pmb_mysql_query("update pret set printed=1 where printed=2 and pret_idempr=".$r->id_empr);
 				$not_mail=true;
-				if ((($mailretard_priorite_email==1)&&($r->empr_mail))&&($niveau_min<3)) $not_mail=false;
+				if ((($mailretard_priorite_email==1)&&($r->empr_mail))&&($niveau_min<3)) {
+					$not_mail=false;
+					if (($niveau_min==2) && ($mailretard_priorite_email==1) && ($mailretard_priorite_email_2==1)) {
+						$not_mail=true;
+					}
+				}
 				if ((($print_all || !$printed)&&($niveau_min))&&($not_mail)) {
 					$niveau_relance=$niveau_min;
 					$this->get_texts($niveau_relance);
@@ -448,7 +449,7 @@ class pmbesLoans extends external_services_api_class {
 	}
 	
 	
-	function buildPdfLoansRunningGroup($id_groupe='') {
+	public function buildPdfLoansRunningGroup($id_groupe='') {
 		global $dbh, $fpdf, $msg, $ourPDF;
 		global $class_path, $include_path;
 		global $pdflettreretard_1largeur_page, $pdflettreretard_1hauteur_page,$pdflettreretard_1format_page;
@@ -543,7 +544,7 @@ class pmbesLoans extends external_services_api_class {
 		return $ourPDF;
 	}
 	
-	function buildPdfLoansDelayGroup ($groupe_id) {
+	public function buildPdfLoansDelayGroup ($groupe_id) {
 		global $fpdf,$ourPDF,$pdflettreretard_1largeur_page, $pdflettreretard_1hauteur_page,$pdflettreretard_1format_page;
 			
 		$this->get_texts(1);
@@ -563,7 +564,7 @@ class pmbesLoans extends external_services_api_class {
 		return $ourPDF;
 	}
 	
-	function buildPdfLoansRunningReader($id_empr, $location_biblio) {
+	public function buildPdfLoansRunningReader($id_empr, $location_biblio) {
 		global $dbh, $fpdf, $ourPDF, $msg,$pmb_lecteurs_localises;
 		global $pmb_hide_biblioinfo_letter;
 		global $biblio_name;
@@ -630,7 +631,7 @@ class pmbesLoans extends external_services_api_class {
 	}
 	
 	
-	function buildPdfLoansDelayReader($id_empr, $biblio_location=0, $niveau_relance=0) {
+	public function buildPdfLoansDelayReader($id_empr, $biblio_location=0, $niveau_relance=0) {
 		global $ourPDF,$fpdf,$pdflettreretard_1largeur_page, $pdflettreretard_1hauteur_page,$pdflettreretard_1format_page;
 		global $pmb_lecteurs_localises;
 
@@ -670,7 +671,7 @@ class pmbesLoans extends external_services_api_class {
 	 * @param $type_send READER=1,GROUP=2
 	 * @param $ident
 	 */
-	function sendMailLoansRunning($type_send, $ident, $location_biblio) {
+	public function sendMailLoansRunning($type_send, $ident, $location_biblio) {
 		global $dbh, $msg, $pmb_lecteurs_localises;
 		global $mailretard_1fdp,$biblio_name,$biblio_email,$PMBuseremailbcc;
 		
@@ -736,23 +737,7 @@ class pmbesLoans extends external_services_api_class {
 				$responsabilites=array() ;
 				$header_aut = "" ;
 				$responsabilites = get_notice_authors(($expl->m_id+$expl->s_id)) ;
-				$as = array_search ("0", $responsabilites["responsabilites"]) ;
-				if ($as!== FALSE && $as!== NULL) {
-					$auteur_0 = $responsabilites["auteurs"][$as] ;
-					$auteur = new auteur($auteur_0["id"]);
-					$header_aut .= $auteur->isbd_entry;
-					} else {
-						$aut1_libelle=array();
-						$as = array_keys ($responsabilites["responsabilites"], "1" ) ;
-						for ($i = 0 ; $i < count($as) ; $i++) {
-							$indice = $as[$i] ;
-							$auteur_1 = $responsabilites["auteurs"][$indice] ;
-							$auteur = new auteur($auteur_1["id"]);
-							$aut1_libelle[]= $auteur->isbd_entry;
-						}
-				
-						$header_aut .= implode (", ",$aut1_libelle) ;
-					}
+				$header_aut = gen_authors_header($responsabilites);
 				$header_aut ? $auteur=" / ".$header_aut : $auteur="";
 		
 				// récupération du titre de série
@@ -793,13 +778,13 @@ class pmbesLoans extends external_services_api_class {
 	 * @param $type_send READER=1,GROUP=2
 	 * @param $ident
 	 */
-	function sendMailLoansDelay($type_send, $ident) {
+	public function sendMailLoansDelay($type_send, $ident) {
 		/*Quasi-identique à sendMailLoansRunning */
 		
 		return "";
 	}
 	
-	function get_texts($relance) {
+	public function get_texts($relance) {
 		global $fdp, $after_list,$before_recouvrement,$after_recouvrement,$limite_after_list, $before_list;
 		global $madame_monsieur, $nb_1ere_page, $nb_par_page, $taille_bloc_expl, $debut_expl_1er_page,$debut_expl_page;
 		global $marge_page_gauche, $marge_page_droite, $largeur_page, $hauteur_page,$format_page;
@@ -809,92 +794,92 @@ class pmbesLoans extends external_services_api_class {
 		global $pmb_lecteurs_localises;
 
 		$var = "pdflettreretard_".$relance."fdp";
-		global $$var;
-		eval ("\$fdp=\"".$$var."\";");
+		global ${$var};
+		eval ("\$fdp=\"".${$var}."\";");
 	
 		// le texte après la liste des ouvrages en retard
 		$var = "pdflettreretard_".$relance."after_list";
-		global $$var;
-		eval ("\$after_list=\"".$$var."\";");
+		global ${$var};
+		eval ("\$after_list=\"".${$var}."\";");
 		
 		// Le texte avant la liste des ouvrages qui passeront en recouvrement
 		$var = "pdflettreretard_".$relance."before_recouvrement";
-		global $$var;
-		eval ("\$before_recouvrement=\"".$$var."\";");
+		global ${$var};
+		eval ("\$before_recouvrement=\"".${$var}."\";");
 		
 		// Le texte après la liste des ouvrages qui passeront en recouvrement
 		$var = "pdflettreretard_".$relance."after_recouvrement";
-		global $$var;
-		eval ("\$after_recouvrement=\"".$$var."\";");
+		global ${$var};
+		eval ("\$after_recouvrement=\"".${$var}."\";");
 			
 		
 		// la position verticale limite du texte after_liste (si >, saut de page et impression)
 		$var = "pdflettreretard_".$relance."limite_after_list";
-		global $$var;
-		$limite_after_list = $$var;
+		global ${$var};
+		$limite_after_list = ${$var};
 				
 		// le texte avant la liste des ouvrges en retard
 		$var = "pdflettreretard_".$relance."before_list";
-		global $$var;
-		eval ("\$before_list=\"".$$var."\";");
+		global ${$var};
+		eval ("\$before_list=\"".${$var}."\";");
 		
 		// le "Madame, Monsieur," ou tout autre truc du genre "Cher adhérent,"
 		$var = "pdflettreretard_".$relance."madame_monsieur";
-		global $$var;
-		eval ("\$madame_monsieur=\"".$$var."\";");
+		global ${$var};
+		eval ("\$madame_monsieur=\"".${$var}."\";");
 		
 		// le nombre de blocs expl à imprimer sur la première page
 		$var = "pdflettreretard_".$relance."nb_1ere_page";
-		global $$var;
-		$nb_1ere_page = $$var;
+		global ${$var};
+		$nb_1ere_page = ${$var};
 		
 		// le nombre de blocs expl à imprimer sur les pages suivantes
 		$var = "pdflettreretard_".$relance."nb_par_page";
-		global $$var;
-		$nb_par_page = $$var;
+		global ${$var};
+		$nb_par_page = ${$var};
 		
 		// la taille d'un bloc expl en retard affiché
 		$var = "pdflettreretard_".$relance."taille_bloc_expl";
-		global $$var;
-		$taille_bloc_expl = $$var;
+		global ${$var};
+		$taille_bloc_expl = ${$var};
 		
 		// la position verticale du premier bloc expl sur la première page
 		$var = "pdflettreretard_".$relance."debut_expl_1er_page";
-		global $$var;
-		$debut_expl_1er_page = $$var;
+		global ${$var};
+		$debut_expl_1er_page = ${$var};
 		
 		// la position verticale du premier bloc expl sur les pages suivantes
 		$var = "pdflettreretard_".$relance."debut_expl_page";
-		global $$var;
-		$debut_expl_page = $$var;
+		global ${$var};
+		$debut_expl_page = ${$var};
 		
 		// la marge gauche des pages
 		$var = "pdflettreretard_".$relance."marge_page_gauche";
-		global $$var;
-		$marge_page_gauche = $$var;
+		global ${$var};
+		$marge_page_gauche = ${$var};
 		
 		// la marge droite des pages
 		$var = "pdflettreretard_".$relance."marge_page_droite";
-		global $$var;
-		$marge_page_droite = $$var;
+		global ${$var};
+		$marge_page_droite = ${$var};
 		
 		// la largeur des pages
 		$var = "pdflettreretard_1largeur_page";
-		global $$var;
-		$largeur_page = $$var;
+		global ${$var};
+		$largeur_page = ${$var};
 		
 		// la hauteur des pages
 		$var = "pdflettreretard_1hauteur_page";
-		global $$var;
-		$hauteur_page = $$var;
+		global ${$var};
+		$hauteur_page = ${$var};
 		
 		// le format des pages
 		$var = "pdflettreretard_1format_page";
-		global $$var;
-		$format_page = $$var;
+		global ${$var};
+		$format_page = ${$var};
 	}
 	
-	function infos_biblio($location_biblio=0) {
+	public function infos_biblio($location_biblio=0) {
 		global $dbh,$pmb_lecteurs_localises;
 		global $biblio_name, $biblio_adr1, $biblio_adr2, $biblio_cp, $biblio_town, $biblio_state, $biblio_country, $biblio_phone, $biblio_email,$biblio_website;
 		global $biblio_logo;
@@ -924,58 +909,58 @@ class pmbesLoans extends external_services_api_class {
 			/*** Informations provenant des paramètres généraux - on ne parle donc pas de multi-localisations **/
 			// nom de la structure
 			$var = "opac_biblio_name";
-			global $$var;
-			eval ("\$biblio_name=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_name=\"".${$var}."\";");
 		
 			// logo de la structure
 			$var = "opac_logo";
-			global $$var;
-			eval ("\$biblio_logo=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_logo=\"".${$var}."\";");
 		
 			// adresse principale
 			$var = "opac_biblio_adr1";
-			global $$var;
-			eval ("\$biblio_adr1=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_adr1=\"".${$var}."\";");
 			
 			// adresse secondaire
 			$var = "opac_biblio_adr2";
-			global $$var;
-			eval ("\$biblio_adr2=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_adr2=\"".${$var}."\";");
 			
 			// code postal
 			$var = "opac_biblio_cp";
-			global $$var;
-			eval ("\$biblio_cp=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_cp=\"".${$var}."\";");
 			
 			// ville
 			$var = "opac_biblio_town";
-			global $$var;
-			eval ("\$biblio_town=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_town=\"".${$var}."\";");
 			
 //			// Etat
 			$var = "opac_biblio_state";
-			global $$var;
-			eval ("\$biblio_state=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_state=\"".${$var}."\";");
 			
 			// pays
 			$var = "opac_biblio_country";
-			global $$var;
-			eval ("\$biblio_country=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_country=\"".${$var}."\";");
 			
 			// telephone
 			$var = "opac_biblio_phone";
-			global $$var;
-			eval ("\$biblio_phone=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_phone=\"".${$var}."\";");
 			
 			// adresse mail
 			$var = "opac_biblio_email";
-			global $$var;
-			eval ("\$biblio_email=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_email=\"".${$var}."\";");
 			
 			//site web
 			$var = "opac_biblio_website";
-			global $$var;
-			eval ("\$biblio_website=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_website=\"".${$var}."\";");
 		}
 	}
 }

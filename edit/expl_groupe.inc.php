@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl_groupe.inc.php,v 1.39 2015-06-27 08:26:47 jpermanne Exp $
+// $Id: expl_groupe.inc.php,v 1.49 2017-11-22 11:07:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($page)) $page = 0;
 
 //Récupération des variables postées, on en aura besoin pour les liens
 $url_page="./edit.php";
@@ -105,14 +107,14 @@ $req = pmb_mysql_query($sql,$dbh) or die("Erreur SQL !<br />".$sql."<br />".pmb_
 
 echo "<form class='form-$current_module' action=$url_page?categ=$categ&sub=$sub&nb_per_page=$nb_per_page method=post>";
 
-echo $msg['edit_go_directly_to']."<select name=\"gogroup_id\"><option value=\"-1\"></option>";
+echo '<span class="message">'.$msg['edit_go_directly_to']."</span><select name=\"gogroup_id\"><option value=\"-1\"></option>";
 
 	foreach ($groups as $id => $infos){
 		echo '<option value="'.$id.'" '.($id == $gogroup_id ? 'selected' : '').'>'.$infos["libelle"].'</option>';
 	}
 	
 echo "</select><br />";
-echo "$msg[circ_afficher] <input type='text' name='nb_per_page' size=2 value=$nb_per_page class='petit'> $msg[1905]";
+echo " <input type='text' name='nb_per_page' size=2 value=$nb_per_page class='petit'> <span class='message'>$msg[1905]</span>";
 if ($empr_groupes_localises) echo docs_location::gen_combo_box_empr($empr_location_id);
 echo "<br /><input type='submit' class='bouton' value='".$msg["actualiser"]."' title='".$msg["actualiser"]."' />
 	</form>";
@@ -137,17 +139,17 @@ echo "<tr><th>&nbsp;<input type='button' name='cochgroupes' class='bouton_small'
 	<th>".$msg[4016]."</th>
 	<th>".$msg[294]."</th>
 	<th>".$msg[233]."</th>
-	<th>".$msg[234]."</th><th>".$msg[empr_nom_prenom].
-	"</th><th>".$msg[circ_date_emprunt]."</th><th>".$msg[circ_date_retour].
+	<th>".$msg[234]."</th><th>".$msg['empr_nom_prenom'].
+	"</th><th>".$msg['circ_date_emprunt']."</th><th>".$msg['circ_date_retour'].
 	"</th>";
 
 switch($sub) {
 	case "ppargroupe" :
-		echo "<th>".$msg[1110]."</th>";
+		echo "<th colspan=2>".$msg[369]."</th>";
 		$message=$msg['imprimer_liste_prets_groupe'];
 		break;
 	case "rpargroupe" :
-		echo "<th>".$msg[369]."</th>";
+		echo "<th colspan=2>".$msg[369]."</th>";
 		$message=$msg['imprimer_lettres_groupe_relance'];
 		break;
 	default :
@@ -174,26 +176,9 @@ while ($data = pmb_mysql_fetch_array($req)) {
 	$id_expl =$data['expl_cb'];
 	$titre = $data['tit'];
 	$support = $data['tdoc_libelle'];
-	$header_aut = "" ;
 
 	$responsabilites = get_notice_authors($data['idnot']) ;
-	$as = array_search ("0", $responsabilites["responsabilites"]) ;
-	if ($as!== FALSE && $as!== NULL) {
-		$auteur_0 = $responsabilites["auteurs"][$as] ;
-		$auteur = new auteur($auteur_0["id"]);
-		$header_aut .= $auteur->isbd_entry;
-		} else {
-			$aut1_libelle=array();
-			$as = array_keys ($responsabilites["responsabilites"], "1" ) ;
-			for ($i = 0 ; $i < count($as) ; $i++) {
-				$indice = $as[$i] ;
-				$auteur_1 = $responsabilites["auteurs"][$indice] ;
-				$auteur = new auteur($auteur_1["id"]);
-				$aut1_libelle[]= $auteur->isbd_entry;
-				}
-			
-			$header_aut .= implode (", ",$aut1_libelle) ;
-			}
+	$header_aut = gen_authors_header($responsabilites);
 	
 	$header_aut ? $auteur=$header_aut : $auteur="";
 
@@ -210,7 +195,7 @@ while ($data = pmb_mysql_fetch_array($req)) {
 			if ($datacount->retard==0) $nbok=$datacount->combien;
 			if ($datacount->retard==1) $nbretard=$datacount->combien;
 		}
-		$retard_sur_total = str_replace ("!!nb_retards!!",$nbretard*1,$msg[n_retards_sur_total_de]);
+		$retard_sur_total = str_replace ("!!nb_retards!!",$nbretard*1,$msg['n_retards_sur_total_de']);
 		$retard_sur_total = str_replace ("!!nb_total!!",($nbretard+$nbok)*1,$retard_sur_total);
 		
 		echo "\r\n<tr class='group_title'><td colspan=6><input type='checkbox' class='checkbox' name='coch_groupe[]' value='".$id_groupe."'>";
@@ -219,8 +204,8 @@ while ($data = pmb_mysql_fetch_array($req)) {
 		
 		switch ($sub) {
 			case "ppargroupe":
-				$imprime_click = "onclick=\"openPopUp('./pdf.php?pdfdoc=liste_pret_groupe&id_groupe=$id_groupe', 'lettre', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes'); return(false) \"";
- 				echo "\n<td align=center><a href=\"#\" ".$imprime_click."><img src=\"./images/new.gif\" title=\"".$message."\" alt=\"".$message."\" border=\"0\"></a>\n";
+				$imprime_click = "onclick=\"openPopUp('./pdf.php?pdfdoc=liste_pret_groupe&id_groupe=$id_groupe', 'lettre'); return(false) \"";
+ 				echo "\n<td class='center'><a href=\"#\" ".$imprime_click."><img src='".get_url_icon('new.gif')."' title=\"".$message."\" alt=\"".$message."\" border=\"0\"></a>\n";
 		
 				//mail responsable
 				$sql1="";
@@ -231,13 +216,15 @@ while ($data = pmb_mysql_fetch_array($req)) {
 		
 		
 				if ($mail_responsable) {
-					$mail_click = "onclick=\"if (confirm('".$msg["mail_retard_confirm"]."')) {openPopUp('./mail.php?type_mail=mail_prets&id_groupe=$id_groupe', 'mail', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes, scrollbars=yes');} return(false) \"";
-					echo "<a href=\"#\" ".$mail_click."><img src=\"./images/mail.png\" title=\"".$msg[mail_retard]."\" alt=\"".$msg[mail_retard]."\" border=\"0\"></a>"; 
+					$mail_click = "onclick=\"if (confirm('".$msg["mail_retard_confirm"]."')) {openPopUp('./mail.php?type_mail=mail_prets&id_groupe=$id_groupe', 'mail');} return(false) \"";
+					echo "</td><td class='center'><a href=\"#\" ".$mail_click."><img src='".get_url_icon('mail.png')."' title=\"".$msg['mail_retard']."\" alt=\"".$msg['mail_retard']."\" border=\"0\"></a>";
+				} else {
+					echo "</td><td>&nbsp;";
 				}				
 			break;			
 			case "rpargroupe":
-				$imprime_click = "onclick=\"openPopUp('./pdf.php?pdfdoc=lettre_retard_groupe&id_groupe=$id_groupe', 'lettre', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes'); return(false) \"";
- 				echo "\n<td align=center><a href=\"#\" ".$imprime_click."><img src=\"./images/new.gif\" title=\"".$message."\" alt=\"".$message."\" border=\"0\"></a>\n";
+				$imprime_click = "onclick=\"openPopUp('./pdf.php?pdfdoc=lettre_retard_groupe&id_groupe=$id_groupe', 'lettre'); return(false) \"";
+ 				echo "\n<td class='center'><a href=\"#\" ".$imprime_click."><img src='".get_url_icon('new.gif')."' title=\"".$message."\" alt=\"".$message."\" border=\"0\"></a>\n";
 		
 				//mail responsable
 				$sql1="";
@@ -247,8 +234,10 @@ while ($data = pmb_mysql_fetch_array($req)) {
 				$mail_responsable=$result['empr_mail'];
 		
 				if ($mail_responsable) {
-					$mail_click = "onclick=\"if (confirm('".$msg["mail_retard_confirm"]."')) {openPopUp('./mail.php?type_mail=mail_retard_groupe&id_groupe=$id_groupe', 'mail', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes, scrollbars=yes');} return(false) \"";
-					echo "<a href=\"#\" ".$mail_click."><img src=\"./images/mail.png\" title=\"".$msg[mail_retard]."\" alt=\"".$msg[mail_retard]."\" border=\"0\"></a>"; 
+					$mail_click = "onclick=\"if (confirm('".$msg["mail_retard_confirm"]."')) {openPopUp('./mail.php?type_mail=mail_retard_groupe&id_groupe=$id_groupe', 'mail');} return(false) \"";
+					echo "</td><td class='center'><a href=\"#\" ".$mail_click."><img src='".get_url_icon('mail.png')."' title=\"".$msg['mail_retard']."\" alt=\"".$msg['mail_retard']."\" border=\"0\"></a>";
+				} else {
+					echo "</td><td>&nbsp;";
 				}
 			break;
 			default:
@@ -262,7 +251,7 @@ while ($data = pmb_mysql_fetch_array($req)) {
 	}
 
 	if($retard || ($sub=="ppargroupe") ){
-		if ($retard) $tit_color="color='RED'";				
+		if ($retard) $tit_color="style='color:RED'";				
 		else $tit_color="";
 			
 		if ($odd_even==0) {			
@@ -284,36 +273,44 @@ while ($data = pmb_mysql_fetch_array($req)) {
 		echo "<td>".$support."</td>";
 		
 		if (SESSrights & CATALOGAGE_AUTH) {
-			if ($data['expl_notice']) echo "<td><a href='./catalog.php?categ=isbd&id=".$data['expl_notice']."'><font $tit_color><b>".$titre."</b></font></a></td>"; // notice de monographie
-			elseif ($data['expl_bulletin']) echo "<td><a href='./catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=".$data['expl_bulletin']."'><font $tit_color><b>".$titre."</b></font></a></td>"; // notice de bulletin
-			else echo "<td><font $tit_color><b>".$titre."</b></font></td>";
-		} else echo "<td><font $tit_color><b>".$titre."</b></font></td>";    
-			echo "<td><font $tit_color>".$auteur."</font></td>";    
+			if ($data['expl_notice']) echo "<td><a href='./catalog.php?categ=isbd&id=".$data['expl_notice']."'><span $tit_color><b>".$titre."</b></span></a></td>"; // notice de monographie
+			elseif ($data['expl_bulletin']) echo "<td><a href='./catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=".$data['expl_bulletin']."'><span $tit_color><b>".$titre."</b></span></a></td>"; // notice de bulletin
+			else echo "<td><span $tit_color><b>".$titre."</b></span></td>";
+		} else echo "<td><span $tit_color><b>".$titre."</b></span></td>";    
+			echo "<td><span $tit_color>".$auteur."</span></td>";    
 			echo "<td><a href=\"./circ.php?categ=pret&form_cb=".rawurlencode($empr_cb)."\">".$empr_nom.", ".$empr_prenom."</a></td>"; 
 			echo "<td>".$aff_pret_date."</td>"; 
-			echo "<td><font $tit_color><b>".$aff_pret_retour."</font></b></td>";
+			echo "<td><span $tit_color><b>".$aff_pret_retour."</b></span></td>";
 		/* test de date de retour dépassée */
 	
 		switch ($sub) {
 			case "ppargroupe":
 				if ($retard) {
-					$imprime_click = "onclick=\"openPopUp('./pdf.php?pdfdoc=liste_pret&cb_doc=$id_expl&id_empr=$id_empr', 'lettre', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes'); return(false) \"";
-		 			echo "\n<td align=center><a href=\"#\" ".$imprime_click."><img src=\"./images/new.gif\" title=\"".$msg['prets_en_cours']."\" alt=\"".$msg['prets_en_cours']."\" border=\"0\"></a>\n";
-					$mail_click = "onclick=\"if (confirm('".$msg["mail_retard_confirm"]."')) {openPopUp('./mail.php?type_mail=mail_prets&cb_doc=$id_expl&id_empr=$id_empr', 'mail', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes, scrollbars=yes'); } return(false) \"";
-					if (($empr_mail)&&($biblio_email)) echo "<a href=\"#\" ".$mail_click."><img src=\"./images/mail.png\" title=\"".$msg[mail_retard]."\" alt=\"".$msg[mail_retard]."\" border=\"0\"></a>";
+					$imprime_click = "onclick=\"openPopUp('./pdf.php?pdfdoc=liste_pret&cb_doc=$id_expl&id_empr=$id_empr', 'lettre'); return(false) \"";
+		 			echo "\n<td class='center'><a href=\"#\" ".$imprime_click."><img src='".get_url_icon('new.gif')."' title=\"".$msg['prets_en_cours']."\" alt=\"".$msg['prets_en_cours']."\" border=\"0\"></a>\n";
+					$mail_click = "onclick=\"if (confirm('".$msg["mail_retard_confirm"]."')) {openPopUp('./mail.php?type_mail=mail_prets&cb_doc=$id_expl&id_empr=$id_empr', 'mail'); } return(false) \"";
+					if (($empr_mail)&&($biblio_email)) {
+						echo "</td><td class='center'><a href=\"#\" ".$mail_click."><img src='".get_url_icon('mail.png')."' title=\"".$msg['mail_retard']."\" alt=\"".$msg['mail_retard']."\" border=\"0\"></a></td>";
+					} else {
+						echo "</td><td>&nbsp;</td>";
+					}
 				} else {
-					echo "</td><td>&nbsp;</td>";
-				} 
+					echo "</td><td>&nbsp;</td><td>&nbsp;</td>";
+				}
 			break;
 			case "rpargroupe":
 				
 				if ($retard) {
-					$imprime_click = "onclick=\"openPopUp('./pdf.php?pdfdoc=lettre_retard&cb_doc=$id_expl&id_empr=$id_empr', 'lettre', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes'); return(false) \"";
-		 			echo "\n<td align=center><a href=\"#\" ".$imprime_click."><img src=\"./images/new.gif\" title=\"".$msg['lettre_retard']."\" alt=\"".$msg['lettre_retard']."\" border=\"0\"></a>\n";
-					$mail_click = "onclick=\"if (confirm('".$msg["mail_retard_confirm"]."')) {openPopUp('./mail.php?type_mail=mail_retard&cb_doc=$id_expl&id_empr=$id_empr', 'mail', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes, scrollbars=yes'); } return(false) \"";
-					if (($empr_mail)&&($biblio_email)) echo "<a href=\"#\" ".$mail_click."><img src=\"./images/mail.png\" title=\"".$msg[mail_retard]."\" alt=\"".$msg[mail_retard]."\" border=\"0\"></a>"; 
+					$imprime_click = "onclick=\"openPopUp('./pdf.php?pdfdoc=lettre_retard&cb_doc=$id_expl&id_empr=$id_empr', 'lettre'); return(false) \"";
+		 			echo "\n<td class='center'><a href=\"#\" ".$imprime_click."><img src='".get_url_icon('new.gif')."' title=\"".$msg['lettre_retard']."\" alt=\"".$msg['lettre_retard']."\" border=\"0\"></a>\n";
+					$mail_click = "onclick=\"if (confirm('".$msg["mail_retard_confirm"]."')) {openPopUp('./mail.php?type_mail=mail_retard&cb_doc=$id_expl&id_empr=$id_empr', 'mail'); } return(false) \"";
+					if (($empr_mail)&&($biblio_email)) {
+						echo "</td><td class='center'><a href=\"#\" ".$mail_click."><img src='".get_url_icon('mail.png')."' title=\"".$msg['mail_retard']."\" alt=\"".$msg['mail_retard']."\" border=\"0\"></a></td>";
+					} else {
+						echo "</td><td>&nbsp;</td>";
+					}
 				} else {
-					echo "</td><td>&nbsp;</td>";
+					echo "</td><td>&nbsp;</td><td>&nbsp;</td>";
 				}
 			break;
 			default:
@@ -329,10 +326,10 @@ echo "</table></form>";
 $bouton_imprime_tout ="" ;
 switch($sub) {
 	case "ppargroupe" :
-		$bouton_imprime_tout = "<input type='button' class='bouton_small' value='".$msg['imprimer_liste_prets_groupes']."' title='".$msg['imprimer_liste_prets_groupes']."' onclick=\"if (verifCheckboxes('cases_a_cocher','coch_groupe')) { openPopUp('', 'lettre', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes'); document.forms['cases_a_cocher'].target='lettre'; document.forms['cases_a_cocher'].submit(); return(false) } \" >";
+		$bouton_imprime_tout = "<input type='button' class='bouton_small' value='".$msg['imprimer_liste_prets_groupes']."' title='".$msg['imprimer_liste_prets_groupes']."' onclick=\"if (verifCheckboxes('cases_a_cocher','coch_groupe')) { openPopUp('', 'lettre'); document.forms['cases_a_cocher'].target='lettre'; document.forms['cases_a_cocher'].submit(); return(false) } \" >";
 		break;
 	case "rpargroupe" :
-		$bouton_imprime_tout = "<input type='button' class='bouton_small' value='".$msg['lettres_relance_groupe']."' title='".$msg['lettres_relance_groupe']."' onclick=\"if (verifCheckboxes('cases_a_cocher','coch_groupe')) { openPopUp('', 'lettre', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes'); document.forms['cases_a_cocher'].target='lettre'; document.forms['cases_a_cocher'].submit(); return(false) }\" >";
+		$bouton_imprime_tout = "<input type='button' class='bouton_small' value='".$msg['lettres_relance_groupe']."' title='".$msg['lettres_relance_groupe']."' onclick=\"if (verifCheckboxes('cases_a_cocher','coch_groupe')) { openPopUp('', 'lettre'); document.forms['cases_a_cocher'].target='lettre'; document.forms['cases_a_cocher'].submit(); return(false) }\" >";
 		break;
 	default :
 		break;

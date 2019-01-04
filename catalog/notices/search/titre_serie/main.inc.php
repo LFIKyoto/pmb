@@ -1,6 +1,8 @@
 <?php
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+if(!isset($no_rec_history)) $no_rec_history = '';
+
 // page de switch recherche titre de série
 
 require_once($class_path."/searcher.class.php");

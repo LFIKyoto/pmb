@@ -37,18 +37,18 @@ class DoubleMetaPhone
 {
 //  properties
 
-   var $original  = "";
-   var $primary   = "";
-   var $secondary = "";
-   var $length    =  0;
-   var $last      =  0;
-   var $current   =  0;
+   public $original  = "";
+   public $primary   = "";
+   public $secondary = "";
+   public $length    =  0;
+   public $last      =  0;
+   public $current   =  0;
 
 //  methods
 
   // Public method
   
-  function DoubleMetaPhone($string) {
+  public function __construct($string) {
   	
    $this->primary   = "";
    $this->secondary = "";
@@ -975,7 +975,7 @@ class DoubleMetaPhone
   
   // Private methods
   
-  function StringAt($string, $start, $length, $list) {
+  public function StringAt($string, $start, $length, $list) {
     if (($start <0) || ($start >= strlen($string)))
       return 0;
 
@@ -986,11 +986,11 @@ class DoubleMetaPhone
     return 0;
   }
 
-  function IsVowel($string, $pos) {
+  public function IsVowel($string, $pos) {
     return preg_match("#[AEIOUY]#", substr($string, $pos, 1));
   }
 
-  function SlavoGermanic($string) {
+  public function SlavoGermanic($string) {
     return preg_match("#W|K|CZ|WITZ#", $string);     
   }
 } // end of class MetaPhone

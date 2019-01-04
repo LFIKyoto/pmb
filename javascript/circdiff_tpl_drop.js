@@ -1,7 +1,7 @@
 /* +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: circdiff_tpl_drop.js,v 1.1 2014-10-14 10:41:02 dgoron Exp $ */
+// $Id: circdiff_tpl_drop.js,v 1.2 2016-09-29 13:44:41 dgoron Exp $ */
 
 function circdiff_highlight(obj) {
 	obj.style.background="#DDD";
@@ -12,35 +12,17 @@ function circdiff_downlight(obj) {
 }
 
 function circdiffprint_circdiffprint(dragged,target){
-	
-	var circdiff_id = dragged.getAttribute("id_circdiffprint");
-	var circdiff_cible_id = target.getAttribute("id_circdiffprint");
-
-	var circdiff=target.parentNode;
-	circdiff.insertBefore(dragged,target);
-	
-	circdiff_downlight(target);
-	
-	recalc_recept();
-	update_orderprint(dragged,target);
+	element_drop(dragged,target,'circdiffprint');
 }
 
-function update_orderprint(source,cible){
-	var src_order =  source.getAttribute("order");
-	var target_order = cible.getAttribute("order");
-	var circdiff = source.parentNode;
-	
-	var index = 0;
-	var tab_circdiff = new Array();
-	for(var i=0;i<circdiff.childNodes.length;i++){
-		if(circdiff.childNodes[i].nodeType == 1){
-			circdiff.childNodes[i].setAttribute("order",index);
-			if(circdiff.childNodes[i].getAttribute("id_circdiff")){
-				tab_circdiff[index] = circdiff.childNodes[i].getAttribute("id_circdiff");
-			}
-			index++;
-		}
+function circdiffprint_get_tab_order_value(element, i) {
+	if(element.childNodes[i].getAttribute("id_circdiff")){
+		return element.childNodes[i].getAttribute("id_circdiff");
 	}
+	return "";
+}
+
+function circdiffprint_update_order_callback(source,tab_circdiff) {
 	document.getElementById('order_tpl').value = tab_circdiff.join(",");
 	var id_serialcirc = source.getAttribute("id_serialcirc");	
 	var url= "./ajax.php?module=edit&categ=serialcirc_diff&sub=up_order_circdiffprint&id_serialcirc="+id_serialcirc;	

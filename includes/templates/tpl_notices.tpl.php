@@ -2,19 +2,21 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: tpl_notices.tpl.php,v 1.3 2013-04-11 08:47:35 mbertin Exp $
+// $Id: tpl_notices.tpl.php,v 1.7 2017-11-24 13:36:48 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 global $abonnement_view,$abonnement_list,$abonnement_form;
 
+if(!isset($antivol_form)) $antivol_form = '';
+
 $abonnement_view = "
 <div id='abts_abonnement!!id_abonnement!!' class='notice-parent'>
-	<img src='./images/plus.gif' class='img_plus' name='imEx' id='abts_abonnement!!id_abonnement!!Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('abts_abonnement!!id_abonnement!!', true); return false;\" hspace='3'>
+	<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='abts_abonnement!!id_abonnement!!Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('abts_abonnement!!id_abonnement!!', true); return false;\" hspace='3'>
 	<span class='notice-heada'>
     	<small>
     		<span  class='statutnot1'  style='margin-right: 3px;'>
-    			<img src='./images/spacer.gif' width='10' height='10' />
+    			<img src='".get_url_icon('spacer.gif')."' width='10' height='10' />
     		</span>
     	</small>
     	<a href='!!view_id_abonnement!!'>!!abonnement_header!!</a>
@@ -58,8 +60,8 @@ $abonnement_view = "
 $abonnement_list ="
 <script type='text/javascript' src='./javascript/tablist.js'></script>
 <div class='form-contenu'>
-<a href='javascript:expandAll()'><img src='./images/expand_all.gif' border='0' id='expandall'></a>
-<a href='javascript:collapseAll()'><img src='./images/collapse_all.gif' border='0' id='collapseall'></a>
+<a href='javascript:expandAll()'><img src='".get_url_icon('expand_all.gif')."' border='0' id='expandall'></a>
+<a href='javascript:collapseAll()'><img src='".get_url_icon('collapse_all.gif')."' border='0' id='collapseall'></a>
 !!abonnement_list!!
 </div>
 <div class='row'>
@@ -188,7 +190,7 @@ $script1
 			</div>
 			<div class='row'>
 				<input type='hidden' name='date_debut' value='!!date_debut!!' />
-				<input class='bouton' type='button' name='date_debut_lib' value='!!date_debut_lib!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=form_abonnement&date_caller=!!date_debut!!&param1=date_debut&param2=date_debut_lib&auto_submit=NO&date_anterieure=YES', 'date_debut', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\"   />
+				<input class='bouton' type='button' name='date_debut_lib' value='!!date_debut_lib!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=form_abonnement&date_caller=!!date_debut!!&param1=date_debut&param2=date_debut_lib&auto_submit=NO&date_anterieure=YES', 'calendar')\"   />
 			</div>
 		</div>
 		<div class='colonne_suite'>
@@ -197,7 +199,7 @@ $script1
 			</div>
 			<div class='row'>
 				<input type='hidden' name='date_fin' value='!!date_fin!!' />
-				<input class='bouton' type='button' name='date_fin_lib' value='!!date_fin_lib!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=form_abonnement&date_caller=!!date_fin!!&param1=date_fin&param2=date_fin_lib&auto_submit=NO&date_anterieure=YES', 'date_fin', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\"   />
+				<input class='bouton' type='button' name='date_fin_lib' value='!!date_fin_lib!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=form_abonnement&date_caller=!!date_fin!!&param1=date_fin&param2=date_fin_lib&auto_submit=NO&date_anterieure=YES', 'calendar')\"   />
 			</div>
 		</div>
 		<div class='colonne2'>
@@ -205,10 +207,10 @@ $script1
 				<label for='fournisseur' class='etiquette'>".$msg["abonnements_fournisseur"]."</label>
 			</div>	
 			<div class='row'>
-				<input id='id_fou' id='id_fou' name='id_fou' value='!!id_fou!!' type='hidden'>
-				<input id='lib_fou' id='lib_fou' name='lib_fou' tabindex='1' value='!!lib_fou!!' class='saisie-30emr' onchange=\"openPopUp('./select.php?what=fournisseur&caller=form_abonnement&param1=id_fou&param2=lib_fou&id_bibli=0&deb_rech='+".pmb_escape()."(this.form.lib_fou.value), 'select_fournisseur', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes'); \" type='text'>
+				<input id='id_fou' name='id_fou' value='!!id_fou!!' type='hidden'>
+				<input id='lib_fou' name='lib_fou' tabindex='1' value='!!lib_fou!!' class='saisie-30emr' onchange=\"openPopUp('./select.php?what=fournisseur&caller=form_abonnement&param1=id_fou&param2=lib_fou&id_bibli=0&deb_rech='+".pmb_escape()."(this.form.lib_fou.value), 'selector'); \" type='text'>
 				<input type='button' name='fournisseur' class='bouton' value='...'  
-				onClick=\"openPopUp('./select.php?what=fournisseur&caller=form_abonnement&param1=id_fou&param2=lib_fou&id_bibli=0&deb_rech='+".pmb_escape()."(this.form.lib_fou.value), 'select_fournisseur', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes');\"   />
+				onClick=\"openPopUp('./select.php?what=fournisseur&caller=form_abonnement&param1=id_fou&param2=lib_fou&id_bibli=0&deb_rech='+".pmb_escape()."(this.form.lib_fou.value), 'selector');\"   />
 				<input type='button' tabindex='1' class='bouton' value='".$msg['raz']."' onclick=\"document.getElementById('id_fou').value='0';document.getElementById('lib_fou').value='';\" />
 			</div>
 		</div>

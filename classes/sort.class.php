@@ -2,14 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sort.class.php,v 1.42.4.2 2015-12-09 10:21:48 jpermanne Exp $
+// $Id: sort.class.php,v 1.58 2018-12-12 13:01:10 dgoron Exp $
 
-if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
-	die("no access");
+if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-require_once ($include_path . "/parser.inc.php");
-require_once ($include_path . "/templates/sort.tpl.php");
-require_once ($class_path . "/parametres_perso.class.php");
+require_once ($include_path.'/parser.inc.php');
+require_once ($include_path.'/templates/sort.tpl.php');
+require_once ($class_path.'/parametres_perso.class.php');
 
 /**
  * Classe d'abstraction d'acces aux données des tris stockés
@@ -17,14 +16,14 @@ require_once ($class_path . "/parametres_perso.class.php");
  */
 class dataSort {
 
-	var $typeData; //base ou session
-	var $sortName;
+	public $typeData; //base ou session
+	public $sortName;
 	
 	//pour le parcours des tris
-	var $tabParcours;
-	var $posParcours;
+	public $tabParcours;
+	public $posParcours;
 
-	function dataSort($sName,$tData) {
+	public function __construct($sName,$tData) {
 		$this->sortName = $sName;
 		$this->typeData = $tData;
 	}
@@ -32,7 +31,7 @@ class dataSort {
 	/**
 	 * Retourne un tableau avec le nom du tri et la construction du tri
 	 */
-	function recupTriParId($id) {
+	public function recupTriParId($id) {
 		switch($this->typeData) {
 			case 'base':
 				$result = pmb_mysql_query("SELECT nom_tri, tri_par FROM tris WHERE id_tri=" . $id);
@@ -44,8 +43,13 @@ class dataSort {
 					return null;
 				break;
 			case 'session':
-				$tab["nom_tri"] = "";
-				$tab["tri_par"] = $_SESSION["sort".$this->sortName.$id];
+				if(isset($_SESSION["sortname".$this->sortName.$id]) && $_SESSION["sortname".$this->sortName.$id]){
+					$tab["nom_tri"] = $_SESSION["sortname".$this->sortName.$id];
+					$tab["tri_par"] = $_SESSION["sort".$this->sortName.$id];
+				} else {
+					$tab["nom_tri"] = "";
+					$tab["tri_par"] = "";
+				}
 				return $tab;
 				break;
 		}
@@ -56,7 +60,7 @@ class dataSort {
 	 * Pour initialiser un parcours des tris
 	 * Retourne le nombre de tris
 	 */
-	function initParcoursTris($objSort) {
+	public function initParcoursTris($objSort) {
 		//on initialise la position du parcours
 		$this->posParcours = 0;
 		$this->nbResult=0;
@@ -99,7 +103,6 @@ class dataSort {
 					//on charge les tris dans un tableau
 					for($i=0; $i<$this->nbResult; $i++) {
 						$this->tabParcours[$i]["id_tri"] = $i;
-						
 						$this->tabParcours[$i]["nom_tri"] = $objSort->descriptionTri($_SESSION["sort".$this->sortName.$i]);
 						$this->tabParcours[$i]["tri_par"] = $_SESSION["sort".$this->sortName.$i];
 					}
@@ -113,15 +116,15 @@ class dataSort {
 	/**
 	 * Renvoi le tri suivant dans un parcours
 	 */
-	function parcoursTriSuivant() {
+	public function parcoursTriSuivant() {
 		switch($this->typeData) {
 			case 'base':
-				$result = $this->tabParcours[$this->posParcours];
+				$result = (isset($this->tabParcours[$this->posParcours]) ? $this->tabParcours[$this->posParcours] : '');
 				$this->posParcours++;
 				return $result;
 				break;
 			case 'session':
-				$result = $this->tabParcours[$this->posParcours];
+				$result = (isset($this->tabParcours[$this->posParcours]) ? $this->tabParcours[$this->posParcours] : '');
 				$this->posParcours++;
 				return $result;
 				break;
@@ -131,7 +134,7 @@ class dataSort {
 	/**
 	 * Enregistre un tri
 	 */
-	function enregistreTri($id,$nomTri,$desTri) {
+	public function enregistreTri($id,$nomTri,$desTri) {
 		global $msg;
 		global $charset;
 
@@ -176,7 +179,6 @@ class dataSort {
 				break;
 
 			case 'session':
-
 				//si nombre de tris enregistrés dans la session n'est pas null, parcours des variables de session pour l'existence tri et sauvegarde
 				if ($_SESSION["nb_sort".$this->sortName]<=0) {
 					$_SESSION["sort".$this->sortName."0"] = htmlentities($desTri,ENT_QUOTES,$charset);
@@ -204,7 +206,7 @@ class dataSort {
 	/**
 	 * Supprime un tri
 	 */
-	function supprimeTri($idTri) {
+	public function supprimeTri($idTri) {
 		switch($this->typeData) {
 			case 'base':
 				// on vérifie que le tri existe bien
@@ -217,10 +219,9 @@ class dataSort {
 				}
 				break;
 			case 'session':
-			
 				//on charge les tris dans un tableau sauf celui à supprimer
 				$posTab = 0;
-				for($i=0; $i<$_SESSION["nb_sort".$this->sortName]; $i++) {
+				for($i=0; $i<$_SESSION['nb_sort'.$this->sortName]; $i++) {
 					if ($i != $idTri) {
 						//ce n'est pas le tri a supprimer
 						//on le stocke dans le tableau
@@ -231,15 +232,14 @@ class dataSort {
 				
 				//on rempli les variables session sans l'element a supprimer
 				for($i=0; $i<$posTab; $i++) {
-					$_SESSION["sort".$this->sortName.$i] = $tabParcours[$i];
+					$_SESSION['sort'.$this->sortName.$i] = $tabParcours[$i];
 				}
-				$_SESSION["nb_sort".$this->sortName]--;
+				$_SESSION['nb_sort'.$this->sortName]--;
 				
 				//si il ne subsiste plus d'historique de tris, mise à null des variables de session
-				if ($_SESSION["nb_sort".$this->sortName]==0) {
-					$_SESSION["last_sort".$this->sortName]="";
-				} 
-				
+				if ($_SESSION['nb_sort'.$this->sortName]==0) {
+					$_SESSION['last_sort'.$this->sortName]="";
+				}
 				break;
 		}
 	}
@@ -254,17 +254,16 @@ class dataSort {
  * 
  */
 class sort {
-	//var $sort_name;
-	var $params;
-	var $error = false;
-	var $error_message = "";
-	var $table_tri_tempo = "tri_tempo"; //table temporaire à utiliser
-	var $table_primary_tri_tempo; //Clé primaire de la table temporaire à créer
-	var $limit; //limitation des enregistrements à utiliser dans la requête de tri pour le pager
-	var $champs_select; //champs éventuels à retourner dans la requête
-	var $table_select; //table éventuelle à retourner dans la requête
-	var $table_primary_key_select; //clé de la table éventuelle à retourner dans la requête
-	var $dSort; // objet d'acces aux informations 
+	public $params;
+	public $error = false;
+	public $error_message = "";
+	public $table_tri_tempo = "tri_tempo"; //table temporaire à utiliser
+	public $table_primary_tri_tempo; //Clé primaire de la table temporaire à créer
+	public $limit; //limitation des enregistrements à utiliser dans la requête de tri pour le pager
+	public $champs_select; //champs éventuels à retourner dans la requête
+	public $table_select; //table éventuelle à retourner dans la requête
+	public $table_primary_key_select; //clé de la table éventuelle à retourner dans la requête
+	public $dSort; // objet d'acces aux informations 
 	private static $nb_instance = 1;
 
 
@@ -272,7 +271,7 @@ class sort {
 	 * Applique le tri donné
 	 * @$sort_name nom du tri à appliquer
 	 */
-	function sort($sort_name, $accesTri) {
+	public function __construct($sort_name, $accesTri) {
 		if ($sort_name) {
 			$sname = $sort_name;
 		} else {
@@ -293,7 +292,7 @@ class sort {
 	/**
 	 * Affiche l'écran de choix des tris enregistrés
 	 */
-	function show_tris_form() {
+	public function show_tris_form() {
 		global $show_tris_form;
 		global $ligne_tableau_tris;
 		global $ligne_tableau_tris_etagere;
@@ -312,7 +311,6 @@ class sort {
 
 			//affichage des enregistrements de tris possibles
 			while ($result = $this->dSort->parcoursTriSuivant()) {
-				
 				//gestion du surlignage une ligne sur 2 
 				if ($parity % 2)
 					$pair_impair = "even";
@@ -341,7 +339,7 @@ class sort {
 				$callback="parent.document.getElementById('history').style.display='none';parent.window.getSort(0,''); return false;";
 				break;
 			default :
-				$callback="parent.document.getElementById('history').style.display='none';parent.location.href='./recall.php?current=".$_SESSION["CURRENT"]."&t=NOTI'; return false;";
+				$callback="parent.document.getElementById('history').style.display='none';parent.location.href='./recall.php?current=".$_SESSION["CURRENT"]."&t=NOTI&tri=-1'; return false;";
 				break;
 		}
 		$tris_form = str_replace("!!callback!!", $callback, $tris_form);
@@ -356,7 +354,7 @@ class sort {
 	/**
 	 * Affiche l'écran de sélection des criteres de tri
 	 */
-	function show_sel_form($id_tri) {
+	public function show_sel_form($id_tri=0) {
 		switch($this->dSort->typeData) {
 			case 'base':
 				return $this->show_sel_formAdmin($id_tri);
@@ -370,20 +368,20 @@ class sort {
 	/**
 	 * Fonction de calcul de la visibilité d'un critère de tri
 	 */
-	function visibility($field) {
+	public function visibility($field) {
 		$visibility=true;
-		if ($field["VAR"]) {
+		if (isset($field["VAR"]) && $field["VAR"]) {
 			for ($i=0; $i<count($field["VAR"]); $i++) {
 				$name=$field["VAR"][$i]["NAME"] ;
-				global $$name;
+				global ${$name};
 				if ($field["VAR"][$i]["VISIBILITY"]=="yes") {
 					$visibility=true;
 				} else {
 					$visibility=false;
 				}
-				if (isset($$name)) {
+				if (isset(${$name})) {
 					for ($j=0; $j<count($field["VAR"][$i]["VALUE"]); $j++) {
-						if ($$name == $field["VAR"][$i]["VALUE"][$j]["value"]) {
+						if (${$name} == $field["VAR"][$i]["VALUE"][$j]["value"]) {
 							if ($field["VAR"][$i]["VALUE"][$j]["VISIBILITY"]=="yes") {
 								$visibility=true;
 							} else {
@@ -400,7 +398,7 @@ class sort {
 	/**
 	 * Affiche l'écran de sélection des criteres de tri
 	 */
-	function show_sel_formAdmin($id_tri) {
+	public function show_sel_formAdmin($id_tri) {
 		global $show_sel_form;
 		global $charset;
 		global $msg;
@@ -455,7 +453,7 @@ class sort {
 							//la liste des champs sélectionnés
 							$liste_selectionnes .= "<option value='" . $tri_par1[0] . "_" . $tri_par1[1] . "_" . $tri_par1[2] . "'>";
 							//si champ perso, on a déjà le libellé
-							if($fields[$j]['SOURCE'] == "cp") $name = $fields[$j]['LABEL'];
+							if(isset($fields[$j]['SOURCE']) && $fields[$j]['SOURCE'] == "cp") $name = $fields[$j]['LABEL'];
 							else $name = $msg[$fields[$j]['NAME']]; 
 							$liste_selectionnes .= $debut . "" . htmlentities($name, ENT_QUOTES, $charset);
 							$liste_selectionnes .= "</option>\n";
@@ -473,7 +471,7 @@ class sort {
 					if ($fields[$j]["UTILISE"]!=true){
 						if ($this->visibility($fields[$j])) {
 							//si champ perso, on a déjà le libellé
-							if($fields[$j]['SOURCE'] == "cp") $name = $fields[$j]['LABEL'];
+							if(isset($fields[$j]['SOURCE']) && $fields[$j]['SOURCE'] == "cp") $name = $fields[$j]['LABEL'];
 							else $name = $msg[$fields[$j]['NAME']]; 
 							$liste_criteres .= "<option value='c_" . $fields[$j]["TYPE"] . "_" . $fields[$j]["ID"] . "'>" . htmlentities($name, ENT_QUOTES, $charset) . "</option>\n"; 
 						}
@@ -487,7 +485,7 @@ class sort {
 			for ($j = 0; $j < count($fields); $j++) {
 				if ($this->visibility($fields[$j])) {
 					//si champ perso, on a déjà le libellé
-					if($fields[$j]['SOURCE'] == "cp") $name = $fields[$j]['LABEL'];
+					if(isset($fields[$j]['SOURCE']) && $fields[$j]['SOURCE'] == "cp") $name = $fields[$j]['LABEL'];
 					else $name = $msg[$fields[$j]['NAME']]; 
 					$liste_criteres .= "<option value='c_" . $fields[$j]["TYPE"] . "_" . $fields[$j]["ID"] . "'>" . htmlentities($name, ENT_QUOTES, $charset) . "</option>\n";
 				}
@@ -505,7 +503,7 @@ class sort {
 		return $sel_form;
 	}
 
-    function show_sel_formOPAC() {
+    public function show_sel_formOPAC() {
     	global $show_sel_form;
 		global $liste_criteres_tri;
 		global $charset;
@@ -514,6 +512,7 @@ class sort {
 
 		$fields = $this->params["FIELD"];
 
+		$liste_criteres = '';
     	for ($i=0;$i<count($fields);$i++) {
     		if ($this->visibility($fields[$i])) {
     			$liste_criteres.="<option value='".$fields[$i]["ID"]."'>".htmlentities($msg[$fields[$i]["NAME"]],ENT_QUOTES,$charset)."</option>\n";
@@ -534,7 +533,7 @@ class sort {
 	/**
 	 * Enregistre les criteres de tri dans la table tris
 	 */
-	function sauvegarder($id_tri, $nom_tri, $tris_par) {
+	public function sauvegarder($id_tri, $nom_tri, $tris_par) {
 		global $msg;
 		global $charset;
 
@@ -547,14 +546,14 @@ class sort {
 	/**
 	 * Supprime un tri sauvegarder
 	 */
-	function supprimer($id_tri) {
+	public function supprimer($id_tri) {
 		return $this->dSort->supprimeTri($id_tri);
 	}
 	
 	/**
 	 * Retourne le texte de description du tri à partir de sa description
 	 */
-	function descriptionTri($desTri) {
+	public function descriptionTri($desTri) {
 		global $msg;
 
 		//récuperations des champs
@@ -570,7 +569,7 @@ class sort {
 
 			//on genere le texte descriptif à afficher
 			for ($i = 0; $i < count($fields); $i++) {
-				if ($fields[$i]["ID"] == $temp[2]) {
+				if (isset($temp[2]) && $fields[$i]["ID"] == $temp[2]) {
 					$trier_par_texte .= $msg[$fields[$i]["NAME"]] . " ";
 					if ($temp[0] == "c") {
 						$trier_par_texte .= $msg["tri_texte_croissant"];
@@ -591,7 +590,7 @@ class sort {
 	/**
 	 * Retourne le texte de description du tri a partir d'un id
 	 */
-	function descriptionTriParId($id_tri) {
+	public function descriptionTriParId($id_tri) {
 		global $msg,$charset;
 
 		if ($id_tri!="") {
@@ -613,12 +612,11 @@ class sort {
 				
 	}
 	
-	
 	/**
 	 * Applique le tri sélectionner
 	 * Renvoi la requete finale utilisant les criteres de tri
 	 */
-	function appliquer_tri($idTri_orTri, $selectTempo, $nomColonneIndex,$debLimit,$nbLimit) {
+	public function appliquer_tri($idTri_orTri, $selectTempo, $nomColonneIndex,$debLimit,$nbLimit) {
 		global $msg;
 
 		//récuperations des champs
@@ -630,7 +628,6 @@ class sort {
 		//pmb_mysql_query($cmd_table);
 		//$cmd_table = "CREATE TABLE " . $tableEnCours . " ENGINE=MyISAM (".$selectTempo.")";
 		$cmd_table = "CREATE TEMPORARY TABLE " . $tableEnCours . " ENGINE=MyISAM (".$selectTempo.")";
-		//echo $cmd_table."<br />";
 		pmb_mysql_query($cmd_table);
 		$cmd_table = "ALTER TABLE " . $tableEnCours . " ADD PRIMARY KEY (" . $nomColonneIndex.")";
 		pmb_mysql_query($cmd_table);	
@@ -644,7 +641,8 @@ class sort {
 		}
 		$trier_par = explode(",",$result['tri_par']);
 
-		//parcours des champs sur lesquels trier		
+		//parcours des champs sur lesquels trier
+		$orderby = '';
 		for ($j = 0; $j < count($trier_par); $j++) {
 			//découpage du champ (ex : c_num_2 (croissance ou décroissance (c ou d),
 			//type de champ (num,text,...) et id du champ)
@@ -654,7 +652,7 @@ class sort {
 			for ($i = 0; $i < count($fields); $i++) {
 
 				//afin de trouver ceux sur lesquels le tri s'applique
-				if ($fields[$i]["ID"] == $temp[2]) {
+				if (isset($temp[2]) && $fields[$i]["ID"] == $temp[2]) {
 					//on est sur un champ de tri
 
 					//suivant le type de champ
@@ -667,9 +665,9 @@ class sort {
 							$x = 0;
 							while ($x < pmb_mysql_num_fields($requete_fields)) {
 								$ligne = pmb_mysql_fetch_field($requete_fields, $x);
-								if ($ligne->name == $fields[$i]["TABLEFIELD"][0][value]) {
+								if ($ligne->name == $fields[$i]["TABLEFIELD"][0]['value']) {
 									//le champ est la donc on ajoute le champ au order
-									$orderby .= $this->ajoutOrder($fields[$i]["TABLEFIELD"][0][value],$temp[0]) . ",";
+									$orderby .= $this->ajoutOrder($fields[$i]["TABLEFIELD"][0]['value'],$temp[0]) . ",";
 									$x = pmb_mysql_num_fields($requete_fields);
 								}
 								$x++;
@@ -700,7 +698,7 @@ class sort {
 							}
 							
 							//on a aussi des champs persos maitenant...
-							if($fields[$i]['SOURCE'] == "cp"){
+							if(isset($fields[$i]['SOURCE']) && $fields[$i]['SOURCE'] == "cp"){
 								$requete = $this->generateRequeteCPUpdate($fields[$i], $tableEnCours, $nomChamp);
 								pmb_mysql_query($requete);
 							}
@@ -715,6 +713,10 @@ class sort {
 		if ($orderby!="") {
 			//on enleve la derniere virgule
 			$orderby = substr($orderby, 0, strlen($orderby) - 1);
+
+			//on va classer la table tempo suivant les criteres donnés
+			$requete = "ALTER TABLE " . $tableEnCours ." ORDER BY ". $orderby;
+			pmb_mysql_query($requete);
 		}
 
 		//on retourne la requete sur la table de tri
@@ -739,15 +741,117 @@ class sort {
 				if ($orderby!="") $requete .= " ORDER BY " . $orderby;
 			}
     	}
-
  		return $requete;
+	}
+	
+	public function appliquer_tri_from_tmp_table($idTri_orTri=0, $tableEnCours, $nomColonneIndex,$debLimit=0,$nbLimit=0){
+		//récuperations des champs
+		$fields = $this->params["FIELD"];
+		
+		//récupération de la description du tri
+		if (is_array($idTri_orTri)) {
+			$result = $idTri_orTri;
+		}
+		else {
+			$result = $this->dSort->recupTriParId($idTri_orTri);
+		}
+		$trier_par = explode(",",$result['tri_par']);
+		//parcours des champs sur lesquels trier
+		$orderby = '';
+		for ($j = 0; $j < count($trier_par); $j++) {
+			//découpage du champ (ex : c_num_2 (croissance ou décroissance (c ou d),
+			//type de champ (num,text,...) et id du champ)
+			$temp = explode("_", $trier_par[$j]);
+			//on parcours tous les champs de tri possible
+			for ($i = 0; $i < count($fields); $i++) {
+				//afin de trouver ceux sur lesquels le tri s'applique
+				if (isset($temp[2]) && $fields[$i]["ID"] == $temp[2]) {
+					//on est sur un champ de tri
+					//suivant le type de champ
+					switch ($fields[$i]["TYPEFIELD"]) {
+						case "internal":
+							//c'est un champ de la requete de base
+							$nomChamp = $fields[$i]["TABLEFIELD"][0]['value'];
+							//on verifie que le champ est dans la table temporaire
+							$requete_fields = pmb_mysql_query("SELECT * FROM " . $tableEnCours . " LIMIT 1");
+							$x = 0;
+							if ($requete_fields) {
+								while ($x < pmb_mysql_num_fields($requete_fields)) {
+									$ligne = pmb_mysql_fetch_field($requete_fields, $x);
+									if ($ligne->name == $nomChamp) {
+										//le champ est la donc on ajoute le champ au order
+										if($orderby!="") $orderby.=",";
+										$orderby .= $this->ajoutOrder($nomChamp,$temp[0]);
+										$x = pmb_mysql_num_fields($requete_fields);
+									}
+									$x++;
+								}
+								pmb_mysql_free_result($requete_fields);
+							}
+							break;
+						case "select":
+							//une requete union est nécéssaire
+							//le nom du champ on ajoute tb pour corriger le probleme des noms numeriques
+							$nomChamp = "tb".$fields[$i]["NAME"];
+							//on ajoute la colonne au orderby
+							if($orderby!="") $orderby.=",";
+							$orderby .= $this->ajoutOrder($nomChamp,$temp[0]);
+							//on ajoute la colonne à la table temporaire
+							$this->ajoutColonneTableTempo($tableEnCours, $nomChamp, $temp[1]);
 
+							//on parcours la ou les tables pour generer les updates
+							for ($x = 0; $x < count($fields[$i]["TABLE"]); $x++) {
+								$requete = $this->genereRequeteUpdate($fields[$i]["TABLE"][$x], $tableEnCours, $nomChamp, $nomColonneIndex);
+								pmb_mysql_query($requete);
+							}
+								
+							//on a aussi des champs persos maitenant...
+							if(isset($fields[$i]['SOURCE']) && $fields[$i]['SOURCE'] == "cp"){
+								$requete = $this->generateRequeteCPUpdate($fields[$i], $tableEnCours, $nomChamp);
+								pmb_mysql_query($requete);
+							}
+							break;
+	
+					} //switch
+				} //if ($fields[$i]["ID"] == $temp[2]) {
+			} //for ($i = 0; $i < count($fields); $i++) {
+		} //for ($j = 0; $j < count($trier_par); $j++) {
+	
+		if ($orderby!="") {
+			//on va classer la table tempo suivant les criteres donnés
+			$requete = "ALTER TABLE " . $tableEnCours ." ORDER BY ". $orderby;
+			pmb_mysql_query($requete);
+		}
+	
+		//on retourne la requete sur la table de tri
+		if ($this->table_select!="") {
+			//c'est une requete avec des informations extérieures
+			$requete = "SELECT " . $nomColonneIndex . "," . $this->champs_select;
+			$requete .= " FROM " . $this->table_tri_tempo . "," . $this->table_select;
+			$requete .= " WHERE " . $this->table_select . "." . $this->table_primary_key_select;
+			$requete .= "=" . $this->table_tri_tempo . "." . $nomColonneIndex;
+			$requete .= " GROUP BY " . $nomColonneIndex;
+			if ($orderby!="") $requete .= " ORDER BY " . $orderby;
+			if ($nbLimit>0) $requete .= " LIMIT " . $debLimit . "," . $nbLimit;
+		} else {
+			if ($nbLimit>0) {
+				//requete de base sur la table triée avec limit
+				$requete = "SELECT * FROM " . $tableEnCours;
+				if ($orderby!="") $requete .= " ORDER BY " . $orderby;
+				$requete .= " LIMIT " . $debLimit . "," . $nbLimit;
+			} else {
+				//requete de base sur la table triée
+				$requete = "SELECT " . $nomColonneIndex . " FROM " . $tableEnCours;
+				if ($orderby!="") $requete .= " ORDER BY " . $orderby;
+			}
+		}
+		return $requete;
 	}
 	
 	/**
 	 * Ajoute une colonne à la table temporaire du nom et du type précisé
 	 */
-	function ajoutColonneTableTempo($nomTable, $nomCol,$type) {
+	public function ajoutColonneTableTempo($nomTable, $nomCol,$type) {
 		
 		//d'abord on ajoute la colonne
 		$cmd_table = "ALTER TABLE " . $nomTable . " ADD " . $nomCol . " ";
@@ -765,13 +869,12 @@ class sort {
 		
 		//execution de l'ajout de la colonne
 		pmb_mysql_query($cmd_table);
-		
 	}
 	
 	/**
 	 * Renvoi le nom du champ et l'ordre de tri SQL
 	 */
-	function ajoutOrder($nomChp,$typeorder) {
+	public function ajoutOrder($nomChp,$typeorder) {
 		
 		$tmpTxt = $nomChp;
 		
@@ -791,10 +894,67 @@ class sort {
 	}
 	
 	/**
+	 * Genere les liaisons (jointures)
+	 */
+	protected static function genereRequeteLinks($desTable, $nomTable, $desLink, $params_reference, $params_referencekey) {
+		$extractinfo_sql = "";
+		if(isset($desLink["TABLE"][0]['ALIAS']) && $desLink["TABLE"][0]['ALIAS']){
+			$alias = $desLink["TABLE"][0]['ALIAS'];
+		}else{
+			$alias =$desLink["TABLE"][0]['value'];
+		}
+		if(isset($desLink["TYPE"])) {
+			switch ($desLink["TYPE"]) {
+				case "n1" :
+					if (isset($desLink["TABLEKEY"][0]['value']) && $desLink["TABLEKEY"][0]['value']) {
+						$extractinfo_sql .= " LEFT JOIN " . $desLink["TABLE"][0]['value'].($desLink["TABLE"][0]['value'] != $alias  ? " AS ".$alias : "");
+						$extractinfo_sql .= " ON " . $desTable["NAME"] . "." . $desLink["EXTERNALFIELD"][0]['value'];
+						$extractinfo_sql .= "=" . $alias . "." . $desLink["TABLEKEY"][0]['value'];
+					} else {
+						$extractinfo_sql .= " LEFT JOIN " . $desTable["NAME"];
+						$extractinfo_sql .= " ON " . $params_reference . "." . $params_referencekey;
+						$extractinfo_sql .= "=" . $desTable["NAME"] . "." . $desLink["EXTERNALFIELD"][0]['value'];
+					}
+					break;
+				case "1n" :
+					$extractinfo_sql .= " LEFT JOIN " . $desTable["NAME"];
+					$extractinfo_sql .= " ON (" . $desTable["NAME"] . "." . $desTable["TABLEKEY"][0]['value'];
+					$extractinfo_sql .= "=" . $params_reference . "." . $desLink["REFERENCEFIELD"][0]['value'] . ") ";
+					break;
+				case "nn" :
+					$extractinfo_sql .= " LEFT JOIN " . $desLink["TABLE"][0]['value'].($desLink["TABLE"][0]['value'] != $alias  ? " AS ".$alias : "");
+					$extractinfo_sql .= " ON (" . $nomTable . "." . $params_referencekey;
+					$extractinfo_sql .= "=" . $alias . "." . $desLink["REFERENCEFIELD"][0]['value'] . ") ";
+						
+					//Autres jointures
+					if(isset($desLink["LINK"])) {
+						for ($x = 0; $x <= count($desLink["LINK"]); $x++) {
+							$extractinfo_sql .= static::genereRequeteLinks($desTable, $desLink["TABLE"][0]['value'], $desLink["LINK"][$x], $desLink["TABLE"][0]['value'], $desLink["EXTERNALFIELD"][0]['value']);
+						}
+					} else {
+						if (isset($desLink["TABLEKEY"][0]['value']) && $desLink["TABLEKEY"][0]['value']) {
+							$extractinfo_sql .= " LEFT JOIN " . $desTable["NAME"];
+							$extractinfo_sql .= " ON (" . $alias . "." . $desLink["TABLEKEY"][0]['value'];
+							$extractinfo_sql .= "=" . $desTable["NAME"] . "." . $desLink["EXTERNALFIELD"][0]['value'] ." ".$desLink["LINKRESTRICT"][0]['value']. ") ";
+						} else {
+							$extractinfo_sql .= " LEFT JOIN " . $desTable["NAME"];
+							$extractinfo_sql .= " ON (" . $alias . "." . $desLink["EXTERNALFIELD"][0]['value'];
+							$extractinfo_sql .= "=" . $desTable["NAME"] . "." . $desTable["TABLEKEY"][0]['value'] . " ".$desLink["LINKRESTRICT"][0]['value'].") ";
+						
+						}
+					}
+					break;
+			}
+		}
+		return $extractinfo_sql;
+	}
+	
+	/**
 	 * Genere la requete select d'un element table
 	 */
-	function genereRequeteUpdate($desTable, $nomTable, $nomChp, $nomColonneTempo) {
-
+	public function genereRequeteUpdate($desTable, $nomTable, $nomChp, $nomColonneTempo) {
+		global $lang;
+		
 		$tables = $nomTable . "," .$this->params["REFERENCE"];
 		$groupby = "";
 		
@@ -806,53 +966,15 @@ class sort {
 		//
 		//On ajout les éventuelles liaisons
 		//
-		for ($x = 0; $x <= count($desTable["LINK"]); $x++) {
-			if($desTable["LINK"][$x]["TABLE"][0]['ALIAS']){
-				$alias = $desTable["LINK"][$x]["TABLE"][0]['ALIAS'];
-			}else{
-				$alias =$desTable["LINK"][$x]["TABLE"][0]['value'];
-			}
-			switch ($desTable["LINK"][$x]["TYPE"]) {
-				case "n1" :
-					if ($desTable["LINK"][$x]["TABLEKEY"][0]['value']) {
-						$extractinfo_sql .= " LEFT JOIN " . $desTable["LINK"][$x]["TABLE"][0]['value'].($desTable["LINK"][$x]["TABLE"][0]['value'] != $alias  ? " AS ".$alias : "");
-						$extractinfo_sql .= " ON " . $desTable["NAME"] . "." . $desTable["LINK"][$x]["EXTERNALFIELD"][0]['value'];
-						$extractinfo_sql .= "=" . $alias . "." . $desTable["LINK"][$x]["TABLEKEY"][0]['value'];
-					} else {
-						$extractinfo_sql .= " LEFT JOIN " . $desTable["NAME"];
-						$extractinfo_sql .= " ON " . $this->params["REFERENCE"] . "." . $this->params["REFERENCEKEY"];
-						$extractinfo_sql .= "=" . $desTable["NAME"] . "." . $desTable["LINK"][$x]["EXTERNALFIELD"][0]['value'];
-					}
-					break;
-				case "1n" :
-					$extractinfo_sql .= " LEFT JOIN " . $desTable["NAME"];
-					$extractinfo_sql .= " ON (" . $desTable["NAME"] . "." . $desTable["TABLEKEY"][0]['value'];
-					$extractinfo_sql .= "=" . $this->params["REFERENCE"] . "." . $desTable["LINK"][$x]["REFERENCEFIELD"][0]['value'] . ") ";
-					break;
-				case "nn" :
-					$extractinfo_sql .= " LEFT JOIN " . $desTable["LINK"][$x]["TABLE"][0]['value'].($desTable["LINK"][$x]["TABLE"][0]['value'] != $alias  ? " AS ".$alias : "");
-					$extractinfo_sql .= " ON (" . $nomTable . "." . $this->params["REFERENCEKEY"];
-					$extractinfo_sql .= "=" . $alias . "." . $desTable["LINK"][$x]["REFERENCEFIELD"][0]['value'] . ") ";
-					
-					if ($desTable["LINK"][$x]["TABLEKEY"][0]['value']) {
-						$extractinfo_sql .= " LEFT JOIN " . $desTable["NAME"];
-						$extractinfo_sql .= " ON (" . $alias . "." . $desTable["LINK"][$x]["TABLEKEY"][0]['value'];
-						$extractinfo_sql .= "=" . $desTable["NAME"] . "." . $desTable["LINK"][$x]["EXTERNALFIELD"][0]['value'] ." ".$desTable["LINK"][$x]["LINKRESTRICT"][0]['value']. ") ";
-					} else {
-						$extractinfo_sql .= " LEFT JOIN " . $desTable["NAME"];
-						$extractinfo_sql .= " ON (" . $alias . "." . $desTable["LINK"][$x]["EXTERNALFIELD"][0]['value'];
-						$extractinfo_sql .= "=" . $desTable["NAME"] . "." . $desTable["TABLEKEY"][0]['value'] . " ".$desTable["LINK"][$x]["LINKRESTRICT"][0]['value'].") ";
-						
-					}
-					
-					break;
+		if(isset($desTable["LINK"])) {
+			for ($x = 0; $x <= count($desTable["LINK"]); $x++) {
+				$extractinfo_sql .= static::genereRequeteLinks($desTable, $nomTable, $desTable["LINK"][$x], $this->params["REFERENCE"], $this->params["REFERENCEKEY"]);
 			}
 		}
 		
 		//si on a un filtre supplementaire
 		if (isset($desTable["FILTER"])) {
-			//un order by est précisé
-			$extractinfo_sql .= " WHERE " . $desTable["FILTER"][0][value];	
+			$extractinfo_sql .= " WHERE " . $desTable["FILTER"][0]['value'];	
 		}
 		
 		//On applique la restriction ORDER BY
@@ -860,6 +982,9 @@ class sort {
 		if (isset($desTable["ORDERBY"])) {
 			$extractinfo_sql .= " ORDER BY ".$this->ajoutIfNull($desTable["ORDERBY"][0]);		
 		}
+		
+		//remplacement de motif pour les catégories
+		$extractinfo_sql = str_replace('!!lang!!', $lang, $extractinfo_sql);
 		
 		//Si l'on a un group by on passe par une sous-requete pour que le groupement soit fait après le tri (Cas des Auteurs : C'est l'auteur principal qui doit être utilisé pour le tri)
 		if (isset($desTable["GROUPBY"])) {
@@ -902,11 +1027,6 @@ class sort {
 		$requete .= " AND ".$nomTable."_update.".$nomChp." IS NOT NULL";
 		$requete .= " AND ".$nomTable."_update.".$nomChp." != ''";
 		
-		//si on a un filtre supplementaire
-		/*if (isset($desTable["FILTER"])) {
-			//un order by est précisé
-			$requete .= " AND " . $desTable["FILTER"][0][value];	
-		}*/
 		return $requete;
 	}
 
@@ -914,11 +1034,11 @@ class sort {
 	/**
 	 * Ajoute le ifnull si précisé
 	 */
-	function ajoutIfNull($tableau) {
+	public function ajoutIfNull($tableau) {
 		if (isset($tableau["NULLVALUE"])) {
-			$tmpTxt = "IFNULL(" . $tableau[value] . ",'" . $tableau["NULLVALUE"] . "')"; 
+			$tmpTxt = "IFNULL(" . $tableau['value'] . ",'" . $tableau["NULLVALUE"] . "')"; 
 		} else {
-			$tmpTxt = $tableau[value];
+			$tmpTxt = $tableau['value'];
 		}
 	
 		return $tmpTxt;	
@@ -929,13 +1049,13 @@ class sort {
 	 * Parse les fichiers XML de parametres
 	 * il y a un fichier par type de tris
 	 */
-	function parse() {
+	public function parse() {
 		global $include_path;
-		global $$params_name;
 		global $charset;
 		global $dbh;
 		$params_name = $this->dSort->sortName . "_params";
-		$params = $$params_name;
+		global ${$params_name};
+		$params = ${$params_name};
 
 		if ($params) {
 			$this->params = $params;
@@ -955,7 +1075,7 @@ class sort {
 				//on le ferme
 				fclose($fp);
 				//on le parse pour le transformer en tableau
-				$params = _parser_text_no_function_($xml, "SORT");
+				$params = _parser_text_no_function_($xml, "SORT", $nomfichier);
 				//on le stocke dans la classe
 				$this->params = $params;
 			} else {
@@ -967,12 +1087,12 @@ class sort {
 		//tri perso
 		$p_perso = new parametres_perso("notices");
 		
-		foreach($p_perso->t_fields as $key => $t_field){	
-			$param=_parser_text_no_function_("<?xml version='1.0' encoding='".$charset."'?>\n".$t_field['OPTIONS'], "OPTIONS");
+		foreach($p_perso->t_fields as $key => $t_field){
+			$param=$t_field['OPTIONS'][0];
 			switch($t_field['TYPE']){
 				case "comment" :
 				case "text":
-					if($param['REPETABLE'][0]['value']){
+					if(isset($param['REPETABLE']) && $param['REPETABLE'][0]['value']){
 						$tablefield = "group_concat(".$p_perso->prefix."_custom_".$t_field['DATATYPE']." separator ' ')";
 						$groupby = "group by notice_id";
 					}else{
@@ -997,7 +1117,7 @@ class sort {
 					}else{
 						$tablefield = $p_perso->prefix."_custom_list_lib";
 						$groupby = "";
-					}				
+					}
 					$p_tri = array(
 						'SOURCE' => "cp",
 						'TYPEFIELD' => "select",
@@ -1070,7 +1190,7 @@ where ".$p_perso->prefix."_custom_values.".$p_perso->prefix."_custom_champ ='".$
 		}
 	}
 	
-	function generateRequeteCPUpdate($field, $nomTable, $nomChp){
+	public function generateRequeteCPUpdate($field, $nomTable, $nomChp){
 		$requete = "
 			SELECT 
 				".$this->params['REFERENCE'].'.'.$this->params['REFERENCEKEY'].", 

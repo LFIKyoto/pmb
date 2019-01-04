@@ -2,17 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: videojs.class.php,v 1.8 2015-04-17 08:10:27 apetithomme Exp $
+// $Id: videojs.class.php,v 1.10 2017-10-11 08:04:54 ngantier Exp $
 
 require_once($visionneuse_path."/classes/mimetypes/affichage.class.php");
 
 class videojs extends affichage {
-	var $doc;
-	var $driver;
-	var $toDisplay = array();
-	var $isDiarized = false;
+	public $doc;
+	public $driver;
+	public $toDisplay = array();
+	public $isDiarized = false;
 	
-	function videojs($doc=0){
+	public function __construct($doc=0){
 		if ($doc) {
 			$this->doc = $doc;
 			$this->driver = $doc->driver;
@@ -28,7 +28,7 @@ class videojs extends affichage {
 		}
 	}
 	
-	function fetchDisplay(){
+	public function fetchDisplay(){
 		global $visionneuse_path,$base_path, $opac_url_base;
 		//le titre
 		$this->toDisplay["titre"] = $this->doc->titre;
@@ -144,18 +144,17 @@ class videojs extends affichage {
 		return $ajaxCall;
 	}
 	
-	function render(){
+	public function render(){
 		global $visionneuse_path;
 		header("Content-Type: ".$this->doc->mimetype);
 		session_write_close();
 		print $this->driver->openCurrentDoc();
 	}
 	
-	function getEmbedVideo(){
+	public function getEmbedVideo(){
 		global $visionneuse_path;
 		
-		print "
-	<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN' 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
+		print "<!DOCTYPE html>
 	<html>
 		<head>
 			<link href='$visionneuse_path/classes/mimetypes/videojs/videoJS/video-js.css' rel='stylesheet'>
@@ -223,7 +222,7 @@ class videojs extends affichage {
 		}
 	}
 	
-	function getTabParam(){
+	public function getTabParam(){
 		$this->tabParam = array(
 				"size_x"=>array("type"=>"text","name"=>"size_x","value"=>$this->parameters['size_x'],"desc"=>"Largeur du lecteur"),
 				"size_y"=>array("type"=>"text","name"=>"size_y","value"=>$this->parameters['size_y'],"desc"=>"Hauteur du lecteur")
@@ -231,19 +230,19 @@ class videojs extends affichage {
 		return $this->tabParam;
 	}
 		
-	function getParamsPerso(){
+	public function getParamsPerso(){
 		$params = $this->driver->getClassParam('videojs');
 		$this->unserializeParams($params);
 	}
 	
-	function unserializeParams($paramsToUnserialized){
+	public function unserializeParams($paramsToUnserialized){
 		$this->parameters = unserialize($paramsToUnserialized);
 		if(!$this->parameters['size_x']) $this->parameters['size_x'] = "480";
 		if(!$this->parameters['size_y']) $this->parameters['size_y'] = "270";
 		return $this->parameters;
 	}
 	
-	function serializeParams($paramsToSerialized){
+	public function serializeParams($paramsToSerialized){
 		$this->parameters =$paramsToSerialized;
 		if(!$this->parameters['size_x']) $this->parameters['size_x'] = "480";
 		if(!$this->parameters['size_y']) $this->parameters['size_y'] = "270";

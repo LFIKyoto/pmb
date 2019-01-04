@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: classementGen.class.php,v 1.2 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: classementGen.class.php,v 1.6 2017-05-06 12:03:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,26 +12,28 @@ require_once($include_path."/templates/classementGen.tpl.php");
 class classementGen {
 
 	// propriétés
-	var $object_type = '';			//type de l'objet à classer (etagere, caddie, ...)
-	var $object_id = 0;				//identifiant de l'objet à classer
+	public $object_type = '';			//type de l'objet à classer (etagere, caddie, ...)
+	public $object_id = 0;				//identifiant de l'objet à classer
 
-	var $libelle = '';		//libellé du classement
+	public $libelle = '';		//libellé du classement
+	
+	public static $classementGenListe = array(); //Liste des classements existants, passé en static pour éviter de recalculer
 
 	// constructeur
-	function classementGen($object_type, $object_id = 0) {
+	public function __construct($object_type, $object_id = 0) {
 		
 		if (!isset($_SESSION["classementGen_types"][$object_type])){
 			classementGen::parseXml();
 		}		
 		$this->object_type = $object_type;
-		if($object_id){
-			$this->object_id = $object_id;
+		$this->object_id = $object_id+0;
+		if($this->object_id){
 			$this->getLibelle();
 		}
 	}
 	
 	//parsage du xml des classements
-	static function parseXml(){
+	public static function parseXml(){
 		global $include_path;
 		
 		$xmlFile=$include_path."/classementGen/classementGen.xml";
@@ -62,7 +64,7 @@ class classementGen {
 	}
 	
 	//récupération classement de l'objet
-	function getLibelle() {
+	public function getLibelle() {
 		global $dbh;
 
 		$res = pmb_mysql_query("SELECT ".$_SESSION["classementGen_types"][$this->object_type]["TABLE_CLASSEMENT_FIELD"]." 
@@ -74,7 +76,7 @@ class classementGen {
 	}
 	
 	//enregistrement classement de l'objet
-	function saveLibelle($value) {
+	public function saveLibelle($value) {
 		global $dbh;
 
 		$value=trim($value);
@@ -85,7 +87,7 @@ class classementGen {
 	}
 
 	//affichage sélecteur de classement
-	function show_selector($url_callback,$user_id) {
+	public function show_selector($url_callback,$user_id) {
 		global $msg,$classementGen_selector;
 		
 		$to_show = $classementGen_selector;
@@ -99,7 +101,7 @@ class classementGen {
 		return $to_show;
 	}
 	
-	function getClassementsSelectorContent($user_id,$classement_selected='') {
+	public function getClassementsSelectorContent($user_id,$classement_selected='') {
 		global $charset;
 		
 		$listeClassements = "";
@@ -121,37 +123,41 @@ class classementGen {
 	}
 	
 	//Liste des classements disponibles pour le type
-	function getClassementsList($user_id) {
+	public function getClassementsList($user_id) {
 		global $dbh;
+		
+		if(!isset(static::$classementGenListe[0])){
 
-		$arrayClassements = array();
-		$requete = "SELECT DISTINCT ".$_SESSION["classementGen_types"][$this->object_type]["TABLE_CLASSEMENT_FIELD"]." 
-				FROM ".$_SESSION["classementGen_types"][$this->object_type]["TABLE"]." 
+			$requete = "SELECT DISTINCT ".$_SESSION["classementGen_types"][$this->object_type]["TABLE_CLASSEMENT_FIELD"]."
+				FROM ".$_SESSION["classementGen_types"][$this->object_type]["TABLE"]."
 				WHERE ".$_SESSION["classementGen_types"][$this->object_type]["TABLE_CLASSEMENT_FIELD"]."<>'' ";
-		if($autorisation_where=trim($_SESSION["classementGen_types"][$this->object_type]["AUTORISATION_WHERE"])){
-			$requete.="AND ".str_replace("!!id!!",$user_id,$autorisation_where)." ";
-		}		
-		$requete.= "ORDER BY 1";
-
-		$res = pmb_mysql_query($requete,$dbh);
-		if(pmb_mysql_num_rows($res)){
-			while ($row = pmb_mysql_fetch_array($res)){
-				$arrayClassements[]=$row[0];
+			if($autorisation_where=trim($_SESSION["classementGen_types"][$this->object_type]["AUTORISATION_WHERE"])){
+				$requete.="AND ".str_replace("!!id!!",$user_id,$autorisation_where)." ";
+			}
+			$requete.= "ORDER BY 1";
+			
+			$res = pmb_mysql_query($requete,$dbh);
+			if(pmb_mysql_num_rows($res)){
+				while ($row = pmb_mysql_fetch_array($res)){
+					static::$classementGenListe[]=$row[0];
+				}
+			}else{
+				static::$classementGenListe=array();
 			}
 		}
 
-		return $arrayClassements;
+		return static::$classementGenListe;
 	}
 	
 	//Libellé "Aucun classement" par défaut
-	static function getDefaultLibelle(){
+	public static function getDefaultLibelle(){
 		global $msg;
 		
 		return $msg["classementGen_default_libelle"];
 	}
 	
 	//Affiche la liste des classements selon les droits de l'utilisateur
-	function show_list_classements($user_id,$baseLink){
+	public function show_list_classements($user_id,$baseLink){
 		global $msg,$charset;
 		global $classementGen_list_table_header, $classementGen_list_table_row, $classementGen_list_table_footer;
 		
@@ -184,7 +190,7 @@ class classementGen {
 	}
 	
 	//Formulaire d'édition du classement
-	function show_form_edit_classement($value,$baseLink){
+	public function show_form_edit_classement($value,$baseLink){
 		global $classementGen_form_edit,$msg,$charset;
 		
 		$value=stripslashes($value);
@@ -202,7 +208,7 @@ class classementGen {
 	}
 	
 	//Mise à jour du libellé du classement
-	function update_classement($oldClassement,$newClassement,$user_id){
+	public function update_classement($oldClassement,$newClassement,$user_id){
 		global $dbh;
 		
 		if($oldClassement!==$newClassement){
@@ -220,7 +226,7 @@ class classementGen {
 	}
 	
 	//Suppression du libellé du classement
-	function delete_classement($oldClassement,$user_id){
+	public function delete_classement($oldClassement,$user_id){
 		global $dbh;
 	
 		$requete = "UPDATE ".$_SESSION["classementGen_types"][$this->object_type]["TABLE"]."
@@ -233,6 +239,29 @@ class classementGen {
 		pmb_mysql_query($requete,$dbh);
 	
 		return;
+	}
+	
+	public function proceed($action) {
+		global $PMBuserid;
+		global $baseLink;
+		global $classement, $oldClassement, $newClassement;
+		
+		switch($action){
+			case "edit" :
+				print $this->show_form_edit_classement($classement,$baseLink);
+				break;
+			case "update" :
+				$this->update_classement($oldClassement,$newClassement,$PMBuserid);
+				print $this->show_list_classements($PMBuserid,$baseLink);
+				break;
+			case "delete" :
+				$this->delete_classement($oldClassement,$PMBuserid);
+				print $this->show_list_classements($PMBuserid,$baseLink);
+				break;
+			default :
+				print $this->show_list_classements($PMBuserid,$baseLink);
+				break;
+		}
 	}
  
 } //fin de déclaration du fichier classement.class.php

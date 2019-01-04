@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- $Id: catalog.xml,v 1.11 2014-03-25 14:31:34 jpermanne Exp $ -->
+<!-- $Id: catalog.xml,v 1.13 2017-09-18 10:05:21 jpermanne Exp $ -->
 <catalog>
 	<item name="Base PMB -&gt; pmb-XML MARC" path="equi" export="yes" exportname="UNIMARC PMB XML" visible="no"/>
 	<item name="Base PMB -&gt; UNIMARC Bretagne" path="pmb2bretagne" export="yes" exportname="UNIMARC Bretagne" visible="no"/>
@@ -27,5 +27,7 @@
 	<item name="pmb-XML MARC -&gt; EndNote" path="pmb2endnote" export="yes" exportname="EndNote"/>
 	<item name="pmb-XML MARC -&gt; MEDLINE" path="pmbxml2medline" export="yes" exportname="Medline"/>
 	<item name="pmb-XML MARC -&gt; RIS" path="pmbxml2ris" export="yes" exportname="RIS"/>
+	<item name="pmb-XML MARC -&gt; RIS ZOTERO" path="pmbxml2ris_zotero" export="yes" exportname="RIS ZOTERO"/>
 	<item name="Base PMB -&gt; XML RDF" path="pmb2xmlrdf" import="no" export="yes" exportname="XML RDF"/>
+	<item name="Base PMB -&gt; AscoDocPsy" path="pmb2ascodocpsy" import="no" export="yes" exportname="AscoDocPsy"/>
 </catalog>

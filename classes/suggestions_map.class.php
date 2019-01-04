@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions_map.class.php,v 1.22 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: suggestions_map.class.php,v 1.28 2017-11-23 16:00:31 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,22 +14,22 @@ require_once($class_path.'/suggestions_origine.class.php');
 class suggestions_map {
 	
 
-	var $allowedflow=array();			//Tableau des flux autorises
-	var $workflow=array();				//Tableau des flux definis
+	public $allowedflow=array();			//Tableau des flux autorises
+	public $workflow=array();				//Tableau des flux definis
 	
-	var $firststate="";					//Nom de l'état initial
-	var $laststate="";					//Nom de l'état final
+	public $firststate="";					//Nom de l'état initial
+	public $laststate="";					//Nom de l'état final
 
-	var $states=array();				//Tableau des etats possibles
-	var $transitions=array();			//Tableau des transitions possibles pour un etat
-	var $mail_on_transition=array();	//Tableau definissant si envoi de mail sur transition  
-	var $id_to_name=array();			//Tableau de correspondance id=>name pour les etats
+	public $states=array();				//Tableau des etats possibles
+	public $transitions=array();			//Tableau des transitions possibles pour un etat
+	public $mail_on_transition=array();	//Tableau definissant si envoi de mail sur transition  
+	public $id_to_name=array();			//Tableau de correspondance id=>name pour les etats
 	
-	var $has_unimarc = false;
+	public $has_unimarc = false;
 	 
 	 
 	//Constructeur.	 
-	function suggestions_map() {
+	public function __construct() {
 		
 		global $dbh;
 		global $include_path;
@@ -41,6 +41,8 @@ class suggestions_map {
 		$xml=file_get_contents($map_file,"r") or die("Can't find XML file $map_file");
 		if (file_exists($map_file_subst)) {
 			$xml_subst=file_get_contents($map_file_subst,"r");		
+		} else {
+			$xml_subst='';
 		}
 		
 		//Parse le fichier dans un tableau	
@@ -99,17 +101,20 @@ class suggestions_map {
 		//Tableaux des transitions possibles pour un etat et d'envoi des mails sur transitions
 		for($i=0;$i<count($this->workflow['FROMSTATE']);$i++) {
 			$to_transitions=array();
-			
-			for($j=0;$j<count($this->workflow['FROMSTATE'][$i]['TOSTATE']); $j++) {
-							
-				$to_transitions[] = $this->workflow['FROMSTATE'][$i]['TOSTATE'][$j]['NAME'];
-				$this->mail_on_transition[$this->workflow['FROMSTATE'][$i]['NAME']][$this->workflow['FROMSTATE'][$i]['TOSTATE'][$j]['NAME']]=$this->workflow['FROMSTATE'][$i]['TOSTATE'][$j]['MAIL'];
+			if(isset($this->workflow['FROMSTATE'][$i]['TOSTATE'])) {
+				for($j=0;$j<count($this->workflow['FROMSTATE'][$i]['TOSTATE']); $j++) {
+					$to_transitions[] = $this->workflow['FROMSTATE'][$i]['TOSTATE'][$j]['NAME'];
+					if(isset($this->workflow['FROMSTATE'][$i]['TOSTATE'][$j]['MAIL'])) {
+						$this->mail_on_transition[$this->workflow['FROMSTATE'][$i]['NAME']][$this->workflow['FROMSTATE'][$i]['TOSTATE'][$j]['NAME']]=$this->workflow['FROMSTATE'][$i]['TOSTATE'][$j]['MAIL'];
+					} else {
+						$this->mail_on_transition[$this->workflow['FROMSTATE'][$i]['NAME']][$this->workflow['FROMSTATE'][$i]['TOSTATE'][$j]['NAME']]='';
+					}
+				}
 			}
 			$this->transitions[$this->workflow['FROMSTATE'][$i]['NAME']]=$to_transitions;
 
 		}
-/*		
-		print 'transitions= <br /><pre>';
+/*		print 'transitions= <br /><pre>';
 		print_r ($this->transitions);
 		print '</pre><br /><br />';
 */
@@ -120,7 +125,7 @@ class suggestions_map {
 	
 	
 	//Verification du workflow
-	function workflowCheck() {
+	public function workflowCheck() {
 		
 		//Etat initial
 		$allowed_firststates=array();
@@ -143,46 +148,47 @@ class suggestions_map {
 		for($i=0;$i<count($allowed_transitions);$i++) {
 
 			$allowed_from_states[$i]=$allowed_transitions[$i]['NAME'];	
-			for ($j=0;$j<count($allowed_transitions[$i]['TOSTATE']);$j++) {
-				$allowed_to_states[$allowed_from_states[$i]][]=$allowed_transitions[$i]['TOSTATE'][$j]['NAME'];
+			if(isset($allowed_transitions[$i]['TOSTATE'])) {
+				for ($j=0;$j<count($allowed_transitions[$i]['TOSTATE']);$j++) {
+					$allowed_to_states[$allowed_from_states[$i]][]=$allowed_transitions[$i]['TOSTATE'][$j]['NAME'];
+				}
 			}
 			
 		}
 
 		for($i=0;$i<count($work_transitions);$i++) {
 
-			$work_from_states[$i]=$work_transitions[$i]['NAME'];	
-			for ($j=0;$j<count($work_transitions[$i]['TOSTATE']);$j++) {
-				$work_to_states[$work_from_states[$i]][]=$work_transitions[$i]['TOSTATE'][$j]['NAME'];
+			$work_from_states[$i]=$work_transitions[$i]['NAME'];
+			if(isset($work_transitions[$i]['TOSTATE'])) {
+				for ($j=0;$j<count($work_transitions[$i]['TOSTATE']);$j++) {
+					$work_to_states[$work_from_states[$i]][]=$work_transitions[$i]['TOSTATE'][$j]['NAME'];
+				}
 			}
 		}
 	
 		for($i=0;$i<count($work_from_states);$i++) {
-			
 			if(in_array($work_from_states[$i],$allowed_from_states)===false) return FALSE;
-					
-			for ($j=0;$j<count($work_to_states[$work_from_states[$i]]);$j++) {
-				
-				if (in_array($work_to_states[$work_from_states[$i]][$j], $allowed_to_states[$work_from_states[$i]])===false) {
-					return FALSE;
+			if(isset($work_to_states[$work_from_states[$i]])) {
+				for ($j=0;$j<count($work_to_states[$work_from_states[$i]]);$j++) {
+					if (in_array($work_to_states[$work_from_states[$i]][$j], $allowed_to_states[$work_from_states[$i]])===false) {
+						return FALSE;
+					}
 				}
-				
 			}
-			
 		}
 
 		return TRUE;
 	}
 	
 	//Retourne l'attribut ID associe à un etat
-	function getState_ID($state_name) {
+	public function getState_ID($state_name) {
 		
 		return $this->states[$state_name]['ID'];
 	}
 	
 	
 	//Retourne l'attribut ADD associe à un etat	
-	function getState_ADD($state_name) {
+	public function getState_ADD($state_name) {
 		
 		return $this->states[$state_name]['ADD'];
 		
@@ -190,49 +196,49 @@ class suggestions_map {
 
 
 	//Retourne l'attribut DISPLAY associe à un etat
-	function getState_DISPLAY($state_name) {
+	public function getState_DISPLAY($state_name) {
 		
 		return $this->states[$state_name]['DISPLAY'];
 	}
 
 
 	//Retourne l'attribut MERGE associe à un etat
-	function getState_MERGE($state_name) {
+	public function getState_MERGE($state_name) {
 		
 		return $this->states[$state_name]['MERGE'];
 	}
 
 
 	//Retourne l'attribut CATALOG associe à un etat
-	function getState_CATALOG($state_name) {
+	public function getState_CATALOG($state_name) {
 		
 		return $this->states[$state_name]['CATALOG'];
 	}
 
 
 	//Retourne l'attribut CATEG associe à un etat
-	function getState_CATEG($state_name) {
+	public function getState_CATEG($state_name) {
 		
 		return $this->states[$state_name]['CATEG'];
 	}
 
 
 	//Retourne l'attribut COMMENT associe à un etat
-	function getState_COMMENT($state_name) {
+	public function getState_COMMENT($state_name) {
 		
 		return $this->states[$state_name]['COMMENT'];
 	}
 
 
 	//Retourne le tableau des actions associees a un etat
-	function getState_ACTION($state_name) {
+	public function getState_ACTION($state_name) {
 		
 		return $this->states[$state_name]['ACTION'];
 	}
 
 
 	//Construction du sélecteur en fonction de la liste des états possibles
-	function getStateSelector() {
+	public function getStateSelector() {
 		
 		global $msg, $charset;
 			
@@ -253,7 +259,7 @@ class suggestions_map {
 	}
 
 	//Construction d'un sélecteur de statut en fonction de la liste des états possibles et de l'état en cours
-	function getHtmlStateSelect($current='ORDERED', $selected=array(0=>'ORDERED'), $sel_nochg=TRUE, $sel_attr=array()) {
+	public function getHtmlStateSelect($current='ORDERED', $selected=array(0=>'ORDERED'), $sel_nochg=TRUE, $sel_attr=array()) {
 		
 		global $msg, $charset;
 			
@@ -286,7 +292,7 @@ class suggestions_map {
 	
 	
 	//Retourne la liste des états possibles (valeur, libelle)
-	function getStateList($from='', $with_from=TRUE) {
+	public function getStateList($from='', $with_from=TRUE) {
 		
 		global $msg;
 		
@@ -315,7 +321,7 @@ class suggestions_map {
 
 
 	//Construction de la liste des boutons en fonction de l'état en cours
-	function getButtonList($state='-1') {
+	public function getButtonList($state='-1') {
 		
 		global $msg, $charset;
 		
@@ -357,7 +363,7 @@ class suggestions_map {
 	}
 
 
-	function getButtonList_MERGE() {
+	public function getButtonList_MERGE() {
 		
 		global $msg;
 		
@@ -365,7 +371,7 @@ class suggestions_map {
 	}
 	
 
-	function getButtonList_VALIDATED() {
+	public function getButtonList_VALIDATED() {
 		
 		global $msg;
 		
@@ -373,7 +379,7 @@ class suggestions_map {
 	}
 
 
-	function getButtonList_REJECTED() {
+	public function getButtonList_REJECTED() {
 		
 		global $msg;
 		
@@ -381,7 +387,7 @@ class suggestions_map {
 	}
 	
 
-	function getButtonList_CONFIRMED() {
+	public function getButtonList_CONFIRMED() {
 	
 		global $msg;
 	
@@ -389,7 +395,7 @@ class suggestions_map {
 	}
 	
 
-	function getButtonList_GIVENUP() {
+	public function getButtonList_GIVENUP() {
 		
 		global $msg;
 		
@@ -397,7 +403,7 @@ class suggestions_map {
 	}
 	
 
-	function getButtonList_ORDERED() {
+	public function getButtonList_ORDERED() {
 		
 		global $msg;
 		
@@ -405,7 +411,7 @@ class suggestions_map {
 	}
 	
 
-	function getButtonList_ESTIMATED() {
+	public function getButtonList_ESTIMATED() {
 		
 		global $msg;
 		
@@ -413,7 +419,7 @@ class suggestions_map {
 	}
 
 
-	function getButtonList_RECEIVED() {
+	public function getButtonList_RECEIVED() {
 		
 		global $msg;
 		
@@ -421,7 +427,7 @@ class suggestions_map {
 	}
 	
 
-	function getButtonList_FILED() {
+	public function getButtonList_FILED() {
 		
 		global $msg;
 		
@@ -429,7 +435,7 @@ class suggestions_map {
 	}
 
 	
-	function getButtonList_TODO($state='-1') {
+	public function getButtonList_TODO($state='-1') {
 		
 		global $msg;
 		
@@ -454,12 +460,12 @@ class suggestions_map {
 	}	
 
 
-	function getCategModifier($state='-1', $num_categ='-1', $nb_per_page) {
+	public function getCategModifier($state='-1', $num_categ='-1', $nb_per_page) {
 		
 		global $msg, $charset;
 		
 		$selector = "<label class='etiquette' >".htmlentities($msg['acquisition_sug_sel_categ'],ENT_QUOTES, $charset)."</label>&nbsp;"; 
-		$selector.= "<select class='saisie-25em' id='to_categ' name='to_categ' onChange=\"chk_CATEG(); \" />";
+		$selector.= "<select class='saisie-25em' id='to_categ' name='to_categ' onChange=\"chk_CATEG(); \">";
 		$selector.= "<option value= '0'>".htmlentities($msg['acquisition_sug_sel_no_categ'], ENT_QUOTES, $charset)."</option>";
 		$tab_categ = suggestions_categ::getCategList();
 		foreach ($tab_categ as $id_categ=>$lib_categ) {
@@ -497,7 +503,7 @@ class suggestions_map {
 	}	
 
 
-	function getButtonList_DELETED($state='-1') {
+	public function getButtonList_DELETED($state='-1') {
 		
 		global $msg;
 
@@ -523,7 +529,7 @@ class suggestions_map {
 
 
 	//Retourne le bouton supprimer dans le formulaire de modification
-	function getButton_DELETED($state,$id_bibli,$id_sug) {
+	public function getButton_DELETED($state,$id_bibli,$id_sug) {
 		
 		global $msg;
 
@@ -551,7 +557,7 @@ class suggestions_map {
 
 
 	//Retourne le bouton cataloguer dans le formulaire de modification
-	function getButton_CATALOG($state,$id_bibli,$id_sug) {
+	public function getButton_CATALOG($state,$id_bibli,$id_sug) {
 		
 		global $msg,$charset;
 
@@ -570,7 +576,7 @@ class suggestions_map {
 	
 	
 	//Retourne un masque pour tenir compte des statuts archives 
-	function getMask_FILED() {
+	public function getMask_FILED() {
 		
 		$mask=(int)($this->states['FILED']['ID']);
 		return $mask;
@@ -578,7 +584,7 @@ class suggestions_map {
 
 
 	//Retourne le commentaire Texte associe a un etat
-	function getTextComment($state) {
+	public function getTextComment($state) {
 		
 		global $msg,$charset;
 		
@@ -590,7 +596,7 @@ class suggestions_map {
 	}
 	
 	//Retourne le commentaire Html associe a un etat
-	function getHtmlComment($state) {
+	public function getHtmlComment($state) {
 		
 		global $msg,$charset;
 		
@@ -604,13 +610,13 @@ class suggestions_map {
 
 
 	//Retourne le commentaire PDF associe a un etat
-	function getPdfComment($state) {
+	public function getPdfComment($state) {
 		
 		global $msg,$charset;
 		
 		$mask = $this->getMask_FILED();
 		$disp_state = ($state & ~$mask);
-		$comment = $msg[$this->getState_COMMENT($this->id_to_name[$disp_state])];
+		$comment = htmlentities($msg[$this->getState_COMMENT($this->id_to_name[$disp_state])], ENT_QUOTES, $charset);
 		if (($state & $mask) == $mask) $comment.= "\n".$msg['acquisition_sug_arc'];
 		
 		return $comment;
@@ -618,7 +624,7 @@ class suggestions_map {
 
 
 	//Construction de la liste des boutons en fonction de l'état en cours
-	function getScriptList($state='-1', $num_categ='-1',$nb_per_page) {
+	public function getScriptList($state='-1', $num_categ='-1',$nb_per_page) {
 		
 		global $msg, $charset;
 		
@@ -637,7 +643,7 @@ class suggestions_map {
 			$state_name=$this->id_to_name[$state];
 			$tostates=$this->transitions[$state_name];
 			
-			if ($this->getState_MERGE[$state_name]!='NO') {
+			if ($this->getState_MERGE($state_name)!='NO') {
 				$script_list.= $this->getScriptList_MERGE($num_categ, $nb_per_page);
 			}
 			
@@ -651,7 +657,7 @@ class suggestions_map {
 	}
 
 
-	function getScriptList_MERGE($num_categ='-1',$nb_per_page) {
+	public function getScriptList_MERGE($num_categ='-1',$nb_per_page) {
 		
 		global $msg;
 		
@@ -672,7 +678,7 @@ class suggestions_map {
 	}
 	
 
-	function getScriptList_VALIDATED($num_categ='-1',$nb_per_page) {
+	public function getScriptList_VALIDATED($num_categ='-1',$nb_per_page) {
 		
 		global $msg;
 		
@@ -693,7 +699,7 @@ class suggestions_map {
 	}
 
 
-	function getScriptList_REJECTED($num_categ='-1',$nb_per_page) {
+	public function getScriptList_REJECTED($num_categ='-1',$nb_per_page) {
 		
 		global $msg;
 
@@ -714,7 +720,7 @@ class suggestions_map {
 	}
 	
 
-	function getScriptList_CONFIRMED($num_categ='-1',$nb_per_page) {
+	public function getScriptList_CONFIRMED($num_categ='-1',$nb_per_page) {
 		
 		global $msg;
 		
@@ -735,7 +741,7 @@ class suggestions_map {
 	}
 	
 
-	function getScriptList_GIVENUP($num_categ='-1',$nb_per_page) {
+	public function getScriptList_GIVENUP($num_categ='-1',$nb_per_page) {
 		
 		global $msg;
 		
@@ -756,14 +762,12 @@ class suggestions_map {
 	}
 	
 
-	function getScriptList_ORDERED($num_categ='-1',$nb_per_page) {
-		
+	public function getScriptList_ORDERED($num_categ='-1',$nb_per_page) {		
 		global $msg;
 		global $acquisition_sugg_to_cde;
 		
-		if ($acquisition_sugg_to_cde) {
-					
-			$script.="
+		if ($acquisition_sugg_to_cde) {					
+			return "
 				//Commande les éléments cochés
 				function chk_ORDERED() {
 					if(!verifChk(1)) return false;
@@ -774,11 +778,9 @@ class suggestions_map {
 						return true;	
 					}
 					return false;
-				}";
-	
-		} else {			
-				
-			$script.="
+				}";	
+		} else {				
+			return "
 				//Commande les éléments cochés
 				function chk_ORDERED() {
 					if(!verifChk(1)) return false;
@@ -790,20 +792,16 @@ class suggestions_map {
 					}
 					return false;
 				}";
-		}
-
-		return $script;		
+		}	
 	}
 	
 
-	function getScriptList_ESTIMATED($num_categ='-1',$nb_per_page) {
-		
+	public function getScriptList_ESTIMATED($num_categ='-1',$nb_per_page) {		
 		global $msg;
 		global $acquisition_sugg_to_cde;
 		
-		if ($acquisition_sugg_to_cde) {
-					
-			$script.="
+		if ($acquisition_sugg_to_cde) {					
+			return "
 				//Devise les éléments cochés
 				function chk_ESTIMATED() {
 					if(!verifChk(1)) return false;
@@ -814,11 +812,9 @@ class suggestions_map {
 						return true;	
 					}
 					return false;
-				}";
-	
-		} else {			
-				
-			$script.="
+				}";	
+		} else {				
+			return "
 				//Devise les éléments cochés
 				function chk_ESTIMATED() {
 					if(!verifChk(1)) return false;
@@ -831,12 +827,10 @@ class suggestions_map {
 					return false;
 				}";
 		}
-
-		return $script;		
 	}
 	
 
-	function getScriptList_RECEIVED($num_categ='-1',$nb_per_page) {
+	public function getScriptList_RECEIVED($num_categ='-1',$nb_per_page) {
 		
 		global $msg;
 		
@@ -857,7 +851,7 @@ class suggestions_map {
 	}
 	
 
-	function getScriptList_FILED($num_categ='-1',$nb_per_page) {
+	public function getScriptList_FILED($num_categ='-1',$nb_per_page) {
 		
 		global $msg;
 
@@ -878,7 +872,7 @@ class suggestions_map {
 	}
 
 	
-	function getScriptList_TODO($num_categ='-1',$nb_per_page) {
+	public function getScriptList_TODO($num_categ='-1',$nb_per_page) {
 		
 		global $msg;
 
@@ -899,7 +893,7 @@ class suggestions_map {
 	}	
 
 
-	function getScriptList_DELETED() {
+	public function getScriptList_DELETED() {
 		
 		global $msg;
 		
@@ -921,7 +915,7 @@ class suggestions_map {
 
 
 	//Effectue une transition 
-	function doTransition($toname,$chk,$force=FALSE){
+	public function doTransition($toname,$chk,$force=FALSE){
 		
 		global $acquisition_email_sugg;
 		
@@ -999,7 +993,7 @@ class suggestions_map {
 	
 	
 	//Change la categorie pour un tableau de suggestions
-	function changeCateg($chk, $to_categ) {
+	public function changeCateg($chk, $to_categ) {
 		
 		foreach($chk as $key=>$id_sug){
 			
@@ -1016,14 +1010,14 @@ class suggestions_map {
 
 
 	//Retourne l'id de l'etat de depart	
-	function getFirstStateId() {
+	public function getFirstStateId() {
 
 		return $this->getState_ID($this->firststate);
 	}
 
 
 	//Retourne le nom de l'etat a partir de l'id
-	function getStateNameFromId($state_id) {
+	public function getStateNameFromId($state_id) {
 
 		$mask = $this->getMask_FILED();
 		if (($state_id & $mask)==$mask ) $state_id=$mask;
@@ -1033,7 +1027,7 @@ class suggestions_map {
 
 
 	//Fonction d'envoi de mail  
-	function sendMail($sug) {
+	public function sendMail($sug) {
 		
 		global $dbh, $msg, $charset;
 		global $biblio_name,$biblio_email,$biblio_phone;
@@ -1042,6 +1036,7 @@ class suggestions_map {
 		global $acquisition_mel_aba_obj, $acquisition_mel_aba_cor;
 		global $acquisition_mel_cde_obj, $acquisition_mel_cde_cor;
 		global $acquisition_mel_rec_obj, $acquisition_mel_rec_cor;
+		global $pmb_mail_html_format;
 		
 		$mask = $this->getMask_FILED();
 		
@@ -1083,6 +1078,10 @@ class suggestions_map {
 		if($sug->prix) $corps.= $msg['acquisition_sug_pri']." :\t ".$sug->prix."\n";
 		if($sug->commentaires) $corps.= $msg['acquisition_sug_com']." :\t ".$sug->commentaires."\n";
 		$corps.= "\n\n";
+		
+		if ($pmb_mail_html_format) {
+			$corps = str_replace("\n","<br />",$corps);
+		}
 		
 		$corps = str_replace('!!date!!', formatdate($sug->date_creation), $corps);
 		

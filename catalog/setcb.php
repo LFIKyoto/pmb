@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: setcb.php,v 1.18 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: setcb.php,v 1.22 2017-10-19 14:21:11 ngantier Exp $
 // popup de saisie d'un code barre
 
 require_once ("../includes/error_report.inc.php") ;
@@ -26,6 +26,9 @@ include("$include_path/misc.inc.php");
 include("$include_path/isbn.inc.php");
 include("$class_path/XMLlist.class.php");
 
+$current = current_page();
+$current_module=str_replace(".php","",$current);
+
 if(!checkUser('PhpMyBibli')) {
 	// localisation (fichier XML) (valeur par défaut)
 	$messages = new XMLlist("$include_path/messages/$lang.xml", 0);
@@ -36,13 +39,13 @@ if(!checkUser('PhpMyBibli')) {
 	error_message($msg[11], $msg[12], 1);
 	print '</body></html>';
 	exit;
-	}
+}
 
 
 if(SESSlang) {
 	$lang=SESSlang;
 	$helpdir = $lang;
-	}
+}
 
 // localisation (fichier XML)
 $messages = new XMLlist("$include_path/messages/$lang.xml", 0);
@@ -53,55 +56,57 @@ require("$include_path/templates/common.tpl.php");
 
 header ("Content-Type: text/html; charset=".$charset);
 
-print "
-<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN'
- 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
-<html xmlns='http://www.w3.org/1999/xhtml' lang='$msg[1002]' charset='".$charset."'>
+print "<!DOCTYPE html>
+<html>
+<head>
+	<meta charset=\"".$charset."\" />
 	<meta http-equiv='Pragma' content='no-cache'>
-		<meta http-equiv='Cache-Control' content='no-cache'>";
+	<meta http-equiv='Cache-Control' content='no-cache'>";
 print link_styles($stylesheet) ;
 print "	<title>$msg[4014]</title></head><body>";
 	
-if (!$formulaire_appelant) $formulaire_appelant="notice" ;
-if (!$objet_appelant) $objet_appelant="f_cb" ;
+if (!isset($formulaire_appelant) || !$formulaire_appelant) $formulaire_appelant="notice" ;
+if (!isset($objet_appelant) || !$objet_appelant) $objet_appelant="f_cb" ;
+if(!isset($bulletin)) $bulletin = '';
 
+$alerte_code_double = 0;
 // traitement de la soumission
-if ($suite) { // un CB a été soumis
+if (isset($suite) && $suite) { // un CB a été soumis
 	if ($cb) {
 		if(isEAN($cb)) {
 			// la saisie est un EAN -> on tente de le formater en ISBN
 			$code = EANtoISBN($cb);
 			// si échec, on prend l'EAN comme il vient
 			if(!$code) $code = $cb;
+		} else {
+			if(isISBN($cb)) {
+				// si la saisie est un ISBN
+				$code = formatISBN($cb,13);
+				// si échec, ISBN erroné on le prend sous cette forme
+				if(!$code) $code = $cb;
 			} else {
-				if(isISBN($cb)) {
-					// si la saisie est un ISBN
-					$code = formatISBN($cb,13);
-					// si échec, ISBN erroné on le prend sous cette forme
-					if(!$code) $code = $cb;
-					} else {
-						// ce n'est rien de tout ça, on prend la saisie telle quelle
-						$code = $cb;
-						}
-				}
-		$code_temp = $code;
+				// ce n'est rien de tout ça, on prend la saisie telle quelle
+				$code = $cb;
+			}
 		}
+		$code_temp = $code;
+	}
 	if ($code_temp) {
 		if ($bulletin) {
 			if ($notice_id) $and_clause = " and bulletin_id!='".$notice_id."'" ;
 				else $and_clause = "" ;
 			$rqt_verif_code = "select count(1) from bulletins where bulletin_cb='".$code_temp."'".$and_clause ;
-			} else {
-				if ($notice_id) $and_clause = " and notice_id!='".$notice_id."'" ;
-					else $and_clause = "" ;
-				$rqt_verif_code = "select count(1) from notices where code ='".$code_temp."'".$and_clause ;
-				}
+		} else {
+			if ($notice_id) $and_clause = " and notice_id!='".$notice_id."'" ;
+				else $and_clause = "" ;
+			$rqt_verif_code = "select count(1) from notices where code ='".$code_temp."'".$and_clause ;
+		}
 		$res_verif_code = pmb_mysql_query($rqt_verif_code, $dbh);
 		$nbr_verif_code = pmb_mysql_result($res_verif_code, 0, 0);
 		if ($nbr_verif_code > 0) $alerte_code_double = 1 ;
 			else $alerte_code_double = 0 ;
-		}
-	} 
+	}
+} 
 
 if ($alerte_code_double) {
 	?>
@@ -112,7 +117,7 @@ if ($alerte_code_double) {
 				}
 			</script>
 		<?php
-	} elseif ($suite) {
+	} elseif (isset($suite) && $suite) {
 		?>
 			<script type="text/javascript">
 			window.opener.document.forms['<?php echo $formulaire_appelant; ?>'].elements['<?php echo $objet_appelant; ?>'].value = '<?php echo $code_temp; ?>';
@@ -123,8 +128,8 @@ if ($alerte_code_double) {
 			
 
 ?>
-<div align='center'>
-	<form class='form-$current_module' name='setcb' action='./setcb.php' >
+<div class='center'>
+	<form class='form-catalog' name='setcb' action='./setcb.php' >
 		<small><?php echo $msg[4056]; ?></small><br />
 		<input type='text' name='cb' value=''>
 		<input type='hidden' name='notice_id' value='<?php echo $notice_id; ?>'>

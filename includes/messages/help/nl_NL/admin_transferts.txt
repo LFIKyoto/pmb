@@ -1,4 +1,4 @@
-<h1>Transferts</h1>
+<h2>Transferts</h2>
 <p>Vous trouverez ici les options pour param&eacute;trer les transferts. </p>
 <p>
 <b>G&eacute;n&eacute;ral</b> Les param&egrave;tres g&eacute;n&eacute;raux

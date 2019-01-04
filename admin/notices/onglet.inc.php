@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onglet.inc.php,v 1.2 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: onglet.inc.php,v 1.5 2018-10-12 11:59:35 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+require_once($class_path."/list/configuration/notices/list_configuration_notices_onglet_ui.class.php");
 
 // gestion des codes statut exemplaires
 ?>
@@ -22,31 +24,7 @@ function test_form(form)
 
 <?php
 function show_onglet() {
-	global $msg,$dbh;
-	global $charset ;
-
-	print "<table>
-	<tr>
-		<th>".$msg['admin_noti_onglet_name']."</th>
-	</tr>";
-
-	// affichage du tableau des statuts
-	$requete = "SELECT id_onglet, onglet_name FROM notice_onglet ORDER BY onglet_name ";
-	$res = pmb_mysql_query($requete, $dbh);
-	$nbr = pmb_mysql_num_rows($res);
-
-	$parity=1;
-	for($i=0;$i<$nbr;$i++) {
-		$row=pmb_mysql_fetch_object($res);
-		if ($parity % 2) $pair_impair = "even";else $pair_impair = "odd";
-		$parity += 1;
-		$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./admin.php?categ=notices&sub=onglet&action=modif&id=$row->id_onglet';\" ";
-        	
-		print "<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td>".htmlentities($row->onglet_name,ENT_QUOTES, $charset)."</td>";
-		print "</tr>";
-	}
-	print "</table>
-		<input class='bouton' type='button' value=' $msg[admin_noti_onglet_ajout] ' onClick=\"document.location='./admin.php?categ=notices&sub=onglet&action=add'\" />";
+	print list_configuration_notices_onglet_ui::get_instance()->get_display_list();
 }
 
 function onglet_form($nom="", $id=0) {
@@ -57,8 +35,8 @@ function onglet_form($nom="", $id=0) {
 
 	$admin_onglet_form = str_replace('!!id!!', $id, $admin_onglet_form);
 
-	if(!$id) $admin_onglet_form = str_replace('!!form_title!!', $msg[admin_noti_onglet_ajout], $admin_onglet_form);
-	else $admin_onglet_form = str_replace('!!form_title!!', $msg[admin_noti_onglet_modification], $admin_onglet_form);
+	if(!$id) $admin_onglet_form = str_replace('!!form_title!!', $msg['admin_noti_onglet_ajout'], $admin_onglet_form);
+	else $admin_onglet_form = str_replace('!!form_title!!', $msg['admin_noti_onglet_modification'], $admin_onglet_form);
 
 	$admin_onglet_form = str_replace('!!nom!!', htmlentities($nom,ENT_QUOTES, $charset), $admin_onglet_form);
 	
@@ -106,8 +84,13 @@ switch($action) {
 		break;
 	case 'del':
 		if ($id) {			
+
+			$req="UPDATE authperso SET authperso_notice_onglet_num=0 where authperso_notice_onglet_num=".$id;
+			pmb_mysql_query($req, $dbh);
+				
 			$requete = "DELETE FROM notice_onglet WHERE id_onglet='$id' ";
 			$res = pmb_mysql_query($requete, $dbh);
+			
 			$requete = "OPTIMIZE TABLE origine_notice ";
 			$res = pmb_mysql_query($requete, $dbh);
 			show_onglet();

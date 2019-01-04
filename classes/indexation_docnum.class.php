@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: indexation_docnum.class.php,v 1.30 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: indexation_docnum.class.php,v 1.36 2018-11-28 15:45:28 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,30 +15,33 @@ require_once("$base_path/catalog/explnum/index_docnum/index_bnf.class.php");
 require_once("$base_path/catalog/explnum/index_docnum/index_mso.class.php");
 require_once("$base_path/catalog/explnum/index_docnum/index_epub.class.php");
 require_once("$class_path/curl.class.php");
-require_once("$class_path/upload_folder.class.php");
+require_once("$class_path/explnum.class.php");
 require_once("$include_path/explnum.inc.php");
+require_once($class_path."/sphinx/sphinx_explnums_indexer.class.php");
 
 /**
  * Classe de gestion de l'indexation des documents numériques
  */
 class indexation_docnum {
 	
-	var $id_explnum;
-	var $fichier='';
-	var $file_content='';
-	var $file_url='';
-	var $mimetype='';
-	var $explnum_nomfichier='';
-	var $ext='';
-	var $os='';
-	var $class_associee='';
-	var $texte='';
-	var $vignette='';
+	public $id_explnum;
+	public $fichier='';
+	public $file_content='';
+	public $file_url='';
+	public $mimetype='';
+	public $explnum_nomfichier='';
+	public $ext='';
+	public $os='';
+	public $class_associee='';
+	public $texte='';
+	public $vignette='';
+	private static $sphinx_indexer;
+		
 	
 	/**
 	 * Constructeur
 	 */
-	function indexation_docnum($id, $texte=''){
+	function __construct($id, $texte=''){
 		$this->id_explnum = $id;
 		if(!$texte){
 			$this->fetch_data();
@@ -57,37 +60,18 @@ class indexation_docnum {
 	function fetch_data(){
 		global $dbh;
 		
-		$rqt_expl = "select explnum_mimetype, explnum_nomfichier, explnum_extfichier, explnum_data, explnum_url, concat(repertoire_path,explnum_path) as path, explnum_repertoire from explnum left join upload_repertoire on repertoire_id=explnum_repertoire where explnum_id='".$this->id_explnum."'";
-		$result_expl = pmb_mysql_query($rqt_expl,$dbh);
-		if($result_expl) {
-			while(($explnum = pmb_mysql_fetch_object($result_expl))){
-				if($explnum->explnum_data)
-					//le fichier est en base
-					$this->file_content = $explnum->explnum_data;
-				else {
-					//le fichier est en upload
-					$up = new upload_folder($explnum->explnum_repertoire);
-					$path = str_replace('//','/',$explnum->path.$explnum->explnum_nomfichier);
-					if($path){
-						$path = $up->encoder_chaine($path);
-						if(file_exists($path)){
-							$fp = fopen($path , "r" ) ;
-							if((filesize($path)) && (filesize($path) < $this->return_bytes(ini_get('upload_max_filesize')) && (ini_get('memory_limit')*1==-1 || (filesize($path) < (($this->return_bytes(ini_get('memory_limit'))*1)-(memory_get_usage(true)*1)))))){
-								$this->file_content = fread ($fp, filesize($path));
+                $explnum = new explnum($this->id_explnum);
+		
+                if ($content = $explnum->get_file_content()) {
+                    $this->file_content = $content;
 							}else{
 								$this->file_content ="";
 							}
-							fclose ($fp) ;
-						} else $this->file_content = "";
-					}
-				} 
 				$this->file_url = $explnum->explnum_url;
 				$this->mimetype = $explnum->explnum_mimetype;
 				$this->explnum_nomfichier = $explnum->explnum_nomfichier;
 				$this->ext = $explnum->explnum_extfichier;
 			}
-		}	
-	}
 	/**
 	 * Pour avoir la taille en octets
 	 */
@@ -218,6 +202,7 @@ class indexation_docnum {
 		$nom_temp = str_replace('.','_',$nom_temp);
 		$this->fichier = "$base_path/temp/".$nom_temp;
 		$aCurl = new Curl();
+		$aCurl->timeout=5;
 		$aCurl->save_file_name=$this->fichier; 
 		$aCurl->get($f_url);	
 		
@@ -228,6 +213,7 @@ class indexation_docnum {
 	 */
 	function indexer(){
 		global $dbh;
+		global $sphinx_active; 
 		
 		$explnum_index_sew = strip_empty_words($this->texte);
 		if(strlen($explnum_index_sew)) {
@@ -236,6 +222,10 @@ class indexation_docnum {
 		$rqt = " update explnum set explnum_index_sew='".addslashes($explnum_index_sew)."', explnum_index_wew='".addslashes($this->texte)."' where explnum_id='".$this->id_explnum."'";
 		pmb_mysql_query($rqt,$dbh);	
 		if (file_exists($this->fichier)) unlink($this->fichier);	
+		if($sphinx_active){
+			$si = self::get_sphinx_indexer();
+			$si->fillIndex($this->id_explnum);
+		}
 	}
 	
 	/**
@@ -245,8 +235,14 @@ class indexation_docnum {
 		global $dbh;
 		
 		$rqt = " update explnum set explnum_index_sew='', explnum_index_wew='' where explnum_id='".$this->id_explnum."'";
-		pmb_mysql_query($rqt,$dbh);	
-
+		pmb_mysql_query($rqt,$dbh);
+	}
+		
+	private static function get_sphinx_indexer(){
+		global $include_path;
+		if(!self::$sphinx_indexer){
+			self::$sphinx_indexer = new sphinx_explnums_indexer();
+		}
+		return self::$sphinx_indexer;
 	}
 }
-?>

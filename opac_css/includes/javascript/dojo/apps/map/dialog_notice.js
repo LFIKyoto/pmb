@@ -1,10 +1,10 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dialog_notice.js,v 1.3 2015-04-17 12:50:58 vtouchard Exp $
+// $Id: dialog_notice.js,v 1.5 2017-09-05 08:37:29 vtouchard Exp $
 
 
-define(["dojo/_base/declare", "dojo/dom", "dijit/Dialog", "dojo/on", "dojo/dom-construct", "dijit/layout/TabContainer","dojo/_base/lang", "dojo/query", "dijit/layout/ContentPane"], function(declare, dom, Dialog, on, domConstruct, TabContainer, lang, query, ContentPane){
+define(["dojo/_base/declare", "dojo/dom", "apps/pmb/PMBDialog", "dojo/on", "dojo/dom-construct", "dijit/layout/TabContainer","dojo/_base/lang", "dojo/query", "dijit/layout/ContentPane"], function(declare, dom, Dialog, on, domConstruct, TabContainer, lang, query, ContentPane){
   	
   return declare(Dialog, {
 	  	listIds:null,
@@ -17,7 +17,7 @@ define(["dojo/_base/declare", "dojo/dom", "dijit/Dialog", "dojo/on", "dojo/dom-c
 	    	this.ajaxUrl = "./ajax.php?module=ajax&categ=notice&show_map=0&show_expl=1&show_explnum=1&popup_map=1&id=";
 	    },
 	    /*
-	     * Ajoute une notice à la popup, stocke l'id de la notice
+	     * Ajoute une notice ï¿½ la popup, stocke l'id de la notice
 	     */
 	    addNotice:function(idNotice){
 	    	
@@ -32,7 +32,7 @@ define(["dojo/_base/declare", "dojo/dom", "dijit/Dialog", "dojo/on", "dojo/dom-c
 	    	this.showPagin();
 	    },
 	    /*
-	     * Vérifie si l'id de notice fourni en paramètre est présent dans la popup
+	     * Vï¿½rifie si l'id de notice fourni en paramï¿½tre est prï¿½sent dans la popup
 	     */
 	    checkPresence:function(idNotice){
 	    	if(this.listIds!=null&&this.listIds.indexOf(idNotice)!=-1){
@@ -122,7 +122,7 @@ define(["dojo/_base/declare", "dojo/dom", "dijit/Dialog", "dojo/on", "dojo/dom-c
     			dom.byId('paginator').appendChild(hrefBegin);
 	    	}
 	    	if(this.currentId != 0){
-	    		//Append bouton début & prev
+	    		//Append bouton dï¿½but & prev
 	    		var hrefPrev = domConstruct.create('a');
 	    		var callbackPrev = lang.hitch(this, this.clickPrev);
     			
@@ -152,7 +152,7 @@ define(["dojo/_base/declare", "dojo/dom", "dijit/Dialog", "dojo/on", "dojo/dom-c
 	    		}
 	    	}	
 	    	if(this.currentId != (max-1)){
-	    		//Append bouton début & prev
+	    		//Append bouton dï¿½but & prev
 	    		var hrefNext = domConstruct.create('a');
 	    		var callbackNext = lang.hitch(this, this.clickNext);
 	    		hrefNext.innerHTML = ">";

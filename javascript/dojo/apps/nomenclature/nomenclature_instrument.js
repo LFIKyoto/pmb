@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_instrument.js,v 1.15 2015-02-03 14:03:12 vtouchard Exp $
+// $Id: nomenclature_instrument.js,v 1.17 2016-03-01 15:47:48 apetithomme Exp $
 
 define(["dojo/_base/declare", "apps/nomenclature/nomenclature_musicstand", "dijit/registry"], function(declare, Musicstand, registry){
 	/*
@@ -25,6 +25,8 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_musicstand", "diji
 		    indefinite_effective:false,
 		    hash:null,
 		    instruments_list:null,
+		    id_exotic_instrument: 0,
+		    id_workshop_instrument: 0,
 		    
 		    constructor: function(code, name){
 		    	this.set_code(code);
@@ -161,7 +163,7 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_musicstand", "diji
 			check: function(){
 				this.valid = true;
 				//Un instrument sans effectif, pas possible !
-				if(this.effective  == 0){
+				if((this.effective  == 0) && !this.indefinite_effective){
 					this.error_message = registry.byId('nomenclature_datastore').get_message('nomenclature_js_nomenclature_error_check_instrument_effective')
 					this.valid = false;
 				}
@@ -176,6 +178,7 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_musicstand", "diji
 		    },
 		    
 		    get_abbreviation: function(){
+		    	this.calc_abbreviation();
 		    	return this.abbreviation;
 		    },
 			sort_array: function(a, b){
@@ -191,30 +194,52 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_musicstand", "diji
 			},
 			calc_abbreviation: function(){
 				var abbreviation= "";
-				var tab_others_instruments = new Array();
-				var str_others_instruments = "";
-				
-				if(this.others_instruments != null) {
-					var other_instruments = this.get_others_instruments();
-					other_instruments.sort(this.sort_array);
-					for(var i=0; i<other_instruments.length ; i++){
-						tab_others_instruments.push(other_instruments[i].get_code());
+				if(this.musicstand){
+					var tab_others_instruments = new Array();
+					var str_others_instruments = "";
+					if(this.others_instruments != null) {
+						var other_instruments = this.get_others_instruments();
+						other_instruments.sort(this.sort_array);
+						for(var i=0; i<other_instruments.length ; i++){
+							tab_others_instruments.push(other_instruments[i].get_code());
+						}
+						str_others_instruments = tab_others_instruments.join('/');
 					}
-					str_others_instruments = tab_others_instruments.join('/');
-				}
-				if (this.standard) {
-					if(this.part){
-						abbreviation += this.effective;
+					if (this.standard) {
+						if (this.musicstand.get_divisable()) {
+							if (!this.effective && this.indefinite_effective) {
+								abbreviation += this.musicstand.family.nomenclature.indefinite_character;
+							} else {
+								abbreviation += this.effective;
+							}
+						}else{
+							abbreviation += this.order;
+						}
 					} else {
-						abbreviation += this.order;
+						if (this.musicstand.get_divisable()) {
+							if (!this.effective && this.indefinite_effective) {
+								abbreviation += this.musicstand.family.nomenclature.indefinite_character;
+								abbreviation += this.code;
+							} else {
+								if (this.effective != 1){
+									abbreviation += this.effective;
+								}
+								if (this.effective) {
+									abbreviation += this.code;
+								}
+							}
+						} else {
+							abbreviation += this.code;
+						}
 					}
-				} else {
-					abbreviation += this.code;
+					if(str_others_instruments != "") {
+						abbreviation += '/'+str_others_instruments;
+					}
+					this.set_abbreviation(abbreviation);
+				}else{
+					abbreviation = this.effective+' '+this.name;
+					this.set_abbreviation(abbreviation);
 				}
-				if(str_others_instruments != "") {
-					abbreviation += '/'+str_others_instruments;
-				}
-				this.set_abbreviation(abbreviation);
 			},
 			get_id: function() {
 				if(!this.id){
@@ -225,6 +250,18 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_musicstand", "diji
 			
 			set_id: function(id) {
 				this.id = id;
-			},			
+			},
+			set_id_exotic_instrument: function(id){
+				this.id_exotic_instrument = id;
+			},
+			get_id_exotic_instrument: function(){
+				return this.id_exotic_instrument;
+			},
+			set_id_workshop_instrument: function(id){
+				this.id_workshop_instrument = id;
+			},
+			get_id_workshop_instrument: function(){
+				return this.id_workshop_instrument;
+			}
 	    });
 });

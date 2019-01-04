@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.7 2009-05-16 11:12:02 dbellamy Exp $
+// $Id: main.inc.php,v 1.8 2016-03-13 11:39:09 Alexandre Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -23,7 +23,7 @@ switch ($moyen) {
 		include ("./catalog/caddie/collecte/douchette.inc.php");
 		break;
 	default:
-		$catalog_layout = str_replace('<!--!!sous_menu_choisi!! -->', "?", $catalog_layout);
+		$catalog_layout = str_replace('<!--!!sous_menu_choisi!! -->', "", $catalog_layout);
 		print $catalog_layout ;
 		print "<br /><br /><b>".$msg["caddie_select_collecte"]."</b>" ;
 		break;

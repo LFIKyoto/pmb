@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: restaure_act.php,v 1.8.4.1 2015-09-21 13:13:56 jpermanne Exp $
+// $Id: restaure_act.php,v 1.11 2017-10-23 10:13:00 ngantier Exp $
 
 //Restauration d'un jeu
 
@@ -36,11 +36,11 @@ function abort($message) {
 }
 
 print "<div id=\"contenu-frame\">\n";
-echo "<center><h1>".sprintf($msg["sauv_misc_restaure"],$file_name)."</h1></center>\n";
+echo "<h1>".sprintf($msg["sauv_misc_restaure"],$file_name)."</h1>\n";
 
 if ($critical==1) {
 	$dbh=pmb_mysql_connect($host,$user,$password) or abort($msg["sauv_misc_ract_cant_connect"]);
-	pmb_mysql_select_db($db) or abort(sprintf($msg["sauv_misc_ract_db_dont_exists"],$db));
+	pmb_mysql_select_db($db, $dbh) or abort(sprintf($msg["sauv_misc_ract_db_dont_exists"],$db));
 }
 
 //Récupération de la partie data

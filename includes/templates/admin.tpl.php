@@ -1,14 +1,33 @@
 <?php
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: admin.tpl.php,v 1.210.2.2 2015-12-07 10:37:20 jpermanne Exp $
+// $Id: admin.tpl.php,v 1.272 2018-12-19 14:49:38 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+if(!isset($file_in)) $file_in = '';
+if(!isset($suffix)) $suffix = '';
+if(!isset($mimetype)) $mimetype = '';
+if(!isset($output)) $output = '';
+
+global $pmb_logs_activate, $pmb_opac_view_activate, $pmb_nomenclature_activate, $pmb_quotas_avances, $pmb_utiliser_calendrier;
+global $pmb_gestion_financiere, $pmb_planificateur_allow, $pmb_mails_waiting, $pmb_sur_location_activate;
+global $pmb_selfservice_allow, $pmb_transferts_actif, $pmb_javascript_office_editor;
+global $opac_visionneuse_allow;
+
+global $opac_search_universes_activate, $opac_websubscribe_show, $opac_serialcirc_active;
+
+global $ldap_accessible;
+
+global $faq_active;
+
+global $acquisition_gestion_tva, $acquisition_sugg_categ;
 
 // ---------------------------------------------------------------------------
 //	$admin_menu_new : Menu vertical de l'administration
 // ---------------------------------------------------------------------------
+
 $admin_menu_new = "
 <div id='menu'>
 <h3 onclick='menuHide(this,event)'>$msg[7]</h3>
@@ -23,18 +42,28 @@ $admin_menu_new = "
 	<li><a href='./admin.php?categ=users'>$msg[25]</a></li>
 	<li><a href='./admin.php?categ=cms_editorial'>".$msg['editorial_content']."</a></li>
 	<li><a href='./admin.php?categ=loans'>".$msg['admin_menu_loans']."</a></li>
+	<li><a href='./admin.php?categ=pnb'>".$msg['admin_menu_pnb']."</a></li>
+	<li><a href='./admin.php?categ=composed_vedettes'>".$msg['admin_menu_composed_vedettes']."</a></li>
 </ul>
-<h3 onclick='menuHide(this,event)'>$msg[opac_admin_menu]</h3>
+<h3 onclick='menuHide(this,event)'>".$msg['opac_admin_menu']."</h3>
 <ul>
 	<li><a href='./admin.php?categ=infopages'>".$msg["infopages_admin_menu"]."</a></li>
 	<li><a href='./admin.php?categ=opac&sub=search_persopac&section=liste'>".$msg["search_persopac_list_title"]."</a></li>
 	<li><a href='./admin.php?categ=opac&sub=navigopac&action='>".$msg["exemplaire_admin_navigopac"]."</a></li>
-	<li><a href='./admin.php?categ=opac&sub=facette_search_opac&section=facette'>".$msg["opac_facette"]."</a></li>
+	<li><a href='./admin.php?categ=opac&sub=facettes'>".$msg["opac_facette"]."</a></li>
 	".($pmb_logs_activate?"<li><a href='./admin.php?categ=opac&sub=stat&section=view_list'>".$msg["stat_opac_menu"]."</a></li>":"")."
 	".($opac_visionneuse_allow?"<li><a href='./admin.php?categ=visionneuse'>".$msg["visionneuse_admin_menu"]."</a></li>":"")."
 	".($pmb_opac_view_activate?"<li><a href='./admin.php?categ=opac&sub=opac_view&section=list'>".$msg["opac_view_admin_menu"]."</a></li>":"")."
+	<li><a href='./admin.php?categ=contact_form'>".$msg["admin_opac_contact_form"]."</a></li>
+	<li><a href='./admin.php?categ=opac&sub=maintenance'>".$msg["admin_opac_maintenance"]."</a></li>
+";
+	if($opac_search_universes_activate){
+		$admin_menu_new.="<li><a href='./admin.php?categ=search_universes'>".$msg['admin_menu_search_universes']."</a></li>";
+	}
+
+$admin_menu_new .="
 </ul>
-<h3 onclick='menuHide(this,event)'>$msg[admin_menu_act]</h3>
+<h3 onclick='menuHide(this,event)'>".$msg['admin_menu_act']."</h3>
 <ul>
 	<li><a href='./admin.php?categ=proc&sub=proc&action='>".$msg['admin_menu_act_perso']."</a></li>
 	<li><a href='./admin.php?categ=proc&sub=clas&action='>".$msg['admin_menu_act_perso_clas']."</a></li>
@@ -43,15 +72,16 @@ $admin_menu_new = "
 
 if($pmb_nomenclature_activate)
 	$admin_menu_new.="
-	<h3 onclick='menuHide(this,event)'>$msg[admin_menu_nomenclature]</h3>
+	<h3 onclick='menuHide(this,event)'>".$msg['admin_menu_nomenclature']."</h3>
 	<ul>
 		<li><a href='./admin.php?categ=family&sub=family&action='>".$msg['admin_menu_nomenclature_tutti']."</a></li>
 		<li><a href='./admin.php?categ=formation&sub=formation&action='>".$msg['admin_menu_nomenclature_formations']."</a></li>
 		<li><a href='./admin.php?categ=voice&sub=voice&action='>".$msg['admin_menu_nomenclature_voice']."</a></li>
 		<li><a href='./admin.php?categ=instrument&sub=instrument&action='>".$msg['admin_menu_nomenclature_instruments']."</a></li>
+		<li><a href='./admin.php?categ=material&sub=material&action='>".$msg['admin_menu_nomenclature_material']."</a></li>
 	</ul>";
 $admin_menu_new.="
-<h3 onclick='menuHide(this,event)'>$msg[admin_menu_modules]</h3>
+<h3 onclick='menuHide(this,event)'>".$msg['admin_menu_modules']."</h3>
 <ul>
 ";
 
@@ -61,47 +91,45 @@ if ($pmb_utiliser_calendrier) $admin_menu_new.="<li><a href='./admin.php?categ=c
 
 if (($pmb_gestion_financiere)&&(($pmb_gestion_abonnement==2)||($pmb_gestion_tarif_prets==2)||($pmb_gestion_amende))) $admin_menu_new.="<li><a href='./admin.php?categ=finance'>".$msg["admin_gestion_financiere"]."</a></li>";
 
-$admin_menu_new.="</ul>
-<ul>
+$admin_menu_new.="
 	<li><a href='./admin.php?categ=import'>$msg[519]</a></li>
 	<li><a href='./admin.php?categ=convert'>".$msg["admin_conversion"]."</a></li>
 	<li><a href='./admin.php?categ=harvest'>".$msg["admin_harvest"]."</a></li>
-</ul>
-<ul>
 	<li><a href='./admin.php?categ=misc'>$msg[27]</a></li>
-</ul>
-<ul>
 	<li><a href='./admin.php?categ=z3950'>Z39.50</a></li>
 	".($pmb_planificateur_allow?"<li><a href='./admin.php?categ=planificateur'>".$msg["planificateur_admin_menu"]."</a></li>":"")."
 	<li><a href='./admin.php?categ=external_services'>".$msg["es_admin_menu"]."</a></li>
 	".($pmb_allow_external_search?"<li><a href='./admin.php?categ=connecteurs'>".$msg["admin_connecteurs_menu"]."</a></li>":"")."
 	".($pmb_selfservice_allow?"<li><a href='./admin.php?categ=selfservice'>".$msg["selfservice_admin_menu"]."</a></li>":"")."
-</ul>
-<ul>
-	<li><a href='./admin.php?categ=sauvegarde'>$msg[28]</a></li>
-</ul>";
+	<li><a href='./admin.php?categ=sauvegarde'>$msg[28]</a></li>";
 
-if ($acquisition_active) $admin_menu_new.="\n<ul><li><a href='./admin.php?categ=acquisition'>".$msg["admin_acquisition"]."</a></li></ul>";
+if ($acquisition_active) $admin_menu_new.="\n<li><a href='./admin.php?categ=acquisition'>".$msg["admin_acquisition"]."</a></li>";
 
 //pour les tranferts
-if ($pmb_transferts_actif)
-	$admin_menu_new.="\n<ul><li><a href='./admin.php?categ=transferts'>".$msg["admin_menu_transferts"]."</a></li></ul>";
-
+if ($pmb_transferts_actif) {
+	$admin_menu_new.="\n<li><a href='./admin.php?categ=transferts'>".$msg["admin_menu_transferts"]."</a></li>";
+}
 if ($gestion_acces_active==1) {
-	$admin_menu_new.="\n<ul><li><a href='./admin.php?categ=acces'>".$msg["admin_menu_acces"]."</a></li></ul>";
+	$admin_menu_new.="\n<li><a href='./admin.php?categ=acces'>".$msg["admin_menu_acces"]."</a></li>";
+}
+if ($pmb_javascript_office_editor) {
+	$admin_menu_new.="\n<li><a href='./admin.php?categ=html_editor'>".$msg["admin_html_editor"]."</a></li>";
+}
+if($demandes_active) {
+	$admin_menu_new.="\n<li><a href='./admin.php?categ=demandes'>".$msg["admin_demandes"]."</a></li>";
+}
+if($faq_active) {
+	$admin_menu_new.="\n<li><a href='./admin.php?categ=faq'>".$msg["admin_faq"]."</a></li>";
 }
 
-if ($pmb_javascript_office_editor) $admin_menu_new.="\n<ul><li><a href='./admin.php?categ=html_editor'>".$msg["admin_html_editor"]."</a></li></ul>";
-
-if($demandes_active) $admin_menu_new.="\n<ul><li><a href='./admin.php?categ=demandes'>".$msg["admin_demandes"]."</a></li></ul>";
-
-if($faq_active) $admin_menu_new.="\n<ul><li><a href='./admin.php?categ=faq'>".$msg["admin_faq"]."</a></li></ul>";
-
 $admin_menu_new.="
-	<ul>
-		<li><a href='./admin.php?categ=mailtpl'>".$msg["admin_mailtpl"]."</a></li>
-	</ul>";
-$admin_menu_new.="</div>";
+	<li><a href='./admin.php?categ=mailtpl'>".$msg["admin_mailtpl"]."</a></li>";
+if($pmb_scan_request_activate) {
+	$admin_menu_new.="<li><a href='./admin.php?categ=scan_request'>".$msg['admin_menu_scan_request']."</a></li>";
+}
+$admin_menu_new.="</ul>";
+$plugins = plugins::get_instance();
+$admin_menu_new.=$plugins->get_menu('admin')."</div>";
 
 
 // ---------------------------------------------------------------------------
@@ -109,6 +137,7 @@ $admin_menu_new.="</div>";
 // ---------------------------------------------------------------------------
 // $admin_menu_docs : menu Exemplaires
 
+$sur_location_menu="";
 if($pmb_sur_location_activate)
 $sur_location_menu="
 	<span".ongletSelect("categ=docs&sub=sur_location").">
@@ -116,7 +145,7 @@ $sur_location_menu="
 			".$msg["sur_location_admin_menu"]."
 		</a>
 	</span>";
-
+			
 $admin_menu_docs = "
 <h1>$msg[admin_menu_exemplaires] <span>> !!menu_sous_rub!!</span></h1>
 <div class='hmenu'>
@@ -160,23 +189,27 @@ $admin_menu_docs = "
 ";
 
 // $admin_menu_notices : menu Notices
-if($pmb_map_activate)$admin_menu_noti_onglet="
-	<span".ongletSelect("categ=notices&sub=map_echelle").">
-		<a title='$msg[admin_menu_noti_statut]' href='./admin.php?categ=notices&sub=map_echelle&action='>
-			$msg[admin_menu_noti_map_echelle]
-		</a>
-	</span>
-	<span".ongletSelect("categ=notices&sub=map_projection").">
-		<a title='$msg[admin_menu_noti_statut]' href='./admin.php?categ=notices&sub=map_projection&action='>
-			$msg[admin_menu_noti_map_projection]
-		</a>
-	</span>
-	<span".ongletSelect("categ=notices&sub=map_ref").">
-		<a title='$msg[admin_menu_noti_statut]' href='./admin.php?categ=notices&sub=map_ref&action='>
-			$msg[admin_menu_noti_map_ref]
-		</a>
-	</span>
-";
+if($pmb_map_activate) {
+	$admin_menu_noti_onglet="
+		<span".ongletSelect("categ=notices&sub=map_echelle").">
+			<a title='$msg[admin_menu_noti_statut]' href='./admin.php?categ=notices&sub=map_echelle&action='>
+				$msg[admin_menu_noti_map_echelle]
+			</a>
+		</span>
+		<span".ongletSelect("categ=notices&sub=map_projection").">
+			<a title='$msg[admin_menu_noti_statut]' href='./admin.php?categ=notices&sub=map_projection&action='>
+				$msg[admin_menu_noti_map_projection]
+			</a>
+		</span>
+		<span".ongletSelect("categ=notices&sub=map_ref").">
+			<a title='$msg[admin_menu_noti_statut]' href='./admin.php?categ=notices&sub=map_ref&action='>
+				$msg[admin_menu_noti_map_ref]
+			</a>
+		</span>
+	";
+} else {
+	$admin_menu_noti_onglet="";
+}
 $admin_menu_notices = "
 <h1>$msg[admin_menu_notices] <span>> !!menu_sous_rub!!</span></h1>
 <div class='hmenu'>
@@ -199,6 +232,11 @@ $admin_menu_notices = "
 	<span".ongletSelect("categ=notices&sub=onglet").">
 		<a title='$msg[admin_menu_noti_onglet_title]' href='./admin.php?categ=notices&sub=onglet&action='>
 			$msg[admin_menu_noti_onglet]
+		</a>
+	</span>
+	<span".ongletSelect("categ=notices&sub=notice_usage").">
+		<a title='$msg[admin_menu_notice_usage]' href='./admin.php?categ=notices&sub=notice_usage&action='>
+			$msg[admin_menu_notice_usage]
 		</a>
 	</span>
 </div>
@@ -230,7 +268,7 @@ $admin_menu_collstate = "
 	</span>
 </div>
 ";
-
+		
 $admin_menu_search_persopac = "
 <h1>".$msg["admin_menu_search_persopac"]." <span>> !!menu_sous_rub!!</span></h1>
 <div class='hmenu'>
@@ -266,6 +304,11 @@ $admin_menu_abonnements = "
 	<span".ongletSelect("categ=abonnements&sub=periodicite").">
 		<a title='$msg[admin_menu_abonnements_periodicite]' href='./admin.php?categ=abonnements&sub=periodicite&action='>
 			$msg[admin_menu_abonnements_periodicite]
+		</a>
+	</span>
+	<span".ongletSelect("categ=abonnements&sub=status").">
+		<a title='".$msg['admin_menu_abonnements_status']."' href='./admin.php?categ=abonnements&sub=status&action='>
+			".$msg['admin_menu_abonnements_status']."
 		</a>
 	</span>
 </div>
@@ -387,7 +430,7 @@ $admin_menu_convert = "
 	</span>
 </div>
 ";
-
+			
 $admin_menu_harvest = "
 <h1>$msg[admin_harvest] <span>> !!menu_sous_rub!!</span></h1>
 <div class='hmenu'>
@@ -397,20 +440,25 @@ $admin_menu_harvest = "
 		</a>
 	</span>
 	<span".ongletSelect("categ=harvest&sub=profil").">
-		<a title='$msg[admin_harvest_profil_menu]' href='./admin.php?categ=harvest&sub=profil&action='>
+		<a title='$msg[admin_harvest_profil_title]' href='./admin.php?categ=harvest&sub=profil&action='>
 			$msg[admin_harvest_profil_title]
 		</a>
 	</span>
 
 </div>
 ";
-
+			
 $admin_menu_mailtpl = "
 <h1>$msg[admin_mailtpl] <span>> !!menu_sous_rub!!</span></h1>
 <div class='hmenu'>
 	<span".ongletSelect("categ=mailtpl&sub=build").">
 		<a title='$msg[admin_mailtpl_menu]' href='./admin.php?categ=mailtpl&sub=build&action='>
 			$msg[admin_mailtpl_menu]
+		</a>
+	</span>
+	<span".ongletSelect("categ=mailtpl&sub=print_cart").">
+		<a title='".$msg['admin_print_cart_tpl_menu']."' href='./admin.php?categ=mailtpl&sub=print_cart_tpl&action='>
+			".$msg['admin_print_cart_tpl_menu']."
 		</a>
 	</span>
 	<span".ongletSelect("categ=mailtpl&sub=img").">
@@ -420,7 +468,7 @@ $admin_menu_mailtpl = "
 	</span>
 </div>
 ";
-
+			
 // $admin_menu_misc : menu Outils
 $admin_menu_misc = "
 <h1>$msg[27] <span>> !!menu_sous_rub!!</span></h1>
@@ -450,7 +498,14 @@ $admin_menu_misc = "
 			$msg[32]
 		</a>
 	</span>
-	<span".ongletSelect("categ=param").">
+	".($PMBuserid == 1 ? "
+		<span".ongletSelect("categ=misc&sub=files").">
+			<a title='".$msg['files']."' href='./admin.php?categ=misc&sub=files&action='>
+				".$msg['files']."
+			</a>
+		</span>" : 
+	""
+	)."<span".ongletSelect("categ=param").">
 		<a title='$msg[1600]' href='./admin.php?categ=param&action='>
 			$msg[1600]
 		</a>
@@ -510,7 +565,7 @@ $admin_menu_calendrier = "
 $admin_menu_finance = "
 <h1>".$msg["admin_gestion_financiere"]." <span>> !!menu_sous_rub!!</span></h1>
 <div class='hmenu'>";
-if (($pmb_gestion_financiere)&&($pmb_gestion_abonnement==2))
+if (($pmb_gestion_financiere)&&($pmb_gestion_abonnement==2)) 
 	$admin_menu_finance.="
 		<span".ongletSelect("categ=finance&sub=abts").">
 			<a title='".$msg["finance_abts"]."' href='./admin.php?categ=finance&sub=abts'>
@@ -518,7 +573,7 @@ if (($pmb_gestion_financiere)&&($pmb_gestion_abonnement==2))
 			</a>
 		</span>
 	";
-if (($pmb_gestion_financiere)&&($pmb_gestion_tarif_prets==2))
+if (($pmb_gestion_financiere)&&($pmb_gestion_tarif_prets==2)) 
 	$admin_menu_finance.="
 	<span".ongletSelect("categ=finance&sub=prets").">
 		<a title='".$msg["finance_prets"]."' href='./admin.php?categ=finance&sub=prets'>
@@ -555,6 +610,11 @@ $admin_menu_finance.="
 		<a title='".$msg["transaction_admin"]."' href='./admin.php?categ=finance&sub=transactype'>
 			".$msg["transaction_admin"]."
 		</a>
+	</span>	
+    <span".ongletSelect("categ=finance&sub=transaction_payment_method").">
+		<a title='".$msg["transaction_payment_method_admin"]."' href='./admin.php?categ=finance&sub=transaction_payment_method'>
+			".$msg["transaction_payment_method_admin"]."
+		</a>
 	</span>";
 
 if (($pmb_gestion_financiere)&&($pmb_gestion_financiere_caisses))
@@ -584,7 +644,7 @@ $admin_menu_acquisition = "
 	</span>
 ";
 
-//Pas d'affichage de la tva sur achats si on ne la gere pas
+//Pas d'affichage de la tva sur achats si on ne la gere pas 
 if ($acquisition_gestion_tva) $admin_menu_acquisition.= "
 	<span".ongletSelect("categ=acquisition&sub=tva").">
 		<a title='$msg[acquisition_menu_ref_tva]' href='./admin.php?categ=acquisition&sub=tva'>
@@ -630,6 +690,24 @@ $admin_menu_acquisition.= "
 	<span".ongletSelect("categ=acquisition&sub=lgstat").">
 		<a title='".htmlentities($msg['acquisition_menu_ref_lgstat'],ENT_QUOTES,$charset)."' href='./admin.php?categ=acquisition&sub=lgstat'>"
 			.htmlentities($msg['acquisition_menu_ref_lgstat'],ENT_QUOTES,$charset)."
+		</a>
+	</span>";	
+$admin_menu_acquisition.= "
+	<span".ongletSelect("categ=acquisition&sub=pricing_systems").">
+		<a title='".htmlentities($msg['acquisition_menu_pricing_systems'],ENT_QUOTES,$charset)."' href='./admin.php?categ=acquisition&sub=pricing_systems'>"
+			.htmlentities($msg['acquisition_menu_pricing_systems'],ENT_QUOTES,$charset)."
+		</a>
+	</span>";
+$admin_menu_acquisition.= "
+	<span".ongletSelect("categ=acquisition&sub=account_types").">
+		<a title='".htmlentities($msg['acquisition_menu_account_types'],ENT_QUOTES,$charset)."' href='./admin.php?categ=acquisition&sub=account_types'>"
+				.htmlentities($msg['acquisition_menu_account_types'],ENT_QUOTES,$charset)."
+		</a>
+	</span>";				
+$admin_menu_acquisition.= "
+	<span".ongletSelect("categ=acquisition&sub=thresholds").">
+		<a title='".htmlentities($msg['acquisition_menu_thresholds'],ENT_QUOTES,$charset)."' href='./admin.php?categ=acquisition&sub=thresholds'>"
+				.htmlentities($msg['acquisition_menu_thresholds'],ENT_QUOTES,$charset)."
 		</a>
 	</span>";
 $admin_menu_acquisition.= "
@@ -708,7 +786,7 @@ $admin_menu_connecteurs = "
 	</span>
 </div>";
 
-//Borne de prêt
+//Borne de prêt 
 $admin_menu_selfservice = "
 <h1>".$msg["selfservice_admin_menu"]." <span>> !!menu_sous_rub!!</span></h1>
 <div class='hmenu'>
@@ -802,6 +880,16 @@ $admin_menu_upload_docnum ="
 			".$msg["admin_menu_docnum_statut"]."
 		</a>
 	</span>
+	<span".ongletSelect("categ=docnum&sub=perso").">
+		<a title='".htmlentities($msg["admin_menu_noti_perso"],ENT_QUOTES,$charset)."' href='./admin.php?categ=docnum&sub=perso'>
+			".$msg["admin_menu_noti_perso"]."
+		</a>
+	</span>
+	<span".ongletSelect("categ=docnum&sub=licence").">
+		<a title='".htmlentities($msg["admin_menu_noti_licence"],ENT_QUOTES,$charset)."' href='./admin.php?categ=docnum&sub=licence'>
+			".$msg["admin_menu_noti_licence"]."
+		</a>
+	</span>
 </div>";
 
 //$admin_menu_demandes = demandes de recherche
@@ -874,7 +962,7 @@ $admin_menu_voice ="
 	</span>
 </div>";
 
-//$admin_menu_$admin_menu_instrument = instrument
+//$admin_menu_instrument = instrument
 $admin_menu_instrument ="
 <h1>".$msg["admin_nomenclature"]." <span>> !!menu_sous_rub!!</span></h1>
 <div class=\"hmenu\">
@@ -884,12 +972,49 @@ $admin_menu_instrument ="
 		</a>
 	</span>
 </div>";
+
+//$admin_menu_material = material
+$admin_menu_material ="
+<h1>".$msg["admin_nomenclature"]." <span>> !!menu_sous_rub!!</span></h1>
+<div class=\"hmenu\">
+	<span".ongletSelect("categ=material&sub=material").">
+		<a title='".htmlentities($msg["admin_nomenclature_material"],ENT_QUOTES,$charset)."' href='./admin.php?categ=material&sub=material'>
+			".$msg["admin_nomenclature_material"]."
+		</a>
+	</span>
+</div>";
+
+$admin_menu_scan_request ="
+<h1>".$msg["admin_scan_request"]." <span>> !!menu_sous_rub!!</span></h1>
+<div class=\"hmenu\">
+	<span".ongletSelect("categ=scan_request&sub=status").">
+		<a title='".htmlentities($msg["admin_scan_request_status"],ENT_QUOTES,$charset)."' href='./admin.php?categ=scan_request&sub=status'>
+			".$msg["admin_scan_request_status"]."
+		</a>
+	</span>
+	<span".ongletSelect("categ=scan_request&sub=workflow").">
+		<a title='".htmlentities($msg["admin_scan_request_workflow"],ENT_QUOTES,$charset)."' href='./admin.php?categ=scan_request&sub=workflow'>
+			".$msg["admin_scan_request_workflow"]."
+		</a>
+	</span>
+	<span".ongletSelect("categ=scan_request&sub=priorities").">
+		<a title='".htmlentities($msg["admin_scan_request_priorities"],ENT_QUOTES,$charset)."' href='./admin.php?categ=scan_request&sub=priorities'>
+			".$msg["admin_scan_request_priorities"]."
+		</a>
+	</span>
+	<span".ongletSelect("categ=scan_request&sub=upload_folder").">
+		<a title='".htmlentities($msg["upload_folder_storage"],ENT_QUOTES,$charset)."' href='./admin.php?categ=scan_request&sub=upload_folder'>
+			".$msg["upload_folder_storage"]."
+		</a>
+	</span>
+</div>";
+
 //    ----------------------------------
 // $admin_layout : layout page administration
 $admin_layout = "
 <!-- conteneur -->
-<div id='conteneur'  class='$current_module'>
-$admin_menu_new
+<div id='conteneur'  class='$current_module'>".
+$admin_menu_new."
 <!-- contenu -->
 <div id='contenu'>
 !!menu_contextuel!!
@@ -1035,7 +1160,7 @@ function account_calcule_section(selectBox) {
 			<label class='etiquette'>$msg[67] &nbsp;</label><br />
 			<input type='text' class='saisie-20em' name='form_nom' value='!!nom!!' />
 		</div>
-		<div class='colonne_suite'>
+		<div class='colonne3'>
 			<label class='etiquette'>$msg[68] &nbsp;</label><br />
 			<input type='text' class='saisie-20em' name='form_prenom' value='!!prenom!!' />
 		</div>
@@ -1050,38 +1175,51 @@ function account_calcule_section(selectBox) {
 			<!-- sel_group -->
 		</div>
 	</div>
-
+	<div class='row'><span class='space-wide-space'>&nbsp;</span><hr /></div>
 	<div class='row'>
 		<div class='colonne3'>
 			<label class='etiquette'>".$msg['email']." &nbsp;</label><br />
 			<input type='text' class='saisie-20em' name='form_user_email' value='!!user_email!!' />
 		</div>
 		<div class='colonne3'>
-			<br />
-			<input type='checkbox' class='checkbox' !!alter_resa_mail!! value='1' name='form_user_alert_resamail' />
-			<label class='etiquette'>".$msg['alert_resa_user_mail']." &nbsp;</label>
+			<span class='ui-panel-display'>
+				<input type='checkbox' class='checkbox' !!alter_resa_mail!! value='1' name='form_user_alert_resamail' />
+				<label class='etiquette'>".$msg['alert_resa_user_mail']." &nbsp;</label>
+			</span>
+			<span class='ui-panel-display'>
+				".($acquisition_active ? "<input type='checkbox' class='checkbox' !!alert_sugg_mail!! value='1' name='form_user_alert_suggmail' />
+				<label class='etiquette'>".$msg['alert_sugg_user_mail']." &nbsp;</label>" : "")."			
+			</span>	
 		</div>
-		<div class='colonne_suite'>
-			<br />
-			".($demandes_active ? "<input type='checkbox' class='checkbox' !!alert_demandes_mail!! value='1' name='form_user_alert_demandesmail' />
-			<label class='etiquette'>".$msg['alert_demandes_user_mail']." &nbsp;</label>" : "")."
+		<div class='colonne3'>
+			<span class='ui-panel-display'>
+				".($demandes_active ? "<input type='checkbox' class='checkbox' !!alert_demandes_mail!! value='1' name='form_user_alert_demandesmail' />
+				<label class='etiquette'>".$msg['alert_demandes_user_mail']." &nbsp;</label>" : "")."
+			</span>
+			<span class='ui-panel-display'>
+				".($opac_websubscribe_show ? "<input type='checkbox' class='checkbox' !!alert_subscribe_mail!! value='1' name='form_user_alert_subscribemail' />
+				<label class='etiquette'>".$msg['alert_subscribe_user_mail']." &nbsp;</label>" : "")."
+			</span>	
 		</div>
 	</div>
+	<div class='row'><span class='space-wide-space'>&nbsp;</span><hr /></div>
+	<div class='row'>
+		<div class='colonne3'></div>
+		<div class='colonne3'></div>
+		<div class='colonne3'></div>
+	</div>
+	".($opac_serialcirc_active ? "
 	<div class='row'>
 		<div class='colonne3'>
-		&nbsp;
+			<span class='space-wide-space'>&nbsp;</span>
 		</div>
 		<div class='colonne3'>
-			".($opac_websubscribe_show ? "<input type='checkbox' class='checkbox' !!alert_subscribe_mail!! value='1' name='form_user_alert_subscribemail' />
-			<label class='etiquette'>".$msg['alert_subscribe_user_mail']." &nbsp;</label>" : "")."
+			<input type='checkbox' class='checkbox' !!alert_serialcirc_mail!! value='1' name='form_user_alert_serialcircmail' />
+			<label class='etiquette'>".$msg['alert_subscribe_serialcirc_mail']." &nbsp;</label>
 		</div>
-		<div class='colonne_suite'>
-			".($acquisition_active ? "<input type='checkbox' class='checkbox' !!alert_sugg_mail!! value='1' name='form_user_alert_suggmail' />
-			<label class='etiquette'>".$msg['alert_sugg_user_mail']." &nbsp;</label>" : "")."
-		</div>
+		<div class='row'><span class='space-wide-space'>&nbsp;</span><hr /></div>
 	</div>
-<div class='row'><hr /></div>
-
+	" : "")."
 	!!password_field!!
 
 <div class='row'>
@@ -1097,7 +1235,7 @@ function account_calcule_section(selectBox) {
 	<!--	Nombre d'enregistrements par page en sélection d'autorités	-->
 		<label class='etiquette'>${msg[901]}</label><br />
 		<input class='saisie-10em' type='text' id='form_nb_per_page_select' name='form_nb_per_page_select' value='!!nb_per_page_select!!' size='4' />
-	</div>
+	</div>	
 	<div class='colonne_suite'>
 		<label class='etiquette' for='form_nb_per_page_gestion'>${msg[902]}</label><br />
 		<input type='text' class='saisie-10em' id='form_nb_per_page_gestion' name='form_nb_per_page_gestion' value='!!nb_per_page_gestion!!' size='4' />
@@ -1110,25 +1248,31 @@ function account_calcule_section(selectBox) {
 
 <div class='colonne4'>
 		<input type='checkbox' class='checkbox' !!circ_flg!! value='1' id='form_circ' name='form_circ' /><label for='form_circ'>$msg[5]</label><br />\n
+		<input type='checkbox' class='checkbox' !!modif_cb_expl_flg!! value='1' id='form_catal_modif_cb_expl' name='form_catal_modif_cb_expl' /><label for='form_catal_modif_cb_expl'><i>".$msg['catal_modif_cb_expl_droit']."</i></label><br/>\n
 		<input type='checkbox' class='checkbox' !!restrictcirc_flg!! value='1' id='form_restrictcirc' name='form_restrictcirc' /><label for='form_restrictcirc'><i>".$msg["restrictcirc_auth"]."</i></label><br />
 		<input type='checkbox' class='checkbox' !!admin_flg!! value='1' id='form_admin' name='form_admin' /><label for='form_admin'>$msg[7]</label><br />\n";
-if ($fiches_active) $admin_user_form .= "<input type='checkbox' class='checkbox' !!fiches_flg!! value='1' id='form_fiches' name='form_fiches' /><label for='form_fiches'>".$msg["onglet_fichier"]."</label><br />\n";
+if ($fiches_active) $admin_user_form .= "<input type='checkbox' class='checkbox' !!fiches_flg!! value='1' id='form_fiches' name='form_fiches' /><label for='form_fiches'>".$msg["onglet_fichier"]."</label><br />\n";	
+if ($thesaurus_concepts_active) $admin_user_form .= "<input type='checkbox' class='checkbox' !!concepts_flg!! value='1' id='form_concepts' name='form_concepts' /><label for='form_concepts'>".$msg["ontology_skos_menu"]."</label><br />\n";	
 $admin_user_form .= "
 		</div>
 <div class='colonne4'>
 		<input type='checkbox' class='checkbox' !!catal_flg!! value='1' id='form_catal' name='form_catal' /><label for='form_catal'>$msg[93]</label><br />\n
 		<input type='checkbox' class='checkbox' !!edit_flg!! value='1' id='form_edition' name='form_edition' /><label for='form_edition'>$msg[1100]</label><br />\n
 		<input type='checkbox' class='checkbox' !!edit_forcing_flg!! value='1' id='form_edition_forcing' name='form_edition_forcing' /><label for='form_edition_forcing'>".$msg["edit_droit_forcing"]."</label><br />\n
-		<input type='checkbox' class='checkbox' !!sauv_flg!! value='1' id='form_sauv' name='form_sauv' /><label for='form_sauv'>$msg[28]</label><br />\n";
-if ($cms_active) $admin_user_form .= "<input type='checkbox' class='checkbox' !!cms_flg!! value='1' id='form_cms' name='form_cms' /><label for='form_cms'>".$msg["cms_onglet_title"]."</label><br />\n";
-$admin_user_form .= "
-		</div>
+		<input type='checkbox' class='checkbox' !!sauv_flg!! value='1' id='form_sauv' name='form_sauv' /><label for='form_sauv'>$msg[28]</label><br />	
+		<input type='checkbox' class='checkbox' !!cms_flg!! value='1' id='form_cms' name='form_cms' /><label for='form_cms'>".$msg["cms_onglet_title"]."</label><br />
+		<input type='checkbox' class='checkbox' !!cms_build_flg!! value='1' id='form_cms_build' name='form_cms_build' /><label for='form_cms_build'>".$msg["cms_build_tab"]."</label><br />\n
+</div>
 <div class='colonne4'>
 	<input type='checkbox' class='checkbox' !!auth_flg!! value='1' id='form_auth' name='form_auth' /><label for='form_auth'>$msg[132]</label><br />\n";
 if ($dsi_active) $admin_user_form .= "<input type='checkbox' class='checkbox' !!dsi_flg!! value='1' id='form_dsi' name='form_dsi' /><label for='form_dsi'>".$msg["dsi_droit"]."</label><br />\n";
 	else $admin_user_form .= "<br />\n";
-$admin_user_form .= "<input type='checkbox' class='checkbox' !!pref_flg!! value='1' id='form_pref' name='form_pref' /><label for='form_pref'>$msg[933]</label>\n
-	</div>
+$admin_user_form .= "<input type='checkbox' class='checkbox' !!pref_flg!! value='1' id='form_pref' name='form_pref' /><label for='form_pref'>$msg[933]</label><br />\n";
+if ($acquisition_active) $admin_user_form .= "<input type='checkbox' class='checkbox' !!acquisition_account_invoice_flg!! value='1' id='form_acquisition_account_invoice_flg' name='form_acquisition_account_invoice_flg' /><label for='form_acquisition_account_invoice_flg'>".$msg['acquisition_account_invoice_flg']."</label><br>\n";
+	else $admin_user_form .= "<br />\n";
+if ($semantic_active)  $admin_user_form .= "<input type='checkbox' class='checkbox' !!semantic_flg!! value='1' id='form_semantic' name='form_semantic' /><label for='form_semantic'>".$msg['semantic_flg']."</label>\n";
+	else $admin_user_form .= "<br />\n";
+$admin_user_form .= "</div>
 <div class='colonne_suite'>
 	<input type='checkbox' class='checkbox' !!thesaurus_flg!! value='1' id='form_thesaurus' name='form_thesaurus' /><label for='form_thesaurus'>$msg[thesaurus_auth]</label><br />\n";
 if ($acquisition_active) $admin_user_form .= "<input type='checkbox' class='checkbox' !!acquisition_flg!! value='1' id='form_acquisition' name='form_acquisition' /><label for='form_acquisition'>".$msg["acquisition_droit"]."</label><br />\n";
@@ -1139,7 +1283,11 @@ if ($pmb_extension_tab) $admin_user_form .= "<input type='checkbox' class='check
 	else $admin_user_form .= "<br />\n";
 if ($demandes_active) $admin_user_form .= "<input type='checkbox' class='checkbox' !!demandes_flg!! value='1' id='form_demandes' name='form_demandes' /><label for='form_demandes'>".$msg["demandes_droit"]."</label><br />\n";
 	else $admin_user_form .= "<br />\n";
-
+if ($frbr_active) $admin_user_form .= "<input type='checkbox' class='checkbox' !!frbr_flg!! value='1' id='form_frbr' name='form_frbr' /><label for='form_frbr'>".$msg["frbr"]."</label><br />\n";
+	else $admin_user_form .= "<br />\n";
+if ($modelling_active) $admin_user_form .= "<input type='checkbox' class='checkbox' !!modelling_flg!! value='1' id='form_modelling' name='form_modelling' /><label for='form_modelling'>".$msg["modelling"]."</label><br />\n";
+	else $admin_user_form .= "<br />\n";
+	
 $admin_user_form .= "
 	</div>
 </div>
@@ -1173,12 +1321,12 @@ $user_acquisition_adr_form = "
 <div class='row'>
 	<div class='child'>
 		<div class='colonne2'>
-			<div class='colonne' >
+			<div class='colonne' >					
 				<input type='hidden' id='id_adr_liv[!!id_bibli!!]' name='id_adr_liv[!!id_bibli!!]' value='!!id_adr_liv!!' />
 				<textarea  id='adr_liv[!!id_bibli!!]' name='adr_liv[!!id_bibli!!]' class='saisie-30emr' readonly='readonly' cols='50' rows='6' wrap='virtual'>!!adr_liv!!</textarea>&nbsp;
 			</div>
 			<div class='colonne_suite' >
-				<input type='button' class='bouton_small' tabindex='1' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=coord&caller=!!form_name!!&param1=id_adr_liv[!!id_bibli!!]&param2=adr_liv[!!id_bibli!!]&id_bibli=!!id_bibli!!', 'select_adresse', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes'); \" />&nbsp;
+				<input type='button' class='bouton_small' tabindex='1' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=coord&caller=!!form_name!!&param1=id_adr_liv[!!id_bibli!!]&param2=adr_liv[!!id_bibli!!]&id_bibli=!!id_bibli!!', 'selector'); \" />&nbsp;
 				<input type='button' class='bouton_small' tabindex='1' value='X' onclick=\"document.getElementById('id_adr_liv[!!id_bibli!!]').value='0';document.getElementById('adr_liv[!!id_bibli!!]').value='';\" />
 			</div>
 		</div>
@@ -1188,7 +1336,7 @@ $user_acquisition_adr_form = "
 				<textarea id='adr_fac[!!id_bibli!!]' name='adr_fac[!!id_bibli!!]'  class='saisie-30emr' readonly='readonly' cols='50' rows='6' wrap='virtual'>!!adr_fac!!</textarea>&nbsp;
 			</div>
 			<div class='colonne_suite'>
-				<input type='button' class='bouton_small' tabindex='1' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=coord&caller=!!form_name!!&param1=id_adr_fac[!!id_bibli!!]&param2=adr_fac[!!id_bibli!!]&id_bibli=!!id_bibli!!', 'select_adresse', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes'); \" />&nbsp;
+				<input type='button' class='bouton_small' tabindex='1' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=coord&caller=!!form_name!!&param1=id_adr_fac[!!id_bibli!!]&param2=adr_fac[!!id_bibli!!]&id_bibli=!!id_bibli!!', 'selector'); \" />&nbsp;
 				<input type='button' class='bouton_small' tabindex='1' value='X' onclick=\"document.getElementById('id_adr_fac[!!id_bibli!!]').value='0';document.getElementById('adr_fac[!!id_bibli!!]').value='';\" />
 			</div>
 		</div>
@@ -1201,7 +1349,7 @@ $admin_param_form = "
 <h3><span onclick='menuHide(this,event)'>!!form_title!!</span></h3>
 <div class='form-contenu'>
 	<div class='row'>
-		<div class='colonne5' align='right'>
+		<div class='colonne5 align_right'>
 				<label class='etiquette'>$msg[1602] &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>
@@ -1210,7 +1358,7 @@ $admin_param_form = "
 		</div>
 	<div class='row'>&nbsp;</div>
 	<div class='row'>
-		<div class='colonne5' align='right'>
+		<div class='colonne5 align_right'>
 				<label class='etiquette'>$msg[1603] &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>
@@ -1219,7 +1367,7 @@ $admin_param_form = "
 		</div>
 	<div class='row'>&nbsp;</div>
 	<div class='row'>
-		<div class='colonne5' align='right'>
+		<div class='colonne5 align_right'>
 				<label class='etiquette'>$msg[1604] &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>
@@ -1228,7 +1376,7 @@ $admin_param_form = "
 		</div>
 	<div class='row'>&nbsp;</div>
 	<div class='row'>
-		<div class='colonne5' align='right'>
+		<div class='colonne5 align_right'>
 				<label class='etiquette'>".$msg['param_explication']." &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>
@@ -1249,13 +1397,13 @@ $admin_param_form = "
 
 $password_field = "
 <div class='row'>
-	<div class='colonne4'>
+	<div class='colonne3'>
 		<label class='etiquette'>$msg[2]</label><br />
-		<input type='password' name='form_pwd'>
+		<input type='password' name='form_pwd' class='ui-width-medium saisie-20em'>
 		</div>
-	<div class='colonne_suite'>
+	<div class='colonne3'>
 		<label class='etiquette'>$msg[88]</label><br />
-		<input type='password' name='form_pwd2'>
+		<input type='password' name='form_pwd2' class='ui-width-medium saisie-20em'>
 		</div>
 	</div>
 <div class='row'>&nbsp;</div>
@@ -1272,16 +1420,26 @@ $admin_user_list = "
 	<div class='colonne_suite'>
 		!!user_link!!
 		</div>
+	<div class='colonne_suite' style='float:right;'>
+		!!user_created_date!!
+	</div>
 	</div>
 <div class='row'>
-	<table class='brd'>
+	<table class='brd'>";
+
+// Première ligne
+$admin_user_list .= "
 		<tr >
 			<td class='brd'>!!nusercirc!!$msg[5]</td>
 			<td class='brd'>!!nusercatal!!$msg[93]</td>
 			<td class='brd'>!!nuserauth!!$msg[132]</td>
 			<td class='brd'>!!nuserthesaurus!!".$msg["thesaurus_auth"]."</td>
-		</tr><tr>
-			<td class='brd'>!!nuserrestrictcirc!!<i>".$msg["restrictcirc_auth"]."</i></td>
+		</tr>";
+
+// Deuxième ligne
+$admin_user_list .= "
+		<tr>
+			<td class='brd'>!!nusermodifcbexpl!!<i>".$msg['catal_modif_cb_expl_droit']."</i></td>
 			<td class='brd'>!!nuseredit!!$msg[1100]</td>
 			<td class='brd'>";
 					if ($dsi_active) $admin_user_list .= "!!nuserdsi!!$msg[dsi_droit]</td>";
@@ -1289,9 +1447,13 @@ $admin_user_list = "
 $admin_user_list .= "<td class='brd'>";
 					if ($acquisition_active) $admin_user_list .= "!!nuseracquisition!!$msg[acquisition_droit]</td>";
 					else $admin_user_list .= "&nbsp;</td>";
+$admin_user_list .= "				
+		</tr>";
+
+// Troisième ligne
 $admin_user_list .= "
-		</tr><tr>
-			<td class='brd'>!!nuseradmin!!$msg[7]</td>
+		<tr>
+			<td class='brd'>!!nuserrestrictcirc!!<i>".$msg["restrictcirc_auth"]."</i></td>
 			<td class='brd'>!!nusereditforcing!!$msg[edit_droit_forcing]</td>
 			<td class='brd'>!!nuserpref!!$msg[933]</td>
 			<td class='brd'>";
@@ -1301,54 +1463,75 @@ $admin_user_list .= "
 $admin_user_list .= "
 		</tr>";
 
-$admin_user_list .= "<tr>
+// Quatrième ligne
+$admin_user_list .= "
+		<tr>
+			<td class='brd'>!!nuseradmin!!$msg[7]</td>";
+		$admin_user_list .= "<td class='brd'>!!nusersauv!!$msg[28]</td>";
+			$admin_user_list .= "<td class='brd'>";
+			if ($cms_active) 
+				$admin_user_list .= "!!nusercms!!$msg[cms_onglet_title]</td>";
+			else $admin_user_list .= "&nbsp;</td>";	
+$admin_user_list .= "
+			<td class='brd'>";
+			if ($cms_active)
+				$admin_user_list .= "!!nusercms_build!!$msg[cms_build_tab]</td>";
+			else $admin_user_list .= "&nbsp;</td>";
+$admin_user_list .= "
+		</tr>";
+
+// Cinquième ligne
+$admin_user_list .= "
+		<tr>
 		<td class='brd'>";
 			if ($pmb_extension_tab) $admin_user_list .="!!nuserextensions!!$msg[extensions_droit]</td>";
 			else $admin_user_list .= "&nbsp;</td>";
-		$admin_user_list .= "<td class='brd'>!!nusersauv!!$msg[28]</td>";
+$admin_user_list .= "<td class='brd'>";
+			if ($demandes_active) 
+				$admin_user_list .= "!!nuserdemandes!!$msg[demandes_droit]</td>";
+			else $admin_user_list .= "&nbsp;</td>";
 			$admin_user_list .= "<td class='brd'>";
 			if ($fiches_active)
 				$admin_user_list .= "!!nuserfiches!!$msg[onglet_fichier]</td>";
 			else $admin_user_list .= "&nbsp;</td>";
 			$admin_user_list .= "<td class='brd'>";
-			if ($cms_active)
-				$admin_user_list .= "!!nusercms!!$msg[cms_onglet_title]</td>";
+			if ($acquisition_active)
+				$admin_user_list .= "!!nuseracquisition_account_invoice!!".$msg['acquisition_account_invoice_flg']."</td>";
 			else $admin_user_list .= "&nbsp;</td>";
-$admin_user_list .= "</tr>";
-
-$admin_user_list .= "<tr>
-		<td class='brd'>&nbsp;</td>
-		<td class='brd'>";
-			if ($demandes_active)
-				$admin_user_list .= "!!nuserdemandes!!$msg[demandes_droit]</td>";
-			else $admin_user_list .= "&nbsp;</td>";
-			$admin_user_list .= "<td class='brd'>&nbsp;</td>
-			<td class='brd'>&nbsp;</td>
+			$admin_user_list .= "
 		</tr>";
 
-$admin_user_list .= "<tr>
-				<td colspan=4 class='brd'>
-				!!user_alert_resamail!! &nbsp;
-				</td>
+// Sixième  ligne
+$admin_user_list .= "
+		<tr>
+			<td class='brd'>";
+if($semantic_active){
+	$admin_user_list .= "!!nusersemantic!!<i>".$msg["semantic_flg"]."</i>";
+}
+$admin_user_list .= "</td>
+			<td class='brd'>";
+if($thesaurus_concepts_active){
+	$admin_user_list .= "!!nuserconcepts!!<i>".$msg["ontology_skos_menu"]."</i>";
+}
+$admin_user_list .= "</td>
+			<td class='brd'></td>
+			<td class='brd'></td>
 		</tr>";
+// Septième ligne
+$admin_user_list .= "
+		!!user_alert_resamail!!";
 
-if ($demandes_active) $admin_user_list .= "<tr>
-				<td colspan=4 class='brd'>
-				!!user_alert_demandesmail!! &nbsp;
-				</td>
-		</tr>";
+// Huitième ligne
+if ($demandes_active) $admin_user_list .= "
+		!!user_alert_demandesmail!!";
 
-if ($opac_websubscribe_show) $admin_user_list .= "<tr>
-				<td colspan=4 class='brd'>
-				!!user_alert_subscribemail!! &nbsp;
-				</td>
-		</tr>";
+// Neuvième ligne
+if ($opac_websubscribe_show) $admin_user_list .= "
+		!!user_alert_subscribemail!!";
 
-if ($acquisition_active) $admin_user_list .= "<tr>
-				<td colspan=4 class='brd'>
-				!!user_alert_suggmail!! &nbsp;
-				</td>
-		</tr>";
+// 10eme ligne
+if ($acquisition_active) $admin_user_list .= "
+		!!user_alert_suggmail!!";
 
 $admin_user_list .= "</table>
 </div>
@@ -1356,11 +1539,18 @@ $admin_user_list .= "</table>
 <hr />
 ";
 
+$admin_user_alert_row = "
+		<tr>
+				<td colspan=4 class='brd'>
+				!!user_alert!! &nbsp;
+				</td>
+		</tr>";
+
 $admin_user_link1 = "
 	<input class='bouton' type='button' value=' $msg[62] ' onClick=\"document.location='./admin.php?categ=users&sub=users&action=modif&id=!!nuserid!!'\">&nbsp;
 	<input class='bouton' type='button' value=' $msg[mot_de_passe] ' onClick=\"document.location='./admin.php?categ=users&sub=users&action=pwd&id=!!nuserid!!'\">
 	";
-
+	
 // commented because now use the confirmation_delete function used also from the other submodules
 // so we show also the name we want to delete - Marco Vaninetti
 
@@ -1413,11 +1603,33 @@ $admin_location_form_sur_loc_part = "
 		<label class='etiquette'>$msg[sur_location_select_surloc]</label>
 		</div>
 	<div class='row'>
-		!!sur_loc_selector!!
-		<label class='etiquette' >$msg[sur_location_use_surloc]</label>
+		!!sur_loc_selector!! 
+		<label class='etiquette' >$msg[sur_location_use_surloc]</label> 
 		<input type=checkbox name='form_location_use_surloc' value='1' !!checkbox_use_surloc!! class='checkbox' />
 	</div>
 ";
+
+//    ----------------------------------------------------
+//    Onglet map
+//    ----------------------------------------------------
+global $pmb_map_activate;
+$location_map_tpl = "";
+if ($pmb_map_activate)
+	$location_map_tpl = "
+<!-- onglet 14 -->
+<div id='el14Parent' class='parent'>
+	<h3>
+    	<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='el14Img' onClick=\"expandBase('el14', true); return false;\" title='".$msg["notice_map_onglet_title"]."' border='0' /> ".$msg["notice_map_onglet_title"]."
+	</h3>
+</div>
+
+<div id='el14Child' class='child' etirable='yes' title='".htmlentities($msg['notice_map_onglet_title'],ENT_QUOTES, $charset)."'>
+	<div id='el14Child_0' title='".htmlentities($msg['notice_map'],ENT_QUOTES, $charset)."' movable='yes'>
+		<div id='el14Child_0b' class='row'>
+			!!location_map!!
+		</div>
+	</div>
+</div>";
 
 // $admin_location_form : template form des localisations
 $admin_location_form = "
@@ -1463,9 +1675,9 @@ $admin_location_form = "
 	<div class='row'>
 		!!lender!!
 		</div>
-	$admin_location_form_sur_loc_part
+	$admin_location_form_sur_loc_part	
 <br />
-<hr />
+<hr />".$location_map_tpl."
 <br />
 <div class='row'></div>
 <div class='row'><label class='etiquette'>$msg[location_details_name]</label></div><div class='row'><input type='text' name='form_locdoc_name' value='!!loc_name!!' class='saisie-50em' /></div>
@@ -1707,6 +1919,33 @@ $admin_onglet_form = "
 <script type='text/javascript'>document.forms['ongletform'].elements['form_nom'].focus();</script>
 ";
 
+// $admin_notice_usage_form : template form droit d'usage notice
+$admin_notice_usage_form = "
+<form class='form-$current_module' name=notice_usageform method='post' action=\"./admin.php?categ=notices&sub=notice_usage&action=update&id_usage=!!id_usage!!\">
+<h3><span onclick='menuHide(this,event)'>!!form_title!!</span></h3>
+<!--    Contenu du form    -->
+<div class='form-contenu'>
+	<div class='row'>
+		<label class='etiquette' >".$msg['notice_usage_libelle']."</label>
+	</div>
+	<div class='row'>
+		<input type=text name='usage_libelle' value='!!usage_libelle!!' class='saisie-50em' />
+	</div>
+</div>
+<!-- Boutons -->
+<div class='row'>
+	<div class='left'>
+		<input class='bouton' type='button' value=' ".$msg['76']." ' onClick=\"document.location='./admin.php?categ=notices&sub=notice_usage'\">&nbsp;
+		<input class='bouton' type='submit' value=' ".$msg['77']." ' onClick=\"return test_form(this.form)\">
+	</div>
+	<div class='right'>
+		!!bouton_supprimer!!
+	</div>
+</div>
+<div class='row'></div>
+</form>
+<script type='text/javascript'>document.forms['notice_usageform'].elements['usage_libelle'].focus();</script>
+";
 
 $admin_map_echelle_form = "
 <form class='form-$current_module' name=map_echelleform method=post action=\"./admin.php?categ=notices&sub=map_echelle&action=update&id=!!id!!\">
@@ -1801,7 +2040,7 @@ $admin_typdoc_form = "
 		<div class='row'>
 			<input type='text' id='form_libelle' name='form_libelle' value='!!libelle!!' class='saisie-50em' />
 		</div>
-
+		
 		<!-- form_pret -->
 		<!-- form_short_loan_duration -->
 		<!-- form_resa -->
@@ -2021,74 +2260,82 @@ $admin_empr_statut_form = "
 <div class='form-contenu'>
 	<div class='row'>
 		<label class='etiquette' for='form_cb'>$msg[103]</label>
-		</div>
+	</div>
 	<div class='row'>
 		<input type=text name='statut_libelle' value='!!libelle!!' class='saisie-50em' />
-		</div>
+	</div>
 	<div class='row'>
 		<input type=checkbox name=allow_loan value='1' id=allow_loan !!checkbox_loan!! class='checkbox' />
 		<label class='etiquette' for='allow_loan'>".$msg['empr_allow_loan']."</label>
-		</div>
+	</div>
 	<div class='row'>
 		<input type=checkbox name=allow_loan_hist value='1' id=allow_loan_hist !!checkbox_loan_hist!! class='checkbox'/>
 		<label class='etiquette' for='allow_loan_hist'>".$msg['empr_allow_loan_hist']."</label>
-		</div>
+	</div>
 	<div class='row'>
 		<input type=checkbox name=allow_book value='1' id=allow_book !!checkbox_book!! class='checkbox' />
 		<label class='etiquette' for='allow_book'>".$msg['empr_allow_book']."</label>
-		</div>
+	</div>
 	<div class='row'>
 		<input type=checkbox name=allow_opac value='1' id=allow_opac !!checkbox_opac!! class='checkbox' />
 		<label class='etiquette' for='allow_opac'>".$msg['empr_allow_opac']."</label>
-		</div>
+	</div>
 	<div class='row'>
 		<input type=checkbox name=allow_dsi value='1' id=allow_dsi !!checkbox_dsi!! class='checkbox' />
 		<label class='etiquette' for='allow_dsi'>".$msg['empr_allow_dsi']."</label>
-		</div>
+	</div>
 	<div class='row'>
 		<input type=checkbox name=allow_dsi_priv value='1' id=allow_dsi_priv !!checkbox_dsi_priv!! class='checkbox' />
 		<label class='etiquette' for='allow_dsi_priv'>".$msg['empr_allow_dsi_priv']."</label>
-		</div>
+	</div>
 	<div class='row'>
 		<input type=checkbox name=allow_sugg value='1' id=allow_sugg !!checkbox_sugg!! class='checkbox' />
 		<label class='etiquette' for='allow_sugg'>".$msg['empr_allow_sugg']."</label>
-		</div>
+	</div>
 	<div class='row'>
 		<input type=checkbox name=allow_dema value='1' id=allow_dema !!checkbox_dema!! class='checkbox' />
 		<label class='etiquette' for='allow_dema'>".$msg['empr_allow_dema']."</label>
-		</div>
+	</div>
 	<div class='row'>
 		<input type=checkbox name=allow_liste_lecture value='1' id=allow_liste_lecture !!checkbox_liste_lecture!! class='checkbox' />
 		<label class='etiquette' for='allow_liste_lecture'>".$msg['empr_allow_liste_lecture']."</label>
-		</div>
+	</div>
 	<div class='row'>
 		<input type=checkbox name=allow_prol value='1' id=allow_prol !!checkbox_prol!! class='checkbox' />
 		<label class='etiquette' for='allow_prol'>".$msg['empr_allow_prol']."</label>
-		</div>
+	</div>
 	<div class='row'>
 		<input type=checkbox name=allow_avis value='1' id=allow_avis !!checkbox_avis!! class='checkbox' />
 		<label class='etiquette' for='allow_avis'>".$msg['empr_allow_avis']."</label>
-		</div>
+	</div>
 	<div class='row'>
 		<input type=checkbox name=allow_tag value='1' id=allow_tag !!checkbox_tag!! class='checkbox' />
 		<label class='etiquette' for='allow_tag'>".$msg['empr_allow_tag']."</label>
-		</div>
+	</div>
 	<div class='row'>
 		<input type=checkbox name=allow_pwd value='1' id=allow_pwd !!checkbox_pwd!! class='checkbox' />
 		<label class='etiquette' for='allow_pwd'>".$msg['empr_allow_pwd']."</label>
-		</div>
+	</div>
 	<div class='row'>
 		<input type=checkbox name=allow_self_checkout value='1' id=allow_self_checkout !!allow_self_checkout!! class='checkbox' />
 		<label class='etiquette' for='allow_self_checkout'>".$msg['empr_allow_self_checkout']."</label>
-		</div>
+	</div>
 	<div class='row'>
 		<input type=checkbox name=allow_self_checkin value='1' id=allow_self_checkin !!allow_self_checkin!! class='checkbox' />
 		<label class='etiquette' for='allow_self_checkin'>".$msg['empr_allow_self_checkin']."</label>
-		</div>
+	</div>
 	<div class='row'>
 		<input type='checkbox' name='allow_serialcirc' value='1' id='allow_serialcirc' !!allow_serialcirc!! class='checkbox' />
 		<label class='etiquette' for='allow_serialcirc'>".$msg['empr_allow_serialcirc']."</label>
-		</div>
+	</div>
+	<div class='row'>
+		<input type='checkbox' name='allow_scan_request' value='1' id='allow_scan_request' !!allow_scan_request!! class='checkbox' />
+		<label class='etiquette' for='allow_scan_request'>".$msg['empr_allow_scan_request']."</label>
+	</div>
+	<div class='row'>
+		<input type='checkbox' name='allow_contribution' value='1' id='allow_contribution' !!allow_contribution!! class='checkbox' />
+		<label class='etiquette' for='allow_contribution'>".$msg['empr_allow_contribution']."</label>
+	</div>
 </div>
 <!-- Boutons -->
 <div class='row'>
@@ -2147,8 +2394,8 @@ $admin_proc_form = "
 		</div>
 	<div class='row'>
 		<label class='etiquette' for='form_comment'>$msg[procs_autorisations]</label>
-		<input type='button' class='bouton_small' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);' align='middle'>
-		<input type='button' class='bouton_small' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);' align='middle'>
+		<input type='button' class='bouton_small align_middle' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);'>
+		<input type='button' class='bouton_small align_middle' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);'>
 		</div>
 	<div class='row'>
 		!!autorisations_users!!
@@ -2220,7 +2467,7 @@ $admin_zbib_form = "
 <h3><span onclick='menuHide(this,event)'>!!form_title!!</span></h3>
 <div class='form-contenu'>
 	<div class='row'>
-		<div class='colonne4' align='right'>
+		<div class='colonne4 align_right'>
 				<label class='etiquette'>$msg[admin_Nom] &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>
@@ -2229,7 +2476,7 @@ $admin_zbib_form = "
 		</div>
 	<div class='row'>&nbsp;</div>
 	<div class='row'>
-		<div class='colonne4' align='right'>
+		<div class='colonne4 align_right'>
 				<label class='etiquette'>$msg[admin_Utilisation] &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>
@@ -2238,7 +2485,7 @@ $admin_zbib_form = "
 		</div>
 	<div class='row'>&nbsp;</div>
 	<div class='row'>
-		<div class='colonne4' align='right'>
+		<div class='colonne4 align_right'>
 				<label class='etiquette'>$msg[admin_Base] &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>
@@ -2247,7 +2494,7 @@ $admin_zbib_form = "
 		</div>
 	<div class='row'>&nbsp;</div>
 	<div class='row'>
-		<div class='colonne4' align='right'>
+		<div class='colonne4 align_right'>
 				<label class='etiquette'>$msg[admin_URL] &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>
@@ -2256,7 +2503,7 @@ $admin_zbib_form = "
 		</div>
 	<div class='row'>&nbsp;</div>
 	<div class='row'>
-		<div class='colonne4' align='right'>
+		<div class='colonne4 align_right'>
 				<label class='etiquette'>$msg[admin_NumPort] &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>
@@ -2265,7 +2512,7 @@ $admin_zbib_form = "
 		</div>
 	<div class='row'>&nbsp;</div>
 	<div class='row'>
-		<div class='colonne4' align='right'>
+		<div class='colonne4 align_right'>
 				<label class='etiquette'>$msg[admin_Format] &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>
@@ -2274,7 +2521,7 @@ $admin_zbib_form = "
 		</div>
 	<div class='row'>&nbsp;</div>
 	<div class='row'>
-		<div class='colonne4' align='right'>
+		<div class='colonne4 align_right'>
 				<label class='etiquette'>$msg[z3950_sutrs] &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>
@@ -2283,7 +2530,7 @@ $admin_zbib_form = "
 		</div>
 	<div class='row'>&nbsp;</div>
 	<div class='row'>
-		<div class='colonne4' align='right'>
+		<div class='colonne4 align_right'>
 				<label class='etiquette'>$msg[admin_user] &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>
@@ -2292,7 +2539,7 @@ $admin_zbib_form = "
 		</div>
 	<div class='row'>&nbsp;</div>
 	<div class='row'>
-		<div class='colonne4' align='right'>
+		<div class='colonne4 align_right'>
 				<label class='etiquette'>$msg[admin_password] &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>
@@ -2301,7 +2548,7 @@ $admin_zbib_form = "
 		</div>
 	<div class='row'>&nbsp;</div>
 	<div class='row'>
-		<div class='colonne4' align='right'>
+		<div class='colonne4 align_right'>
 				<label class='etiquette'>$msg[zbib_zfunc] &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>
@@ -2333,7 +2580,7 @@ $admin_zattr_form = "
 
 	<div class='row'>&nbsp;</div>
 	<div class='row'>
-		<div class='colonne4' align='right'>
+		<div class='colonne4 align_right'>
 				<label class='etiquette'>$msg[admin_Attributs] &nbsp;</label>
 				</div>
 		<div class='colonne_suite'>
@@ -2342,7 +2589,7 @@ $admin_zattr_form = "
 				</div>
 		</div>
 	<div class='row'> </div>
-
+	
 
 </div>
 	<div class='row'>
@@ -2360,7 +2607,7 @@ $admin_zattr_form = "
 
 // $admin_convert_end form - FIX MaxMan
 $admin_convert_end = "
-</center><br /><br />
+<br /><br />
 <form class='form-$current_module' action=\"folow_import.php\" method=\"post\" name=\"destfic\">
 <h3><span onclick='menuHide(this,event)'>".$msg["admin_conversion_end11"]."</span></h3>
 <div class='form-contenu'>
@@ -2368,11 +2615,11 @@ $admin_convert_end = "
 
 if (($output=="yes")&&(!$noimport)) {
 	$admin_convert_end .= "
-		<input type=\"radio\" name=\"deliver\" value=\"1\" checked>&nbsp;".$msg["admin_conversion_end5"]."<br />
-		<input type=\"radio\" name=\"deliver\" value=\"2\" checked>&nbsp;".$msg["admin_conversion_end6"]."<br />";
+		<input id=\"admin_conversion_end5\" type=\"radio\" name=\"deliver\" value=\"1\" checked><label for=\"admin_conversion_end5\">&nbsp;".$msg["admin_conversion_end5"]."</label><br />
+		<input id=\"admin_conversion_end6\" type=\"radio\" name=\"deliver\" value=\"2\" checked><label for=\"admin_conversion_end6\">&nbsp;".$msg["admin_conversion_end6"]."</label><br />";
 }
 $admin_convert_end .= "
-		<input type=\"radio\" name=\"deliver\" value=\"3\" checked>&nbsp;".$msg["admin_conversion_end7"]."<br />
+		<input id=\"admin_conversion_end7\" type=\"radio\" name=\"deliver\" value=\"3\" checked><label for=\"admin_conversion_end7\">&nbsp;".$msg["admin_conversion_end7"]."</label><br />
 		<input type=\"hidden\" name=\"file_in\" value=\"$file_in\">
 		<input type=\"hidden\" name=\"suffix\" value=\"$suffix\">
 		<input type=\"hidden\" name=\"mimetype\" value=\"$mimetype\">
@@ -2387,10 +2634,11 @@ $admin_convert_end .= "</div><div class='row'>
 </form>
 <br />
 <div class='row'>
-<center><b>".$msg["admin_conversion_end9"]."</b></center>";
+<span class='center'><b>".$msg["admin_conversion_end9"]."</b></span>";
 
+if(!isset($n_errors)) $n_errors = 0;
 if ($n_errors==0) {
-	$admin_convert_end .= "<center><b>".$msg["admin_conversion_end10"]."</b></center>";
+	$admin_convert_end .= "<span class='center'><b>".$msg["admin_conversion_end10"]."</b></span>";
 } else {
 	$admin_convert_end .= "  $errors_msg  </div> ";
 }
@@ -2445,7 +2693,7 @@ $admin_calendrier_form_mois_start = "
 
 $admin_calendrier_form_mois_commentaire = " <input class='saisie-5em' id='commentaire' type='text' name='!!name!!' value='!!commentaire!!' />" ;
 $admin_calendrier_form_mois_commentaire = " <textarea name='!!name!!' class='saisie-5em' rows='4' wrap='virtual'>!!commentaire!!</textarea>";
-
+				
 $admin_calendrier_form_mois_end = "	</div>
 <div class='row'>
 	<input class='bouton' type='button' value='$msg[76]' onClick=\"document.location='./admin.php?categ=calendrier'\">&nbsp;
@@ -2526,6 +2774,15 @@ $admin_notice_statut_form = "
 	<div class='colonne_suite'>
 		<label class='etiquette' for='form_expl_visu_abon'>$msg[noti_statut_explnum_visible_opac_abon]</label>
 		<input type=checkbox name=form_explnum_visu_abon value='1' !!checkbox_explnum_visu_abon!! class='checkbox' />
+		</div>
+	<div class='row'>&nbsp;</div>
+	<div class='colonne2'>
+		<label class='etiquette' for='form_scan_request_opac'>".$msg['noti_statut_scan_request_opac']."</label>
+		<input type='checkbox' name='form_scan_request_opac' value='1' !!checkbox_scan_request_opac!! class='checkbox' />
+		</div>
+	<div class='colonne_suite'>
+		<label class='etiquette' for='form_scan_request_opac_abon'>".$msg['noti_statut_scan_request_opac_abon']."</label>
+		<input type='checkbox' name='form_scan_request_opac_abon' value='1' !!checkbox_scan_request_opac_abon!! class='checkbox' />
 		</div>
 	<div class='row'></div>
 	</div>
@@ -2620,42 +2877,42 @@ $admin_abonnements_periodicite_form = "
 	<div class='row'>
 		<input type=text name='libelle' value='!!libelle!!' class='saisie-50em' />
 		</div>
-
+	
 	<div class='row'>
 		<label class='etiquette' for='duree'>$msg[abonnements_periodicite_duree]</label>
 		</div>
 	<div class='row'>
 		<input type=text name='duree' value='!!duree!!' class='saisie-50em' />
 		</div>
-
+				
 	<div class='row'>
 		<label class='etiquette' for='unite'>$msg[abonnements_periodicite_unite]</label>
 		</div>
 	<div class='row'>
 		!!unite!!
 		</div>
-
+				
 	<div class='row'>
 		<label class='etiquette' for='seuil_periodicite'>$msg[seuil_periodicite]</label>
 		</div>
 	<div class='row'>
 		<input type=text name='seuil_periodicite' value='!!seuil_periodicite!!' class='saisie-50em' />
 		</div>
-
+	
 	<div class='row'>
 		<label class='etiquette' for='retard_periodicite'>$msg[retard_periodicite]</label>
 		</div>
 	<div class='row'>
 		<input type=text name='retard_periodicite' value='!!retard_periodicite!!' class='saisie-50em' />
 		</div>
-
+	
 	<div class='row'>
 		<label class='etiquette' for='consultation_duration'>".$msg["serialcirc_consultation_duration"]."</label>
 		</div>
 	<div class='row'>
 		<input type=text name='consultation_duration' value='!!consultation_duration!!' class='saisie-50em' />
 		</div>
-
+			
 	</div>
 <!-- Boutons -->
 <div class='row'>
@@ -2700,112 +2957,6 @@ $admin_procs_clas_form = "
 </form>
 <script type='text/javascript'>document.forms['proc_clas_form'].elements['form_libproc_classement'].focus();</script>
 ";
-
-// $admin_chklnk_form : template form choix paniers nettoyage liens cassés
-$admin_chklnk_form = "
-	<form class='form-$current_module' id='login' method='post' action='./admin.php'>
-	<h3>".$msg['chklnk_titre']."</h3>
-	<div class='form-contenu'>
-		<div class='row'>
-			<input type='checkbox' checked name='chkrestrict' value='1'>&nbsp;<label class='etiquette' >".$msg['chklnk_restrict']."</label>
-			<blockquote>";
-			$requetenoti = "SELECT idcaddie, name FROM caddie where type='NOTI' and (autorisations='$PMBuserid' or autorisations like '$PMBuserid %' or autorisations like '% $PMBuserid %' or autorisations like '% $PMBuserid') order by name ";
-			$requetebull = "SELECT idcaddie, name FROM caddie where type='BULL' and (autorisations='$PMBuserid' or autorisations like '$PMBuserid %' or autorisations like '% $PMBuserid %' or autorisations like '% $PMBuserid') order by name ";
-			$requeteexpl = "SELECT idcaddie, name FROM caddie where type='EXPL' and (autorisations='$PMBuserid' or autorisations like '$PMBuserid %' or autorisations like '% $PMBuserid %' or autorisations like '% $PMBuserid') order by name ";
-$admin_chklnk_form .= "
-				<div class='colonne3'>
-					<label class='etiquette' >".$msg['chklnk_restrict_by_basket_noti']."</label><br />
-					".gen_liste ($requetenoti, "idcaddie", "name", "idcaddienoti[]", "", "", "", "","","",1,"style='width:100%;'")."
-				</div>
-				<div class='colonne3'>
-					<label class='etiquette' >".$msg['chklnk_restrict_by_basket_bull']."</label><br />
-					".gen_liste ($requetebull, "idcaddie", "name", "idcaddiebull[]", "", "", "", "","","",1,"style='width:100%;'")."
-				</div>
-				<div class='colonne3'>
-					<label class='etiquette' >".$msg['chklnk_restrict_by_basket_expl']."</label><br />
-					".gen_liste ($requeteexpl, "idcaddie", "name", "idcaddieexpl[]", "", "", "", "","","",1,"style='width:100%;'")."
-				</div>
-			</blockquote>
-		</div>
-		<h3>".$msg['chklnk_titre_notice']."</h3>
-		<div class='row'>
-			<input type='checkbox' checked name='chknoti' value='1'>&nbsp;<label class='etiquette' >".$msg['chklnk_chk_noti']."</label>&nbsp;
-		<blockquote>
-			<input type='checkbox' name='ajtnoti' value='1'>&nbsp;".$msg['chklnk_choix_caddie_noti']."
-	        ";
-			$requetetmpcad = "SELECT idcaddie, name FROM caddie where type='NOTI' and (autorisations='$PMBuserid' or autorisations like '$PMBuserid %' or autorisations like '% $PMBuserid %' or autorisations like '% $PMBuserid') order by name ";
-$admin_chklnk_form .= gen_liste ($requetetmpcad, "idcaddie", "name", "idcaddienot", "", "", "", "","","",0);
-$admin_chklnk_form .= "</blockquote>
-		</div>
-		<div class='row'>
-			<input type='checkbox' checked name='chkvign' value='1'>&nbsp;<label class='etiquette' >".$msg['chklnk_chk_vign']."</label>&nbsp;
-		<blockquote>
-			<input type='checkbox' name='ajtvign' value='1'>&nbsp;".$msg['chklnk_choix_caddie_noti']."
-	        ";
-			$requetetmpcad = "SELECT idcaddie, name FROM caddie where type='NOTI' and (autorisations='$PMBuserid' or autorisations like '$PMBuserid %' or autorisations like '% $PMBuserid %' or autorisations like '% $PMBuserid') order by name ";
-$admin_chklnk_form .= gen_liste ($requetetmpcad, "idcaddie", "name", "idcaddievign", "", "", "", "","","",0);
-$admin_chklnk_form .= "</blockquote>
-		</div>
-		<div class='row'>
-			<input type='checkbox' checked name='chkcp' value='1'>&nbsp;<label class='etiquette' >".$msg['chklnk_chk_cp']."</label>&nbsp;
-		<blockquote>
-			<input type='checkbox' name='ajtcp' value='1'>&nbsp;".$msg['chklnk_choix_caddie_cp']."
-	        ";
-			$requetetmpcad = "SELECT idcaddie, name FROM caddie where type='NOTI' and (autorisations='$PMBuserid' or autorisations like '$PMBuserid %' or autorisations like '% $PMBuserid %' or autorisations like '% $PMBuserid') order by name ";
-$admin_chklnk_form .= gen_liste ($requetetmpcad, "idcaddie", "name", "idcaddiecp", "", "", "", "","","",0);
-$admin_chklnk_form .= "</blockquote>
-		</div>
-		<div class='row'>
-			<input type='checkbox' checked name='chkenum' value='1'>&nbsp;<label class='etiquette' >".$msg['chklnk_chk_enum']."</label>&nbsp;
-		<blockquote>
-			<input type='checkbox' name='ajtenum' value='1'>&nbsp;".$msg['chklnk_choix_caddie_enum']."
-	        ";
-			$requetetmpcad = "SELECT idcaddie, name FROM caddie where type='NOTI' and (autorisations='$PMBuserid' or autorisations like '$PMBuserid %' or autorisations like '% $PMBuserid %' or autorisations like '% $PMBuserid') order by name ";
-$admin_chklnk_form .= gen_liste ($requetetmpcad, "idcaddie", "name", "idcaddielnk", "", "", "", "","","",0);
-$admin_chklnk_form .= "</blockquote>
-		</div>
-		<div class='row'>
-			<input type='checkbox' checked name='chkbull' value='1'>&nbsp;<label class='etiquette' >".$msg['chklnk_chk_bull']."</label>&nbsp;
-		<blockquote>
-			<input type='checkbox' name='ajtbull' value='1'>&nbsp;".$msg['chklnk_choix_caddie_bull']."
-	        ";
-			$requetetmpcad = "SELECT idcaddie, name FROM caddie where type='BULL' and (autorisations='$PMBuserid' or autorisations like '$PMBuserid %' or autorisations like '% $PMBuserid %' or autorisations like '% $PMBuserid') order by name ";
-$admin_chklnk_form .= gen_liste ($requetetmpcad, "idcaddie", "name", "idcaddiebul", "", "", "", "","","",0);
-$admin_chklnk_form .= "</blockquote>
-		</div>
-		<h3>".$msg['chklnk_titre_autorites']."</h3>
-		<div class='row'>
-			<input type='checkbox' checked name='chkautaut' value='1'>&nbsp;<label class='etiquette' >".$msg['chklnk_chk_autaut']."</label>
-		</div>
-		<div class='row'>
-			<input type='checkbox' checked name='chkautpub' value='1'>&nbsp;<label class='etiquette' >".$msg['chklnk_chk_autpub']."</label>
-		</div>
-		<div class='row'>
-			<input type='checkbox' checked name='chkautcol' value='1'>&nbsp;<label class='etiquette' >".$msg['chklnk_chk_autcol']."</label>
-		</div>
-		<div class='row'>
-			<input type='checkbox' checked name='chkautsco' value='1'>&nbsp;<label class='etiquette' >".$msg['chklnk_chk_autsco']."</label>
-		</div>";
-if ($cms_active) {
-	$admin_chklnk_form .="<h3>".$msg['chklnk_titre_editorial_content']."</h3>
-		<div class='row'>
-			<input type='checkbox' checked name='chkeditorialcontentcp' value='1'>&nbsp;<label class='etiquette' >".$msg['chklnk_editorial_content_chk_cp']."</label>
-		</div>";
-}
-$admin_chklnk_form .="<h3>".$msg['chklnk_curl_timeout']."</h3>
-		<div class='row'>
-			<input type='text' class='saisie-10em' name='chkcurltimeout' value='".$pmb_curl_timeout."' />
-		</div>
-		</div>
-
-	<!--	Bouton d'envoi	-->
-	<div class='row'>
-		<input type='hidden' name='suite' value='OK' />
-		<input type='hidden' name='categ' value='chklnk' />
-		<input type='submit' class='bouton' value=\"".$msg['chklnk_bt_lancer']."\" />
-	</div>
-	</form>
-	";
 
 $admin_menu_infopages = "
 <h1><span>".$msg['admin_menu_opac']." > !!menu_sous_rub!!</span></h1>
@@ -2919,6 +3070,11 @@ $admin_menu_authorities = "
 		<a title='".$msg['origins']."' href='./admin.php?categ=authorities&sub=origins&action='>
 			".$msg['origins']."
 		</a>
+	</span>	
+	<span".ongletSelect("categ=authorities&sub=statuts").">
+		<a title='".$msg['20']."' href='./admin.php?categ=authorities&sub=statuts&action='>
+			".$msg['20']."
+		</a>
 	</span>
 	<span".ongletSelect("categ=authorities&sub=perso&type_field=author").">
 		<a title='$msg[admin_menu_docs_perso_author]' href='./admin.php?categ=authorities&sub=perso&type_field=author&action='>
@@ -2960,11 +3116,16 @@ $admin_menu_authorities = "
 			$msg[admin_menu_docs_perso_indexint]
 		</a>
 	</span>
+	<span".ongletSelect("categ=authorities&sub=perso&type_field=skos").">
+		<a title='$msg[admin_menu_docs_perso_skos]' href='./admin.php?categ=authorities&sub=perso&type_field=skos&action='>
+			$msg[admin_menu_docs_perso_skos]
+		</a>
+	</span>
 	<span".ongletSelect("categ=authorities&sub=authperso").">
 		<a title='$msg[admin_menu_authperso]' href='./admin.php?categ=authorities&sub=authperso'>
 			$msg[admin_menu_authperso]
 		</a>
-	</span>
+	</span>	
 	<span".ongletSelect("categ=authorities&sub=templates").">
 		<a title='$msg[admin_menu_authperso]' href='./admin.php?categ=authorities&sub=templates'>
 			$msg[admin_menu_authperso_template]
@@ -2992,30 +3153,15 @@ $admin_menu_opac_views = "
 			$msg[opac_view_admin_menu_list]
 		</a>
 	</span>";
-if($pmb_opac_view_activate == 2){
-	$admin_menu_opac_views.= "
+if($pmb_opac_view_activate == 2){		
+	$admin_menu_opac_views.= "			
 	<span".ongletSelect("categ=opac&sub=opac_view&section=affect").">
 		<a title='$msg[opac_view_admin_menu_affect]' href='./admin.php?categ=opac&sub=opac_view&section=affect'>
 			$msg[opac_view_admin_menu_affect]
 		</a>
 	</span>";
 }
-$admin_menu_opac_views.= "
-</div>
-";
-
-$admin_menu_facettes="
-<div class='hmenu'>
-	<span".ongletSelect("categ=opac&sub=facette_search_opac&section=facette").">
-		<a title='$msg[facettes_admin_menu_facettes]' href='./admin.php?categ=opac&sub=facette_search_opac&section=facette'>
-			$msg[facettes_admin_menu_facettes]
-		</a>
-	</span>
-	<span".ongletSelect("categ=opac&sub=facette_search_opac&section=comparateur").">
-		<a title='$msg[facettes_admin_menu_compare]' href='./admin.php?categ=opac&sub=facette_search_opac&section=comparateur'>
-			$msg[facettes_admin_menu_compare]
-		</a>
-	</span>
+$admin_menu_opac_views.= "	
 </div>
 ";
 
@@ -3026,7 +3172,7 @@ $admin_menu_cms_editorial = "
 		<a title='".$msg['editorial_content_type_section']."' href='./admin.php?categ=cms_editorial&sub=type&elem=section&action='>
 			".$msg['editorial_content_type_section']."
 		</a>
-	</span>
+	</span>	
 	<span".ongletSelect("categ=cms_editorial&sub=type&elem=article").">
 		<a title='".$msg['editorial_content_type_article']."' href='./admin.php?categ=cms_editorial&sub=type&elem=article&action='>
 			".$msg['editorial_content_type_article']."
@@ -3044,7 +3190,7 @@ $admin_liste_jscript = "
 	<script type='text/javascript' src='./javascript/ajax.js'></script>
 	<script type='text/javascript'>
 		function showListItems(obj) {
-
+		
 
 			kill_frame_items();
 
@@ -3052,13 +3198,13 @@ $admin_liste_jscript = "
 			var what = 	obj.getAttribute('what');
 			var item = 		obj.getAttribute('item');
 			var total = 		obj.getAttribute('total');
-
+		
 			var url='./admin/docs/frame_liste_items.php?what='+what+'&item='+item+'&total='+total;
 			var list_view=document.createElement('iframe');
 			list_view.setAttribute('id','frame_list_items');
 			list_view.setAttribute('name','list_items');
 			list_view.src=url;
-
+		
 			var att=document.getElementById('att');
 			list_view.style.visibility='hidden';
 			list_view.style.display='block';
@@ -3146,7 +3292,11 @@ $admin_docnum_statut_form = "
 		<input type=checkbox name=form_download_opac_abon value='1' !!checkbox_download_opac_abon!! class='checkbox' />
 	</div>
 	<div class='row'>&nbsp;</div>
-	<div class='row'></div>
+	<div class='row'>
+		<label class='etiquette' for='form_thumbnail_visible_opac_override'>".$msg["docnum_statut_thumbnail_visible_opac_override"]."</label>
+		<input type=checkbox name='form_thumbnail_visible_opac_override' value='1' !!checkbox_thumbnail_visible_opac_override!! class='checkbox' />
+	</div>
+	<div class='row'>&nbsp;</div>
 </div>
 <!-- Boutons -->
 <div class='row'>
@@ -3173,4 +3323,160 @@ $admin_menu_loans = "
 	</span>
 </div>
 ";
-?>
+
+$admin_authorities_statut_form = "
+<form class='form-$current_module' name='statutform' method=post action=\"./admin.php?categ=authorities&sub=statuts&action=update&id=!!id!!\">
+<h3><span onclick='menuHide(this,event)'>!!form_title!!</span></h3>
+<!--    Contenu du form    -->
+<div class='form-contenu'>
+<div class='row'>
+<label class='etiquette' for='form_libelle'>".$msg["docnum_statut_libelle"]."</label>
+		</div>
+		<div class='row'>
+			<input type=text name='form_gestion_libelle' value='!!gestion_libelle!!' class='saisie-50em' />
+		</div>
+		<div class='row'>&nbsp;</div>
+		<div class='row'>
+			<div class='colonne5'>
+				<label class='etiquette' for='form_class_html'>".$msg["docnum_statut_class_html"]."</label>
+			</div>
+			<div class='colonne_suite'>
+				!!class_html!!
+			</div>
+		</div>
+		<div class='row'>&nbsp;</div>
+		<div class='row'>
+			<div class='colonne5'>
+				<label class='etiquette' for='form_used_for'>".$msg["authorities_used_for"]."</label>
+				</div>
+				<div class='colonne_suite'>
+				!!list_authorities!!
+				</div>
+				</div>
+				<div class='row'>&nbsp;</div>
+				</div>
+				<!-- Boutons -->
+				<div class='row'>
+				<div class='left'>
+				<input class='bouton' type='button' value=' $msg[76] ' onClick=\"document.location='./admin.php?categ=authorities&sub=statuts&action='\">&nbsp;
+				<input class='bouton' type='submit' value=' $msg[77] ' onClick=\"return test_form(this.form)\">
+				</div>
+				<div class='right'>
+				!!bouton_supprimer!!
+				</div>
+				</div>
+				<div class='row'></div>
+				</form>
+				<script type='text/javascript'>document.forms['statutform'].elements['form_gestion_libelle'].focus();</script>";
+
+//Formulaire de contact
+$admin_menu_contact_form = "
+<h1>".$msg["admin_menu_opac"]." > ".$msg["admin_opac_contact_form"]."<span> > !!menu_sous_rub!!</span></h1>
+<div class='hmenu'>
+	<span".ongletSelect("categ=contact_form&sub=parameters").">
+		<a title='".$msg["admin_opac_contact_form_parameters"]."' href='./admin.php?categ=contact_form&sub=parameters'>
+			".$msg["admin_opac_contact_form_parameters"]."
+		</a>
+	</span>
+	<span".ongletSelect("categ=contact_form&sub=objects").">
+		<a title='".$msg["admin_opac_contact_form_objects"]."' href='./admin.php?categ=contact_form&sub=objects'>
+			".$msg["admin_opac_contact_form_objects"]."
+		</a>
+	</span>
+	<span".ongletSelect("categ=contact_form&sub=recipients").">
+		<a title='".$msg["admin_opac_contact_form_recipients"]."' href='./admin.php?categ=contact_form&sub=recipients'>
+			".$msg["admin_opac_contact_form_recipients"]."
+		</a>
+	</span>
+</div>";
+
+
+$admin_menu_search_universes ="
+<h1>".$msg["admin_menu_search_universes"]."</h1>
+<div class=\"hmenu\">
+	<span".ongletSelect("categ=search_universes&sub=universe").">
+		<a title='".$msg["admin_search_universe"]."' href='./admin.php?categ=search_universes&sub=universe'>
+			".$msg["admin_search_universe"]."
+		</a>
+	</span>
+</div>";
+
+$admin_menu_pnb = "
+<h1>".$msg["admin_menu_pnb"]." <span>> !!menu_sous_rub!!</span></h1>
+<div class='hmenu'>
+	<span".ongletSelect("categ=pnb&sub=param").">
+		<a title='".$msg["admin_menu_pnb_param"]."' href='./admin.php?categ=pnb&sub=param&action='>
+			".$msg["admin_menu_pnb_param"]."
+		</a>
+	</span>			
+	<span".ongletSelect("categ=pnb&sub=quotas_simultaneous_loans").">
+		<a title='" . $msg["admin_menu_pnb_quotas_simultaneous_loans"] . "' href='./admin.php?categ=pnb&sub=quotas_simultaneous_loans&action='>
+			" . $msg["admin_menu_pnb_quotas_simultaneous_loans"] . "
+		</a>
+	</span>		
+	<span".ongletSelect("categ=pnb&sub=quotas_prolongation").">
+		<a title='" . $msg["admin_menu_pnb_quotas_prolongation"] . "' href='./admin.php?categ=pnb&sub=quotas_prolongation&action='>
+			" . $msg["admin_menu_pnb_quotas_prolongation"] . "
+		</a>
+	</span>	
+	<span".ongletSelect("categ=pnb&sub=drm_parameters").">
+		<a title='" . $msg["admin_menu_pnb_drm_parameters"] . "' href='./admin.php?categ=pnb&sub=drm_parameters&action='>
+			" . $msg["admin_menu_pnb_drm_parameters"] . "
+		</a>
+	</span>
+</div>
+";
+
+$admin_vignette_menu ="
+<h1>".$msg["admin_vignette_menu"]."</h1>
+<div class=\"hmenu\">
+	<span".ongletSelect("categ=vignette&sub=record").">
+		<a title='$msg[admin_vignette_menu_record]' href='./admin.php?categ=vignette&sub=record&action='>
+			$msg[admin_vignette_menu_record]
+		</a>
+	</span>
+	<div style='display:none'><!--    TO DO    -->
+    	<span".ongletSelect("categ=vignette&sub=author").">
+    		<a title='$msg[admin_vignette_menu_author]' href='./admin.php?categ=vignette&sub=author&action='>
+    			$msg[admin_vignette_menu_author]
+    		</a>
+    	</span>
+    	<span".ongletSelect("categ=vignette&sub=categ").">
+    		<a title='$msg[admin_vignette_menu_categ]' href='./admin.php?categ=vignette&sub=categ&action='>
+    			$msg[admin_vignette_menu_categ]
+    		</a>
+    	</span>
+    	<span".ongletSelect("categ=vignette&sub=publisher").">
+    		<a title='$msg[admin_vignette_menu_publisher]' href='./admin.php?categ=vignette&sub=publisher&action='>
+    			$msg[admin_vignette_menu_publisher]
+    		</a>
+    	</span>
+    	<span".ongletSelect("categ=vignette&sub=collection").">
+    		<a title='$msg[admin_vignette_menu_collection]' href='./admin.php?categ=vignette&sub=collection&action='>
+    			$msg[admin_vignette_menu_collection]
+    		</a>
+    	</span>
+    	<span".ongletSelect("categ=vignette&sub=subcollection").">
+    		<a title='$msg[admin_vignette_menu_subcollection]' href='./admin.php?categ=vignette&sub=subcollection&action='>
+    			$msg[admin_vignette_menu_subcollection]
+    		</a>
+    	</span>
+    	<span".ongletSelect("categ=vignette&sub=serie").">
+    		<a title='$msg[admin_vignette_menu_serie]' href='./admin.php?categ=vignette&sub=serie&action='>
+    			$msg[admin_vignette_menu_serie]
+    		</a>
+    	</span>
+    	<span".ongletSelect("categ=vignette&sub=tu").">
+    		<a title='$msg[admin_vignette_menu_tu]' href='./admin.php?categ=vignette&sub=tu&action='>
+    			$msg[admin_vignette_menu_tu]
+    		</a>
+    	</span>
+    	<span".ongletSelect("categ=vignette&sub=indexint").">
+    		<a title='$msg[admin_vignette_menu_indexint]' href='./admin.php?categ=vignette&sub=indexint&action='>
+    			$msg[admin_vignette_menu_indexint]
+    		</a>
+    	</span>
+	</div>
+</div>";
+
+

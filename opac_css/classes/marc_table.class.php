@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: marc_table.class.php,v 1.22 2014-11-20 10:51:59 arenou Exp $
+// $Id: marc_table.class.php,v 1.30 2017-11-13 10:34:53 dgoron Exp $
 
 // classe de gestion des tables MARC en XML
 
@@ -11,19 +11,21 @@ if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 if ( ! defined( 'MARC_TABLE_CLASS' ) ) {
   define( 'MARC_TABLE_CLASS', 1 );
 
-require_once("$class_path/XMLlist.class.php");
+require_once($class_path.'/XMLlist.class.php');
+require_once($class_path.'/XMLlist_links.class.php');
 
 class marc_list {
 
 // propriétés
 
-	var $table;
-	var $parser;
-
+	public $table;
+	public $parser;
+	public $inverse_of = array();
+	public $attributes = array();
 // méthodes
 
 	// constructeur
-	function marc_list($type) {
+	public function __construct($type) {
 		global $lang;
 		global $charset;
 		global $include_path;
@@ -123,7 +125,12 @@ class marc_list {
 				$parser = new XMLlist("$include_path/marc_tables/$lang/relationtype_autup.xml");
 				$parser->analyser();
 				$this->table = $parser->table;
-				break;	
+				break;
+			case 'languages':
+				$parser = new XMLlist("$include_path/messages/languages.xml");
+				$parser->analyser();
+				$this->table = $parser->table;
+				break;
 			case 'music_key':
 				$parser = new XMLlist("$include_path/marc_tables/$lang/music_key.xml");
 				$parser->analyser();
@@ -133,6 +140,26 @@ class marc_list {
 				$parser = new XMLlist("$include_path/marc_tables/$lang/music_form.xml");
 				$parser->analyser();
 				$this->table = $parser->table;
+				break;
+			case 'oeuvre_type':
+				$parser = new XMLlist("$include_path/marc_tables/$lang/oeuvre_type.xml");
+				$parser->analyser();
+				$this->table = $parser->table;
+				break;
+			case 'oeuvre_nature':
+				$parser = new XMLlist("$include_path/marc_tables/$lang/oeuvre_nature.xml");
+				$parser->setAttributesToParse(array(array('name' => "NATURE")));				
+				$parser->analyser();
+				$this->attributes=$parser->getAttributes();
+				$this->table = $parser->table;
+				break;
+			case 'oeuvre_link':
+				$parser = new XMLlist_links("$include_path/marc_tables/$lang/oeuvre_link.xml");
+				$parser->setAttributesToParse(array(array('name' => 'EXPRESSION', 'default_value' => 'no'), array('name' => 'OTHER_LINK', 'default_value' => 'yes')));
+				$parser->analyser();
+				$this->table = $parser->table;
+				$this->attributes = $parser->getAttributes();
+				$this->inverse_of = $parser->inverse_of;
 				break;
 			default:
 				$this->table=array();
@@ -146,46 +173,111 @@ class marc_select {
 
 // propriétés
 
-	var $display;
-	var $libelle; // libellé du selected
+	public $table;
+	public $name;
+	public $selected;
+	public $onchange;
+	public $display;
+	public $libelle; // libellé du selected
+	public $attributes=array();
 
 // méthodes
 
 	// constructeur
+	public function __construct($type, $name='mySelector', $selected='', $onchange='', $option_premier_code='', $option_premier_info='', $attributes=array()){
+		$source = marc_list_collection::get_instance($type);
+		$this->table = $source->table;
+		if($option_premier_code!=='' && $option_premier_info!=='') {
+			$option_premier_tab = array($option_premier_code=>$option_premier_info);
+			$this->table=$option_premier_tab + $this->table;
+		}
+		$this->name = $name;
+		$this->selected = $selected;
+		$this->onchange = $onchange;
+		$this->attributes = $attributes;
+		$this->get_selector();
+	}
 
-
-	function marc_select($type, $name='mySelector', $selected='', $onchange='')
-	{
-		$source = new marc_list($type);
-		if ($onchange) $onchange=" onchange=\"$onchange\" ";
-		$this->display = "<select id='$name' name='$name' $onchange >";
+	public function get_selector(){
+		global $charset;
 		
-		if($selected) {
-			foreach($source->table as $value=>$libelle) {
-				if(!($value == $selected))
-					$tag = "<option value='$value'>";
-				else{
-					$tag = "<option value='$value' selected='selected'>";
-					$this->libelle="$libelle";
+		$attribute_fields=' ';
+		foreach ($this->attributes as $attribute){
+			$attribute_fields.=$attribute['name'].'="'.$attribute['value'].'" ';
+		}
+		if ($this->onchange) $onchange=" onchange=\"".$this->onchange."\" ";
+		else $onchange="";
+		$this->display = '<select id="'.$this->name.'" name="'.$this->name.'" '.$attribute_fields.' '.$onchange.' >';
+		
+		foreach($this->table as $value=>$libelle) {
+			if(is_array($libelle)){
+				$this->display.='
+					<optgroup label="'.htmlentities($value,ENT_QUOTES,$charset).'">';
+				foreach($libelle as $key => $val){
+					$this->gen_option($key, $val);
 				}
-				$this->display .= "$tag$libelle</option>";
+				$this->display.="
+					</optgroup>";
+			}else {
+				$this->gen_option($value, $libelle);
 			}
-
-		} else {
-
-			// cirque à cause d'un bug d'IE
-			reset($source->table);
-			$this->display .= "<option value='".key($source->table)."' selected='selected' >";
-			$this->display .= pos($source->table).'</option>';
-
-			while(next($source->table)) {
-				$this->display .= "<option value='".key($source->table)."'>";
-				$this->display .= pos($source->table).'</option>';
-			}
-
 		}
 		$this->display .= "</select>";
+	}
+	
+	private function gen_option($value, $libelle){
+		global $charset;
+		if(!($value == $this->selected))
+			$tag = "<option value='".$value."'>";
+		else{
+			$tag = "<option value='".$value."' selected='selected'>";
+			$this->libelle=$libelle;
+		}
+		$this->display .= $tag.htmlentities($libelle,ENT_QUOTES,$charset)."</option>";
+	}
+	
+	public function get_radio_selector(){
+		$display = "";
+		foreach($this->table as $value=>$libelle) {
+			if(is_array($libelle)){
+				foreach($libelle as $key => $val){
+					$display.= $this->gen_radio_item($key, $val);
+				}
+			}else {
+				$display.= $this->gen_radio_item($value, $libelle);
+			}
+		}
+		return $display;
+	}
+	
+	private function gen_radio_item($value, $libelle){
+		global $charset;
+		
+		$onchange = $selected = '';
+		if ($this->onchange) $onchange = " onclick=\"".$this->onchange."\" ";
+		if((!$this->selected && !$value) || ($value === $this->selected)){
+			$selected = " checked='checked' ";
+			$this->libelle = $libelle;
+		}
+		return "&nbsp;<input type='radio' id='".$this->name."_".htmlentities($value,ENT_QUOTES,$charset)."' name='".$this->name."' value='".htmlentities($value,ENT_QUOTES,$charset)."'".$selected.$onchange."/>&nbsp;
+				<label for='".$this->name."_".htmlentities($value,ENT_QUOTES,$charset)."'>".htmlentities($libelle,ENT_QUOTES,$charset)."</label>";
+	}
+	
+	public function first_item_at_last() {
+		$item = array_shift($this->table);
+		array_push($this->table, $item);
+	}
+}
 
+class marc_list_collection {
+
+	private static $marc_list = array();
+
+	public static function get_instance($type) {
+		if (!isset(self::$marc_list[$type])) {
+			self::$marc_list[$type] = new marc_list($type);
+		}
+		return self::$marc_list[$type];
 	}
 }
 

@@ -1,4 +1,4 @@
-<h1>Interlibrary loans (ILL)</h1>
+<h2>Interlibrary loans (ILL)</h2>
 <p>Below you will find the option to set up ILLs. </p>
 <p>
 <b>General</b> General settings

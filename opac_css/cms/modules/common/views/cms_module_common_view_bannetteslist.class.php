@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_bannetteslist.class.php,v 1.4.4.1 2015-10-09 15:07:38 dgoron Exp $
+// $Id: cms_module_common_view_bannetteslist.class.php,v 1.10 2017-07-26 07:57:50 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -30,6 +30,9 @@ class cms_module_common_view_bannetteslist extends cms_module_common_view_django
 	}
 	
 	public function get_form(){
+		if(!isset($this->parameters['used_template'])) $this->parameters['used_template'] = '';
+		if(!isset($this->parameters['css'])) $this->parameters['css'] = '';
+		if(!isset($this->parameters['nb_notices'])) $this->parameters['nb_notices'] = '';
 		$form="
 		<div class='row'>
 			<div class='colonne3'>
@@ -124,20 +127,12 @@ class cms_module_common_view_bannetteslist extends cms_module_common_view_django
 			$datas["bannettes"][$i]['records']=array();
 			while ($r=pmb_mysql_fetch_object($resultat)) {	
 				$content="";
-				if ($opac_show_book_pics=='1' && ($opac_book_pics_url || $r->thumbnail_url)) {
-					$code_chiffre = pmb_preg_replace('/-|\.| /', '', $r->code);
-					$url_image = $opac_book_pics_url ;
-					$url_image = $opac_url_base."getimage.php?url_image=".urlencode($url_image)."&noticecode=!!noticecode!!&vigurl=".urlencode($r->thumbnail_url) ;
-					if ($r->thumbnail_url){
-					$url_vign=$r->thumbnail_url;	
-					}else if($code_chiffre){
-						$url_vign = str_replace("!!noticecode!!", $code_chiffre, $url_image) ;
-					}else {
-						$url_vign = $opac_url_base."images/vide.png";			
-					}
+				$url_vign = "";
+				if (($r->code || $r->thumbnail_url) && ($opac_show_book_pics=='1' && ($opac_book_pics_url || $r->thumbnail_url))) {
+					$url_vign = getimage_url($r->code, $r->thumbnail_url);
 				}
 				if($this->parameters['used_template']){
-					$tpl = new notice_tpl_gen($this->parameters['used_template']);
+					$tpl = notice_tpl_gen::get_instance($this->parameters['used_template']);
 					$content= $tpl->build_notice($r->num_notice);
 				}else{					
 					$notice_class = new $opac_notice_affichage_class($r->num_notice,$liens_opac);

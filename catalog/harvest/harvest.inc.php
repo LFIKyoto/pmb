@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: harvest.inc.php,v 1.1 2012-01-25 15:20:35 ngantier Exp $
+// $Id: harvest.inc.php,v 1.2 2017-05-12 15:15:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -23,7 +23,7 @@ if ($acces_m==0) {
 	$harv = new harvest_notice($notice_id,$harvest_id,$profil_id);			
 	switch($action){
 		case 'build':
-			print "<h1>".$msg[harvest_notice_replace_title]."</h1>";
+			print "<h1>".$msg['harvest_notice_replace_title']."</h1>";
 			
 			$harv->get_notice_externe($notice_id);
 		break;
@@ -32,7 +32,7 @@ if ($acces_m==0) {
 		break;
 	
 		default:
-			print "<h1>".$msg[harvest_notice_replace_title]."</h1>";
+			print "<h1>".$msg['harvest_notice_replace_title']."</h1>";
 			
 			print $harv->get_form_sel();
 		break;		

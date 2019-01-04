@@ -2,11 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_z3950_replace.inc.php,v 1.3 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: notice_z3950_replace.inc.php,v 1.4 2017-01-25 16:43:50 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // page de remplacement notice par z3950
+
+if(!isset($id_notice)) $id_notice = 0;
 
 //verification des droits de modification notice
 $acces_m=1;

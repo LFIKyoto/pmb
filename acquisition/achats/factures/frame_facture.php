@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frame_facture.php,v 1.27 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: frame_facture.php,v 1.30 2016-06-16 12:01:18 jpermanne Exp $
 
 //Liste les lignes d'une facture
 $base_path="../../..";                            
@@ -60,7 +60,7 @@ function verif_fac() {
 		
 		//Vérification prix
 		$prix[$i] = str_replace(',','.',$prix[$i]);
-		if (!is_numeric($prix[$i]) || $prix[$i] < '0' || $prix[$i] > '999999.99' ) {
+		if (!is_numeric($prix[$i]) || $prix[$i] > '9999999999.99' ) {
 			$error = true;
 			$error_msg = $msg['acquisition_lig'].' '.$i.': '.$msg['acquisition_prix_fac_inv'];
 			break;
@@ -70,7 +70,7 @@ function verif_fac() {
 		if ($acquisition_gestion_tva) {
 			//Vérification tva
 			$tva[$i] = str_replace(',','.',$tva[$i]);
-			if (!is_numeric($tva[$i]) || $tva[$i] < '0' || $tva[$i] > '99.99' ) {
+			if (!is_numeric($tva[$i]) || $tva[$i] > '99.99' ) {
 				$error = true;
 				$error_msg = $msg['acquisition_lig'].' '.$i.': '.$msg['acquisition_tva_fac_inv'];
 				break;
@@ -118,25 +118,26 @@ function verif_bud() {
 	global $prix, $rem, $rub, $fac;
 	global $error, $error_msg;
 	global $acquisition_budget;
+	global $id_lig;
 
 	if ($acquisition_budget) {
 
 		$tot_rub = array();
 		$tot_bud = array();
-		for ($i=1;$i<=$max_lig;$i++) {
-			if ($fac[$i]) $tot_rub[$rub[$i]] = 0;
-		}
 
 		//récupère le total facturé par rubrique
 		for ($i=1;$i<=$max_lig;$i++) {
-			if ($fac[$i]) $tot_rub[$rub[$i]] = $tot_rub[$rub[$i]] + ( $fac[$i]*$prix[$i]*(1 - ($rem[$i]/100) ) );
+			$ligne_commande = new lignes_actes($id_lig[$i]);
+			if (!array_key_exists($rub[$i], $tot_rub)) $tot_rub[$rub[$i]] = 0;
+			if ($fac[$i]) $tot_rub[$rub[$i]] += ( $fac[$i]*$prix[$i]*(1 - ($rem[$i]/100) ) ) - ( $fac[$i]*($ligne_commande->prix)*(1 - (($ligne_commande->remise)/100) ) );
+			
 		}
 
 		//récupère le total facturé par budget
 		foreach ($tot_rub as $key=>$value) {
 			$r = new rubriques($key);
 			if (!array_key_exists($r->num_budget, $tot_bud)) $tot_bud[$r->num_budget] = 0; 
-			$tot_bud[$r->num_budget] = $tot_bud[$r->num_budget] + $value; 
+			$tot_bud[$r->num_budget] += $value; 
 		}
 
 		//Vérifie que les budgets affectés par rubrique ne sont pas dépassés		

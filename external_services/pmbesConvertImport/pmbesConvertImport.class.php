@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesConvertImport.class.php,v 1.8 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: pmbesConvertImport.class.php,v 1.16 2018-11-26 14:32:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -36,26 +36,20 @@ require_once ("$class_path/titre_uniforme.class.php");
 require_once("$include_path/parser.inc.php");
 
 class pmbesConvertImport extends external_services_api_class {
-
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
-	var $es;				//Classe mère qui implémente celle-ci !
-	var $msg;
-
-	var $catalog;
-	var $converted_notice;
+	public $catalog;
+	public $converted_notice;
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 	}
 	
-	function get_catalog() {
+	public function get_catalog() {
 		
 		if (!count($this->catalog)) {
 			//Lecture des différents formats de conversion possibles
@@ -65,7 +59,7 @@ class pmbesConvertImport extends external_services_api_class {
 			} else {
 				$fic_catal = "$base_path/admin/convert/imports/catalog.xml";
 			}
-			$this->catalog=_parser_text_no_function_(file_get_contents($fic_catal),"CATALOG");
+			$this->catalog=_parser_text_no_function_(file_get_contents($fic_catal),"CATALOG",$fic_catal);
 		}
 		return $this->catalog;
 	}
@@ -74,7 +68,7 @@ class pmbesConvertImport extends external_services_api_class {
 	/*
 	 * returne la liste des conversions possibles
 	 */
-	function get_convert_types() {
+	public function get_convert_types() {
 		
 		$this->get_catalog();
 		//Création et filtrage de la liste des types d'import
@@ -85,38 +79,83 @@ class pmbesConvertImport extends external_services_api_class {
 		}
 		return $convert_types;
 	}
-	
+
 	
 	/*
-	 * @param notice = 1 notice sans entête
+	 * retourne la liste des paths
+	 */
+	public function get_catalog_paths() {
+		$catalog_paths = array();
+		$this->get_catalog();
+		//Création et filtrage de la liste des types d'import
+		for ($i=0; $i<count($this->catalog['ITEM']); $i++) {
+			if ($this->catalog['ITEM'][$i]['VISIBLE']!='no') {
+			   $catalog_paths[$this->catalog['ITEM'][$i]['PATH']] = $i;
+			}
+		}
+		return $catalog_paths;
+	}
+	
+	/*
+	 * @param notice = 1 notice sans entête en utf-8
+	 * @param convert_path = chemin de la conversion à réaliser
+	 * @param import = true >> exécuter l'import après conversion
+	 * @param source_id = Identifiant d'une source
+	 * @param do_not_convert = true >> Ne pas convertir la notice (Peut-être utile si notice en format Unimarc)
+	 */
+	public function convert_by_path($notice, $convert_path, $import=0, $source_id=0, $do_not_convert=false) {
+		$convert_type_id = 0;
+		$catalog_paths = $this->get_catalog_paths();
+		
+		if (isset($catalog_paths[$convert_path])) {
+			$convert_type_id = $catalog_paths[$convert_path];
+		}
+		return $this->convert($notice, $convert_type_id, $import, $source_id, $do_not_convert);
+	}
+	
+	/*
+	 * @param notice = 1 notice sans entête en utf-8
 	 * @param convert_type_id = identifiant de la conversion à réaliser
 	 * @param import = true >> exécuter l'import après conversion
+	 * @param source_id = Identifiant d'une source
+	 * @param do_not_convert = true >> Ne pas convertir la notice (Peut-être utile si notice en format Unimarc)
 	 */
-	function convert($notice, $convert_type_id, $import=0, $source_id=0) {
+	public function convert($notice, $convert_type_id, $import=0, $source_id=0, $do_not_convert=false) {
+		global $charset;
 		
+		$retour = array();		
 		$this->get_catalog();
 		$this->source_id=$source_id;
 		$convert_type=$this->catalog['ITEM'][$convert_type_id];
 		$importable=$this->catalog['ITEM'][$convert_type_id]['IMPORT'];
 
 		if (count($convert_type)) {
-			$export= new convert(utf8_decode($notice),$convert_type_id);
+			$notice_convert=$notice;
+			if (($charset != "utf-8") && ($do_not_convert == false)) {
+				if(function_exists("mb_convert_encoding")){
+					$notice_convert = mb_convert_encoding($notice,"Windows-1252","UTF-8");
+				}else{
+					$notice_convert = utf8_decode($notice);
+				}
+			}
+			$export= new convert($notice_convert,$convert_type_id);
 			$this->converted_notice=$export->output_notice;
-					
+			
 			if($import && ($importable=='yes') && $this->converted_notice) {
-				$this->import();
+				$retour = $this->import();
 			}
 		}
 				
-		return array('notice'=>$notice, 'converted_notice'=>utf8_encode($this->converted_notice));
+		return array('notice'=>$notice, 'converted_notice'=>($charset!= "utf-8"?utf8_encode($this->converted_notice):$this->converted_notice), 'import' => $retour);
 	}
 	
 	
-	function import($unimarc_notice='',$source_id='') {
+	public function import($unimarc_notice='',$source_id='') {
 		
 		global $deflt_integration_notice_statut;
 		global $gestion_acces_active, $gestion_acces_user_notice, $gestion_acces_empr_notice;
 		
+		$retour = array();
 		if ($unimarc_notice) {
 			$this->converted_notice=$unimarc_notice;
 		}
@@ -146,11 +185,13 @@ class pmbesConvertImport extends external_services_api_class {
 				}
 			}
 		}
+		return $retour;
 	}
 	
-	function import_basic($notices,$params=array(),$with_expl=false){
+	public function import_basic($notices,$params=array(),$with_expl=false){
 		global $base_path,$class_path,$include_path,$dbh,$msg,$charset;
 		global $deflt_integration_notice_statut,$deflt_lenders,$deflt_docs_statut,$deflt_docs_location;
+		global $deflt_notice_is_new;
 		
 		$log=array();
 		//On contrôle tous les paramètres obligatoires
@@ -171,6 +212,7 @@ class pmbesConvertImport extends external_services_api_class {
 		if(!isset($params["link_generate"])) $params["link_generate"]="0";//Générer les liens entre notices ?
 		if(!isset($params["authorities_notices"])) $params["authorities_notices"]="0";//Tenir compte des notices d'autorités
 		if(!isset($params["authorities_default_origin"])) $params["authorities_default_origin"]="";//Origine par défaut des autorités si non précisé dans les notices
+		if(!isset($params["notice_is_new"])) $params["notice_is_new"]=$deflt_notice_is_new;//Est-ce une nouveauté ?
 		
 		//Exemplaires
 		if($with_expl){
@@ -185,7 +227,7 @@ class pmbesConvertImport extends external_services_api_class {
 		//Find de contrôle des paramètres obligatoires
 		//On rend global tous les paramètres passés (et pas forcément que les obligatoires) pour la suite
 		foreach ( $params as $key => $value ) {
-       		global $$key;
+       		global ${$key};
        		${$key}=$value;
 		}
 		
@@ -207,7 +249,7 @@ class pmbesConvertImport extends external_services_api_class {
 				$nb_expl_ignores=0;
 			}
 			foreach ( $notices as $notice ) {
-				$notice=utf8_decode($notice);
+				$notice=encoding_normalize::utf8_normalize($notice);
        			$res_lecture = recup_noticeunimarc($notice) ;
        			if($params["link_generate"]) recup_noticeunimarc_link($notice);
        			global $tit_200a;

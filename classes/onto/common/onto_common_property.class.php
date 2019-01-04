@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_property.class.php,v 1.9 2014-08-07 14:31:53 arenou Exp $
+// $Id: onto_common_property.class.php,v 1.12 2017-11-27 10:37:26 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -59,10 +59,57 @@ class onto_common_property extends onto_common_root {
 	 */
 
 	/**
+	 * 
+	 * @var unknown
+	 */
+	public $pmb_marclist_type;
+	
+	/**
+	 *
+	 * @var unknown
+	 */
+	public $pmb_list_item;
+	
+	/**
+	 *
+	 * @var unknown
+	 */
+	public $pmb_list_query;
+	
+	/**
+	 * 
+	 * @var unknown
+	 */
+	public $pmb_extended;
+	
+	/**
 	 * Tableau des URI des propriétés inverses à la propriété représentée
 	 * @access public
 	 */
 	public $inverse_of;
+	
+	/**
+	 * Obligatoire
+	 * 
+	 * @var unknown
+	 */
+	protected $mandatory = false;
+	
+	/**
+	 * Caché
+	 * 
+	 * @var unknown
+	 */
+	protected $hidden = false;
+	
+	/**
+	 * Non affiché
+	 * 
+	 * @var unknown
+	 */
+	protected $undisplayed = false;
+
+	protected $framework_params;
 	
 	public function __construct($uri,$ontology) {
 		parent::__construct($uri,$ontology);
@@ -100,5 +147,90 @@ class onto_common_property extends onto_common_root {
 	
 	public function set_inverse_of($inverse_of){
 		$this->inverse_of = $inverse_of;
+	}
+	
+	public function set_pmb_marclist_type($pmb_marclist_type) {
+		$this->pmb_marclist_type = $pmb_marclist_type;
+	}
+	
+	public function set_pmb_list_item($pmb_list_item) {
+		$this->pmb_list_item = $pmb_list_item;
+	}
+	
+	public function set_pmb_list_query($pmb_list_query) {
+		$this->pmb_list_query = $pmb_list_query;
+	}
+	
+	public function get_pmb_datatype_label($datatype)
+	{
+		global $msg;
+		switch($datatype){
+			case "http://www.pmbservices.fr/ontology#small_text":
+				$label = $msg['onto_onto_pmb_datatype_pmb_datatype_small_text']; 
+				break;
+			case "http://www.pmbservices.fr/ontology#resource_selector":
+				$label = $msg['onto_onto_pmb_datatype_pmb_datatype_resource_selector'];
+				break;
+			case "http://www.pmbservices.fr/ontology#text":
+				$label = $msg['onto_onto_pmb_datatype_pmb_datatype_text'];
+				break;
+			case "http://www.pmbservices.fr/ontology#date":
+				$label = $msg['onto_onto_pmb_datatype_pmb_datatype_date'];
+				break;
+			case "http://www.pmbservices.fr/ontology#small_text_card":
+				$label = $msg['onto_onto_pmb_datatype_pmb_datatype_small_text_card'];
+				break;
+			default :
+				$label = $datatype;
+				break;
+		}
+		return $label;
+	}
+	
+	public function set_mandatory($mandatory) {
+		$this->mandatory = $mandatory;
+		return $this;
+	}
+	
+	public function is_mandatory() {
+		return $this->mandatory;
+	}
+	
+	public function set_hidden($hidden) {
+		$this->hidden = $hidden;
+		return $this;
+	}
+	
+	public function is_hidden() {
+		return $this->hidden;
+	}
+    
+	public function set_pmb_extended($pmb_extended) {
+		$this->pmb_extended = $pmb_extended;
+	}
+		
+	public function get_pmb_extended() {
+		return $this->pmb_extended;
+	}
+	
+	public function set_framework_params($framework_params){
+		if(!isset($this->framework_params)){
+			$this->framework_params = $framework_params;
+		}
+	}
+	
+	public function get_framework_params(){
+		return $this->framework_params;
+	}
+	
+	public function set_undisplayed($undisplayed) {
+		if ($undisplayed) {
+			$this->undisplayed = true;
+		}
+		return $this;
+	}
+	
+	public function is_undisplayed() {
+		return $this->undisplayed;
 	}
 } // end of onto_common_property

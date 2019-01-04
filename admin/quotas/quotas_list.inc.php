@@ -2,12 +2,18 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: quotas_list.inc.php,v 1.16 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: quotas_list.inc.php,v 1.19 2017-10-18 13:08:53 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-//Gestion des éléments du type de quota
+if(!isset($label)) $label = '';
+if(!isset($first)) $first = '';
+if(!isset($min_value)) $min_value = '';
+if(!isset($max_value)) $max_value = '';
+if(!isset($max_quota)) $max_quota = '';
+if(!isset($force_lend)) $force_lend = '';
 
+//Gestion des éléments du type de quota
 require_once($include_path."/templates/quotas.tpl.php");
 
 //Liste des éléments
@@ -29,7 +35,7 @@ for($i=0;$i<count($qt->quota_type["QUOTAS"]);$i++) {
 	$elts=explode(",",$qt->quota_type["QUOTAS"][$i]);
 	$index=array();
 	for ($j=0; $j<count($elts); $j++) {
-		$index[]=$msg["quotas_by"]." ".$_quotas_elements_[$qt->get_element_by_name($elts[$j])]["COMMENT"];
+		$index[]=$msg["quotas_by"]." ".quota::$_quotas_[$qt->descriptor]['_elements_'][$qt->get_element_by_name($elts[$j])]["COMMENT"];
 	}
 	if ($parity % 2) {
 		$pair_impair = "even";
@@ -102,10 +108,10 @@ if ($first==1) {
 	$requete="insert into ".$qt->table." (quota_type,constraint_type,elements,value) values(".$qt->quota_type["ID"].",'CONFLICT',0,'".$conflict_value."')";
 	pmb_mysql_query($requete);
 	//Forçage du prêt
-	$requete="insert into ".$qt->table." (quota_type,constraint_type,elements,value) values(".$qt->quota_type["ID"].",'FORCE_LEND',0,".$force_lend.")";
+	$requete="insert into ".$qt->table." (quota_type,constraint_type,elements,value) values(".$qt->quota_type["ID"].",'FORCE_LEND',0,'".$force_lend."')";
 	pmb_mysql_query($requete);
 	//Max_quota
-	$requete="insert into ".$qt->table." (quota_type,constraint_type,elements,value) values(".$qt->quota_type["ID"].",'MAX_QUOTA',0,".$max_quota.")";
+	$requete="insert into ".$qt->table." (quota_type,constraint_type,elements,value) values(".$qt->quota_type["ID"].",'MAX_QUOTA',0,'".$max_quota."')";
 	pmb_mysql_query($requete);
 	//Priorités
 	for ($i=0; $i<count($elements); $i++) {
@@ -113,7 +119,7 @@ if ($first==1) {
 		$requete="insert into ".$qt->table." (quota_type,constraint_type,elements,value) values(".$qt->quota_type["ID"].",'PRIORITY',$id,'".$i."')";
 		pmb_mysql_query($requete);
 	}
-	$recorded="<font color='#CC0000'><strong>".$msg["quotas_recorded"]."</strong></font>";
+	$recorded="<span style='color:#CC0000'><strong>".$msg["quotas_recorded"]."</strong></span>";
 }
 
 $typ_quota_form=str_replace("!!recorded!!",$recorded,$typ_quota_form);
@@ -132,6 +138,8 @@ if ($qt->quota_type["MAX"]) {
 	}
 	$max_value_.="</div>
 		";
+} else {
+	$max_value_="";
 }
 if ($qt->quota_type["MIN"]) {
 	$min_value_="
@@ -139,6 +147,8 @@ if ($qt->quota_type["MIN"]) {
 		<div class='row'><input type='text'  class='saisie-5em' size='10' name='min_value' id='min_value' value='".htmlentities($min_value,ENT_QUOTES,$charset)."'/>";
 	$min_value_.="</div>
 		";
+} else {
+	$min_value_="";
 }
 
 

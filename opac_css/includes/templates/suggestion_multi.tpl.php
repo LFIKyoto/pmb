@@ -2,9 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestion_multi.tpl.php,v 1.6 2010-02-23 16:27:22 kantin Exp $
+// $Id: suggestion_multi.tpl.php,v 1.8 2018-01-25 10:13:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $multi_sug_form;
+global $opac_sugg_categ;
+global $opac_sugg_categ_default;
+global $acquisition_sugg_categ;
 
 require_once($base_path.'/classes/suggestions_categ.class.php');
 
@@ -21,7 +26,7 @@ $multi_sug_form= "<div id='make_mul_sugg'>
 	for(var i=0;i<nb_ligne;i++){
 		if (document.getElementById('sugg_'+i)){
 			if((document.getElementById('sugg_tit_'+i).disabled == true) && (i==0) ){
-				alert(\"".$msg[sugg_no_field_fill]."\");
+				alert(\"".$msg['sugg_no_field_fill']."\");
 				return false;
 			} else if(document.getElementById('sugg_tit_'+i).disabled == true) 
 					break;		 
@@ -46,9 +51,9 @@ $multi_sug_form= "<div id='make_mul_sugg'>
 	}
 
 	if(qte_error){
-		alert('".$msg[empr_sugg_qte_error]."');
+		alert('".$msg['empr_sugg_qte_error']."');
 	} else if(txt_error){
-		alert(\"".$msg[empr_sugg_ko]."\");
+		alert(\"".$msg['empr_sugg_ko']."\");
 	}
 		
 	return retour;

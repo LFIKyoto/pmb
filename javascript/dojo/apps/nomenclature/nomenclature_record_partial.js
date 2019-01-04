@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_record_partial.js,v 1.2 2015-02-10 14:14:32 arenou Exp $
+// $Id: nomenclature_record_partial.js,v 1.5 2016-03-22 17:16:46 apetithomme Exp $
 
 define(["dojo/_base/declare", "dojo/_base/lang", "dojo/topic", "dijit/registry", "dojo/request/xhr"], function(declare, lang, topic, registry, xhr){
 	/*
@@ -21,11 +21,15 @@ define(["dojo/_base/declare", "dojo/_base/lang", "dojo/topic", "dijit/registry",
 		num_type: null,
 		num_voice: null,
 		num_instrument: null,
+		other: null,
+		num_nomenclature: null,
 		
 		constructor: function(params){
 			this.num_record = params.num_record;
 			this.relation_code = registry.byId("nomenclature_datastore").get_relation_code();
-			this.set_informations(JSON.parse(params.detail));
+			if(params.detail){
+				this.set_informations(JSON.parse(params.detail));
+			}
 		},
 		
 		set_informations: function(detail){
@@ -35,8 +39,16 @@ define(["dojo/_base/declare", "dojo/_base/lang", "dojo/topic", "dijit/registry",
 			this.num_formation = parseInt(detail.num_formation);
 			this.num_workshop = parseInt(detail.num_workshop);
 			this.num_type = parseInt(detail.num_type);
-			this.num_instrument = parseInt(detail.num_instrument)
+			this.num_instrument = parseInt(detail.num_instrument);
 			this.num_voice = parseInt(detail.num_voice);
+			this.num_nomenclature = parseInt(detail.num_nomenclature);
+			this.other = new Array();
+			if(detail.other){
+				var others = detail.other.split("/");
+				for(var i=0; i<others.length; i++){
+					this.other.push(others[i]);
+				}
+			}
 		},
 		
 		set_num_parent: function (num_parent){
@@ -94,6 +106,14 @@ define(["dojo/_base/declare", "dojo/_base/lang", "dojo/topic", "dijit/registry",
 		
 		get_num_type: function(){
 			return this.num_type;
+		},
+		
+		get_num_nomenclature: function(){
+			return this.num_nomenclature;
+		},
+		
+		get_other: function(){
+			return this.other;
 		},
 	});
 });

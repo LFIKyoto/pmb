@@ -2,19 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: progressiondemande.class.php,v 1.3 2015-04-03 11:16:27 jpermanne Exp $
+// $Id: progressiondemande.class.php,v 1.5 2017-11-22 11:07:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 class progressiondemande{
 	
-	var $id_element = 0;
-	var $champ_entree = "";
-	var $champ_sortie = "";
-	var $display="";
-	var $idobjet = 0;
+	public $id_element = 0;
+	public $champ_entree = "";
+	public $champ_sortie = "";
+	public $display="";
+	public $idobjet = 0;
 	
-	function progressiondemande($id_elt,$fieldElt){
+	public function __construct($id_elt,$fieldElt){
 		global $quoifaire;
 		
 		$this->id_element = $id_elt;
@@ -26,7 +26,7 @@ class progressiondemande{
 		
 	}
 	
-	function make_display(){
+	public function make_display(){
 		global $msg, $dbh,$charset;
 		
 		$rqt = "select progression from demandes where id_demande='".$this->idobjet."'";
@@ -49,7 +49,7 @@ class progressiondemande{
 		$this->display = $display;
 	}
 	
-	function update(){
+	public function update(){
 		
 		global $dbh, $progressiondemande;		
 		
@@ -58,7 +58,7 @@ class progressiondemande{
 		
 		switch($this->champ_sortie){
 			case 'img':
-				$this->display = "<img src=\"./images/jauge.png\" height='15px' width=\"".$progressiondemande."%\" title='".$progressiondemande."%' />";
+				$this->display = "<img src='".get_url_icon('jauge.png')."' height='15px' width=\"".$progressiondemande."%\" title='".$progressiondemande."%' />";
 				break;
 			default:
 				$this->display = $progressiondemande."%";

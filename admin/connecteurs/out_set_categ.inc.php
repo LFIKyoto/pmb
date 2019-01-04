@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: out_set_categ.inc.php,v 1.2 2009-10-06 04:00:09 touraine37 Exp $
+// $Id: out_set_categ.inc.php,v 1.3 2017-01-25 16:43:50 dgoron Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($class_path."/connecteurs_out_sets.class.php");
@@ -31,7 +31,7 @@ function list_categ() {
 	}
 	
 	print "</table>
-			<input class='bouton' type='button' value='".htmlentities($msg[admin_connecteurs_setcateg_add] ,ENT_QUOTES, $charset)."' onClick=\"document.location='./admin.php?categ=connecteurs&sub=categout_sets&action=add'\" />";
+			<input class='bouton' type='button' value='".htmlentities($msg['admin_connecteurs_setcateg_add'] ,ENT_QUOTES, $charset)."' onClick=\"document.location='./admin.php?categ=connecteurs&sub=categout_sets&action=add'\" />";
 }
 
 function show_categ_form($id=0, $setcateg_name='', $setcateg_sets=array()) {

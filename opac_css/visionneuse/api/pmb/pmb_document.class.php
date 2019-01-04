@@ -2,17 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmb_document.class.php,v 1.3 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: pmb_document.class.php,v 1.5 2017-06-30 14:55:37 dgoron Exp $
 
 require_once($class_path."/cms/cms_document.class.php");
 
 
 class pmb_document extends base_params implements params {
-	var $listeDocs = array();		//tableau de documents
-	var $current = 0;				//position courante dans le tableau
-	var $currentDoc = "";			//tableau décrivant le document courant
-	var $params;					//tableau de paramètres utiles pour la recontructions des requetes...et même voir plus
-	var $watermark = array();			//Url du watermark si défini  + transparence
+	public $listeDocs = array();		//tableau de documents
+	public $current = 0;				//position courante dans le tableau
+	public $currentDoc = "";			//tableau décrivant le document courant
+	public $params;					//tableau de paramètres utiles pour la recontructions des requetes...et même voir plus
+	public $watermark = array();			//Url du watermark si défini  + transparence
   
     public function __construct($params,$visionneuse_path) {
     	global $opac_photo_mean_size_x,$opac_photo_mean_size_y;
@@ -29,30 +29,13 @@ class pmb_document extends base_params implements params {
 	    	$this->getDocById($this->params["explnum"]);
 	    }
     }
-	
-	
- 	//renvoie un param
- 	function getParam($parametre){
- 		return $this->params[$parametre];
- 	}
- 	//renvoie le nombre de documents
- 	function getNbDocs(){
- 		return sizeof($this->listeDocs);
- 	}
- 	//renvoie un document précis
- 	function getDoc($numDoc){
- 		if($numDoc >= 0 && $numDoc <= $this->getNbDocs()-1){
- 			$this->current = $numDoc;
- 			return $this->getCurrentDoc();
- 		}else return false;
- 	}
  	
-	function getDocById($id){
+	public function getDocById($id){
 		$this->current = 0;
 		$this->listeDocs = array($id);
 	}
  	
- 	function recupListDocNum(){
+ 	public function recupListDocNum(){
  		if(!count($this->listeDocs)){
 			$this->listeDocs = array();
 	 		switch($this->params['type']){
@@ -96,7 +79,7 @@ class pmb_document extends base_params implements params {
   	}
 // 	
 // 	//recupére les documents numériques associés
-// 	function getExplnums($id=0){
+// 	public function getExplnums($id=0){
 //		global $dbh;
 //		global $opac_photo_filtre_mimetype; //filtre des mimetypes
 //		global $gestion_acces_active,$gestion_acces_empr_notice;
@@ -130,7 +113,7 @@ class pmb_document extends base_params implements params {
 //		}
 //	} 
 //	
-//	function checkCurrentExplnumId(){
+//	public function checkCurrentExplnumId(){
 //		if($this->params["explnum_id"] != 0 && $this->params["start"]){
 //			for ($i=0;$i<sizeof($this->listeDocs);$i++){
 //				if($this->params["explnum_id"] == $this->listeDocs[$i]->explnum_id){
@@ -141,7 +124,7 @@ class pmb_document extends base_params implements params {
 //		}else $this->current = $this->params["position"];			
 //	}
 //	
-	function getCurrentDoc(){
+	public function getCurrentDoc(){
 		$this->currentDoc = "";
 		//on peut récup déjà un certain nombre d'infos...
 		$this->currentDoc["id"] = $this->listeDocs[$this->current];
@@ -162,45 +145,12 @@ class pmb_document extends base_params implements params {
 /*******************************************************************
 *  Renvoie le contenu du document brut et gère le cache si besoin  *
 ******************************************************************/
-	function openCurrentDoc(){
+	public function openCurrentDoc(){
 		global $dbh;
 		return file_get_contents($this->currentDoc['path']);
 	}
-	
-	function getMimetypeConf(){
-		global $opac_visionneuse_params;
- 		return unserialize(htmlspecialchars_decode($opac_visionneuse_params));
-	}
-	
-	function getUrlBase(){
-		global $opac_url_base;
-		return $opac_url_base;
-	}
 
-	
-	function getUrlImage($img){
-		global $opac_url_base;
-		if($img !== "")
-			$img = $opac_url_base."images/".$img;
-			
-		return $img;
-	}
-	
-	function getClassParam($class){
-		$params = serialize(array());
-		if($class != ""){
-			$req="SELECT visionneuse_params_parameters FROM visionneuse_params WHERE visionneuse_params_class LIKE '$class'";
-			if($res=pmb_mysql_query($req)){
-				if(pmb_mysql_num_rows($res)){
-					$result = pmb_mysql_fetch_object($res);
-					$params = htmlspecialchars_decode($result->visionneuse_params_parameters);
-				}
-			}
-		}
-		return $params;
-	}
-
-	function forbidden_callback(){
+	public function forbidden_callback(){
 		global $opac_show_links_invisible_docnums;
 		
 		$display ="";
@@ -217,7 +167,7 @@ class pmb_document extends base_params implements params {
 		return $display;
 	} 
 	
-	function getBnfClass($mimetype){
+	public function getBnfClass($mimetype){
 		global $base_path,$class_path,$include_path;
 
 		switch($mimetype){
@@ -234,20 +184,21 @@ class pmb_document extends base_params implements params {
 		return $classname;
 	}
 	
-	function getVisionneuseUrl($params){
-		$url = "./visionneuse.php?driver=pmb_document";
+	public function getVisionneuseUrl($params){
+		global $base_path;
+		$url = $base_path."/visionneuse.php?driver=pmb_document";
 		if($params){
 			$url.= "&".$params;
 		}
 		return $url;
 	}
 
-	function getDocumentUrl($id){
+	public function getDocumentUrl($id){
 		global $opac_url_base;
 		return $opac_url_base."/ajax.php?module=cms&categ=document&action=render&id=".$id;
 	}
 
-	function getCurrentBiblioInfos(){
+	public function getCurrentBiblioInfos(){
 		global $msg;
 		
 // 		$current = $this->listeDocs[$this->current]->explnum_id;

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_lvl.class.php,v 1.7 2014-11-19 15:53:45 arenou Exp $
+// $Id: cms_module_common_selector_lvl.class.php,v 1.12 2016-11-14 11:01:26 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -31,6 +31,8 @@ class cms_module_common_selector_lvl extends cms_module_common_selector{
 			"show_list",
 			"section_see",
 			"rss_see",
+			"concept_see",
+			"authperso_see",
 			//"doc_command",
 			"sort",
 			"lastrecords",
@@ -52,7 +54,9 @@ class cms_module_common_selector_lvl extends cms_module_common_selector{
 			"faq",
 			"empr",
 			"askmdp",
-			"subscribe"
+			"subscribe",
+			"contact_form",
+			"collstate_bulletins_display"
 		);
 	}
 	
@@ -94,9 +98,14 @@ class cms_module_common_selector_lvl extends cms_module_common_selector{
 				</div>
 				<div class='colonne-suite'>
 					<select name='".$this->get_form_value_name("lvl")."[]' multiple='yes'>";
+		$sorted_lvl = array();
 		foreach($this->lvl as $lvl){
+			$sorted_lvl[$lvl] = $this->format_text($this->msg['cms_module_common_selector_lvl_'.$lvl]);
+		}
+		asort($sorted_lvl);
+		foreach($sorted_lvl as $lvl=>$label){
 			$form.="
-						<option value='".$lvl."' ".(in_array($lvl,$this->parameters) ? "selected='selected'" : "").">".$this->format_text($this->msg['cms_module_common_selector_lvl_'.$lvl])."</option>";
+						<option value='".$lvl."' ".(in_array($lvl,$this->parameters) ? "selected='selected'" : "").">".$label."</option>";
 		}
 		$form.="				
 					</select>
@@ -116,5 +125,27 @@ class cms_module_common_selector_lvl extends cms_module_common_selector{
 			$this->value = $this->parameters;
 		}
 		return $this->value;
+	}
+	
+	public function get_human_description_selector(){		
+		if (!$this->parameters) $this->parameters=array();
+		$description = "";
+		$i = 1;		
+		foreach($this->lvl as $lvl){
+			if(in_array($lvl,$this->parameters)){
+				if($i <= 3){
+					if(array_search($lvl, $this->parameters) == 0){
+						$description .= $this->format_text($this->msg['cms_module_common_selector_lvl_'.$lvl]);
+					}else{
+						$description .= ", ".$this->format_text($this->msg['cms_module_common_selector_lvl_'.$lvl]);
+					}
+				}else{
+					$description .= " (...+".(count($this->parameters)-3).")";
+					break;
+				}
+				$i++;
+			}			
+		}
+		return $description;		
 	}
 }

@@ -1,7 +1,7 @@
 //+-------------------------------------------------+
 //© 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 //+-------------------------------------------------+
-//$Id: tablist.js,v 1.24.2.2 2015-12-03 16:18:52 mbertin Exp $
+//$Id: tablist.js,v 1.27 2016-11-05 14:49:08 ngantier Exp $
 
 //gestion des listes "collapsibles" en Javascript
 
@@ -310,7 +310,7 @@ function expandAll() {
 	tempColl    = document.getElementsByTagName('IMG');
 	tempCollCnt = tempColl.length;
 	for (var i = 0; i < tempCollCnt; i++) {
-		if(tempColl[i].name == 'imEx') {
+		if(tempColl[i].name == 'imEx' && (tempColl[i].parentElement.className == 'notice-parent')) {
 			tempColl[i].src=tempColl[i].src.replace("nomgif=plus","nomgif=moins");
 		}
 	}
@@ -329,7 +329,7 @@ function collapseAll() {
 	tempColl    = document.getElementsByTagName('IMG');
 	tempCollCnt = tempColl.length;
 	for (var i = 0; i < tempCollCnt; i++) {
-		if(tempColl[i].name == 'imEx') {
+		if(tempColl[i].name == 'imEx'&& (tempColl[i].parentElement.className == 'notice-parent')) {
 			tempColl[i].src=tempColl[i].src.replace("nomgif=moins","nomgif=plus");
 		}
 	}

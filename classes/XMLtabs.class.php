@@ -2,24 +2,24 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: XMLtabs.class.php,v 1.2 2013-04-04 13:22:53 mbertin Exp $
+// $Id: XMLtabs.class.php,v 1.3 2017-06-30 14:08:17 dgoron Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 class XMLtabs {
 	
-	var $analyseur;
-	var $fichierXml;
-	var $table;
+	public $analyseur;
+	public $fichierXml;
+	public $table;
 
 	// constructeur
-	function XMLtabs($fichier, $s=1) {
+	public function __construct($fichier, $s=1) {
 		$this->fichierXml = $fichier;
 		$this->s = $s;
 		$this->flag_order = false;		
 	}
 		                
 	//Méthodes
-	function debutBalise($parser, $nom, $attributs) {
+	public function debutBalise($parser, $nom, $attributs) {
 		global $_starttag; 
 		$_starttag=true;
 		
@@ -30,13 +30,12 @@ class XMLtabs {
 		}
 	}
 		
-	function finBalise($parser, $nom) {}
+	public function finBalise($parser, $nom) {}
 
-	function texte($parser, $data) {}
+	public function texte($parser, $data) {}
 
  // Modif Armelle Nedelec recherche de l'encodage du fichier xml et transformation en charset'
- 	function analyser() 
- 	{
+ 	public function analyser() {
  		global $charset;
 		if (!($fp = @fopen($this->fichierXml, "r"))) {
 			die("impossible d'ouvrir le fichier XML $this->fichierXml");

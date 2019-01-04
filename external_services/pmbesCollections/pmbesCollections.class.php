@@ -2,31 +2,27 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesCollections.class.php,v 1.8 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: pmbesCollections.class.php,v 1.9 2017-06-22 08:49:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/external_services.class.php");
 
 class pmbesCollections extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
-	var $es;				//Classe mère qui implémente celle-ci !
-	var $msg;
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	
-	function list_collection_notices($collection_id, $OPACUserId=-1) {
+	public function list_collection_notices($collection_id, $OPACUserId=-1) {
 		global $dbh;
 		global $msg;
 		$result = array();
@@ -49,7 +45,7 @@ class pmbesCollections extends external_services_api_class {
 		return $result;
 	}
 	
-	function list_subcollection_notices($subcollection_id, $OPACUserId=-1) {
+	public function list_subcollection_notices($subcollection_id, $OPACUserId=-1) {
 		global $dbh;
 		global $msg;
 		$result = array();
@@ -72,7 +68,7 @@ class pmbesCollections extends external_services_api_class {
 		return $result;
 	}
 	
-	function get_collection_information($collection_id) {
+	public function get_collection_information($collection_id) {
 		global $dbh;
 		global $msg;
 		$result = array();
@@ -99,7 +95,7 @@ class pmbesCollections extends external_services_api_class {
 		return $result;
 	}
 	
-	function get_subcollection_information($subcollection_id) {
+	public function get_subcollection_information($subcollection_id) {
 		global $dbh;
 		global $msg;
 		$result = array();
@@ -126,21 +122,21 @@ class pmbesCollections extends external_services_api_class {
 		return $result;
 	}
 
-	function get_collection_information_and_notices($collection_id, $OPACUserId=-1) {
+	public function get_collection_information_and_notices($collection_id, $OPACUserId=-1) {
 		return array(
 			"information" => $this->get_collection_information($collection_id),
 			"notice_ids" => $this->list_collection_notices($collection_id, $OPACUserId=-1)
 		);
 	}
 	
-	function get_subcollection_information_and_notices($subcollection_id, $OPACUserId=-1) {
+	public function get_subcollection_information_and_notices($subcollection_id, $OPACUserId=-1) {
 		return array(
 			"information" => $this->get_subcollection_information($subcollection_id),
 			"notice_ids" => $this->list_subcollection_notices($subcollection_id, $OPACUserId=-1)
 		);
 	}
 	
-	function list_collection_subcollections($collection_id) {
+	public function list_collection_subcollections($collection_id) {
 		global $dbh;
 		global $msg;
 		$result = array();

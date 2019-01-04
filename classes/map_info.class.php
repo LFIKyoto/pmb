@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_info.class.php,v 1.5 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: map_info.class.php,v 1.7 2017-08-24 14:08:06 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,8 +12,7 @@ class map_info {
 
 	
 	public function __construct($id) {
-		$this->id=$id;
-		
+		$this->id=$id+0;
 	   	$this->fetch_datas();
   	} // end of member function __construct
 
@@ -35,14 +34,21 @@ class map_info {
   		$this->map=array();
   		$this->isbd="";
   		$this->public="";
+  		$this->map['echelle_num'] = '';
+  		$this->map['projection_num'] = '';
+  		$this->map['ref_num'] = '';
+  		$this->map['equinoxe'] = '';
+  		$this->map['echelle'] = '';
+  		$this->map['projection'] = '';
+  		$this->map['ref'] = '';
+  		
   		if(!$this->id) return;  		
-  	
+  		
   		$req="select map_echelle_num, map_projection_num, map_ref_num, map_equinoxe
   				from notices where notice_id=".$this->id;  	
   		$res=pmb_mysql_query($req);
   		if (pmb_mysql_num_rows($res)) {
   			if($r=pmb_mysql_fetch_object($res)){
-  				$this->map['id']=$r->map_id;
   				$this->map['echelle_num']=$r->map_echelle_num;
   				$this->map['projection_num']=$r->map_projection_num;
   				$this->map['ref_num']=$r->map_ref_num;

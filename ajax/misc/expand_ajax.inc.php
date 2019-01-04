@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expand_ajax.inc.php,v 1.3 2014-03-07 11:14:19 dgoron Exp $
+// $Id: expand_ajax.inc.php,v 1.11 2018-06-14 10:17:43 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -20,14 +20,21 @@ $link_explnum_bulletin = "./catalog.php?categ=serials&sub=bulletinage&action=exp
 $mono_display_cmd=stripslashes($mono_display_cmd);
 $param=unserialize($mono_display_cmd);
 
-$selector_prop = "toolbar=no, dependent=yes, width=500, height=400, resizable=yes, scrollbars=yes";
-$cart_click = "onClick=\"openPopUp('./cart.php?object_type=NOTI&item=".$param['id']."', 'cart', 600, 700, -2, -2, '$selector_prop')\"";
+$cart_click = "onClick=\"openPopUp('./cart.php?object_type=NOTI&item=".$param['id']."', 'cart')\"";
+$cart_over_out = "onMouseOver=\"show_div_access_carts(event,".$param['id'].");\" onMouseOut=\"set_flag_info_div(false);\"";
 $current=$_SESSION["CURRENT"];
 if ($current!==false) {
-	$print_action = "&nbsp;<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&notice_id=".$param['id']."&action_print=print_prepare','print',500,600,-2,-2,'scrollbars=yes,menubar=0'); w.focus(); return false;\"><img src='./images/print.gif' border='0' align='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"/></a>";
+	$print_action = "&nbsp;<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&notice_id=".$param['id']."&action_print=print_prepare','print'); w.focus(); return false;\"><img src='".get_url_icon('print.gif')."' style='border:0px' class='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"/></a>";
 }	
-$categ=$param['categ'];
-$id_empr=$param['id_empr'];
+$categ=(isset($param['categ']) ? $param['categ'] : '');
+$id_empr=(isset($param['id_empr']) ? $param['id_empr']*1 : 0);
+if(!isset($param['lien_suppr_cart'])) $param['lien_suppr_cart'] = '';
+if(!isset($param['print'])) $param['print'] = '';
+if(!isset($param['action_serial'])) $param['action_serial'] = '';
+if(!isset($param['action_analysis'])) $param['action_analysis'] = '';
+if(!isset($param['action_bulletin'])) $param['action_bulletin'] = '';
+if(!isset($param['lien_explnum'])) $param['lien_explnum'] = '';
+if(!isset($param['bouton_explnum'])) $param['bouton_explnum'] = '';
 
 switch($param['function_to_call']) {
 	case 'serial_display' :
@@ -38,7 +45,7 @@ switch($param['function_to_call']) {
 			$param['action_bulletin'], $param['lien_suppr_cart'], $param['lien_explnum'],$param['bouton_explnum'],
 			$param['print'],1, 1, 1,1);
 		if(SESSrights & CATALOGAGE_AUTH){
-			$display->result="	<img src='./images/basket_small_20x20.gif' align='middle' alt='basket' title=\"${msg[400]}\" $cart_click>$print_action !!serial_type!! !!ISBD!!";
+			$display->result="	<img src='".get_url_icon('basket_small_20x20.gif')."' class='align_middle' alt='basket' title=\"${msg[400]}\" $cart_click $cart_over_out>$print_action !!serial_type!! !!ISBD!!";
 		}else{
 			$display->result="	$print_action !!serial_type!! !!ISBD!!";
 		}
@@ -53,8 +60,8 @@ switch($param['function_to_call']) {
 			$param['expl_link'], $param['lien_suppr_cart'], $param['explnum_link'],1,
 			$param['print'],1, 1, '', 1, false, true, 0, 1);
 		if(SESSrights & CATALOGAGE_AUTH){
-			//$display->result="<div onMouseOver='if(init_drag) init_drag();'><img src='./images/basket_small_20x20.gif' align='middle' alt='basket' title=\"${msg[400]}\" $cart_click>$print_action !!ISBD!!</div>";
-			$display->result="<div><img src='./images/basket_small_20x20.gif' align='middle' alt='basket' title=\"${msg[400]}\" $cart_click>$print_action !!ISBD!!</div>";
+			//$display->result="<div onMouseOver='if(init_drag) init_drag();'><img src='".get_url_icon('basket_small_20x20.gif')."' class='align_middle' alt='basket' title=\"${msg[400]}\" $cart_click>$print_action !!ISBD!!</div>";
+			$display->result="<div><img src='".get_url_icon('basket_small_20x20.gif')."' class='align_middle' alt='basket' title=\"${msg[400]}\" $cart_click $cart_over_out>$print_action !!ISBD!!</div>";
 		}else{
 			$display->result=" $print_action !!ISBD!!";
 		}

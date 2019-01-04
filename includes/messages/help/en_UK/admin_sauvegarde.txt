@@ -1,4 +1,4 @@
-<h1>Backups</h1>
+<h2>Backups</h2>
 <p>
 <b>Locations</b>, where backups are located on your hard disk or network
 </p><p>

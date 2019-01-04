@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: WatchesUI.js,v 1.22.4.1 2015-12-08 11:40:17 apetithomme Exp $
+// $Id: WatchesUI.js,v 1.25 2017-11-30 10:53:34 dgoron Exp $
 
 
 define(["dojo/_base/declare", "dijit/layout/ContentPane" ,"apps/docwatch/WatchStore", "dojo/store/Observable", "apps/docwatch/WatchesModel", "dijit/Tree", "dojo/dom-construct", "dojo/topic", "dojo/_base/lang", "dijit/form/Button", "apps/docwatch/Dialog", "dojo/on", "dijit/tree/dndSource", "dojo/aspect"], function(declare, ContentPane, WatchStore, Observable, WatchesModel, Tree, domConstruct, topic, lang, Button, Dialog, on, dndSource, aspect){
@@ -37,8 +37,8 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane" ,"apps/docwatch/WatchSt
 			this.watchesStore = new WatchStore({url:'./ajax.php?module=dsi&categ=docwatch&sub=watches'});
 			var divCollapse = domConstruct.create("div", {style:{width:"100%"}}, this.domNode, "last");
 			this.own(
-				on(domConstruct.create("img",{src:'./images/expand_all.gif'},divCollapse,"last"),'click', lang.hitch(this, this.expandAll)),
-				on(domConstruct.create("img",{src:'./images/collapse_all.gif'},divCollapse,"last"), 'click', lang.hitch(this, this.collapseAll))
+				on(domConstruct.create("img",{src:pmbDojo.images.getImage('expand_all.gif')},divCollapse,"last"),'click', lang.hitch(this, this.expandAll)),
+				on(domConstruct.create("img",{src:pmbDojo.images.getImage('collapse_all.gif')},divCollapse,"last"), 'click', lang.hitch(this, this.collapseAll))
 			);
 			setInterval(lang.hitch(this, this.checkWatchesTTL), 120000);
 		},
@@ -183,7 +183,7 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane" ,"apps/docwatch/WatchSt
 			});
 		},
 		
-		// copier/coller à peine adapté  http://stackoverflow.com/questions/5409097/how-to-update-dojo-tree-data-dynamically
+		// copier/coller ï¿½ peine adaptï¿½  http://stackoverflow.com/questions/5409097/how-to-update-dojo-tree-data-dynamically
 		refreshTree : function(itemTreeToSelected){
 			// Tree.selectedItems, Tree.selectedNode, and Tree.selectedNodes.
 			if (!itemTreeToSelected) {
@@ -233,11 +233,14 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane" ,"apps/docwatch/WatchSt
 		},
 		
 		checkWatchesTTL:function(){
-			var watches = this.tree.model.store.query({type:'watch'});
-			for(var i=0 ; i<watches.length ; i++){
-				var sources = this.tree.model.store.query({type:'source', parent_watch:watches[i].id});
-				if(sources.length > 0){//Des sources sont présentes pour cette veille
-					topic.publish("watchesUI", "sourcesAsked", {watchId:watches[i].id});	
+			var tabContainer = this.getParent().getChildren()[1].getChildren()[0];
+			if(typeof tabContainer.selectedChildWidget.itemsStore != "undefined"){ //Permet de ne pas dï¿½naturer le code courant
+				var watches = this.tree.model.store.query({type:'watch'});
+				for(var i=0 ; i<watches.length ; i++){
+					var sources = this.tree.model.store.query({type:'source', parent_watch:watches[i].id});
+					if(sources.length > 0){//Des sources sont prï¿½sentes pour cette veille
+						topic.publish("watchesUI", "sourcesAsked", {watchId:watches[i].id});	
+					}
 				}
 			}
 		},
@@ -254,11 +257,11 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane" ,"apps/docwatch/WatchSt
 				topic.publish('watchesUI', 'watchOutdated', {watchId: sources[0].num_watch});
 			}
 		},
-		//détermine si l'item est déplaçable
+		//dï¿½termine si l'item est dï¿½plaï¿½able
 		checkIfDraggeableItemTree:function(source,node) {
 			var item = source.tree.selectedItem;
 			var type = item.type;
-			//on peut déplacer une veille, une source ou un classement! 
+			//on peut dï¿½placer une veille, une source ou un classement! 
 			switch(type){
 				case 'watch' :
 				case 'category' :
@@ -270,7 +273,7 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane" ,"apps/docwatch/WatchSt
 					break;
 			}
 		},
-		//détermine si c'est déposable en l'endroit
+		//dï¿½termine si c'est dï¿½posable en l'endroit
 		checkIfItemTreeCanDropHere:function(target,source,position) {
 			var target_item = dijit.getEnclosingWidget(target).item;
 			var current_item = dijit.getEnclosingWidget(target).tree.selectedItem;

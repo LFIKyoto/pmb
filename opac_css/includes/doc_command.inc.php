@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: doc_command.inc.php,v 1.4 2015-04-03 11:16:16 jpermanne Exp $
+// $Id: doc_command.inc.php,v 1.7 2017-11-07 15:44:52 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -25,8 +25,8 @@ $form_mailing="
 	}
 </script>
 <form name='mailing' action='index.php?lvl=doc_command&id=$id&mode_phototeque=1' method='post'>
-	<center><h3>".htmlentities($msg["command_phototeque_coord"],ENT_QUOTES,$charset)."</h3></center>
-	<table width='100%'>
+	<h3>".htmlentities($msg["command_phototeque_coord"],ENT_QUOTES,$charset)."</h3>
+	<table style='width:100%'>
 		<tr>
 			<td>".htmlentities($msg["command_phototeque_name"],ENT_QUOTES,$charset)."</td><td><input type='text' name='nom' id='nom' size='40' value='!!nom!!'></td>
 		</tr>
@@ -43,9 +43,9 @@ $form_mailing="
 			<td>".htmlentities($msg["command_phototeque_comment"],ENT_QUOTES,$charset)."</td><td><textarea cols='40' rows='5' wrap='virtual'></textarea></td>
 		</tr>
 	</table>
-	<table width='100%' height='50px'>
+	<table style='width:100%'>
 		<tr>
-			<td align='center' width='50%'><input type='submit' class='bouton' value='".htmlentities($msg["command_phototeque_send_demand"],ENT_QUOTES,$charset)."' onClick='return check_form();'/></td><td align='center'><input type='button' class='bouton' value='".htmlentities($msg["command_phototeque_cancel"],ENT_QUOTES,$charset)."' onClick='document.location=\"index.php?lvl=notice_display&id=$id&mode_phototeque=1\"'/></td>
+			<td class='center' style='width:50%;height:50px'><input type='submit' class='bouton' value='".htmlentities($msg["command_phototeque_send_demand"],ENT_QUOTES,$charset)."' onClick='return check_form();'/></td><td class='center'><input type='button' class='bouton' value='".htmlentities($msg["command_phototeque_cancel"],ENT_QUOTES,$charset)."' onClick='document.location=\"index.php?lvl=notice_display&id=$id&mode_phototeque=1\"'/></td>
 		</tr>
 	</table>
 </form>";

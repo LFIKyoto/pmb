@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_empr.tpl.php,v 1.4 2014-10-20 13:23:52 arenou Exp $
+// $Id: serialcirc_empr.tpl.php,v 1.8 2017-11-21 12:00:59 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -28,7 +28,7 @@ $empr_serialcirc_tmpl="
 		} 
 	}
 
-	function serialcirc_tr(form){
+	function serialcirc_tr(form, duplicate){
 		y=form.serialcirc_empr_list.value;
 		ids=y.split('|');
 		var need = false;				
@@ -39,8 +39,12 @@ $empr_serialcirc_tmpl="
 			}		
 		}				
 		if(need){
-			form.serialcirc_action.value='tr';
-			openPopUp('./select.php?what=emprunteur&caller=serial_empr_action&param1=serialcirc_new_empr&param2=serialcirc_new_empr_label&callback=serialcirc_tr_confirm', 'select_author0', 500, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes');
+			if (duplicate) {
+				form.serialcirc_action.value='dup';
+			} else {
+				form.serialcirc_action.value='tr';
+			}
+			openPopUp('./select.php?what=emprunteur&caller=serial_empr_action&param1=serialcirc_new_empr&param2=serialcirc_new_empr_label&callback=serialcirc_tr_confirm', 'selector');
 		}			
 	}
 
@@ -61,7 +65,14 @@ $empr_serialcirc_tmpl="
 	}
 
 	function serialcirc_tr_confirm(){
-		if(confirm('".addslashes($msg['serialcirc_empr_forward_confirm'])."')){
+		var conf = null;
+		var serialcirc_action = document.forms['serial_empr_action'].serialcirc_action.value;
+		if (serialcirc_action == 'tr') {
+			conf = confirm('".addslashes($msg['serialcirc_empr_forward_confirm'])."');
+		} else if (serialcirc_action == 'dup') {
+			conf = confirm('".addslashes($msg['serialcirc_empr_duplicate_confirm'])."');
+		}
+		if(conf){
 			document.forms['serial_empr_action'].submit();			
 		}
 	}
@@ -72,7 +83,8 @@ $empr_serialcirc_tmpl="
 		<tr>
 			<th colspan='5'>
 				<input type='button' class='bouton' name='serialcirc_del' onclick='serialcirc_delete(this.form);' value='".htmlentities($msg["serialcirc_empr_delete_button"],ENT_QUOTES,$charset)."'/>
-				<input type='button' class='bouton' name='serialcirc_forward' onclick='serialcirc_tr(this.form);' value='".htmlentities($msg["serialcirc_empr_forward_button"],ENT_QUOTES,$charset)."'/>
+				<input type='button' class='bouton' name='serialcirc_forward' onclick='serialcirc_tr(this.form, false);' value='".htmlentities($msg["serialcirc_empr_forward_button"],ENT_QUOTES,$charset)."'/>
+				<input type='button' class='bouton' name='serialcirc_duplicate' onclick='serialcirc_tr(this.form, true);' value='".htmlentities($msg["serialcirc_empr_duplicate_button"],ENT_QUOTES,$charset)."'/>
 				<input type='text' class='saisie-20emr' disabled='disabled' name='serialcirc_new_empr_label' value=''/>
 			</th>
 		</tr>
@@ -114,10 +126,8 @@ $empr_serialcirc_tmpl_item="
 			<td>
 				!!exemplaire_see!!
 			</td>
-			<td>
-				<center>
-					<input id='serialcirc_!!id!!' type='checkbox' name='serialcirc[]' value='!!id!!'/>
-				</center>
+			<td class='center'>
+				<input id='serialcirc_!!id!!' type='checkbox' name='serialcirc[]' value='!!id!!'/>
 			</td>
 		</tr>
 ";		
@@ -136,7 +146,7 @@ $empr_serialcirc_circ_tmpl_item="
 			<td>
 				!!exemplaire_see!!
 			</td>
-			<td>
-				<center><img src='./images/interdit.gif' title='".htmlentities($msg['serialcirc_empr_only_in_circ'],ENT_QUOTES,$charset)."'/></center>
+			<td class='center'>
+				<img src='".get_url_icon('interdit.gif')."' title='".htmlentities($msg['serialcirc_empr_only_in_circ'],ENT_QUOTES,$charset)."'/>
 			</td>
 		</tr>";

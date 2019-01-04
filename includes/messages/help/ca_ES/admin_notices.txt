@@ -1,4 +1,4 @@
-<h1>Administració dels registres</h1>
+<h2>Administració dels registres</h2>
 
 <p>La secció <b>administració dels registres</b> permet definir els paràmetres de l'aplicació pels registres.
 <ul>

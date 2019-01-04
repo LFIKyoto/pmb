@@ -18,7 +18,7 @@ This file is part of BookReader.
     
     The BookReader source is hosted at http://github.com/openlibrary/bookreader/
 
-*/
+// $Id: BookReader.js,v 1.7 2017-05-10 17:16:13 arenou Exp $ */
 
 // BookReader()
 //______________________________________________________________________________
@@ -522,7 +522,7 @@ BookReader.prototype.drawLeafsOnePage = function() {
     
     this.displayedIndices = indicesToDisplay.slice();
     this.updateSearchHilites();
-    
+    this.applyContrast();
     if (null != this.getPageNum(firstIndexToDraw))  {
         $("#BRpagenum").val(this.getPageNum(this.currentIndex()));
     } else {
@@ -765,6 +765,7 @@ BookReader.prototype.drawLeafsThumbnail = function( seekIndex ) {
         $("#BRpagenum").val('');
     }
 
+    this.applyContrast();
     this.updateToolbarZoom(this.reduce); 
 }
 
@@ -894,6 +895,7 @@ BookReader.prototype.drawLeafsTwoPage = function() {
     this.twoPageSetCursor();
 
     this.updatePageNumBox2UP();
+    this.applyContrast();
     this.updateToolbarZoom(this.reduce);
     
     // this.twoPagePlaceFlipAreas();  // No longer used
@@ -3311,6 +3313,7 @@ BookReader.prototype.initNavbar = function() {
         +         '<button class="BRicon onepg"></button>'
         +         '<button class="BRicon twopg"></button>'
         +         '<button class="BRicon thumb"></button>'
+        +         '<button class="BRicon contrast"></button>'
         // $$$ not yet implemented
         //+         '<button class="BRicon fit"></button>'
         +         '<button class="BRicon zoom_in"></button>'
@@ -3327,9 +3330,31 @@ BookReader.prototype.initNavbar = function() {
         +         '</div>'     
         +     '</div>'
         +     '<div id="BRnavCntlBtm" class="BRnavCntl BRdn"></div>'
+        +     '<div id="BRnavCntlContrast" class="BRnavCntlContrast">'
+        +         '<div class="BRbrightLabel"><div class="BRcontrastSlider" id="BRbrightSlide"></div></div>'
+        +         '<div class="BRcontrastLabel"><div class="BRcontrastSlider" id="BRcontrastSlide"></div></div>'
+        +	  '</div>'
         + '</div>'
     );
-    
+	
+    $('#BRcontrastSlide').slider({
+		min:0,
+		max: 300,
+		value:100
+	})
+    .bind('slide', function(event, ui) {
+    	self.applyContrast();
+        return true;
+    })
+	$('#BRbrightSlide').slider({
+		min:0,
+		max: 400,
+		value:100
+	})
+	.bind('slide', function(event, ui) {
+		self.applyContrast();
+        return true;
+    })
     var self = this;
     $('#BRpager').slider({    
         animate: true,
@@ -3377,6 +3402,9 @@ BookReader.prototype.initNavbar = function() {
         changeArrow();
         $('.BRnavCntl').delay(3000).animate({height:'43px'}).delay(1000).animate({opacity:.25},1000);
     */
+}
+BookReader.prototype.applyContrast = function() {
+	$('#BRcontainer img').css('filter', 'contrast('+$('#BRcontrastSlide').slider('value')+'%) brightness('+$('#BRbrightSlide').slider('value')+'%)');
 }
 
 // initEmbedNavbar
@@ -3906,7 +3934,7 @@ BookReader.prototype.bindNavigationHandlers = function() {
     });
     
     
-    //Réécriture PMB Services pour la visionneuse PMB
+    //Rï¿½ï¿½criture PMB Services pour la visionneuse PMB
     
     //Code d'orgine
 //    jIcons.filter('.full').bind('click', function() {
@@ -3922,6 +3950,17 @@ BookReader.prototype.bindNavigationHandlers = function() {
 	jIcons.filter('.full').bind('click', function() {
 	      window.open(self.bookUrl);
 	}); 
+	
+	jIcons.filter('.contrast').bind('click', function(e) {
+		var display = $('#BRnavCntlContrast').css('display');
+		if(display == "block"){
+			display = "none";
+		}else{
+			display = "block";
+		}
+        $('#BRnavCntlContrast').css('display',display);
+    });
+	
     $('.BRnavCntl').click(
         function(){
             if ($('#BRnavCntlBtm').hasClass('BRdn')) {

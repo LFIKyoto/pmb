@@ -2,11 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serials_simple_circ.inc.php,v 1.1.4.2 2015-09-22 13:17:41 ngantier Exp $
+// $Id: serials_simple_circ.inc.php,v 1.2 2017-03-02 17:00:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 //require_once("$include_path/templates/serials_simple_circ.tpl.php");
+
+if(!isset($start_date)) $start_date = '';
+if(!isset($end_date)) $end_date = '';
 
 require_once("$class_path/simple_circ.class.php");
 

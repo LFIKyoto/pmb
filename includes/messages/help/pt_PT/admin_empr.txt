@@ -1,4 +1,4 @@
-<h1>Administra&ccedil;&atilde;o de leitores</h1>
+<h2>Administra&ccedil;&atilde;o de leitores</h2>
 <p>Os diferentes c&oacute;digos associados a cada um dos utilizadores da biblioteca permitem obter as estat&iacute;sticas sobre o p&uacute;blico da mesma.
 </p>
 

@@ -1,4 +1,4 @@
-<h1>C&oacute;pias de Seguran&ccedil;a</h1>
+<h2>C&oacute;pias de Seguran&ccedil;a</h2>
 </p><p>
 <b>Locais</b> localiza&ccedil;&atilde;o dos c&oacute;pias de seguran&ccedil;a no disco ou na rede
 </p><p>

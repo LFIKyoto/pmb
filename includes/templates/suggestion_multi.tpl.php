@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestion_multi.tpl.php,v 1.12 2014-08-01 14:28:54 Alexandre Exp $
+// $Id: suggestion_multi.tpl.php,v 1.14 2017-09-28 09:23:36 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -19,7 +19,7 @@ $multi_sug_form= "<div id='make_mul_sugg'>
 	for(var i=0;i<nb_ligne;i++){
 		if (document.getElementById('sugg_'+i)){
 			if((document.getElementById('sugg_tit_'+i).disabled == true) && (i==0) ){
-				alert(\"".$msg[sugg_no_field_fill]."\");
+				alert(\"".$msg['sugg_no_field_fill']."\");
 				return false;
 			} else if(document.getElementById('sugg_tit_'+i).disabled == true) 
 					break;	
@@ -44,9 +44,9 @@ $multi_sug_form= "<div id='make_mul_sugg'>
 	}
 
 	if(qte_error){
-		alert('".$msg[acquisition_sugg_qte_error]."');
+		alert('".$msg['acquisition_sugg_qte_error']."');
 	} else if(txt_error){
-		alert(\"".$msg[acquisition_sug_ko]."\");
+		alert(\"".$msg['acquisition_sug_ko']."\");
 	}
 		
 	return retour;
@@ -82,7 +82,7 @@ $multi_sug_form= "<div id='make_mul_sugg'>
 				<input type='hidden' id='id_user' name='id_user' value='!!id_user!!' />
 				<input type='hidden' id='type_user' name='type_user' value='!!type_user!!' />
 				<input type='text' id='user_txt' name='user_txt' class='saisie-20emr' value='!!user_txt!!'/>
-				<input type='button' class='bouton_small' value='...' onclick=\"openPopUp('./select.php?what=origine&caller=sug_multi&param1=id_user&param2=user_txt&param3=type_user&deb_rech='+".pmb_escape()."(this.form.user_txt.value), 'select_user', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes')\" />
+				<input type='button' class='bouton_small' value='...' onclick=\"openPopUp('./select.php?what=origine&caller=sug_multi&param1=id_user&param2=user_txt&param3=type_user&deb_rech='+".pmb_escape()."(this.form.user_txt.value), 'selector')\" />
 				<input type='button' class='bouton_small' value='X'  onclick=\"this.form.id_user.value=0;this.form.type_user.value=0;this.form.user_txt.value=''\"/>				
 			</div>
 			<div class='colonne3'>

@@ -1,4 +1,4 @@
-<h1>Management of the records</h1>
+<h2>Management of the records</h2>
 
 <p>The section <b>Managing records</b> allows you to define your records parameters.
 <ul>

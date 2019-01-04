@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.php,v 1.34.2.1 2015-11-15 12:45:25 Alexandre Exp $
+// $Id: main.php,v 1.39 2017-10-18 12:46:22 ngantier Exp $
 
 // définition du minimum nécéssaire
 $base_path=".";
@@ -63,13 +63,12 @@ if ((!$param_licence)||($pmb_bdd_version!=$pmb_version_database_as_it_should_be)
 	if($use_shortcuts) {
 		include("$include_path/shortcuts/circ.sht");
 	}
-
 	print $main_layout;
 
 	if ($pmb_bdd_version!=$pmb_version_database_as_it_should_be) {
 		echo "<h1>".$msg["pmb_v_db_pas_a_jour"]."</h1>";
-		echo "<h1>".$msg[1803]."<font color=red>".$pmb_bdd_version."</font></h1>";
-		echo "<h1>".$msg[pmb_v_db_as_it_should_be]."<font color=red>".$pmb_version_database_as_it_should_be."</font></h1>";
+		echo "<h1>".$msg[1803]."<span style='color:red'>".$pmb_bdd_version."</span></h1>";
+		echo "<h1>".$msg['pmb_v_db_as_it_should_be']."<span style='color:red'>".$pmb_version_database_as_it_should_be."</span></h1>";
 		echo "<a href='./admin.php?categ=alter&sub='>".$msg["pmb_v_db_mettre_a_jour"]."</a>";
 		echo "<SCRIPT>alert(\"".$msg["pmb_v_db_pas_a_jour"]."\\n".$pmb_version_database_as_it_should_be." <> ".$pmb_bdd_version."\");</SCRIPT>";
 	} elseif ($pmb_subversion_database_as_it_shouldbe!=$pmb_bdd_subversion) {
@@ -77,7 +76,17 @@ if ((!$param_licence)||($pmb_bdd_version!=$pmb_version_database_as_it_should_be)
 		include("./admin/misc/addon.inc.php");
 		echo "<h1>Changes applied in database.</h1>";
 	}
-
+	
+	//On est probablement sur une première connexion à PMB
+	$pmb_indexation_must_be_initialized += 0;
+	if($pmb_indexation_must_be_initialized) {
+		echo "<h1>Indexation in progress...</h1>";
+		flush();
+		ob_flush();
+		include("./admin/misc/setup_initialization.inc.php");
+		echo "<h1>Indexation applied in database.</h1>";		
+	}
+	
 	if (!$param_licence) {
 		include("$base_path/resume_licence.inc.php");
 		print $PMB_texte_licence ;
@@ -89,8 +98,11 @@ if ((!$param_licence)||($pmb_bdd_version!=$pmb_version_database_as_it_should_be)
 	pmb_mysql_close($dbh);
 	exit ;
 }
-
-if ($ret_url) {
+if ($ret_url) {	
+	if(strpos($ret_url, 'ajax.php') !== false) {
+		print "<SCRIPT>document.location=\"".$_SERVER['HTTP_REFERER']."\";</SCRIPT>";
+		exit;
+	}
 	print "<SCRIPT>document.location=\"$ret_url\";</SCRIPT>";
 	exit ;
 }

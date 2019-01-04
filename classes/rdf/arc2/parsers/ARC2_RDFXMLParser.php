@@ -3,8 +3,8 @@
  * ARC2 RDF/XML Parser
  *
  * @author Benjamin Nowack <bnowack@semsol.com>
- * @license http://arc.semsol.org/license
- * @homepage <http://arc.semsol.org/>
+ * @license W3C Software License and GPL
+ * @homepage <https://github.com/semsol/arc2>
  * @package ARC2
 */
 
@@ -46,7 +46,7 @@ class ARC2_RDFXMLParser extends ARC2_RDFParser {
     /* parse */
     $first = true;
     while ($d = $this->reader->readStream()) {
-      if (!$this->keep_time_limit) @set_time_limit($this->v('time_limit', 60, $this->a));
+      if (!$this->keep_time_limit) @set_time_limit($this->v('time_limit', 0, $this->a));
       if ($iso_fallback && $first) {
         $d = '<?xml version="1.0" encoding="ISO-8859-1"?>' . "\n" . preg_replace('/^\<\?xml [^\>]+\?\>\s*/s', '', $d);
         $first = false;

@@ -2,13 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: envoi.inc.php,v 1.6 2012-08-20 08:06:32 ngantier Exp $
+// $Id: envoi.inc.php,v 1.13 2018-12-27 10:05:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+if(!isset($site_destination)) $site_destination = '';
+
+require_once($class_path."/list/transferts/list_transferts_envoi_ui.class.php");
+require_once($class_path."/list/transferts/list_transferts_validation_ui.class.php");
+require_once($class_path."/list/transferts/list_transferts_refus_ui.class.php");
+require_once($class_path."/mono_display_expl.class.php");
 
 // Titre de la fenetre
-echo window_title($database_window_title.$msg[transferts_circ_menu_envoi].$msg[1003].$msg[1001]);
+echo window_title($database_window_title.$msg['transferts_circ_menu_envoi'].$msg[1003].$msg[1001]);
 
 //creation de l'objet transfert
 $obj_transfert = new transfert();
@@ -16,26 +22,8 @@ $obj_transfert = new transfert();
 switch ($action) {
 	
 	case "aff_env":
-		echo "<h1>" . $msg[transferts_circ_menu_titre] . " > " . $msg[transferts_circ_menu_envoi] . "</h1>";
-		
-		echo affiche_liste_valide(
-								$transferts_envoi_liste_valide_envoi,
-								$transferts_envoi_liste_valide_envoi_ligne,
-								"SELECT num_notice, num_bulletin, " .
-									"expl_cb as val_ex, lender_libelle, transferts.date_creation as val_date_creation, " .
-									"date_visualisee as val_date_accepte, motif as val_motif, location_libelle as val_dest, empr_cb as val_empr " .
-								"FROM transferts " .
-									"INNER JOIN transferts_demande ON id_transfert=num_transfert " .
-									"INNER JOIN exemplaires ON num_expl=expl_id " .
-									"INNER JOIN lenders ON idlender=expl_owner " .
-									"INNER JOIN docs_location ON num_location_dest=idlocation " .
-									"LEFT JOIN resa ON resa_trans=id_resa " .
-									"LEFT JOIN empr ON resa_idempr=id_empr " .
-								"WHERE ".
-									"id_transfert IN (!!liste_numeros!!) ".
-									"AND etat_demande=1",
-								"circ.php?categ=trans&sub=". $sub
-								);
+		$list_transferts_envoi_ui = new list_transferts_envoi_ui(array('etat_demande' => 1));
+		print $list_transferts_envoi_ui->get_display_valid_list();
 		break;
 	case "env":
 		//on valide les envois
@@ -46,26 +34,8 @@ switch ($action) {
 
 	case "aff_refus":
 		//on affiche l'écran de saisie du refus
-		echo "<h1>" . $msg[transferts_circ_menu_titre] . " > " . $msg[transferts_circ_menu_envoi] . "</h1>";
-		
-		echo affiche_liste_valide(
-								$transferts_validation_liste_refus,
-								$transferts_validation_liste_valide_ligne,
-								"SELECT num_notice, num_bulletin, " .
-									"expl_cb as val_ex, lender_libelle, transferts.date_creation as val_date_creation, " .
-									"motif as val_motif, location_libelle as val_dest, empr_cb as val_empr  " .
-								"FROM transferts " .
-									"INNER JOIN transferts_demande ON id_transfert=num_transfert " .
-									"INNER JOIN exemplaires ON num_expl=expl_id " .
-									"INNER JOIN lenders ON idlender=expl_owner " .
-									"INNER JOIN docs_location ON num_location_dest=idlocation " .
-									"LEFT JOIN resa ON resa_trans=id_resa " .
-									"LEFT JOIN empr ON resa_idempr=id_empr " .
-								"WHERE ".
-									"id_transfert IN (!!liste_numeros!!) ".
-									"AND etat_demande=1",
-								"circ.php?categ=trans&sub=". $sub
-								);
+		$list_transferts_refus_ui = new list_transferts_refus_ui(array('etat_demande' => 1));
+		print $list_transferts_refus_ui->get_display_valid_list();
 		break;
 	case "refus":
 		//on enregistre les refus
@@ -76,8 +46,8 @@ switch ($action) {
 
 if ($action=="") {
 
-	get_cb_expl($msg[transferts_circ_menu_titre]." > ".$msg[transferts_circ_menu_envoi],
-					$msg[661], $msg[transferts_circ_envoi_exemplaire], "./circ.php?categ=trans&sub=".$sub."&f_destination=".$f_destination."&nb_per_page=".$nb_per_page, 0);
+	get_cb_expl($msg['transferts_circ_menu_titre']." > ".$msg['transferts_circ_menu_envoi'],
+					$msg[661], $msg['transferts_circ_envoi_exemplaire'], "./circ.php?categ=trans&sub=".$sub."&site_destination=".$site_destination."&nb_per_page=".$nb_per_page);
 
 	if ($form_cb_expl != "") {
 		//enregistrement de l'envoi
@@ -88,70 +58,18 @@ if ($action=="") {
 			echo $transferts_envoi_erreur;
 		} else {
 			// l'envoi est fait
-			$aff=str_replace("!!cb_expl!!", $form_cb_expl,$transferts_envoi_OK);
+			$expl = new mono_display_expl($form_cb_expl,0 ,0);			
+			$aff=str_replace("!!cb_expl!!", $expl->header,$transferts_envoi_OK);
 			echo str_replace("!!new_location!!", $obj_transfert->new_location_libelle,$aff);
 		}
 	}
 	
-	$filtres = "&nbsp;".$msg["transferts_circ_envoi_filtre_destination"].str_replace("!!nom_liste!!","f_destination",$transferts_liste_localisations_tous);
-	$filtres = str_replace("!!liste_localisations!!", do_liste_localisation($f_destination), $filtres);
-	
-	if ($transferts_validation_actif=="1")
-		$req =	"FROM transferts " .
-					"INNER JOIN transferts_demande ON id_transfert=num_transfert " .
-					"INNER JOIN exemplaires ON num_expl=expl_id " .
-					"INNER JOIN lenders ON idlender=expl_owner " .
-					"INNER JOIN docs_location ON num_location_dest=idlocation " .
-					"LEFT JOIN resa ON resa_trans=id_resa " .
-					"LEFT JOIN empr ON resa_idempr=id_empr " .
-				"WHERE etat_transfert=0 " . //pas fini
-					"AND etat_demande=1 " . //validé
-					"AND num_location_source=".$deflt_docs_location; //pour le site de l'utilisateur
-	else
-		$req =	"FROM transferts " .
-					"INNER JOIN transferts_demande ON id_transfert=num_transfert " .
-					"INNER JOIN exemplaires ON num_expl=expl_id " .
-					"INNER JOIN lenders ON idlender=expl_owner " .
-					"INNER JOIN docs_location ON num_location_dest=idlocation " .
-					"LEFT JOIN resa ON resa_trans=id_resa " .
-					"LEFT JOIN empr ON resa_idempr=id_empr " .
-				"WHERE etat_transfert=0 " . //pas fini
-					"AND (etat_demande=0 " . //pas validé
-					"OR etat_demande=1) " . //validé
-					"AND num_location_source=".$deflt_docs_location; //pour le site de l'utilisateur
-
-	//pour l'edition de la liste
-	$url_edition = "./edit.php?categ=transferts&sub=envoi";
-	
-	//on applique la seletion du filtre
-	if ($f_destination) {
-		$req .= " AND num_location_dest=".$f_destination;
-		$url_edition .= "&site_destination=" .$f_destination;
+	if ($transferts_validation_actif=="1") {
+		$list_transferts_envoi_ui = new list_transferts_envoi_ui(array('etat_transfert' => 0, 'etat_demande' => 1, 'site_origine' => $deflt_docs_location));
+		print $list_transferts_envoi_ui->get_display_list();
+	} else {
+		$list_transferts_envoi_ui = new list_transferts_envoi_ui(array('etat_transfert' => 0, 'etat_demande' => array(0,1), 'site_origine' => $deflt_docs_location));
+		print $list_transferts_envoi_ui->get_display_list();
 	}
-	
-	//le lien pour l'édition si on a le droit ...
-	if (SESSrights & EDIT_AUTH)
-		$lien_edition = "<a href='" . $url_edition . "'>".$msg[1100]."</a>";
-	else
-		$lien_edition = "";
-	//on affiche la liste
-	echo affiche_liste(
-		$sub,
-		$page,
-		"SELECT num_notice, num_bulletin, id_transfert as val_id, " .
-			"expl_cb as val_ex, lender_libelle, transferts.date_creation as val_date_creation, " .
-			"date_visualisee as val_date_accepte, motif as val_motif, location_libelle as val_dest, empr_cb as val_empr ",
-		$req,
-		$nb_per_page,
-		$transferts_envoi_form_global,
-		$transferts_envoi_tableau_definition,
-		$transferts_envoi_tableau_ligne,
-		$transferts_envoi_boutons_action,
-		$transferts_envoi_pas_de_resultats,
-		$lien_edition,
-		$filtres,
-		"&f_destination=".$f_destination  
-		);
-
 }
 ?>

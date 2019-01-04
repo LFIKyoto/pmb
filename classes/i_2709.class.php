@@ -1,51 +1,51 @@
 <?php
 
-define("IS3",chr(0x1d));			//Caractère de fin d'enregistrement
-define("IS2",chr(0x1e));			//Caractère de fin de champ
-define("IS1",chr(0x1f));			//Caractère de début de sous champ
-define("NSBB",chr(0x88));			//Caractère de début "non sorting bloc"
-define("NSBE",chr(0x89));			//Caractère de fin "non sorting bloc"
+if(!defined("IS3")) define("IS3",chr(0x1d));			//Caractère de fin d'enregistrement
+if(!defined("IS2")) define("IS2",chr(0x1e));			//Caractère de fin de champ
+if(!defined("IS1")) define("IS1",chr(0x1f));			//Caractère de début de sous champ
+if(!defined("NSBB")) define("NSBB",chr(0x88));			//Caractère de début "non sorting bloc"
+if(!defined("NSBE")) define("NSBE",chr(0x89));			//Caractère de fin "non sorting bloc"
 
 
 class iso2709 {
 	//Parties brutes de la notice
-	var $notice;					//Notice complète
-	var $guide;						//Guide
-	var $directory;					//Directory
-	var $data;						//Données
+	public $notice;					//Notice complète
+	public $guide;						//Guide
+	public $directory;					//Directory
+	public $data;						//Données
 	
 	//Caractères spéciaux de synchronisation
-	var $record_end;				//Caractère de fin d'enregistrement
-	var $field_end;					//Caractère de fin de champ
-	var $subfield_begin;			//Caractère de début de sous champ
-	var $NSB_begin;					//Caractère début "non sorting bloc"
-	var $NSB_end;					//Caractère fin "non sorting bloc"
+	public $record_end;				//Caractère de fin d'enregistrement
+	public $field_end;					//Caractère de fin de champ
+	public $subfield_begin;			//Caractère de début de sous champ
+	public $NSB_begin;					//Caractère début "non sorting bloc"
+	public $NSB_end;					//Caractère fin "non sorting bloc"
 	
 	//Longueurs d'encodage de certaines données
-	var $ind_lenght=2;				//Longeur des indicateurs (en nombre de caractères)
-	var $subfield_code_lenght=2;	//Longueur du code sous champ (subfield_begin compris)
-	var $zone_lenght=4;				//Nombre de caractères pour coder la longueur d'un champ complet
-	var $first_pos=5;				//Nombre de caractères pour coder la position d'un champ dans la zone data
+	public $ind_lenght=2;				//Longeur des indicateurs (en nombre de caractères)
+	public $subfield_code_lenght=2;	//Longueur du code sous champ (subfield_begin compris)
+	public $zone_lenght=4;				//Nombre de caractères pour coder la longueur d'un champ complet
+	public $first_pos=5;				//Nombre de caractères pour coder la position d'un champ dans la zone data
 
 	//Champs calculés
-	var $total_lenght;				//Longueur totale de la notice (calculée à la génération)
-	var $data_pos;					//Position de la zone de données dans la notice (calculée à la génération)
+	public $total_lenght;				//Longueur totale de la notice (calculée à la génération)
+	public $data_pos;					//Position de la zone de données dans la notice (calculée à la génération)
 	
 	//Champs propres au type de données
-	var $statut;					//Statut marc de la notice
-	var $application_codes;			//Codes propres au type de données
+	public $statut;					//Statut marc de la notice
+	public $application_codes;			//Codes propres au type de données
 	var	$supplementary;				//Codes supplémentaires propres au type de données
 	
 	//Champs décodés
-	var $guide_infos=array();		//Tableaux des codes propres au type de données
-	var $directory_table=array();	//Table décodée du répertoire
-	var $fields;					//Tableau des champs / sous-champs décodés
+	public $guide_infos=array();		//Tableaux des codes propres au type de données
+	public $directory_table=array();	//Table décodée du répertoire
+	public $fields;					//Tableau des champs / sous-champs décodés
 	
 	//Gestion des erreurs
-	var $error=false;				//Indicateur d'erreur
-	var $error_message="";			//Message d'erreur
+	public $error=false;				//Indicateur d'erreur
+	public $error_message="";			//Message d'erreur
 	
-	var $is_utf8 = false;			//Gestion de l'UTF-8 dans les notices
+	public $is_utf8 = false;			//Gestion de l'UTF-8 dans les notices
 	/*
 		Vérification de la cohérence du format de la notice :
 			-Vérifie les longueurs, la place des zones, que le répertoire correspond à la zone de données
@@ -273,7 +273,7 @@ class iso2709 {
 				//Si c'est un diacritique on regarde le caractère suivant et on cherche dans la table de correspondance
 				$car=$string[$i].$string[$i+1];
 				//Si le caractère est connu
-				if ($ISO5426_dia[$car]) {
+				if (!empty($ISO5426_dia[$car])) {
 					$string_r.=$ISO5426_dia[$car];
 				} else {
 					//Sinon on ne tient juste pas compte du diacritique
@@ -382,7 +382,11 @@ class iso2709 {
 			if (count($subfields)==1) {
 				$this->fields[$label][]["value"]=$this->ISO_decode($subfields[0]);
 			} else {
-				$n=count($this->fields[$label]);
+				if(empty($this->fields[$label])) {
+					$n=0;
+				} else {
+					$n=count($this->fields[$label]);
+				}
 				$this->fields[$label][$n]["IND"]=$subfields[0];
 				for ($j=1; $j<count($subfields); $j++) {
 					$sf=substr($subfields[$j],0,1);
@@ -848,10 +852,10 @@ class iso2709 {
 
 /* Un parser XML simple */ 
 class private_parser {
-	var $table;
-	var $xml;
-	var $error;
-	var $error_message;
+	public $table;
+	public $xml;
+	public $error;
+	public $error_message;
 	
 	// Lecture récursive de la structure et stockage des paramètres
 	function recursive(&$indice, $niveau, &$param, &$tag_count, &$vals) {

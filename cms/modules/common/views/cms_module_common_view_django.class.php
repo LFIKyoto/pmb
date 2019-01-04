@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_django.class.php,v 1.20 2015-04-29 14:14:11 dbellamy Exp $
+// $Id: cms_module_common_view_django.class.php,v 1.34 2018-10-31 17:46:06 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/h2o/h2o.php");
@@ -15,9 +15,10 @@ class cms_module_common_view_django extends cms_module_common_view{
 	}
 
 	public function get_form(){
-		if(count($this->managed_datas['templates'])){
+		$form = '';
+		if(isset($this->managed_datas['templates']) && count($this->managed_datas['templates'])){
 			//sélection d'un template définie en adminsitration
-			$form="
+			$form.="
 		<div clas='row'>
 			<div class='colonne3'>
 				<label for='cms_module_common_view_django_template_choice'>".$this->format_text($this->msg['cms_module_common_view_django_template_choice'])."</label>
@@ -39,10 +40,21 @@ class cms_module_common_view_django extends cms_module_common_view{
 				$contents = explode("\n",$infos['content']);
 				$form.="
 							case '".$key."' :
-								dojo.byId('cms_module_common_view_django_template_content').value=''";
+								if(pmbDojo.aceManager.getEditor('cms_module_common_view_django_template_content')){
+									pmbDojo.aceManager.getEditor('cms_module_common_view_django_template_content').selectAll();
+									pmbDojo.aceManager.getEditor('cms_module_common_view_django_template_content').remove();
+								}else{
+									dojo.byId('cms_module_common_view_django_template_content').value='';		
+								}
+								";
 				foreach($contents as $content){
 					$form.="
-								dojo.byId('cms_module_common_view_django_template_content').value+= \"".str_replace(array("\n","\r"),"",addslashes($content)).'\n'."\"";
+							if(pmbDojo.aceManager.getEditor('cms_module_common_view_django_template_content')){
+								pmbDojo.aceManager.getEditor('cms_module_common_view_django_template_content').insert(\"".str_replace(array("\n","\r"),"",addslashes($content))."\"+\"\\n\")
+							}else{
+								dojo.byId('cms_module_common_view_django_template_content').value+= \"".str_replace(array("\n","\r"),"",addslashes($content)).'\n'."\"		
+							}
+							";
 				}
 				$form.="
 								break;";
@@ -56,9 +68,12 @@ class cms_module_common_view_django extends cms_module_common_view{
 				</script>
 			</div>
 		</div>";
-		}else if($this->parameters['active_template'] == ""){
+		}
+		
+		if(!isset($this->parameters['active_template']) || $this->parameters['active_template'] == ""){
 			$this->parameters['active_template'] = $this->default_template;
 		}
+	
 		$form.="
 		<div class='row'>
 			<div class='colonne3'>
@@ -68,7 +83,7 @@ class cms_module_common_view_django extends cms_module_common_view{
 			<div class='colonne-suite'>
 				<textarea name='cms_module_common_view_django_template_content' id='cms_module_common_view_django_template_content'>".$this->format_text($this->parameters['active_template'])."</textarea>
 			</div>
-		</div>";
+		</div>".$this->get_ace_editor_script();
 
 		return $form;
 	}
@@ -86,25 +101,14 @@ class cms_module_common_view_django extends cms_module_common_view{
 	}
 
 	public function render($datas){
-
-		global $opac_url_base;
-		if(!$datas['id']){
+		if(!isset($datas['id']) || !$datas['id']){
 			$datas['id'] = $this->get_module_dom_id();
 		}
-		if(!$datas['get_vars']){
+		if(!isset($datas['get_vars']) || !$datas['get_vars']){
 			$datas['get_vars'] = $_GET;
 		}
-		if(!$datas['post_vars']){
+		if(!isset($datas['post_vars']) || !$datas['post_vars']){
 			$datas['post_vars'] = $_POST;
-		}
-		if(!$datas['session_vars']){
-			$datas['session_vars']['view'] = $_SESSION['opac_view'];
-			$datas['session_vars']['id_empr'] = $_SESSION['id_empr_session'];
-		}
-		if(!$datas['env_vars']){
-			$datas['env_vars']['script'] = basename($_SERVER['SCRIPT_NAME']);
-			$datas['env_vars']['request'] = basename($_SERVER['REQUEST_URI']);
-			$datas['env_vars']['opac_url'] = $opac_url_base;
 		}
 		try{
 			$html = H2o::parseString($this->parameters['active_template'])->render($datas);
@@ -121,19 +125,19 @@ class cms_module_common_view_django extends cms_module_common_view{
 		global $cms_template_delete;
 
 		if(!$this->managed_datas) $this->managed_datas = array();
-		if($this->managed_datas['templates'][$cms_template_delete]) unset($this->managed_datas['templates'][$cms_template_delete]);
+		if(isset($this->managed_datas['templates'][$cms_template_delete])) unset($this->managed_datas['templates'][$cms_template_delete]);
 
 		$form="
-		<div dojoType='dijit.layout.BorderContainer' style='width: 100%; height: 800px;'>
-			<div dojoType='dijit.layout.ContentPane' region='left' splitter='true' style='width:200px;' >";
-		if($this->managed_datas['templates']){
+		<div data-dojo-type='dijit/layout/BorderContainer' style='width: 100%; height: 800px;'>
+			<div data-dojo-type='dijit/layout/ContentPane' region='left' splitter='true' style='width:200px;' >";
+		if(isset($this->managed_datas['templates'])){
 			foreach($this->managed_datas['templates'] as $key => $infos){
 				$form.="
 					<p>
 						<a href='".$base_path."/cms.php?categ=manage&sub=".str_replace("cms_module_","",$this->module_class_name)."&quoi=views&elem=".$this->class_name."&cms_template=".$key."&action=get_form'>".$this->format_text($infos['name'])."</a>
 						&nbsp;
 						<a href='".$base_path."/cms.php?categ=manage&sub=".str_replace("cms_module_","",$this->module_class_name)."&quoi=views&elem=".$this->class_name."&cms_template_delete=".$key."&action=save_form' onclick='return confirm(\"".$this->format_text($this->msg['cms_module_common_view_django_delete_template'])."\")'>
-							<img src='".$base_path."/images/trash.png' alt='".$this->format_text($this->msg['cms_module_root_delete'])."' title='".$this->format_text($this->msg['cms_module_root_delete'])."'/>
+							<img src='".get_url_icon('trash.png')."' alt='".$this->format_text($this->msg['cms_module_root_delete'])."' title='".$this->format_text($this->msg['cms_module_root_delete'])."'/>
 						</a>
 					</p>";
 			}
@@ -143,7 +147,7 @@ class cms_module_common_view_django extends cms_module_common_view{
 			";
 		$form.="
 			</div>
-			<div dojoType='dijit.layout.ContentPane' region='center' >";
+			<div data-dojo-type='dijit/layout/ContentPane' region='center' >";
 		if($cms_template){
 			$form.=$this->get_managed_form_start(array('cms_template'=>$cms_template));
 			$form.=$this->get_managed_template_form($cms_template);
@@ -163,11 +167,11 @@ class cms_module_common_view_django extends cms_module_common_view{
 		}else{
 			$infos = array(
 				'name' => "Nouveau Template",
-				'content' => $this->default_template
+				'content' => (isset($this->default_template) ? $this->default_template : '')
 			);
 		}
 		//nom
-		$form.="
+		$form = "
 			<div class='row'>
 				<div class='colonne3'>
 					<label for='cms_module_common_view_django_template_name'>".$this->format_text($this->msg['cms_module_common_view_django_template_name'])."</label>
@@ -177,7 +181,7 @@ class cms_module_common_view_django extends cms_module_common_view{
 				</div>
 			</div>";
 		//contenu
-		$form.="
+		$form .= "
 			<div class='row'>
 				<div class='colonne3'>
 					<label for='cms_module_common_view_django_template_content'>".$this->format_text($this->msg['cms_module_common_view_django_template_content'])."</label><br/>
@@ -186,7 +190,8 @@ class cms_module_common_view_django extends cms_module_common_view{
 				<div class='colonne-suite'>
 					<textarea id='cms_module_common_view_django_template_content' name='cms_module_common_view_django_template_content'>".$this->format_text($infos['content'])."</textarea>
 				</div>
-			</div>";
+			</div>
+			".$this->get_ace_editor_script();
 		return $form;
 	}
 
@@ -245,6 +250,90 @@ class cms_module_common_view_django extends cms_module_common_view{
 				array(
 					'var' => "session_vars.id_empr",
 					'desc' => $this->msg['cms_module_common_view_django_session_vars_id_empr_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_nom",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_nom_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_prenom",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_prenom_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_mail",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_mail_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_login",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_login_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_adr1",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_adr1_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_adr2",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_adr2_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_cp",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_cp_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_ville",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_ville_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_categ",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_categ_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_codestat",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_codestat_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_sexe",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_sexe_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_year",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_year_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_cb",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_cb_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_prof",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_prof_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_tel1",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_tel1_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_tel2",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_tel2_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_location",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_location_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_date_adhesion",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_date_adhesion_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_date_expiration",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_date_expiration_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_statut",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_statut_desc'],
+				),
+				array(
+					'var' => "session_vars.empr_first_authentification",
+					'desc' => $this->msg['cms_module_common_view_django_session_vars_empr_first_authentification_desc'],
 				)
 			)
 		);
@@ -263,6 +352,14 @@ class cms_module_common_view_django extends cms_module_common_view{
 				array(
 					'var' => "env_vars.opac_url",
 					'desc' => $this->msg['cms_module_common_view_django_session_vars_opac_url_desc'],
+				),
+				array(
+						'var' => "env_vars.platform",
+						'desc' => $this->msg['cms_module_common_view_django_session_vars_platform_desc'],
+				),
+				array(
+						'var' => "env_vars.browser",
+						'desc' => $this->msg['cms_module_common_view_django_session_vars_browser_desc'],
 				)
 			)
 		);
@@ -290,7 +387,11 @@ class cms_module_common_view_django extends cms_module_common_view{
 					model: model,
 					showRoot: false,
 					onDblClick: function(item){
-						document.getElementById('".$textarea."').value = document.getElementById('".$textarea."').value + '{{'+item.var[0]+'}}';
+						if(pmbDojo.aceManager.getEditor('".$textarea."')){
+							pmbDojo.aceManager.getEditor('".$textarea."').insert('{{'+item.var[0]+'}}');
+						}else{
+							document.getElementById('".$textarea."').value = document.getElementById('".$textarea."').value + '{{'+item.var[0]+'}}';		
+						}
 					},
 
 				},'struct_tree');
@@ -308,4 +409,5 @@ class cms_module_common_view_django extends cms_module_common_view{
 
 		return $html;
 	}
+	
 }

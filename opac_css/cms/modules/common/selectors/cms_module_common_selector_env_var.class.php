@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_env_var.class.php,v 1.8 2012-12-17 10:35:13 arenou Exp $
+// $Id: cms_module_common_selector_env_var.class.php,v 1.10 2017-07-12 15:15:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -19,7 +19,7 @@ class cms_module_common_selector_env_var extends cms_module_common_selector{
 					<label for='cms_module_common_selector_env_var'>".$this->format_text($this->msg['cms_module_common_selector_env_var'])."</label>
 				</div>
 				<div class='colonne-suite'>";
-		if(is_array($this->cms_build_env['page'])){
+		if(isset($this->cms_build_env['page']) && is_array($this->cms_build_env['page'])){
 			$form.="
 					<select name='".$this->get_form_value_name("env_var")."'>";
 			foreach($this->cms_build_env['page'] as $var){
@@ -46,8 +46,8 @@ class cms_module_common_selector_env_var extends cms_module_common_selector{
 	public function get_value(){
 		if(!$this->value){
 			$var = $this->parameters;
-			global $$var;
-			$this->value = $$var;
+			global ${$var};
+			$this->value = ${$var};
 		}
 		return $this->value;
 	}

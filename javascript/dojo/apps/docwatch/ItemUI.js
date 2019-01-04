@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ItemUI.js,v 1.35.4.1 2015-10-09 13:49:22 dgoron Exp $
+// $Id: ItemUI.js,v 1.39 2018-11-07 12:21:33 dgoron Exp $
 
 
 define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/dom-construct", "dojo/dom", "dojo/on", "dojo/topic","dojo/_base/lang","dijit/form/Button","dijit/form/RadioButton","dijit/form/ToggleButton", "apps/pmb/authForm","dijit/form/DropDownButton", "dijit/DropDownMenu", "dijit/MenuItem", "dijit/form/TextBox","dijit/registry","dojo/dom-style"], function(declare,ContentPane, domConstruct, dom, on, topic, lang, Button, RadioButton, ToggleButton,authForm, DropDownButton, DropDownMenu, MenuItem, TextBox, registry,domStyle){
@@ -36,7 +36,6 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/dom-construct", 
 					this.show();
 					break;
 				case "showSourcesList":
-					this.hide();
 					break;
 				case "noMoreItems":
 					this.display_raz();
@@ -53,6 +52,9 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/dom-construct", 
 				case "watchDeleted":
 					this.display_raz();
 					break;
+				case "redrawItem":
+					this.display(evtArgs);
+					break;
 			}			
 		},		
 		buildRendering: function(){
@@ -61,7 +63,27 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/dom-construct", 
 		destroy: function(){
 			this.inherited(arguments);
 		},
+		setAvailableDatatags: function(tags) {
+			for(var i = 0; i < tags.length; i++) {
+				if(typeof availableDatatags.get(tags[i].id) == 'undefined') {
+					var nb_item_tags=dojo.byId("max_tags").value;
+					for (var j=0; j<nb_item_tags; j++){
+						var dropDownMenu=registry.byId("DropDownMenu"+j);
+						dropDownMenu.addChild(new MenuItem({
+							label : tags[i].label,
+							onClick : lang.hitch(this,this.add_tag,0,tags[i].label)
+						}));
+					}
+				}
+				var response = availableDatatags.put(tags[i],{
+					overwrite:true
+				});
+			}
+		},
 		itemIndexAck: function(response){
+			if(response.tags.length) {
+				this.setAvailableDatatags(response.tags);
+			}
 			if(dojo.byId('descriptors_isbd')) {
 				domConstruct.place('<label>'+response.descriptors_isbd+'</label>', dojo.byId('descriptors_isbd'), 'only');
 			}
@@ -73,7 +95,7 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/dom-construct", 
 				dijit.byId("button_index_id").set('disabled', true);
 			}
 		},
-		display: function(data){	
+		display: function(data){
 			this.display_raz();
 			var html="";
 			if(data.item.status!=2){
@@ -230,7 +252,7 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/dom-construct", 
 		add_new_tag_selector: function(label,index){			
 			var menu = new DropDownMenu({id: "DropDownMenu"+index, style: "display: none;"});
 
-			var tmp = new MenuItem();
+			var tmp = new MenuItem({id: "MenuItem"+index});
 			menu.addChild(tmp);
 			
 			 new TextBox({
@@ -247,6 +269,15 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/dom-construct", 
 				label: this.getMsg("dsi_js_item_action_create_tag"),
 				onClick : lang.hitch(this,this.add_new_tag,index)
 			}).placeAt(tmp);
+			
+			if (label != "") {
+				new Button({
+					iconClass: 'dijitIconDelete',
+					showLabel: false,
+					label: this.getMsg("dsi_js_item_action_remove_tag"),
+					onClick : lang.hitch(this,this.remove_tag,index)
+				}).placeAt(tmp);
+			}
 			
 			for(var i=0 ; i<availableDatatags.data.length ; i++){
 				menu.addChild(new MenuItem({
@@ -273,6 +304,14 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/dom-construct", 
 						this.add_new_tag_selector("",(index+1));	
 				registry.byId("button_tag_id_"+index).set('label',dom.byId("new_input_tag"+index).value);
 				topic.publish('itemUI',"itemUIChange",{action:"add_new_tag"});
+				var button = new Button({
+					iconClass: 'dijitIconDelete',
+					showLabel: false,
+					label: this.getMsg("dsi_js_item_action_remove_tag"),
+					onClick : lang.hitch(this,this.remove_tag,index)
+				});
+				button.placeAt("MenuItem"+index);
+				button.startup();
 			}
 		},			
 		add_tag: function(index,label){	
@@ -280,7 +319,21 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/dom-construct", 
 			if(!registry.byId("button_tag_id_"+ (index+1)))
 				this.add_new_tag_selector("",(index+1));	
 			registry.byId("button_tag_id_"+index).set('label',label);
-		},			
+			var button = new Button({
+				iconClass: 'dijitIconDelete',
+				showLabel: false,
+				label: this.getMsg("dsi_js_item_action_remove_tag"),
+				onClick : lang.hitch(this,this.remove_tag,index)
+			});
+			button.placeAt("MenuItem"+index);
+			button.startup();
+		},	
+		remove_tag: function(index){
+			var data=this.categForm.get_data();
+			var data_tags=this.get_tags();
+			data_tags.splice(index,1);
+			topic.publish('itemUI',"itemReIndex",{itemId:this.itemId,data:{descriptors:data,tags:data_tags}});
+		},
 		display_raz: function(){		
 			this.destroyDescendants();
 		},

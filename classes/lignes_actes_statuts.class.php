@@ -2,30 +2,28 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lignes_actes_statuts.class.php,v 1.5 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: lignes_actes_statuts.class.php,v 1.6 2017-02-20 19:04:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 class lgstat{
 	
 	 
-	var $id_statut = 0;					//Identifiant de statut de ligne d'acte	
-	var $libelle  = '';					//Libelle
-	var $relance = 0;					//0=non, 1=oui
+	public $id_statut = 0;					//Identifiant de statut de ligne d'acte	
+	public $libelle  = '';					//Libelle
+	public $relance = 0;					//0=non, 1=oui
 	 
 	//Constructeur.	 
-	function lgstat($id_statut=0) {
-		
-		if ($id_statut) {
-			$this->id_statut = $id_statut;
+	public function __construct($id_statut=0) {
+		$this->id_statut = $id_statut+0;
+		if ($this->id_statut) {
 			$this->load();	
 		}
-
 	}	
 	
 	
 	// charge un statut de ligne d'acte à partir de la base.
-	function load(){
+	public function load(){
 	
 		global $dbh;
 		
@@ -39,7 +37,7 @@ class lgstat{
 
 	
 	// enregistre un statut de ligne d'acte en base.
-	function save(){
+	public function save(){
 		
 		global $dbh;
 
@@ -66,7 +64,7 @@ class lgstat{
 
 
 	//Retourne une liste des statuts de lignes d'actes (tableau)
-	static function getList($x='ARRAY_ALL') {
+	public static function getList($x='ARRAY_ALL') {
 		
 		global $dbh;
 		$res='';
@@ -99,7 +97,7 @@ class lgstat{
 	}
 
 	//Retourne un selecteur html avec la liste des statuts de lignes d'actes
-	static function getHtmlSelect($selected=array(), $sel_all='', $sel_attr=array()) {
+	public static function getHtmlSelect($selected=array(), $sel_all='', $sel_attr=array()) {
 		
 		global $dbh,$msg,$charset;
 
@@ -116,7 +114,7 @@ class lgstat{
 		}
 		
 		$size=count($res);
-		if ($sel_attr['size']>$size) $sel_attr['size']=$size;
+		if (isset($sel_attr['size']) && $sel_attr['size']>$size) $sel_attr['size']=$size;
 		
 		if ($size) {
 			$sel="<select ";
@@ -141,45 +139,41 @@ class lgstat{
 	
 	
 	//Vérifie si un statut de ligne d'acte existe
-	static function exists($id_statut) {
-		
-		global $dbh;
+	public static function exists($id_statut) {
+		$id_statut += 0;
 		$q = "select count(1) from lignes_actes_statuts where id_statut = '".$id_statut."' ";
-		$r = pmb_mysql_query($q, $dbh); 
+		$r = pmb_mysql_query($q); 
 		return pmb_mysql_result($r, 0, 0);
 		
 	}
 	
 		
 	//Vérifie si le libelle d'un statut de ligne d'acte existe déjà en base
-	static function existsLibelle($libelle,$id_statut) {
-
-		global $dbh;
+	public static function existsLibelle($libelle,$id_statut) {
+		$id_statut += 0;
 		$q = "select count(1) from lignes_actes_statuts where libelle = '".$libelle."' ";
 		if ($id_statut) $q.= "and id_statut != '".$id_statut."' ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		return pmb_mysql_result($r, 0, 0);
 
 	}
 
 
 	//supprime un statut de ligne d'acte de la base
-	static function delete($id_statut= 0) {
-		
-		global $dbh;
-
+	public static function delete($id_statut= 0) {
+		$id_statut += 0;
 		if (!$id_statut) return;
 
 		$q = "delete from lignes_actes_statuts where id_statut = '".$id_statut."' ";
-		$r = pmb_mysql_query($q, $dbh);
-				
+		$r = pmb_mysql_query($q);
 	}
 
 
 	//Vérifie si un statut de ligne d'acte est utilise dans les lignes d'actes	
-	static function isUsed($id_statut){
+	public static function isUsed($id_statut){
 		
 		global $dbh;
+		$id_statut += 0;
 		if (!$id_statut) return 0;
 		$total=0;
 		$q = "select count(1) from lignes_actes where num_statut = '".$id_statut."' ";
@@ -197,11 +191,8 @@ class lgstat{
 
 
 	//optimization de la table lignes_actes_statuts
-	function optimize() {
-		
-		global $dbh;
-		
-		$opt = pmb_mysql_query('OPTIMIZE TABLE lignes_actes_statuts', $dbh);
+	public function optimize() {
+		$opt = pmb_mysql_query('OPTIMIZE TABLE lignes_actes_statuts');
 		return $opt;
 				
 	}

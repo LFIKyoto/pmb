@@ -1,4 +1,4 @@
-<h1>Administraci&oacute;n de los ejemplares</h1>
+<h2>Administraci&oacute;n de los ejemplares</h2>
 
 <p>El m&oacute;dulo <b>administraci&oacute;n de los ejemplares</b> permite definir los par&aacute;metros de la aplicaci&oacute;n para el pr&eacute;stamo y las
 estad&iacute;sticas de los documentos.

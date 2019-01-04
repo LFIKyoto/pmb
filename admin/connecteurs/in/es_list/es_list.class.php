@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: es_list.class.php,v 1.3 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: es_list.class.php,v 1.6 2017-07-12 15:15:02 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,47 +13,34 @@ require_once($class_path."/nusoap/nusoap.php");
 
 class es_list extends connector {
 	//Variables internes pour la progression de la récupération des notices
-	var $del_old;				//Supression ou non des notices dejà existantes
+	public $del_old;				//Supression ou non des notices dejà existantes
 	
-	var $profile;				//Profil Amazon
-	var $match;					//Tableau des critères UNIMARC / AMAZON
-	var $current_site;			//Site courant du profile (n°)
-	var $searchindexes;			//Liste des indexes de recherche possibles pour le site
-	var $current_searchindex;	//Numéro de l'index de recherche de la classe
-	var $match_index;			//Type de recherche (power ou simple)
-	var $types;					//Types de documents pour la conversino des notices
+	public $profile;				//Profil Amazon
+	public $match;					//Tableau des critères UNIMARC / AMAZON
+	public $current_site;			//Site courant du profile (n°)
+	public $searchindexes;			//Liste des indexes de recherche possibles pour le site
+	public $current_searchindex;	//Numéro de l'index de recherche de la classe
+	public $match_index;			//Type de recherche (power ou simple)
+	public $types;					//Types de documents pour la conversino des notices
 	
 	//Résultat de la synchro
-	var $error;					//Y-a-t-il eu une erreur	
-	var $error_message;			//Si oui, message correspondant
+	public $error;					//Y-a-t-il eu une erreur	
+	public $error_message;			//Si oui, message correspondant
 	
-    function es_list($connector_path="") {
-    	parent::connector($connector_path);
+    public function __construct($connector_path="") {
+    	parent::__construct($connector_path);
     }
     
-    function get_id() {
+    public function get_id() {
     	return "es_list";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 2;
 	}
     
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-    
-    function get_libelle($message) {
-    	if (substr($message,0,4)=="msg:") return $this->msg[substr($message,4)]; else return $message;
-    }
-    
-    function source_get_property_form($source_id) {
+    public function source_get_property_form($source_id) {
 		global $charset;
 		
 		$params=$this->get_source_params($source_id);
@@ -61,8 +48,8 @@ class es_list extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		
@@ -123,7 +110,7 @@ class es_list extends connector {
 		return $form;
     }
     
-    function make_serialized_source_properties($source_id) {
+    public function make_serialized_source_properties($source_id) {
     	global $es_selected;
     	global $use_in_a2z;
     	global $libelle;
@@ -136,45 +123,24 @@ class es_list extends connector {
     	$t['source_as_origine'] = $source_as_origine;
     	$this->sources[$source_id]["PARAMETERS"]=serialize($t);
 	}
-	
-	//Récupération  des proriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
-		$this->timeout=5;
-		$this->repository=2;
-		$this->retry=3;
-		$this->ttl=1800;
-		$this->parameters="";
-	}
-	
-	 //Formulaire des propriétés générales
-	function get_property_form() {
-		return "";
-	}
-    
-    function make_serialized_properties() {
-    	global $accesskey, $secretkey;
-		//Mise en forme des paramètres à partir de variables globales (mettre le résultat dans $this->parameters)
-		$keys = array();
-		$this->parameters = serialize($keys);
-	}
 
-	function enrichment_is_allow(){
+	public function enrichment_is_allow(){
 		return true;
 	}
 	
-	function getEnrichmentHeader(){
+	public function getEnrichmentHeader(){
 		$header= array();
 		return $header;
 	}
 	
-	function getTypeOfEnrichment($source_id){		
+	public function getTypeOfEnrichment($source_id){		
 		$params=$this->get_source_params($source_id);
 		if ($params["PARAMETERS"]) {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		$type['type'] = array(
@@ -188,14 +154,14 @@ class es_list extends connector {
 		return $type;
 	}
 	
-	function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array(),$page=1){
+	public function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array(),$page=1){
 		$params=$this->get_source_params($source_id);
 		if ($params["PARAMETERS"]) {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		$enrichment= array();

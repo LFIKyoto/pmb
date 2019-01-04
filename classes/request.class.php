@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: request.class.php,v 1.5 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: request.class.php,v 1.6 2017-06-30 14:32:20 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,28 +14,27 @@ if(!defined('REQ_TYP_FRE')) define('REQ_TYP_FRE', 1);	//Type requete	1 = Libre
 
 class request {
 	
-	var $idproc = 0;				//id de procedure
-	var $name = '';					//nom de procédure
-	var $requete = '';				//requete SQL
-	var $comment = '';				//commentaires sur la procedure
-	var $autorisations = array();	//autorisation d'utilisation de la procedure
-	var $parameters = '';			//parametres d'execution de la procedure
-	var $num_classement = 0;		//Classement de la procedure
-	var $p_mode = REQ_MOD_FRE;		//mode de procedure
-	var $p_form = '';				//formulaire XML de description de la procedure
+	public $idproc = 0;				//id de procedure
+	public $name = '';					//nom de procédure
+	public $requete = '';				//requete SQL
+	public $comment = '';				//commentaires sur la procedure
+	public $autorisations = array();	//autorisation d'utilisation de la procedure
+	public $parameters = '';			//parametres d'execution de la procedure
+	public $num_classement = 0;		//Classement de la procedure
+	public $p_mode = REQ_MOD_FRE;		//mode de procedure
+	public $p_form = '';				//formulaire XML de description de la procedure
 	
 	
 	//Constructeur
-	function request($idproc=0) {
-
-		if ($idproc) {
-			$this->idproc = $idproc;
+	public function __construct($idproc=0) {
+		$this->idproc = $idproc+0;
+		if ($this->idproc) {
 			$this->load();	
 		}
 	}
 
 	// charge une procedure a partir de la base.
-	function load(){
+	public function load(){
 	
 		global $dbh;
 		
@@ -58,12 +57,11 @@ class request {
 	
 	
 	// enregistre une procedure en base.
-	function save(){
+	public function save(){
 		
 		global $dbh;
 			
 		if ($this->idproc) {
-		
 			$q = "update procs set ";
 			$q.= "requete = '".addslashes($this->requete)."', ";
 			$q.= "comment = '".addslashes($this->comment)."', ";
@@ -74,9 +72,7 @@ class request {
 			$q.= "p_form = '".addslashes($this->p_form)."' ";
 			$q.= "where idproc = '".$this->idproc."' ";
 			pmb_mysql_query($q, $dbh);
-		
 		} else {
-
 			$q = "insert into procs set ";
 			$q.= "requete = '".addslashes($this->requete)."', ";
 			$q.= "comment = '".addslashes($this->comment)."', ";
@@ -90,22 +86,15 @@ class request {
 		}
 	}
 
-
 	//supprime une procedure de la base
-	function delete($idproc = 0) {
-		
-		global $dbh;
-
+	public function delete($idproc = 0) {
 		if(!$idproc) $idproc = $this->idproc; 	
 		$q = "delete from procs where idproc = '".$idproc."' ";
-		pmb_mysql_query($q, $dbh);
-				
+		pmb_mysql_query($q);
 	}
-	
 
 	//retourne un form pour les autorisations d'une requete ou les autorisations par defaut si requete non creee
-	static function getAutorisationsForm() {
-		
+	static public function getAutorisationsForm() {
 		global $dbh, $charset;
 		global $req_auth;
 		$aut = array('1');
@@ -138,9 +127,7 @@ class request {
 		}
 		$form.="<input type='hidden' id='auto_id_list' name='auto_id_list' value='$id_check_list' >";
 		return $form;
-
 	}	
-	
 }
 
 ?>

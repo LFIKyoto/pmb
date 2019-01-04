@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ascodocpsy2xmluni.inc.php,v 1.1 2013-01-23 15:24:16 dgoron Exp $
+// $Id: ascodocpsy2xmluni.inc.php,v 1.10 2018-06-27 08:45:13 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -15,8 +15,15 @@ function convert_ascodocpsy($notice, $s, $islast, $isfirst, $param_path) {
 	global $base_path,$origine;
 	global $tab_functions;
 	global $charset;
+	
+	$error=$warning="";
 
 	if (!$tab_functions) $tab_functions=new marc_list('function');
+	
+	if (!$authors_function) {
+		$authors_function=array("Collab."=>"Collaborateur","Coord."=>"Coordinateur","Dir."=>"Directeur de publication","Ed."=>"Editeur scientifique",
+				"Ill."=>"Illustrateur","Préf."=>"Préfacier","Trad."=>"Traducteur","Postf."=>"Postfacier");
+	}
 	
 	if (!$cols) {
 		//On lit les intitulés dans le fichier temporaire
@@ -28,26 +35,123 @@ function convert_ascodocpsy($notice, $s, $islast, $isfirst, $param_path) {
 		}
 	}
 	
-	if (!$ty) {
-		$ty=array("Livre"=>"a","Congrès"=>"h","Mémoire"=>"r",
-				"Thèse"=>"o","Rapport"=>"q","Texte officiel"=>"t",
-				"Périodique"=>"p","Article"=>"s","Document multimédia"=>"m");
+	if(!isset($cols) || !is_array($cols) || !count($cols)){
+		$cols=array();
+		$error.="Pas de description des champs de fourni<br />\n";
+		$data="";
 	}
 	
-	$fields=explode("\t",$notice);
+	if (!$ty) {
+		$tab_type=new marc_list('doctype');
+		$ty=array_flip($tab_type->table);
+		/*$ty=array("Livre"=>"a","Congrès"=>"h","Mémoire"=>"r",
+				"Thèse"=>"o","Rapport"=>"q","Texte officiel"=>"t",
+				"Périodique"=>"p","Article"=>"s","Document multimédia"=>"m");*/
+	}
+	
+	$fields=explode("'^'",$notice);
+	
+	if(count($fields) != count($cols)){
+		$error.="Pas le bon nombre de champs<br />\n";
+		$data="";
+	}
+	
 	for ($i=0; $i<count($fields); $i++) {
-		$ntable[$cols[$i]]=$fields[$i];
+		$ntable[$cols[$i]]=trim($fields[$i]);
+	}
+	
+	$obligatoire=array();
+	//Article
+	$obligatoire["s"][]="TYPE";
+	$obligatoire["s"][]="PRODFICH";
+	$obligatoire["s"][]="AUT";
+	$obligatoire["s"][]="TIT";
+	$obligatoire["s"][]="DATE";
+	$obligatoire["s"][]="MOTCLE";
+	$obligatoire["s"][]="REV";
+	$obligatoire["s"][]="NUM";
+	$obligatoire["s"][]="PDPF";
+	//Ouvrage
+	$obligatoire["a"][]="TYPE";
+	$obligatoire["a"][]="PRODFICH";
+	$obligatoire["a"][]="AUT";
+	$obligatoire["a"][]="TIT";
+	$obligatoire["a"][]="EDIT";
+	$obligatoire["a"][]="LIEU";
+	$obligatoire["a"][]="PAGE";
+	$obligatoire["a"][]="DATE";
+	$obligatoire["a"][]="MOTCLE";
+	$obligatoire["a"][]="LOC";
+	$obligatoire["a"][]="ISBNISSN";
+	//Congrès
+	$obligatoire["h"]=$obligatoire["a"];
+	//Périodique
+	$obligatoire["p"][]="TYPE";
+	$obligatoire["p"][]="PRODFICH";
+	$obligatoire["p"][]="SUPPORTPERIO";
+	$obligatoire["p"][]="ISBNISSN";
+	$obligatoire["p"][]="REV";
+	$obligatoire["p"][]="VIEPERIO";
+	$obligatoire["p"][]="ETATCOL";
+	//Thése
+	$obligatoire["o"][]="TYPE";
+	$obligatoire["o"][]="PRODFICH";
+	$obligatoire["o"][]="AUT";
+	$obligatoire["o"][]="TIT";
+	$obligatoire["o"][]="EDIT";
+	$obligatoire["o"][]="LIEU";
+	$obligatoire["o"][]="PAGE";
+	$obligatoire["o"][]="DATE";
+	$obligatoire["o"][]="MOTCLE";
+	$obligatoire["o"][]="LOC";
+	$obligatoire["o"][]="DIPSPE";
+	//Mémoire
+	$obligatoire["r"]=$obligatoire["o"];
+	//Texte officiel
+	$obligatoire["t"][]="TYPE";
+	$obligatoire["t"][]="PRODFICH";
+	$obligatoire["t"][]="TIT";
+	$obligatoire["t"][]="MOTCLE";
+	$obligatoire["t"][]="THEME";
+	$obligatoire["t"][]="LIEN";
+	$obligatoire["t"][]="REV";
+	$obligatoire["t"][]="NATTEXT";
+	$obligatoire["t"][]="DATESAIS";
+	//Rapport
+	$obligatoire["q"][]="TYPE";
+	$obligatoire["q"][]="PRODFICH";
+	$obligatoire["q"][]="AUT";
+	$obligatoire["q"][]="TIT";
+	$obligatoire["q"][]="PAGE";
+	$obligatoire["q"][]="DATE";
+	$obligatoire["q"][]="MOTCLE";
+	$obligatoire["q"][]="THEME";
+	$obligatoire["q"][]="LIEN";
+	$obligatoire["q"][]="DATESAIS";
+	//Document multimédia
+	$obligatoire["m"][]="TYPE";
+	$obligatoire["m"][]="PRODFICH";
+	$obligatoire["m"][]="AUT";
+	$obligatoire["m"][]="TIT";
+	$obligatoire["m"][]="EDIT";
+	$obligatoire["m"][]="LIEU";
+	$obligatoire["m"][]="DATE";
+	$obligatoire["m"][]="MOTCLE";
+	$obligatoire["m"][]="SUPPORT";
+	
+	if($ty[$ntable["TYPE"]]){
+		foreach ($obligatoire[$ty[$ntable["TYPE"]]] as $value) {
+			if(!$ntable[$value]){
+				$warning.="Pas de ".$value."<br />\n";
+			}
+		}
+	}else{
+		$error.="TYPE inconnu<br />\n";
+		$data="";
 	}
 
-	if ((!$ntable["TIT"]) && (!$ntable["REV"] && $ntable["TYPE"] == "Périodique")) {
+	if ($error) {
 		$data=""; 
-		$error="Titre vide<br />".$notice;
-	} elseif (array_key_exists("REV", $ntable) && ($ntable["REV"] == "") && ($ntable["TYPE"] != "Rapport")) {
-		$data=""; 
-		$error="Titre de revue vide<br />".$notice;
-	} elseif (!$ntable["TYPE"]) {
-		$data=""; 
-		$error="Aucun type de document<br />".$notice;
 	} else {
 		$error="";
 		$data="<notice>\n";
@@ -57,22 +161,22 @@ function convert_ascodocpsy($notice, $s, $islast, $isfirst, $param_path) {
 		if ($ty[$ntable["TYPE"]]) $dt=$ty[$ntable["TYPE"]]; else $dt="a";
 		
 		switch ($dt) {
-			case "p":
+			case "p"://Périodique
 				$bl = "s";
 				$hl = "1";
 				break;
-			case "s":
-			case "t":
+			case "s"://Article
+			case "t"://Texte officiel
 				$bl = "a";
 				$hl = "2";
 				break;
 			default :
-				if(($dt == "q") && ($ntable["REV"])) {
+				if(($dt == "q") && ($ntable["REV"])) {//Rapport
 					$bl = "a";
 					$hl = "2";
 				} else {
 					$bl = "m";
-					$hl = "*";
+					$hl = "0";
 				}
 		}
 		$data.="  <dt>".$dt."</dt>\n";
@@ -84,55 +188,107 @@ function convert_ascodocpsy($notice, $s, $islast, $isfirst, $param_path) {
 //			
 //		}
 		
+		$with_titre=false;
+		$with_titre_perio=false;
+		$with_bull_info=false;
 		//Traitement des titres
 		if ($ntable["TIT"]) {
+			$tmp_titre="";
+			$tmp_titre=htmlspecialchars($ntable["TIT"],ENT_QUOTES,$charset);
+			if($tmp_titre){
+				$with_titre=true;
+			}
 			$data.="  <f c='200' ind='  '>\n";
-			$data.="    <s c='a'>".htmlspecialchars($ntable["TIT"],ENT_QUOTES,$charset)."</s>\n";
+			$data.="    <s c='a'>".$tmp_titre."</s>\n";
 			$data.="  </f>\n";
 		}
 
 		//Titre de revue (périodique)
 		if($ntable["REV"]){
-			if ($ntable["TYPE"] == "Périodique") {
+			$tmp_titre="";
+			if ($ntable["TYPE"] == (($charset == "utf-8")?utf8_encode("Périodique"):"Périodique")) {
 				$code = '200';
 				$ss_code = 'a';
+				$tmp_titre=htmlspecialchars($ntable["REV"],ENT_QUOTES,$charset);
+				if($tmp_titre){
+					$with_titre=true;
+				}
 			} else {
 				$code = '461';
 				$ss_code = 't';
+				$tmp_titre=htmlspecialchars($ntable["REV"],ENT_QUOTES,$charset);
+				if($tmp_titre){
+					$with_titre_perio=true;
+				}
 			}
-			$data .= "	<f c='".$code."' ind='  '>\n";
-			$data .= "		<s c='".$ss_code."'>".htmlspecialchars($ntable["REV"],ENT_QUOTES,$charset)."</s>\n";
+			$data .= "  <f c='".$code."' ind='  '>\n";
+			$data .= "		<s c='".$ss_code."'>".$tmp_titre."</s>\n";
 			//Volume ou tome
 			if ($ntable["VOL"] && ($code == "461")) {
+				$with_bull_info=true;
 				$data.="    	<s c='v'>".htmlspecialchars($ntable["VOL"],ENT_QUOTES,$charset)."</s>\n";
 			}
 			$data.="  </f>\n";
+		}elseif($ntable["VOL"]){
+			$with_bull_info=true;
+			$data.="  <f c='461' ind='  '>\n";
+			$data.="    	<s c='v'>".htmlspecialchars($ntable["VOL"],ENT_QUOTES,$charset)."</s>\n";
+			$data.="  </f>\n";
 		}
 		
-		//Date de publication du texte
-		if ($ntable["DATEPUB"]) {
+		//Reprise DATETEXT comme DATE si c'est un "Texte officiel"
+		if( ($dt == "t") && (!trim($ntable["DATEPUB"])) && (!trim($ntable["DATE"])) && ($ntable["DATETEXT"]) ){
+			$ntable["DATE"]=$ntable["DATETEXT"];
+		}elseif($ntable["DATEPUB"]) { //Date de publication du texte -> Que pour les textes officiel
+			$with_bull_info=true;
 			$data.="  <f c='210' ind='  '>\n";
 			$data.="    <s c='d'>".htmlspecialchars($ntable["DATEPUB"],ENT_QUOTES,$charset)."</s>\n";
 			$data.="  </f>\n";
 		}
 		
-		//Traitement des Auteurs
-		if ($ntable["AUT"] && ($ntable["AUT"] != "[s.n.]")) {
-			if (!$authors_function) {
-				$authors_function=array("Collab."=>"Collaborateur","Coord."=>"Coordinateur","Dir."=>"Directeur de publication","Ed."=>"Editeur scientifique",
-				"Ill."=>"Illustrateur","Préf."=>"Préfacier","Trad."=>"Traducteur","Postf."=>"Postfacier");
+		//Date de vie et de mort du périodique -> Que pour les périodiques
+		if (($ntable["VIEPERIO"])/* && ($ntable["VIEPERIO"] != "[s.d.]")*/) {
+			$data.="  <f c='210' ind='  '>\n";
+			$data.="    <s c='d'>".htmlspecialchars($ntable["VIEPERIO"],ENT_QUOTES,$charset)."</s>\n";
+			$data.="  </f>\n";
+		}
+		
+		//Editeurs -> Pas présent pour les textes officiel et les périodiques
+		if (($ntable["EDIT"])/* && ($ntable["EDIT"] != "[s.n.]")*/) {
+			$editeurs = explode("/", $ntable["EDIT"]);
+			$data.="  <f c='210' ind='  '>\n";
+			for ($i=0; $i<count($editeurs); $i++) {
+				$data.="    <s c='c'>".htmlspecialchars($editeurs[$i],ENT_QUOTES,$charset)."</s>\n";
 			}
+			if (($ntable["LIEU"])/* && ($ntable["LIEU"] != "[s.l.]")*/) {
+				$lieux = explode("/", $ntable["LIEU"]);
+				for ($i=0; $i<count($lieux); $i++) {
+					$data.="    <s c='a'>".htmlspecialchars($lieux[$i],ENT_QUOTES,$charset)."</s>\n";
+				}
+			}
+			if ($ntable["DATE"]) {
+				$with_bull_info=true;
+				$data.="    <s c='d'>".htmlspecialchars($ntable["DATE"],ENT_QUOTES,$charset)."</s>\n";
+			}
+			$data.="  </f>\n";
+		} elseif ($ntable["DATE"]) {
+			$with_bull_info=true;
+			$data.="  <f c='210' ind='  '>\n";
+			$data.="    <s c='d'>".htmlspecialchars($ntable["DATE"],ENT_QUOTES,$charset)."</s>\n";
+			$data.="  </f>\n";
+		}
+		
+		//Traitement des Auteurs
+		if ($ntable["AUT"]/* && ($ntable["AUT"] != "[s.n.]")*/) {
 			$auteurs=explode("/",$ntable["AUT"]);
 			for ($i=0; $i<count($auteurs); $i++) {
 				//preg_match_all('~\b[[:upper:]]+\b~', trim($auteurs[$i]),$matches);
 				$fonction = "";
 				$func_author = "";
-				if (substr($auteurs[$i], strlen($auteurs[$i])-1,strlen($auteurs[$i])) == ".") {
-					$func_author = trim(substr($auteurs[$i], strrpos($auteurs[$i], " "),strlen($auteurs[$i])));
+				if (pmb_substr($auteurs[$i], strlen($auteurs[$i])-1,strlen($auteurs[$i])) == ".") {
+					$func_author = trim(pmb_substr($auteurs[$i], strrpos($auteurs[$i], " "),strlen($auteurs[$i])));
 				}
-				if (array_key_exists($func_author, $authors_function)) {
-					$fonction = $authors_function[$func_author];
-				}
+				
 				$entree=trim(str_replace($func_author, "", $auteurs[$i]));
 				if ($entree) {
 					if ($i == 0) $data.="  <f c='700' ind='  '>\n";
@@ -141,8 +297,20 @@ function convert_ascodocpsy($notice, $s, $islast, $isfirst, $param_path) {
 //					if ($rejete) {
 //						$data.="    <s c='b'>".htmlspecialchars($rejete,ENT_QUOTES,$charset)."</s>\n";
 //					}
-					$as=array_search($fonction,$tab_functions->table);
-					if (($as!==false)&&($as!==null)) $fonction=$as; else $fonction="070";
+					$as=array_search($func_author,$tab_functions->table);
+					if (($as!==false)&&($as!==null)){
+						$fonction=$as;
+					}else{
+						if (array_key_exists($func_author, $authors_function)) {
+							$fonction = $authors_function[$func_author];
+						}
+						$as=array_search($fonction,$tab_functions->table);
+						if (($as!==false)&&($as!==null)){
+							$fonction=$as;
+						}else{
+							$fonction="070";
+						}
+					}
 					$data.="    <s c='4'>".$fonction."</s>\n";
 					$data.="  </f>\n";
 				}
@@ -150,24 +318,13 @@ function convert_ascodocpsy($notice, $s, $islast, $isfirst, $param_path) {
 		}
 		
 		//Numéro - infos bulletin
-		if (($ntable["NUM"]) && ($ntable["NUM"] != "[s.n.]")) {
+		if (($ntable["NUM"])/* && ($ntable["NUM"] != "[s.n.]")*/) {
 			//infos bulletin
+			$with_bull_info=true;
 			$data .= "<f c='463' ind='  '>";
 			$data.="	<s c='v'>".htmlspecialchars($ntable["NUM"],ENT_QUOTES,$charset)."</s>";
 			$data.="</f>\n";
 		}
-
-		//Date de vie et de mort du périodique
-		if (($ntable["VIEPERIO"]) && ($ntable["VIEPERIO"] != "[s.d.]")) {
-			$data.="  <f c='210' ind='  '>\n";
-			$data.="    <s c='d'>".htmlspecialchars($ntable["VIEPERIO"],ENT_QUOTES,$charset)."</s>\n";
-			$data.="  </f>\n";
-		}
-		
-//		//Etat des collections des centres
-//		if ($ntable["ETATCOL"]) {
-//			
-//		}
 		
 		//Congrès
 		if (($ntable["CONGRTIT"]) || ($ntable["CONGRNUM"]) || ($ntable["CONGRLIE"]) || ($ntable["CONGRDAT"])) {
@@ -191,29 +348,6 @@ function convert_ascodocpsy($notice, $s, $islast, $isfirst, $param_path) {
 			$data.="  </f>\n";
 		}
 		
-		//Editeurs
-		if (($ntable["EDIT"]) && ($ntable["EDIT"] != "[s.n.]")) {
-			$editeurs = explode("/", $ntable["EDIT"]);
-			$data.="  <f c='210' ind='  '>\n";
-			for ($i=0; $i<count($editeurs); $i++) {
-				$data.="    <s c='c'>".htmlspecialchars($editeurs[$i],ENT_QUOTES,$charset)."</s>\n";				
-			}
-			if (($ntable["LIEU"]) && ($ntable["LIEU"] != "[s.l.]")) {
-				$lieux = explode("/", $ntable["LIEU"]);
-				for ($i=0; $i<count($lieux); $i++) {
-					$data.="    <s c='a'>".htmlspecialchars($lieux[$i],ENT_QUOTES,$charset)."</s>\n";				
-				}
-			}
-			if ($ntable["DATE"]) {
-				$data.="    <s c='d'>".htmlspecialchars($ntable["DATE"],ENT_QUOTES,$charset)."</s>\n";
-			}
-			$data.="  </f>\n";
-		} elseif ($ntable["DATE"]) {
-			$data.="  <f c='210' ind='  '>\n";
-			$data.="    <s c='d'>".htmlspecialchars($ntable["DATE"],ENT_QUOTES,$charset)."</s>\n";
-			$data.="  </f>\n";
-		}
-		
 		//Réédition
 		if ($ntable["REED"]) {
 			$data.="  <f c='205' ind='  '>\n";
@@ -223,12 +357,14 @@ function convert_ascodocpsy($notice, $s, $islast, $isfirst, $param_path) {
 		
 		//Collection
 		if ($ntable["COL"]) {
-			$pos_deb_subtitle=strpos($ntable["COL"],":");
-			$pos_deb_num_col=strpos($ntable["COL"],";");
+			//$pos_deb_subtitle=strpos($ntable["COL"],":");
+			$pos_deb_num_col=mb_strpos($ntable["COL"],";",0,$charset);
 			$data.="  <f c='225' ind='  '>\n";
-			$data.="    <s c='a'>".htmlspecialchars($ntable["COL"],ENT_QUOTES,$charset)."</s>\n";
 			if ($pos_deb_num_col) {
-				$data.="    <s c='a'>".htmlspecialchars(substr($ntable["COL"],$pos_deb_num_col+1),ENT_QUOTES,$charset)."</s>\n";
+				$data.="    <s c='v'>".htmlspecialchars(pmb_substr($ntable["COL"],$pos_deb_num_col+1),ENT_QUOTES,$charset)."</s>\n";
+				$data.="    <s c='a'>".htmlspecialchars(trim(pmb_substr($ntable["COL"],0,($pos_deb_num_col-1))),ENT_QUOTES,$charset)."</s>\n";
+			}else{
+				$data.="    <s c='a'>".htmlspecialchars($ntable["COL"],ENT_QUOTES,$charset)."</s>\n";
 			}
 			$data.="  </f>\n";
 		}
@@ -298,9 +434,12 @@ function convert_ascodocpsy($notice, $s, $islast, $isfirst, $param_path) {
 		}
 		//Thème
 		if ($ntable["THEME"]) {
-			$data.="  <f c='901'>\n";
-			$data.="    <s c='a'>".htmlspecialchars($ntable["THEME"],ENT_QUOTES,$charset)."</s>\n";
-			$data.="  </f>\n";
+		    $candes = explode("/", $ntable["THEME"]);
+		    for ($i=0; $i < count($candes); $i++) {
+		        $data.="  <f c='901'>\n";
+		        $data.="    <s c='a'>".htmlspecialchars($candes[$i],ENT_QUOTES,$charset)."</s>\n";
+		        $data.="  </f>\n";
+		    }
 		}
 		//Nom Propre
 		if ($ntable["NOMP"]) {
@@ -315,20 +454,32 @@ function convert_ascodocpsy($notice, $s, $islast, $isfirst, $param_path) {
 		if ($ntable["PRODFICH"]) {
 			$prodfich = explode("/", $ntable["PRODFICH"]);
 			for ($i=0; $i < count($prodfich); $i++) {
-				$data.="  <f c='903'>\n";
-				$data.="    <s c='a'>".htmlspecialchars($prodfich[$i],ENT_QUOTES,$charset)."</s>\n";
-				$data.="  </f>\n";
+				if($prodfich[$i] && ($prodfich[$i] != "[vide]")){
+					$tmp_prod_array=explode("-",$prodfich[$i]);
+					$match_prod=array();
+					if(preg_match("/asco[0]*([0-9]+)/",mb_strtolower($tmp_prod_array[0]),$match_prod)){
+						$tmp_prod_array[0]="asco".str_pad($match_prod[1],3,"0",STR_PAD_LEFT);
+					}else{
+						$error.="PRODFICH incorrect: ".$prodfich[$i]."<br />\n";
+					}
+					$data.="  <f c='903'>\n";
+					$data.="    <s c='a'>".htmlspecialchars(trim($tmp_prod_array[0]),ENT_QUOTES,$charset)."</s>\n";
+					$data.="  </f>\n";
+				}
 			}
 		}
 		//DIPSPE
-		if ($ntable["DIPSPE"]) {
+		if ($ntable["DIPSPE"]/* && ($ntable["DIPSPE"] != "[vide]")*/) {
 			$data.="  <f c='904'>\n";
 			$data.="    <s c='a'>".htmlspecialchars($ntable["DIPSPE"],ENT_QUOTES,$charset)."</s>\n";
 			$data.="  </f>\n";
 		}
 		//Annexe
 		if ($ntable["ANNEXE"]) {
-			$annexe = explode(" ; ", $ntable["ANNEXE"]);
+			$annexe = explode("/", $ntable["ANNEXE"]);
+			if(count($annexe) == 1){
+				$annexe = explode(" ; ", $ntable["ANNEXE"]);
+			}
 			for ($i=0; $i < count($annexe); $i++) {
 				$data.="  <f c='905'>\n";
 				$data.="    <s c='a'>".htmlspecialchars($annexe[$i],ENT_QUOTES,$charset)."</s>\n";
@@ -349,14 +500,32 @@ function convert_ascodocpsy($notice, $s, $islast, $isfirst, $param_path) {
 		if ($ntable["LOC"]) {
 			$loc = explode("/", $ntable["LOC"]);
 			for ($i=0; $i < count($loc); $i++) {
-				$data.="  <f c='907'>\n";
-				$data.="    <s c='a'>".htmlspecialchars($loc[$i],ENT_QUOTES,$charset)."</s>\n";
-				$data.="  </f>\n";
+				if($loc[$i] && ($loc[$i] != "[vide]")){
+					$tmp_loc_array=explode("-",$loc[$i]);
+					
+					$match_prod=array();
+					if(preg_match("/asco[0]*([0-9]+)/",mb_strtolower($tmp_loc_array[0]),$match_prod)){
+						$tmp_loc_array[0]="asco".$match_prod[1];
+					}else{
+						$error.="LOC incorrect: ".$loc[$i]."<br />\n";
+					}
+					$data.="  <f c='907'>\n";
+					$data.="    <s c='a'>".htmlspecialchars(trim($tmp_loc_array[0]),ENT_QUOTES,$charset)."</s>\n";
+					$data.="  </f>\n";
+					$data.="  <f c='995'>\n";
+					$data.="    <s c='a'>".htmlspecialchars(trim($tmp_loc_array[0]),ENT_QUOTES,$charset)."</s>\n";
+					if ($ntable["SUPPORT"]) {
+						$data.="    <s c='r'>".htmlspecialchars($ntable["SUPPORT"],ENT_QUOTES,$charset)."</s>\n";
+					}elseif($ntable["TYPE"]){
+						$data.="    <s c='r'>".htmlspecialchars($ntable["TYPE"],ENT_QUOTES,$charset)."</s>\n";
+					}
+					$data.="  </f>\n";
+				}
 			}
 		}
 		
 		//Nature du texte
-		if ($ntable["NATTEXT"]) {
+		if ($ntable["NATTEXT"] && ($ntable["NATTEXT"] != "[vide]")) {
 			$data.="  <f c='908'>\n";
 			$data.="    <s c='a'>".htmlspecialchars($ntable["NATTEXT"],ENT_QUOTES,$charset)."</s>\n";
 			$data.="  </f>\n";
@@ -376,26 +545,68 @@ function convert_ascodocpsy($notice, $s, $islast, $isfirst, $param_path) {
 			$data.="  </f>\n";
 		}
 		
+		//Date de fin de validité
+		if ($ntable["DATEVALI"]) {
+			$data.="  <f c='911'>\n";
+			$data.="    <s c='a'>".htmlspecialchars($ntable["DATEVALI"],ENT_QUOTES,$charset)."</s>\n";
+			$data.="  </f>\n";
+		}
+		
 //		//Date de saisie
 //		if ($ntable["DATESAIS"]) {
 //			$data.="  <f c='912'>\n";
 //			$data.="    <s c='a'>".htmlspecialchars($ntable["DATESAIS"],ENT_QUOTES,$charset)."</s>\n";
 //			$data.="  </f>\n";
-//		}
+//		}	
 		
-//		//Date de fin de validité
-//		if ($ntable["DATEVALI"]) {
-//			$data.="  <f c='910'>\n";
-//			$data.="    <s c='a'>".htmlspecialchars($ntable["DATEVALI"],ENT_QUOTES,$charset)."</s>\n";
-//			$data.="  </f>\n";
-//		}
+		//Etat des collections des centres
+		if ($ntable["ETATCOL"] && ($ntable["ETATCOL"] != "[vide]")) {
+			$data.="  <f c='913'>\n";
+			$data.="    <s c='a'>".htmlspecialchars($ntable["ETATCOL"],ENT_QUOTES,$charset)."</s>\n";
+			if ($ntable["SUPPORTPERIO"] && ($ntable["SUPPORTPERIO"] != "[vide]")) {
+				$data.="    <s c='b'>".htmlspecialchars($ntable["SUPPORTPERIO"],ENT_QUOTES,$charset)."</s>\n";
+			}
+			$data.="  </f>\n";
+		}
+		
+		//Support pour les documents multimédia
+		if ($ntable["SUPPORT"]) {
+			$data.="  <f c='914'>\n";
+			$data.="    <s c='a'>".htmlspecialchars($ntable["SUPPORT"],ENT_QUOTES,$charset)."</s>\n";
+			$data.="  </f>\n";
+		}
 		
 		$data.="</notice>\n";
+		
+		if(!$with_titre){
+			$error.="Pas de titre pour la notice<br />\n";
+		}
+		
+		if(!$with_titre_perio && ($bl == "a")){
+			$error.="Pas de titre de p&eacute;riodique pour l'article<br />\n";
+		}
+		
+		if(!$with_bull_info && ($bl == "a")){
+			$error.="Pas d'information de bulletin pour l'article (NUM, VOL, DATE et DATETEXT vide)<br />\n";
+		}
+		
 	}
 	
-	if (!$error) $r['VALID'] = true; else $r['VALID']=false;
-	$r['ERROR'] = $error;
+	if(!$error) {
+		$r['VALID'] = true; 
+	}else {
+		$error.=$notice."<br/>\n";
+		$r['VALID']=false;
+	}
+	if($warning){
+		//$r['WARNING']="Ne bloque pas la conversion: ".$warning.$notice."<br/>\n";
+	}
+	
+	if($error){
+		$r['ERROR'] = "<span style='color:red;'>".$error."</span>";
+	}else{
+		$r['ERROR'] = "";
+	}
 	$r['DATA'] = $data;
 	return $r;
 }
-?>

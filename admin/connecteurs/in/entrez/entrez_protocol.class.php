@@ -2,15 +2,16 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entrez_protocol.class.php,v 1.4 2009-11-12 15:25:26 gueluneau Exp $
+// $Id: entrez_protocol.class.php,v 1.9 2017-07-12 09:07:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path,$base_path, $include_path;
+require_once($class_path."/curl.class.php");
 
 class xml_dom_entrez {
-	var $xml;				/*!< XML d'origine */
-	var $charset;			/*!< Charset courant (iso-8859-1 ou utf-8) */
+	public $xml;				/*!< XML d'origine */
+	public $charset;			/*!< Charset courant (iso-8859-1 ou utf-8) */
 	/**
 	 * \brief Arbre des noeuds du document
 	 * 
@@ -25,19 +26,19 @@ class xml_dom_entrez {
 	 )
 	 \endverbatim
 	 */
-	var $tree; 
-	var $error=false; 		/*!< Signalement d'erreur : true : erreur lors du parse, false : pas d'erreur */
-	var $error_message=""; 	/*!< Message d'erreur correspondant à l'erreur de parse */
-	var $depth=0;			/*!< \protected */
-	var $last_elt=array();	/*!< \protected */
-	var $n_elt=array();		/*!< \protected */
-	var $cur_elt=array();	/*!< \protected */
-	var $last_char=false;	/*!< \protected */
+	public $tree; 
+	public $error=false; 		/*!< Signalement d'erreur : true : erreur lors du parse, false : pas d'erreur */
+	public $error_message=""; 	/*!< Message d'erreur correspondant à l'erreur de parse */
+	public $depth=0;			/*!< \protected */
+	public $last_elt=array();	/*!< \protected */
+	public $n_elt=array();		/*!< \protected */
+	public $cur_elt=array();	/*!< \protected */
+	public $last_char=false;	/*!< \protected */
 	
 	/**
 	 * \protected
 	 */
-	function close_node() {
+	public function close_node() {
 		$this->last_elt[$this->depth-1]["CHILDS"][]=$this->cur_elt;
 		$this->last_char=false;
 		$this->cur_elt=$this->last_elt[$this->depth-1];
@@ -47,7 +48,7 @@ class xml_dom_entrez {
 	/**
 	 * \protected
 	 */
-	function startElement($parser,$name,$attribs) {
+	public function startElement($parser,$name,$attribs) {
 		if ($this->last_char) $this->close_node();
 		$this->last_elt[$this->depth]=$this->cur_elt;
 		$this->cur_elt=array();
@@ -61,7 +62,7 @@ class xml_dom_entrez {
 	/**
 	 * \protected
 	 */
-	function endElement($parser,$name) {
+	public function endElement($parser,$name) {
 		if ($this->last_char) $this->close_node();
 		$this->close_node();
 	}
@@ -69,7 +70,7 @@ class xml_dom_entrez {
 	/**
 	 * \protected
 	 */
-	function charElement($parser,$char) {
+	public function charElement($parser,$char) {
 		if ($this->last_char) $this->close_node();
 		$this->last_char=true;
 		$this->last_elt[$this->depth]=$this->cur_elt;
@@ -86,7 +87,7 @@ class xml_dom_entrez {
 	 * @param string $xml XML a manipuler
 	 * @param string $charset Charset du document XML
 	 */
-	function xml_dom_entrez($xml,$charset="iso-8859-1") {
+	public function __construct($xml,$charset="iso-8859-1") {
 		$this->charset=$charset;
 		$this->cur_elt=array("NAME"=>"document","TYPE"=>"0");
 		
@@ -134,7 +135,7 @@ class xml_dom_entrez {
 	 Les attributs ne peuvent être cités que sur le noeud final.
 	 \endverbatim
 	 */
-	function get_node($path,$node="") {
+	public function get_node($path,$node="") {
 		if ($node=="") $node=&$this->tree;
 		$paths=explode("/",$path);
 		for ($i=0; $i<count($paths); $i++) {
@@ -196,7 +197,7 @@ class xml_dom_entrez {
 	 a/b/id@c	Tous les noeuds éléments c fils de a/b. L'attribut est ignoré
 	 \endverbatim
 	 */
-	function get_nodes($path,$node="") {
+	public function get_nodes($path,$node="") {
 		$n=0;
 		$nodes="";
 		while ($nod=$this->get_node($path."[$n]",$node)) {
@@ -216,7 +217,7 @@ class xml_dom_entrez {
 	 * @param bool $force_entities true : les données sont renvoyées avec les entités xml, false : les données sont renvoyées sans entités
 	 * @return string données sérialisées du noeud élément
 	 */
-	function get_datas($node,$force_entities=false) {
+	public function get_datas($node,$force_entities=false) {
 		$char="";
 		if ($node["TYPE"]!=1) return false;
 		//Recherche des fils et vérification qu'il n'y a que du texte !
@@ -254,7 +255,7 @@ class xml_dom_entrez {
 	 * @param noeud $node Noeud élément duquel on veut les attributs
 	 * @return mixed Tableau des attributs Nom => Valeur ou false si ce n'est pas un noeud de type 1
 	 */
-	function get_attributes($node) {
+	public function get_attributes($node) {
 		if ($node["TYPE"]!=1) return false;
 		return $node["ATTRIBUTES"];
 	}
@@ -286,7 +287,7 @@ class xml_dom_entrez {
 	 a/b/id@c[3]	Renvoie : "2"
 	 \endverbatim
 	 */
-	function get_value($path,$node="") {
+	public function get_value($path,$node="") {
 		$elt=$this->get_node($path,$node);
 		if ($elt) {
 			$paths=explode("/",$path);
@@ -345,7 +346,7 @@ class xml_dom_entrez {
 	 a/b/id@c	Renvoie : [0]=>"0",[1]=>"1",[2]=>"2"
 	 \endverbatim
 	 */
-	function get_values($path,$node="") {
+	public function get_values($path,$node="") {
 		$n=0;
 		while ($elt=$this->get_node($path."[$n]",$node)) {
 			$elts[$n]=$elt;
@@ -389,24 +390,27 @@ class xml_dom_entrez {
 }
 
 class entrez_request {
-	var $database;
-	var $request_text;
-	var $total_items = 0;
-	var $current_item_index = 0;
-	var $current_id_list = array();
-	var $current_responses = array();
+	public $database;
+	public $request_text;
+	public $total_items = 0;
+	public $current_item_index = 0;
+	public $current_id_list = array();
+	public $current_responses = '';
+	protected $base_url = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/';
 	
-	function entrez_request($database, $request_text) {
+	public function __construct($database, $request_text) {
 		$this->database = $database;
 		$this->request_text = $request_text;
 	}
 	
-	function get_next_idlist($retmax=100) {
+	public function get_next_idlist($retmax=100) {
 		global $base_path;
 		
 		//host,port,user,password
 		global $pmb_curl_proxy;
 
+		
+		
 		if ($pmb_curl_proxy) {
 			$proxies=explode(";",$pmb_curl_proxy);
 			$proxy=explode(",",$proxies[0]);
@@ -415,60 +419,41 @@ class entrez_request {
                           'proxy_login'    => $proxy[2],
                           'proxy_password' => $proxy[3]);
 		} else $proxytable=array();
-		$client = new SoapClient($base_path."/admin/connecteurs/in/entrez/eutils.wsdl",$proxytable);
-		$params = array(
-			"db" => $this->database,
-			"RetStart" => $this->current_item_index,
-			"RetMax" => $retmax,
-			"term" => $this->request_text
-		);
 		
-		$result = $client->run_eSearch($params);
-		if (isset($result->IdList->Id)) {
-			$this->current_id_list = is_array($result->IdList->Id) ? $result->IdList->Id : array($result->IdList->Id);
+		$curl =  new Curl();
+		$url = $this->base_url . "esearch.fcgi?db=".$this->database."&term=".$this->request_text."&usehistory=y&retmax=".$retmax."&retstart=".$this->current_item_index;
+		$result = $curl->get($url);
+		
+		$params = _parser_text_no_function_($result->body,"ESEARCHRESULT");
+		
+		if (isset($params["IDLIST"][0]["ID"])) {
+			foreach ($params["IDLIST"][0]["ID"] as $id) {
+				$this->current_id_list[] = $id["value"];
+			}
+			$this->total_items = $params["COUNT"][0];
 			return true;
-		}
-		else {
-			$this->current_id_list = array();
 		}
 		return false;
 	}
 	
-	function retrieve_currentidlist_notices() {
+	public function retrieve_currentidlist_notices() {
 		global $base_path;
 		
-		$current_responses = array();
-		if (!$this->current_id_list)
+		$current_responses = '';
+		if (!$this->current_id_list) {
 			return; //Pas de liste, pas de fetch
-		
-		//host,port,user,password
-		global $pmb_curl_proxy;
-		
-		if ($pmb_curl_proxy) {
-			$proxies=explode(";",$pmb_curl_proxy);
-			$proxy=explode(",",$proxies[0]);
-			$proxytable=array('proxy_host'     =>$proxy[0],
-                          'proxy_port'     => (int)$proxy[1],
-                          'proxy_login'    => $proxy[2],
-                          'proxy_password' => $proxy[3],
-						  'trace'=>1);
-		} else $proxytable=array('trace'=>1);
-		
-		$client = new SoapClient($base_path."/admin/connecteurs/in/entrez/efetch_pubmed.wsdl", $proxytable);
+		}
 
-		//Si un jour ils voudront bien marquer dans leur doc que ça mange les virgules leur truc ça pourrait faire gagner du temps aux developpeurs.
-		$params = array(
-			"id" => implode(",", $this->current_id_list)
-		);
-
-		$result = $client->run_eFetch($params);
-		$response_xml = $client->__getLastResponse();
-		$current_responses[] = $response_xml;
+		$curl =  new Curl();
+		$url = $this->base_url . "efetch.fcgi?db=".$this->database."&retmode=xml&id=".implode(",", $this->current_id_list);
+		$result = $curl->get($url);
+		
+		$current_responses = $result->body;
 
 		$this->current_responses = $current_responses;
 	}
 	
-	function get_current_responses() {
+	public function get_current_responses() {
 		return $this->current_responses;
 	}
 }

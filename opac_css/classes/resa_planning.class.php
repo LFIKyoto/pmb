@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: resa_planning.class.php,v 1.5 2015-06-24 15:36:20 dbellamy Exp $
+// $Id: resa_planning.class.php,v 1.6 2016-12-22 11:28:33 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -155,7 +155,7 @@ class resa_planning{
 			$r = pmb_mysql_query($q,$dbh);
 			if(pmb_mysql_num_rows($r)) {
 				$i=0;
-				while ($o=mysql_fetch_object($r)) {
+				while ($o=pmb_mysql_fetch_object($r)) {
 					$loc[$i]['location_id']=$o->expl_location;
 					$loc[$i]['location_libelle']=$o->location_libelle;
 					$loc[$i]['location_nb']=$o->nb;

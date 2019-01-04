@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_series.class.php,v 1.1 2015-03-10 08:46:23 apetithomme Exp $
+// $Id: vedette_series.class.php,v 1.2 2017-09-18 13:20:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -19,6 +19,6 @@ class vedette_series extends vedette_element{
 	
 	public function set_vedette_element_from_database(){
 		$serie = new serie($this->id);
-		$this->isbd = $serie->name;
+		$this->isbd = $serie->get_isbd();
 	}
 }

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_sections_by_parent_and_cp.class.php,v 1.2 2015-04-03 11:16:18 jpermanne Exp $
+// $Id: cms_module_common_selector_sections_by_parent_and_cp.class.php,v 1.4 2016-09-21 15:38:44 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 //require_once($base_path."/cms/modules/common/selectors/cms_module_selector.class.php");
@@ -35,7 +35,8 @@ class cms_module_common_selector_sections_by_parent_and_cp extends cms_module_co
 			$var = new cms_module_common_selector_env_var($this->get_sub_selector_id("cms_module_common_selector_env_var"));
 			$this->value = array();
 			if(is_array($parents) && count($parents)){
-				$query = "select id_section from cms_sections where section_num_parent in (".implode(",",$parents).")";
+				array_walk($parents, 'static::int_caster');
+				$query = "select id_section from cms_sections where section_num_parent in ('".implode("','",$parents)."')";
 				$result = pmb_mysql_query($query);
 				$fields = new cms_editorial_parametres_perso($field['type']);
 				if(pmb_mysql_num_rows($result)){

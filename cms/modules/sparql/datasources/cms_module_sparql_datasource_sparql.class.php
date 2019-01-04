@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_sparql_datasource_sparql.class.php,v 1.1 2013-09-26 10:15:58 arenou Exp $
+// $Id: cms_module_sparql_datasource_sparql.class.php,v 1.4 2018-01-24 15:33:28 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -18,7 +18,7 @@ class cms_module_sparql_datasource_sparql extends cms_module_common_datasource{
 		return array(
 			"cms_module_sparql_selector_server"
 		);
-	}	
+	}
 	
 	public function get_managed_selectors(){
 		return array(
@@ -107,7 +107,7 @@ class cms_module_sparql_datasource_sparql extends cms_module_common_datasource{
 						<a href='".$base_path."/cms.php?categ=manage&sub=".str_replace("cms_module_","",$this->module_class_name)."&quoi=datasources&elem=".$this->class_name."&cms_store=".$key."&action=get_form'>".$this->format_text($infos['name'])."</a>
 						&nbsp;
 						<a href='".$base_path."/cms.php?categ=manage&sub=".str_replace("cms_module_","",$this->module_class_name)."&quoi=datasources&elem=".$this->class_name."&cms_store_delete=".$key."&action=save_form' onclick='return confirm(\"".$this->format_text($this->msg['cms_module_common_view_django_delete_store'])."\")'>
-							<img src='".$base_path."/images/trash.png' alt='".$this->format_text($this->msg['cms_module_root_delete'])."' title='".$this->format_text($this->msg['cms_module_root_delete'])."'/>
+							<img src='".get_url_icon('trash.png')."' alt='".$this->format_text($this->msg['cms_module_root_delete'])."' title='".$this->format_text($this->msg['cms_module_root_delete'])."'/>
 						</a>
 					</p>";
 			}
@@ -174,7 +174,7 @@ class cms_module_sparql_datasource_sparql extends cms_module_common_datasource{
 					function cms_module_load_elem_form(elem,id,dom_id){
 						dojo.xhrPost({
 							url : './ajax.php?module=cms&categ=module&elem='+elem+'&action=get_form&id='+id,
-							postData : 'cms_build_info=".rawurlencode(serialize($this->cms_build_env))."&cms_module_class=".rawurlencode($this->class_name)."',
+							postData : 'cms_build_info=".rawurlencode(serialize(pmb_base64_encode($this->cms_build_env)))."&cms_module_class=".rawurlencode($this->class_name)."',
 							handelAs : 'text/html',
 							load : function(data){
 								dijit.byId(dom_id).set('content',data);

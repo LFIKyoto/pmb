@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: domain.inc.php,v 1.7.4.1 2015-10-02 08:37:08 jpermanne Exp $
+// $Id: domain.inc.php,v 1.9 2017-08-23 07:57:24 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -15,7 +15,7 @@ if (!$ac) {
 	$ac= new acces();
 	$t_cat= $ac->getCatalog();
 }
-if (!$dom) {
+if (empty($dom)) {
 	$dom=$ac->setDomain($id);
 }
 
@@ -109,8 +109,10 @@ function show_domain($id,$maj=false) {
 				$r_rows.="
 					<tr>
 						<td style='width:25px;' ><input type='checkbox' name='chk_rights[0][0][".$k2."]' id='chk_rights[0][0][".$k2."]' value='1' ";
-				if ($t_rights[0][0] & (pow(2,$k2-1)) ) {
-					$r_rows.= "checked='checked' ";
+				if (isset($t_rights[0]) && isset($t_rights[0][0])) {
+					if ($t_rights[0][0] & (pow(2,$k2-1)) ) {
+						$r_rows.= "checked='checked' ";
+					}
 				}
 				$r_rows.= "/></td>
 						<td><label for='chk_rights[0][0][".$k2."]'>".htmlentities($v2, ENT_QUOTES, $charset)."</label></td>
@@ -176,8 +178,10 @@ function show_domain($id,$maj=false) {
 					$r_rows.="
 					<tr>
 					<td style='width:25px;' ><input type='checkbox' name='chk_rights[".$k1."][".$k2."][".$k3."]' id='chk_rights[".$k1."][".$k2."][".$k3."]' value='1' ";
-					if ($t_rights[$k1][$k2] & (pow(2,$k3-1)) ) {
-						$r_rows.= "checked='checked' ";
+					if (isset($t_rights[$k1]) && isset($t_rights[$k1][$k2])) {
+						if ($t_rights[$k1][$k2] & (pow(2,$k3-1)) ) {
+							$r_rows.= "checked='checked' ";
+						}
 					}
 					$r_rows.= "/></td>
 					<td><label for='chk_rights[".$k1."][".$k2."][".$k3."]'>".htmlentities($v3, ENT_QUOTES, $charset)."</label></td>

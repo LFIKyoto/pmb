@@ -2,9 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: skos_view_concept.tpl.php,v 1.8 2015-03-16 16:14:45 apetithomme Exp $
+// $Id: skos_view_concept.tpl.php,v 1.9 2018-07-12 15:38:49 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+global $skos_view_concept_concept_in_list_with_all_links;
+global $skos_view_concept_concept_in_list;
+global $skos_view_concept_concept;
+global $skos_view_concept_detail_concept;
+global $skos_view_concept_authorities_indexed_with_concept;
 
 $skos_view_concept_concept_in_list_with_all_links = "
 {% for element in concept.elements %}

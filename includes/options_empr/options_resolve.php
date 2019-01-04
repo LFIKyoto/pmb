@@ -2,15 +2,19 @@
  // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: options_resolve.php,v 1.8 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: options_resolve.php,v 1.10 2017-12-12 08:47:28 jpermanne Exp $
 
 //Gestion des options de type resolve
 $base_path = "../..";
 $base_auth = "CATALOGAGE_AUTH|ADMINISTRATION_AUTH";
+$base_title = "";
 include ($base_path."/includes/init.inc.php");
 
 require_once ("$include_path/parser.inc.php");
 require_once ("$include_path/fields_empr.inc.php");
+
+if(!isset($dtype)) $dtype = '';
+if(!isset($first)) $first = '';
 
 if(!$dtype && $idchamp){
 	$requete="SELECT datatype FROM ".$_custom_prefixe_."_custom WHERE idchamp = $idchamp";
@@ -21,21 +25,21 @@ $options = stripslashes($options);
 //Si enregistrer
 if ($first==1) {
 	$param["FOR"] = "resolve";
-	$param[SIZE][0][value] = stripslashes($SIZE*1);
-	$param[REPEATABLE][0][value] = $REPEATABLE ? 1 : 0;
-	if(count($RESOLVE[id])==0){
-	 	$param[RESOLVE][0][id] = "1";
-	 	$param[RESOLVE][0][label] = "Pubmed";
-	 	$param[RESOLVE][0][value] = "http://www.ncbi.nlm.nih.gov/pubmed/!!id!!";
-	 	$param[RESOLVE][1][id] = "2";
-	 	$param[RESOLVE][1][label] = "DOI";
-	 	$param[RESOLVE][1][value] = "http://dx.doi.org/!!id!!";
+	$param['SIZE'][0]['value'] = stripslashes($SIZE*1);
+	$param['REPEATABLE'][0]['value'] = $REPEATABLE ? 1 : 0;
+	if(count($RESOLVE['id'])==0){
+	 	$param['RESOLVE'][0]['id'] = "1";
+	 	$param['RESOLVE'][0]['label'] = "Pubmed";
+	 	$param['RESOLVE'][0]['value'] = "http://www.ncbi.nlm.nih.gov/pubmed/!!id!!";
+	 	$param['RESOLVE'][1]['id'] = "2";
+	 	$param['RESOLVE'][1]['label'] = "DOI";
+	 	$param['RESOLVE'][1]['value'] = "http://dx.doi.org/!!id!!";
 	}
-	for($i=0; $i<count($RESOLVE[id]);$i++){
-		if($RESOLVE[id][$i] && $RESOLVE[label][$i] && $RESOLVE[value][$i]){
-			$param[RESOLVE][$i][id] = $RESOLVE[id][$i];
-			$param[RESOLVE][$i][label] = $RESOLVE[label][$i];
-			$param[RESOLVE][$i][value] = "<![CDATA[".$RESOLVE[value][$i]."]]>";
+	for($i=0; $i<count($RESOLVE['id']);$i++){
+		if($RESOLVE['id'][$i] && $RESOLVE['label'][$i] && $RESOLVE['value'][$i]){
+			$param['RESOLVE'][$i]['id'] = $RESOLVE['id'][$i];
+			$param['RESOLVE'][$i]['label'] = $RESOLVE['label'][$i];
+			$param['RESOLVE'][$i]['value'] = "<![CDATA[".$RESOLVE['value'][$i]."]]>";
 		}	
 	}
 
@@ -51,18 +55,18 @@ if ($first==1) {
 }else{
 	if ($first == 2){
 		$param["FOR"] = "resolve";
-		$param[SIZE][0][value] = stripslashes($SIZE*1);
-		$param[REPEATABLE][0][value] = $REPEATABLE ? 1 : 0;
-		$param[RESOLVE]= array();
-		for($i=0; $i<count($RESOLVE[id]);$i++){
-			if(count($checked)==0 || (count($checked)>0 && !in_array($RESOLVE[id][$i],$checked))){
-				if($RESOLVE[id][$i] && $RESOLVE[label][$i] && $RESOLVE[value][$i]){
+		$param['SIZE'][0]['value'] = stripslashes($SIZE*1);
+		$param['REPEATABLE'][0]['value'] = $REPEATABLE ? 1 : 0;
+		$param['RESOLVE']= array();
+		for($i=0; $i<count($RESOLVE['id']);$i++){
+			if(count($checked)==0 || (count($checked)>0 && !in_array($RESOLVE['id'][$i],$checked))){
+				if($RESOLVE['id'][$i] && $RESOLVE['label'][$i] && $RESOLVE['value'][$i]){
 					$array= array(
-						id => $RESOLVE[id][$i],
-						label => $RESOLVE[label][$i],
-						value =>"<![CDATA[".$RESOLVE[value][$i]."]]>"
+						'id' => $RESOLVE['id'][$i],
+						'label' => $RESOLVE['label'][$i],
+						'value' =>"<![CDATA[".$RESOLVE['value'][$i]."]]>"
 					);
-					$param[RESOLVE][]=$array;
+					$param['RESOLVE'][]=$array;
 				}	
 			}
 		}
@@ -70,16 +74,19 @@ if ($first==1) {
 		$options = array_to_xml($param, "OPTIONS");
 	}
 	?> 
-	<h3><?php  echo $msg[procs_options_param].$name;?> </h3>
+	<h3><?php  echo $msg['procs_options_param'].$name;?> </h3>
 	<hr />
 	
 	<?php
 	if (!$options) $options = "
 	<OPTIONS></OPTIONS>";
 	 $param = _parser_text_no_function_("<?xml version='1.0' encoding='".$charset."'?>\n".$options, "OPTIONS");
-	if ($param["FOR"] != "resolve") {
+	if (!isset($param["FOR"]) || $param["FOR"] != "resolve") {
 		$param = array();
 		$param["FOR"] = "resolve";
+		$param["RESOLVE"][$i]['VALUE'] = '';
+		$param['SIZE'][0]['value'] = '';
+		$param['REPEATABLE'][0]['value'] = '';
 	}
 	//Formulaire
 
@@ -90,16 +97,16 @@ if ($first==1) {
 			<input type="hidden" name="first" value="1">
 			<input type="hidden" name="idchamp" value="<?php echo $idchamp; ?>">
 			<input type="hidden" name="_custom_prefixe_" value="<?php echo $_custom_prefixe_;?>">
-			<input type="hidden" name="dtype" $param[RESOLVE][$i][VALUE],value="<?php echo $dtype;?>">
+			<input type="hidden" name="dtype" value="<?php echo $dtype;?>">
 			<input type="hidden" name="name" value="<?php  echo htmlentities($name,ENT_QUOTES,$charset);?>">
 			<table class='table-no-border' width=100%>
 				<tr>
-					<td><?php  echo $msg[procs_options_text_taille];?></td>
-					<td><input class='saisie-10em' type="text" name="SIZE" value="<?php  echo htmlentities($param[SIZE][0][value],ENT_QUOTES,$charset);?>"></td>
+					<td><?php  echo $msg['procs_options_text_taille'];?></td>
+					<td><input class='saisie-10em' type="text" name="SIZE" value="<?php  echo htmlentities($param['SIZE'][0]['value'],ENT_QUOTES,$charset);?>"></td>
 				</tr>	
 				<tr>
-					<td><?php  echo $msg[persofield_textrepeat];?> </td>
-					<td><input type="checkbox" name="REPEATABLE" <?php  echo $param[REPEATABLE][0][value] ? ' checked ' : "";?>></td>
+					<td><?php  echo $msg['persofield_textrepeat'];?> </td>
+					<td><input type="checkbox" name="REPEATABLE" <?php  echo $param['REPEATABLE'][0]['value'] ? ' checked ' : "";?>></td>
 				</tr>
 				<tr>
 					<td colspan="2">
@@ -108,30 +115,30 @@ if ($first==1) {
 						?>
 						<table>
 							<tr>
-								<td><?php echo $msg[procs_options_resolve_options];?></td>
+								<td><?php echo $msg['procs_options_resolve_options'];?></td>
 							</tr>
 							<tr>
 								<td>
 									<table border="1" id="resolve_table" style="text-align:center">
 										<tr>
 											<th></th>
-											<th><?php echo $msg[procs_options_resolve_options_id];?></th>
-											<th><?php echo $msg[procs_options_resolve_options_label];?></th>
-											<th><?php echo $msg[procs_options_resolve_options_link];?></th>
+											<th><?php echo $msg['procs_options_resolve_options_id'];?></th>
+											<th><?php echo $msg['procs_options_resolve_options_label'];?></th>
+											<th><?php echo $msg['procs_options_resolve_options_link'];?></th>
 										</tr>
 								<?php
 									$max = 0;
-									for($i=0; $i<count($param[RESOLVE]);$i++){
-										$requete="select count(".$_custom_prefixe_."_custom_$dtype) from ".$_custom_prefixe_."_custom_values where ".$_custom_prefixe_."_custom_champ=".$idchamp." and SUBSTRING_INDEX(".$_custom_prefixe_."_custom_$dtype,'|',-1) like '".$param[RESOLVE][$i][ID]."'";
+									for($i=0; $i<count($param['RESOLVE']);$i++){
+										$requete="select count(".$_custom_prefixe_."_custom_$dtype) from ".$_custom_prefixe_."_custom_values where ".$_custom_prefixe_."_custom_champ=".$idchamp." and SUBSTRING_INDEX(".$_custom_prefixe_."_custom_$dtype,'|',-1) like '".$param['RESOLVE'][$i]['ID']."'";
 										$res = pmb_mysql_query($requete);
 										if(pmb_mysql_num_rows($res)) $nb = pmb_mysql_result($res,0,0);
 										else $nb = 0;
 										print "
 										<tr>
-											<td><input type='checkbox' name='checked[]' value='".htmlentities($param[RESOLVE][$i][ID],ENT_QUOTES,$charset)."' ".($nb > 0 ? "disabled=true": "")."/></td>
-											<td><input type='text' name='RESOLVE[id][]' size='2' value='".htmlentities($param[RESOLVE][$i][ID],ENT_QUOTES,$charset)."' readonly='true'/></td>
-											<td><input type='text' name='RESOLVE[label][]' size='10' value='".htmlentities($param[RESOLVE][$i][LABEL],ENT_QUOTES,$charset)."'/></td>
-											<td><input type='text' name='RESOLVE[value][]' size='30' value='".htmlentities($param[RESOLVE][$i][value],ENT_QUOTES,$charset)."'/></td>
+											<td><input type='checkbox' name='checked[]' value='".htmlentities($param['RESOLVE'][$i]['ID'],ENT_QUOTES,$charset)."' ".($nb > 0 ? "disabled='true' ": "")."/></td>
+											<td><input type='text' name='RESOLVE[id][]' size='2' value='".htmlentities($param['RESOLVE'][$i]['ID'],ENT_QUOTES,$charset)."' readonly='true'/></td>
+											<td><input type='text' name='RESOLVE[label][]' size='10' value='".htmlentities($param['RESOLVE'][$i]['LABEL'],ENT_QUOTES,$charset)."'/></td>
+											<td><input type='text' name='RESOLVE[value][]' size='30' value='".htmlentities($param['RESOLVE'][$i]['value'],ENT_QUOTES,$charset)."'/></td>
 										</tr>";
 									}
 								?>			
@@ -147,16 +154,16 @@ if ($first==1) {
 				</tr>	
 			</table>
 		</div>
-		<input class="bouton" type="submit" value="<?php echo $msg[ajouter]; ?>" onclick="add_entry();return false;">&nbsp;
-		<input class="bouton" type="submit" value="<?php echo $msg[procs_options_suppr_options_coche]; ?>" onClick="this.form.first.value=2">&nbsp;
+		<input class="bouton" type="submit" value="<?php echo $msg['ajouter']; ?>" onclick="add_entry();return false;">&nbsp;
+		<input class="bouton" type="submit" value="<?php echo $msg['procs_options_suppr_options_coche']; ?>" onClick="this.form.first.value=2">&nbsp;
 		<input class="bouton" type="submit" value="<?php  echo $msg[77];?>">
 	</form>
 	<script type="text/javascript">
 		var tab = new Array();
 		<?php
-			for($i=0; $i<count($param[RESOLVE]);$i++){
+			for($i=0; $i<count($param['RESOLVE']);$i++){
 				print "
-		tab[$i] = ".$param[RESOLVE][$i][ID].";";
+		tab[$i] = ".$param['RESOLVE'][$i]['ID'].";";
 			}
 		?>
 		function getMaxId() {

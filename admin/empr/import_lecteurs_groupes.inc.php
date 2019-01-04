@@ -2,17 +2,18 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: import_lecteurs_groupes.inc.php,v 1.14 2015-06-02 13:24:51 dgoron Exp $
+// $Id: import_lecteurs_groupes.inc.php,v 1.16 2018-11-22 15:34:57 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once("$class_path/emprunteur.class.php");
+require_once($class_path."/import/import_empr.class.php");
 
 //La structure du fichier texte doit être la suivante : 
 //Numéro identifiant/Nom/Prénom/Rue/Complément de rue/Code postal/Commune/Téléphone/Année de date de naissance/Classe/Sexe/Tel2/Mail/Profession/Message
 
 function show_import_choix_fichier($dbh) {
-	global $msg;
+	global $msg, $charset;
 	global $current_module ;
 	global $pmb_lecteurs_localises, $deflt2docs_location;
 
@@ -31,7 +32,7 @@ print "
 	</div>
 	<div class='row'>
 		<p>L'ordre des colonnes dans votre fichier doit &ecirc;tre :<br />
-		<font size='1'>Code-barres ; Nom ; Pr&eacute;nom ; Rue ; Compl&eacute;ment de rue ; Code postal ; Commune ; T&eacute;l&eacute;phone ; Ann&eacute;e de date de naissance ; Classe ; Sexe ; T&eacute;l&eacute;phone 2 ; Mail ; Profession ; Message</font><br />
+		Code-barres ; Nom ; Pr&eacute;nom ; Rue ; Compl&eacute;ment de rue ; Code postal ; Commune ; T&eacute;l&eacute;phone ; Ann&eacute;e de date de naissance ; Classe ; Sexe ; T&eacute;l&eacute;phone 2 ; Mail ; Profession ; Message<br />
 		Les trois derni&egrave;res colonnes mail, profession, message sont facultatives.
 		</p>
 	</div>
@@ -40,76 +41,31 @@ print "
     </div>
     <br />
 	<div class='row'>
-        <input type=radio name='type_import' value='nouveau_lect' checked>
-        <label class='etiquette' for='form_import_lec'>Nouveaux lecteurs</label>
-        (ajoute ou modifie les lecteurs pr&eacute;sents dans le fichier)
-        <br />
-        <input type=radio name='type_import' value='maj_complete'>
-        <label class='etiquette' for='form_import_lec'>Mise &agrave; jour compl&egrave;te</label>
-        (modifie les lecteurs pr&eacute;sents, supprime les lecteurs absents du fichier)
+        ".import_empr::get_update_type_radio()."
     </div>
     <div class='row'>";
     
 // Si les lecteurs sont localisés, affiche le sélecteur de localisation, sinon valeur par défaut de l'utilisateur
-    if ($pmb_lecteurs_localises=="1") {
-    	print "Localisation des lecteurs <select name='localisation'>";
-		$requete_localisation="SELECT idlocation, location_libelle FROM docs_location ORDER BY location_libelle";
-		$select_requete_localisation = pmb_mysql_query($requete_localisation,$dbh);
-		while (($liste_localisation = pmb_mysql_fetch_array($select_requete_localisation))) {
-			print "<option value='".$liste_localisation["idlocation"]."' >".$liste_localisation["location_libelle"]."</option>";
-        }
-		print "</select><br />";
-    } else {
-    	print "<input type='hidden' name='localisation' value='".$deflt2docs_location."' />";
-    }
+print import_empr::get_locations_selector('localisations');
+print "<br />";
     
 // Sélecteur de categ lecteur
-print "Cat&eacute;gorie des lecteurs <select name='categorie'>";
-$requete_categorie="SELECT id_categ_empr, libelle FROM empr_categ ORDER BY libelle";
-$select_requete_categorie = pmb_mysql_query($requete_categorie,$dbh);
-while (($liste_categorie = pmb_mysql_fetch_array($select_requete_categorie))) {
-	print "<option value='".$liste_categorie["id_categ_empr"]."' >".$liste_categorie["libelle"]."</option>";
-}
-print "</select><br />";
+print import_empr::get_categories_selector('categorie');
+print "<br />";
 
 // Sélecteur de code stat
-print "Code statistique des lecteurs 
-<select name='codestat'>";
+print import_empr::get_codestat_selector('codestat');
+print "<br />";
 
-$requete_codestat="SELECT idcode, libelle FROM empr_codestat ORDER BY libelle";
-$select_requete_codestat = pmb_mysql_query($requete_codestat,$dbh);
-while (($liste_codestat = pmb_mysql_fetch_array($select_requete_codestat))) {
-	print "<option value='".$liste_codestat["idcode"]."' >".$liste_codestat["libelle"]."</option>";
-}
+print "<label class='etiquette' for='encodage_fic_source' id='text_desc_encodage_fic_source' name='text_desc_encodage_fic_source'>".htmlentities($msg["admin_import_encodage_fic_source"],ENT_QUOTES,$charset)."</label>";
+print import_empr::get_encoding_selector();
 
 print "
-		</select>
 	</div>
 	<div class='row'>
 		<input name='import_launch' value='Import des lecteurs' type='submit' class='bouton'/>
 	</div>
 </form>";
-}
-
-function cre_login($nom, $prenom, $dbh) {
-    $empr_login = substr($prenom,0,1).$nom ;
-    $empr_login = strtolower($empr_login);
-    $empr_login = clean_string($empr_login) ;
-    $empr_login = convert_diacrit(strtolower($empr_login)) ;
-    $empr_login = preg_replace('/[^a-z0-9\.]/', '', $empr_login);
-    $pb = 1 ;
-    $num_login=1 ;
-    while ($pb==1) {
-        $requete = "SELECT empr_login FROM empr WHERE empr_login='$empr_login' AND empr_nom <> '$nom' AND empr_prenom <> '$prenom' LIMIT 1 ";
-        $res = pmb_mysql_query($requete, $dbh);
-        $nbr_lignes = pmb_mysql_num_rows($res);
-        if ($nbr_lignes) {
-            $empr_login .= $num_login ;
-            $num_login++;
-        } 
-        else $pb = 0 ;
-    }
-    return $empr_login;
 }
 
 function import($separateur, $dbh, $type_import){
@@ -140,26 +96,28 @@ function import($separateur, $dbh, $type_import){
         while (!feof($fichier)) {
 			//initialise la variable tableau, au cas où on ait pas toutes les colonnes dans le fichier csv
 			$buffer = fgets($fichier, 4096);
+			$buffer = import_empr::get_encoded_buffer($buffer);
             $buffer = pmb_mysql_escape_string($buffer);
             $tab = explode($separateur, $buffer);
 
             //Gestion du sexe
+            if(!isset($tab[10]{0})) $tab[10]{0} = '';
             switch ($tab[10]{0}) {
-                case M: 
+                case 'M': 
                     $sexe = 1;
                     break;
-                case F:
+                case 'F':
                     $sexe = 2; 
                     break;
                 default:
                     $sexe = 0;
                     break;
             }
-			if ($tab[8]!="0") $password=$tab[8]; else $password="";
+			if (isset($tab[8]) && $tab[8]!="0") $password=$tab[8]; else $password="";
 			//pour éviter un saut de ligne dans les trois dernières colonnes qui sont facultatives
-			$tab[12]=str_replace("\\r\\n","", $tab[12]);
-			$tab[13]=str_replace("\\r\\n","", $tab[13]);
-			$tab[14]=str_replace("\\r\\n","", $tab[14]);
+			if(isset($tab[12])) $tab[12]=str_replace("\\r\\n","", $tab[12]);
+			if(isset($tab[13])) $tab[13]=str_replace("\\r\\n","", $tab[13]);
+			if(isset($tab[14])) $tab[14]=str_replace("\\r\\n","", $tab[14]);
 			 
             // Traitement du lecteur
             $select = pmb_mysql_query("SELECT id_empr FROM empr WHERE empr_cb = '".$tab[0]."'",$dbh);
@@ -167,7 +125,7 @@ function import($separateur, $dbh, $type_import){
             
             //Test si un numéro id est fourni, rejet si pas d'id avec message si au moins nom ou au moins prénom contient qqch
             //si pas d'id, pas de nom, pas de prénom, erreur muette : dernière ligne
-            if ((!$tab[0] || $tab[0] == "") && !($tab[1]=="" && $tab[2]=="" && $tab[3]==""&& $tab[4]=="")) {
+            if (empty($tab[0]) && !($tab[1]=="" && $tab[2]=="" && $tab[3]==""&& $tab[4]=="")) {
             	print("<b> Lecteur non pris en compte car \"Num&eacute;ro identifiant\" non renseign&eacute; : </b><br />");
                 for ($i=0;$i<3;$i++) {
                     print($eleve_abrege[$i]." : ".$tab[$i].", ");
@@ -176,7 +134,7 @@ function import($separateur, $dbh, $type_import){
                 $nb_enreg = 2;
             }
             
-            $login = cre_login($tab[1],$tab[2], $dbh);
+            $login = import_empr::cre_login($tab[1],$tab[2]);
                         
             switch ($nb_enreg) {
                 case 0:
@@ -200,7 +158,7 @@ function import($separateur, $dbh, $type_import){
                     	emprunteur::hash_password($login,$password);
                         $cpt_insert ++;
                     }
-                    gestion_groupe($tab[9], $tab[0], $dbh);
+                    import_empr::gestion_groupe($tab[9], $tab[0]);
                     $j++;
                     break;
 
@@ -257,7 +215,7 @@ function import($separateur, $dbh, $type_import){
                     	
                         $cpt_maj ++;
                     }
-                    gestion_groupe($tab[9], $tab[0], $dbh);
+                    import_empr::gestion_groupe($tab[9], $tab[0]);
                     $j++;
                     break;
                 case 2:
@@ -295,26 +253,6 @@ function import($separateur, $dbh, $type_import){
         if ($cpt_maj) print($cpt_maj." lecteurs modifi&eacute;s. <br />");
         fclose($fichier);
     }
-}
-
-function gestion_groupe($lib_groupe, $empr_cb, $dbh) {
-    
-    $sel = pmb_mysql_query("SELECT id_groupe from groupe WHERE libelle_groupe = \"".$lib_groupe."\"",$dbh);
-    $nb_enreg_grpe = pmb_mysql_num_rows($sel);
-    
-    if (!$nb_enreg_grpe) {
-		//insertion dans la table groupe
-		pmb_mysql_query("INSERT INTO groupe(libelle_groupe) VALUES(\"".$lib_groupe."\")");
-		$groupe=pmb_mysql_insert_id();
-    } else {
-    	$grpobj = pmb_mysql_fetch_object($sel) ;
-    	$groupe = $grpobj->id_groupe ; 
-    }
-
-	//insertion dans la table empr_groupe
-    $sel_empr = pmb_mysql_query("SELECT id_empr FROM empr WHERE empr_cb = \"".$empr_cb."\"",$dbh);
-    $empr = pmb_mysql_fetch_array($sel_empr);
-    @pmb_mysql_query("INSERT INTO empr_groupe(empr_id, groupe_id) VALUES ('$empr[id_empr]','$groupe')");
 }
 
 switch($action) {

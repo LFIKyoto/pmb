@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: coordonnees.inc.php,v 1.6 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: coordonnees.inc.php,v 1.10 2017-11-21 13:38:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -84,16 +84,16 @@ function show_results($dbh, $nbr_lignes=0, $page=0) {
 		$precedente = $page-1;
 
 		// affichage du lien précédent si nécessaire
-		print '<hr /><div align=center>';
+		print '<hr /><div class="center">';
 		if($precedente > 0)
-		print "<a href='$base_url&page=$precedente&nbr_lignes=$nbr_lignes&no_display=$no_display'><img src='./images/left.gif' border='0' title='$msg[48]' alt='[$msg[48]]' hspace='3' align='middle' /></a>";
+		print "<a href='$base_url&page=$precedente&nbr_lignes=$nbr_lignes&no_display=$no_display'><img src='".get_url_icon('left.gif')."' style='border:0px; margin:3px 3px' title='$msg[48]' alt='[$msg[48]]' class='align_middle' /></a>";
 		for($i = 1; $i <= $nbepages; $i++) {
 			if($i==$page)
 				print "<b>$i/$nbepages</b>";
 		}
 
 	if($suivante<=$nbepages)
-		print "<a href='$base_url&page=$suivante&nbr_lignes=$nbr_lignes&no_display=$no_display'><img src='./images/right.gif' border='0' title='$msg[49]' alt='[$msg[49]]' hspace='3' align='middle' /></a>";
+		print "<a href='$base_url&page=$suivante&nbr_lignes=$nbr_lignes&no_display=$no_display'><img src='".get_url_icon('right.gif')."' style='border:0px; margin:3px 3px' title='$msg[49]' alt='[$msg[49]]' class='align_middle' /></a>";
 
 	}
 	print '</div>';

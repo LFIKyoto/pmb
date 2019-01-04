@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: category_auto.class.php,v 1.4 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: category_auto.class.php,v 1.5 2017-07-13 12:14:17 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,11 +14,11 @@ require_once($class_path."/noeuds.class.php");
 
 class category_auto {
 
-    function category_auto() {
+    public function _construct() {
     	
     }
     
-    static function get_info_categ($record){
+    public static function get_info_categ($record){
     	global $include_path,$tabl_categ_has_recovered,$tabl_categ_recovered,$tabl_categ_recovery;
 		$tabl_categ_recovered=array();
 		if(!isset($tabl_categ_has_recovered)){
@@ -73,7 +73,7 @@ class category_auto {
     )
     Dans le cas d'une reprise hiérarchique sans créatation direct (Z-3950) la gestion des autorités n'est pas encore réalisée
     */
-    static function save_info_categ(&$tabl_categ_lib=""){
+    public static function save_info_categ(&$tabl_categ_lib=""){
     	global $tabl_categ_recovery,$tabl_categ_recovered;
     	$tabl_link_authority=array();
     	/*echo "<pre>";
@@ -266,7 +266,7 @@ class category_auto {
 		return $tabl_link_authority;
     }
     
-    static function browse_subfields($tab_ss_champ,$name_field,&$tabl_categ_has_recovered){
+    public static function browse_subfields($tab_ss_champ,$name_field,&$tabl_categ_has_recovered){
 		foreach ( $tab_ss_champ as $key => $subfield_root ) {
 			$tmp=array();
 			$tmp["field"]=$name_field;
@@ -279,7 +279,7 @@ class category_auto {
 		}
 	}
 	
-	static function browse_category($subfield,$tabl_categ_recovered,$name_field,$counter_field,$id_thes,$root_node_number,&$tabl_categ_lib,$create_node){
+	public static function browse_category($subfield,$tabl_categ_recovered,$name_field,$counter_field,$id_thes,$root_node_number,&$tabl_categ_lib,$create_node){
 		global $incr_categ,$notice_id,$tabl_id_categ_link;
 		$creation=0;
 		$id_noeud=$root_node_number;
@@ -372,7 +372,7 @@ class category_auto {
 		return $creation;
 	}
 	
-	static function build_categ($tab_categ,$id_thes,$id_parent,$do_lien=true,$do_create=true){
+	public static function build_categ($tab_categ,$id_thes,$id_parent,$do_lien=true,$do_create=true){
 		global $incr_categ,$notice_id,$lang;
 		if(trim($tab_categ)){
 			$resultat = categories::searchLibelle(addslashes($tab_categ), $id_thes, $lang,$id_parent);				

@@ -2,25 +2,28 @@
  // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: options_html.php,v 1.4 2015-01-13 15:31:24 dgoron Exp $
+// $Id: options_html.php,v 1.5 2017-02-24 15:34:34 dgoron Exp $
 
 //Gestion des options de type commentaire
 $base_path = "../..";
 $base_auth = "CATALOGAGE_AUTH|ADMINISTRATION_AUTH";
+$base_title = "";
 include ($base_path."/includes/init.inc.php");
 
 require_once ("$include_path/parser.inc.php");
 require_once ("$include_path/fields_empr.inc.php");
+
+if(!isset($first)) $first = '';
 
 $options = stripslashes($options);
 
 //Si enregistrer
 if ($first == 1) {
 	$param["FOR"] = "html";
-	$param[HEIGHT][0][value] = stripslashes($HEIGHT*1);
-	$param[WIDTH][0][value] = stripslashes($WIDTH*1);
-	$param[REPEATABLE][0][value] = $REPEATABLE ? 1 : 0;
-	$param[HTMLEDITOR][0][value] = $HTMLEDITOR ? 1 : 0;
+	$param['HEIGHT'][0]['value'] = stripslashes($HEIGHT*1);
+	$param['WIDTH'][0]['value'] = stripslashes($WIDTH*1);
+	$param['REPEATABLE'][0]['value'] = $REPEATABLE ? 1 : 0;
+	$param['HTMLEDITOR'][0]['value'] = $HTMLEDITOR ? 1 : 0;
 	
 	$options = array_to_xml($param, "OPTIONS");
 	?> 
@@ -32,7 +35,7 @@ if ($first == 1) {
 	<?php
 	 } else {
 	?> 
-	<h3><?php  echo $msg[procs_options_param].$name;
+	<h3><?php  echo $msg['procs_options_param'].$name;
 	?> </h3><hr />
 	
 	
@@ -40,9 +43,12 @@ if ($first == 1) {
 	if($options){
 		$param = _parser_text_no_function_("<?xml version='1.0' encoding='".$charset."'?>\n".$options, "OPTIONS");
 	}
-	if ($param["FOR"] != "html") {
+	if (!isset($param["FOR"]) || $param["FOR"] != "html") {
 		$param = array();
 		$param["FOR"] = "html";
+		$param['HEIGHT'][0]['value'] = '';
+		$param['WIDTH'][0]['value'] = '';
+		$param['REPEATABLE'][0]['value'] = '';
 	}
 	
 	//Formulaire
@@ -61,21 +67,21 @@ if ($first == 1) {
 	<table class='table-no-border' width=100%>
 	<tr><td><?php  echo $msg["persofield_htmlheight"];
 	?> </td><td><input type="text" class="saisie-10em" name="HEIGHT" value="<?php  echo htmlentities(
-		$param[HEIGHT][0][value],
+		$param['HEIGHT'][0]['value'],
 		ENT_QUOTES,
 		$charset);
 	?>"></td></tr>
 	<tr><td><?php  echo $msg["persofield_htmlwidth"];
 	?> </td><td><input type="text" class="saisie-10em" name="WIDTH" value="<?php  echo htmlentities(
-		$param[WIDTH][0][value],
+		$param['WIDTH'][0]['value'],
 		ENT_QUOTES,
 		$charset);
 	?>"></td></tr>
 	<tr><td><?php  echo $msg["persofield_textrepeat"];
-	?> </td><td><input type="checkbox" name="REPEATABLE" <?php  echo $param[REPEATABLE][0][value] ? ' checked ' : "";
+	?> </td><td><input type="checkbox" name="REPEATABLE" <?php  echo $param['REPEATABLE'][0]['value'] ? ' checked ' : "";
 	?>></td></tr>
 	<tr><td><?php  echo $msg["persofield_usehtmleditor"];
-	?> </td><td><input type="checkbox" name="HTMLEDITOR" <?php  echo $param[HTMLEDITOR][0][value] ? ' checked ' : "";
+	?> </td><td><input type="checkbox" name="HTMLEDITOR" <?php  echo $param['HTMLEDITOR'][0]['value'] ? ' checked ' : "";
 	?>></td></tr>
 	</table>
 	</div>

@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: inhtml_manifest.xml,v 1.1.2.2 2015-07-24 14:33:29 mbertin Exp $ -->
+$Id: inhtml_manifest.xml,v 1.1 2015-07-24 14:23:02 mbertin Exp $ -->
 <manifest>
 	<name>inhtml</name>
 	<description>msg:inhtml_functions_description</description>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_suggestions.inc.php,v 1.22 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: func_suggestions.inc.php,v 1.26 2017-11-21 12:00:59 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -142,7 +142,7 @@ function sug_fusChk(){
 			<h3>$titre</h3>
 			<!--    Contenu du form    -->
 			<div class='form-contenu'>
-				<table width='100%'>
+				<table style='width:100%'>
 					<tr>
 						<th>".htmlentities($msg['acquisition_sug_dat_cre'], ENT_QUOTES, $charset)."</th>
 						<th>".htmlentities($msg['acquisition_sug_tit'], ENT_QUOTES, $charset)."</th>
@@ -296,7 +296,7 @@ function sug_fusVal(){
 //Recuperation du statut session d'affichage des suggestions
 function getSessionSugState() {
 	global $deflt3sug_statut;
-	if (!$_SESSION['sug_statut'] && $deflt3sug_statut) {
+	if ((!isset($_SESSION['sug_statut']) || !$_SESSION['sug_statut']) && $deflt3sug_statut) {
 		$_SESSION['sug_statut']=$deflt3sug_statut;
 	}
 	return $_SESSION['sug_statut'];
@@ -328,7 +328,7 @@ function save_unimarc_notice(){
 		<br /><div class='erreur'></div>
 		<div class='row'>
 			<div class='colonne10'>
-				<img src='./images/tick.gif' align='left'>
+				<img src='".get_url_icon('tick.gif')."' class='align_left'>
 			</div>
 			<div class='colonne80'>
 				<strong>".$msg["z3950_integr_not_ok"]."</strong>
@@ -366,7 +366,7 @@ function save_unimarc_notice(){
 		<br /><div class='erreur'>$msg[540]</div>
 		<div class='row'>
 			<div class='colonne10'>
-				<img src='./images/error.gif' align='left'>
+				<img src='".get_url_icon('error.gif')."' class='align_left'>
 			</div>
 			<div class='colonne80'>
 				<strong>".($msg["z3950_integr_not_existait"])."</strong><br /><br />
@@ -413,7 +413,7 @@ function catalog_notice_form(){
 		<div class='form-contenu'>
 			<div class='row'>
 				<div>
-					<img src='./images/error.gif'  >
+					<img src='".get_url_icon('error.gif')."'  >
 					<strong>".$msg["acquisition_catalog_notice_ask"]."</strong>
 				</div>
 			</div>

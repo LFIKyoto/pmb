@@ -1,4 +1,4 @@
-<h1>Administration of the e-mail templates</h1>
+<h2>Administration of the e-mail templates</h2>
 <p>This page allows to edit e-mail templates in order to do mailings</p>
 <p>Configuration to set up:</p>
 

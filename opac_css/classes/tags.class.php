@@ -4,7 +4,7 @@
 // © 2006 mental works / www.mental-works.com contact@mental-works.com
 // 	repris et corrigé par PMB Services 
 // +-------------------------------------------------+
-// $Id: tags.class.php,v 1.15 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: tags.class.php,v 1.19 2018-05-26 09:31:48 dgoron Exp $
 
 // définition de la classe d'affichage des 'tags'
 
@@ -14,14 +14,15 @@ class tags {
 	//		propriétés de la classe
 	// ---------------------------------------------------------------
 
-
+	protected $url_base;
+	
 	// ---------------------------------------------------------------
 	//		constructeur
 	// ---------------------------------------------------------------
-	function tags() {
+	public function __construct() {
 	}
 
-	function listeAlphabetique(){
+	public function listeAlphabetique(){
 		//renvoie la liste des tags existants
 		global $dbh;
 		global $pmb_keyword_sep;
@@ -34,6 +35,7 @@ class tags {
 				$liste = explode($pmb_keyword_sep,$loc->index_l);
 				for ($i=0;$i<count($liste);$i++){
 					$index=trim($liste[$i]);
+					if(!isset($arr[strtolower($index)])) $arr[strtolower($index)] = 0;
 					if ($index) $arr[strtolower($index)]++;
 				}
 			}
@@ -48,14 +50,22 @@ class tags {
 		}
 		ksort($arr);
 		$count=0;
-		$max=0;
+		$max=$somme=0;
 		//les seuils permettent de séparer les valeurs en 4 groupes pour afficher les tags dans 4 tailles différentes en fct de leur fréquence 
-		foreach ($arr as $key => $value){
-			$count++;
-			$somme+=$value;
-			if ($max<$value) $max=$value;
+		if(is_array($arr) && count($arr)){
+			foreach ($arr as $key => $value){
+				$count++;
+				$somme+=$value;
+				if ($max<$value) $max=$value;
+			}
+			$seuil2 = array_sum($arr)/count($arr);//moyenne des valeurs
+		}else{
+			$seuil2=0;
 		}
-		$seuil2 = array_sum($arr)/count($arr);//moyenne des valeurs
+		if(!$count){
+			$count=1;
+		}
+		$seuil2 = array_sum($arr)/$count;//moyenne des valeurs
 		$seuil1 = $seuil2/2;
 		$seuil3 = $seuil2+($max-$seuil2)/2;//mi chemin en la valeur max et la moyenne
 
@@ -67,16 +77,16 @@ class tags {
 				if($reponse) 
 					$reponse.="<br /><br />";
 			} else if($reponse) $reponse.=", ";
-			if ($value<$seuil1) $reponse.="<a href='./index.php?lvl=more_results&mode=keyword&user_query=".urlencode($key)."&tags=ok' class='TagF1'>$key</a> ";
-				elseif ($value<$seuil2) $reponse.="<a href='./index.php?lvl=more_results&mode=keyword&user_query=".urlencode($key)."&tags=ok' class='TagF2'>$key</a> ";
-					elseif ($value<$seuil3) $reponse.="<a href='./index.php?lvl=more_results&mode=keyword&user_query=".urlencode($key)."&tags=ok' class='TagF3'>$key</a> ";
-						else $reponse.="<a href='./index.php?lvl=more_results&mode=keyword&user_query=".urlencode($key)."&tags=ok' class='TagF4'>$key</a> ";
+			if ($value<$seuil1) $reponse.="<a href='".$this->format_url("lvl=more_results&mode=keyword&user_query=".urlencode($key)."&tags=ok")."' class='TagF1'>$key</a> ";
+				elseif ($value<$seuil2) $reponse.="<a href='".$this->format_url("lvl=more_results&mode=keyword&user_query=".urlencode($key)."&tags=ok")."' class='TagF2'>$key</a> ";
+					elseif ($value<$seuil3) $reponse.="<a href='".$this->format_url("lvl=more_results&mode=keyword&user_query=".urlencode($key)."&tags=ok")."' class='TagF3'>$key</a> ";
+						else $reponse.="<a href='".$this->format_url("lvl=more_results&mode=keyword&user_query=".urlencode($key)."&tags=ok")."' class='TagF4'>$key</a> ";
 		}
 		return $reponse;
 	}
 	
 	
-	function bold($str,$needle) {
+	public function bold($str,$needle) {
 		//cherche si un des mots de $needle existe dans $str et le met en gras
 		$str_propre=strtolower(convert_diacrit($str));
 		$mot=strtolower(convert_diacrit($needle));
@@ -88,7 +98,7 @@ class tags {
 		return $str;
 	}
 
-	function chercheTag($user_query){
+	public function chercheTag($user_query){
 		global $dbh;
 		global $msg;
 		global $pmb_keyword_sep ;
@@ -108,13 +118,15 @@ class tags {
 		ksort($arr);
 		//les seuils permettent de séparer les valeurs en 4 groupes pour afficher les tags dans 4 tailles différentes en fct de leur fréquence 
 		$count=0;
-		$max=0;
-		foreach ($arr as $key => $value){
-			$texte=$this->bold($key,$user_query);
-			if (!(strpos($texte,"</span>")===false)) {
-				$count++;
-				$somme+=$value;
-				if ($max<$value) $max=$value;
+		$max=$somme=0;
+		if(is_array($arr) && count($arr)){
+			foreach ($arr as $key => $value){
+				$texte=$this->bold($key,$user_query);
+				if (!(strpos($texte,"</span>")===false)) {
+					$count++;
+					$somme+=$value;
+					if ($max<$value) $max=$value;
+				}
 			}
 		}
 		if(!$count){
@@ -125,20 +137,38 @@ class tags {
 		$seuil3 = $seuil2+($max-$seuil2)/2;//mi chemin en la valeur max et la moyenne
 		
 		$reponse="";
-		foreach ($arr as $key => $value){
-			$texte=$this->bold($key,$user_query);
-			
-			if (!(strpos($texte,"</span>")===false)) {
-				if ($reponse) $reponse.=", ";
-				if ($value<$seuil1) $reponse.="<a href='index.php?lvl=more_results&mode=keyword&user_query=".urlencode($key)."&tags=ok' class='TagF1'>$texte</a> ";
-					elseif ($value<$seuil2) $reponse.="<a href='index.php?lvl=more_results&mode=keyword&user_query=".urlencode($key)."&tags=ok' class='TagF2'>$texte</a> ";
-						elseif ($value<$seuil3) $reponse.="<a href='index.php?lvl=more_results&mode=keyword&user_query=".urlencode($key)."&tags=ok' class='TagF3'>$texte</a> ";
-							else $reponse.="<a href='index.php?lvl=more_results&mode=keyword&user_query=".urlencode($key)."&tags=ok' class='TagF4'>$texte</a> ";
+		if(is_array($arr) && count($arr)){
+			foreach ($arr as $key => $value){
+				$texte=$this->bold($key,$user_query);
+				
+				if (!(strpos($texte,"</span>")===false)) {
+					if ($reponse) $reponse.=", ";
+					if ($value<$seuil1) $reponse.="<a href='".$this->format_url("lvl=more_results&mode=keyword&user_query=".urlencode($key)."&tags=ok")."' class='TagF1'>$texte</a> ";
+						elseif ($value<$seuil2) $reponse.="<a href='".$this->format_url("lvl=more_results&mode=keyword&user_query=".urlencode($key)."&tags=ok")."' class='TagF2'>$texte</a> ";
+							elseif ($value<$seuil3) $reponse.="<a href='".$this->format_url("lvl=more_results&mode=keyword&user_query=".urlencode($key)."&tags=ok")."' class='TagF3'>$texte</a> ";
+								else $reponse.="<a href='".$this->format_url("lvl=more_results&mode=keyword&user_query=".urlencode($key)."&tags=ok")."' class='TagF4'>$texte</a> ";
+				}
 			}
 		}
 		if (count($arr)==0) $reponse=$msg["no_result"];
 		return $reponse;
 	}
 
+	protected function format_url($url) {
+		global $base_path;
+	
+		if(!isset($this->url_base)) {
+			$this->url_base = $base_path.'/index.php?';
+		}
+		if(strpos($this->url_base, "lvl=search_segment")) {
+			return $this->url_base.str_replace('lvl', '&action', $url);
+		} else {
+			return $this->url_base.$url;
+		}
+	}
+	
+	public function set_url_base($url_base) {
+		$this->url_base = $url_base;
+	}
 }
 ?>

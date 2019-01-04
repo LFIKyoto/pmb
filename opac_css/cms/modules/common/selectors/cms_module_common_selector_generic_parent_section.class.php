@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_generic_parent_section.class.php,v 1.2 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: cms_module_common_selector_generic_parent_section.class.php,v 1.3 2016-09-20 14:33:53 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -24,7 +24,7 @@ class cms_module_common_selector_generic_parent_section extends cms_module_commo
 		global $dbh;
 		if(!$this->value){
 			$sub = $this->get_selected_sub_selector();
-			$query = "select section_num_parent from cms_sections where id_section='".$sub->get_value()."' ";
+			$query = "select section_num_parent from cms_sections where id_section='".($sub->get_value()*1)."' ";
 			$result = pmb_mysql_query($query,$dbh);
 			if($result && pmb_mysql_num_rows($result)){
 				while($row = pmb_mysql_fetch_object($result)){

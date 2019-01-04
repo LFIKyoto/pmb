@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_record_partial_ui.js,v 1.4 2015-02-10 17:00:22 arenou Exp $
+// $Id: nomenclature_record_partial_ui.js,v 1.8 2016-11-29 13:00:29 vtouchard Exp $
 
 define(["dojo/_base/declare", "dojo/dom-construct", "dojo/dom", "dojo/on", "dojo/_base/lang", "dojo/topic", "dijit/registry", "dijit/_WidgetBase", "apps/nomenclature/nomenclature_record_partial"], function(declare, domConstruct, dom, on, lang, topic, registry, _WidgetBase, record_partial){
 	/*
@@ -22,8 +22,7 @@ define(["dojo/_base/declare", "dojo/dom-construct", "dojo/dom", "dojo/on", "dojo
 		current_form: null,
 		relation_code:null,
 		
-		constructor:function(params,parent_node){
-			this.parent_node = parent_node;
+		constructor:function(params){
 			this.own(topic.subscribe("record_partial_ui",lang.hitch(this,this.handle_events)));
 			this.relation_code = registry.byId('nomenclature_datastore').get_relation_code()+"-up";
 		},
@@ -217,7 +216,6 @@ define(["dojo/_base/declare", "dojo/dom-construct", "dojo/dom", "dojo/on", "dojo
 				this.record_partial = new record_partial({
 					num_record: this.num_record,
 					detail: this.detail
-					
 				});
 			}
 			//on cherche le formulaire
@@ -234,7 +232,6 @@ define(["dojo/_base/declare", "dojo/dom-construct", "dojo/dom", "dojo/on", "dojo
 							this.own(on(inputs[i], "click", lang.hitch(this,this.init_handlers)));
 						}
 					}
-					
 				}
 				if(this.current_form.max_rel){
 					for(var i=0 ; i<this.current_form.max_rel.value ; i++){
@@ -249,17 +246,27 @@ define(["dojo/_base/declare", "dojo/dom-construct", "dojo/dom", "dojo/on", "dojo
 		},
 		
 		init_display: function(){
+//			if(this.check_if_is_a_child()){
+//				this.formation.disabled = false;
+//				this.musicstand.disabled = false;
+//				this.workshop.disabled = false;
+//				this.order.disabled = false;
+//				this.voice.disabled = false;
+//				this.effective.disabled = false;
+//				this.other_instruments.disabled = false;
+//				this.instrument.disabled = false;
+//				
+//			}else{
+//				this.formation.disabled = true;
+//				this.musicstand.disabled = true;
+//				this.workshop.disabled = true;
+//				this.order.disabled = true;
+//				this.voice.disabled = true;
+//				this.effective.disabled = true;
+//				this.other_instruments.disabled = true;
+//				this.instrument.disabled = true;
+//			}
 			if(this.check_if_is_a_child()){
-				this.formation.disabled = false;
-				this.musicstand.disabled = false;
-				this.workshop.disabled = false;
-				this.order.disabled = false;
-				this.voice.disabled = false;
-				this.effective.disabled = false;
-				this.other_instruments.disabled = false;
-				this.instrument.disabled = false;
-				
-			}else{
 				this.formation.disabled = true;
 				this.musicstand.disabled = true;
 				this.workshop.disabled = true;
@@ -268,7 +275,6 @@ define(["dojo/_base/declare", "dojo/dom-construct", "dojo/dom", "dojo/on", "dojo
 				this.effective.disabled = true;
 				this.other_instruments.disabled = true;
 				this.instrument.disabled = true;
-
 			}
 		},
 
@@ -313,7 +319,7 @@ define(["dojo/_base/declare", "dojo/dom-construct", "dojo/dom", "dojo/on", "dojo
 					domConstruct.create("option",{
 						value : key,
 						innerHTML : values.formations[key],
-						selected : (this.record_partial.num_formation == key ? "selected" : false)
+						selected : (this.record_partial.num_nomenclature == key ? "selected" : false)
 					},this.formation);
 					
 				}
@@ -357,6 +363,13 @@ define(["dojo/_base/declare", "dojo/dom-construct", "dojo/dom", "dojo/on", "dojo
 			//instrument
 			this.instrument.value = registry.byId('nomenclature_datastore').get_code_from_id(this.record_partial.get_num_instrument());
 			dom.byId("nomenclature_record_partial_num_instrument").value = this.record_partial.get_num_instrument();
+			//instruments annexes
+			var others = this.record_partial.get_other();
+			var others_codes= new Array();
+			for(var i=0; i<others.length; i++){
+				others_codes.push(others[i]);
+			}
+			this.other_instruments.value = others_codes.join('/');
 			//voice
 			this.voice.value = registry.byId('nomenclature_datastore').get_voice_code_from_id(this.record_partial.get_num_voice());
 			dom.byId("nomenclature_record_partial_num_voice").value = this.record_partial.get_num_voice();
@@ -380,7 +393,36 @@ define(["dojo/_base/declare", "dojo/dom-construct", "dojo/dom", "dojo/on", "dojo
 					this.formation.selectedIndex = i;
 				}
 			}
-		}
+			this.add_hidden_inputs();
+			
+		},
+		add_hidden_inputs: function(){
+			if(!document.getElementById(this.formation.name+'_hidden')){
+				domConstruct.create('input', {type:'hidden', name: this.formation.name,id:this.formation.name+'_hidden', value:this.formation.value}, this.domNode);	
+			}		
+			if(!document.getElementById(this.musicstand.name+'_hidden')){
+				domConstruct.create('input', {type:'hidden', name: this.musicstand.name, id:this.musicstand.name+'_hidden', value:this.musicstand.value}, this.domNode);	
+			}
+			if(!document.getElementById(this.workshop.name+'_hidden')){
+				domConstruct.create('input', {type:'hidden', name: this.workshop.name, id:this.workshop.name+'_hidden',value:this.workshop.value}, this.domNode);	
+			}
+			if(!document.getElementById(this.order.name+'_hidden')){
+				domConstruct.create('input', {type:'hidden', name: this.order.name, id:this.order.name+'_hidden', value:this.order.value}, this.domNode);	
+			}
+			if(!document.getElementById(this.voice.name+'_hidden')){
+				domConstruct.create('input', {type:'hidden', name: this.voice.name, id:this.voice.name+'_hidden', value:this.voice.value}, this.domNode);	
+			}
+			if(!document.getElementById(this.effective.name+'_hidden')){
+				domConstruct.create('input', {type:'hidden', name: this.effective.name, id: this.effective.name+'_hidden',value:this.effective.value}, this.domNode);	
+			}
+			if(!document.getElementById(this.other_instruments.name+'_hidden')){
+				domConstruct.create('input', {type:'hidden', name: this.other_instruments.name, id:this.other_instruments.name+'_hidden', value:this.other_instruments.value}, this.domNode);	
+			}
+			if(!document.getElementById(this.instrument.name+'_hidden')){
+				domConstruct.create('input', {type:'hidden', name: this.instrument.name, id:this.instrument.name+'_hidden', value:this.instrument.value}, this.domNode);	
+			}
+			
+		},
 	});
 });
 			    

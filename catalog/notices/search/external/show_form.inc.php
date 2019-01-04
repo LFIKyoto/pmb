@@ -2,10 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: show_form.inc.php,v 1.4 2012-11-20 12:48:47 dbellamy Exp $
+// $Id: show_form.inc.php,v 1.7 2018-12-20 11:00:19 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+require_once($class_path."/facettes_external.class.php");
+
+//Réinitialisation des facettes externes
+facettes_external::destroy_global_env();
 
 //Si c'est une multi
 if ($_SESSION["ext_type"]=="multi") {
@@ -36,7 +40,7 @@ if ($_SESSION["ext_type"]=="multi") {
 	$sources="";
 } else {
 	//sinon s'il y a un environnement, on le restaure
-	if (count($search)) {
+	if (is_array($search) && count($search)) {
 		//Recherche du champp source, s'il n'est pas présent, on décale tout et on l'ajoute
 		$flag_found=false;
 		for ($i=0; $i<count($search); $i++) {
@@ -68,6 +72,9 @@ $form_to_show=$sc->show_form("./catalog.php?categ=search&mode=7".$notice_id_info
 if ($_SESSION["ext_type"]=="simple") {
 	$form_to_show=str_replace("<!--!!precise_h3!!-->","<div class='right' style='font-size:0.8em'>".sprintf($msg["connecteurs_search_multi"],"catalog.php?categ=search&mode=7&external_type=multi".$notice_id_info)."</div>",$form_to_show);
 	$form_to_show=str_replace("<!--!!before_form!!-->","<h3>".$msg["connecteurs_source_label"]."</h3>\n".$sources."<h3>".$msg["connecteurs_external_criterias"]."</h3>",$form_to_show);
+}
+if ($_SESSION["ext_type"]=="multi") {
+	$form_to_show=str_replace("<!--!!precise_h3!!-->","<div class='right' style='font-size:0.8em'>".sprintf($msg["connecteurs_search_simple"],"catalog.php?categ=search&mode=7&external_type=simple")."</div>",$form_to_show);
 }
 print $form_to_show;
 ?>

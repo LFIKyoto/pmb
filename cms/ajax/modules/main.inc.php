@@ -2,17 +2,22 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.21 2014-12-19 14:43:51 ngantier Exp $
+// $Id: main.inc.php,v 1.25 2018-01-24 15:33:28 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+require_once($include_path.'/misc.inc.php');
 require_once($class_path."/autoloader.class.php");
 $autoloader = new autoloader();
 $autoloader->add_register("cms_modules",true);
 
 //si l'id n'est pas passé en GET, on récupère le hidden qui se balade dans les posts...
 if(!$id){
-	$id = $cms_module_common_module_id;
+	if(isset($cms_module_common_module_id)) {
+		$id = $cms_module_common_module_id+0;
+	} else {
+		$id = 0;
+	}
 }
 switch($action){
 	case "save_form" :
@@ -41,6 +46,10 @@ switch($action){
 		$cms= new cms_build();
 		$response=$cms->save_cadre_classement($id_cadre,$classement);		
 		break;
+	case "unchain_cadre" :
+		$cms= new cms_build();
+		$response=$cms->unchain_cadre($id_cadre);		
+		break;
 	case "get_env":
 		$element = new $elem();
 		$response = $element->get_page_env_select($pageid,$name,$var);
@@ -52,9 +61,11 @@ switch($action){
 		break;	
 	case "get_form" :
 	default :
-		if(!$cancel_callback) $cancel_callback = "";
+		if(!isset($callback)) $callback = "";
+		if(!isset($cancel_callback) || !$cancel_callback) $cancel_callback = "";
+		if(!isset($delete_callback)) $delete_callback = "";
 		$element = new $elem($id);
-		if($cms_module_class){
+		if(isset($cms_module_class) && $cms_module_class){
 			$element->set_module_class_name($cms_module_class);
 		}
 		$element->set_cms_build_env(restore_cms_env($cms_build_info));
@@ -68,6 +79,6 @@ if($action!="ajax"){
 
 function restore_cms_env($infos){
 	global $cms_build_info;
-	$cms_build_info = unserialize(stripslashes($infos));
+	$cms_build_info = pmb_base64_decode(unserialize(stripslashes($infos)));
 	return $cms_build_info;
 }

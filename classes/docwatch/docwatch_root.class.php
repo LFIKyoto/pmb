@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_root.class.php,v 1.7 2015-05-29 12:21:09 dgoron Exp $
+// $Id: docwatch_root.class.php,v 1.12 2018-04-19 11:58:55 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -36,8 +36,8 @@ class docwatch_root{
 	
 	protected function get_value_from_form($name){
 		$var_name = $this->get_form_value_name($name);
-		global $$var_name;
-		return $$var_name;
+		global ${$var_name};
+		return ${$var_name};
 	}
 	
 	protected static function charset_normalize($elem,$input_charset){
@@ -57,6 +57,7 @@ class docwatch_root{
 	}
 	
 	protected static function clean_cp1252($str,$charset){
+		$cp1252_map = array();
 		switch($charset){
 			case "utf-8" :
 				$cp1252_map = array(
@@ -90,6 +91,7 @@ class docwatch_root{
 				);
 				break;
 			case "iso8859-1" :
+			case "iso-8859-1" :
 				$cp1252_map = array(
 				"\x80" => "EUR", /* EURO SIGN */
 				"\x82" => "\xab", /* SINGLE LOW-9 QUOTATION MARK */
@@ -128,7 +130,7 @@ class docwatch_root{
 	public static function prefix_var_tree($tree,$prefix){
 		for($i=0 ; $i<count($tree) ; $i++){
 			$tree[$i]['var'] = $prefix.".".$tree[$i]['var'];
-			if($tree[$i]['children']){
+			if(isset($tree[$i]['children']) && $tree[$i]['children']){
 				$tree[$i]['children'] = self::prefix_var_tree($tree[$i]['children'],$prefix);
 			}
 		}
@@ -141,24 +143,24 @@ class docwatch_root{
 		$var = $class_name."_page_".$type."_var";
 		$url = $class_name."_link_".$type."_url";
 	
-		global $$method;
-		global $$page;
-		global $$var;
-		global $$url;
+		global ${$method};
+		global ${$page};
+		global ${$var};
+		global ${$url};
 		
 		$this->parameters['links'][$type] = array();
-		switch($$method) {
+		switch(${$method}) {
 			case $page."_select_cms_page":
 				$this->parameters['links'][$type] = array(
-						'method' => $$method,
-						'page' => $$page+0,
-						'var'  => $$var
+						'method' => ${$method},
+						'page' => ${$page}+0,
+						'var'  => ${$var}
 				);
 				break;
 			case $page."_input_url":
 				$this->parameters['links'][$type] = array(
-						'method' => $$method,
-						'url' => $$url
+						'method' => ${$method},
+						'url' => ${$url}
 				);
 				break;
 		}
@@ -166,6 +168,10 @@ class docwatch_root{
 	
 	public function get_constructor_link_form($type,$class_name=""){
 		global $dbh,$msg,$charset;
+		
+		if(!isset($this->parameters['links'][$type]['method'])) $this->parameters['links'][$type]['method'] = '';
+		if(!isset($this->parameters['links'][$type]['url'])) $this->parameters['links'][$type]['url'] = '';
+		if(!isset($this->parameters['links'][$type]['page'])) $this->parameters['links'][$type]['page'] = '';
 		
 		$name = $class_name."_link_".$type;
 	

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serie.class.php,v 1.10 2015-04-03 11:16:18 jpermanne Exp $
+// $Id: serie.class.php,v 1.18 2018-07-26 15:25:52 tsamson Exp $
 
 // définition de la classe de gestion des 'titres de séries'
 
@@ -17,64 +17,48 @@ class serie {
 	//  propriétés de la classe
 	// ---------------------------------------------------------------
 
-	var $id       = 0;        // MySQL serie_id in table 'series'
-	var $name     = '';       // serie name
-	var $index    = '';       // serie form for index
-
+	public $id       = 0;        // MySQL serie_id in table 'series'
+	public $name     = '';       // serie name
+	public $index    = '';       // serie form for index
+	public $num_statut = 1; //Statut
 
 	// ---------------------------------------------------------------
 	//  série($id) : constructeur
 	// ---------------------------------------------------------------
 
-	function serie($id) {
-		// on regarde si on a une série-objet ou un id de série
-		if (is_object($id)) {
-			$this->get_primaldatafrom($id);
-		} else {
-			$this->id = $id;
-			$this->get_primaldata();
-		}
+	public function __construct($id) {
+		$this->id = $id+0;
+		$this->getData();
 	}
 
-
-
 	// ---------------------------------------------------------------
-	//  get_primaldata() : récupération infos subcollection à partir de l'id
+	//		getData() : récupération infos du titre
 	// ---------------------------------------------------------------
 
-	function get_primaldata() {
-		global $dbh;
-		$requete = "SELECT * FROM series WHERE serie_id='".addslashes($this->id)."' ";
-		$result = @pmb_mysql_query($requete, $dbh);
-		if(pmb_mysql_num_rows($result)) {
-			$obj = pmb_mysql_fetch_object($result);
-			pmb_mysql_free_result($result);
-			$this->get_primaldatafrom($obj);
-		} else {
-			// pas de collection avec cette clé
-			$this->id     = 0;
-			$this->name   = '';
-			$this->index  = '';
+	public function getData() {
+		$this->name			=	'';
+		$this->index			=	'';
+		$this->num_statut = 1;
+		if($this->id) {
+			$requete = "SELECT * FROM series WHERE serie_id='".addslashes($this->id)."' ";
+			$result = pmb_mysql_query($requete);
+			if(pmb_mysql_num_rows($result)) {
+				$row = pmb_mysql_fetch_object($result);
+				$this->id = $row->serie_id;
+				$this->name = $row->serie_name;
+				$this->index = $row->serie_index;
+				//$authority = new authority(0, $this->id, AUT_TABLE_SERIES);
+				$authority = authorities_collection::get_authority('authority', 0, ['num_object' => $this->id, 'type_object' => AUT_TABLE_SERIES]);
+				$this->num_statut = $authority->get_num_statut();
+			}
 		}
-	}
-
-
-
-	// ---------------------------------------------------------------
-	//  get_primaldatafrom($obj) : récupération infos collection à partir d'un collection-objet
-	// ---------------------------------------------------------------
-
-	function get_primaldatafrom($obj) {
-		$this->id = $obj->serie_id;
-		$this->name = $obj->serie_name;
-		$this->index = $obj->serie_index;
 	}
 
 	// ---------------------------------------------------------------
 	//  print_resume($level) : affichage d'informations sur la série
 	// ---------------------------------------------------------------
 
-	function print_resume($level = 2,$css='') {
+	public function print_resume($level = 2,$css='') {
 		global $css;
 		if(!$this->id) return;
 
@@ -95,8 +79,38 @@ class serie {
 		$print = str_replace("!!name!!", $this->name, $print);
 
 		return $print;
-		}
+	}
 
+	public function get_db_id() {
+		return $this->id;
+	}
+	
+	public function get_isbd() {
+		return $this->name;
+	}
+	
+	public function get_permalink() {
+		global $liens_opac;
+		return str_replace('!!id!!', $this->id, $liens_opac['lien_rech_serie']);
+	}
+	
+	public function get_comment() {
+		return '';
+	}
+
+	public function get_header() {
+		return $this->name;
+	}
+	
+	public function format_datas($antiloop = false){
+		$formatted_data = array(
+				'name' => $this->name
+		);
+		//$authority = new authority(0, $this->id, AUT_TABLE_SERIES);
+		$authority = authorities_collection::get_authority('authority', 0, ['num_object' => $this->id, 'type_object' => AUT_TABLE_SERIES]);
+		$formatted_data = array_merge($authority->format_datas(), $formatted_data);
+		return $formatted_data;
+	}
 } # fin de définition de la classe serie
 
 } # fin de délaration

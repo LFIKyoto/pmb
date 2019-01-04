@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: resa.inc.php,v 1.32 2015-06-25 12:50:03 dbellamy Exp $
+// $Id: resa.inc.php,v 1.33 2016-12-29 13:39:37 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -10,8 +10,7 @@ $temp_aff = resa_a_traiter() . resa_a_ranger() . resa_depassees_a_traiter(). res
 
 if ($temp_aff) $aff_alerte .= "<ul>".$msg['resa_menu_alert'].$temp_aff."</ul>" ;
 
-function resa_a_traiter () {
-	global $dbh ;
+function resa_a_traiter() {
 	global $msg;
 	global $pmb_transferts_actif,$transferts_choix_lieu_opac,$deflt_docs_location, $pmb_location_reservation,$transferts_site_fixe,$pmb_lecteurs_localises;
 	
@@ -67,78 +66,27 @@ function resa_a_traiter () {
 		}
 	
 	}
-//print "$sql";exit;
-	$req = pmb_mysql_query($sql,$dbh) or die ("Erreur SQL !<br />".$sql."<br />".pmb_mysql_error()); 
-	if(pmb_mysql_num_rows($req)) 
+	$result = pmb_mysql_query($sql); 
+	if($result && pmb_mysql_num_rows($result)) {
 		return "<li><a href='./circ.php?categ=listeresa&sub=encours' target='_parent'>".$msg['resa_menu_a_traiter']."</a></li>";
-	else
+	} else {
 		return "";
-	
-/*
-	$sql.=" GROUP BY resa_idnotice, resa_idbulletin ";
-	$sql.=" ORDER BY resa_idnotice, resa_idbulletin, resa_date " ;
-	$req = pmb_mysql_query($sql) or die ("Erreur SQL !<br />".$sql."<br />".pmb_mysql_error()); 
-
-	$nb_resa_a_faire = 0;
-	while ($data = pmb_mysql_fetch_array($req)) {
-		$resa_idnotice = $data['resa_idnotice'];
-		$resa_idbulletin = $data['resa_idbulletin'];
-		$resa_nombre = $data['nb_resa'];
-		
-		// on compte le nombre total d'exemplaires prêtables pour la notice
-		$query = "SELECT count(1) FROM exemplaires, docs_statut WHERE expl_statut=idstatut AND pret_flag=1 $sql_expl_loc ";
-		if ($resa_idnotice)  $query .= " AND expl_notice=".$resa_idnotice;
-		elseif ($resa_idbulletin) $query .= " AND expl_bulletin=".$resa_idbulletin;
-		$tresult = @pmb_mysql_query($query, $dbh);
-		$total_ex = pmb_mysql_result($tresult, 0, 0);
-
-		// on compte le nombre d'exemplaires sortis
-		$query = "SELECT count(1) as qte FROM exemplaires , pret WHERE pret_idexpl=expl_id $sql_expl_loc ";
-		if ($resa_idnotice) $query .= " and expl_notice=".$resa_idnotice;
-		elseif ($resa_idbulletin) $query .= " and expl_bulletin=".$resa_idbulletin;
-		
-		$tresult = @pmb_mysql_query($query, $dbh);
-		$total_sortis = pmb_mysql_result($tresult, 0, 0);
-	
-		// on compte le nombre d'exemplaires affectés aux résas
-		if ($pmb_transferts_actif=="1"){
-			$query = "select count(1) from resa, exemplaires where resa_idnotice=".$resa_idnotice." and resa_idbulletin=".$resa_idbulletin." and resa_cb!='' and resa_cb=expl_cb and expl_location='".$deflt_docs_location."'";
-		}else {			
-			$query = "select count(1) from resa where resa_idnotice=".$resa_idnotice." and resa_idbulletin=".$resa_idbulletin." and resa_cb!='' ";
-		}	
-		$tresult = @pmb_mysql_query($query, $dbh);
-		$total_affectes = pmb_mysql_result($tresult, 0, 0);
-		
-		// on en déduit le nombre d'exemplaires disponibles
-		$total_dispo = $total_ex - $total_sortis - $total_affectes ;
-		// DEBUG echo "Not: $resa_idnotice Bull: $resa_idbulletin NbResa: $resa_nombre /dispo: $total_dispo = $total_ex - $total_sortis - $total_affectes <br />" ;
-		// on a au moins UNE résa et au moins UN dispo :
-		if ($total_dispo && $resa_nombre) {
-			// un exemplaire est disponible pour cette resa
-			$nb_resa_a_faire ++;
-		}
-	} 
-	
-	if ($nb_resa_a_faire)
-		return "<li><a href='./circ.php?categ=listeresa&sub=encours' target='_parent'>".$msg['resa_menu_a_traiter']."</a></li>" ;
-	else
-		return "" ;
-*/
+	}
 }
 
-function resa_a_ranger () {
-	
-	global $dbh ;
+function resa_a_ranger() {
 	global $msg,$deflt_docs_location;
 	
 	$sql="SELECT count(1) from resa_ranger,exemplaires where resa_cb=expl_cb and expl_location='$deflt_docs_location' limit 1 ";
-	$res = pmb_mysql_query($sql, $dbh) ;
-	if (pmb_mysql_result($res, 0, 0)) return "<li><a href='./circ.php?categ=listeresa&sub=docranger' target='_parent'>".$msg['resa_menu_a_ranger']."</a></li>" ;
-	return "" ;
+	$result = pmb_mysql_query($sql) ;
+	if ($result && pmb_mysql_result($result, 0, 0)) {
+		return "<li><a href='./circ.php?categ=listeresa&sub=docranger' target='_parent'>".$msg['resa_menu_a_ranger']."</a></li>" ;
+	} else {
+		return "";
+	}
 }
 
-function resa_depassees_a_traiter () {
-	global $dbh ;
+function resa_depassees_a_traiter() {
 	global $msg,$pmb_transferts_actif, $deflt_docs_location,$transferts_choix_lieu_opac;
 		
 	$sql="SELECT 1 FROM resa, empr WHERE resa_idempr = id_empr AND resa_date_fin < CURDATE() and resa_date_fin <>  '0000-00-00' ";
@@ -164,16 +112,16 @@ function resa_depassees_a_traiter () {
 	
 	// comptage des résas dépassées 
 	//$sql="SELECT 1 FROM resa where resa_date_fin < CURDATE() and resa_date_fin <> '0000-00-00' limit 1 ";
-	$req = pmb_mysql_query($sql) or die ("Erreur SQL !<br />".$sql."<br />".pmb_mysql_error()); 
-	if (!pmb_mysql_num_rows($req)) {
+	$result = pmb_mysql_query($sql); 
+	if (!$result || !pmb_mysql_num_rows($result)) {
 		return "" ;
 	}
 	return "<li><a href='./circ.php?categ=listeresa&sub=depassee' target='_parent'>".$msg['resa_menu_a_depassees']."</a></li>" ;
 
 }
-function resa_planning_a_traiter () {
 
-	global $dbh, $msg, $charset;
+function resa_planning_a_traiter() {
+	global $msg, $charset;
 	global $pmb_resa_planning, $pmb_resa_planning_toresa, $deflt_resas_location, $deflt_docs_location;
 
 	$ret='';
@@ -184,15 +132,14 @@ function resa_planning_a_traiter () {
 		} else {
 			$expl_loc = $deflt_docs_location;
 		}
-		$q = "SELECT count(*) ";
-		$q.= "FROM resa_planning ";
-		$q.= "WHERE resa_remaining_qty!=0 ";
-		$q.= "and resa_loc_retrait = $expl_loc ";
-		$q.= "and (date_format(resa_date_debut,'%Y%m%d')*1 + $pmb_resa_planning_toresa ) > date_format(curdate(),'%Y%m%d')*1 ";
+		$query = "SELECT count(*) ";
+		$query.= "FROM resa_planning ";
+		$query.= "WHERE resa_remaining_qty!=0 ";
+		$query.= "and resa_loc_retrait = $expl_loc ";
+		$query.= "and (date_format(resa_date_debut,'%Y%m%d')*1 + $pmb_resa_planning_toresa ) > date_format(curdate(),'%Y%m%d')*1 ";
 
-		$r = pmb_mysql_query($q,$dbh);
-		$n = pmb_mysql_result($r,0,0);
-		if ($n) {
+		$result = pmb_mysql_query($query);
+		if ($result && pmb_mysql_result($result,0,0)) {
 			$ret = "<li><a href='./circ.php?categ=resa_planning&sub=all' target='_parent'>".$msg['resa_planning_todo']."</a></li>" ;
 		}
 	}

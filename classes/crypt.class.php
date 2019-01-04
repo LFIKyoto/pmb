@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: crypt.class.php,v 1.6 2007-03-10 09:25:48 touraine37 Exp $
+// $Id: crypt.class.php,v 1.7 2017-06-30 14:08:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -27,19 +27,19 @@ class Crypt {
 	// Données
 	//------------------------------------------------------------
 	
-	var $print1;					//Empruntes utilisées pour créer les éléments de codage/décodage
-	var $print2;
-	var $tPrint1 = array();			//Tableaux normalisés issus des empruntes
-	var $tPrint2 = array();
-	var $tColCorresp = array();		//Table de codage colonne
-	var $tRowCorresp = array();		//Table de codage ligne
-	var $tInvColCorresp = array();	//Table de décodage colonne
+	public $print1;					//Empruntes utilisées pour créer les éléments de codage/décodage
+	public $print2;
+	public $tPrint1 = array();			//Tableaux normalisés issus des empruntes
+	public $tPrint2 = array();
+	public $tColCorresp = array();		//Table de codage colonne
+	public $tRowCorresp = array();		//Table de codage ligne
+	public $tInvColCorresp = array();	//Table de décodage colonne
 
 	//------------------------------------------------------------
 	// Constructeur : Crypt($print1,$print2)
 	// Création des tables de codages à partir des empruntes
 	//------------------------------------------------------------
-	function Crypt($print1, $print2) {
+	public function __construct($print1, $print2) {
 		$this -> print1 = $print1;
 		$this -> print2 = $print2;
 
@@ -68,7 +68,7 @@ class Crypt {
 	// genTcar()
 	// Génération de la table des caractères
 	//------------------------------------------------------------
-	function genTcar() {
+	public function genTcar() {
 		$tCar = array();
 		for ($i = 0; $i < 256; $i ++) {
 			$tCar[$i] = $i;
@@ -80,7 +80,7 @@ class Crypt {
 	// decal(& array $tCar, int $pos, $nStayingCar)
 	// Décalage à gauche de la table des caractères $tCar à partir de la position donnée par $pos sur les $nStayingcar premiers caractères
 	//------------------------------------------------------------
-	function decal(& $tCar, $pos, $nStayingCar) {
+	public function decal(& $tCar, $pos, $nStayingCar) {
 		for ($i = $pos +1; $i < $nStayingCar; $i ++) {
 			$tCar[$i -1] = $tCar[$i];
 		}
@@ -90,7 +90,7 @@ class Crypt {
 	// hex2decNormalized(char $value)
 	// fonction de convetissage hex->decimal normalisé (entre 0 et 1)
 	//------------------------------------------------------------
-	function hex2decNormalized($value) {
+	public function hex2decNormalized($value) {
 		$tHex = array("0" => 0, "1" => 1, "2" => 2, "3" => 3, "4" => 4, "5" => 5, "6" => 6, "7" => 7, "8" => 8, "9" => 9, "a" => 10, "b" => 11, "c" => 12, "d" => 13, "e" => 14, "f" => 15);
 		return $tHex[$value] / 15;
 	}
@@ -99,7 +99,7 @@ class Crypt {
 	// decalLine(& array $line, int $decal)
 	// Permutation d'une ligne $line avec un offset de $decal
 	//-----------------------------------------------------------
-	function decalLine(& $line, $decal) {
+	public function decalLine(& $line, $decal) {
 		$lineOut = array();
 		for ($i = 0; $i < 256; $i ++) {
 			$p = $decal + $i;
@@ -114,7 +114,7 @@ class Crypt {
 	// genCryptTables()
 	// Génération des tables de codage
 	//-----------------------------------------------------------
-	function genCryptTables() {
+	public function genCryptTables() {
 		//Table des colonnes
 
 		$lCar = array();
@@ -176,7 +176,7 @@ class Crypt {
 	// Génération des tables de décodage
 	//------------------------------------------------------------
 	
-	function genDecryptTables() {
+	public function genDecryptTables() {
 		//Table des colonnes
 		for ($l = 0; $l < 32; $l ++) {
 			for ($c = 0; $c < 256; $c ++) {
@@ -191,7 +191,7 @@ class Crypt {
 	// getCrypt(string $str)
 	// Fonction de cryptage d'une chaine $str
 	//------------------------------------------------------------
-	function getCrypt($str) {
+	public function getCrypt($str) {
 		$strR = "";
 		$line = 0;
 		for ($i = 0; $i < strlen($str); $i ++) {
@@ -206,7 +206,7 @@ class Crypt {
 	// getDecrypt(string $str)
 	// Fonction de décryptage d'une chaine $str
 	//------------------------------------------------------------
-	function getDecrypt($str) {
+	public function getDecrypt($str) {
 		$strR = "";
 		$line = 0;
 		for ($i = 0; $i < strlen($str); $i ++) {

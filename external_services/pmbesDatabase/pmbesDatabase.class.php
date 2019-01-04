@@ -2,32 +2,28 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesDatabase.class.php,v 1.6 2015-06-19 07:31:23 mbertin Exp $
+// $Id: pmbesDatabase.class.php,v 1.7 2017-06-22 08:49:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/external_services.class.php");
 
 class pmbesDatabase extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
-	var $es;				//Classe mère qui implémente celle-ci !
-	var $msg;
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	
 	
-	function get_current_version(){
+	public function get_current_version(){
 		global $dbh;
 		$query ="select valeur_param from parametres where type_param = 'pmb' and sstype_param ='bdd_version'";
 		$result = pmb_mysql_query($query,$dbh);
@@ -38,7 +34,7 @@ class pmbesDatabase extends external_services_api_class {
 		return $pmb_bdd_version;
 	}
 	
-	function get_current_subversion(){
+	public function get_current_subversion(){
 		global $dbh;
 		$query ="select valeur_param from parametres where type_param = 'pmb' and sstype_param ='bdd_subversion'";
 		$result = pmb_mysql_query($query,$dbh);
@@ -49,7 +45,7 @@ class pmbesDatabase extends external_services_api_class {
 		return $pmb_bdd_subversion;
 	}
 	
-	function get_version_informations() {
+	public function get_version_informations() {
 		global $dbh;
 		global $pmb_version_database_as_it_should_be;
 		global $pmb_subversion_database_as_it_shouldbe;
@@ -63,7 +59,7 @@ class pmbesDatabase extends external_services_api_class {
 		return $tmp;
 	}
 	
-	function need_update(){
+	public function need_update(){
 		global $pmb_version_database_as_it_should_be;
 		global $pmb_subversion_database_as_it_shouldbe;
 
@@ -77,7 +73,7 @@ class pmbesDatabase extends external_services_api_class {
 		return $result;
 	}
 	
-	function update(){
+	public function update(){
 		global $base_path;
 		global $dbh;
 		global $lang;

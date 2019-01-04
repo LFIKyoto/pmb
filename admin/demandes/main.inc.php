@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.1.16.1 2015-09-11 12:50:41 dgoron Exp $
+// $Id: main.inc.php,v 1.3 2017-06-02 10:05:36 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -13,7 +13,7 @@ switch($sub) {
 		include("./admin/demandes/theme.inc.php");		
 		break;
 	case 'type':
-		$admin_layout = str_replace('!!menu_sous_rub!!', $msg["demandes_nature"], $admin_layout);
+		$admin_layout = str_replace('!!menu_sous_rub!!', $msg["demandes_type"], $admin_layout);
 		print $admin_layout;
 		include("./admin/demandes/type.inc.php");		
 		break;

@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dyn_form.js,v 1.5 2014-12-27 15:49:23 Alexandre Exp $
+// $Id: dyn_form.js,v 1.6 2016-04-22 09:43:53 jpermanne Exp $
 
 function make_form(id){
 	
@@ -33,8 +33,8 @@ function save_avis(id){
 	var action = new http_request();
 	var sujet = document.getElementById("field_sujet_"+id).value;
 	
-	if (typeof(tinyMCE) != "undefined") {tinyMCE.execCommand('mceToggleEditor',true,"avis_desc_"+id);}
-	if (typeof(tinyMCE) != "undefined") {tinyMCE.execCommand('mceRemoveControl',true,"avis_desc_"+id);}
+	if (typeof(tinyMCE) != "undefined") {tinyMCE_execCommand('mceToggleEditor',true,"avis_desc_"+id);}
+	if (typeof(tinyMCE) != "undefined") {tinyMCE_execCommand('mceRemoveControl',true,"avis_desc_"+id);}
 	var desc = document.getElementById("avis_desc_"+id).value;
 	var url = "./ajax.php?module=catalog&categ=avis&id="+id+"&quoifaire=update_avis";
 	

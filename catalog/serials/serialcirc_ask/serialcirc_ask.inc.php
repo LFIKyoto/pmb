@@ -2,9 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_ask.inc.php,v 1.2 2011-11-24 16:30:07 ngantier Exp $
+// $Id: serialcirc_ask.inc.php,v 1.3 2017-06-06 15:26:36 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($location_id)) $location_id = 0;
+if(!isset($type_filter)) $type_filter = 0;
+if(!isset($statut_filter)) $statut_filter = 0;
 
 require_once("$class_path/serialcirc_ask.class.php");
 

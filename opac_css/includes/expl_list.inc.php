@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl_list.inc.php,v 1.11 2015-04-17 14:22:36 ngantier Exp $
+// $Id: expl_list.inc.php,v 1.12 2018-01-15 14:58:29 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -50,7 +50,7 @@ function expl_list($type,$id) {
 		if ($expl->pret_flag) {
 			if($expl->pret_retour)
 				// exemplaire sorti
-				$situation .= "<strong>$msg[out_until] ".formatdate($expl->pret_retour).'</strong>';
+				$situation .= "<strong>".str_replace('!!date!!', formatdate($expl->pret_retour), $msg['out_until'] )."</strong>";								
 			else
 				// exemplaire disponible
 				$situation .= "<strong>$msg[available]</strong>&nbsp;";				

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: transaction.class.php,v 1.2 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: transaction.class.php,v 1.3 2017-02-20 19:04:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,10 +10,10 @@ require_once($include_path."/templates/transaction/transaction.tpl.php");
 
 
 class transactype  {
-	var $id = 0;				// identifiant de la transactype
-	var $name = "";				// Libellé de la transactype
-	var $unit_price = 0;		// prix unitaire
-	var $quick_allowed = 0;		// Autorisation de l'encaissement rapide
+	public $id = 0;				// identifiant de la transactype
+	public $name = "";				// Libellé de la transactype
+	public $unit_price = 0;		// prix unitaire
+	public $quick_allowed = 0;		// Autorisation de l'encaissement rapide
 	
 	public function __construct($id=0){		
 		$this->id=$id+0;		
@@ -59,7 +59,7 @@ class transactype  {
 		$form = str_replace('!!unit_price!!', htmlentities($this->unit_price,ENT_QUOTES, $charset), $form);
 		
 		if($this->quick_allowed) $quick_allowed_checked=" checked='checked' ";
-		else $quick_allowed_checked;		
+		else $quick_allowed_checked = '';		
 		$form = str_replace('!!quick_allowed_checked!!', $quick_allowed_checked, $form);
 		
 		$form = str_replace('!!action!!', "./admin.php?categ=finance&sub=transactype&action=save&id=!!id!!", $form);
@@ -102,7 +102,8 @@ class transactype  {
 			$save = "update ";
 			$clause = "where transactype_id = '".$this->id."'";
 		}else{
-			$save = "insert into ";						
+			$save = "insert into ";
+			$clause = "";
 		}
 		$save.=" transactype set transactype_name='". addslashes( $this->name). "', transactype_unit_price='".$this->unit_price. "' ,transactype_quick_allowed='". $this->quick_allowed. "'   $clause";
 		pmb_mysql_query($save,$dbh);		

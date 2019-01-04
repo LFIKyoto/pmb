@@ -2,16 +2,25 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_sugg.inc.php,v 1.5 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: ajax_sugg.inc.php,v 1.11 2018-07-20 08:58:27 dgoron Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($class_path."/suggestions_origine.class.php");
 
+if(!isset($quoifaire)) $quoifaire = '';
 switch($quoifaire){
 	
 	case 'ajout_origine':
 	case 'suppr_origine':
 		mod_origine();
+		break;
+	default:
+		switch($action) {
+			case "list":
+				require_once($class_path.'/list/lists_controller.class.php');
+				lists_controller::proceed_ajax($object_type);
+				break;
+		}
 		break;
 }
 
@@ -28,7 +37,7 @@ function mod_origine(){
 				$sug_ori->save();
 				break;
 			case 'suppr_origine':
-				$sug_ori->delete($sug_ori->num_suggestion,$sug_ori->origine,$sug_ori->type_origine);
+				suggestions_origine::delete($sug_ori->num_suggestion,$sug_ori->origine,$sug_ori->type_origine);
 				break;
 		}
 	}
@@ -47,7 +56,7 @@ function mod_origine(){
 					if ($row_user[2]) $lib_orig.= ", ".$row_user[2];
 					$suppr_click = "onClick=\"if(confirm('".$msg['confirm_suppr_origine']."')){ ajax_suppr_origine('".$user->origine."','".$user->type_origine."');}\"";					
 					if(empty($premier_user) || !isset($premier_user)) $premier_user = $lib_orig;
-					else $list_user .= $lib_orig."<img src='./images/trash.png' align='middle' alt='basket' title=\"".$msg["origine_suppr"]."\" alt=\"".$msg["origine_suppr"]."\" $suppr_click /><br />";
+					else $list_user .= $lib_orig."<img src='".get_url_icon('trash.png')."' class='align_middle' alt='basket' title=\"".$msg["origine_suppr"]."\" alt=\"".$msg["origine_suppr"]."\" $suppr_click /><br />";
 					break;
 				case '1' :
 				 	$requete_empr = "SELECT id_empr, empr_nom, empr_prenom FROM empr where id_empr = '".$user->origine."'";
@@ -57,21 +66,21 @@ function mod_origine(){
 					if ($row_empr[2]) $lib_orig.= ", ".$row_empr[2];
 					$suppr_click = "onClick=\"if(confirm('".$msg['confirm_suppr_origine']."')){ ajax_suppr_origine('".$user->origine."','".$user->type_origine."');}\"";
 					if(empty($premier_user) || !isset($premier_user)) $premier_user = $lib_orig;
-					else $list_user .= $lib_orig."<img src='./images/trash.png' align='middle' alt='basket' title=\"".$msg["origine_suppr"]."\" alt=\"".$msg["origine_suppr"]."\" $suppr_click /><br />";
+					else $list_user .= $lib_orig."<img src='".get_url_icon('trash.png')."' class='align_middle' alt='basket' title=\"".$msg["origine_suppr"]."\" alt=\"".$msg["origine_suppr"]."\" $suppr_click /><br />";
 					break;
 				case '2' :
 					if($user->origine) $lib_orig = $user->origine;
 					else $lib_orig = $msg['suggest_anonyme'];
 					$suppr_click = "onClick=\"if(confirm('".$msg['confirm_suppr_origine']."')){ ajax_suppr_origine('".$user->origine."','".$user->type_origine."');}\"";
 					if(empty($premier_user) || !isset($premier_user)) $premier_user = $lib_orig;
-					else $list_user .= $lib_orig."<img src='./images/trash.png' align='middle' alt='basket' title=\"".$msg["origine_suppr"]."\" alt=\"".$msg["origine_suppr"]."\" $suppr_click /><br />";
+					else $list_user .= $lib_orig."<img src='".get_url_icon('trash.png')."' class='align_middle' alt='basket' title=\"".$msg["origine_suppr"]."\" alt=\"".$msg["origine_suppr"]."\" $suppr_click /><br />";
 					break;
 		}
 		$nb_user++;
 	}
 	$ajout_create = "
 		<input type='text' id='creator_lib_orig_ajax' name='creator_lib_orig' class='saisie-10emr'/>
-		<input type='button' id='creator_btn_orig_ajax' class='bouton_small' value='...' onclick=\"openPopUp('./select.php?what=origine&caller=sug_modif_form&param1=orig&param2=creator_lib_orig_ajax&param3=typ&param4=&param5=&param6=&callback=ajax_origine&deb_rech='+document.getElementById('creator_lib_orig_ajax').value, 'select_creator_orig', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes')\" />";
+		<input type='button' id='creator_btn_orig_ajax' class='bouton_small' value='...' onclick=\"openPopUp('./select.php?what=origine&caller=sug_modif_form&param1=orig&param2=creator_lib_orig_ajax&param3=typ&param4=&param5=&param6=&callback=ajax_origine&deb_rech='+".pmb_escape()."(document.getElementById('creator_lib_orig_ajax').value), 'selector')\" />";
 	$list_user .= $ajout_create;
 	  
 	if(pmb_mysql_num_rows($res) > 1){

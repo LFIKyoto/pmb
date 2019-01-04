@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: requester.class.php,v 1.10 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: requester.class.php,v 1.12 2017-06-22 10:19:48 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,17 +10,17 @@ require_once ($include_path.'/templates/requests.tpl.php');
 
 class requester {
 	
-	var $t_type = array();		//Table de definition des types de requetes			 
-	var $t_cont = array();		//Table de definition des contenus de requetes
-	var $t_univ = array();		//Table de definition des univers et relations
-	var $t_schema = array();	//Table schema de base
-	var $t_fct = array();		//Table de definition des fonctions
-	var $t_fct_grp = array();	//Table de definition des groupes de fonctions
+	public $t_type = array();		//Table de definition des types de requetes			 
+	public $t_cont = array();		//Table de definition des contenus de requetes
+	public $t_univ = array();		//Table de definition des univers et relations
+	public $t_schema = array();	//Table schema de base
+	public $t_fct = array();		//Table de definition des fonctions
+	public $t_fct_grp = array();	//Table de definition des groupes de fonctions
 
-	var $t_join = array();		//Table de stockage des jointures
+	public $t_join = array();		//Table de stockage des jointures
 
 	//Constructeur.	 
-	function requester() {
+	public function __construct() {
 		
 		$rp = new reqParser();
 
@@ -35,7 +35,7 @@ class requester {
 
 
 	//Retourne un selecteur pour choix des univers
-	function getUnivSelector($selected=0, $change='') {
+	public function getUnivSelector($selected=0, $change='') {
 		
 		global $charset;
 		
@@ -51,7 +51,7 @@ class requester {
 
 
 	//Retourne un selecteur pour choix du type de requete
-	function getTypeSelector($selected=0, $change='') {
+	public function getTypeSelector($selected=0, $change='') {
 		
 		global $charset;
 		
@@ -67,7 +67,7 @@ class requester {
 
 	
 	//Retourne le nom de la table de reference d'un univers
-	function getReferenceTableName($univ_id=0){
+	public function getReferenceTableName($univ_id=0){
 		if (!$univ_id) return '';
 		$itr=$this->t_univ[$univ_id]['ref'];
 		return $itr;
@@ -75,7 +75,7 @@ class requester {
 
 	
 	//Retourne l'id de la table de reference d'un univers
-	function getReferenceTableID($univ_id=0){
+	public function getReferenceTableID($univ_id=0){
 		if (!$univ_id) return 0;
 		$tr=$this->getReferenceTableName($univ_id);
 		$itr=$this->t_schema[$tr];
@@ -84,7 +84,7 @@ class requester {
 
 
 	//Retourne l'id d'une table a partir de son nom 
-	function getTableID($table_name=''){
+	public function getTableID($table_name=''){
 		if (!$table_name) return 0;
 		$table_id=$this->t_schema[$table_name];
 		return $table_id;
@@ -92,14 +92,14 @@ class requester {
 
 
 	//Retourne les informations sur une table a partir de son id
-	function getTableInfo($table_id=0){
+	public function getTableInfo($table_id=0){
 		if (!$table_id) return false;
 		return $this->t_schema[$table_id];
 	}
 
 
 	//Retourne la cle primaire d'une table
-	function getPrimaryKeyID($table_id=0){
+	public function getPrimaryKeyID($table_id=0){
 		if (!$table_id) return false;
 		$pkid=$this->t_schema[$table_id]['pkid'];
 		return $pkid;
@@ -107,7 +107,7 @@ class requester {
 
 	
 	//Retourne les cles etrangeres d'une table
-	function getForeignKeys($table_id=0){
+	public function getForeignKeys($table_id=0){
 		if (!$table_id) return false;
 		$t=array();
 		foreach($this->t_schema[$table_id]['fields'] as $k=>$v){
@@ -118,7 +118,7 @@ class requester {
 
 
 	//Retourne l'Id de la table accessible depuis une cle etrangere
-	function getForeignTableID($foreign_key=0) {
+	public function getForeignTableID($foreign_key=0) {
 		if(!$foreign_key) return false;
 		$pk=$this->t_schema['cp_links'][$foreign_key];
 		$tmp=explode('-',$pk);
@@ -127,7 +127,7 @@ class requester {
 
 
 	//Retourne true si le champ fait partie d'une relation enfant-parent
-	function isForeignKey($field_id=0){
+	public function isForeignKey($field_id=0){
 		if(!$field_id) return false;
 		if(array_key_exists($field_id,$this->t_schema['cp_links'])) return true;
 			else return false;
@@ -135,7 +135,7 @@ class requester {
 
 
 	//Retourne la liste des id des champs d'une table
-	function getTableFieldIDList($table_id=0, $with_FK='true'){
+	public function getTableFieldIDList($table_id=0, $with_FK='true'){
 		if(!$table_id) return false;
 		$t = array();
 		foreach($this->t_schema[$table_id]['fields'] as $k=>$v) {
@@ -150,7 +150,7 @@ class requester {
 
 
 	//Retourne la liste des informations pour les champs d'une table
-	function getTableFieldInfo($table_id=0, $with_FK='true'){
+	public function getTableFieldInfo($table_id=0, $with_FK='true'){
 		if(!$table_id) return false;
 		$t = array();
 		foreach($this->t_schema[$table_id]['fields'] as $k=>$v) {
@@ -165,7 +165,7 @@ class requester {
 
 	
  	//Construit un selecteur avec la liste des tables accessibles a partir d'un Univers
-	function getTableSelector($univ_id=0 ,$selected=0){
+	public function getTableSelector($univ_id=0 ,$selected=0){
 		
 		global $charset;
 
@@ -199,7 +199,7 @@ class requester {
 	
 	
 	//Construit l'arbre des champs accessibles a partir d'un Univers
-	function getFielTree($univ_id=0 ){
+	public function getFielTree($univ_id=0 ){
 		
 		global $msg;
 
@@ -230,7 +230,7 @@ class requester {
 
 
 	//Construit les noeuds de l'arbre des champs accessibles a partir d'un univers
-	function getNodesTree($univ_id, $table_id, $prev_node_id=0, $prev_rel_id=0, $prev_desc=''){
+	public function getNodesTree($univ_id, $table_id, $prev_node_id=0, $prev_rel_id=0, $prev_desc=''){
 		
 		global $msg, $charset;
 		
@@ -316,7 +316,7 @@ class requester {
 	
 	
 	//Ajout relations a la table des jointures
-	function addJoin($univ_id,$rel_id,$n=0) {
+	public function addJoin($univ_id,$rel_id,$n=0) {
 
 		if (!($univ_id && $rel_id)) return;
 
@@ -350,7 +350,7 @@ class requester {
 	
 	
 	//Retourne un formulaire pour la table des jointures
-	function getJoinTab() {
+	public function getJoinTab() {
 		
 		global $charset,$joi_tab_line_select;
 		
@@ -394,7 +394,7 @@ class requester {
 
 	
 	//Construit l'arbre des fonctions SQL
-	function getFuncTree(){
+	public function getFuncTree(){
 
 		global $msg, $charset;
 
@@ -424,7 +424,7 @@ class requester {
 		
 
 	//Construit l'arbre des sous-requetes SQL
-	function getSubrTree(){
+	public function getSubrTree(){
 
 		global $msg,$charset,$dbh;
 
@@ -463,7 +463,7 @@ class requester {
 	
 	
 	//Construction requete a partir du formulaire poste
-	function buildRequest($req_type,$req_univ,$req_nb_lines,$req_datas) {
+	public function buildRequest($req_type,$req_univ,$req_nb_lines,$req_datas) {
 
 		global $msg;
 		if (!$req_type || !$req_univ || !$req_nb_lines || !is_array($req_datas)) return;
@@ -716,7 +716,7 @@ class requester {
 
 	//Extraction des parametres d'une fonction
 	//$f_id	= id de fonction
-	function getFunction($f_id) {
+	public function getFunction($f_id) {
 		$data=array();
 		if($this->t_fct[$f_id]['name']) {
 			$data['id']=$this->t_fct[$f_id]['id'];
@@ -732,7 +732,7 @@ class requester {
 	
 	//Extraction d'une sous-requete
 	//$r_id	= id de requete
-	function getSubRequest($r_id) {
+	public function getSubRequest($r_id) {
 		
 		global $dbh;
 		$sub='';
@@ -747,7 +747,7 @@ class requester {
 	
 	//Extraction des infos de champ et de relation a partir de l'identifiant poste
 	//$f_id	= id de champ
-	function getField($f_id) {
+	public function getField($f_id) {
 		
 		$data=array();
 		$data['D']='';		//Stockage donnees calculees
@@ -776,7 +776,7 @@ class requester {
 
 	
 	//Extraction des jointures multiples 
-	function getFullJoin($univ_id, $rel, $t_jo) {
+	public function getFullJoin($univ_id, $rel, $t_jo) {
 		
 		$rel_id=substr($rel,1);
 		$join=array();
@@ -835,7 +835,7 @@ class requester {
 	
 	
 	//Recuperation des attributs de fonction a partir de l'identifiant
-	function getAttributes($fct_id=0,$c_type='') {
+	public function getAttributes($fct_id=0,$c_type='') {
 		global $charset;
 		if (!$fct_id) die('No function id');
 		
@@ -856,7 +856,7 @@ class requester {
 
 	
 	//construit la partie data d'une ligne de requete
-	function buildDataContent($t_da) {
+	public function buildDataContent($t_da) {
 
 		$t_ret=array();
 		
@@ -978,7 +978,7 @@ class requester {
 	
 	
 	//construit la partie filtre d'une ligne de requete (where)
-	function buildFilterContent($t_fi) {
+	public function buildFilterContent($t_fi) {
 
 		$t_ret=array();
 
@@ -1105,16 +1105,16 @@ class requester {
 
 class reqParser {
 
-	var $parser;
-	var $t=array();
-	var $cur_id=0;
-	var $cur_rel=0;
-	var $cur_fct=0;
+	public $parser;
+	public $t=array();
+	public $cur_id=0;
+	public $cur_rel=0;
+	public $cur_fct=0;
 	
-	function reqParser() {
+	public function __construct() {
 	}
 	
-	function run($file) {
+	public function run($file) {
 		
 		global $include_path;
 		global $charset;
@@ -1146,7 +1146,7 @@ class reqParser {
 	}
 
 
-	function tagStart($parser, $tag, $att) {
+	public function tagStart($parser, $tag, $att) {
 		
 		global $msg;
 		
@@ -1180,11 +1180,11 @@ class reqParser {
 				break;
 			case 'REQ_CONTENT':
 				$this->t['REQ_CONTENT'][$att['id']]['type']= $att['type'];
-				$this->t['REQ_CONTENT'][$att['id']]['name']= $msg[$att['name']];
+				$this->t['REQ_CONTENT'][$att['id']]['name']= (isset($att['name']) && isset($msg[$att['name']]) ? $msg[$att['name']] : '');
 				break;
 			case 'REQ_CONTAINER':
 				$this->t['REQ_CONTAINER'][$att['id']]['type']= $att['type'];
-				$this->t['REQ_CONTAINER'][$att['id']]['name']= $msg[$att['name']];
+				$this->t['REQ_CONTAINER'][$att['id']]['name']= (isset($att['name']) && isset($msg[$att['name']]) ? $msg[$att['name']] : '');
 				break;
 			case 'REQ_UNIVERSE':
 				$this->t[$att['id']]['name']= $msg[$att['name']];
@@ -1194,11 +1194,11 @@ class reqParser {
 			case 'REQ_RELATION':
 				$this->t[$this->cur_id]['relations']['from'][$att['from']][]=$att['id'];
 				$this->t[$this->cur_id][$att['id']]['from']=$att['from'];
-				$this->t[$this->cur_id][$att['id']]['prev']=$att['prev'];
+				$this->t[$this->cur_id][$att['id']]['prev']=(isset($att['prev']) ? $att['prev'] : '');
 				$this->t[$this->cur_id][$att['id']]['type']=$att['type'];
 				$this->t[$this->cur_id][$att['id']]['to']=$att['to'];
 				$this->t[$this->cur_id][$att['id']]['desc']=$att['desc'];
-				$this->t[$this->cur_id][$att['id']]['except']=$att['except'];		
+				$this->t[$this->cur_id][$att['id']]['except']=(isset($att['except']) ? $att['except'] : '');		
 				$this->cur_rel=$att['id'];
 				break;
 			case 'REQ_THROUGH':
@@ -1230,7 +1230,7 @@ class reqParser {
 	}
 	
 	
-	function tagEnd($parser, $tag) {
+	public function tagEnd($parser, $tag) {
 		return;
 	}
 	

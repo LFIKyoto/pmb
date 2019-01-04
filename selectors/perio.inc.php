@@ -2,30 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: perio.inc.php,v 1.6 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: perio.inc.php,v 1.9 2017-11-21 14:23:55 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // la variable $caller, passée par l'URL, contient le nom du form appelant
 $base_url = "./select.php?what=perio&caller=$caller&param1=$param1&param2=$param2&no_display=$no_display&bt_ajouter=$bt_ajouter";
 
-// contenu popup sélection emprunteur
-require('./selectors/templates/sel_perio.tpl.php');
+$selector_perio = new selector_perio(stripslashes($user_input));
+$selector_perio->proceed();
 
-// affichage du header
-print $sel_header;
-
-// traitement en entrée des requêtes utilisateur
-if ($deb_rech) $f_user_input = $deb_rech ;
-if($f_user_input=="" && $user_input=="") {
-	$user_input='';
-} else {
-	// traitement de la saisie utilisateur
-	if ($user_input) $f_user_input=$user_input;
-	if (($f_user_input)&&(!$user_input)) $user_input=$f_user_input;	
-}
-
-function show_results ($dbh, $user_input, $nbr_lignes=0, $page=0, $id = 0) {
+function show_results ($user_input, $nbr_lignes=0, $page=0, $id = 0) {
 	global $nb_per_page;
 	global $base_url;
 	global $caller;
@@ -84,18 +71,9 @@ function show_results ($dbh, $user_input, $nbr_lignes=0, $page=0, $id = 0) {
 	}
 		// affichage de la pagination
 		
-		print "<div class='row'>&nbsp;<hr /></div><div align='center'>";
+		print "<div class='row'>&nbsp;<hr /></div><div class='center'>";
 		$url_base = $base_url."&user_input=".rawurlencode(stripslashes($user_input));
 		$nav_bar = aff_pagination ($url_base, $nbr_lignes, $nb_per_page, $page, 10, false, true) ;
 		print $nav_bar;
 		print "</div>";
 }
-
-// affichage des membres de la page
-
-$sel_search_form = str_replace("!!deb_rech!!", stripslashes($f_user_input), $sel_search_form);
-print $sel_search_form;
-print $jscript;
-show_results($dbh, $user_input, $nbr_lignes, $page);
-
-print $sel_footer;

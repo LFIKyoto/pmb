@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: recall.php,v 1.12.4.1 2015-11-09 09:14:03 jpermanne Exp $
+// $Id: recall.php,v 1.15 2016-05-13 08:32:11 dgoron Exp $
 
 header("Expires: Sat, 01 Jan 2000 00:00:00 GMT");
 header("Last-Modified: ".gmdate("D, d M Y H:i:s")." GMT");
@@ -13,7 +13,13 @@ session_start();
 $_SESSION["last_required"]=$_GET["t"];
 if (!isset($current) || $current!==false) $_SESSION["CURRENT"]=$_GET["current"];
 $_SESSION["MAP_CURRENT"]=$_SESSION["CURRENT"];
-if ($_GET["tri"]) $_SESSION["tri"]=$_GET["tri"];
+if (isset($_GET["tri"])){
+	if ($_GET["tri"] == -1) {
+		unset($_SESSION["tri"]);
+	} else {
+		$_SESSION["tri"]=$_GET["tri"];
+	}
+}
 //Appel du mode recherche externe
 if (isset($_GET["external"]) && $_GET["external"]==1) {
 	$_SESSION["last_required"]="";

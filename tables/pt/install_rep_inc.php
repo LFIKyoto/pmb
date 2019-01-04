@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: install_rep_inc.php,v 1.3 2012-12-12 10:29:54 ngantier Exp $
+// $Id: install_rep_inc.php,v 1.4 2016-03-30 09:04:51 mbertin Exp $
 
 // plus rien ici : reprise d'un script d'une autre install
 if(preg_match('/install_rep_inc\.php/', $_SERVER['REQUEST_URI'])) {
@@ -78,9 +78,12 @@ $msg_crea_30 = "<p>The installation scripts are renamed so that they cannot be e
 $msg_crea_31 = "<p><a href=\"../\">Go to the welcome page</a></p>";
 $msg_crea_32 = "Problem with the creation data set...";
 
-$msg_crea_33 = "<br /><br />Remplissage de la demo du portail r&eacute;ussi";
-$msg_crea_34 = "<br /><br />Echec du remplissage de la demo du portail";				
-					
+$msg_crea_33 = "<br /><br />Remplissage de la demo du portail Pag&eacute;o r&eacute;ussi";
+$msg_crea_34 = "<br /><br />Echec du remplissage de la demo du portail Pag&eacute;o";
+
+$msg_crea_35 = "<br /><br />Remplissage de la demo du portail Zen r&eacute;ussi";
+$msg_crea_36 = "<br /><br />Echec du remplissage de la demo du portail Zen";
+
 $msg_crea_control_version = "<h3>The database version is <font color=red>!!pmb_version!!</font>, it should be <font color=red>$pmb_version_database_as_it_should_be</font></h3><br />
 			Connect to PMB as usual,<br />
 			Go to Administration > Tools > database update before you work with PMB.<br />

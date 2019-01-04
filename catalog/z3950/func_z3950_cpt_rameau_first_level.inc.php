@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: func_z3950_cpt_rameau_first_level.inc.php,v 1.11 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: func_z3950_cpt_rameau_first_level.inc.php,v 1.12 2016-09-07 08:35:37 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -122,7 +122,7 @@ function traite_categories_from_form() {
 		if ($categ_first[$i]) {
 			$resultat = categories::searchLibelle(addslashes($categ_first[$i]), $thesaurus_defaut, 'fr_FR');	
 			if (!$resultat){
-				$categories[]["categ_id"] = create_categ($thes->num_noeud_racine, $categ_first[$i], " ".addslashes(strip_empty_words($categ_first[$i]))." ");
+				$categories[]["categ_id"] = create_categ_z3950($thes->num_noeud_racine, $categ_first[$i], " ".addslashes(strip_empty_words($categ_first[$i]))." ");
 			} else {
 				$categories[]["categ_id"] = $resultat;
 			}
@@ -133,7 +133,7 @@ function traite_categories_from_form() {
 }
 
 
-function create_categ($num_parent, $libelle, $index) {
+function create_categ_z3950($num_parent, $libelle, $index) {
 	
 	global $thes;
 	$n = new noeuds();

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_tagcloud_view_tagcloud_3d.class.php,v 1.3 2014-12-18 16:31:50 dgoron Exp $
+// $Id: cms_module_tagcloud_view_tagcloud_3d.class.php,v 1.4 2017-07-12 15:15:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -55,7 +55,7 @@ class cms_module_tagcloud_view_tagcloud_3d extends cms_module_common_view{
  			<ul>";
 		foreach($datas as $tag){
 			$html_to_display.= "
-				<li><a href='".$$tag['link']."'>".$this->format_text($tag['label'])."</a></li>";
+				<li><a href='".${$tag['link']}."'>".$this->format_text($tag['label'])."</a></li>";
 		}
 		$html_to_display.= "
 			</ul>

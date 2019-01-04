@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dosync.php,v 1.9 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: dosync.php,v 1.11 2017-09-29 14:28:37 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -41,7 +41,7 @@ if (isset($env)) {
 	$tenv = unserialize($env);
 	if (is_array($tenv)) {
 		foreach ($tenv as $aenv=>$aenvv) {
-			$$aenv = $aenvv;
+			${$aenv} = $aenvv;
 		}
 	}
 }
@@ -58,7 +58,7 @@ if (!$source_id)
 	return_error("Missing source ID!");
 
 //Traitement en cas de requete d'annulation de synchro
-if ($cancel) {
+if (!empty($cancel)) {
 	if ($conn->cancel_maj($source_id)) {
 		$requete="delete from source_sync where source_id=".$source_id;
 	} else {

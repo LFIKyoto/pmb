@@ -2,7 +2,7 @@
 <!DOCTYPE XMLlist SYSTEM "../../XMLlist.dtd">
 
 <!-- liste des codes fonction en UNIMARC (franÁais)
-$Id: function.xml,v 1.12 2007-06-06 22:07:33 gautier Exp $ -->
+$Id: function.xml,v 1.13 2017-04-05 14:11:49 ngantier Exp $ -->
 
 <XMLlist>
 	<entry code="005">Actor</entry>
@@ -45,7 +45,7 @@ $Id: function.xml,v 1.12 2007-06-06 22:07:33 gautier Exp $ -->
 	<entry code="260">Detentor dos direitos do autor</entry>
 	<entry code="270">Corrector</entry>
 	<entry code="273">Organizador de exposição</entry>
-	<entry code="274">Bailarino</entry>
+	<entry code="275">Bailarino</entry>
 	<entry code="280">Personalidade a quem é dedicada a obra</entry>
 	<entry code="290">Autor da dedicatória</entry>
 	<entry code="295">Organisme de soutenance</entry>

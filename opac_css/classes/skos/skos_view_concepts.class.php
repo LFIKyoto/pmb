@@ -1,8 +1,9 @@
 <?php
+
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: skos_view_concepts.class.php,v 1.10 2015-03-20 15:28:24 apetithomme Exp $
+// $Id: skos_view_concepts.class.php,v 1.16 2018-08-23 15:09:39 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -17,6 +18,7 @@ require_once($class_path."/skos/skos_onto.class.php");
 */
 class skos_view_concepts {
 	
+    
 	/**
 	 * Retourne la liste à afficher
 	 * @param array $datas Liste des concepts formatés
@@ -25,9 +27,13 @@ class skos_view_concepts {
 	 * @return string La liste à afficher
 	 */
 	static public function render($datas, $template, $parameters = array()) {
-		global $$template;
+		global ${$template}, $base_path;
 		
-		return H2o::parseString($$template)->render(array('concepts_list' => $datas, 'parameters' => $parameters));
+		if(!file_exists($base_path.'/temp/'.LOCATION.'_'.$template)){
+		    file_put_contents($base_path.'/temp/'.LOCATION.'_'.$template, ${$template});
+		}
+		$h2o = H2o_collection::get_instance($base_path.'/temp/'.LOCATION.'_'.$template);
+		return $h2o->render(array('concepts_list' => $datas, 'parameters' => $parameters));
 	}
 	
 	/**
@@ -38,7 +44,8 @@ class skos_view_concepts {
 	 * @return string
 	 */
 	static public function get_list_in_notice($concepts_list) {
-		global $thesaurus_concepts_affichage_ordre, $thesaurus_concepts_concept_in_line;
+		global $msg;
+		global $thesaurus_concepts_concept_in_line;
 	
 		$concepts = $concepts_list->get_concepts();
 		
@@ -58,7 +65,7 @@ class skos_view_concepts {
 	 * @return string
 	 */
 	static public function get_list_in_authority($concepts_list) {
-		global $thesaurus_concepts_affichage_ordre, $thesaurus_concepts_concept_in_line;
+		global $thesaurus_concepts_concept_in_line;
 		global $msg;
 	
 		$concepts = $concepts_list->get_concepts();
@@ -77,7 +84,7 @@ class skos_view_concepts {
 	 * @return string
 	 */
 	static public function get_narrowers_list($concepts_list) {
-		global $thesaurus_concepts_affichage_ordre, $thesaurus_concepts_concept_in_line;
+		global $thesaurus_concepts_concept_in_line;
 	
 		$concepts = $concepts_list->get_concepts();
 		
@@ -95,7 +102,7 @@ class skos_view_concepts {
 	 * @return string
 	 */
 	static public function get_broaders_list($concepts_list) {
-		global $thesaurus_concepts_affichage_ordre, $thesaurus_concepts_concept_in_line;
+		global $thesaurus_concepts_concept_in_line;
 	
 		$concepts = $concepts_list->get_concepts();
 		
@@ -108,12 +115,29 @@ class skos_view_concepts {
 	}
 	
 	/**
+	 * Retourne l'affichage des termes associés d'un concept
+	 * @param skos_concepts_list $concepts_list Liste des parents
+	 * @return string
+	 */
+	static public function get_related_list($concepts_list) {
+	    global $thesaurus_concepts_concept_in_line;
+	    
+	    $concepts = $concepts_list->get_concepts();
+	    
+	    $datas = array(
+	        'title' => skos_onto::get_property_label("http://www.w3.org/2004/02/skos/core#Concept", "http://www.w3.org/2004/02/skos/core#related"),
+	        'elements' => self::get_sorted_concepts($concepts, false)
+	    );
+	    return self::render($datas, "skos_view_concepts_related_list", 0);
+	}
+	
+	/**
 	 * Retourne l'affichage des concepts composés qui utilisent un concept
 	 * @param skos_concepts_list $concepts_list Liste des concepts composés
 	 * @return string
 	 */
 	static public function get_composed_concepts_list($concepts_list) {
-		global $thesaurus_concepts_affichage_ordre, $thesaurus_concepts_concept_in_line;
+		global $thesaurus_concepts_concept_in_line;
 		global $msg;
 	
 		$concepts = $concepts_list->get_concepts();
@@ -134,12 +158,15 @@ class skos_view_concepts {
 	 */
 	static protected function get_sorted_concepts($concepts, $all_links) {
 		global $msg;
+		global $thesaurus_concepts_affichage_ordre;
+		
 		// On trie le tableau des concepts selon leurs schemas
 		$sorted_concepts = array();
 		
 		foreach ($concepts as $concept) {
-			if ($concept->get_schemes()) {
-				$scheme = $concept->get_schemes();
+			$schemes = $concept->get_schemes();
+			if (count($schemes)) {
+				$scheme = implode(',', $schemes);
 			} else {
 				$scheme = $msg['skos_view_concept_no_scheme'];
 			}

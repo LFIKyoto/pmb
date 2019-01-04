@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions_export.class.php,v 1.1 2009-07-31 14:37:10 kantin Exp $
+// $Id: suggestions_export.class.php,v 1.2 2017-05-05 09:12:15 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,14 +10,14 @@ require_once($class_path."/suggestions.class.php");
 
 class suggestions_export {
 	
-	var $liste_suggestion=array();
-	var $current=0;
+	public $liste_suggestion=array();
+	public $current=0;
 	
-	function suggestions_export($liste_suggestions) {
+	public function __construct($liste_suggestions) {
 		$this->liste_suggestion=$liste_suggestions;
 	}
 	
-	function export_xml($sugg_id) {
+	public function export_xml($sugg_id) {
 		global $charset;
 		
 		$sugg=new suggestions($sugg_id);
@@ -58,7 +58,7 @@ class suggestions_export {
 		return $notice;
 	}
 	
-	function get_next_notice() {
+	public function get_next_notice() {
 		if ($this->current<count($this->liste_suggestion)) {
 			$notice=$this->export_xml($this->liste_suggestion[$this->current]);
 			$this->current++;

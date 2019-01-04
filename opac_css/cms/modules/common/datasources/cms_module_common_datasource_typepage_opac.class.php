@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_typepage_opac.class.php,v 1.7.2.1 2015-08-13 07:30:45 jpermanne Exp $
+// $Id: cms_module_common_datasource_typepage_opac.class.php,v 1.18 2018-06-22 10:00:09 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,29 +13,29 @@ class cms_module_common_datasource_typepage_opac {
 		$post = $_POST;
 		$get = $_GET;
 	
-		if($post['lvl']){
+		if(isset($post['lvl']) && $post['lvl']){
 			$niveau = $post['lvl'];
-		} elseif ($get['lvl']){
+		} elseif (isset($get['lvl']) && $get['lvl']){
 			$niveau = $get['lvl'];
 		} else $niveau='';
 		
-		if($post['search_type_asked']){
+		if(isset($post['search_type_asked']) && $post['search_type_asked']){
 			$type = $post['search_type_asked'];
-		} elseif ($get['search_type_asked']){
+		} elseif (isset($get['search_type_asked']) && $get['search_type_asked']){
 			$type = $get['search_type_asked'];
 		} else $type='';
 	
-		if($post['mode']){
+		if(isset($post['mode']) && $post['mode']){
 			$mode = $post['mode'];
-		} elseif ($get['mode']){
+		} elseif (isset($get['mode']) && $get['mode']){
 			$mode = $get['mode'];
 		} else $mode='';
 	
-		if ($get['oresa']){
+		if (isset($get['oresa']) && $get['oresa']){
 			$sugg = $get['oresa'];
 		} else $sugg='';
 	
-	
+		//Note : Type page = 30 pour les URLs externes
 		$page = array(
 			"recherche" => 1, 
 			"result" => 2,
@@ -65,13 +65,21 @@ class cms_module_common_datasource_typepage_opac {
 			"extend" => 26,
 			"result_docnum" => 27, 
 			"accueil" => 28, 
-			"ajax" => 29 
+			"ajax" => 29,
+			"contact_form" => 31,
+			"collstate_bulletins_display" => 32,
+			// pixel blanc : 33 
+			"search_universe" => 34,
+			"search_segment" => 35,
+			"pnb_loan_list" => 36,
+			"pnb_devices" => 37,
+			"pnb_parameters" => 38,
 		);
 		
 		//pour le panier
-		if($post['action']){
+		if(isset($post['action']) && $post['action']){
 			$action = $post['action'];
-		} elseif ($get['action']){
+		} elseif (isset($get['action']) && $get['action']){
 			$action = $get['action'];
 		} else $action='';
 	
@@ -88,9 +96,9 @@ class cms_module_common_datasource_typepage_opac {
 		}
 		
 		//tags recherche
-		if($post['tags']){
+		if(isset($post['tags']) && $post['tags']){
 			$tags = $post['tags'];
-		} elseif ($get['tags']){
+		} elseif (isset($get['tags']) && $get['tags']){
 			$tags = $get['tags'];
 		} else {
 			$tags='';
@@ -221,6 +229,27 @@ class cms_module_common_datasource_typepage_opac {
 			case "faq" :
 				$type_page=$page['faq'];
 				break;
+			case "contact_form" :
+				$type_page=$page['contact_form'];
+				break;
+			case "collstate_bulletins_display":
+				$type_page=$page['collstate_bulletins_display'];
+				break;
+			case 'search_universe':
+				$type_page = $page['search_universe'];
+				break;
+			case 'search_segment':
+				$type_page = $page['search_segment'];
+				break;
+			case 'pnb_loan_list':
+				$type_page = $page['pnb_loan_list'];
+				break;
+			case 'pnb_devices':
+				$type_page = $page['pnb_devices'];
+				break;
+			case 'pnb_parameters':
+				$type_page = $page['pnb_parameters'];
+				break;
 			case 'index':
 				$type_page=$page['recherche'];
 				break;
@@ -243,6 +272,8 @@ class cms_module_common_datasource_typepage_opac {
 			case 'bannette':
 			case 'bannette_gerer':
 			case 'bannette_creer':
+			case 'bannette_edit':
+			case 'bannette_unsubscribe' :
 			case 'make_multi_sugg':
 			case 'import_sugg':
 			case 'private_list':
@@ -250,6 +281,7 @@ class cms_module_common_datasource_typepage_opac {
 			case 'demande_list':
 			case 'do_dmde':
 			case 'list_dmde':
+			case 'scan_requests_list':
 				$type_page=$page['empr'];
 				break;
 			default:
@@ -278,40 +310,40 @@ class cms_module_common_datasource_typepage_opac {
 		// 		$notice = get_info_notice($param,$parser);
 	
 		//récuperation des différentes variables nécessaires à l'identification des pages
-		if($post['lvl']){
+		if(isset($post['lvl']) && $post['lvl']){
 			$niveau = $post['lvl'];
-		} elseif ($get['lvl']){
+		} elseif (isset($get['lvl']) && $get['lvl']){
 			$niveau = $get['lvl'];
 		} else $niveau='';
 	
 		//type recherche
-		if($post['search_type_asked']){
+		if(isset($post['search_type_asked']) && $post['search_type_asked']){
 			$type = $post['search_type_asked'];
-		} elseif ($get['search_type_asked']){
+		} elseif (isset($get['search_type_asked']) && $get['search_type_asked']){
 			$type = $get['search_type_asked'];
 		} else $type='';
 	
 		//pour recherche prédéfinie
-		if ($post['onglet_persopac']){
+		if (isset($post['onglet_persopac']) && $post['onglet_persopac']){
 			$perso = $post['onglet_persopac'];
-		} elseif ($get['onglet_persopac']){
+		} elseif (isset($get['onglet_persopac']) && $get['onglet_persopac']){
 			$perso = $get['onglet_persopac'];
 		} else $perso='';
 	
 		//pour les types d'autorité
-		if($post['mode']){
+		if(isset($post['mode']) && $post['mode']){
 			$mode = $post['mode'];
-		} elseif ($get['mode']){
+		} elseif (isset($get['mode']) && $get['mode']){
 			$mode = $get['mode'];
 		} else $mode='';
 	
 		//nivo biblio
-		if($notice['niveau_biblio']){
+		if(isset($notice['niveau_biblio']) && $notice['niveau_biblio']){
 			$biblio = $notice['niveau_biblio'];
 		} else $biblio='';
 	
 		//suggestion
-		if ($get['oresa']){
+		if (isset($get['oresa']) && $get['oresa']){
 			$sugg = $get['oresa'];
 		} else {
 			$url_ref = $_SERVER['REQUEST_URI'];
@@ -319,9 +351,9 @@ class cms_module_common_datasource_typepage_opac {
 		}
 	
 		//pour le panier
-		if($post['action']){
+		if(isset($post['action']) && $post['action']){
 			$action = $post['action'];
-		} elseif ($get['action']){
+		} elseif (isset($get['action']) && $get['action']){
 			$action = $get['action'];
 		} else $action='';
 	
@@ -345,21 +377,23 @@ class cms_module_common_datasource_typepage_opac {
 		}
 		
 		//facettes
-		if($get['reinit_facette'] || isset($get['param_delete_facette'])) { //param_delete_facette peut être égal à 0
+		if((isset($get['reinit_facette']) && $get['reinit_facette']) || isset($get['param_delete_facette'])) { //param_delete_facette peut être égal à 0
 			return '308';
-		}elseif($get['facette_test']){
+		}elseif(isset($get['facette_test']) && $get['facette_test']){
 			return '307';
 		}
 		
 		//recherches affiliées
-		if($get['tab']){
+		if(isset($get['tab']) && $get['tab']){
 			$tab=$get['tab'];
+		} else {
+			$tab='';
 		}
 		
 		//tags recherche
-		if($post['tags']){
+		if(isset($post['tags']) && $post['tags']){
 			$tags = $post['tags'];
-		} elseif ($get['tags']){
+		} elseif (isset($get['tags']) && $get['tags']){
 			$tags = $get['tags'];
 		} else {
 			$tags='';
@@ -456,7 +490,7 @@ class cms_module_common_datasource_typepage_opac {
 						$search_type = '304';
 						break;
 					case 'external':
-						$search_type = '305';  
+						$search_type = '305';
 						break;
 					default:
 						$search_type = '302';
@@ -531,9 +565,9 @@ class cms_module_common_datasource_typepage_opac {
 				$search_type = '1002';
 				break;
 			case 'show_cart':
-				if ($get['raz_cart']) {
+				if (isset($get['raz_cart']) && $get['raz_cart']) {
 					$search_type = '805';
-				} elseif ($get['action']=='del') {
+				} elseif (isset($get['action']) && $get['action']=='del') {
 					$search_type = '806';
 				} elseif (isset($get['sort'])) { //Peut être égal à 0
 					$search_type = '808';
@@ -592,6 +626,27 @@ class cms_module_common_datasource_typepage_opac {
 				break;
 			case "faq" :
 				$search_type = '2401';
+				break;
+			case "contact_form" :
+				$search_type = '3101';
+				break;
+			case "collstate_bulletins_display" :
+				$search_type = '3201';
+				break;
+			case 'search_universe':
+				$search_type = '3301';
+				break;
+			case 'search_segment':
+				$search_type = '3401';
+				break;
+			case 'pnb_loan_list':
+				$search_type = '3601';
+				break;
+			case 'pnb_devices':
+				$search_type = '3602';
+				break;
+			case 'pnb_parameters':
+				$search_type = '3603';
 				break;
 			case 'index':
 				switch($type){
@@ -659,6 +714,12 @@ class cms_module_common_datasource_typepage_opac {
 			case 'bannette_creer':
 				$search_type = '708';
 				break;
+			case 'bannette_edit':
+				$search_type = '727';
+				break;
+			case 'bannette_unsubscribe':
+				$search_type = '728';
+				break;
 			case 'make_sugg':
 				if($sugg)
 					$search_type = '1401';
@@ -704,16 +765,13 @@ class cms_module_common_datasource_typepage_opac {
 				break;
 			case 'cart':
 				if (strpos($url,'print.php')) {
-					$search_type = '807';
-				} else {
-					switch($action){	
-						case 'print_cart':
-							$search_type = '802';
-							break;		
-						default:
-							$search_type = '801';
-							break;
+					if ($action) {
+						$search_type = '802';
+					} else {
+						$search_type = '807';
 					}
+				} else {
+					$search_type = '801';
 				}
 				break;
 			case 'list':
@@ -787,6 +845,9 @@ class cms_module_common_datasource_typepage_opac {
 				}
 			}
 		}
-		return self::$liste_libelle_type[$type];
+		if(isset(self::$liste_libelle_type[$type])){
+			return self::$liste_libelle_type[$type];
+		}
+		return '';
 	}
 }

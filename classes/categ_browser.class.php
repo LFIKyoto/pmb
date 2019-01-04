@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: categ_browser.class.php,v 1.23 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: categ_browser.class.php,v 1.26 2017-11-22 11:07:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,32 +16,31 @@ class categ_browser {
 
 	// properties
 	// browser images
-	var $up_folder = "<img src='./images/folderup.gif' />";
-	var $closed_folder = "<img src='./images/folderclosed.gif' />";
-	var $open_folder = "<img src='./images/folderopen.gif' />";
-	var $document = "<img src='./images/doc.gif' />";
-	var $see_img = "<img src='./images/see.gif' />";
+	public $up_folder = "<img src='./images/folderup.gif' />";
+	public $closed_folder = "<img src='./images/folderclosed.gif' />";
+	public $open_folder = "<img src='./images/folderopen.gif' />";
+	public $document = "<img src='./images/doc.gif' />";
+	public $see_img = "<img src='./images/see.gif' />";
 	
-	var $parent = 0;			// 	current parent
-	var $level = 0;				//	current level in browser tree
-	var $parents_tab;			//	array parents values
-	var $children_tab;			//	array for children values
-	var $display = '';			//	string to display
-	var $offset = 18;			//	offset for margin
-	var $current_margin = 0;	// 	actual margin
-	var $folder_link = '';		//	link to use if a folder is clicked
-	var $document_link = '';	//	link to use if a document or name is clicked
-	var $id_thes = 0;			//  identifiant de thesaurus
-	var $thes;					//  objet thesaurus 
+	public $parent = 0;			// 	current parent
+	public $level = 0;				//	current level in browser tree
+	public $parents_tab;			//	array parents values
+	public $children_tab;			//	array for children values
+	public $display = '';			//	string to display
+	public $offset = 18;			//	offset for margin
+	public $current_margin = 0;	// 	actual margin
+	public $folder_link = '';		//	link to use if a folder is clicked
+	public $document_link = '';	//	link to use if a document or name is clicked
+	public $id_thes = 0;			//  identifiant de thesaurus
+	public $thes;					//  objet thesaurus 
 	
 	// constructor
-	function categ_browser($parent=0, $folder_link='', $document_link='', $id_thes=0) {
+	public function __construct($parent=0, $folder_link='', $document_link='', $id_thes=0) {
 		global $PHP_SELF;
 
 		$this->parent = $parent;
 		$this->folder_link = $folder_link;
 		$this->document_link = $document_link;
-
 
 		//recuperation du thesaurus session 
 		if(!$id_thes) {
@@ -49,28 +48,21 @@ class categ_browser {
 		} else {
 			thesaurus::setSessionThesaurusId($id_thes);
 		}
-
 		if ($id_thes != -1) {
 			$this->thes = new thesaurus($id_thes);
 		}
-
 		$this->id_thes = $id_thes; 
-		
 		if ($this->id_thes != -1) { // 1 seul thesaurus
-
 			if (!$this->parent) {
 				$this->parent = $this->thes->num_noeud_racine;
 			}
-	
 			$this->parents_tab = array();
 			$this->children_tab = array();
 			$caller = preg_replace('/\/.*\//', './', $PHP_SELF);
-	
 			if(!$this->folder_link)
 				$this->folder_link = "<a href='".$caller."?parent=!!id!!'>";
 			if(!$this->document_link)
 				$this->document_link = "<a href='".$caller."?id=!!id!!'>";
-	
 			$this->get_children();
 			$this->get_parents();
 		}
@@ -79,7 +71,7 @@ class categ_browser {
 	}
 
 	// getting images location if required
-	function set_images($up_folder='', $closed_folder='', $open_folder='', $document='', $see='') {
+	public function set_images($up_folder='', $closed_folder='', $open_folder='', $document='', $see='') {
 		if($up_folder)
 			$this->up_folder = $up_folder;
 		if($closed_folder)
@@ -93,10 +85,8 @@ class categ_browser {
 	}
 
 	// do_browser() : drawing final browser
-	function do_browser() {
-
+	public function do_browser() {
 		global $msg;
-		global $dbh;
 
 		// display up link if applying
 		$up_link = str_replace('!!id!!', '0', $this->folder_link);
@@ -146,7 +136,7 @@ class categ_browser {
 					// on regarde si la catégorie cible a des enfants
 					$see_requete = "SELECT count(1) FROM noeuds WHERE num_parent=${valeur['id']} LIMIT 1";
 
-					$count_result = pmb_mysql_query($see_requete, $dbh);
+					$count_result = pmb_mysql_query($see_requete);
 					if(@pmb_mysql_result($count_result, 0, 0)) {
 						// la catégorie cible à des enfants -> tous les liens pointent vers l'affichage catégorie
 						$link = str_replace('!!id!!', $valeur['id'], $this->folder_link);
@@ -179,9 +169,7 @@ class categ_browser {
 
 
 	// get_parents() method : retrieves parents infos
-	function get_parents() {
-
-		global $dbh;
+	public function get_parents() {
 		global $lang;
 
 		if(!$this->parent) {
@@ -191,10 +179,8 @@ class categ_browser {
 		
 		$temp = $this->parent;
 
-	
 		while($temp != $this->thes->num_noeud_racine) {
 			// fetching category information
-
 			$requete = "select catdef.num_noeud as categ_id, ";
 			$requete.= "if (catlg.num_noeud is null, catdef.libelle_categorie, catlg.libelle_categorie) as categ_libelle, ";
 			$requete.= "noeuds.num_parent as categ_parent, ";
@@ -206,33 +192,30 @@ class categ_browser {
 			$requete.= "where catdef.num_noeud = '".$temp."' ";	
 			$requete.= "limit 1 ";
 
-			$result = pmb_mysql_query($requete, $dbh);
+			$result = pmb_mysql_query($requete);
 
 			$upper = pmb_mysql_fetch_object($result);
 
 			// getting number of associated records
 			$requete = "select count(1) from notices_categories where num_noeud ='".$upper->categ_id."' ";
 
-			$count_result = pmb_mysql_query($requete, $dbh);
+			$count_result = pmb_mysql_query($requete);
 
 			$has_records = pmb_mysql_result($count_result, 0, 0);
-			$this->parents_tab[] = array(	id => $upper->categ_id,
-							name => $upper->categ_libelle,
-							has_records => $has_records);
+			$this->parents_tab[] = array(	
+							'id' => $upper->categ_id,
+							'name' => $upper->categ_libelle,
+							'has_records' => $has_records);
 			$temp = $upper->categ_parent;
 		}
 		if(sizeof($this->parents_tab)) $this->parents_tab = array_reverse($this->parents_tab);
 	}
 
-
-	function get_children() {
-		
-		global $dbh;
+	public function get_children() {
 		global $thesaurus_categories_show_empty_categ;
 		global $lang;
 		
 		// getting infos for children categories
-
 		$requete = "select catdef.num_noeud as categ_id, ";
 		$requete.= "if (catlg.num_noeud is null, catdef.libelle_categorie, catlg.libelle_categorie) as categ_libelle, ";
 		$requete.= "noeuds.num_parent as categ_parent, ";
@@ -243,52 +226,50 @@ class categ_browser {
 		$requete.= "left join categories as catlg on catdef.num_noeud = catlg.num_noeud and catlg.langue = '".$lang."' ";
 		$requete.= "where noeuds.num_parent = '".$this->parent."' ";	
 		$requete.= "order by categ_libelle limit 200 ";
-		$result = pmb_mysql_query($requete, $dbh);
+		$result = pmb_mysql_query($requete);
 
 
 		while($current=pmb_mysql_fetch_object($result)) {
 			$count_child = "select count(1) from noeuds where num_parent = '".$current->categ_id."' limit 1";
-			$count_result = pmb_mysql_query($count_child, $dbh);
-
+			$count_result = pmb_mysql_query($count_child);
 
 			// getting number of associated records
 			$query = "select count(1) from notices_categories where num_noeud = '".$current->categ_id."' ";
-			$count_records = pmb_mysql_query($query, $dbh);
+			$count_records = pmb_mysql_query($query);
 
 			if (((pmb_mysql_result($count_records, 0, 0)||$thesaurus_categories_show_empty_categ)||(pmb_mysql_result($count_result, 0, 0)))&&($current->categ_libelle[0]!="~")) {
-				$this->children_tab[] = array(	id => $current->categ_id,
-								name => $current->categ_libelle,
-								see => $current->categ_see,
-								has_children => pmb_mysql_num_rows($count_result),
-								has_records => pmb_mysql_num_rows($count_records));
+				$this->children_tab[] = array(	
+								'id' => $current->categ_id,
+								'name' => $current->categ_libelle,
+								'see' => $current->categ_see,
+								'has_children' => pmb_mysql_num_rows($count_result),
+								'has_records' => pmb_mysql_num_rows($count_records));
 			}
 		}
 	}
 
 
-// ---------------------------------------------------------------
-//		search_form() : affichage du form de recherche
-// ---------------------------------------------------------------
-static function search_form($categ_id=0) {
-	global $user_query;
-	global $msg;
-	global $user_input,$id_thes,$charset;
-	
-	
-	$user_query = str_replace ('!!user_query_title!!', $msg[357]." : ".$msg[134] , $user_query);
-	$user_query = str_replace ('!!action!!', './autorites.php?categ=categories&sub=search', $user_query);
-	$user_query = str_replace ('!!add_auth_msg!!', $msg[317] , $user_query);
-	$user_query = str_replace ('!!add_auth_act!!', "./autorites.php?categ=categories&sub=categ_form&parent=$categ_id&id=0", $user_query);
-	if ($id_thes>=1)
-		$lien_derniers = "<a href='./autorites.php?categ=categories&sub=categorie_last&id_thes=$id_thes'>".$msg["autorites_categ_last"]."</a>&nbsp;";
-	else
-		$lien_derniers = "" ;
-	$user_query = str_replace("<!-- lien_derniers -->",$lien_derniers,$user_query);
-	$user_query = str_replace("!!user_input!!",htmlentities(stripslashes($user_input),ENT_QUOTES, $charset),$user_query);
-	
-	print pmb_bidi($user_query) ;
+	// ---------------------------------------------------------------
+	//		search_form() : affichage du form de recherche
+	// ---------------------------------------------------------------
+	public static function search_form($categ_id=0) {
+		global $user_query;
+		global $msg;
+		global $user_input,$id_thes,$charset;
+		
+		$user_query = str_replace ('!!user_query_title!!', $msg[357]." : ".$msg[134] , $user_query);
+		$user_query = str_replace ('!!action!!', './autorites.php?categ=categories&sub=search', $user_query);
+		$user_query = str_replace ('!!add_auth_msg!!', $msg[317] , $user_query);
+		$user_query = str_replace ('!!add_auth_act!!', "./autorites.php?categ=categories&sub=categ_form&parent=$categ_id&id=0", $user_query);
+		if ($id_thes>=1)
+			$lien_derniers = "<a href='./autorites.php?categ=categories&sub=categorie_last&id_thes=$id_thes'>".$msg["autorites_categ_last"]."</a>&nbsp;";
+		else
+			$lien_derniers = "" ;
+		$user_query = str_replace("<!-- lien_derniers -->",$lien_derniers,$user_query);
+		$user_query = str_replace("!!user_input!!",htmlentities(stripslashes($user_input),ENT_QUOTES, $charset),$user_query);
+		
+		print pmb_bidi($user_query) ;
 	}
-
 
 } # fin de définition de la classe 'categ_browser'
 

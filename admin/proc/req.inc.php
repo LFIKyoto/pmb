@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: req.inc.php,v 1.2 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: req.inc.php,v 1.3 2016-09-08 15:05:52 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+require_once ($class_path.'/parameters.class.php');
 require_once ($class_path.'/request.class.php');  
 require_once ($class_path.'/requester.class.php');
 require_once ($include_path.'/templates/requests.tpl.php');
@@ -42,22 +43,6 @@ function show_req_add_form($step=0) {
 	print $req_add_form; 	
 }
 
-//Verification de la presence et de la syntaxe des parametres de la requete
-//retourne true si OK, sinon retourne le nom du parametre entre parentheses
-function check_param($requete) {
-	$query_parameters=array();
-	//S'il y a des termes !!*!! dans la requête alors il y a des paramètres
-	if (preg_match_all("|!!(.*)!!|U",$requete,$query_parameters)) {
-			for ($i=0; $i<count($query_parameters[1]); $i++) {
-				if (!preg_match("/^[A-Za-z][A-Za-z0-9_]*$/",$query_parameters[1][$i])) {
-					return "(".$query_parameters[1][$i].")";
-				}
-			}
-	}
-	return true;
-}
-
-
 //traitement des actions
 switch($action) {
 	
@@ -79,7 +64,7 @@ switch($action) {
 				} else {
 					$autorisations='';
 				}
-				$param_name=check_param($req_code);
+				$param_name=parameters::check_param($req_code);
 				if ($param_name!==true) {
 					error_message_history($param_name, sprintf($msg['proc_param_check_field_name'],$param_name), 1);
 					exit();

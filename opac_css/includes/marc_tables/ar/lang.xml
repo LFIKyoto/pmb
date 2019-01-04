@@ -2,7 +2,7 @@
 <!DOCTYPE XMLlist SYSTEM "../../XMLlist.dtd">
 
 <!-- liste des codes langue en UNIMARC (français)
-$Id: lang.xml,v 1.6 2009-03-03 14:46:24 touraine37 Exp $ -->
+$Id: lang.xml,v 1.7 2016-09-13 09:23:22 jpermanne Exp $ -->
 
 <XMLlist>
 	<entry code="ace">Achinese</entry>
@@ -161,6 +161,7 @@ $Id: lang.xml,v 1.6 2009-03-03 14:46:24 touraine37 Exp $ -->
 	<entry code="ijo">Ijo</entry>
 	<entry code="ilc">Ilocano</entry>
 	<entry code="ilo">Ilocano</entry>
+	<entry code="ina">Interlingua</entry>
 	<entry code="inc">Indo-aryen (groupe)</entry>
 	<entry code="ind">Indonésien</entry>
 	<entry code="ine">Indo-européennes (langues)</entry>

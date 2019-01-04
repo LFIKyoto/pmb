@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: timer.php,v 1.7 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: timer.php,v 1.8 2017-10-23 10:13:00 ngantier Exp $
 
 $base_path="../..";
 $base_auth="SAUV_AUTH|ADMINISTRATION_AUTH";
@@ -41,11 +41,11 @@ else
 
 if ($delai==0) $url="run.php"; else $url="timer.php";
 print "<div id=\"contenu-frame\">\n";
-echo "<center><h1>".sprintf($msg["sauv_misc_timer_delay"],$delai)."</h1></center>\n";
+echo "<h1>".sprintf($msg["sauv_misc_timer_delay"],$delai)."</h1>\n";
 echo "<form class='form-$current_module' method=\"post\" name=\"timer_form\" action=\"$url\">\n";
 echo "<input type=\"hidden\" name=\"delai\" value=\"".$delai."\">\n";
-echo "<br /><br /><center>
-<table cellspacing=0><tr><td align=center style=\"border:solid;border-width:1px\"><b>".$msg["sauv_misc_timer_sets"]."</b></td><td align=center style=\"border:solid;border-width:1px\"><b>".$msg["sauv_misc_timer_groups"]."</b></td></tr>\n";
+echo "<br /><br />
+<table cellspacing=0><tr><td class='center' style=\"border:solid;border-width:1px\"><b>".$msg["sauv_misc_timer_sets"]."</b></td><td class='center' style=\"border:solid;border-width:1px\"><b>".$msg["sauv_misc_timer_groups"]."</b></td></tr>\n";
 $sauv=implode(",",$sauvegardes);
 $requete="select sauv_sauvegarde_nom,sauv_sauvegarde_tables from sauv_sauvegardes where sauv_sauvegarde_id in (".$sauv.") order by sauv_sauvegarde_nom";
 $resultat=pmb_mysql_query($requete) or die(pmb_mysql_error());
@@ -64,13 +64,13 @@ for ($i=0; $i<count($sauv_name); $i++) {
 	}
 	echo "<tr><td style=\"border:solid;border-width:1px\"><b>".$sauv_name[$i]."</b></td><td style=\"border:solid;border-width:1px\">".implode(", ",$tTables)."</td></tr>\n";
 }
-echo "</table></center>\n";
+echo "</table>\n";
 for ($i=0; $i<count($sauvegardes); $i++)
 {
 	echo "<input type=\"hidden\" name=\"sauvegardes[]\" value=\"".$sauvegardes[$i]."\">\n";
 }
 echo "<br /><br />";
-echo "<center><input type=\"button\" value=\"".$msg["sauv_annuler"]."\" class=\"bouton\" onClick=\"document.location='launch.php'\"></center>";
+echo "<input type=\"button\" value=\"".$msg["sauv_annuler"]."\" class=\"bouton\" onClick=\"document.location='launch.php'\">";
 if ($delai==0) $timeout=10; else $timeout=30000;
 echo "<script>setTimeout(\"document.timer_form.submit()\",$timeout);</script>";
 echo "</form>";

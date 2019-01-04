@@ -1,7 +1,7 @@
 /* +--------------------------------------------------------------------------+
 // � 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: layout.css,v 1.151 2014-09-04 13:13:17 dgoron Exp $
+// $Id: layout.css,v 1.154 2017-10-30 16:05:10 mramage Exp $
 */
 
 /* ---------------------------------------------------------------------------*/
@@ -22,6 +22,11 @@ body
       voice-family: "\"}\""; voice-family:inherit;
       font-size:small;
 } 
+
+input, select {
+	font-family: Verdana, Sans-Serif, Helvetica, Georgia;
+}
+
 a,
 a:visited,
 a:hover {
@@ -1095,7 +1100,7 @@ h3
 }
 	#content_onglet_perio a{text-decoration:none;}
 	#content_onglet_perio a:hover{text-decoration:none;}
-.bulletins-perio
+.bulletins-perio, .elts-list-tabs
 {	border-top: 1px solid #684;
 	border-bottom: 1px solid #684;
 	border-left: 1px solid #684;
@@ -1492,6 +1497,12 @@ border-radius:5px 5px;
 .in_cell_nb_ro {
 	width:99%;
 	border:1px solid;
+}
+.form-acquisition .in_cell, 
+.form-acquisition .in_cell_nb, 
+.form-acquisition .in_cell_ro, 
+.form-acquisition .in_cell_nb_ro {
+    width: 70%;
 }
 .in_cell_nb,
 .in_cell_nb_ro {

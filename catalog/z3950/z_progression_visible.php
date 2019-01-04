@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: z_progression_visible.php,v 1.11.4.1 2015-11-22 18:02:00 Alexandre Exp $
+// $Id: z_progression_visible.php,v 1.15 2017-11-22 11:07:35 dgoron Exp $
 
 // définition du minimum nécéssaire
 $base_path="../..";
@@ -24,13 +24,13 @@ require_once("z3950_func.inc.php");
 print "
 <div id='contenu-frame'>
 <!--
-<br /><p align='center'>$msg[z3950_progr_rech_txt]</p>
+<br /><p class='center'>$msg[z3950_progr_rech_txt]</p>
 -->
-<table class='nobrd' width='100%' align='center'>";
+<table class='nobrd center' width='100%'>";
 
 print "
-	<div id='zframe1' align='center'> ".$msg['patientez']."
-		<div id='joke' style='visibility:\"visible\";'><img src='../../images/patience.gif'></div>
+	<div id='zframe1' class='center'> ".$msg['patientez']."
+		<div id='joke' style='visibility:\"visible\";'><img src='".get_url_icon('patience.gif')."'></div>
 	</div>";
 
 //

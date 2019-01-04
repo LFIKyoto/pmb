@@ -3,7 +3,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.29 2013-02-28 10:56:52 mbertin Exp $ -->
+$Id: manifest.xml,v 1.32 2016-09-21 15:53:37 dgoron Exp $ -->
 <manifest>
 	<name>pmbesOPACAnonymous</name>
 	<description>msg:pmbesOPACAnonymous_description</description>
@@ -806,6 +806,54 @@ $Id: manifest.xml,v 1.29 2013-02-28 10:56:52 mbertin Exp $ -->
 					</result>					
 				</result>
 			</outputs>
+		</method>
+		<method name="listFacets" comment="msg:listFacets_description" rights="" version="1.0" language_independant="true">
+			<requirements>
+		  		<requirement group="pmbesSearch" name="listFacets" version="1.0"/>
+			</requirements>
+			<inputs>
+				<description>msg:listFacets_inputs_description</description>
+				<param name="searchId" type="scalar" dataType="string" description="msg:listFacets_searchId"/>
+				<param name="fields" type="array" description="msg:listFacets_inputs_description_fields">
+					<param name="code_champ" type="scalar" dataType="integer" description="msg:listFacets_inputs_description_field_code_champ"/>
+					<param name="code_ss_champ" type="scalar" dataType="integer" description="msg:listFacets_inputs_description_field_code_ss_champ"/>
+				</param>
+				<param name="filters" type="array" description="msg:listFacets_inputs_description_filters">
+					<param name="code_champ" type="scalar" dataType="integer" description="msg:listFacets_inputs_description_filter_code_champ"/>
+					<param name="code_ss_champ" type="scalar" dataType="integer" description="msg:listFacets_inputs_description_filter_code_ss_champ"/>
+					<param name="value" type="scalar" dataType="string" description="msg:listFacets_inputs_description_filter_value"/>
+				</param>
+			</inputs>
+			<outputs>                                                                                            
+				<description>msg:listFacets_output_description</description>                        
+				<result type="array" name="results" description="msg:listFacets_results">                                                                                       
+					<result name="code_champ" type="scalar" dataType="integer" description="msg:listFacets_results_code_champ"/>
+					<result name="code_ss_champ" type="scalar" dataType="integer" description="msg:listFacets_results_code_ss_champ"/>
+					<result name="value" type="scalar" dataType="string" description="msg:listFacets_results_value"/>
+					<result name="count" type="scalar" dataType="integer" description="msg:listFacets_results_count"/>
+				</result>                                                                                    
+			</outputs> 
+		</method>
+		<method name="listRecordsFromFacets" comment="msg:listRecordsFromFacets_description" rights="" version="1.0" language_independant="true">
+			<requirements>
+		  		<requirement group="pmbesSearch" name="listRecordsFromFacets" version="1.0"/>
+			</requirements>
+			<inputs>
+				<description>msg:listRecordsFromFacets_inputs_description</description>
+				<param name="session_id" type="scalar" dataType="string"/>
+				<param name="searchId" type="scalar" dataType="string" description="msg:listRecordsFromFacets_searchId"/>
+				<param name="filters" type="array" description="msg:listRecordsFromFacets_inputs_description_filters">
+					<param name="code_champ" type="scalar" dataType="integer" description="msg:listRecordsFromFacets_inputs_description_filter_code_champ"/>
+					<param name="code_ss_champ" type="scalar" dataType="integer" description="msg:listRecordsFromFacets_inputs_description_filter_code_ss_champ"/>
+					<param name="value" type="scalar" dataType="string" description="msg:listRecordsFromFacets_inputs_description_filter_value"/>
+				</param>
+			</inputs>
+			<outputs>                                                                                            
+				<description>msg:listRecordsFromFacets_output_description</description>                        
+				<result type="array" name="results" description="msg:listRecordsFromFacets_results">
+					<result name="noticeId"  type="scalar" dataType="integer" description="msg:listRecordsFromFacets_outputs_description_noticeId"/>
+				</result>                                                                                       
+			</outputs> 
 		</method>
 	</methods>
 </manifest>

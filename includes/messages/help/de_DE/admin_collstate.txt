@@ -1,4 +1,4 @@
-<h1>Administrating Collection state</h1>
+<h2>Administrating Collection state</h2>
 
 <p>Section <b>Administrating Collection state</b> allows to define application settings for the periodical collections.
 <ul>

@@ -2,16 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pclass.tpl.php,v 1.5 2009-05-16 11:19:55 dbellamy Exp $
+// $Id: pclass.tpl.php,v 1.8 2018-12-05 09:00:07 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 // templates pour la gestion des plans de classements 
 
+global $browser_pclassement;
+global $pclassement_form;
+
 //Template du browser
-$browser = "
+$browser_pclassement = "
 <div class='row'>
-	<h3>&nbsp;".$msg[pclassement_liste]."</h3>
+	<h3>&nbsp;".$msg['pclassement_liste']."</h3>
 </div>
 <br />
 <br />
@@ -23,7 +26,7 @@ $browser = "
 <br />
 <br />
 <div class='row'>
-	<input class='bouton' type='button' value='".$msg[pclassement_ajouter]."' onclick = \"document.location = '!!action!!' \" />
+	<input class='bouton' type='button' value='".$msg['pclassement_ajouter']."' onclick = \"document.location = '!!action!!' \" />
 </div>
 ";
 
@@ -35,7 +38,7 @@ $pclassement_form = "
 	{
 		if(document.getElementById('libelle').value.length == 0)
 			{
-				var msg = \"".$msg[pclassement_libelle_manquant]."\";
+				var msg = \"".$msg['pclassement_libelle_manquant']."\";
 				alert(msg);
 	           	document.forms['pclass'].elements['libelle'].focus();
 			return false;
@@ -44,7 +47,7 @@ $pclassement_form = "
 	}
 	
 function confirm_delete() {
-        result = confirm(\"".$msg[confirm_suppr]."\");
+        result = confirm(\"".$msg['confirm_suppr']."\");
         if(result)
             document.location='!!delete_url!!';
         else
@@ -70,7 +73,7 @@ function confirm_delete() {
 
 		<!-- langue defaut -->
 		<div class='row'>
-			<label class='etiquette' >".$msg[pclassement_type_doc_titre]."</label><label class='etiquette'></label>
+			<label class='etiquette' >".$msg['pclassement_type_doc_titre']."</label><label class='etiquette'></label>
 		</div>
 		<div class='row'>
 			!!type_doc!! 

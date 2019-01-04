@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: Typdoc.php,v 1.3 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: Typdoc.php,v 1.5 2017-10-05 11:02:10 jpermanne Exp $
 
 namespace Sabre\PMB;
 
@@ -13,25 +13,32 @@ class Typdoc extends Collection {
 	function __construct($name,$config) {
 		parent::__construct($config);
 		global $tdoc;
+		
 		if (!sizeof($tdoc)) $tdoc = new \marc_list('doctype');
+
 		$name = str_replace(" (T)","",$name);
 		foreach($tdoc->table as $key => $label){
-			if($name == $label){
+			if($name == static::format_typdoc($label)){
 				$this->typdoc = $key;
 				break;		
 			}
 		}
 		$this->type = "typdoc";
 	}
+	
+	protected static function format_typdoc($value) {
+		
+		$value = (str_replace('/','-',$value));
+		$value = convert_diacrit(strtolower($value));
+		$value = \encoding_normalize::utf8_normalize(str_replace('/', '-',$value));
+		
+		return $value;
+	} 
 
 	function getName() {
-		global $tdoc,$charset;
+		global $tdoc;
 		if (!sizeof($tdoc)) $tdoc = new \marc_list('doctype');
-		if($charset != "utf-8"){
-			return utf8_encode($tdoc->table[$this->typdoc]." (T)");
-		}else{
-			return $tdoc->table[$this->typdoc]." (T)";
-		}
+		return $this->format_name($tdoc->table[$this->typdoc]." (T)");
 	}
 	
 	function getNotices(){

@@ -2,51 +2,54 @@
 // +-------------------------------------------------+
 // | 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesTasks.class.php,v 1.13.2.1 2015-09-24 09:12:21 dgoron Exp $
+// $Id: pmbesTasks.class.php,v 1.20 2018-12-28 10:10:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/external_services.class.php");
 
 class pmbesTasks extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 		
-	function timeoutTasks() {
+	public function timeoutTasks() {
 		global $dbh;
-
-		$requete = "select id_tache, param, start_at FROM taches, planificateur 
-			WHERE num_planificateur=id_planificateur AND id_process <> 0";
-
+		$requete = "select id_tache, param, start_at, num_type_tache FROM taches
+				JOIN planificateur ON num_planificateur=id_planificateur 
+			WHERE id_process <> 0 and commande <> 6";
 		$resultat=pmb_mysql_query($requete, $dbh);
-		while ($row = pmb_mysql_fetch_object($resultat)) {
-			$params=unserialize($row->param);
-			foreach ($params as $index=>$param) {
-				if (($index == "timeout") && ($param != "")) {
-					// 6 = FAIL - Sera mis à l'échec à l'écoute de la tâche
-					$requete_check_timeout = "update taches set commande=6 
-						where DATE_ADD('".$row->start_at."', INTERVAL ".($param)." MINUTE) <= CURRENT_TIMESTAMP 
-						and id_tache=".$row->id_tache;
-					
-					pmb_mysql_query($requete_check_timeout, $dbh);
+		if(pmb_mysql_num_rows($resultat)) {
+			while ($row = pmb_mysql_fetch_object($resultat)) {
+				$params=unserialize($row->param);
+				if(isset($params['timeout']) && $params['timeout']) {
+					$query = "select count(*) as nb from taches
+							where DATE_ADD('".$row->start_at."', INTERVAL ".($params['timeout'])." MINUTE) <= CURRENT_TIMESTAMP
+							and id_tache=".$row->id_tache;
+					$result = pmb_mysql_query($query);
+					if($result && pmb_mysql_result($result, 0, 'nb')) {
+						scheduler_log::add_content('scheduler_'.scheduler_tasks::get_catalog_element($row->num_type_tache, 'NAME').'_task_'.$row->id_tache.'.log', 'Timeout of task exceeded');
+						// 6 = FAIL - Sera mis à l'échec à l'écoute de la tâche
+						$requete_check_timeout = "update taches set commande=6
+							where id_tache=".$row->id_tache;
+						pmb_mysql_query($requete_check_timeout, $dbh);
+					}
 				}
 			}
 		}
+		return array("response" => "OK");
 	}
 	
-	function getOS() {
+	public function getOS() {
 		if (stripos($_SERVER['SERVER_SOFTWARE'], "win")!==false || stripos(PHP_OS, "win")!==false )
 		  $os = "Windows";
 		elseif (stripos($_SERVER['SERVER_SOFTWARE'], "mac")!==false || stripos(PHP_OS, "mac")!==false || stripos($_SERVER['SERVER_SOFTWARE'], "ppc")!==false || stripos(PHP_OS, "ppc")!==false )
@@ -72,16 +75,14 @@ class pmbesTasks extends external_services_api_class {
 	}
 	
 	/*Vérifie les processus actifs*/
-	function checkTasks() {
-		global $dbh,$base_path,$include_path,$class_path,$javascript_path,$lang;
+	public function checkTasks() {
 		global $charset;
-		global $PMBusernom,$PMBuserprenom,$PMBuseremail;
 		
 		//Récupération de l'OS pour la vérification des processus
 		$os = $this->getOS();
 		
 		$sql = "SELECT id_tache, start_at, id_process FROM taches WHERE id_process <> 0";
-		$res = pmb_mysql_query($sql,$dbh);
+		$res = pmb_mysql_query($sql);
 		if ($res && pmb_mysql_num_rows($res)) {
 			while ($row = pmb_mysql_fetch_assoc($res)) {
 				if ($os == "Linux") {
@@ -96,48 +97,16 @@ class pmbesTasks extends external_services_api_class {
 				$output=array();
 	        	exec($command,$output);
 	        	if (!isset($output[1])) {
+	        		$scheduler_task = new scheduler_task($row["id_tache"]);
 	        		// 5 = STOPPED
-	        		$sql_stop_task = "update taches set status=5, "; 
-	        		if ($row['start_at'] == '0000-00-00 00:00:00') $sql_stop_task .= "start_at=CURRENT_TIMESTAMP, ";
-	        		$sql_stop_task .= "end_at=CURRENT_TIMESTAMP, id_process=0, commande=0 where id_tache=".$row["id_tache"];
-	        		pmb_mysql_query($sql_stop_task);
+	        		$scheduler_task->send_command(5);
 	        		//En fonction du paramétrage de la tâche...
 	        		//Replanifier / Envoi de mail
-	        		$query = "select num_type_tache, libelle_tache, param, num_planificateur, indicat_progress from planificateur join taches on id_planificateur=num_planificateur where id_tache=".$row["id_tache"];
-	        		$result = pmb_mysql_query($query);
-	        		if ($result && pmb_mysql_num_rows($result)) {
-	        			$task_info = pmb_mysql_fetch_object($result);
-	        			$params = unserialize($task_info->param);
-	        			if ($params["alert_mail_on_failure"] != "") {
-	        				$params_alert_mail = explode(",",$params["alert_mail_on_failure"]);
-	        				if ($params_alert_mail[0]) {
-	        					$mails = explode(";",$params_alert_mail[1]);
-	        					if(preg_match("#.*@.*#",$PMBuseremail)) {
-		        					if (count($mails)) {
-		        						//Allons chercher les messages
-		        						if (file_exists("$include_path/messages/".$lang.".xml")) {
-		        							//Allons chercher les messages
-		        							require_once("$class_path/XMLlist.class.php");
-		        							$messages = new XMLlist("$include_path/messages/".$lang.".xml", 0);
-		        							$messages->analyser();
-		        							$msg = $messages->table;
-		        						
-			        						$objet = $msg["task_alert_user_mail_obj"];
-			        						$corps = str_replace("!!task_name!!",$task_info->libelle_tache,$msg["task_alert_user_mail_corps"]) ;
-			        						$corps = str_replace("!!percent!!",$task_info->indicat_progress,$corps) ;
-			        						foreach ($mails as $mail) {
-			        							if(preg_match("#.*@.*#",$mail)) {
-			        								@mailpmb("", $mail, $objet, $corps, $PMBusernom." ".$PMBuserprenom, $PMBuseremail, "Content-Type: text/plain; charset=\"$charset\"", '', '', 0, '');
-			        							}
-			        						}
-		        						}
-		        					}
-	        					}
-	        				}
-	        			}
-	        			if ($params["restart_on_failure"]) {
-							$this->createNewTask($row["id_tache"],$task_info->num_type_tache,$task_info->num_planificateur);
-	        			}
+	        		if($scheduler_task->is_param_active('alert_mail_on_failure')) {
+	        			$scheduler_task->send_mail();
+	        		}
+	        		if($scheduler_task->is_param_active('restart_on_failure')) {
+	        			$this->createNewTask($scheduler_task->get_id_tache(),$scheduler_task->get_num_type_tache(),$scheduler_task->get_num_planificateur());
 	        		}
 	        	}
 			}
@@ -145,7 +114,7 @@ class pmbesTasks extends external_services_api_class {
 	}
 		
 	/*Vérifie si une ou plusieurs tâches doivent être exécutées et lance celles-ci*/
-	function runTasks($connectors_out_source_id) {
+	public function runTasks($connectors_out_source_id) {
 		global $dbh;
 		global $base_path;
 		global $pmb_path_php,$pmb_psexec_cmd;
@@ -192,7 +161,7 @@ class pmbesTasks extends external_services_api_class {
 	
 	/*Retourne la liste des tâches réalisées et planifiées
 	 */
-	function listTasksPlanned() {
+	public function listTasksPlanned() {
 		global $dbh;
 
 		$result = array();
@@ -219,7 +188,7 @@ class pmbesTasks extends external_services_api_class {
 	}
 	
 	/*Retourne les types de tâches*/
-	function listTypesTasks() {
+	public function listTypesTasks() {
 		global $dbh;
 
 		$result = array();
@@ -230,7 +199,7 @@ class pmbesTasks extends external_services_api_class {
 			$filename = "../admin/planificateur/catalog.xml";
 		}
 		$xml=file_get_contents($filename);
-		$param=_parser_text_no_function_($xml,"CATALOG");
+		$param=_parser_text_no_function_($xml,"CATALOG",$filename);
 		
 		foreach ($param["ACTION"] as $anitem) {
 			$t=array();
@@ -244,7 +213,7 @@ class pmbesTasks extends external_services_api_class {
 	
 	/*Retourne les informations concernant une tâche planifiée
 	 */
-	function getInfoTaskPlanned($planificateur_id, $active="") {
+	public function getInfoTaskPlanned($planificateur_id, $active="") {
 		global $dbh;
 
 		$result = array();
@@ -280,7 +249,7 @@ class pmbesTasks extends external_services_api_class {
 		return $result;
 	}
 	
-	function createNewTask($id_tache, $id_type_tache, $id_planificateur) {
+	public function createNewTask($id_tache, $id_type_tache, $id_planificateur) {
 		global $base_path;
 	
 		if (!$id_tache)
@@ -292,16 +261,11 @@ class pmbesTasks extends external_services_api_class {
 			$filename = $base_path."/admin/planificateur/catalog.xml";
 		}
 		$xml=file_get_contents($filename);
-		$param=_parser_text_no_function_($xml,"CATALOG");
+		$param=_parser_text_no_function_($xml,"CATALOG",$filename);
 		
-		foreach ($param["ACTION"] as $anitem) {
-			if($id_type_tache == $anitem["ID"]) {
-				require_once($base_path."/admin/planificateur/".$anitem["NAME"]."/".$anitem["NAME"].".class.php");
-				$obj_type = new $anitem["NAME"]($id_tache);
-				$obj_type->calcul_execution($id_planificateur);
-				$obj_type->insertOfTask($id_planificateur);
-			}
-		}
+		$scheduler_planning = new scheduler_planning($id_planificateur);
+		$scheduler_planning->calcul_execution();
+		$scheduler_planning->insertOfTask();
 	}
 
 	/**
@@ -310,7 +274,7 @@ class pmbesTasks extends external_services_api_class {
 	 * @param $id_planificateur 
 	 * @param $activation (0=false, 1=true)
 	 */
-	function changeStatut($id_planificateur,$activation='') {
+	public function changeStatut($id_planificateur,$activation='') {
 		global $dbh;
 		
 		if (!$id_planificateur)

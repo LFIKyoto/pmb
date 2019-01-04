@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_metadatas_datasource_metadatas_generic.class.php,v 1.4 2015-01-13 09:05:24 arenou Exp $
+// $Id: cms_module_metadatas_datasource_metadatas_generic.class.php,v 1.9 2017-11-28 15:33:39 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -22,8 +22,9 @@ class cms_module_metadatas_datasource_metadatas_generic extends cms_module_commo
 		$this->parameters['selector'] = $selector_choice;
 		$metadatas_list = $this->get_metas_list();
 		foreach ($metadatas_list as $key_metadata_list=>$metadata_list) {
+			$this->parameters[$this->get_form_value_name($key_metadata_list."_active")] = stripslashes($this->get_value_from_form($key_metadata_list."_active"));
 			foreach ($metadata_list["items"] as $key=>$metadata) {
-				$this->parameters[$this->get_form_value_name($key_metadata_list."_".$key)] = $this->get_value_from_form($key_metadata_list."_".$key);
+				$this->parameters[$this->get_form_value_name($key_metadata_list."_".$key)] = stripslashes($this->get_value_from_form($key_metadata_list."_".$key));
 			}
 		}
 		return parent::save_form();
@@ -142,6 +143,11 @@ class cms_module_metadatas_datasource_metadatas_generic extends cms_module_commo
 		return $html;
 	}
 	
+	protected function _get_display_toggle($key_metadata_list) {
+		return "<input type='checkbox' id='".$this->get_form_value_name($key_metadata_list."_active")."' name='".$this->get_form_value_name($key_metadata_list."_active")."' class='switch' value='1' ".(!isset($this->parameters[$this->get_form_value_name($key_metadata_list."_active")]) || $this->parameters[$this->get_form_value_name($key_metadata_list."_active")] ? "checked='checked'" : "")." />
+			<label for='".$this->get_form_value_name($key_metadata_list."_active")."'>".$this->format_text($this->msg['cms_module_metadatas_datasource_metadatas_generic_active'])."</label>";
+	}
+	
 	public function get_form(){
 		$form = parent::get_form();
 		
@@ -152,7 +158,11 @@ class cms_module_metadatas_datasource_metadatas_generic extends cms_module_commo
 				</div>";
 		$metadatas_format_form = "";
 		foreach ($metadatas_list as $key_metadata_list=>$metadata_list) {
-			$metadata_format_form = "";
+			$metadata_format_form = "
+				<div class='row'>
+					".$this->_get_display_toggle($key_metadata_list)."
+				</div>
+				<div class='row'>&nbsp;</div>";
 			foreach ($metadata_list["items"] as $key=>$metadata) {
 				if (!isset($this->parameters[$this->get_form_value_name($key_metadata_list."_".$key)])) {
 					$active_template_content = $metadata["default_template"]; 
@@ -193,15 +203,18 @@ class cms_module_metadatas_datasource_metadatas_generic extends cms_module_commo
 		$datas = array();
 		$metadatas_list = $this->get_metas_list();
 		foreach ($metadatas_list as $i=>$metadata_list) {
-			$data = array();
-			$data['replace'] = $metadata_list['replace'] != "" ? true : false;
-			$data["group_template"] = $metadata_list["group_template"];
-			foreach ($metadata_list["items"] as $key=>$metadata) {
-				if (isset($this->parameters[$this->get_form_value_name($i."_".$key)])) {
-					$data["metadatas"][$metadata_list["prefix"].$metadata_list["separator"].$key] = $this->parameters[$this->get_form_value_name($i."_".$key)];
+			// !isset <=> activé par défaut pour ne pas avoir à éditer tous les cadres
+			if (!isset($this->parameters[$this->get_form_value_name($i."_active")]) || $this->parameters[$this->get_form_value_name($i."_active")]) {
+				$data = array();
+				$data['replace'] = (isset($metadata_list['replace']) && $metadata_list['replace'] != "" ? true : false);
+				$data["group_template"] = $metadata_list["group_template"];
+				foreach ($metadata_list["items"] as $key=>$metadata) {
+					if (isset($this->parameters[$this->get_form_value_name($i."_".$key)])) {
+						$data["metadatas"][$metadata_list["prefix"].$metadata_list["separator"].$key] = $this->parameters[$this->get_form_value_name($i."_".$key)];
+					}
 				}
+				$datas[] = $data;
 			}
-			$datas[] = $data;
 		}
 		return $datas;
 	}
@@ -212,20 +225,20 @@ class cms_module_metadatas_datasource_metadatas_generic extends cms_module_commo
 	public function get_datas(){
 		$datas = array();
 
-		if(!$datas['id']){
+		if(!isset($datas['id']) || !$datas['id']){
 			$datas['id'] = $this->get_module_dom_id();
 		}
-		if(!$datas['get_vars']){
+		if(!isset($datas['get_vars']) || !$datas['get_vars']){
 			$datas['get_vars'] = $_GET;
 		}
-		if(!$datas['post_vars']){
+		if(!isset($datas['post_vars']) || !$datas['post_vars']){
 			$datas['post_vars'] = $_POST;
 		}
-		if(!$datas['session_vars']){
-			$datas['session_vars']['view'] = $_SESSION['opac_view'];
+		if(!isset($datas['session_vars']) || !$datas['session_vars']){
+			$datas['session_vars']['view'] = (isset($_SESSION['opac_view']) ? $_SESSION['opac_view'] : '');
 			$datas['session_vars']['id_empr'] = $_SESSION['id_empr_session'];
 		}
-		if(!$datas['env_vars']){
+		if(!isset($datas['env_vars']) || !$datas['env_vars']){
 			$datas['env_vars']['script'] = basename($_SERVER['SCRIPT_NAME']);
 			$datas['env_vars']['request'] = basename($_SERVER['REQUEST_URI']);
 		}
@@ -252,7 +265,7 @@ class cms_module_metadatas_datasource_metadatas_generic extends cms_module_commo
 // 						<a href='".$base_path."/cms.php?categ=manage&sub=".str_replace("cms_module_","",$this->module_class_name)."&quoi=datasources&elem=".$this->class_name."&cms_template=".$key."&action=get_form'>".$this->format_text($infos['name'])."</a>
 // 						&nbsp;
 // 						<a href='".$base_path."/cms.php?categ=manage&sub=".str_replace("cms_module_","",$this->module_class_name)."&quoi=datasources&elem=".$this->class_name."&cms_template_delete=".$key."&action=save_form' onclick='return confirm(\"".$this->format_text($this->msg['cms_module_metadatas_datasource_django_delete_template'])."\")'>
-// 							<img src='".$base_path."/images/trash.png' alt='".$this->format_text($this->msg['cms_module_root_delete'])."' title='".$this->format_text($this->msg['cms_module_root_delete'])."'/>
+// 							<img src='".get_url_icon('trash.png')."' alt='".$this->format_text($this->msg['cms_module_root_delete'])."' title='".$this->format_text($this->msg['cms_module_root_delete'])."'/>
 // 						</a>
 // 					</p>";
 // 			}

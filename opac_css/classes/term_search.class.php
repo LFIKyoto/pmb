@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: term_search.class.php,v 1.27 2015-04-03 11:16:18 jpermanne Exp $
+// $Id: term_search.class.php,v 1.35 2018-08-24 08:44:59 plmrozowski Exp $
 //
 // Gestion de la recherche des termes dans le thésaurus
 
@@ -11,55 +11,55 @@ if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($base_path."/classes/category.class.php");
 require_once($class_path."/analyse_query.class.php");
 require_once($class_path."/thesaurus.class.php");
+require_once($class_path."/categorie.class.php");
 
 class term_search {
-	var $id_thes = 0;				//Etendue de la recherche (identifiant thesaurus ou multi-thesaurus si 0)
-	var $thes;
-	var $search_term_name;			//Nom de la variable contenant le terme recherché dans les catégories
-	var $search_term_origin_name;	//Nom de la variable contenant le terme recherché saisi par l'utilisateur
-    var $search_term;				//Terme recherché dans les catégories
-	var $search_term_oigin;			//Terme recherché saisi par l'utilisateur
-    var $n_per_page;				//Nombre de résultats par page
-    var $base_query;				//Paramètres supplémentaires à passer dans l'url
-    var $url_for_term_show;			//Page à appeller pour l'affichage de la fiche du terme
-	var $url_for_term_search;		//Page à appeller pour l'affichage de la liste des termes correspondants à la recherche
-	var $offset;					//offset en fonction de la page courante
-	var $page;    					//Page courante (récupérée du formulaire)
-	var $n_total;					//Nombre de termes total correspondants à la recherche
-    var $keep_tilde;				//Affichage ou non des catégories cachées
-    var $order;						//Stockage de la clause select de calcul de pertinence
-    var $error_message;				//Erreur renvoyée par l'analyse de la chaine
-    var $where;						//Clause where après analyse de la chaine
-    var $aq;
-
-    
+	public $id_thes = 0;				//Etendue de la recherche (identifiant thesaurus ou multi-thesaurus si 0)
+	public $thes;
+	public $search_term_name;			//Nom de la variable contenant le terme recherché dans les catégories
+	public $search_term_origin_name;	//Nom de la variable contenant le terme recherché saisi par l'utilisateur
+    public $search_term;				//Terme recherché dans les catégories
+	public $search_term_oigin;			//Terme recherché saisi par l'utilisateur
+    public $n_per_page;				//Nombre de résultats par page
+    public $base_query;				//Paramètres supplémentaires à passer dans l'url
+    public $url_for_term_show;			//Page à appeller pour l'affichage de la fiche du terme
+	public $url_for_term_search;		//Page à appeller pour l'affichage de la liste des termes correspondants à la recherche
+	public $offset;					//offset en fonction de la page courante
+	public $page;    					//Page courante (récupérée du formulaire)
+	public $n_total;					//Nombre de termes total correspondants à la recherche
+    public $keep_tilde;				//Affichage ou non des catégories cachées
+    public $order;						//Stockage de la clause select de calcul de pertinence
+    public $error_message;				//Erreur renvoyée par l'analyse de la chaine
+    public $where;						//Clause where après analyse de la chaine
+    public $aq;
+	
     //Constructeur
-    function term_search($search_term_name,$search_term_origin_name,$n_per_page=200,$base_query,$url_for_term_show,$url_for_term_search,$keep_tilde=0,$id_thes=0) {
+    public function __construct($search_term_name,$search_term_origin_name,$n_per_page=200,$base_query,$url_for_term_show,$url_for_term_search,$keep_tilde=0,$id_thes=0) {
 
     	global $page;
     	
- 		//recuperation du thesaurus session 
-		  if(!$id_thes) {
-			 $id_thes = thesaurus::getSessionThesaurusId();
-		  } else {
-			 thesaurus::setSessionThesaurusId($id_thes);
-	   	}
-	   	
+		//recuperation du thesaurus session
+		if(!$id_thes) {
+			$id_thes = thesaurus::getSessionThesaurusId();
+		} else {
+			thesaurus::setSessionThesaurusId($id_thes);
+		}
+		
     	$this->search_term_name=$search_term_name;
     	$this->search_term_origin_name=$search_term_origin_name;
     	
-    	global $$search_term_name;
-    	global $$search_term_origin_name;
+    	global ${$search_term_name};
+    	global ${$search_term_origin_name};
     	
-    	$this->search_term=stripslashes($$search_term_name);
-    	$this->search_term_origin=stripslashes($$search_term_origin_name);
-     	$this->n_per_page=$n_per_page;
+    	$this->search_term=stripslashes(${$search_term_name});
+    	$this->search_term_origin=stripslashes(${$search_term_origin_name});
+		$this->n_per_page=$n_per_page;
     	$this->base_query=$base_query;
     	$this->url_for_term_show=$url_for_term_show;
     	$this->url_for_term_search=$url_for_term_search;
     	$this->keep_tilde=$keep_tilde;
- 
- 			$this->id_thes = $id_thes;		
+
+		$this->id_thes = $id_thes;		
    		if ($id_thes != -1) $this->thes= new thesaurus($id_thes);
     	
     	if ($page=="") $page=0;
@@ -69,34 +69,35 @@ class term_search {
     }
     
     //Affichage du navigateur de pages
-    function page_navigator() {
+    public function page_navigator() {
     	$last_page=ceil($this->n_total/$this->n_per_page)-1;
     	
     	$url_page=$this->url_for_term_search."?".$this->search_term_name."=".rawurlencode($this->search_term)."&".$this->search_term_origin_name."=".rawurlencode($this->search_term_origin);
-    	if ($this->offset!=0) $navig.="<a href=\"$url_page&page=0"."&nbresultterme=".$this->n_total."\"><img src='./images/first.gif' border='0'/></a>"; else $navig.="<img src='./images/first-grey.gif' border='0'/>";
-		if ($this->offset!=0) $navig.="<a href=\"$url_page&page=".($this->page-1)."&nbresultterme=".$this->n_total."&".$this->base_query."\"><img src='./images/prev.gif' border='0'/></a>"; else $navig.="<img src='./images/prev-grey.gif' border='0'/>";
+    	if ($this->offset!=0) $navig.="<a href=\"$url_page&page=0"."&nbresultterme=".$this->n_total." title='".$msg["first_page"]."'\"><img src='".get_url_icon('first.png')."' alt='".$msg["first_page"]."'  style='border:0px'/></a>"; else $navig.="<img src='".get_url_icon('first-grey.png')."' alt='' style='border:0px'/>";
+		if ($this->offset!=0) $navig.="<a href=\"$url_page&page=".($this->page-1)."&nbresultterme=".$this->n_total."&".$this->base_query." title='".$msg["prec_page"]."'\"><img src='".get_url_icon('prev.png')."' alt='".$msg["prec_page"]."' style='border:0px'/></a>"; else $navig.="<img src='".get_url_icon('prev-grey.png')."' alt='' style='border:0px'/>";
 		$navig.=" (".($this->offset+1)."-".min($this->offset+$this->n_per_page,$this->n_total).")/".$this->n_total." ";
-		if (($this->offset+$this->n_per_page+1)<$this->n_total) $navig.="<a href=\"$url_page&page=".($this->page+1)."&nbresultterme=".$this->n_total."&".$this->base_query."\"><img src='./images/next.gif' border='0'/></a>"; else $navig.="<img src='./images/next-grey.gif' border=0/>";
-		if (($this->offset+$this->n_per_page+1)<$this->n_total) $navig.="<a href=\"$url_page&page=$last_page"."&nbresultterme=".$this->n_total."\"><img src='./images/last.gif' border='0'/></a>"; else $navig.="<img src='./images/last-grey.gif' border='0'/>";
+		if (($this->offset+$this->n_per_page+1)<$this->n_total) $navig.="<a href=\"$url_page&page=".($this->page+1)."&nbresultterme=".$this->n_total."&".$this->base_query." title='".$msg["next_page"]."'\"><img src='".get_url_icon('next.png')."' alt='".$msg["next_page"]."' style='border:0px'/></a>"; else $navig.="<img src='".get_url_icon('next-grey.png')."' alt='' style='border:0px'/>";
+		if (($this->offset+$this->n_per_page+1)<$this->n_total) $navig.="<a href=\"$url_page&page=$last_page"."&nbresultterme=".$this->n_total." title='".$msg["last_page"]."'\"><img src='".get_url_icon('last.png')."' alt='".$msg["last_page"]."' style='border:0px'/></a>"; else $navig.="<img src='".get_url_icon('last-grey.png')."' alt='' style='border:0px'/>";
 		return $navig;	
     }
     
     //Récupération du terme where pour la recherche
-    function get_where_term() {
+    public function get_where_term() {
 		global $msg,$charset;
 		global $opac_stemming_active;
     	//Si il y a déjà un terme where calculé alors renvoi tout de suite
     	if ($this->where) return $this->where;
     	
     	//Si il y a un terme saisi alors close where
+    	$where_term = '';
 		if ($this->search_term) {
 			$this->error_message="";
 			$aq=new analyse_query($this->search_term,0,0,1,0,$opac_stemming_active);
 			if (!$aq->error) {
 				$members=$aq->get_query_members("categories","libelle_categorie","index_categorie","num_noeud");
-				$where_term="and ".$members["where"];
-				$this->order=$members["select"];
-				$this->where=$where_term;
+				$where_term = "and ".$members["where"];
+				$this->order = $members["select"];
+				$this->where = $where_term;
 				$this->aq = $aq;
 			} else {
 				$this->error_message=sprintf($msg["searcher_syntax_error_desc"],$aq->current_car,$aq->input_html,$aq->error_message);
@@ -106,8 +107,7 @@ class term_search {
     }
     
     //Récupération du nombre de termes correspondants à la recherche
-    function get_term_count() {
-    
+    public function get_term_count() {
     	global $lang;
     	global $opac_thesaurus;
     	global $dbh;    	
@@ -130,7 +130,6 @@ class term_search {
 				$q.= "and catdef.num_thesaurus = '".$this->id_thes."' ";
 				$q.= "and catdef.langue = '".$this->thes->langue_defaut."' "; 
 				$q.= "and catdef.libelle_categorie not like '~%' ";
-				
 				$r = pmb_mysql_query($q);
 				$this->n_total=pmb_mysql_result($r, 0, 0);
 			
@@ -149,10 +148,8 @@ class term_search {
 				$q1.= "and catdef.langue = '".$this->thes->langue_defaut."' "; 
 				$q1.= "and catdef.libelle_categorie not like '~%' ";
 				$r1 = pmb_mysql_query($q1, $dbh);
-	
 				$q2 = "select count(distinct categ_libelle) from cattmp ";
 				$r2 = pmb_mysql_query($q2);
-	
 				$this->n_total=pmb_mysql_result($r2, 0, 0);
 			}
 			
@@ -182,14 +179,14 @@ class term_search {
     
     
     //Affichage de la liste des résultats
-    function show_list_of_terms() {
+    public function show_list_of_terms() {
     	global $charset;
     	global $msg;
     	global $lang;
     	global $dbh;
     	global $opac_thesaurus;
      	global $nbresultterme;
-     	
+		
     	//Si il y a eu erreur lors de la première analyse...
     	if ($this->error_message) {
     		return $this->error_message;
@@ -220,6 +217,7 @@ class term_search {
 				$requete.= "libelle_categorie as categ_libelle, ";
 				$requete.= "catdef.index_categorie as indexcat ";
 				if ($where_term) $requete.= ", ".$members_catdef["select"]." as pert ";
+				$requete.= ", catdef.comment_public ";
 				$requete.= "from categories as catdef "; 
 				$requete.= "where 1 ";
 				if ($where_term) $requete.= "and ".$members_catdef["where"]." ";
@@ -238,6 +236,7 @@ class term_search {
 				$requete.= "if (catlg.num_noeud is null, catdef.libelle_categorie, catlg.libelle_categorie ) as categ_libelle, ";
 				$requete.= "if (catlg.num_noeud is null, catdef.index_categorie , catlg.index_categorie ) as indexcat ";
 				if ($where_term) $requete.= ", if (catlg.num_noeud is null, ".$members_catdef["select"].", ".$members_catlg["select"].") as pert ";
+				$requete.= ", catdef.comment_public ";
 				$requete.= "from categories as catdef "; 
 				$requete.= "left join categories as catlg on catdef.num_noeud = catlg.num_noeud and catlg.langue = '".$lang."' ";
 				$requete.= "where 1 ";
@@ -262,6 +261,7 @@ class term_search {
 			$requete.= "if (catlg.num_noeud is null, catdef.libelle_categorie , catlg.libelle_categorie ) as categ_libelle, ";
 			$requete.= "if (catlg.num_noeud is null, catdef.index_categorie , catlg.index_categorie ) as indexcat ";
 			if ($where_term) $requete.= ", if (catlg.num_noeud is null, ".$members_catdef["select"].", ".$members_catlg["select"].") as pert ";
+			$requete.= ", catdef.comment_public ";
 			$requete.= "from thesaurus ";
 			$requete.= "left join categories as catdef on id_thesaurus=catdef.num_thesaurus and catdef.langue=thesaurus.langue_defaut ";
 			$requete.= "left join categories as catlg on catdef.num_noeud=catlg.num_noeud and catlg.langue = '".$lang."' ";
@@ -283,7 +283,7 @@ class term_search {
 		}
 		
 		$res="<b>";
-		if ($this->search_term!="") $res.=$msg["term_search_found_term"]."<i>".htmlentities($this->search_term_origin,ENT_QUOTES,$charset); else $res.="<i>".$msg["term_search_all_terms"];
+		if ($this->search_term!='') $res.=$msg['term_search_found_term'].'<i>'.htmlentities($this->search_term_origin,ENT_QUOTES,$charset); else $res.='<i>'.$msg['term_search_all_terms'];
 		$res.="</i></b>\n";
 
 		//Navigateur de page
@@ -291,29 +291,33 @@ class term_search {
 		else $res.="<br /><br /><span style='text-align:right;'><i>".$msg['term_no_results']."</span><br /><br />";
 
 		//Affichage des termes trouvés
-		$class="colonne2";
+		$class='colonne2';
 		while ($r=pmb_mysql_fetch_object($resultat)) {
 			$show=1;
 			//S'il n'y a qu'un seul résultat, vérification que ce n'est pas un terme masqué
-			if (($r->nb==1)&&(!$this->keep_tilde)) {
+			if (($r->nb == 1) && (!$this->keep_tilde)) {
 				$t_test = new category($resultat->categ_id);
 				if (($t_test->is_under_tilde)&&(!$t_test->voir_id)) $show=0;
 			}
 			if ($show) {
+				// Si il y a présence d'un commentaire affichage du layer
+				$result_com = categorie::zoom_categ($r->categ_id, $r->comment_public);
 				$res.="<div class='".$class."'>";
 				if ($r->nb>1) $nbre_termes ='('.$r->nb.') ';
 				else  $nbre_termes ='' ;
-				$res.=$nbre_termes."<a href=\"".$this->url_for_term_show.'?term='.rawurlencode($r->categ_libelle).'&id_thes='.$r->num_thesaurus.'&'.$this->base_query."\" target=\"term_show\">";
-	      		if ($this->id_thes == -1) {	 //le nom du thesaurus n'est pas affiché si 1 seul thesaurus
-					$res.= '['.htmlentities(addslashes(thesaurus::getLibelle($r->num_thesaurus)),ENT_QUOTES, $charset).'] ';
+				$args = 'term='.rawurlencode($r->categ_libelle).'&id_thes='.$r->num_thesaurus.'&'.$this->base_query;
+				$res.= $nbre_termes."<a href=\"".$this->url_for_term_show.'?'.$args."\" data-evt-args=\"".$args."\" target=\"term_show\" ".$result_com['java_com'].">";
+				if ($this->id_thes == -1) {	 //le nom du thesaurus n'est pas affiché si 1 seul thesaurus
+					$thesaurus = new thesaurus($r->num_thesaurus);
+					$res.= '['.htmlentities(addslashes($thesaurus->getLibelle()),ENT_QUOTES, $charset).'] ';
 				}
-	        	$res.= htmlentities($r->categ_libelle,ENT_QUOTES,$charset)."</a><br />\n";
-				$res.="</div>";
-				if ($class=="colonne2") $class="colonne_suite"; 
-				else $class="colonne2";
+				$res.= htmlentities($r->categ_libelle,ENT_QUOTES,$charset)."</a>".$result_com['zoom']."<br />\n";
+				$res.='</div>';
+				if ($class=='colonne2') $class='colonne_suite';
+				else $class='colonne2';
 			}
 		}
-		if ($class="colonne_suite") $res.="<div class=\"colonne_suite\"></div>\n";
+		if ($class=='colonne_suite') $res.="<div class=\"colonne_suite\"></div>\n";
 		return $res;
     }
 }

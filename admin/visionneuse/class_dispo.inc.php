@@ -2,10 +2,16 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: class_dispo.inc.php,v 1.3 2013-03-25 10:32:40 mbertin Exp $
+// $Id: class_dispo.inc.php,v 1.6 2017-11-30 16:11:43 wlair Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+if (!isset($quoi)) {
+	$quoi = '';
+}
+if (!isset($vue)) {
+	$vue = 'desc';
+}
 if($quoi == ""){
 	//si $quoi non défini on prend le premier de la liste...
 	foreach($class_param->classMimetypes as $class => $mimetypes){
@@ -15,9 +21,9 @@ if($quoi == ""){
 }
 
 $submenu="
-<table width:auto;>
+<table class='vmenu-container'>
 	<tr>
-		<td style='width:20%' valign='top'>
+		<td style='vertical-align:top;width:20%'>
 			<div class='vmenu'>";
 foreach($class_param->classMimetypes as $class => $mimetypes){
 	$link ="categ=visionneuse&sub=class&quoi=$class";
@@ -36,12 +42,12 @@ $submenu.="
 $submenu.="		
 			<div class='hmenu'>
 				<span".($vue == "desc" ? " class=\"selected\"":"").">
-					<a title='desc' href='./admin.php?categ=visionneuse&sub=class&quoi=$quoi&vue=desc'>
+					<a title='desc' href='./admin.php?categ=visionneuse&sub=class&quoi=".$quoi."&vue=desc'>
 						".htmlspecialchars($msg["planificateur_task_desc"],ENT_QUOTES,$charset)."
 					</a>
 				</span>
 				<span".($vue == "param" ? " class=\"selected\"":"").">
-					<a title='param' href='./admin.php?categ=visionneuse&sub=class&quoi=$quoi&vue=param'>
+					<a title='param' href='./admin.php?categ=visionneuse&sub=class&quoi=".$quoi."&vue=param'>
 						".htmlspecialchars($msg["33"],ENT_QUOTES,$charset)."
 					</a>
 				</span>

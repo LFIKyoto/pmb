@@ -7,7 +7,7 @@
 	<!-- Type de l'entrée -->
 	<input type="xml" rootelement="*" noticeelement="notice"/>
 	<!-- Type de sortie -->
-	<output importable="no" type="custom" script="output_rtf.inc.php" suffix="rtf" mimetype="application/rtf">
+	<output importable="no" type="custom" script="word_output.class.php" suffix="rtf" mimetype="application/rtf">
 		<rtftemplate>list.rtf</rtftemplate>
 	</output>
 	<step type="xmltransform">
@@ -17,8 +17,8 @@
 		<noticeelement>notices</noticeelement>
 	</step>
 	<step type="custom">
-		<script>to_rtf.inc.php</script>
-		<callback>convert_middle</callback>
+		<script>word.class.php</script>
+		<callback>convert_data</callback>
 		<rtftemplate>list.rtf</rtftemplate>
 	</step>
 </params>

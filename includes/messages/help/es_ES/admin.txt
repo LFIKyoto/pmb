@@ -1,8 +1,8 @@
-<h1>M&oacute;dulo de administraci&oacute;n</h1>
+<h2>M&oacute;dulo de administraci&oacute;n</h2>
 <p>Acaba de acceder al m&oacute;dulo de administraci&oacute;n de PMB. Las acciones llevadas a cabo en este m&oacute;dulo afectar&aacute;n de manera sustancial 
 al buen funcionamiento del programa. Por lo tanto, le sugerimos utilice estas funciones con el mayor cuidado.  Antes de cualquier acci&oacute;n,
  tenga en cuenta el impacto que tendr&aacute; en sus datos.  Si tiene cualquier duda, env&iacute;enos un mensaje 
- a <a href="mailto:pmb.user@sigb.net"><b>pmb.user@sigb.net</b></a>. Le atenderemos con gusto.</p>
+ a <a href="https://pmb.community/">https://pmb.community</a>. Le atenderemos con gusto.</p>
 
 <h2>Ejemplares, registros</h2>
 <p>El apartado ejemplares y registros permite definir los par&aacute;metros de la aplicaci&oacute;n respecto a los pr&eacute;stamos y las estad&iacute;sticas 

@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ItemsStore.js,v 1.26 2015-03-19 09:46:59 dgoron Exp $
+// $Id: ItemsStore.js,v 1.28 2016-11-15 14:19:21 jpermanne Exp $
 
 
 define(["dojo/_base/declare", "apps/pmb/Store", "dojo/topic", "dojo/_base/lang","dojo/request/xhr","dojo/_base/json"], function(declare, PMBStore, topic, lang, xhr, json){
@@ -57,6 +57,9 @@ define(["dojo/_base/declare", "apps/pmb/Store", "dojo/topic", "dojo/_base/lang",
 				  break;
 			  case "itemRestore":
 				  this.itemRestore(evtArgs.itemId);
+				  break;
+			  case "itemReIndex":
+				  this.itemReIndex(evtArgs.itemId,evtArgs.data);
 				  break;
 			  }
 		  },
@@ -131,6 +134,11 @@ define(["dojo/_base/declare", "apps/pmb/Store", "dojo/topic", "dojo/_base/lang",
 				  }).then(lang.hitch(this, this.successfullyCreated));
 			  }
 		  },
+		  itemDeleteCreatedNotice:function(noticeId) {
+			  if(noticeId) {
+				  xhr(this.url+'&action=itemDeleteCreatedNotice&notice_id='+noticeId);
+			  }
+		  },
 		  itemSeeArticle:function(itemId) {
 			  if(itemId) {
 			  }
@@ -142,6 +150,21 @@ define(["dojo/_base/declare", "apps/pmb/Store", "dojo/topic", "dojo/_base/lang",
 						method: "post",
 						data: "data="+json.toJson(data)
 				  }).then(lang.hitch(this, this.itemIndexAck));
+			  }
+		  },
+		  itemReIndex:function(itemId,data) {
+			  if(itemId) {
+				  xhr(this.url+'&action=itemIndex&item_id='+itemId, {
+						handleAs:'json',
+						method: "post",
+						data: "data="+json.toJson(data)
+				  }).then(					  
+						  lang.hitch( this,function(itemId,response){
+								  		this.setItem(response);
+								  		topic.publish('itemsStore','redrawItem',{item:this.query({id:itemId})[0]})
+						  },itemId
+						  )
+				);
 			  }
 		  },
 		  itemIndexAck:function(response) {
@@ -190,15 +213,24 @@ define(["dojo/_base/declare", "apps/pmb/Store", "dojo/topic", "dojo/_base/lang",
 				  });
 				  var item = this.query({id:response.item.id})[0];
 				  switch(response.action){
-				  case "itemCreateNotice":
-					  item.record_link = response.record.link;
-					  break;
-				  case "itemCreateArticle":
-					  item.article_link = response.article.link;
-					  break;
-				  case "itemCreateSection":
-					  item.section_link = response.section.link;
-					  break;
+					  case "itemCreateNotice":
+						  if (response.record.is_doublon == 1) {
+							  if (confirm(this.getMsg("dsi_js_item_action_create_record_doublon_confirm"))) {
+								  item.record_link = response.record.link;
+							  } else {
+								  response.item.num_notice=0;
+								  this.itemDeleteCreatedNotice(response.record.id);
+							  }
+						  } else {
+							  item.record_link = response.record.link;
+						  }
+						  break;
+					  case "itemCreateArticle":
+						  item.article_link = response.article.link;
+						  break;
+					  case "itemCreateSection":
+						  item.section_link = response.section.link;
+						  break;
 				  }
 				  topic.publish("itemsStore", "itemModified", {itemUIRefresh:true, itemId:response.item.id});
 			  }
@@ -246,6 +278,9 @@ define(["dojo/_base/declare", "apps/pmb/Store", "dojo/topic", "dojo/_base/lang",
 						handleAs:'json',
 				  }).then(lang.hitch(this, this.setItem));
 			  }
+		  },
+		  getMsg: function(key){			 
+			  return pmbDojo.messages.getMessage("dsi",key);
 		  },
 	  });
 });

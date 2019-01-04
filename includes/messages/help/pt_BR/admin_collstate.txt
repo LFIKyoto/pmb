@@ -1,4 +1,4 @@
-<h1>Gerenciamento do estado da cole&ccedil;&atilde;o</h1>
+<h2>Gerenciamento do estado da cole&ccedil;&atilde;o</h2>
 
 <p>A se&ccedil;&atilde;o <b>Gerenciamento do estado da cole&ccedil;&atilde;o</b> permite definir configura&ccedil;&otilde;es para cole&ccedil;&otilde;es de peri&oacute;dicos.
 <ul>

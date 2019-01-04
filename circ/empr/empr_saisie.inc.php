@@ -2,12 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr_saisie.inc.php,v 1.13 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: empr_saisie.inc.php,v 1.15 2018-11-28 15:40:50 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // update d'un emprunteur
 echo window_title($database_window_title.$msg[42]);
+
+if (!isset($form_cb)) $form_cb = '';
 
 //Hook externe
 if (!$id) {
@@ -26,7 +28,7 @@ if(!$id) {
 	$nbr_lignes = pmb_mysql_num_rows($res);
 
 	if(!$nbr_lignes) {
-		show_empr_form("./circ.php?categ=empr_update","./circ.php?categ=empr_create",$dbh, '', $form_cb);
+		show_empr_form("./circ.php?categ=empr_update","./circ.php?categ=empr_create",$dbh, 0, $form_cb);
 	} else {
 		// numéro déjà utilisé
 		error_message($msg[44], $msg[45], 1, $ret_adr='./circ.php?categ=empr_create');

@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: func_agroparistech.inc.php,v 1.2.10.1 2015-09-02 09:32:05 mbertin Exp $
+// $Id: func_agroparistech.inc.php,v 1.4 2016-06-22 06:51:22 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -21,7 +21,7 @@ function z_import_new_notice_suite() {
 	global $base_path;
 	require_once($base_path."/admin/import/func_agroparistech.inc.php");
 	import_new_notice_suite();
-}
+} 
 
 function traite_info_subst(&$obj){
 
@@ -31,6 +31,31 @@ function traite_info_subst(&$obj){
 			$tmp_buffer = $obj->serie_200[0]['i'];
 			$obj->serie = $obj->titles[0];
 			$obj->titles[0] = $tmp_buffer;
+		}
+	} elseif($obj->bibliographic_level=="s"){ //Pour les périos, on bascule les infos de série en complément de titre
+		$record = new iso2709_record ($obj->notice, AUTO_UPDATE,$obj->notice_type);
+		$_200_e_complement=array();
+		$_200_h=$record->get_subfield_array("200","h");
+		if (count($_200_h)) {
+			foreach ($_200_h as $value) {
+				if (trim($value)) {
+					$_200_e_complement[] = $value;
+				}
+			}
+		}
+		$_200_i=$record->get_subfield_array("200","i");
+		if (count($_200_i)) {
+			foreach ($_200_i as $value) {
+				if (trim($value)) {
+					$_200_e_complement[] = $value;
+				}
+			}
+		}
+		if (count($_200_e_complement)) {
+			$obj->serie_200 = array();
+			$obj->serie = "";
+			$obj->nbr_in_serie = "";
+			$obj->titles[3] .= implode('. ',$_200_e_complement);
 		}
 	}
 }

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesDSI.class.php,v 1.3 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: pmbesDSI.class.php,v 1.6 2018-06-14 10:17:43 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,22 +10,20 @@ require_once($class_path."/external_services.class.php");
 require_once($class_path."/bannette.class.php");
 
 class pmbesDSI extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	
-	function listBannettesAuto($filtre_search="", $id_classement=0) {
+	public function listBannettesAuto($filtre_search="", $id_classement=0) {
 		global $dbh;
 		
 		if (SESSrights & DSI_AUTH) {
@@ -66,7 +64,7 @@ class pmbesDSI extends external_services_api_class {
 		}
 	} 
 	
-	function diffuseBannettesFullAuto($lst_bannettes) {
+	public function diffuseBannettesFullAuto($lst_bannettes) {
 		global $msg,$dsi_auto,$PMBusername, $pmb_bdd_version;
 			
 		if (SESSrights & DSI_AUTH) {
@@ -93,10 +91,11 @@ class pmbesDSI extends external_services_api_class {
 		}
 	}
 	
-	function diffuseBannetteFullAuto($id_bannette) {
+	public function diffuseBannetteFullAuto($id_bannette) {
 		global $msg,$dsi_auto,$PMBusername, $pmb_bdd_version;
 					
 		if (SESSrights & DSI_AUTH) {
+			$action_diff_aff="";
 			if (!$dsi_auto) {
 				$action_diff_aff .="DSI Auto pas activée sur base $database (user=$PMBusername) Version noyau: $pmb_bdd_version ";
 	//			throw new Exception("DSI Auto pas activée sur base $database (user=$PMBusername) Version noyau: $pmb_bdd_version ");
@@ -124,7 +123,7 @@ class pmbesDSI extends external_services_api_class {
 		}
 	}
 	
-	function flushBannette($id_bannette) {
+	public function flushBannette($id_bannette) {
 		global $msg,$PMBusername;
 		
 		if (SESSrights & DSI_AUTH) {
@@ -132,7 +131,7 @@ class pmbesDSI extends external_services_api_class {
 				throw new Exception("Missing parameter: id_bannette");
 				
 			$bannette = new bannette($id_bannette) ;
-			$action_diff_aff .= $msg['dsi_dif_vidage'].": ".$bannette->nom_bannette."<br />" ; 
+			$action_diff_aff = $msg['dsi_dif_vidage'].": ".$bannette->nom_bannette."<br />" ; 
 			$action_diff_aff .= $bannette->vider();
 		
 			return $action_diff_aff;
@@ -141,7 +140,7 @@ class pmbesDSI extends external_services_api_class {
 		}
 	}
 	
-	function fillBannette($id_bannette) {
+	public function fillBannette($id_bannette) {
 		global $msg, $PMBusername;
 		
 		if (SESSrights & DSI_AUTH) {
@@ -149,7 +148,7 @@ class pmbesDSI extends external_services_api_class {
 				throw new Exception("Missing parameter: id_bannette");
 				
 			$bannette = new bannette($id_bannette) ;
-			$action_diff_aff .= $msg['dsi_dif_remplissage'].": ".$bannette->nom_bannette ; 
+			$action_diff_aff = $msg['dsi_dif_remplissage'].": ".$bannette->nom_bannette ; 
 			$action_diff_aff .= $bannette->remplir();
 	
 			return $action_diff_aff;
@@ -158,7 +157,7 @@ class pmbesDSI extends external_services_api_class {
 		}
 	}
 	
-	function diffuseBannette($id_bannette) {
+	public function diffuseBannette($id_bannette) {
 		global $msg, $PMBusername;
 		
 		if (SESSrights & DSI_AUTH) {
@@ -166,7 +165,7 @@ class pmbesDSI extends external_services_api_class {
 				throw new Exception("Missing parameter: id_bannette");
 				
 			$bannette = new bannette($id_bannette) ;
-			$action_diff_aff .= "<strong>".$msg['dsi_dif_diffusion'].": ".$bannette->nom_bannette."</strong><br />" ; 
+			$action_diff_aff = "<strong>".$msg['dsi_dif_diffusion'].": ".$bannette->nom_bannette."</strong><br />" ; 
 			$action_diff_aff .= $bannette->diffuser();
 	
 			return $action_diff_aff;
@@ -175,7 +174,7 @@ class pmbesDSI extends external_services_api_class {
 		}
 	}
 	
-	function exportBannette($id_bannette) {
+	public function exportBannette($id_bannette) {
 		global $msg, $PMBusername;
 		global $ourPDF;
 		
@@ -184,9 +183,7 @@ class pmbesDSI extends external_services_api_class {
 				throw new Exception("Missing parameter: id_bannette");
 	
 			$bannette = new bannette($id_bannette) ;
-	//		$action_diff_aff .= "<strong>".$msg['dsi_dif_export'].": ".$bannette->nom_bannette."</strong><br />" ; 
-	//		$ourPDF = $bannette->construit_contenu_PDF();
-			$resultat_html = $bannette->construit_contenu_HTML();
+			$resultat_html = $bannette->get_display_export();
 			$ourPDF = new PDF_HTML();
 			$ourPDF->AddPage();
 			$ourPDF->SetFont('Arial');

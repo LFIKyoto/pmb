@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sudoc.class.php,v 1.3 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: sudoc.class.php,v 1.6 2017-01-30 14:09:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,86 +15,44 @@ require_once($include_path."/parser.inc.php");
 
 class sudoc extends connector {
 	//Variables internes pour la progression de la récupération des notices
-	var $del_old;				//Supression ou non des notices dejà existantes
+	public $del_old;				//Supression ou non des notices dejà existantes
 	
-	var $profile;				//Profil Amazon
-	var $match;					//Tableau des critères UNIMARC / AMAZON
-	var $current_site;			//Site courant du profile (n°)
-	var $searchindexes;			//Liste des indexes de recherche possibles pour le site
-	var $current_searchindex;	//Numéro de l'index de recherche de la classe
-	var $match_index;			//Type de recherche (power ou simple)
-	var $types;					//Types de documents pour la conversino des notices
+	public $profile;				//Profil Amazon
+	public $match;					//Tableau des critères UNIMARC / AMAZON
+	public $current_site;			//Site courant du profile (n°)
+	public $searchindexes;			//Liste des indexes de recherche possibles pour le site
+	public $current_searchindex;	//Numéro de l'index de recherche de la classe
+	public $match_index;			//Type de recherche (power ou simple)
+	public $types;					//Types de documents pour la conversino des notices
 	
 	//Résultat de la synchro
-	var $error;					//Y-a-t-il eu une erreur	
-	var $error_message;			//Si oui, message correspondant
+	public $error;					//Y-a-t-il eu une erreur	
+	public $error_message;			//Si oui, message correspondant
 	
-    function sudoc($connector_path="") {
-    	parent::connector($connector_path);
+    public function __construct($connector_path="") {
+    	parent::__construct($connector_path);
     }
     
-    function get_id() {
+    public function get_id() {
     	return "sudoc";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 2;
 	}
-    
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-    
-    function get_libelle($message) {
-    	if (substr($message,0,4)=="msg:") return $this->msg[substr($message,4)]; else return $message;
-    }
-    
-    function source_get_property_form($source_id) {
-		return "";
-    }
-    
-    function make_serialized_source_properties($source_id) {
-    	$this->sources[$source_id]["PARAMETERS"]=serialize(array());
-	}
-	
-	//Récupération  des proriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
-		$this->timeout=5;
-		$this->repository=2;
-		$this->retry=3;
-		$this->ttl=1800;
-		$this->parameters="";
-	}
-	
- //Formulaire des propriétés générales
-	function get_property_form() {
-		
-		return "";
-	}
-    
-    function make_serialized_properties() {
-		//Mise en forme des paramètres à partir de variables globales (mettre le résultat dans $this->parameters)
-		$keys = array();
-    	$this->parameters = serialize($keys);
-	}
 
-	function enrichment_is_allow(){
+	public function enrichment_is_allow(){
 		return true;
 	}
 	
-	function getEnrichmentHeader(){
+	public function getEnrichmentHeader(){
 		$header= array();
 		$header[]= "<!-- Script d'enrichissement pour le Sudoc-->";
 		return $header;
 	}
 	
-	function getTypeOfEnrichment($source_id){
+	public function getTypeOfEnrichment($source_id){
 		$type['type'] = array(
 			array(
 				'code' => "sudoc",
@@ -105,14 +63,14 @@ class sudoc extends connector {
 		return $type;
 	}
 	
-	function build_error(){		
+	public function build_error(){		
 		$enrichment= array();
 		$enrichment['sudoc']['content'] = $this->msg['sudoc_no_infos'];
 		$enrichment['source_label']= $this->msg['sudoc_enrichment_source'];
 		return $enrichment;
 	}
 	
-	function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array()){
+	public function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array()){
 		global $charset;
 		
 		$enrichment= array();
@@ -124,7 +82,7 @@ class sudoc extends connector {
 		$values = $mes_pp->values;
 		foreach ( $values as $field_id => $vals ) {
 			if($mes_pp->t_fields[$field_id]['TYPE'] == "resolve"){
-				$field_options = _parser_text_no_function_("<?xml version='1.0' encoding='".$charset."'?>\n".$mes_pp->t_fields[$field_id]['OPTIONS'], "OPTIONS");
+				$field_options = $mes_pp->t_fields[$field_id]['OPTIONS'][0];
 				foreach($field_options['RESOLVE'] as $resolve){
 					if(strtoupper($resolve['LABEL'])=="SUDOC"){
 						$infos = explode('|',$vals[0]);

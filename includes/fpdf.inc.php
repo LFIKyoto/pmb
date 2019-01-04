@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fpdf.inc.php,v 1.81.2.1 2015-11-03 13:04:34 jpermanne Exp $
+// $Id: fpdf.inc.php,v 1.92 2018-07-26 13:57:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -22,52 +22,64 @@ function biblio_info($x, $y, $short=0) {
 	global $pmb_pdf_font;
 
 	if ($short==1) {
-			/*
-		if ($biblio_adr1 != "") $biblio_name = $biblio_name."\n";
-		if ($biblio_adr2 != "") $biblio_adr1 = $biblio_adr1."\n";
-		if ($biblio_cp != "") $biblio_cp = $biblio_cp." ";
-		if (($biblio_cp != "") || ($biblio_town != "")) $biblio_adr2 = $biblio_adr2."\n";
-		if ($biblio_state != "") $biblio_state = $biblio_state." ";
-		if (($biblio_state != "") || ($biblio_country != "")) $biblio_town = $biblio_town."\n";
-		if ($biblio_phone != "") $biblio_phone = $biblio_phone."\n ";
-		if ($biblio_email != "") $biblio_email = "@ : ".$biblio_email."\n ";
-		if ($biblio_website != "") $biblio_website = "Web : ".$biblio_website."\n ";
-		if (($biblio_phone != "") || ($biblio_email != "")) $biblio_country = $biblio_country."\n";
-		$txt_biblio_info_short = $biblio_adr1.$biblio_adr2.$biblio_cp.$biblio_town.$biblio_state.$biblio_country.$biblio_phone.$biblio_email.$biblio_website ;
-		*/
 		$ourPDF->SetXY ($x,$y);
 		$ourPDF->setFont($pmb_pdf_font, 'B', 16);
 		$ourPDF->multiCell(120, 8, $biblio_name, 0, 'L', 0);
-		/*
-		$ourPDF->SetXY ($x,$y+20);
-		$ourPDF->setFont('Arial', '', 10);
-		$ourPDF->multiCell(0, 8, $txt_biblio_info_short, 0, 'L', 0);
-		*/
 	} else {
 		// afin de ne générer qu'une fois l'adr et compagnie
 		if (!$txt_biblio_info) {
-			if ($biblio_adr1 != "") $biblio_name = $biblio_name."\n";
-			if ($biblio_adr2 != "") $biblio_adr1 = $biblio_adr1."\n";
-			if ($biblio_cp != "") $biblio_cp = $biblio_cp." ";
-			if (($biblio_cp != "") || ($biblio_town != "")) $biblio_adr2 = $biblio_adr2."\n";
-			if ($biblio_state != "") $biblio_state = $biblio_state." ";
-			if (($biblio_state != "") || ($biblio_country != "")) $biblio_town = $biblio_town."\n";
-			if ($biblio_phone != "") $biblio_phone = $msg['lettre_titre_tel'].$biblio_phone."\n ";
-			if ($biblio_email != "") $biblio_email = "@ : ".$biblio_email."\n ";
-			if ($biblio_website != "") $biblio_website = "Web : ".$biblio_website."\n ";
-			if (($biblio_phone != "") || ($biblio_email != "")) $biblio_country = $biblio_country."\n";
-			$txt_biblio_info = $biblio_adr1.$biblio_adr2.$biblio_cp.$biblio_town.$biblio_state.$biblio_country.$biblio_phone.$biblio_email.$biblio_website ;
+			
+			$txt_biblio_info = trim($biblio_adr1);
+			if ($biblio_adr2 != "") {
+				if(trim($txt_biblio_info)){
+					$txt_biblio_info .= "\n";
+				}
+				$txt_biblio_info .= $biblio_adr2;
+			}
+			if (($biblio_cp != "") || ($biblio_town != "")) {
+				if(trim($txt_biblio_info)){
+					$txt_biblio_info .= "\n";
+				}
+				$txt_biblio_info .= trim($biblio_cp." ".$biblio_town);
+			}
+			if (($biblio_state != "") || ($biblio_country != "")) {
+				if(trim($txt_biblio_info)){
+					$txt_biblio_info .= "\n";
+				}
+				$txt_biblio_info .= trim($biblio_state." ".$biblio_country);
+			}
+			if ($biblio_phone != "") {
+				if(trim($txt_biblio_info)){
+					$txt_biblio_info .= "\n";
+				}
+				$txt_biblio_info .= $msg['lettre_titre_tel'].$biblio_phone;
+			}
+			if ($biblio_email != "") {
+				if(trim($txt_biblio_info)){
+					$txt_biblio_info .= "\n";
+				}
+				$txt_biblio_info .= "@ : ".$biblio_email;
+			}
+			if ($biblio_website != "") {
+				if(trim($txt_biblio_info)){
+					$txt_biblio_info .= "\n";
+				}
+				$txt_biblio_info .= "Web : ".$biblio_website;
+			}
 		}
 
-		if ($biblio_logo) $ourPDF->Image($base_path."/images/".$biblio_logo, $x, $y ) ;
+		if ($biblio_logo) {
+			$ourPDF->Image($base_path."/images/".$biblio_logo, $x, $y );
+			$ourPDF->SetXY ($x,$y+50);
+		} else {
+			$ourPDF->SetXY ($x,$y+10);
+		}
+		$ourPDF->setFont($pmb_pdf_font, '', 9);
+		$ourPDF->multiCell(0, 5, $txt_biblio_info, 0, 'L', 0);
 
 		$ourPDF->SetXY ($x+60,$y);
 		$ourPDF->setFont($pmb_pdf_font, 'B', 16);
 		$ourPDF->multiCell(90, 8, $biblio_name, 0, 'C', 0);
-
-		$ourPDF->SetXY ($x,$y+50);
-		$ourPDF->setFont($pmb_pdf_font, '', 9);
-		$ourPDF->multiCell(0, 5, $txt_biblio_info, 0, 'L', 0);
 	}
 } /* fin biblio_info */
 
@@ -107,16 +119,19 @@ function lecteur_info($id_empr, $x, $y, $link, $short=0, $droite=0,$use_param_bl
 	if (($empr->empr_cp != "") || ($empr->empr_ville != "")) $empr->empr_adr2 = $empr->empr_adr2."\n" ;
 	$adr = $empr->empr_adr1.$empr->empr_adr2.$empr->empr_cp." ".$empr->empr_ville ;
 	if ($empr->empr_pays != "") $adr = $adr."\n".$empr->empr_pays ;
+	$tel = "";
 	if ($empr->empr_tel1 != "") {
-		$tel = $tel.$msg['fpdf_tel1']." ".$empr->empr_tel1." " ;
-		}
+		$tel = $msg['fpdf_tel']." ".$empr->empr_tel1." " ;
+	}
 	if ($empr->empr_tel2 != "") {
 		$tel = $tel.$msg['fpdf_tel2']." ".$empr->empr_tel2;
-		}
+	}
 	if ($empr->empr_mail != "") {
 		if ($tel) $tel = $tel."\n" ;
 		$mail = $msg['fpdf_email']." ".$empr->empr_mail;
-		}
+	} else {
+		$mail = "";
+	}
 
 	$ourPDF->SetXY ($x,$y+8);
 	$ourPDF->setFont($pmb_pdf_font, '', 12);
@@ -136,6 +151,7 @@ function lecteur_adresse($id_empr, $x, $y, $link, $no_cb=false, $show_nomgroupe=
 	global $ourPDF;
 	global $msg;
 	global $pmb_pdf_font;
+	global $pmb_afficher_numero_lecteur_lettres;
 
 	//Vérifions si l'on demande un positionnement absolu
 	if ($use_param_bloc_adresse) {
@@ -169,7 +185,7 @@ function lecteur_adresse($id_empr, $x, $y, $link, $no_cb=false, $show_nomgroupe=
 		if ($temp_id_empr!=$id_empr) {
 			$requete="select concat(empr_prenom,' ',empr_nom) from empr where id_empr=$id_empr"; //Idée de Quentin
 			$res=pmb_mysql_query($requete);
-			$concerne="\n".sprintf($msg["adresse_retard_concerne"],pmb_mysql_result($res,0,0))."\n";
+			$concerne=sprintf($msg["adresse_retard_concerne"],pmb_mysql_result($res,0,0))."\n";
 		}
 	}
 
@@ -179,21 +195,22 @@ function lecteur_adresse($id_empr, $x, $y, $link, $no_cb=false, $show_nomgroupe=
 
 	$requete = "SELECT group_concat(libelle_groupe SEPARATOR ', ') as_all_groupes, 1 as rien from groupe join empr_groupe on groupe_id=id_groupe WHERE lettre_rappel_show_nomgroup=1 and empr_id='$id_empr' group by rien ";
 	$lib_all_groupes=pmb_sql_value($requete);
-	if ($lib_all_groupes) $lib_all_groupes="\n".$lib_all_groupes;
+	if ($lib_all_groupes) $lib_all_groupes=$lib_all_groupes."\n";
 
 	$ourPDF->SetXY ($x,$y);
-	$adr = $empr->empr_prenom." ".$empr->empr_nom."\n";
+	$adr = $empr->empr_prenom." ".$empr->empr_nom;
 	$ourPDF->setFont($pmb_pdf_font, '', 12);
+	if ($empr->empr_adr1 != "") $adr = $adr."\n";
 	if ($empr->empr_adr2 != "") $empr->empr_adr1 = $empr->empr_adr1."\n" ;
 	if (($empr->empr_cp != "") || ($empr->empr_ville != "")) $empr->empr_adr2 = $empr->empr_adr2."\n" ;
 	$adr.= $empr->empr_adr1.$empr->empr_adr2.$empr->empr_cp." ".$empr->empr_ville ;
 
 	if ($empr->empr_pays != "") $adr.="\n".$empr->empr_pays ;
 	if ($empr->empr_tel1 != "") {
-		$tel = "\n".$msg['fpdf_tel1']." ".$empr->empr_tel1;
+		$tel = "\n".$msg['fpdf_tel']." ".$empr->empr_tel1;
 	} elseif ($empr->empr_tel2 != "") {
 		$adr.="\n" ;
-		$tel = $tel.$msg['fpdf_tel2']." ".$empr->empr_tel2;
+		$tel = $msg['fpdf_tel2']." ".$empr->empr_tel2;
 	} else {
 		$tel = "" ;
 	}
@@ -206,12 +223,17 @@ function lecteur_adresse($id_empr, $x, $y, $link, $no_cb=false, $show_nomgroupe=
 
 	$ourPDF->SetDrawColor(255,255,255);
 	$ourPDF->SetFillColor(255,255,255);
-	$ourPDF->multiCell(100, 6, $adr, 0, 'L', true);
+	if($show_nomgroupe==false) {
+		$ourPDF->multiCell(100, 6, $adr, 0, 'L', true);
+	} else {
+		$ourPDF->multiCell(100, 6, $lib_all_groupes.$adr, 0, 'L', true);
+	}
 
-	if ($no_cb==false) {
+	if ($no_cb==false || $concerne !="") {
+		$no_cb_empr = $empr->empr_cb." ".$empr->empr_mail."\n";
 		$ourPDF->SetXY (($x_code ? $x_code : $x),($y_code ? $ourPDF->GetY()+$y_code :$ourPDF->GetY()));
 		$ourPDF->setFont($pmb_pdf_font, 'I', 10);
-		$ourPDF->multiCell(100, 6, $msg['fpdf_carte']." ".$empr->empr_cb." ".$empr->empr_mail. $lib_all_groupes.$concerne, 0, 'L', true);
+		$ourPDF->multiCell(100, 6, ($pmb_afficher_numero_lecteur_lettres ? $msg['fpdf_carte']." ".$no_cb_empr : "").$concerne, 0, 'L', true);
 	}
 } /* fin lecteur_adresse */
 
@@ -232,8 +254,8 @@ function groupe_adresse($id_groupe, $x, $y, $link, $no_cb=false) {
 	if ($groupe->resp_groupe) {
 		$y=$y+8;
 		lecteur_adresse($groupe->resp_groupe, $x, $y, $link, $no_cb || !$pmb_afficher_numero_lecteur_lettres) ;
-		}
-	} /* fin groupe_adresse */
+	}
+} /* fin groupe_adresse */
 
 function expl_info($cb_doc, $x, $y, $link, $short=0, $longmax=99999) {
 	global $ourPDF;
@@ -251,32 +273,16 @@ function expl_info($cb_doc, $x, $y, $link, $short=0, $longmax=99999) {
 	$expl = pmb_mysql_fetch_object($res);
 
 	$responsabilites = get_notice_authors(($expl->m_id+$expl->s_id)) ;
-	$as = array_search ("0", $responsabilites["responsabilites"]) ;
-	if ($as!== FALSE && $as!== NULL) {
-		$auteur_0 = $responsabilites["auteurs"][$as] ;
-		$auteur = new auteur($auteur_0["id"]);
-		$header_aut .= $auteur->isbd_entry;
-	} else {
-		$aut1_libelle=array();
-		$as = array_keys ($responsabilites["responsabilites"], "1" ) ;
-		for ($i = 0 ; $i < count($as) ; $i++) {
-			$indice = $as[$i] ;
-			$auteur_1 = $responsabilites["auteurs"][$indice] ;
-			$auteur = new auteur($auteur_1["id"]);
-			$aut1_libelle[]= $auteur->isbd_entry;
-		}
-		$header_aut .= implode (", ",$aut1_libelle) ;
-	}
+	$header_aut= gen_authors_header($responsabilites);
 	$header_aut ? $auteur=" / ".$header_aut : $auteur="";
 
 	// récupération du titre de série
 	if ($expl->tparent_id && $expl->m_id) {
 		$parent = new serie($expl->tparent_id);
 		$tit_serie = $parent->name;
-		if($expl->tnvol)
+		if($expl->tnvol) {
 			$tit_serie .= ', '.$expl->tnvol;
-	}
-	if($tit_serie) {
+		}
 		$expl->tit = $tit_serie.'. '.$expl->tit;
 	}
 
@@ -350,7 +356,7 @@ function not_bull_info_resa ($id_empr, $notice, $bulletin, $x, $y, $link, $longm
 			if ($as!== FALSE && $as!== NULL) {
 				$auteur_0 = $responsabilites["auteurs"][$as] ;
 				$auteur = new auteur($auteur_0["id"]);
-				$header_aut .= $auteur->isbd_entry;
+				$header_aut = $auteur->get_isbd();
 			} else {
 				$aut1_libelle=array();
 				$as = array_keys ($responsabilites["responsabilites"], "1" ) ;
@@ -358,9 +364,9 @@ function not_bull_info_resa ($id_empr, $notice, $bulletin, $x, $y, $link, $longm
 					$indice = $as[$i] ;
 					$auteur_1 = $responsabilites["auteurs"][$indice] ;
 					$auteur = new auteur($auteur_1["id"]);
-					$aut1_libelle[]= $auteur->isbd_entry;
+					$aut1_libelle[]= $auteur->get_isbd();
 				}
-				$header_aut .= implode (", ",$aut1_libelle) ;
+				$header_aut = implode (", ",$aut1_libelle) ;
 			}
 			$header_aut ? $auteur=" / ".$header_aut : $auteur="";
 
@@ -390,6 +396,7 @@ function expl_retard($cb_doc, $x, $y, $largeur, $retrait, $link) {
 	global $msg;
 	global $pmb_gestion_financiere, $pmb_gestion_amende;
 	global $pmb_pdf_font;
+	global $mailretard_hide_fine;
 
 	$valeur=0;
 	$dates_resa_sql = " date_format(pret_date, '".$msg["format_date"]."') as aff_pret_date, date_format(pret_retour, '".$msg["format_date"]."') as aff_pret_retour " ;
@@ -405,30 +412,29 @@ function expl_retard($cb_doc, $x, $y, $largeur, $retrait, $link) {
 	if ($expl->tparent_id && $expl->m_id) {
 		$parent = new serie($expl->tparent_id);
 		$tit_serie = $parent->name;
-		if($expl->tnvol)
+		if($expl->tnvol) {
 			$tit_serie .= ', '.$expl->tnvol;
-	}
-	if($tit_serie) {
+		}
 		$expl->tit = $tit_serie.'. '.$expl->tit;
 	}
 	$libelle=$expl->tdoc_libelle;
 	$responsabilites=get_notice_authors($expl->m_id) ;
-	//print_r($responsabilites);
+
 	$as = array_keys ($responsabilites["responsabilites"], "0" ) ;
+	$aut1_libelle = array();
 	for ($i = 0 ; $i < count($as) ; $i++) {
 		$indice = $as[$i] ;
 		$auteur_1 = $responsabilites["auteurs"][$indice] ;
 		$auteur = new auteur($auteur_1["id"]);
-		$aut1_libelle[]= $auteur->isbd_entry;
+		$aut1_libelle[]= $auteur->get_isbd();
 
 	}
-	if ($aut1_libelle) {
+	if (count($aut1_libelle)) {
 		$auteurs_liste = implode ("; ",$aut1_libelle) ;
 		if ($auteurs_liste) $libelle .= ' / '. $auteurs_liste;
 
 	}
 	$libelle=$expl->tit." (".$libelle.")" ;
-	//substr($libelle,0,50);
 
 	$ourPDF->SetXY ($x,$y);
 	$ourPDF->setFont($pmb_pdf_font, 'BU', 10);
@@ -436,7 +442,7 @@ function expl_retard($cb_doc, $x, $y, $largeur, $retrait, $link) {
 	while( $ourPDF->GetStringWidth($libelle) > 178) {
 		$libelle=substr($libelle,0,count($libelle)-2);
 	}
-	//print $ourPDF->GetStringWidth($libelle);
+
 	$ourPDF->multiCell($largeur, 8, $libelle, 0, 'L', 0);
 
 	$ourPDF->SetXY ($x+$retrait,$y+4);
@@ -458,7 +464,7 @@ function expl_retard($cb_doc, $x, $y, $largeur, $retrait, $link) {
 	if (($pmb_gestion_financiere)&&($pmb_gestion_amende)) {
 		$amende=new amende($expl->pret_idempr);
 		$amd=$amende->get_amende($expl->expl_id);
-		if ($amd["valeur"]) {
+		if ($amd["valeur"] && !$mailretard_hide_fine) {
 			$ourPDF->SetXY (($x+$retrait+120),$y+8);
 			$ourPDF->multiCell(($largeur - $retrait - 120), 8, sprintf($msg["relance_lettre_retard_amende"],comptes::format_simple($amd["valeur"])), 0, 'R', 0);
 			$valeur=$amd["valeur"];
@@ -513,6 +519,7 @@ function lettre_retard_par_lecteur($id_empr) {
 	global $marge_page_gauche, $marge_page_droite, $largeur_page, $fdp, $after_list, $limite_after_list, $before_list, $madame_monsieur, $nb_1ere_page, $nb_par_page, $taille_bloc_expl, $debut_expl_1er_page, $debut_expl_page, $before_recouvrement,$after_recouvrement;
 	global $pmb_afficher_numero_lecteur_lettres;
 	global $pmb_hide_biblioinfo_letter;
+	global $mailretard_hide_fine;
 
 	//Pour les amendes
 	$valeur=0;
@@ -536,6 +543,7 @@ function lettre_retard_par_lecteur($id_empr) {
 	$ourPDF->multiCell(($largeur_page - $marge_page_droite - $marge_page_gauche), 5, $before_list, 0, 'J', 0);
 
 	//Calcul des frais de relance
+	$frais_relance = 0;
 	if (($pmb_gestion_financiere)&&($pmb_gestion_amende)) {
 		$id_compte=comptes::get_compte_id_from_empr($id_empr,2);
 		if ($id_compte) {
@@ -556,7 +564,9 @@ function lettre_retard_par_lecteur($id_empr) {
 			}
 			$valeur+=expl_retard ($data['expl_cb'],$marge_page_gauche,$pos_page,($largeur_page - $marge_page_droite - $marge_page_gauche), 10,$dbh);
 		}
-		print_amendes($valeur,$frais_relance);
+		if (($valeur || $frais_relance) && (!$mailretard_hide_fine)) {
+			print_amendes($valeur,$frais_relance);
+		}
 
 		$ourPDF->SetX ($marge_page_gauche);
 		$ourPDF->setFont($pmb_pdf_font, '', 10);
@@ -577,7 +587,7 @@ function lettre_retard_par_lecteur($id_empr) {
 					$liste_r[] = $data->expl_cb;
 				}
 			}
-		}	
+		}
 
 		if($liste_r) {
 			// Il y a des retard simple: on affiche d'abord les retards simples
@@ -600,7 +610,9 @@ function lettre_retard_par_lecteur($id_empr) {
 					$valeur+=expl_retard ($cb_expl,$marge_page_gauche,$pos_page,($largeur_page - $marge_page_droite - $marge_page_gauche), 10,$dbh);
 				}
 			}
-			print_amendes($valeur,$frais_relance);
+			if (($valeur || $frais_relance) && (!$mailretard_hide_fine)) {
+				print_amendes($valeur,$frais_relance);
+			}
 
 		} else {
 			// il n'y a que des retards niveau 3
@@ -613,7 +625,9 @@ function lettre_retard_par_lecteur($id_empr) {
 					$valeur+=expl_retard ($cb_expl,$marge_page_gauche,$pos_page,($largeur_page - $marge_page_droite - $marge_page_gauche), 10,$dbh);
 				}
 			}
-			print_amendes($valeur,$frais_relance);
+			if (($valeur || $frais_relance) && (!$mailretard_hide_fine)) {
+				print_amendes($valeur,$frais_relance);
+			}
 			$ourPDF->setFont($pmb_pdf_font, '', 10);
 			$ourPDF->multiCell(($largeur_page - $marge_page_droite - $marge_page_gauche), 5, $after_recouvrement, 0, 'J', 0);
 		}
@@ -628,7 +642,7 @@ function lettre_retard_par_lecteur($id_empr) {
 	} else {
 		$pos_after_list = $pos_page+$taille_bloc_expl;
 	}
-	$ourPDF->SetXY ($marge_page_gauche,($pos_after_list));
+	$ourPDF->SetXY ($marge_page_gauche,$pos_after_list);
 
 	$ourPDF->setFont($pmb_pdf_font, '', 10);
 	$ourPDF->multiCell(($largeur_page - $marge_page_droite - $marge_page_gauche), 5, $after_list, 0, 'J', 0);
@@ -708,7 +722,7 @@ function lettre_retard_par_groupe($id_groupe, $lecteurs_ids=array()) {
 		if ($datacount->retard==0) $nbok=$datacount->combien;
 		if ($datacount->retard==1) $nbretard=$datacount->combien;
 	}
-	$retard_sur_total = str_replace ("!!nb_retards!!",$nbretard*1,$msg[n_retards_sur_total_de]);
+	$retard_sur_total = str_replace ("!!nb_retards!!",$nbretard*1,$msg['n_retards_sur_total_de']);
 	$retard_sur_total = str_replace ("!!nb_total!!",($nbretard+$nbok)*1,$retard_sur_total);
 	$ourPDF->multiCell(($largeur_page - $marge_page_droite - $marge_page_gauche), 8, $retard_sur_total, 0, 'L', 0);
 
@@ -765,7 +779,7 @@ function lettre_resa_par_lecteur($id_empr) {
 
 	$ourPDF->addPage();
 	if(!$pmb_hide_biblioinfo_letter) biblio_info( $marge_page_gauche, 10) ;
-	lecteur_adresse($id_empr, ($marge_page_gauche+90), 45, $dbh, !$pmb_afficher_numero_lecteur_lettres,false,true);
+	lecteur_adresse($id_empr, ($marge_page_gauche+90), 45, $dbh, !$pmb_afficher_numero_lecteur_lettres,true,true);
 
 	$rqt="select empr_nom, empr_prenom from empr where id_empr='".$id_empr."'";
 	$req=pmb_mysql_query($rqt) or die('Erreur SQL !<br />'.$rqt.'<br />'.pmb_mysql_error());
@@ -831,7 +845,7 @@ function lettre_resa_planning_par_lecteur($id_empr) {
 
 	$ourPDF->addPage();
 	if(!$pmb_hide_biblioinfo_letter) biblio_info( $marge_page_gauche, 10) ;
-	lecteur_adresse($id_empr, ($marge_page_gauche+90), 45, $dbh, !$pmb_afficher_numero_lecteur_lettres,false,true);
+	lecteur_adresse($id_empr, ($marge_page_gauche+90), 45, $dbh, !$pmb_afficher_numero_lecteur_lettres,true,true);
 
 	$rqt="select empr_nom, empr_prenom from empr where id_empr='".$id_empr."'";
 	$req=pmb_mysql_query($rqt) or die('Erreur SQL !<br />'.$rqt.'<br />'.pmb_mysql_error());
@@ -916,7 +930,7 @@ function notice_resa($id_resa_print, $x, $y, $largeur, $retrait, $link) {
 	if ($as!== FALSE && $as!== NULL) {
 		$auteur_0 = $responsabilites["auteurs"][$as] ;
 		$auteur = new auteur($auteur_0["id"]);
-		$header_aut .= $auteur->isbd_entry;
+		$header_aut = $auteur->get_isbd();
 	} else {
 			$aut1_libelle=array();
 			$as = array_keys ($responsabilites["responsabilites"], "1" ) ;
@@ -924,10 +938,10 @@ function notice_resa($id_resa_print, $x, $y, $largeur, $retrait, $link) {
 			$indice = $as[$i] ;
 			$auteur_1 = $responsabilites["auteurs"][$indice] ;
 			$auteur = new auteur($auteur_1["id"]);
-			$aut1_libelle[]= $auteur->isbd_entry;
+			$aut1_libelle[]= $auteur->get_isbd();
 		}
 
-		$header_aut .= implode (", ",$aut1_libelle) ;
+		$header_aut = implode (", ",$aut1_libelle) ;
 	}
 	$header_aut ? $auteur=" / ".$header_aut : $auteur="";
 
@@ -1007,22 +1021,7 @@ function notice_resa_planning($id_resa_print, $x, $y, $largeur, $retrait, $link)
 	$expl = pmb_mysql_fetch_object($res);
 
 	$responsabilites = get_notice_authors($expl->notice_id) ;
-	$as = array_search ("0", $responsabilites["responsabilites"]) ;
-	if ($as!== FALSE && $as!== NULL) {
-		$auteur_0 = $responsabilites["auteurs"][$as] ;
-		$auteur = new auteur($auteur_0["id"]);
-		$header_aut .= $auteur->isbd_entry;
-	} else {
-		$aut1_libelle=array();
-		$as = array_keys ($responsabilites["responsabilites"], "1" ) ;
-		for ($i = 0 ; $i < count($as) ; $i++) {
-			$indice = $as[$i] ;
-			$auteur_1 = $responsabilites["auteurs"][$indice] ;
-			$auteur = new auteur($auteur_1["id"]);
-			$aut1_libelle[]= $auteur->isbd_entry;
-		}
-		$header_aut .= implode (", ",$aut1_libelle) ;
-	}
+	$header_aut= gen_authors_header($responsabilites);
 	$header_aut ? $auteur=" / ".$header_aut : $auteur="";
 
 	$ourPDF->SetXY ($x,$y);

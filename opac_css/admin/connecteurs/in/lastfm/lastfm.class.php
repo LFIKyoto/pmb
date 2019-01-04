@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lastfm.class.php,v 1.7 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: lastfm.class.php,v 1.15 2018-08-24 08:44:59 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,36 +13,23 @@ require_once("lastfm_api.class.php");
 
 class lastfm extends connector {
 	//propriétés internes
-	var $api;
-	var $enrichpage;	//page d'enrichissement pour enrichissement paginable
+	public $api;
+	public $enrichpage;	//page d'enrichissement pour enrichissement paginable
 	
-    function lastfm($connector_path="") {
-    	parent::connector($connector_path);
+    public function __construct($connector_path="") {
+    	parent::__construct($connector_path);
     }
     
-    function get_id() {
+    public function get_id() {
     	return "lastfm";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 2;
 	}
     
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-    
-    function get_libelle($message) {
-    	if (substr($message,0,4)=="msg:") return $this->msg[substr($message,4)]; else return $message;
-    }
-    
-    function source_get_property_form($source_id) {
+    public function source_get_property_form($source_id) {
 		global $charset;
 		global $pmb_url_base;
 		global $token;
@@ -52,8 +39,8 @@ class lastfm extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		if($source_id!=0){
@@ -119,7 +106,7 @@ class lastfm extends connector {
 		return $form;
     }
     
-    function make_serialized_source_properties($source_id) {
+    public function make_serialized_source_properties($source_id) {
     	global $api_key,$secret_key,$token_saved;
     	$t=array();
   		$t["api_key"]=$api_key;
@@ -127,33 +114,12 @@ class lastfm extends connector {
   		$t["token_saved"]=$token_saved;
     	$this->sources[$source_id]["PARAMETERS"]=serialize($t);
 	}
-	
-	//Récupération  des proriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
-		$this->timeout=5;
-		$this->repository=2;
-		$this->retry=3;
-		$this->ttl=1800;
-		$this->parameters="";
-	}
-	
-	 //Formulaire des propriétés générales
-	function get_property_form() {
-		return "";
-	}
-    
-    function make_serialized_properties() {
-    	global $accesskey, $secretkey;
-		//Mise en forme des paramètres à partir de variables globales (mettre le résultat dans $this->parameters)
-		$keys = array();
-		$this->parameters = serialize($keys);
-	}
 
-	function enrichment_is_allow(){
+	public function enrichment_is_allow(){
 		return true;
 	}
 	
-	function getEnrichmentHeader($source_id){
+	public function getEnrichmentHeader($source_id){
 		$header= array();
 		$header[]= "<!-- Script d'enrichissement LastFM-->";
 		$header[]= "<script type='text/javascript'>
@@ -161,7 +127,7 @@ class lastfm extends connector {
 			var pagin= new http_request();
 			var content = document.getElementById('div_'+type+notice_id);
 			var patience= document.createElement('img');
-			patience.setAttribute('src','images/patience.gif');
+			patience.setAttribute('src','".get_url_icon('patience.gif')."');
 			patience.setAttribute('align','middle');
 			patience.setAttribute('id','patience'+notice_id);
 			content.innerHTML = '';
@@ -181,7 +147,7 @@ class lastfm extends connector {
 		return $header;
 	}
 	
-	function getTypeOfEnrichment($notice_id,$source_id){
+	public function getTypeOfEnrichment($notice_id,$source_id){
 		$type['type'] = array(
 			"bio",
 			array(
@@ -197,7 +163,7 @@ class lastfm extends connector {
 		return $type;
 	}
 	
-	function getEnrichment($notice_id,$source_id,$type="",$params=array(),$page=1){
+	public function getEnrichment($notice_id,$source_id,$type="",$params=array(),$page=1){
 		$enrichment= array();
 		$this->enrichPage = $page;
 		$this->noticeToEnrich = $notice_id;
@@ -223,7 +189,7 @@ class lastfm extends connector {
 		return $enrichment;
 	}
 	
-	function get_notice_infos(){
+	public function get_notice_infos(){
 		$infos = array();
 		//on va chercher le titre de la notice...
 		$query = "select tit1 from notices where notice_id = ".$this->noticeToEnrich;
@@ -244,7 +210,7 @@ class lastfm extends connector {
 	}
 	
 	
-	function get_artist_biography($source_id){
+	public function get_artist_biography($source_id){
 		$this->init_ws($source_id);
 		$bio = $this->api->get_artist_biography();
 	//	highlight_string(print_r($bio,true));
@@ -255,7 +221,7 @@ class lastfm extends connector {
 		}
 	}
 	
-	function get_similar_artists($source_id){
+	public function get_similar_artists($source_id){
 		$this->init_ws($source_id);
 		$similar = $this->api->get_similar_artists();
 	//	highlight_string(print_r($similar,true));
@@ -269,7 +235,7 @@ class lastfm extends connector {
 			$html.= "
 				<td style='text-align:center;'>
 					<a href='".$similar[$i]['url']."' target='_blank'>
-						<img src='".$similar[$i]['image']['large']."'/><br/>
+						<img src='".$similar[$i]['image']['large']."' alt=''/><br/>
 						<span>".utf8_decode($similar[$i]['name'])."</span>
 					</a>
 				</td>";
@@ -284,7 +250,7 @@ class lastfm extends connector {
 		return $html;
 	}
 	
-	function get_pictures($source_id){
+	public function get_pictures($source_id){
 		global $charset;
 		
 		$this->init_ws($source_id);
@@ -299,8 +265,8 @@ class lastfm extends connector {
 				}
 				$html.= "
 					<td style='text-align:center;'>
-						<a href='".$pictures['images'][$i]['url']."' target='_blank' alt='".htmlentities($this->msg['lastfm_see_picture'],ENT_QUOTES,$charset)."' title='".htmlentities($this->msg['lastfm_see_picture'],ENT_QUOTES,$charset)."'>
-							<img src='".$pictures['images'][$i]['sizes']['largesquare']['url']."'/>
+						<a href='".$pictures['images'][$i]['url']."' target='_blank' title='".htmlentities($this->msg['lastfm_see_picture'],ENT_QUOTES,$charset)."'>
+							<img src='".$pictures['images'][$i]['sizes']['largesquare']['url']."' alt=''/>
 						</a>
 					</td>";
 				
@@ -318,14 +284,14 @@ class lastfm extends connector {
 		return $html;		
 	}
 	
-	function init_ws($source_id){
+	public function init_ws($source_id){
 		$params=$this->get_source_params($source_id);
 		if ($params["PARAMETERS"]) {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		$authVars['apiKey'] = $api_key;
@@ -336,17 +302,17 @@ class lastfm extends connector {
 		$this->api->set_notice_infos($this->get_notice_infos());
 	}
 	
-	function get_pagin_form($infos){
+	public function get_pagin_form($infos){
 		$current = $infos['page'];
 		$ret = "";
 		if($current>0){
 			$nb_page = ceil($infos['total']/20);
-			if($current > 1) $ret .= "<img src='images/prev.gif' onclick='switch_lastfm_page(\"".$this->noticeToEnrich."\",\"".$this->typeOfEnrichment."\",\"".$current."\",\"previous\");'/>";
-			else $ret .= "<img src='images/prev-grey.gif'/>";
+			if($current > 1) $ret .= "<img src='".get_url_icon('prev.png')."' alt='' onclick='switch_lastfm_page(\"".$this->noticeToEnrich."\",\"".$this->typeOfEnrichment."\",\"".$current."\",\"previous\");'/>";
+			else $ret .= "<img src='".get_url_icon('prev-grey.png')."' alt=''/>";
 			$ret .="&nbsp;".$current."/$nb_page&nbsp;";
-			if($current < $nb_page) $ret .= "<img src='images/next.gif' onclick='switch_lastfm_page(\"".$this->noticeToEnrich."\",\"".$this->typeOfEnrichment."\",\"".$current."\",\"next\");' style='cursor:pointer;'/>";
-			else $ret .= "<img src='images/next-grey.gif'/>";
-			$ret = "<div class='row'><center>$ret</center></div>";
+			if($current < $nb_page) $ret .= "<img src='".get_url_icon('next.png')."' alt='' onclick='switch_lastfm_page(\"".$this->noticeToEnrich."\",\"".$this->typeOfEnrichment."\",\"".$current."\",\"next\");' style='cursor:pointer;'/>";
+			else $ret .= "<img src='".get_url_icon('next-grey.png')."' alt=''/>";
+			$ret = "<div class='row'>".$ret."</div>";
 		}
 		return $ret;
 	}	

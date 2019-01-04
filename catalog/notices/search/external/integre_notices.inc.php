@@ -2,18 +2,19 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: integre_notices.inc.php,v 1.12 2015-06-23 11:12:48 jpermanne Exp $
+// $Id: integre_notices.inc.php,v 1.16 2018-06-29 09:03:35 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($class_path."/notice_doublon.class.php");
+require_once($class_path.'/elements_list/elements_records_list_ui.class.php');
 
 //Recherche de la fonction auxiliaire d'integration
 if ($z3950_import_modele) {
 	if (file_exists($base_path."/catalog/z3950/".$z3950_import_modele)) {
 		require_once($base_path."/catalog/z3950/".$z3950_import_modele);
 	} else {
-		error_message("", sprintf($msg["admin_error_file_import_modele_z3950"],$z3950_import_modele), 1, "./admin.php?categ=param");
+		error_message("", sprintf($msg["admin_error_file_import_modele_z3950"],$z3950_import_modele), 1, "./admin.php?categ=param&form_type_param=z3950&form_sstype_param=import_modele#justmodified");
 		exit;
 	}
 } else require_once($base_path."/catalog/z3950/func_other.inc.php");
@@ -63,7 +64,7 @@ if (is_array($external_notice_to_integer) && count($external_notice_to_integer) 
 						<script type='text/javascript' src='./javascript/tablist.js'></script>
 						<div class='row'>
 							<div class='colonne10'>
-								<img src='./images/error.gif' align='left' />
+								<img src='".get_url_icon('error.gif')."' class='align_left' />
 							</div>
 							<div class='colonne80'>
 								<strong>".$msg["gen_signature_erreur_similaire"]."</strong>
@@ -82,29 +83,9 @@ if (is_array($external_notice_to_integer) && count($external_notice_to_integer) 
 					$enCours=1;
 					while($enCours<=$maxAffiche){
 						$r=pmb_mysql_fetch_object($result);
-						if (($notice->niveau_biblio =='s' || $r->niveau_biblio =='a') && ($r->niveau_hierar== 1 || $r->niveau_hierar== 2)) {
-							$link_serial = './catalog.php?categ=serials&sub=view&serial_id=!!id!!';
-							$link_analysis = './catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=!!bul_id!!&art_to_show=!!id!!';
-							$link_bulletin = './catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=!!id!!';
-							$link_explnum = "./catalog.php?categ=serials&sub=analysis&action=explnum_form&bul_id=!!bul_id!!&analysis_id=!!analysis_id!!&explnum_id=!!explnum_id!!";
-							$serial = new serial_display($r->notice_id, 6, $link_serial, $link_analysis, $link_bulletin, "", $link_explnum, 0, 0,1, 1);
-							$notice_display =  pmb_bidi($serial->result);
-						} elseif ($r->niveau_biblio=='m' && $r->niveau_hierar== 0) { 
-							$link = './catalog.php?categ=isbd&id=!!id!!';
-							$link_expl = './catalog.php?categ=edit_expl&id=!!notice_id!!&cb=!!expl_cb!!&expl_id=!!expl_id!!'; 
-							$link_explnum = './catalog.php?categ=edit_explnum&id=!!notice_id!!&explnum_id=!!explnum_id!!'; 
-							$display = new mono_display($r->notice_id, 6, $link, 1, $link_expl, '', $link_explnum,1, 0, 1, 1,"", 1, false, true);
-							$notice_display = pmb_bidi($display->result);
-				        } elseif ($r->niveau_biblio=='b' && $r->niveau_hierar==2) { // on est face a une notice de bulletin
-				        	$requete_suite = "SELECT bulletin_id, bulletin_notice FROM bulletins where num_notice='".$r->notice_id."'";
-				        	$result_suite = pmb_mysql_query($requete_suite, $dbh) or die("<br /><br />".pmb_mysql_error()."<br /><br />");
-				        	$notice_suite = pmb_mysql_fetch_object($result_suite);
-				        	$r->bulletin_id=$notice_suite->bulletin_id;
-				        	$r->bulletin_notice=$notice_suite->bulletin_notice;
-							$link_bulletin = './catalog.php?categ=serials&sub=bulletinage&action=view&bul_id='.$r->bulletin_id;
-							$display = new mono_display($r->notice_id, 6, $link_bulletin, 1, $link_expl, '', $link_explnum,1, 0, 1, 1, "", 1);
-							$notice_display = $display->result;
-						}
+						$records = array($r->notice_id);
+						$elements_records_list_ui = new elements_records_list_ui($records, count($records), false);
+						$notice_display = $elements_records_list_ui->get_elements_list();
 	
 						echo "
 						<div class='row'>
@@ -137,7 +118,7 @@ if (is_array($external_notice_to_integer) && count($external_notice_to_integer) 
 				<br /><div class='erreur'></div>
 				<div class='row'>
 					<div class='colonne10'>
-						<img src='./images/tick.gif' align='left'>
+						<img src='".get_url_icon('tick.gif')."' class='align_left'>
 					</div>
 					<div class='colonne80'>
 						<strong>".(isset($notice_id) ? $msg["notice_connecteur_remplaced_ok"] : $msg["z3950_integr_not_ok"])."</strong>
@@ -161,7 +142,7 @@ if (is_array($external_notice_to_integer) && count($external_notice_to_integer) 
 				<br /><div class='erreur'>$msg[540]</div>
 				<div class='row'>
 					<div class='colonne10'>
-						<img src='./images/tick.gif' align='left'>
+						<img src='".get_url_icon('tick.gif')."' class='align_left'>
 					</div>
 					<div class='colonne80'>
 						<strong>".($msg["z3950_integr_not_existait"])."</strong><br /><br />

@@ -43,7 +43,7 @@ class BorderFormat {
      * @param string $color Colour of border (example '#ff0000')
      * @param float $space Space between borders and the paragraph. 
      */
-	function BorderFormat($size = 0, $color = '', $type = '', $space = 0) {	  
+  	function __construct($size = 0, $color = '', $type = '', $space = 0) {	  
 	  	$this->size = $size * SPACE_IN_POINTS;
 		$this->type = $type;
 		$this->color = Util::formatColor($color); 		

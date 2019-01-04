@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cart.class.php,v 1.11 2013-04-11 08:06:22 mbertin Exp $
+// $Id: cart.class.php,v 1.12 2017-04-20 16:25:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -17,20 +17,20 @@ function array_clean($var) {
 
 class cart {
 	// propriétés
-	var $path = './'				;	// répertoire de stockage des paniers
-	var $file = ''					;	// nom du fichier XML
-	var $name = ''					;	// nom de référence
-	var $description = ''			;	// description du contenu du panier
-	var $entry						;	// tableau accueillant les items du panier	
-	var $parser						;	// réf. sur le parser
-	var $nb_items = 0				;	// nombre d'enregistrements dans le panier
-	var $dtd_path = 'cart.dtd'		;	// path et nom de la DTD
+	public $path = './'				;	// répertoire de stockage des paniers
+	public $file = ''					;	// nom du fichier XML
+	public $name = ''					;	// nom de référence
+	public $description = ''			;	// description du contenu du panier
+	public $entry						;	// tableau accueillant les items du panier	
+	public $parser						;	// réf. sur le parser
+	public $nb_items = 0				;	// nombre d'enregistrements dans le panier
+	public $dtd_path = 'cart.dtd'		;	// path et nom de la DTD
 
 	// méthodes
 
 	// le constructeur
 
-	function cart($xml_file='', $path='') {
+	public function __construct($xml_file='', $path='') {
 		// le fichier a un nom, on récupère les données dedans
 		$this->path = $path;
 		$this->clean_path();
@@ -48,13 +48,13 @@ class cart {
 
 	// mise à jour de la description
 
-	function set_description($desc='') {
+	public function set_description($desc='') {
 		$this->description = $desc;
 	}
 
 	// mise en forme du path
 	
-	function clean_path() {
+	public function clean_path() {
 		if(!$this->path) {
 			$this->path = './';
 		} else {
@@ -66,7 +66,7 @@ class cart {
 
 	// liste des paniers disponibles
 
-	static function get_cart_list($path='') {
+	public static function get_cart_list($path='') {
 
 		// nettoyage du path
 
@@ -98,7 +98,7 @@ class cart {
 
 	// création d'un panier vide
 	
-	function create_cart() {
+	public function create_cart() {
 		$this->name = 'CART'.time();
 		$this->file = $this->path.$this->name.".xml";
 		if( $fp = fopen($this->file, "w"))
@@ -111,7 +111,7 @@ class cart {
 
 	// ajout d'un item
 
-	function add_item($item=0) {
+	public function add_item($item=0) {
 		if(!(int)$item || in_array($item, $this->entry))
 			return;
 		$this->entry[] = $item;
@@ -121,7 +121,7 @@ class cart {
 
 	// suppression d'un item
 
-	function del_item($item=0) {
+	public function del_item($item=0) {
 		if(!(int)$item)
 			return;
 		for($i=0 ; $i < sizeof($this->entry); $i++) {
@@ -136,7 +136,7 @@ class cart {
 
 	// suppression d'un fichier de panier
 
-	function delete() {
+	public function delete() {
 		if(@unlink($this->file)) {
 			$this->entry=array();
 			$this->name='';
@@ -148,7 +148,7 @@ class cart {
 
 	// sauvegarde du panier
 
-	function save_cart() {
+	public function save_cart() {
 		if($fp = @fopen($this->file, 'w')) {
 			$header = "";
 			$header .= "\n<!DOCTYPE cart SYSTEM \"".$this->dtd_path."\">";
@@ -173,7 +173,7 @@ class cart {
 
 	// fonctions du gestionnaire d'éléments
 	
-	function debutBalise($parser, $nom, $attributs) {
+	public function debutBalise($parser, $nom, $attributs) {
 		switch($nom) {
 			case 'CART':
 				$this->name = $attributs['NAME'];
@@ -187,13 +187,13 @@ class cart {
 		return;
 	}
 
-	function finBalise($parser, $nom) {
+	public function finBalise($parser, $nom) {
 		return;
 	}
 
 	// content() -> gestionnaire de données
 
-	function content($parser, $data) {
+	public function content($parser, $data) {
 		if((int)$data) {
 			$this->entry[] = $data;
 		}
@@ -203,7 +203,7 @@ class cart {
 
 
 	// get_cart() : ouvre un fichier et récupère le panier
-	function get_cart() {
+	public function get_cart() {
 		global $charset;
 		if(! $fp = @fopen($this->file, 'r')) {
 			die( "<strong>PMB cart parser error</strong>&nbsp;: can't access ".$this->file);

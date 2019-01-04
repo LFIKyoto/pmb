@@ -1,4 +1,4 @@
-<h1>Reservas interbibliotecas (Interlibrary loans - ILL)</h1>
+<h2>Reservas interbibliotecas (Interlibrary loans - ILL)</h2>
 <p>Abaixo estão as opções para configurar os ILLs. </p>
 <p>
 <b>Geral</b> Configurações gerais

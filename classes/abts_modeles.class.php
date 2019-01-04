@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: abts_modeles.class.php,v 1.36 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: abts_modeles.class.php,v 1.43 2018-06-27 11:31:33 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,47 +12,114 @@ require_once($include_path."/abts_func.inc.php");
 require_once($class_path."/abts_abonnements.class.php");
 
 class abts_modele {
-	var $modele_id; //Numéro du modèle
-	var $modele_name; //Nom du modèle
-	var $num_notice; //numéro de la notice liée
-	var $num_periodicite; //Identifiant de la périodicité
-	var $duree_abonnement; //Durée de l'abonnement
-	var $date_debut; //Date de début de validité du modèle
-	var $date_fin; //Date de fin de validité du modèle
-	var $days; //Jours de la semaine exclus
-	var $day_month; //Jours du mois exclus
-	var $week_month; //Semaine du mois exclue
-	var $week_year; //Semaine de l'année exclue
-	var $month_year; //Mois dans l'année exclu
-	var $error; //Erreur
-	var $error_message; //Message d'erreur
+	public $modele_id; //Numéro du modèle
+	public $modele_name; //Nom du modèle
+	public $num_notice; //numéro de la notice liée
+	public $num_periodicite; //Identifiant de la périodicité
+	public $duree_abonnement; //Durée de l'abonnement
+	public $date_debut; //Date de début de validité du modèle
+	public $date_fin; //Date de fin de validité du modèle
+	public $days; //Jours de la semaine exclus
+	public $day_month; //Jours du mois exclus
+	public $week_month; //Semaine du mois exclue
+	public $week_year; //Semaine de l'année exclue
+	public $month_year; //Mois dans l'année exclu
+	public $error; //Erreur
+	public $error_message; //Message d'erreur
+	public $num_cycle;
+	public $num_combien;
+	public $num_increment;
+	public $num_date_unite;
+	public $num_increment_date;
+	public $num_depart;
+	public $vol_actif;
+	public $vol_increment;
+	public $vol_date_unite;
+	public $vol_increment_numero;
+	public $vol_increment_date;
+	public $vol_cycle;
+	public $vol_combien;
+	public $vol_depart;
+	public $tom_actif;
+	public $tom_increment;
+	public $tom_date_unite;
+	public $tom_increment_numero;
+	public $tom_increment_date;
+	public $tom_cycle;
+	public $tom_combien;
+	public $tom_depart;
+	public $format_aff;
+	public $format_periode;	
 	
-	function abts_modele($modele_id="") {
-		if ($modele_id) {
-			$requete="select * from abts_modeles where modele_id=".$modele_id;
-			$resultat=pmb_mysql_query($requete);
+	public function __construct($modele_id="") {
+		$this->modele_id=$modele_id+0;
+		$this->initData();
+		$this->getData();
+	}
+	
+	public function initData() {
+		$this->modele_name = '';
+		$this->num_notice = 0;
+		$this->num_periodicite = '';
+		$this->duree_abonnement = '';
+		$this->date_debut = '';
+		$this->date_fin = '';
+		$this->days = '';
+		$this->day_month = '';
+		$this->week_month = '';
+		$this->week_year = '';
+		$this->month_year = '';
+		$this->num_cycle = '';
+		$this->num_combien = '';
+		$this->num_increment = '';
+		$this->num_date_unite = '';
+		$this->num_increment_date = '';
+		$this->num_depart = '';
+		$this->vol_actif = '';
+		$this->vol_increment = '';
+		$this->vol_date_unite = '';
+		$this->vol_increment_numero = '';
+		$this->vol_increment_date = '';
+		$this->vol_cycle = '';
+		$this->vol_combien = '';
+		$this->vol_depart = '';
+		$this->tom_actif = '';
+		$this->tom_increment = '';
+		$this->tom_date_unite = '';
+		$this->tom_increment_numero = '';
+		$this->tom_increment_date = '';
+		$this->tom_cycle = '';
+		$this->tom_combien = '';
+		$this->tom_depart = '';
+		$this->format_aff = '';
+		$this->format_periode = '';
+		$this->error = '';
+		$this->error_message = '';
+	}
+	
+	public function getData() {
+		
+		if ($this->modele_id) {
+			$requete = "select * from abts_modeles where modele_id=".$this->modele_id;
+			$resultat = pmb_mysql_query($requete);
 			if (pmb_mysql_num_rows($resultat)) {
-				$r=pmb_mysql_fetch_object($resultat);
-				$this->modele_id=$r->modele_id;
-				$this->modele_name=$r->modele_name;
-				$this->num_notice=$r->num_notice;
-				$this->num_periodicite=$r->num_periodicite;
-				$this->duree_abonnement=$r->duree_abonnement;
-				$this->date_debut=$r->date_debut;
-				$this->date_fin=$r->date_fin;
-				$this->days=$r->days;
-				$this->day_month=$r->day_month;
-				$this->week_month=$r->week_month;
-				$this->week_year=$r->week_year;
-				$this->month_year=$r->month_year;			
-				
+				$r = pmb_mysql_fetch_object($resultat);				
+				$this->modele_name = $r->modele_name;
+				$this->num_notice = $r->num_notice;
+				$this->num_periodicite = $r->num_periodicite;
+				$this->duree_abonnement = $r->duree_abonnement;
+				$this->date_debut = $r->date_debut;
+				$this->date_fin = $r->date_fin;
+				$this->days = $r->days;
+				$this->day_month = $r->day_month;
+				$this->week_month = $r->week_month;
+				$this->week_year = $r->week_year;
+				$this->month_year = $r->month_year;				
 				$this->num_cycle = $r->num_cycle;				
 				$this->num_combien = $r->num_combien;
-			
 				$this->num_increment = $r->num_increment;
 				$this->num_date_unite = $r->num_date_unite;
-				$this->num_increment_date = $r->num_increment_date;
-								
+				$this->num_increment_date = $r->num_increment_date;					
 				$this->num_depart = $r->num_depart;
 				$this->vol_actif = $r->vol_actif;
 				$this->vol_increment = $r->vol_increment;
@@ -71,83 +138,32 @@ class abts_modele {
 				$this->tom_combien = $r->tom_combien;
 				$this->tom_depart = $r->tom_depart;
 				$this->format_aff = $r->format_aff;
-				$this->format_periode = $r->format_periode;
+				$this->format_periode = $r->format_periode;				
 			} else {
-				$this->error=true;
-				$this->error_message="Le modèle demandé n'existe pas";
+				$this->error = true;
+				$this->error_message = "Le modèle demandé n'existe pas";
 			}
 		}
 	}
 	
-	function getData() {
-	if ($this->modele_id) {
-			$requete="select * from abts_modeles where modele_id=".$this->modele_id;
-			$resultat=pmb_mysql_query($requete);
-			if (pmb_mysql_num_rows($resultat)) {
-				$r=pmb_mysql_fetch_object($resultat);				
-				$this->modele_name=$r->modele_name;
-				$this->num_notice=$r->num_notice;
-				$this->num_periodicite=$r->num_periodicite;
-				$this->duree_abonnement=$r->duree_abonnement;
-				$this->date_debut=$r->date_debut;
-				$this->date_fin=$r->date_fin;
-				$this->days=$r->days;
-				$this->day_month=$r->day_month;
-				$this->week_month=$r->week_month;
-				$this->week_year=$r->week_year;
-				$this->month_year=$r->month_year;			
-				
-				$this->num_cycle = $r->num_cycle;				
-				$this->num_combien = $r->num_combien;
-				$this->num_increment = $r->num_increment;
-				$this->num_date_unite = $r->num_date_unite;
-				$this->num_increment_date = $r->num_increment_date;
-					
-				$this->num_depart = $r->num_depart;
-				$this->vol_actif = $r->vol_actif;
-				$this->vol_increment = $r->vol_increment;
-				$this->vol_date_unite = $r->vol_date_unite;
-				$this->vol_increment_numero = $r->vol_increment_numero;
-				$this->vol_increment_date = $r->vol_increment_date;
-				$this->vol_cycle = $r->vol_cycle;
-				$this->vol_combien = $r->vol_combien;
-				$this->vol_depart = $r->vol_depart;
-				$this->tom_actif = $r->tom_actif;	
-				$this->tom_increment = $r->tom_increment;
-				$this->tom_date_unite = $r->tom_date_unite;
-				$this->tom_increment_numero = $r->tom_increment_numero;
-				$this->tom_increment_date = $r->tom_increment_date;
-				$this->tom_cycle = $r->tom_cycle;
-				$this->tom_combien = $r->tom_combien;
-				$this->tom_depart = $r->tom_depart;
-				$this->format_aff = $r->format_aff;
-				$this->format_periode = $r->format_periode;
-				
-			} else {
-				$this->error=true;
-				$this->error_message="Le modèle demandé n'existe pas";
-			}
-		}
-	}
-	
-	function set_perio($num_notice) {
-		$this->num_notice=0;
-		$requete="select niveau_biblio from notices where notice_id=".$num_notice;
-		$resultat=pmb_mysql_query($requete);
+	public function set_perio($num_notice) {
+		$this->num_notice = 0;
+		$requete = "select niveau_biblio from notices where notice_id=".$num_notice;
+		$resultat = pmb_mysql_query($requete);
 		if (pmb_mysql_num_rows($resultat)) {
 			if (pmb_mysql_result($resultat,0,0)=="s")
-				$this->num_notice=$num_notice;
+				$this->num_notice = $num_notice;
 		} else {
-			$this->error=true;
-			$this->error_message="La notice liée n'existe pas ou n'est pas un périodique";
+			$this->error = true;
+			$this->error_message = "La notice liée n'existe pas ou n'est pas un périodique";
 		}
 	}
 	
-	function show_modele() {
+	public function show_modele() {
 		global $modele_view,$serial_id;
 		$perio=new serial_display($this->num_notice,1);
 		$r=$modele_view;
-		$r=str_replace("!!view_id_modele!!","catalog.php?categ=serials&sub=modele&serial_id=$serial_id&modele_id=$this->modele_id",$r);
+		$r=str_replace("!!view_id_modele!!","catalog.php?categ=serials&sub=modele&serial_id=".$serial_id."&modele_id=".$this->modele_id,$r);
 		$r=str_replace("!!id_modele!!",$this->modele_id,$r);
 		$r=str_replace("!!modele_header!!",$this->modele_name,$r);
 		
@@ -156,13 +172,13 @@ class abts_modele {
 		$r=str_replace("!!date_debut!!",format_date($this->date_debut),$r);
 		$r=str_replace("!!date_fin!!",format_date($this->date_fin),$r);
 													
-		$r=str_replace("!!nombre_de_series!!",pmb_sql_value("select sum(nombre_recu) from abts_grille_modele where num_modele='$this->modele_id' and type_serie ='1'"),$r);
-		$r=str_replace("!!nombre_de_horsseries!!",pmb_sql_value("select sum(nombre_recu) from abts_grille_modele where num_modele='$this->modele_id' and type_serie ='2'"),$r);
+		$r=str_replace("!!nombre_de_series!!",pmb_sql_value("select sum(nombre_recu) from abts_grille_modele where num_modele='".$this->modele_id."' and type_serie ='1'"),$r);
+		$r=str_replace("!!nombre_de_horsseries!!",pmb_sql_value("select sum(nombre_recu) from abts_grille_modele where num_modele='".$this->modele_id."' and type_serie ='2'"),$r);
 			
 		return $r;
 	}
 	
-	function show_form() {
+	public function show_form() {
 		global $modele_form;
 		global $serial_header;
 		global $msg;
@@ -246,7 +262,7 @@ class abts_modele {
 		$r=str_replace("!!date_debut_lib!!",formatdate($date_debut),$r);
 		
 		//Date de fin
-		if (!$this->date_fin || $this->date_fin == "0000-00-00") $date_fin=pmb_sql_value("SELECT DATE_ADD('$date_debut', INTERVAL 1 YEAR)"); else $date_fin=$this->date_fin;
+		if (!$this->date_fin || $this->date_fin == "0000-00-00") $date_fin=pmb_sql_value("SELECT DATE_ADD('".$date_debut."', INTERVAL 1 YEAR)"); else $date_fin=$this->date_fin;
 		
 		$r=str_replace("!!date_fin!!",str_replace("-","",$date_fin),$r);
 		$r=str_replace("!!date_fin_lib!!",format_date($date_fin),$r);
@@ -258,7 +274,9 @@ class abts_modele {
 		$days_v="<tr>";
 		for ($i=1; $i<8; $i++) {
 			$days_t.="<td>".$msg["week_days_short_".$i]."</td>";	
-			$days_v.="<td><input type='checkbox' value='$i' ".(!$this->days[$i-1] && $this->modele_id ?"checked":"yes")." name='days[$i]'/></td>";
+			$tmp = '';
+			if(isset($this->days[$i-1])) $tmp = $this->days[$i-1];
+			$days_v.="<td><input type='checkbox' value='$i' ".(!$tmp && $this->modele_id ?"checked":"yes")." name='days[$i]'/></td>";
 		}
 		$days_v.="</tr>";
 		$days_t.="</tr>";
@@ -275,7 +293,9 @@ class abts_modele {
 			for ($i=0; $i<15; $i++) {
 				if (($j*(14+1)+$i+1)>31) break;
 				$days_t.="<td>".($j*(14+1)+$i+1)."</td>";
-				$days_v.="<td><input type='checkbox' value='".($j*(15)+$i+1)."' ".(!$this->day_month[($j*(15)+$i)] && $this->modele_id ?"checked":"yes")." name='day_month[".($j*(15)+$i+1)."]'/></td>";
+				$tmp = '';
+				if(isset($this->day_month[($j*(15)+$i)])) $tmp = $this->day_month[($j*(15)+$i)];
+				$days_v.="<td><input type='checkbox' value='".($j*(15)+$i+1)."' ".(empty($this->day_month[($j*(15)+$i)]) && $this->modele_id ?"checked":"yes")." name='day_month[".($j*(15)+$i+1)."]'/></td>";
 			}
 			$days_v.="</tr>";
 			$days_t.="</tr>";
@@ -292,7 +312,9 @@ class abts_modele {
 		$days_v="<tr>";
 		for ($i=1; $i<7; $i++) {
 			$days_t.="<td>".$i."</td>";
-			$days_v.="<td><input type='checkbox' value='$i' ".(!$this->week_month[$i-1] && $this->modele_id ?"checked":"yes")." name='week_month[$i]'/></td>";
+			$tmp = '';
+			if(isset($this->week_month[$i-1])) $tmp = $this->week_month[$i-1];
+			$days_v.="<td><input type='checkbox' value='$i' ".(!$tmp && $this->modele_id ?"checked":"yes")." name='week_month[$i]'/></td>";
 		}
 		$days_v.="</tr>";
 		$days_t.="</tr>";
@@ -311,7 +333,9 @@ class abts_modele {
 			for ($i=0; $i<$nb_x; $i++) {
 				if (($j*($nb_x)+$i+1)>($nb)) break;
 				$days_t.="<td>".($j*($nb_x)+$i+1)."</td>";
-				$days_v.="<td><input type='checkbox' value='".($j*($nb_x)+$i+1)."' ".(!$this->week_year[($j*($nb_x)+$i)] && $this->modele_id ?"checked":"yes")." name='week_year[".($j*($nb_x)+$i+1)."]'/></td>";
+				$tmp = '';
+				if(isset($this->week_year[($j*($nb_x)+$i)])) $tmp = $this->week_year[($j*($nb_x)+$i)];
+				$days_v.="<td><input type='checkbox' value='".($j*($nb_x)+$i+1)."' ".(!$tmp && $this->modele_id ?"checked":"yes")." name='week_year[".($j*($nb_x)+$i+1)."]'/></td>";
 			}
 			$days_v.="</tr>";
 			$days_t.="</tr>";
@@ -332,7 +356,9 @@ class abts_modele {
 			for ($i=0; $i<$nb_x; $i++) {
 				if (($j*($nb_x)+$i+1)>($nb)) break;
 				$days_t.="<td>".$msg[($j*($nb_x)+$i)+1006]."</td>";
-				$days_v.="<td><input type='checkbox' value='".($j*($nb_x)+$i+1)."' ".(!$this->month_year[($j*($nb_x)+$i)] && $this->modele_id ?"checked":"yes")." name='month_year[".($j*($nb_x)+$i+1)."]'/></td>";
+				$tmp = '';
+				if(isset($this->month_year[($j*($nb_x)+$i)])) $tmp = $this->month_year[($j*($nb_x)+$i)];
+				$days_v.="<td><input type='checkbox' value='".($j*($nb_x)+$i+1)."' ".(!$tmp && $this->modele_id ?"checked":"yes")." name='month_year[".($j*($nb_x)+$i+1)."]'/></td>";
 			}
 			$days_v.="</tr>";
 			$days_t.="</tr>";
@@ -343,14 +369,12 @@ class abts_modele {
 		$r=str_replace("!!month_year!!",$month_year,$r);		
 
 		//Numérotation:  Numéro
-		$selected[$this->num_date_unite]= "selected='selected'";
 		$str_unite="
 			<select id='num_date_unite' name='num_date_unite'>
-				<option value='0'$selected[0]>$msg[abonnements_periodicite_unite_jour]</option>
-				<option value='1'$selected[1]>$msg[abonnements_periodicite_unite_mois]</option>
-				<option value='2'$selected[2]>$msg[abonnements_periodicite_unite_annee]</option>
+				<option value='0' ".($this->num_date_unite == 0 ? "selected='selected'" : "").">".$msg['abonnements_periodicite_unite_jour']."</option>
+				<option value='1' ".($this->num_date_unite == 1 ? "selected='selected'" : "").">".$msg['abonnements_periodicite_unite_mois']."</option>
+				<option value='2' ".($this->num_date_unite == 2 ? "selected='selected'" : "").">".$msg['abonnements_periodicite_unite_annee']."</option>
 			</select>";
-		$selected[$this->num_date_unite]= '';
 		
 		$num="<table>";
 
@@ -369,7 +393,8 @@ class abts_modele {
 		$num_t.="</tr>";
 		$num_v.="</tr>";
 		$num.=$num_t."\n".$num_v."\n";
-			
+
+		if(!isset($msg["abonnements_incrementation_selon_date_2"])) $msg["abonnements_incrementation_selon_date_2"]= '';
 		$num_t="<tr>";
 		$num_v="<tr>";
 		$num_t.="<td></td>";
@@ -377,7 +402,7 @@ class abts_modele {
 		$num_t.="<td><input type='radio' name='num_increment' id='num_increment' value='0' ".($this->num_increment==0 ?"checked":"yes").">".$msg["abonnements_incrementation_selon_numero_1"]."<input type='text' size='5' name='num_combien' id='num_combien' value='$this->num_combien'/>".$msg["abonnements_incrementation_selon_numero_2"]."</td>";
 		$num_v.="<td><input type='radio' name='num_increment' id='num_increment1' value='1' ".($this->num_increment==1 ?"checked":"yes").">".$msg["abonnements_incrementation_selon_date_1"]."<input type='text' size='5' name='num_increment_date' id='num_increment_date' value='$this->num_increment_date'/>$str_unite".$msg["abonnements_incrementation_selon_date_2"]."</td>";
 		$num_t.="<td>".$msg["abonnements_numero_depart"]."</td>";
-		$num_v.="<td><input type='text' size='5' name='num_depart' id='num_depart' value='$this->num_depart' /></td>";		
+		$num_v.="<td><input type='text' size='5' name='num_depart' id='num_depart' value='".$this->num_depart."' /></td>";		
 		$num_t.="</tr>";
 		$num_v.="</tr>";
 		$num.=$num_t."\n".$num_v."\n";	
@@ -386,14 +411,12 @@ class abts_modele {
 		$r=str_replace("!!numero!!",$num,$r);		
 		
 		//Numérotation: Volume
-		$selected[$this->vol_date_unite]= "selected='selected'";
 		$str_unite="
 			<select id='vol_date_unite' name='vol_date_unite'>
-				<option value='0'$selected[0]>$msg[abonnements_periodicite_unite_jour]</option>
-				<option value='1'$selected[1]>$msg[abonnements_periodicite_unite_mois]</option>
-				<option value='2'$selected[2]>$msg[abonnements_periodicite_unite_annee]</option>
+				<option value='0' ".($this->vol_date_unite == 0 ? "selected='selected'" : "").">".$msg['abonnements_periodicite_unite_jour']."</option>
+				<option value='1' ".($this->vol_date_unite == 1 ? "selected='selected'" : "").">".$msg['abonnements_periodicite_unite_mois']."</option>
+				<option value='2' ".($this->vol_date_unite == 2 ? "selected='selected'" : "").">".$msg['abonnements_periodicite_unite_annee']."</option>
 			</select>";
-		$selected[$this->vol_date_unite]= '';
 		
 		$vol="<table>";
 
@@ -427,9 +450,9 @@ class abts_modele {
 		$vol_t.="<td>".$msg["abonnements_cyclique"]."</td>";
 		$vol_v.="<td><input type='checkbox' value='1' ".($this->vol_cycle && $this->modele_id ?"checked":"yes")." name='vol_cycle[1]' id='vol_cycle'  onClick='gere_num(\"vol_cycle\");'/></td>";
 		$vol_t.="<td>".$msg["abonnements_combien"]."</td>";
-		$vol_v.="<td><input type='text' size='5' name='vol_combien' id='vol_combien' value='$this->vol_combien'/></td>";
+		$vol_v.="<td><input type='text' size='5' name='vol_combien' id='vol_combien' value='".$this->vol_combien."'/></td>";
 		$vol_t.="<td>".$msg["abonnements_numero_depart"]."</td>";
-		$vol_v.="<td><input type='text' size='5' name='vol_depart' id='vol_depart' value='$this->vol_depart'/></td>";
+		$vol_v.="<td><input type='text' size='5' name='vol_depart' id='vol_depart' value='".$this->vol_depart."'/></td>";
 		$vol_t.="</tr>";
 		$vol_v.="</tr>";
 		$vol.=$vol_t."\n".$vol_v."\n";
@@ -437,12 +460,11 @@ class abts_modele {
 		$r=str_replace("!!volume!!",$vol,$r);		
 			
 		//Numérotation: Tome
-		$selected[$this->tom_date_unite]= "selected='selected'";
 		$str_unite="
 			<select id='tom_date_unite' name='tom_date_unite'>
-				<option value='0'$selected[0]>$msg[abonnements_periodicite_unite_jour]</option>
-				<option value='1'$selected[1]>$msg[abonnements_periodicite_unite_mois]</option>
-				<option value='2'$selected[2]>$msg[abonnements_periodicite_unite_annee]</option>
+				<option value='0' ".($this->tom_date_unite == 0 ? "selected='selected'" : "").">".$msg['abonnements_periodicite_unite_jour']."</option>
+				<option value='1' ".($this->tom_date_unite == 1 ? "selected='selected'" : "").">".$msg['abonnements_periodicite_unite_mois']."</option>
+				<option value='2' ".($this->tom_date_unite == 2 ? "selected='selected'" : "").">".$msg['abonnements_periodicite_unite_annee']."</option>
 			</select>";
 
 		$vol="<table>";
@@ -478,9 +500,9 @@ class abts_modele {
 		$tom_t.="<td>".$msg["abonnements_cyclique"]."</td>";
 		$tom_v.="<td><input type='checkbox' value='1' ".($this->tom_cycle && $this->modele_id ?"checked":"yes")." name='tom_cycle[1]' id='tom_cycle' onClick='gere_num(\"tom_cycle\");'/></td>";
 		$tom_t.="<td>".$msg["abonnements_combien"]."</td>";
-		$tom_v.="<td><input type='text' size='5' name='tom_combien' id='tom_combien' value='$this->tom_combien'/></td>";
+		$tom_v.="<td><input type='text' size='5' name='tom_combien' id='tom_combien' value='".$this->tom_combien."'/></td>";
 		$tom_t.="<td>".$msg["abonnements_numero_depart"]."</td>";
-		$tom_v.="<td><input type='text' size='5' name='tom_depart' id='tom_depart' value='$this->tom_depart'/></td>";
+		$tom_v.="<td><input type='text' size='5' name='tom_depart' id='tom_depart' value='".$this->tom_depart."'/></td>";
 		$tom_t.="</tr>";
 		$tom_v.="</tr>";
 		$tom.=$tom_t."\n".$tom_v."\n";
@@ -514,7 +536,7 @@ class abts_modele {
 		$r=str_replace("!!format_periode!!",$format,$r);		
 		
 		global $serial_id;
-		$r=str_replace("!!action!!","./catalog.php?categ=serials&sub=modele&serial_id="."$serial_id",$r);
+		$r=str_replace("!!action!!","./catalog.php?categ=serials&sub=modele&serial_id=".$serial_id,$r);
 		$r=str_replace("!!serial_id!!",$serial_id,$r);
 
 		
@@ -567,27 +589,27 @@ ENDOFTEXT;
 			$calend=str_replace("!!serial_id!!",$serial_id,$calend);
 			$calend=str_replace("!!modele_id!!",$this->modele_id,$calend);	
 			
-			$base_url="./catalog.php?categ=serials&sub=modele&serial_id="."$serial_id&modele_id=$this->modele_id";
+			$base_url="./catalog.php?categ=serials&sub=modele&serial_id=".$serial_id."&modele_id=".$this->modele_id;
 			$base_url_mois='';	
 
 			$calend.= "<div id='calendrier_tab' style='width:99%'>" ;
 			$date = $this->date_debut;
 			$calend.= "<A name='ancre_calendrier'></A>"; 
 				
-			$year=pmb_sql_value("SELECT YEAR('$date')");
+			$year=pmb_sql_value("SELECT YEAR('".$date."')");
 			$cur_year=$year;
 			//debut expand
 			$calend.="
 			<div class='row'>&nbsp;</div>
 			<div id='abts_year_$year' class='notice-parent'>
-				<img src='./images/minus.gif' class='img_plus' name='imEx' id='abts_year_$year"."Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('abts_year_$year', true); return false;\" hspace='3'>
+				<img src='".get_url_icon('minus.gif')."' class='img_plus' name='imEx' id='abts_year_".$year."Img' title='".addslashes($msg['plus_detail'])."' style='border:0px' onClick=\"expandBase('abts_year_".$year."', true); return false;\" hspace='3'>
 				<span class='notice-heada'>
-					$year
+					".$year."
 	    		</span>
 			</div>
 			<div id='abts_year_$year"."Child' startOpen='Yes' class='notice-child' style='margin-bottom:6px;width:94%'> ";	
 						
-			$i=pmb_sql_value("SELECT MONTH('$date')");	
+			$i=pmb_sql_value("SELECT MONTH('".$date."')");	
 			if($i==2 || $i==5 || $i==8 || $i==11) {
 					$calend.= "<div class='row' style='padding-top: 5px'><div class='colonne3'>&nbsp;";
 					$calend.= "</div>\n";		
@@ -599,13 +621,13 @@ ENDOFTEXT;
 					$calend.= "</div>\n";		
 			}
 			do {
-				$year=pmb_sql_value("SELECT YEAR('$date')");	
+				$year=pmb_sql_value("SELECT YEAR('".$date."')");	
 				if($year!=$cur_year){
 					$calend.= "</div>";
 					$calend.="
 					<div class='row'></div>
 					<div id='abts_year_$year' class='notice-parent'>
-						<img src='./images/plus.gif' class='img_plus' name='imEx' id='abts_year_$year"."Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('abts_year_$year', true); return false;\" hspace='3'>
+						<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='abts_year_$year"."Img' title='".addslashes($msg['plus_detail'])."' style='border:0px' onClick=\"expandBase('abts_year_$year', true); return false;\" hspace='3'>
 						<span class='notice-heada'>
 							$year
 			    		</span>
@@ -614,7 +636,7 @@ ENDOFTEXT;
 					";	
 					$cur_year=$year;
 				}						
-				$i=pmb_sql_value("SELECT MONTH('$date')");	
+				$i=pmb_sql_value("SELECT MONTH('".$date."')");	
 				
 				if ($i==1 || $i==4 || $i==7 || $i==10 ) $calend.= "<div class='row' style='padding-top: 5px'><div class='colonne3'>";
 				else 
@@ -623,8 +645,8 @@ ENDOFTEXT;
 				$calend.= "</div>\n";
 				if ($i==3 || $i==6 || $i==9 || $i==12 ) $calend.="</div>\n";
 				
-				$date=pmb_sql_value("SELECT DATE_ADD('$date', INTERVAL 1 MONTH)");
-				$diff=pmb_sql_value("SELECT DATEDIFF('$date_fin','$date')");			
+				$date=pmb_sql_value("SELECT DATE_ADD('".$date."', INTERVAL 1 MONTH)");
+				$diff=pmb_sql_value("SELECT DATEDIFF('".$date_fin."','".$date."')");			
 			}
 			while($diff>=0);	
 			//fin expand
@@ -636,12 +658,12 @@ ENDOFTEXT;
 		return $r;
 	}
 	
-	function gen_date(){
+	public function gen_date(){
 		global $dbh;
 		global $msg;
 		global $include_path;
 		if($this->modele_id) {
-			$dummy = "delete FROM abts_grille_modele WHERE num_modele='$this->modele_id' ";
+			$dummy = "delete FROM abts_grille_modele WHERE num_modele='".$this->modele_id."' ";
 			pmb_mysql_query($dummy, $dbh);		
 				
 			$date = construitdateheuremysql($this->date_debut);	
@@ -649,36 +671,36 @@ ENDOFTEXT;
 			
 			//Lire la périodicté
 			$duree=1;
-			$requete="select duree,unite from abts_periodicites where periodicite_id='$this->num_periodicite'";
+			$requete="select duree,unite from abts_periodicites where periodicite_id='".$this->num_periodicite."'";
 			$resultat=pmb_mysql_query($requete);
 			if($r=pmb_mysql_fetch_object($resultat)) {
 				$duree=$r->duree;
 				$unite=$r->unite;									
 				do {				
-					$dayofweek=pmb_sql_value("SELECT DAYOFWEEK('$date')");	//1 = Dimanche, 2 = Lundi, ... 7 = Samedi
+					$dayofweek=pmb_sql_value("SELECT DAYOFWEEK('".$date."')");	//1 = Dimanche, 2 = Lundi, ... 7 = Samedi
 					if($dayofweek==1)$dayofweek=8;
 					$dayofweek--;
-					$day=pmb_sql_value("SELECT DAYOFMONTH('$date')");	// 1 à 31
-					$month=pmb_sql_value("SELECT MONTH('$date')");	//1 à 12 
-					$week=pmb_sql_value("SELECT WEEK('$date',5)") + 1;//0 ... 53
+					$day=pmb_sql_value("SELECT DAYOFMONTH('".$date."')");	// 1 à 31
+					$month=pmb_sql_value("SELECT MONTH('".$date."')");	//1 à 12 
+					$week=pmb_sql_value("SELECT WEEK('".$date."',5)") + 1;//0 ... 53
 					
 					//calcul numero de semaine dans le mois
 					$weekofmonth=($day+7-$dayofweek)/7+1;
 	
 					//Mois dans l'année exclu
-					if($this->month_year[$month-1])
-						if($this->week_year[$week-1])
-							if($this->week_month[$weekofmonth-1])
+					if(!empty($this->month_year[$month-1]))
+						if(!empty($this->week_year[$week-1]))
+							if(!empty($this->week_month[$weekofmonth-1]))
 								if($this->day_month[$day-1])
-									if($this->days[$dayofweek-1]) {
+									if(!empty($this->days[$dayofweek-1])) {
 										//c'est un jour prévu de réception	
-										$requete = "INSERT INTO abts_grille_modele SET num_modele='$this->modele_id', date_parution ='$date', type_serie = '1'";
+										$requete = "INSERT INTO abts_grille_modele SET num_modele='".$this->modele_id."', date_parution ='".$date."', type_serie = '1'";
 										pmb_mysql_query($requete, $dbh);
 									}							
 					// Calcul de la date suivante à analyser et la sortie du while					
-					if($unite==0) $sql_add="INTERVAL $duree DAY";
-					if($unite==1) $sql_add="INTERVAL $duree MONTH";	
-					if($unite==2) $sql_add="INTERVAL $duree YEAR";	
+					if($unite==0) $sql_add="INTERVAL ".$duree." DAY";
+					if($unite==1) $sql_add="INTERVAL ".$duree." MONTH";	
+					if($unite==2) $sql_add="INTERVAL ".$duree." YEAR";	
 					$date=pmb_sql_value("SELECT DATE_ADD('$date', $sql_add)");
 					$diff=pmb_sql_value("SELECT DATEDIFF('$date_fin','$date')");									
 				}
@@ -687,7 +709,7 @@ ENDOFTEXT;
 		}
 	}
 	
-	function update() {
+	public function update() {
 		global $dbh;
 		global $msg;
 		global $include_path;
@@ -738,7 +760,7 @@ ENDOFTEXT;
 		
 		if($this->modele_id) {
 			// update: s'assurer que le nom de modèle n'existe pas déjà
-			$dummy = "SELECT * FROM abts_modeles WHERE modele_name='".addslashes($this->modele_name)."' and num_notice='$this->num_notice' and modele_id!='$this->modele_id' ";
+			$dummy = "SELECT * FROM abts_modeles WHERE modele_name='".addslashes($this->modele_name)."' and num_notice='".$this->num_notice."' and modele_id!='".$this->modele_id."' ";
 			$check = pmb_mysql_query($dummy, $dbh);
 			if(pmb_mysql_num_rows($check)) {
 				require_once("$include_path/user_error.inc.php");
@@ -759,7 +781,7 @@ ENDOFTEXT;
 		} else {
 				
 			// s'assurer que le modèle n'existe pas déjà
-			$dummy = "SELECT * FROM abts_modeles WHERE modele_name='".addslashes($this->modele_name)."' and num_notice='$this->num_notice'";
+			$dummy = "SELECT * FROM abts_modeles WHERE modele_name='".addslashes($this->modele_name)."' and num_notice='".$this->num_notice."'";
 			$check = pmb_mysql_query($dummy, $dbh);
 			if(pmb_mysql_num_rows($check)) {
 				require_once("$include_path/user_error.inc.php");
@@ -781,8 +803,7 @@ ENDOFTEXT;
 		}		
 	}
 	
-	function delete()
-	{
+	public function delete() {
 		global $dbh;
 		global $msg;
 		global $include_path;
@@ -804,7 +825,7 @@ ENDOFTEXT;
 		$check = pmb_mysql_query($dummy, $dbh);			
 	}
 	
-	function proceed() {
+	public function proceed() {
 		global $include_path,$charset;
 		global $act;
 		global $serial_id,$msg,$modele_name,$num_notice,$num_periodicite,$duree_abonnement,$date_debut,$date_fin,$days,$day_month,$week_month,$week_year,$month_year,$date_parution;			
@@ -893,16 +914,16 @@ ENDOFTEXT;
 			break;			
 			case 'copy':
 				// mise à jour modèle
-				$requete = "select type_serie, numero,date_parution,type_serie,nombre_recu from abts_grille_modele where num_modele='$this->modele_id'";
+				$requete = "select type_serie, numero,date_parution,type_serie,nombre_recu from abts_grille_modele where num_modele='".$this->modele_id."'";
 				$resultat=pmb_mysql_query($requete);
 				
 				//Création du nouveau modèle
 				$this->modele_id='';
 				$this->num_notice=$new_serial_id;
-				$this->modele_name= clean_string($msg["abonnement_nom_nouveau_modele"]); 
+				$this->modele_name= clean_string($this->modele_name);
 				$serial_id=$new_serial_id;
 				$this->update();
-				$requete = "delete FROM abts_grille_modele WHERE num_modele='$this->modele_id'";
+				$requete = "delete FROM abts_grille_modele WHERE num_modele='".$this->modele_id."'";
 				pmb_mysql_query($requete, $dbh);		
 				//recopie des infos du calendrier
 				if(pmb_mysql_num_rows($resultat)) { 
@@ -912,7 +933,7 @@ ENDOFTEXT;
 						$nombre_recu=$r->nombre_recu;
 						$numero=$r->numero;
 						
-						$requete = "INSERT INTO abts_grille_modele SET num_modele='$this->modele_id', date_parution ='$date_parution', type_serie = '$type_serie', nombre_recu= '$nombre_recu'";
+						$requete = "INSERT INTO abts_grille_modele SET num_modele='".$this->modele_id."', date_parution ='".$date_parution."', type_serie = '".$type_serie."', nombre_recu= '".$nombre_recu."'";
 						pmb_mysql_query($requete, $dbh);
 					}
 				}			
@@ -920,7 +941,7 @@ ENDOFTEXT;
 			break;
 			case 'del':	
 				// Verif si abonnements associés
-				$requete="select abt_name,abts_abts.abt_id as ab_id from abts_abts_modeles,abts_abts where modele_id='$this->modele_id' and abts_abts.abt_id=abts_abts_modeles.abt_id";
+				$requete="select abt_name,abts_abts.abt_id as ab_id from abts_abts_modeles,abts_abts where modele_id='".$this->modele_id."' and abts_abts.abt_id=abts_abts_modeles.abt_id";
 				$resultat=pmb_mysql_query($requete);
 				if (pmb_mysql_num_rows($resultat)) {	
 					while(($r=pmb_mysql_fetch_object($resultat))) {
@@ -932,11 +953,11 @@ ENDOFTEXT;
 					return;	
 				}
 				$this->delete();		
-				print "<div class='row'><div class='msg-perio'>".$msg[maj_encours]."</div></div>";
+				print "<div class='row'><div class='msg-perio'>".$msg['maj_encours']."</div></div>";
 				$id_form = md5(microtime());
-				$retour = "./catalog.php?categ=serials&sub=view&serial_id=$serial_id&view=modele";
-				print "<form class='form-$current_module' name=\"dummy\" method=\"post\" action=\"$retour\" style=\"display:none\">
-					<input type=\"hidden\" name=\"id_form\" value=\"$id_form\">
+				$retour = "./catalog.php?categ=serials&sub=view&serial_id=".$serial_id."&view=modele";
+				print "<form class='form-".$current_module."' name=\"dummy\" method=\"post\" action=\"".$retour."\" style=\"display:none\">
+					<input type=\"hidden\" name=\"id_form\" value=\"".$id_form."\">
 					</form>
 					<script type=\"text/javascript\">document.dummy.submit();</script>
 					</div>";
@@ -947,7 +968,7 @@ ENDOFTEXT;
 		}
 	}
 	
-	function calc_selection($val,$size){
+	public function calc_selection($val,$size){
 		$ret='';
 		for ($i=0; $i<$size; $i++) {
 			if(!isset($val[$i+1])) $ret .='1'; else $ret .='0';
@@ -958,9 +979,10 @@ ENDOFTEXT;
 
 class abts_modeles {
 	
-	var $modeles = array(); //Tableau des IDs des modèles
+	public $modeles = array(); //Tableau des IDs des modèles
 	
-    function abts_modeles($id_perio) {
+    public function __construct($id_perio) {
+    	$id_perio += 0;
     	$requete="select modele_id from abts_modeles where num_notice=$id_perio";
     	$resultat=pmb_mysql_query($requete);
     	while ($r=pmb_mysql_fetch_object($resultat)) {
@@ -969,7 +991,7 @@ class abts_modeles {
     	}
     }
     
-    function show_list() {
+    public function show_list() {
     	global $modele_list,$msg;
     	$r=$modele_list;
     	$modeles="";
@@ -982,10 +1004,4 @@ class abts_modeles {
     }
 }
 
-/*function sql_value($rqt)
-{
-	$result=pmb_mysql_query($rqt);
-	$row = pmb_mysql_fetch_row($result);
-	return $row[0];
-}*/
 ?>

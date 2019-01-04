@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl.inc.php,v 1.6.2.1 2015-08-14 10:30:03 dbellamy Exp $
+// $Id: expl.inc.php,v 1.8 2017-02-20 19:04:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 // accès à une notice par code-barre, ISBN, ou numéro commercial ou par CB exemplaire
@@ -15,6 +15,7 @@ if ($gestion_acces_active==1 && $gestion_acces_user_notice==1) {
 	$dom_1= $ac->setDomain(1);
 	$acces_j = $dom_1->getJoin($PMBuserid,4,'notice_id');
 }
+
 // on commence par voir ce que la saisie utilisateur est ($ex_query)
 $ex_query_original = $ex_query;
 $ex_query = clean_string($ex_query);
@@ -62,7 +63,7 @@ if ($EAN && $isbn) {
 	$requete.= "join exemplaires on notices.notice_id=exemplaires.expl_notice ";
 	$requete.= "WHERE niveau_biblio='m' AND (exemplaires.expl_cb like '$code' OR exemplaires.expl_cb='$ex_query' OR notices.code in ('$code','$EAN'".($code10?",'$code10'":"").")) limit 10";
 	$myQuery = pmb_mysql_query($requete, $dbh);
-	
+
 } elseif ($isbn) {
 
 	// recherche d'un isbn
@@ -81,6 +82,7 @@ if ($EAN && $isbn) {
 		$requete.= "GROUP BY bulletin_id limit 10";
 		$rqt_bulletin=1;
 	}
+
 } elseif ($code) {
 
 	// recherche d'un exemplaire
@@ -102,11 +104,12 @@ if ($EAN && $isbn) {
 	}
 
 } else {
-	
+
 	error_message($msg[235], $msg[307]." $ex_query".($pmb_allow_external_search?"<br /><a href='./catalog.php?categ=search&mode=7&external_type=simple&from_mode=0&code=".rawurlencode($ex_query)."'>".$msg["connecteurs_external_search_sources"]."</a>":""), 1, "./catalog.php?categ=search&mode=0");
 	die();
-	
+
 }
+
 if ($rqt_bulletin!=1) {
 	if(pmb_mysql_num_rows($myQuery)) {
 		if(pmb_mysql_num_rows($myQuery) > 1) {
@@ -125,17 +128,16 @@ if ($rqt_bulletin!=1) {
 			}
 			print $end_result_liste;
 		} else {
-		$notice = pmb_mysql_fetch_object($myQuery);
-					// un seul résultat
+			$notice = pmb_mysql_fetch_object($myQuery);
+			// un seul résultat
 			print "<script type=\"text/javascript\">";
 			print "document.location = \"./circ.php?categ=resa_planning&resa_action=add_resa&id_empr=$id_empr&groupID=$groupID&id_notice=".$notice->notice_id."\"";
 			print "</script>";
 		}
 	} else {
-		print $RESA_author_query;
 		error_message($msg[235], $msg[307]." $ex_query", 0, "./circ.php?categ=resa_planning&resa_action=search_resa&id_empr=$id_empr&groupID=$groupID&mode=0");
 	}
-		}  else {
+}  else {
 	// C'est un périodique
 	$res = @pmb_mysql_query($requete, $dbh);
 	if (pmb_mysql_num_rows($res)) {
@@ -157,7 +159,6 @@ if ($rqt_bulletin!=1) {
 			print "</script>";
 		}
 	} else {
-		print $RESA_author_query;
 		error_message($msg[235], $msg[307]." $ex_query", 1, "./circ.php?categ=resa_planning&resa_action=search_resa&id_empr=$id_empr&groupID=$groupID&mode=0");
 	}
 }

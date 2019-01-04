@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: statut.inc.php,v 1.22 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: statut.inc.php,v 1.26 2018-10-12 14:44:48 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+require_once($class_path."/list/configuration/docs/list_configuration_docs_statut_ui.class.php");
 
 // gestion des codes statut exemplaires
 ?>
@@ -42,53 +44,7 @@ function test_check_visible_opac(form){
 
 <?php
 function show_statut($dbh) {
-	global $msg;
-
-	print "<table>
-	<tr>
-		<th colspan=5>".$msg['docs_statut_gestion']."</th>
-		<th colspan=2>".$msg['docs_statut_opac']."</th>
-	</tr>
-	<tr>
-		<th>".$msg[103]."</th>
-		<th>&nbsp;</th>
-		<th>&nbsp;</th>
-		<th>".$msg['proprio_codage_proprio']."</th>
-		<th>".$msg['import_codage']."</th>
-		<th>".$msg[103]."</th>
-		<th>".$msg['docs_statut_visu_opac']."</th>
-	</tr>";
-
-	// affichage du tableau des statuts
-	$requete = "SELECT * FROM docs_statut left join lenders on statusdoc_owner=idlender ORDER BY statut_libelle ";
-	$res = pmb_mysql_query($requete, $dbh);
-	$nbr = pmb_mysql_num_rows($res);
-
-	$parity=1;
-	for($i=0;$i<$nbr;$i++) {
-		$row=pmb_mysql_fetch_object($res);
-		if ($parity % 2) {
-			$pair_impair = "even";
-		} else {
-			$pair_impair = "odd";
-		}
-		$parity += 1;
-		$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./admin.php?categ=docs&sub=statut&action=modif&id=$row->idstatut';\" ";
-        if ($row->statusdoc_owner) print pmb_bidi("<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td><i>$row->statut_libelle</i></td>");
-		else print pmb_bidi("<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td><strong>$row->statut_libelle</strong></td>"); 
-		if($row->pret_flag) print "<td>$msg[113]</td>";
-		else print "<td>$msg[114]</td>";
-		if($row->statut_allow_resa) print "<td>".$msg["statut_allow_resa_yes"]."</td>";
-		else print "<td>".$msg["statut_allow_resa_no"]."</td>";
-		print pmb_bidi("<td>$row->lender_libelle</td>") ;
-		print pmb_bidi("<td>$row->statusdoc_codage_import</td>");
-		print pmb_bidi("<td>$row->statut_libelle_opac</td>") ;
-		if($row->statut_visible_opac) print "<td>X</td>";
-		else print "<td>&nbsp;</td>";
-		print "</tr>";
-	}
-	print "</table>
-		<input class='bouton' type='button' value=' $msg[115] ' onClick=\"document.location='./admin.php?categ=docs&sub=statut&action=add'\" />";
+	print list_configuration_docs_statut_ui::get_instance()->get_display_list();
 }
 
 function statut_form($libelle="", $pret=1, $trans=1, $statusdoc_codage_import="", $statusdoc_owner=0, $id=0, $libelle_opac="", $visible_opac=1,$allow_resa=1) {
@@ -180,7 +136,7 @@ switch($action) {
 				$total = pmb_mysql_result(pmb_mysql_query("select count(1) from exemplaires where expl_statut ='".$id."' ", $dbh), 0, 0);
 				if ($total > 0) {
 					$msg_suppr_err = $admin_liste_jscript;
-					$msg_suppr_err .= $msg[1703]." <a href='#' onclick=\"showListItems(this);return(false);\" what='statut_docs' item='".$id."' total='".$total."' alt=\"".$msg["admin_docs_list"]."\" title=\"".$msg["admin_docs_list"]."\"><img src='./images/req_get.gif'></a>" ;
+					$msg_suppr_err .= $msg[1703]." <a href='#' onclick=\"showListItems(this);return(false);\" what='statut_docs' item='".$id."' total='".$total."' alt=\"".$msg["admin_docs_list"]."\" title=\"".$msg["admin_docs_list"]."\"><img src='".get_url_icon('req_get.gif')."'></a>" ;
 					error_message(	$msg[294], $msg_suppr_err, 1, 'admin.php?categ=docs&sub=statut&action=');
 				} else {
 					if ($finance_statut_perdu == '') $statut_perdu = 0;

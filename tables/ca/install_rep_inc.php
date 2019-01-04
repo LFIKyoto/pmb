@@ -74,13 +74,16 @@ $msg_crea_26 = "<br /><br />Echec du remplissage avec la cote style Dewey";
 $msg_crea_27 = "<br /><br />Remplissage avec l'indexation Dewey 100 cases du savoir";
 $msg_crea_28 = "<br /><br />Echec du remplissage avec l'indexation Dewey 100 cases du savoir";
 $msg_crea_29 = "<br /><br />Aucun remplissage d'indexation.";
-$msg_crea_30 = "<p>les scripts d'installation ont &eacute;t&eacute; renomm&eacute;s afin de ne plus pouvoir &ecirc;tre ex&eacute;cut&eacute;s directement</p>";
+$msg_crea_30 = "<p>Les scripts d'installation ont &eacute;t&eacute; renomm&eacute;s afin de ne plus pouvoir &ecirc;tre ex&eacute;cut&eacute;s directement</p>";
 $msg_crea_31 = "<p><a href=\"../\">Allez &agrave; la page d'accueil</a></p>";
-$msg_crea_32 = "Pb de donn&eacute;es de cr&eacute;ation ";
+$msg_crea_32 = "Probl&eagrave;me de donn&eacute;es de cr&eacute;ation ";
 
-$msg_crea_33 = "<br /><br />Remplissage de la demo du portail r&eacute;ussi";
-$msg_crea_34 = "<br /><br />Echec du remplissage de la demo du portail";				
-	
+$msg_crea_33 = "<br /><br />Remplissage de la demo du portail Pag&eacute;o r&eacute;ussi";
+$msg_crea_34 = "<br /><br />Echec du remplissage de la demo du portail Pag&eacute;o";
+
+$msg_crea_35 = "<br /><br />Remplissage de la demo du portail Zen r&eacute;ussi";
+$msg_crea_36 = "<br /><br />Echec du remplissage de la demo du portail Zen";
+
 $msg_crea_control_version = "<h3>La version de la base de donn&eacute;es est <font color=red>!!pmb_version!!</font>, elle devrait &ecirc;tre en <font color=red>$pmb_version_database_as_it_should_be</font></h3><br />
 			Connectez-vous &agrave; PMB normalement,<br />
 			Allez en Administration > Outils > Mise &agrave; jour de la base avant de travailler avec PMB.<br />

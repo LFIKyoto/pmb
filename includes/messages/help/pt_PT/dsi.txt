@@ -1,4 +1,4 @@
-<h1>M&oacute;dulo de Difus&atilde;o Selectiva de Informa&ccedil;&atilde;o</h1>
+<h2>M&oacute;dulo de Difus&atilde;o Selectiva de Informa&ccedil;&atilde;o</h2>
 <p>A difus&atilde;o selectiva de informa&ccedil;&atilde;o &eacute; um
 servi&ccedil;o que consiste em difundir aos leitores, de modo
 regular, os resultados de um perfil de procura personalizada.</p>

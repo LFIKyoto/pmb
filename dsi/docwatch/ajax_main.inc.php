@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_main.inc.php,v 1.33 2015-05-21 15:43:05 dgoron Exp $
+// $Id: ajax_main.inc.php,v 1.41 2018-08-21 15:38:44 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($class_path."/docwatch/docwatch_watches.class.php");
 require_once($class_path."/docwatch/docwatch_item.class.php");
+require_once($class_path."/docwatch/docwatch_logo.class.php");
 require_once($class_path."/encoding_normalize.class.php");
 
 
@@ -51,7 +52,7 @@ switch($sub) {
 				break;
 			case "save_watch":
 				$docwatch_watch = new docwatch_watch($id);
-				if(($docwatch_watch->get_id() != 0 && $docwatch_watch->check_rights()) || ($docwatch_watch->get_id() == 0 && in_array(SESSuserid, $allowed_users))){
+				if(($docwatch_watch->get_id() != 0 && $docwatch_watch->check_rights()) || ($docwatch_watch->get_id() == 0 && (in_array(SESSuserid, $allowed_users)) || ($PMBuserid==1))){
 					$docwatch_watch->set_title(stripslashes($title));
 					$docwatch_watch->set_ttl(stripslashes($ttl));
 					$docwatch_watch->set_logo_url(stripslashes($logo_url));
@@ -65,6 +66,9 @@ switch($sub) {
 					
 					$docwatch_watch->set_record_default_status(stripslashes($record_status));
 					$docwatch_watch->set_record_default_type(stripslashes($record_types));
+					$docwatch_watch->set_record_default_index_lang(stripslashes(($indexation_lang == "--" ? "" : $indexation_lang)));
+					$docwatch_watch->set_record_default_lang(stripslashes($record_default_lang));
+					$docwatch_watch->set_record_default_is_new(stripslashes($watch_record_is_new));
 					
 					$docwatch_watch->set_article_default_content_type(stripslashes($article_type));
 					$docwatch_watch->set_article_default_parent(stripslashes($article_parent));
@@ -73,6 +77,16 @@ switch($sub) {
 					$docwatch_watch->set_section_default_content_type(stripslashes($section_type));
 					$docwatch_watch->set_section_default_parent(stripslashes($section_parent));
 					$docwatch_watch->set_section_default_publication_status(stripslashes($section_status));
+
+					$docwatch_watch->set_watch_rss_link(stripslashes($watch_rss_link));
+					$docwatch_watch->set_watch_rss_lang(stripslashes($watch_rss_lang));
+					$docwatch_watch->set_watch_rss_copyright(stripslashes($watch_rss_copyright));
+					$docwatch_watch->set_watch_rss_editor(stripslashes($watch_rss_editor));
+					$docwatch_watch->set_watch_rss_webmaster(stripslashes($watch_rss_webmaster));
+					$docwatch_watch->set_watch_rss_image_title(stripslashes($watch_rss_image_title));
+					$docwatch_watch->set_watch_rss_image_website(stripslashes($watch_rss_image_website));
+					
+					$docwatch_watch->set_boolean_expression(stripslashes($boolean_expression));
 					
 					$result = $docwatch_watch->save();
 					$response = "";
@@ -162,13 +176,23 @@ switch($sub) {
 				);
 				print encoding_normalize::json_encode($response);
 				break;
+			case "get_logo_form" :
+				$docwatch_logo = new docwatch_logo($id);
+				print encoding_normalize::json_encode(
+						$docwatch_logo->get_form()
+					);
+				break;
+			case "edit_logo" :
+				$docwatch_logo = new docwatch_logo($id);
+				print $docwatch_logo->get_field();
+				break;
 		}
 		break;
 	case "items":
 		switch($action){
 			case "get_items":
 				if($watch_id){
-					if(!is_object($autoloader)){
+					if(!isset($autoloader) || !is_object($autoloader)){
 						$autoloader = new autoloader();
 					}
 					$autoloader->add_register("docwatch",true);
@@ -266,6 +290,16 @@ switch($sub) {
 				}
 				print encoding_normalize::json_encode($return);
 				break;
+			case "itemDeleteCreatedNotice" :
+				$return = array();
+				$return["action"] = $action;
+				$return["state"] = false;
+				if($notice_id){
+					notice::del_notice($notice_id);
+					$query = "update docwatch_items set	item_num_notice = 0 where item_num_notice = '".$num_notice."'";
+					pmb_mysql_query($query, $dbh);
+				}
+				break;
 			case "itemCreateSection":
 				$return = array();
 				$return["action"] = $action;
@@ -338,7 +372,7 @@ switch($sub) {
 				}
 				break;
 			case "get_form" :
-				if(!is_object($autoloader)){
+				if(!isset($autoloader) || !is_object($autoloader)){
 					$autoloader = new autoloader();
 				}
 				$autoloader->add_register("docwatch",true);
@@ -359,7 +393,7 @@ switch($sub) {
 				}
 				break;
 			case "get_selector_form" :
-				if(!is_object($autoloader)){
+				if(!isset($autoloader) || !is_object($autoloader)){
 					$autoloader = new autoloader();
 				}
 				$autoloader->add_register("docwatch",true);
@@ -375,12 +409,12 @@ switch($sub) {
 						$selector = new $class();
 					}
 				}
-				if(is_object($selector)){
+				if(isset($selector) && is_object($selector)){
 					print $selector->get_form();
 				}
 				break;
 			case "save_source" :
-				if(!is_object($autoloader)){
+				if(!isset($autoloader) || !is_object($autoloader)){
 					$autoloader = new autoloader();
 				}
 				$autoloader->add_register("docwatch",true);
@@ -416,6 +450,7 @@ switch($sub) {
 				break;
 			case "get_env":
 				$element = new $elem();
+				if(!isset($var)) $var = '';
 				print $element->get_page_env_select($pageid,$name,$var);
 				break;
 		}	

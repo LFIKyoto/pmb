@@ -1,4 +1,4 @@
-<h1>Funzionalit&agrave; z39.50</h1>
+<h2>Funzionalit&agrave; z39.50</h2>
 <p>Configurazione della funzionalit&agrave; z39.50 per l'importazione delle schede bibliografiche da altre istituzioni (ad es. biblioteche pubbliche con attivo un server z39.50).</p>
 
 <ul>

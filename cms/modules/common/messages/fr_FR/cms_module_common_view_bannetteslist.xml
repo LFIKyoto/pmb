@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: cms_module_common_view_bannetteslist.xml,v 1.1.6.1 2015-10-09 15:07:38 dgoron Exp $ -->
+$Id: cms_module_common_view_bannetteslist.xml,v 1.3 2018-01-25 11:29:44 dgoron Exp $ -->
 
 <XMLlist>
 	<entry code="cms_module_common_view_bannetteslist_build_bannette_link">Construction du lien vers une bannette</entry>
@@ -31,16 +31,16 @@ $Id: cms_module_common_view_bannetteslist.xml,v 1.1.6.1 2015-10-09 15:07:38 dgor
 	<entry code="cms_module_bannetteslist_view_flux_rss_opac_link_desc">Lien Opac</entry>
 	<entry code="cms_module_bannetteslist_view_flux_rss_link_desc">Lien du Flux RSS</entry>
 	<entry code="cms_module_bannetteslist_view_flux_rss_lang_desc">Langue</entry>
-	<entry code="cms_module_bannetteslist_view_flux_rss_copy_desc"></entry>
+	<entry code="cms_module_bannetteslist_view_flux_rss_copy_desc">Copyright</entry>
 	<entry code="cms_module_bannetteslist_view_flux_rss_editor_mail_desc">Email de l'éditeur</entry>
 	<entry code="cms_module_bannetteslist_view_flux_rss_webmaster_mail_desc">Email du Webmasteur</entry>
-	<entry code="cms_module_bannetteslist_view_flux_rss_ttl_desc"></entry>
+	<entry code="cms_module_bannetteslist_view_flux_rss_ttl_desc">Durée de vie</entry>
 	<entry code="cms_module_bannetteslist_view_flux_rss_img_url_desc">URL de l'image</entry>
 	<entry code="cms_module_bannetteslist_view_flux_rss_img_title_desc">Titre de l'image</entry>	
 	<entry code="cms_module_bannetteslist_view_flux_rss_img_link_desc">Lien de l'image</entry>
-	<entry code="cms_module_bannetteslist_view_flux_rss_format_desc"></entry>
-	<entry code="cms_module_bannetteslist_view_flux_rss_content_desc"></entry>
-	<entry code="cms_module_bannetteslist_view_flux_rss_date_last_desc"></entry>
-	<entry code="cms_module_bannetteslist_view_flux_rss_export_court_desc"></entry>
-	<entry code="cms_module_bannetteslist_view_flux_rss_template_desc"></entry>
+	<entry code="cms_module_bannetteslist_view_flux_rss_format_desc">Format du flux</entry>
+	<entry code="cms_module_bannetteslist_view_flux_rss_content_desc">Contenu du flux</entry>
+	<entry code="cms_module_bannetteslist_view_flux_rss_date_last_desc">Date</entry>
+	<entry code="cms_module_bannetteslist_view_flux_rss_export_court_desc">Export court</entry>
+	<entry code="cms_module_bannetteslist_view_flux_rss_template_desc">Template</entry>
 </XMLlist>

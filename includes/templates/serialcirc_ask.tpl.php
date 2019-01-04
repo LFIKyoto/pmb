@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_ask.tpl.php,v 1.4 2012-11-27 16:24:24 ngantier Exp $
+// $Id: serialcirc_ask.tpl.php,v 1.5 2017-03-17 14:29:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+if(!isset($biblio_name)) $biblio_name = '';
 
 $serialcirc_asklist_filter_tpl = "		
 	<h1>".htmlentities($msg["serialcirc_asklist_title"],ENT_QUOTES,$charset)."</h1>

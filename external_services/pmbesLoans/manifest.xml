@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.1 2011-07-29 12:32:15 dgoron Exp $ -->
+$Id: manifest.xml,v 1.2 2018-06-08 10:21:33 vtouchard Exp $ -->
 <manifest>
 	<name>pmbesLoans</name>
 	<description>msg:Loans_functions_description</description>
@@ -30,8 +30,6 @@ $Id: manifest.xml,v 1.1 2011-07-29 12:32:15 dgoron Exp $ -->
 		<method name="relanceLoansReaders" rights="" version="1.0" comment="msg:relanceLoansReaders_description" language_independant="true">
 			<pmb_requirements>
 				<pmb_requirement start_path="class" file="amende.class.php"/>
-				<pmb_requirement start_path="include" file="relance_func.inc.php"/>
-				<pmb_requirement start_path="include" file="templates/relance.tpl.php"/>
 			</pmb_requirements>
 			<inputs>
 				<description>msg:relanceLoansReaders_input_description</description>
@@ -45,8 +43,6 @@ $Id: manifest.xml,v 1.1 2011-07-29 12:32:15 dgoron Exp $ -->
 		<method name="exportCSV" rights="" version="1.0" comment="msg:exportCSV_description" language_independant="true">
 			<pmb_requirements>
 				<pmb_requirement start_path="class" file="amende.class.php"/>
-				<pmb_requirement start_path="include" file="relance_func.inc.php"/>
-				<pmb_requirement start_path="include" file="templates/relance.tpl.php"/>
 			</pmb_requirements>
 			<inputs>
 				<description>msg:exportCSV_input_description</description>

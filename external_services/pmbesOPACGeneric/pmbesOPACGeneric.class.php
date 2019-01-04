@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesOPACGeneric.class.php,v 1.9 2015-04-03 11:16:27 jpermanne Exp $
+// $Id: pmbesOPACGeneric.class.php,v 1.10 2017-09-18 13:20:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -174,14 +174,14 @@ class pmbesOPACGeneric extends external_services_api_class{
 					if ($as!== FALSE && $as!== NULL) {
 						$auteur_0 = $responsab["auteurs"][$as] ;
 						$auteur = new auteur($auteur_0["id"]);
-						$mention_resp = $auteur->isbd_entry;
+						$mention_resp = $auteur->get_isbd();
 					} else {
 						$as = array_keys ($responsab["responsabilites"], "1" ) ;
 						for ($i = 0 ; $i < count($as) ; $i++) {
 							$indice = $as[$i] ;
 							$auteur_1 = $responsab["auteurs"][$indice] ;
 							$auteur = new auteur($auteur_1["id"]);
-							$aut1_libelle[]= $auteur->isbd_entry;
+							$aut1_libelle[]= $auteur->get_isbd();
 						}
 						$mention_resp = implode (", ",$aut1_libelle) ;
 					}

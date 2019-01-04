@@ -2,7 +2,7 @@
 <!DOCTYPE XMLlist SYSTEM "../../XMLlist.dtd">
 
 <!-- liste des codes fonction en UNIMARC (français)
-$Id: function.xml,v 1.1 2012-09-27 15:20:17 arenou Exp $ -->
+$Id: function.xml,v 1.2 2017-04-05 14:11:48 ngantier Exp $ -->
 
 <XMLlist>
 	<entry code="005">Actor executant</entry>
@@ -40,7 +40,7 @@ $Id: function.xml,v 1.1 2012-09-27 15:20:17 arenou Exp $ -->
 	<entry code="260">Detentor de copyright</entry>
 	<entry code="270">Corrector</entry>
 	<entry code="273">Comissari d'una exposicion</entry>
-	<entry code="274">Dançaire</entry>
+	<entry code="275">Dançaire</entry>
 	<entry code="280">Dedicatari</entry>
 	<entry code="290">Autor d'un dedicadís</entry>
 	<entry code="300">Director artistic</entry>

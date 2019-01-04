@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: alter_v4.inc.php,v 1.569.4.1 2015-08-05 12:17:02 mbertin Exp $
+// $Id: alter_v4.inc.php,v 1.570 2015-08-05 09:33:10 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -2152,7 +2152,7 @@ switch ($action) {
 		$res_corr = pmb_mysql_query($sql_corr,$dbh);
 		while ($obj_corr=pmb_mysql_fetch_object($res_corr)) {
 			@pmb_mysql_query("update notices set typdoc='".$obj_corr->typdoc_s."', update_date=update_date where notice_id='".$obj_corr->notice_id_dep."'") ;
-			}
+		}
 		echo traite_rqt("select 1 from users","update analysis notices doctype with serial doctype ") ;
 
 		$rqt="CREATE TABLE resa_planning (

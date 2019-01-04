@@ -1,7 +1,3 @@
-define(
-"dijit/form/nls/pt/validate", ({
-	invalidMessage: "O valor inserido não é válido.",
-	missingMessage: "Este valor é necessário.",
-	rangeMessage: "Este valor está fora do intervalo. "
-})
-);
+//>>built
+define("dijit/form/nls/pt/validate",{invalidMessage:"O valor inserido n\u00e3o \u00e9 v\u00e1lido.",missingMessage:"Este valor \u00e9 necess\u00e1rio.",rangeMessage:"Este valor est\u00e1 fora do intervalo. "});
+//# sourceMappingURL=validate.js.map

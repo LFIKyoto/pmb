@@ -1,11 +1,11 @@
 /* +--------------------------------------------------------------------------+
-// © 2002-2008 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2008 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +--------------------------------------------------------------------------+
 */
 
 /*
  *	Couleurs de niveau 1 
- *	Saturation élevée
+ *	Saturation ï¿½levï¿½e
  *  --------------------------
  *	gris : #dddddd;
  *	ciel : #3594bb;
@@ -28,6 +28,9 @@
 .acquisition #conteneur{border-top:2px solid #90b636;}
 .cms #conteneur{border-top:2px solid #288F95;}
 .admin #conteneur{border-top:2px solid #a02c35;}
+.frbr #conteneur{border-top:2px solid #2196F3;}
+.modelling #conteneur{border-top:2px solid #bd4180;}
+.semantic #conteneur{border-top:2px solid #6725a3;}
 
 /* ------------------- H1 H2 H3 ------------------- */
 
@@ -75,16 +78,23 @@
 
 /* ------------------- NAVBAR ------------------- */
 #navbar-index.current,
-#navbar-index:hover{
+#navbar-index:hover,{
 	background-color:#aaa;
 }
 #navbar-opac.current,
 #navbar-opac:hover{
 	background-color:#f99c09;
 }
+#navbar-opac:hover>a:before{
+	border-color:#f99c09;
+}
 #navbar-circ.current,
 #navbar-circ:hover{
 	background-color:#3594bb;
+}
+#navbar #navbar-circ.current>a:before,
+#navbar #navbar-circ:hover>a:before{
+	border-color:#3594bb;
 }
 #navbar-catalog.current,
 #navbar-catalog:hover{
@@ -113,6 +123,46 @@
 #navbar-admin.current,#navbar-extensions.current,
 #navbar-admin:hover,#navbar-extensions:hover{
 	background-color:#a02c35;
+}
+#navbar #navbar-catalog.current>a:before,
+#navbar #navbar-catalog>a:hover:before{
+	border-color:#f99c09;
+}
+#navbar #navbar-autorites.current>a:before,
+#navbar #navbar-autorites>a:hover:before{
+	border-color:#3840be;
+}
+#navbar #navbar-edit.current>a:before,
+#navbar #navbar-edit>a:hover:before{
+	border-color:#bb3a84;
+}
+#navbar #navbar-dsi.current>a:before,
+#navbar #navbar-dsi>a:hover:before{
+	border-color:#d18c3b;
+}
+#navbar #navbar-acquisition.current>a:before,
+#navbar #navbar-acquisition>a:hover:before{
+	border-color:#90b636;
+}
+#navbar #navbar-cms.current>a:before,
+#navbar #navbar-cms>a:hover:before{
+	border-color:#288f95;
+}
+#navbar #navbar-admin.current>a:before,
+#navbar #navbar-admin>a:hover:before{
+	border-color:#a02c35;
+}
+#navbar #navbar-frbr.current>a:before,
+#navbar #navbar-frbr>a:hover:before{
+	border-color:#2196F3;
+}
+#navbar #navbar-modelling.current>a:before,
+#navbar #navbar-modelling>a:hover:before{
+	border-color:#bd4180;
+}
+#navbar #navbar-semantic.current>a:before,
+#navbar #navbar-semantic>a:hover:before{
+	border-color:#6725a3;
 }
 /* ------------------- Autres NAVbarres ------------------- */
 
@@ -149,6 +199,14 @@ ul.sel_navbar li.sel_navbar_current{
 /* Administration */
 #conteneur.admin #menu h3{background-color:#a02c35;}
 
+/* frbr */
+#conteneur.frbr #menu h3{background-color:#2196F3;}
+
+/* semantique */
+#conteneur.semantic #menu h3{background-color:#6725a3;}
+
+/* modelling */
+#conteneur.modelling #menu h3{background-color:#bd4180;}
 
 /* ------------------- CHAMPS DE SAISIE ------------------- */
 /* General */
@@ -231,6 +289,17 @@ ul.sel_navbar li.sel_navbar_current{
 .cms .saisie-80emr{
 	background:#288f95;
 }
+/* frbr */
+.frbr .saisie-5emr,
+.frbr .saisie-10emr,
+.frbr .saisie-15emr,
+.frbr .saisie-20emr,
+.frbr .saisie-30emr,
+.frbr .saisie-50emr,
+.frbr .saisie-80emr{
+	background:#2196F3;
+}
+
 /* Administration */
 .admin .saisie-5emr,
 .admin .saisie-10emr,
@@ -240,6 +309,30 @@ ul.sel_navbar li.sel_navbar_current{
 .admin .saisie-50emr,
 .admin .saisie-80emr{
 	background:#a02c35;
+}
+
+
+/* semantique */
+.semantic .saisie-5emr,
+.semantic .saisie-10emr,
+.semantic .saisie-15emr,
+.semantic .saisie-20emr,
+.semantic .saisie-30emr,
+.semantic .saisie-50emr,
+.semantic .saisie-80emr{
+	background:#6725a3;
+}
+
+
+/* modelling */
+.modelling .saisie-5emr,
+.modelling .saisie-10emr,
+.modelling .saisie-15emr,
+.modelling .saisie-20emr,
+.modelling .saisie-30emr,
+.modelling .saisie-50emr,
+.admodellingin .saisie-80emr{
+	background:#bd4180;
 }
 
 /* ------------------- ICONES EXTRA ------------------- */
@@ -341,7 +434,36 @@ ul.sel_navbar li.sel_navbar_current{
 .admin #extra2 .notification{
 	background-color:#a02c35;
 }
-
+/* modelling */
+.modelling #extra .icon_history,
+.modelling #extra .icon_help,
+.modelling #extra .icon_param,
+.modelling #extra .icon_opac,
+.modelling #extra .icon_sauv,
+.modelling #extra .icon_quit,
+.modelling #extra2 .notification{
+	background-color:#bd4180;
+}
+/* semantique */
+.semantic #extra .icon_history,
+.semantic #extra .icon_help,
+.semantic #extra .icon_param,
+.semantic #extra .icon_opac,
+.semantic #extra .icon_sauv,
+.semantic #extra .icon_quit,
+.semantic #extra2 .notification{
+	background-color:#6725a3;
+}
+/* frbr */
+.frbr #extra .icon_history,
+.frbr #extra .icon_help,
+.frbr #extra .icon_param,
+.frbr #extra .icon_opac,
+.frbr #extra .icon_sauv,
+.frbr #extra .icon_quit,
+.frbr #extra2 .notification{
+	background-color:#2196F3;
+}
 
 /* ------------------- BOUTONS ------------------- */
 /* Circulation */
@@ -390,8 +512,27 @@ body.acquisition .bouton_small{
 	background:#90b636;
 }
 
+/* modelling */
+body.modelling .bouton,
+body.modelling .bouton_small{
+	background:#bd4180;
+}
 
-/* ------------------- Boutons extension/réduction +/- ------------------- */
+/* frbr */
+body.frbr .bouton,
+body.frbr .bouton_small{
+	background:#2196F3;
+}
+
+/* semantique */
+body.semantique .bouton,
+body.semantique .bouton_small{
+	background:#6725a3;
+}
+
+
+
+/* ------------------- Boutons extension/rï¿½duction +/- ------------------- */
 /* Circulation */
 .circ .img_plus{background:#3594bb;}
 /* Catalogue */

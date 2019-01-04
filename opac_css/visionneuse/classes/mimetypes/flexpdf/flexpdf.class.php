@@ -2,20 +2,20 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: flexpdf.class.php,v 1.9 2013-07-24 13:09:22 arenou Exp $
+// $Id: flexpdf.class.php,v 1.10 2017-07-03 09:07:10 dgoron Exp $
 
 require_once($visionneuse_path."/classes/mimetypes/affichage.class.php");
 require_once($visionneuse_path."/classes/mimetypes/converter_factory.class.php");
 
 class flexpdf extends affichage{
-	var $doc;					//le document numérique à afficher
-	var $driver;				//class driver de la visionneuse
-	var $params;				//paramètres éventuels
-	var $toDisplay= array();	//tableau des infos à afficher	
-	var $tabParam = array();	//tableau décrivant les paramètres de la classe
-	var $parameters = array();	//tableau des paramètres de la classe
+	public $doc;					//le document numérique à afficher
+	public $driver;				//class driver de la visionneuse
+	public $params;				//paramètres éventuels
+	public $toDisplay= array();	//tableau des infos à afficher	
+	public $tabParam = array();	//tableau décrivant les paramètres de la classe
+	public $parameters = array();	//tableau des paramètres de la classe
  
-    function flexpdf($doc=0) {
+    public function __construct($doc=0) {
     	if($doc){
     		$this->doc = $doc; 
     		$this->driver = $doc->driver;
@@ -24,7 +24,7 @@ class flexpdf extends affichage{
     	}
     }
     
-    function fetchDisplay(){
+    public function fetchDisplay(){
     	global $visionneuse_path,$base_path;
      	//le titre
     	$this->toDisplay["titre"] = $this->doc->titre;
@@ -80,7 +80,7 @@ class flexpdf extends affichage{
 		return $this->toDisplay;  	
     }
     
-    function render(){
+    public function render(){
     	global $visionneuse_path;	
     	$this->driver->cleanCache();
     	if (!$this->driver->isInCache($this->doc->id)) {
@@ -102,7 +102,7 @@ class flexpdf extends affichage{
     	print $this->driver->readInCache($this->doc->id);
     }
     
-    function getTabParam(){
+    public function getTabParam(){
 
     	$this->tabParam = array(
 			"size_x"=>array("type"=>"text","name"=>"size_x","value"=>$this->parameters['size_x'],"desc"=>"Largeur du document en % de l'espace visible"),
@@ -117,7 +117,7 @@ class flexpdf extends affichage{
        	return $this->tabParam;
     }
     
-	function getParamsPerso(){
+	public function getParamsPerso(){
 		$params = $this->driver->getClassParam('flexpdf');
 		$this->unserializeParams($params);
 		if($this->parameters['size_x'] == 0) $this->parameters['size_x'] = $this->driver->getParam("maxX");
@@ -125,13 +125,13 @@ class flexpdf extends affichage{
 		if(!$this->parameters['print_allowed']) $this->parameters['print_allowed'] = 0;
 	}
 	
-	function unserializeParams($paramsToUnserialized){
+	public function unserializeParams($paramsToUnserialized){
 		$this->parameters = unserialize($paramsToUnserialized);
 		if(!$this->parameters['print_allowed']) $this->parameters['print_allowed'] = 0;
 		return $this->parameters;
 	}
 	
-	function serializeParams($paramsToSerialized){
+	public function serializeParams($paramsToSerialized){
 		if(!$paramsToSerialized['print_allowed']) $paramsToSerialized['print_allowed'] = 0;
 		$this->parameters =$paramsToSerialized;
 		return serialize($paramsToSerialized);

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: opac_searcher_explnums.class.php,v 1.2 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: opac_searcher_explnums.class.php,v 1.3 2018-11-29 09:04:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -307,7 +307,7 @@ echo 'duree recherche sur l\'index ='.(($t2-$t1)*1).'<br />';
 /*	
 	protected function _get_search_query(){
 		$this->_calc_query_env();
-		if($this->user_query == "*"){
+		if($this->user_query === "*"){
 			$query = $this->get_full_results_query();
 		}else{
 			$query = $this->aq->get_query_mot($this->object_index_key,$this->object_words_table,$this->object_words_value,'','',$this->field_restrict);

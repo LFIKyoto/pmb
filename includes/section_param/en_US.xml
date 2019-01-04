@@ -27,4 +27,6 @@
 	<section name="search">Options pour les recherches</section>	
 	<section name="concepts">Options pour les concepts</section>	
 	<section name="map">Options pour le géoréférencement</section>
+	<section name="debug">Options pour le débogage</section>
+	<section name="e_display_authorities">Affichage des autorités</section>
 </pmbsections>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: categories.class.php,v 1.21 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: categories.class.php,v 1.24 2017-05-18 10:47:04 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,50 +12,39 @@ require_once($class_path."/thesaurus.class.php");
 class categories{
 	
 	
-	var $num_noeud;					//Identifiant du noeud de rattachement
-	var $langue;
-	var $libelle_categorie = '';
-	var $note_application = '';
-	var $comment_public = '';
-	var	$comment_voir = '';
-	var $index_categorie = '';
+	public $num_noeud;					//Identifiant du noeud de rattachement
+	public $langue;
+	public $libelle_categorie = '';
+	public $note_application = '';
+	public $comment_public = '';
+	public $comment_voir = '';
+	public $index_categorie = '';
 
-	
 	//Constructeur	 
-	function categories($num_noeud, $langue) {
-
-		global $dbh;
-		$this->num_noeud = $num_noeud;				
+	public function __construct($num_noeud, $langue) {
+		$this->num_noeud = $num_noeud+0;				
 		$this->langue = $langue;
 		$q = "select count(1) from categories where num_noeud = '".$this->num_noeud."' and langue = '".$this->langue."' ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		if (pmb_mysql_result($r, 0, 0) != 0) {
 			$this->load();
 		} 
 	}
 
-
 	// charge la catégorie à partir de la base si elle existe.
-	function load(){
-	
-		global $dbh;
-
+	public function load(){
 		$q = "select * from categories where num_noeud = '".$this->num_noeud."' and langue = '".$this->langue."' limit 1";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		$obj = pmb_mysql_fetch_object($r);
 		$this->libelle_categorie = $obj->libelle_categorie;				
 		$this->note_application = $obj->note_application;				
 		$this->comment_public = $obj->comment_public;				
 		$this->comment_voir = $obj->comment_voir;
 		$this->index_categorie = $obj->index_categorie;
-
 	}
 	
 	// enregistre la catégorie en base.
-	function save(){
-		
-		global $dbh;
-
+	public function save(){
 		$no = new noeuds($this->num_noeud);
 		$num_thesaurus = $no->num_thesaurus; 
 		
@@ -67,42 +56,31 @@ class categories{
 		$q.= "comment_voir = '".addslashes($this->comment_voir)."', ";
 		$q.= "index_categorie = ' ".addslashes(strip_empty_words($this->libelle_categorie,$this->langue))." ' ";
 		$q.= "where num_noeud = '".$this->num_noeud."' and langue = '".$this->langue."' "; 
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		categories::update_index($this->num_noeud);
 		
 	}
 	
 	//verifie si une categorie existe dans la langue concernée
-	static function exists($num_noeud, $langue) {
-	
-		global $dbh;
-		
+	public static function exists($num_noeud, $langue) {
+		$num_noeud += 0;
 		$q = "select count(1) from categories where num_noeud = '".$num_noeud."' and langue = '".$langue."' ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		if (pmb_mysql_result($r, 0, 0) == 0) return FALSE;
 			else return TRUE;		
 	}
 	
 	//supprime une categorie en base.
-	function delete($num_noeud, $langue) {
-
-		global $dbh;
-		
+	public function delete($num_noeud, $langue) {
+		$num_noeud += 0;
 		$q = "delete from categories where num_noeud = '".$num_noeud."' and langue = '".$langue."' ";
-		$r = @pmb_mysql_query($q, $dbh);
+		$r = @pmb_mysql_query($q);
 	}		
-
 
 	//Liste les libelles des ancetres d'une categorie dans la langue concernée 
 	//a partir de la racine du thesaurus
-	static function listAncestorNames($num_noeud=0, $langue='') {
-		
-		global $dbh;
-			
-		/*if(!$num_noeud) { // Pas de $this dans une static
-			$num_noeud = $this->num_noeud;
-			$langue = $this->langue;
-		}*/
+	public static function listAncestorNames($num_noeud=0, $langue='') {
+		$num_noeud += 0;
 		$thes = thesaurus::getByEltId($num_noeud);
 		$id_list = noeuds::listAncestors($num_noeud);
 		$id_list = array_reverse($id_list);
@@ -113,27 +91,19 @@ class categories{
 			else $lg=$thes->langue_defaut; 
 			$q = "select libelle_categorie from categories where num_noeud = '".$id."' ";
 			$q.= "and langue = '".$lg."' limit 1";
-			$r = pmb_mysql_query($q, $dbh);
+			$r = pmb_mysql_query($q);
 			if (pmb_mysql_num_rows($r))	{
 				$lib_list.= pmb_mysql_result($r, 0, 0); 
 				if ($id != $num_noeud) $lib_list.= ':';
 			}
 		}
 		return $lib_list;
-	
 	}
-
 
 	//Retourne un tableau des ancetres d'une categorie dans la langue concernée 
 	//a partir de la racine du thesaurus
-	static function listAncestors($num_noeud=0, $langue) {
-		
-		global $dbh;
-			
-		/*if(!$num_noeud) { // Pas de $this dans une static
-			$num_noeud = $this->num_noeud;
-			$langue = $this->langue;
-		}*/
+	public static function listAncestors($num_noeud=0, $langue) {
+		$num_noeud += 0;
 		$thes = thesaurus::getByEltId($num_noeud);
 		$id_list = noeuds::listAncestors($num_noeud);
 		$id_list = array_reverse($id_list);
@@ -147,7 +117,7 @@ class categories{
 			$q.= "and categories.langue = '".$lg."' ";
 			$q.= "and categories.num_noeud = noeuds.id_noeud ";
 			$q.= "limit 1";
-			$r = pmb_mysql_query($q, $dbh);
+			$r = pmb_mysql_query($q);
 			
 			while ($row = pmb_mysql_fetch_object($r))	{
 				$anc_list[$id]['num_noeud'] = $row->num_noeud;
@@ -166,17 +136,12 @@ class categories{
 		}
 		return $anc_list;
 	}
-	
 
 	//Retourne un resultset des enfants d'une categorie dans la langue concernée 
-	function listChilds($num_noeud=0, $langue, $keep_tilde=1, $ordered=0) {
-		
-		global $dbh;
+	public static function listChilds($num_noeud=0, $langue, $keep_tilde=1, $ordered=0) {
 		global $opac_categories_nav_max_display;	
-		if(!$num_noeud) {
-			$num_noeud = $this->num_noeud;
-			$langue = $this->langue;
-		}
+		
+		$num_noeud += 0;
 		$thes = thesaurus::getByEltId($num_noeud);
 		$list = array();
 		if($opac_categories_nav_max_display > 0) $limit= " limit $opac_categories_nav_max_display ";
@@ -196,22 +161,18 @@ class categories{
 		if (!$keep_tilde) $q.= "and catdef.libelle_categorie not like '~%' ";
 		if ($ordered !== 0) $q.= "order by ".$ordered." ";
 		$q.=$limit;
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		return $r;
 	}
 	
 	//Retourne un resultset des Orphelins dont le renvoi voir pointe sur ce noeud
-	function listSynonymes($num_noeud=0, $langue, $keep_tilde=1, $ordered=0) {
-	
-		global $dbh;
+	public static function listSynonymes($num_noeud=0, $langue, $keep_tilde=1, $ordered=0) {
 		global $opac_categories_nav_max_display;
-		if(!$num_noeud) {
-			$num_noeud = $this->num_noeud;
-			$langue = $this->langue;
-		}
+		
+		$num_noeud += 0;
 		$thes = thesaurus::getByEltId($num_noeud);
 		$q = "select id_noeud from noeuds where num_thesaurus = '".$thes->id_thesaurus."' and autorite = 'ORPHELINS' ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		if($r && pmb_mysql_num_rows($r)){
 			$num_noeud_orphelins = pmb_mysql_result($r, 0, 0);
 		}else{
@@ -235,30 +196,24 @@ class categories{
 		if (!$keep_tilde) $q.= "and catdef.libelle_categorie not like '~%' ";
 		if ($ordered !== 0) $q.= "order by ".$ordered." ";
 		$q.=$limit;
-		$r = pmb_mysql_query($q, $dbh);	
+		$r = pmb_mysql_query($q);	
 		return $r;
 	}	
 	
-	function getlibelle($num_noeud=0, $langue=""){
-		global $dbh;
+	public static function getlibelle($num_noeud=0, $langue=""){
+		$num_noeud += 0;
 		$lib="";
-		if(!$num_noeud) {
-			$num_noeud = $this->num_noeud;
-			$langue = $this->langue;
-		}
 		$thes = thesaurus::getByEltId($num_noeud);
 		if (categories::exists($num_noeud, $langue)) $lg=$langue; 
 		else $lg=$thes->langue_defaut; 
 		$q = "select libelle_categorie from categories where num_noeud = '".$num_noeud."' ";
 		$q.= "and langue = '".$lg."' limit 1";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		if (pmb_mysql_num_rows($r))	{
 			$lib= pmb_mysql_result($r, 0, 0); 
 		}
-		
 		return $lib;
 	}
-
 }
 
 ?>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_records.class.php,v 1.5 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: searcher_records.class.php,v 1.19 2018-11-29 09:04:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -28,42 +28,76 @@ class searcher_records extends searcher_generic {
 	}
 
 	protected function get_full_results_query(){
-		return "select notice_id as id_notice from notices";
+		return 'select notice_id as id_notice from notices '.$this->_get_typdoc_filter(true);
 	}
 	
 	protected static function _get_typdoc_filter($on_notice=false){
+		global $pmb_show_notice_id, $f_notice_id;
 		global $typdoc_query;
 		global $statut_query;
+		global $date_parution_start_query, $date_parution_end_query, $date_parution_exact_query;
+		
 		$return ="";
+		if($date_parution_start_query) {
+			$date_parution_start = detectFormatDate($date_parution_start_query);
+		} else {
+			$date_parution_start = '';
+		}
+		if($date_parution_end_query) {
+			$date_parution_end = detectFormatDate($date_parution_end_query);
+		} else {
+			$date_parution_end = '';
+		}
 		if($on_notice){
-			if($typdoc_query && $statut_query) {
-				$return = " where typdoc = '".$typdoc_query."' and statut = '".$statut_query."'";
-			}else if ($typdoc_query){
-				$return = " join notices on id_notice = notice_id and typdoc = '".$typdoc_query."'";
-			}else if ($statut_query){
-				$return = " join notices on id_notice = notice_id and statut = '".$statut_query."'";
-			}else{
-				return "";
+			if($pmb_show_notice_id && $f_notice_id) {
+				$return = " where notice_id = '".$f_notice_id."' ";
+			} else {
+				if($typdoc_query && $statut_query) {
+					$return = " where typdoc = '".$typdoc_query."' and statut = '".$statut_query."' ";
+				}else if ($typdoc_query){
+					$return = " where typdoc = '".$typdoc_query."' ";
+				}else if ($statut_query){
+					$return = " where statut = '".$statut_query."' ";
+				}
+			}
+			if($return) {
+				$where_and = ' and ';
+			}else {
+				$where_and = ' where ';
+			}
+			if($date_parution_start && $date_parution_end) {
+				$return.= $where_and." date_parution >= '".$date_parution_start."' and date_parution <= '".$date_parution_end."' ";
+			}else if ($date_parution_start && $date_parution_exact_query){
+				$return.= $where_and." date_parution = '".$date_parution_start."' ";
+			}else if ($date_parution_start){
+				$return.= $where_and." date_parution >= '".$date_parution_start."' ";
+			}else if ($date_parution_end){
+				$return.= $where_and." date_parution <= '".$date_parution_end."' ";
 			}
 		}else{
 			if($typdoc_query && $statut_query) {
-				$return = " join notices on id_notice = notice_id and typdoc = '".$typdoc_query."' and statut = '".$statut_query."'";
+				$return = " join notices on id_notice = notice_id and typdoc = '".$typdoc_query."' and statut = '".$statut_query."' ";
 			}else if ($typdoc_query){
-				$return = " join notices on id_notice = notice_id and typdoc = '".$typdoc_query."'";
+				$return = " join notices on id_notice = notice_id and typdoc = '".$typdoc_query."' ";
 			}else if ($statut_query){
-				$return = " join notices on id_notice = notice_id and statut = '".$statut_query."'";
-			}else{
-				return "";
+				$return = " join notices on id_notice = notice_id and statut = '".$statut_query."' ";
+			}
+			if($date_parution_start && $date_parution_end) {
+				$return.= " join notices as notices_date_parution on id_notice = notices_date_parution.notice_id and notices_date_parution.date_parution >= '".$date_parution_start."' and date_parution <= '".$date_parution_end."' ";
+			}else if ($date_parution_start && $date_parution_exact_query){
+				$return.= " join notices as notices_date_parution on id_notice = notices_date_parution.notice_id and notices_date_parution.date_parution = '".$date_parution_start."' ";
+			}else if ($date_parution_start){
+				$return.= " join notices as notices_date_parution on id_notice = notices_date_parution.notice_id and notices_date_parution.date_parution >= '".$date_parution_start."' ";
+			}else if ($date_parution_end){
+				$return.= " join notices as notices_date_parution on id_notice = notices_date_parution.notice_id and notices_date_parution.date_parution <= '".$date_parution_end."' ";
 			}
 		}
 		return $return;
 	}
-	
+
 	protected function _get_search_query(){
 		$query = parent::_get_search_query();
-		if($this->user_query == "*"){
-			$query.= self::_get_typdoc_filter(true);
-		}else {
+		if($this->user_query !== "*"){
 			$query.= self::_get_typdoc_filter();
 		}
 		return $query;
@@ -78,9 +112,11 @@ class searcher_records extends searcher_generic {
 	}
 	
 	protected function _get_sign($sorted=false){
-		global $typdoc;
+		global $typdoc_query,$statut_query;
+		global $date_parution_start_query, $date_parution_end_query, $date_parution_exact_query;
+		
 		$sign = parent::_get_sign($sorted);
-		$sign.= md5("&typdoc=".$typdoc);
+		$sign.= md5('&typdoc='.$typdoc_query.'&statut='.$statut_query.'&date_parution_start_query='.$date_parution_start_query.'&date_parution_end_query='.$date_parution_end_query.'&date_parution_exact_query='.$date_parution_exact_query);
 		return $sign;
 	}
 	
@@ -170,20 +206,52 @@ class searcher_records extends searcher_generic {
 			if(pmb_mysql_num_rows($res)){
 				$this->result=array();
 				while($row = pmb_mysql_fetch_object($res)){
-					$this->result[] = $row->$this->{object_key};
+					$this->result[] = $row->{$this->object_key};
 				}
 			}
+		} else {
+			$this->result = array_slice(explode(',', $this->objects_ids), $start, $number);
 		}
 	}
+	
+	public function get_raw_query()
+	{
+		$this->_analyse();
+		return $this->_get_search_query();
+	}
 
+	public function get_pert_result($query = false) {
+		$pert = '';
+		if ($this->get_result() && ($this->user_query != '*')) {
+			$pert = $this->_get_pert($query);
+		}
+		if ($query) {
+			return $pert;
+		}
+		return $this->table_tempo;
+	}
+	
 	public function get_full_query(){
+		if($this->user_query === "*"){
+			return 'select notice_id as '.$this->object_key.', 100 as pert from notices '.$this->_get_typdoc_filter(true); 
+		}
 		if($this->get_nb_results()){
 			$query  = $this->_get_pert(false,true);
 		}else{
-			$query = "select ".$this->object_key." from notices where ".$this->object_key." = 0"; 
+			$query = "select ".$this->object_key.", 100 as pert from notices where ".$this->object_key." = 0"; 
 		}
 		return $query;
 	}
 	
+	public static function get_full_query_from_authority($id){
+		
+		$query = "select distinct notice_id, 100 as pert from notices ";
+		if($restrict = self::_get_typdoc_filter(true)) {
+			$query .= $restrict. " and ";
+		} else {
+			$query .= "where ";
+		}
+		return $query;
+	}
 	
 }

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: apijsonrpc.class.php,v 1.9 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: apijsonrpc.class.php,v 1.11 2017-07-18 13:47:42 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,27 +13,27 @@ require_once($class_path."/external_services_esusers.class.php");
 require_once ("$base_path/admin/connecteurs/out/apijsonrpc/apijsonrpc_jsonrpcserver.class.php");
 
 class apijsonrpc extends connecteur_out {
-	var $json_input = '';
+	public $json_input = '';
 	
 	function get_config_form() {
 		$result = $this->msg["no_configuration_required"];
 		return $result;
 	}
 	
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		return;
 	}
 	
-	function instantiate_source_class($source_id) {
+	public function instantiate_source_class($source_id) {
 		return new apijsonrpc_source($this, $source_id, $this->msg);
 	}
 	
 	//On chargera nous même les messages si on en a besoin
-	function need_global_messages() {
+	public function need_global_messages() {
 		return false;
 	}
 	
-	function process($source_id, $pmb_user_id) {
+	public function process($source_id, $pmb_user_id) {
 		global $base_path;
 
 		$apijsonrpc_jsonrpcserver = new apijsonrpc_jsonrpcserver($this);
@@ -43,7 +43,7 @@ class apijsonrpc extends connecteur_out {
 		return;
 	}
 	
-	function return_json_error($message, $request) {
+	public function return_json_error($message, $request) {
 		$response = array (
 			'id' => $request['id'],
 			'result' => NULL,
@@ -57,7 +57,7 @@ class apijsonrpc extends connecteur_out {
 		die();
 	}
 	
-	function get_running_pmb_userid($source_id) {
+	public function get_running_pmb_userid($source_id) {
 		$user_id = 1;
 		$this->json_input = json_decode(file_get_contents('php://input'),true);
 		if (!$this->json_input)
@@ -106,11 +106,11 @@ class apijsonrpc extends connecteur_out {
 
 class apijsonrpc_source extends connecteur_out_source {
 
-	function get_config_form() {
+	public function get_config_form() {
 		global $charset;
 		$result = parent::get_config_form();
 		
-		$api_catalog = new es_catalog();
+		$api_catalog = es_catalog::get_instance();
 		$api_functions = array();
 		foreach ($api_catalog->groups as $agroup) {
 			foreach ($agroup->methods as $amethod) {
@@ -154,7 +154,7 @@ class apijsonrpc_source extends connecteur_out_source {
 		return $result;
 	}
 
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		parent::update_config_from_form();
 		global $api_exported_functions, $authentication_type, $authorized_groups;
 		
@@ -166,7 +166,7 @@ class apijsonrpc_source extends connecteur_out_source {
 			$authorized_groups = array();
 		
 		//Récupérons la liste des fonctions pour virer de l'entrée les noms de fonctions qui n'existent pas
-		$api_catalog = new es_catalog();
+		$api_catalog = es_catalog::get_instance();
 		$api_functions = array();
 		foreach ($api_catalog->groups as $agroup) {
 			foreach ($agroup->methods as $amethod) {

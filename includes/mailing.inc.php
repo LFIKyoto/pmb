@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mailing.inc.php,v 1.5 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: mailing.inc.php,v 1.9 2017-12-06 13:35:29 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -59,7 +59,7 @@ function m_lecteur_info($empr) {
 	$res_final[]=$adr;
 	
 	if ($empr->empr_tel1 != "") {
-		$tel = $tel.$msg['fpdf_tel1']." ".$empr->empr_tel1." " ;
+		$tel = $tel.$msg['fpdf_tel']." ".$empr->empr_tel1." " ;
 		}
 	if ($empr->empr_tel2 != "") {
 		$tel = $tel.$msg['fpdf_tel2']." ".$empr->empr_tel2;
@@ -95,7 +95,7 @@ function m_lecteur_adresse($empr) {
 	$res_final[]=$adr;
 	
 	if ($empr->empr_tel1 != "") {
-		$tel = $tel.$msg['fpdf_tel1']." ".$empr->empr_tel1." " ;
+		$tel = $tel.$msg['fpdf_tel']." ".$empr->empr_tel1." " ;
 		}
 	if ($empr->empr_tel2 != "") {
 		$tel = $tel.$msg['fpdf_tel2']." ".$empr->empr_tel2;
@@ -112,10 +112,14 @@ function m_lecteur_adresse($empr) {
 
 
 // Liste des prêts en cours
-function m_liste_prets($destinataire) {
+function m_liste_prets($destinataire, $late_only = false) {
 	global $dbh, $msg;	
 
 	$res_final=array();
+	$critere_late = "";
+	if ($late_only) {
+		$critere_late = " AND pret_retour<CURDATE()";
+	}
 	// $rqt = "select expl_cb from pret, exemplaires where pret_idempr='".$destinataire->id_empr."' and pret_idexpl=expl_id order by pret_date " ;
 	$requete = "SELECT notices_m.notice_id as m_id, notices_s.notice_id as s_id, expl_cb, expl_cote, pret_date, pret_retour, tdoc_libelle, section_libelle, location_libelle, trim(concat(ifnull(notices_m.tit1,''),ifnull(notices_s.tit1,''),' ',ifnull(bulletin_numero,''), if (mention_date, concat(' (',mention_date,')') ,''))) as tit, ";
 	$requete.= " date_format(pret_date, '".$msg["format_date"]."') as aff_pret_date, ";
@@ -123,30 +127,17 @@ function m_liste_prets($destinataire) {
 	$requete.= " IF(pret_retour>sysdate(),0,1) as retard, notices_m.tparent_id, notices_m.tnvol " ; 
 	$requete.= " FROM (((exemplaires LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id), docs_type, docs_section, docs_location, pret ";
 	$requete.= " WHERE pret_idempr='".$destinataire->id_empr."' and expl_typdoc = idtyp_doc and expl_section = idsection and expl_location = idlocation and pret_idexpl = expl_id  ";
-
+	$requete.= $critere_late;
+	
 	$req = pmb_mysql_query($requete) or die($msg['err_sql'].'<br />'.$requete.'<br />'.pmb_mysql_error()); 
 	while ($expl = pmb_mysql_fetch_object($req)) {
 		
 		$responsabilites = get_notice_authors(($expl->m_id+$expl->s_id)) ;
-		$as = array_search ("0", $responsabilites["responsabilites"]) ;
-		if ($as!== FALSE && $as!== NULL) {
-			$auteur_0 = $responsabilites["auteurs"][$as] ;
-			$auteur = new auteur($auteur_0["id"]);
-			$header_aut .= $auteur->isbd_entry;
-		} else {
-			$aut1_libelle=array();
-			$as = array_keys ($responsabilites["responsabilites"], "1" ) ;
-			for ($i = 0 ; $i < count($as) ; $i++) {
-				$indice = $as[$i] ;
-				$auteur_1 = $responsabilites["auteurs"][$indice] ;
-				$auteur = new auteur($auteur_1["id"]);
-				$aut1_libelle[]= $auteur->isbd_entry;
-			}	
-			$header_aut .= implode (", ",$aut1_libelle) ;
-		}
+		$header_aut = gen_authors_header($responsabilites);
 		$header_aut ? $auteur=" / ".$header_aut : $auteur="";
 	
 		// récupération du titre de série
+		$tit_serie = '';
 		if ($expl->tparent_id && $expl->m_id) {
 			$parent = new serie($expl->tparent_id);
 			$tit_serie = $parent->name;
@@ -195,23 +186,7 @@ function m_not_bull_info_resa ($id_empr, $notice, $bulletin) {
 		$resa = pmb_mysql_fetch_object($res);
 		if ($resa->resa_idempr == $id_empr) {
 			$responsabilites = get_notice_authors($resa->notice_id) ;
-			$as = array_search ("0", $responsabilites["responsabilites"]) ;
-			if ($as!== FALSE && $as!== NULL) {
-				$auteur_0 = $responsabilites["auteurs"][$as] ;
-				$auteur = new auteur($auteur_0["id"]);
-				$header_aut .= $auteur->isbd_entry;
-				} else {
-					$aut1_libelle=array();
-					$as = array_keys ($responsabilites["responsabilites"], "1" ) ;
-					for ($i = 0 ; $i < count($as) ; $i++) {
-						$indice = $as[$i] ;
-						$auteur_1 = $responsabilites["auteurs"][$indice] ;
-						$auteur = new auteur($auteur_1["id"]);
-						$aut1_libelle[]= $auteur->isbd_entry;
-						}
-					
-					$header_aut .= implode (", ",$aut1_libelle) ;
-					}
+			$header_aut = gen_authors_header($responsabilites);
 			$header_aut ? $auteur=" / ".$header_aut : $auteur="";
 
 			if ($resa->aff_resa_date_debut) $tmpmsg_res = $msg['fpdf_reserve_du']." ".$resa->aff_resa_date_debut." ".$msg['fpdf_adherent_au']." ".$resa->aff_resa_date_fin;

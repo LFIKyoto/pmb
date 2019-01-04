@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_list.class.php,v 1.1 2012-06-05 15:22:50 dgoron Exp $
+// $Id: cms_module_common_datasource_list.class.php,v 1.3 2018-12-06 09:34:14 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -66,10 +66,15 @@ class cms_module_common_datasource_list extends cms_module_common_datasource{
 		if ($this->sortable) {
 			$this->parameters['sort_by'] = $cms_module_common_datasource_list_sort_by;
 			$this->parameters['sort_order'] = $cms_module_common_datasource_list_sort_order;
+		} else {
+			$this->parameters['sort_by'] = '';
+			$this->parameters['sort_order'] = '';
 		}
 		if ($this->limitable) {
 			$this->parameters['nb_max_elements'] = $cms_module_common_datasource_list_limit+0;
-		}		
+		} else {
+			$this->parameters['nb_max_elements'] = '';
+		}
 		return parent::save_form();
 	}
 
@@ -83,7 +88,7 @@ class cms_module_common_datasource_list extends cms_module_common_datasource{
 	protected function gen_select_sort_by(){
 		//si on est en création de cadre
 		if(!$this->id){
-			$this->parameters = array();
+			$this->parameters = array('sort_by' => '', 'sort_order' => '', 'nb_max_elements' => '');
 		}
 		$criterias = $this->get_sort_criterias();
 		$select = "<select name='cms_module_common_datasource_list_sort_by' >";
@@ -97,7 +102,7 @@ class cms_module_common_datasource_list extends cms_module_common_datasource{
 	protected function gen_select_sort_order(){
 		//si on est en création de cadre
 		if(!$this->id){
-			$this->parameters = array();
+			$this->parameters = array('sort_by' => '', 'sort_order' => '', 'nb_max_elements' => '');
 		}
 
 		$select = "
@@ -107,5 +112,45 @@ class cms_module_common_datasource_list extends cms_module_common_datasource{
 					</select>
 					";
 		return $select;
+	}
+	
+	protected function get_sorted_datas($field_name, $field_pertinence='') {
+		$query = $this->get_query_base();
+		if(!$query) {
+			return false;
+		}
+		$return = array();
+		if ($this->parameters["sort_by"] == "pert") {
+			$query .= " order by ".$field_name." ".$this->parameters["sort_order"];
+			$result = pmb_mysql_query($query);
+			if(pmb_mysql_num_rows($result) > 0){
+				$pertinence = array();
+				while($row = pmb_mysql_fetch_object($result)){
+					$pertinence[$row->{$field_pertinence}][] = $row->{$field_name};
+				}
+				if($this->parameters["sort_order"] == 'desc') {
+					krsort($pertinence);
+				} else {
+					ksort($pertinence);
+				}
+				foreach ($pertinence as $key=>$values) {
+					foreach ($values as $value) {
+						$return[] = $value;
+					}
+				}
+			}
+		} else {
+			if ($this->parameters["sort_by"] != "") {
+				$query .= " order by ".$this->parameters["sort_by"];
+				if ($this->parameters["sort_order"] != "") $query .= " ".$this->parameters["sort_order"];
+				$result = pmb_mysql_query($query);
+				if(pmb_mysql_num_rows($result) > 0){
+					while($row = pmb_mysql_fetch_object($result)){
+						$return[] = $row->{$field_name};
+					}
+				}
+			}
+		}
+		return $return;
 	}
 }

@@ -1,4 +1,4 @@
-<h1>Herramientas</h1>
+<h2>Herramientas</h2>
 <p>Aqu&iacute; encontrar&aacute; diferentes opciones. </p>
 <p>
 <b>Mantenimiento de la base de datos</b> permite gestionar la base de datos : suprimir los registros sin ejemplares, etc.

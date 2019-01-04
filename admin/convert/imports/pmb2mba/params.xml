@@ -7,7 +7,7 @@
 	<!-- Type de l'entrée -->
 	<input type="xml" rootelement="*" noticeelement="notice" specialexport="yes"/>
 	<!-- Type de sortie -->	 
-	 <output importable="no" script="output_mba.inc.php" type="xml" suffix="xml">
+	 <output importable="no" script="pmb2mba_output.class.php" type="xml" suffix="xml">
 		<rootelement>notices</rootelement>
 	</output>
 </params>

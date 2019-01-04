@@ -2,35 +2,52 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_itemslist_view_django_by_tags.class.php,v 1.1.2.2 2015-10-13 07:44:54 dgoron Exp $
+// $Id: cms_module_itemslist_view_django_by_tags.class.php,v 1.2 2016-02-12 10:13:45 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 class cms_module_itemslist_view_django_by_tags extends cms_module_common_view_django{
 	
 	public function __construct($id=0){
+		global $charset;
+		
 		parent::__construct($id);
 		$this->default_template = "
 {% for tag in tags %}
 <div>
-<h3>{{tag.label}}</h3>
-{% for item in tag.items %}
-<h4>{{item.title}}</h4>
-<img src='{{item.logo_url}}'/>
-<blockquote>{{item.summary}}</blockquote>
-<blockquote>{{item.content}}</blockquote>
-{% endfor %}
+    <h3>{{tag.label}}</h3>
+    {% for item in tag.items %}
+    {% if item.interesting %}
+    {% if item.status!=2 %}
+    <div>
+        <a href='{{item.url}}' title='Source' target='_blank'><h4>{{item.title}}</h4></a>
+        <blockquote>{{item.publication_date}} / {{item.source.title}}</blockquote>
+        <blockquote>{{item.summary}}</blockquote>
+    </div>
+    {% endif %}
+    {% endif %}
+    {% endfor %}
 </div>
 {% endfor %}
+{% if items %}
 <div>
-<h3>Non classés</h3>
-{% for item in items %}
-<h4>{{item.title}}</h4>
-<img src='{{item.logo_url}}'/>
-<blockquote>{{item.summary}}</blockquote>
-<blockquote>{{item.content}}</blockquote>
-{% endfor %}
-</div>";
+    <h3>Non classés</h3>
+    {% for item in items %}
+    {% if item.interesting %}
+    {% if item.status!=2 %}
+    <div>
+        <a href='{{item.url}}' title='Source' target='_blank'><h4>{{item.title}}</h4></a>
+        <blockquote>{{item.publication_date}} / {{item.source.title}}</blockquote>
+        <blockquote>{{item.summary}}</blockquote>
+    </div>
+    {% endif %}
+    {% endif %}
+    {% endfor %}
+</div>
+{% endif %}";
+		if ($charset=="utf-8") {
+			$this->default_template = utf8_encode($this->default_template);
+		}
 	}
 	
 	public function get_form(){

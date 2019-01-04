@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_persopac.tpl.php,v 1.6 2013-10-23 14:56:51 dgoron Exp $
+// $Id: search_persopac.tpl.php,v 1.15 2018-11-08 13:02:57 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -17,10 +17,12 @@ $tpl_search_persopac_liste_tableau = "
 	<div class='row'>
 		<table>
 		<tr>
+			<th>".$msg["search_persopac_table_order"]."</th>
 			<th>".$msg["search_persopac_table_preflink"]."</th>
 			<th>".$msg["search_persopac_table_name"]."</th>
 			<th>".$msg["search_persopac_table_shortname"]."</th>
 			<th>".$msg["search_persopac_table_humanquery"]."</th>
+			<th>".$msg["search_persopac_type"]."</th>
 			<th>".$msg["search_persopac_table_edit"]."</th>
 		</tr>
 		!!lignes_tableau!!
@@ -35,10 +37,15 @@ $tpl_search_persopac_liste_tableau = "
 
 $tpl_search_persopac_liste_tableau_ligne = "
 <tr class='!!pair_impair!!' '!!tr_surbrillance!!' >
+	<td class='center'>
+		<input type='button' class='bouton_small' value='-' onClick=\"document.location='./admin.php?categ=opac&sub=search_persopac&section=liste&action=up&id=!!id!!'\"/></a>
+		<input type='button' class='bouton_small' value='+' onClick=\"document.location='./admin.php?categ=opac&sub=search_persopac&section=liste&action=down&id=!!id!!'\"/>
+	</td>
 	<td !!td_javascript!! >!!directlink!!</td>
 	<td !!td_javascript!! >!!name!!</td>
 	<td !!td_javascript!! >!!shortname!!</td>
-	<td !!td_javascript!! >!!human!!</td>	
+	<td !!td_javascript!! >!!human!!</td>
+	<td !!td_javascript!! >!!type!!</td>
 	<td><input class='bouton_small' value='".$msg["search_persopac_modifier"]."' type='button'  onClick=\"document.location='./admin.php?categ=opac&sub=search_persopac&section=liste&action=form&id=!!id!!'\" ></td>
 </tr>
 ";
@@ -56,7 +63,7 @@ function test_form(form) {
 }
 
 function confirm_delete() {
-    result = confirm(\"${msg[confirm_suppr]}\");
+    result = confirm(\"".$msg['confirm_suppr']."\");
     if(result) {
         unload_off();
         document.location='./admin.php?categ=opac&sub=search_persopac&section=liste&action=delete&id=!!id!!';
@@ -70,29 +77,47 @@ function check_link(id) {
 </script>
 
 
-<form class='form-$current_module' name='search_persopac_form' method='post' action='./admin.php?categ=opac&sub=search_persopac&section=liste&action=save'>
+<form class='form-$current_module' id='search_persopac_form' name='search_persopac_form' method='post' action='./admin.php?categ=opac&sub=search_persopac&section=liste&action=save'>
 	<h3>!!libelle!!</h3>
 	<div class='form-contenu'>
 		<!--	nom	-->
-		!!name!!
+		<div class='row'>
+			<label class='etiquette' for='name'>".$msg['search_persopac_form_name']."</label>
+		</div>
+		<div class='row'>
+			<input class='saisie-80em' id='form_nom' type='text' name='name' value='!!name!!' data-translation-fieldname='search_name'/>
+		</div>
 		
 		<!--	short nom	-->
-		!!shortname!!
+		<div class='row'>
+			<label class='etiquette' for='shortname'>".$msg['search_persopac_form_shortname']."</label>
+		</div>
+		<div class='row'>
+			<input class='saisie-80em' id='shortname' type='text' name='shortname' value='!!shortname!!' data-translation-fieldname='search_shortname'/>
+		</div>
 		
 		<div class='row'>
-			<input value='1' name='directlink' !!directlink!! type='checkbox'>
-			<label for='directlink' class='etiquette'>".$msg["search_persopac_form_direct_search"]."</label>  
+			<input value='1' name='directlink' id='directlink' !!directlink!! type='checkbox'>
+			<label for='directlink' class='etiquette'>".htmlentities($msg["search_persopac_form_direct_search"],ENT_QUOTES,$charset)."</label>  
 		</div>	
 		<div class='row'>
+			<label style='font-size:1.5em'>&rdsh;</label>
+			<input value='1' name='directlink_auto_submit' id='directlink_auto_submit' !!directlink_auto_submit!! type='checkbox'>
+			<label for='directlink_auto_submit' class='etiquette'>".htmlentities($msg["search_perso_form_directlink_auto_submit"],ENT_QUOTES,$charset)."</label>  
+		</div>
+		<div class='row'>
 			<input value='1' name='limitsearch' !!limitsearch!! type='checkbox'>
-			<label for='limitsearch' class='etiquette'>".$msg["search_perso_form_limitsearch"]."</label>  
+			<label for='limitsearch' class='etiquette'>".htmlentities($msg["search_perso_form_limitsearch"],ENT_QUOTES,$charset)."</label>  
 		</div>
 		<div class='row'>
 				!!categorie!!
 		</div>
-		<div class='row'>&nbsp;</div>
+		<div class='row'>&nbsp;</div>		
 		<div class='row'>
-			<label for='requete' class='etiquette'>".$msg["search_perso_form_requete"]."</label>
+				!!type!!
+		</div>
+		<div class='row'>
+			<label for='requete' class='etiquette'>".htmlentities($msg["search_perso_form_requete"],ENT_QUOTES,$charset)."</label>
 		</div>
 		<div class='row'>
 			!!requete_human!!<input type='hidden' name='requete' value=\"!!requete!!\" />!!bouton_modif_requete!!
@@ -104,8 +129,8 @@ function check_link(id) {
 <!--	Boutons	-->
 <div class='row'>
 	<div class='left'>
-		<input type='button' class='bouton' value='".$msg["search_persopac_form_annuler"]."' !!annul!! />
-		<input type='button' value='".$msg["search_persopac_form_save"]."' class='bouton' id='btsubmit' onClick=\"if (test_form(this.form)) this.form.submit();\" />
+		<input type='button' class='bouton' id='btexit' value='".htmlentities($msg["search_persopac_form_annuler"],ENT_QUOTES,$charset)."' !!annul!! />
+		<input type='button' value='".htmlentities($msg["search_persopac_form_save"],ENT_QUOTES,$charset)."' class='bouton' id='btsubmit' onClick=\"if (test_form(this.form)) this.form.submit();\" />
 		</div>
 	<div class='right'>
 		!!delete!!

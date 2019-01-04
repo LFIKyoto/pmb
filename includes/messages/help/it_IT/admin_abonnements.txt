@@ -1,4 +1,4 @@
-<h1>Amministrazione degli abbonamenti</h1>
+<h2>Amministrazione degli abbonamenti</h2>
 
 <p>La sezione <b>amministrazione degli abbonamenti</b> permette di definire i parametri per gli abbonamenti.
 <ul>

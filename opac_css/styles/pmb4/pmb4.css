@@ -1,7 +1,7 @@
 /* +--------------------------------------------------------------------------+
 // 2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmb4.css,v 1.37 2013-06-13 09:13:02 trenon Exp $ */
+// $Id: pmb4.css,v 1.38 2017-10-17 14:55:45 wlair Exp $ */
 
 
 /* ---------------------------------------------------------------------------*/
@@ -593,22 +593,20 @@ input.login, input.password {
 /* ---------------------------------------------------------------------------*/
 
 
+
 #main {
     margin-top: 140px;
-    padding-right: 165px;
-    padding-left: 250px;
-	padding-bottom: 50px;
-	padding-top: 10px;
-	background-color: #ffffff;
-	position: absolute;
-	width: 550px;
-	border: 10px solid rgba(255,255,255,0.4);
-	-moz-box-shadow: 0px 0px 5px #666666;
-	-webkit-box-shadow: 0px 0px 5px #666666;
-	box-shadow: 0px 0px 5px #666666;
-	-moz-background-clip: padding; /* for Mozilla browsers*/
-	-webkit-background-clip: padding;   /* Webkit */
-	background-clip: padding-box; /*  browsers with full support */
+    padding-right: 175px;
+    padding-left: 260px;
+    padding-bottom: 60px;
+    padding-top: 20px;
+    background-color: #ffffff;
+    position: absolute;
+    width: 650px;
+    /* border: 10px solid rgba(255,255,255,0.4); */
+    -moz-box-shadow: 0px 0px 5px #666666;
+    -webkit-box-shadow: 0px 0px 5px #666666;
+    box-shadow: 0px 0px 5px #666666;
 }
 
 #main_hors_footer {

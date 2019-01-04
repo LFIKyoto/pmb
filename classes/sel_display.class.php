@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sel_display.class.php,v 1.11.2.1 2015-10-28 15:21:45 jpermanne Exp $
+// $Id: sel_display.class.php,v 1.24 2018-12-27 16:06:03 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,8 +16,8 @@ require_once("$include_path/notice_authors.inc.php");
 require_once("$include_path/isbn.inc.php");
 
 
-if (!sizeof($tdoc)) $tdoc = new marc_list('doctype');
-if (!count($fonction_auteur)) {
+if (!isset($tdoc)) $tdoc = marc_list_collection::get_instance('doctype');
+if (!isset($fonction_auteur)) {
 	$fonction_auteur = new marc_list('function');
 	$fonction_auteur = $fonction_auteur->table;
 }
@@ -25,43 +25,41 @@ if (!count($fonction_auteur)) {
 // définition de la classe d'affichage des monographies en liste pour selecteur
 class sel_mono_display {
 	
-	var $notice_id = 0;		//id notice
-	var $notice = '';		//objet notice
-  	var $header = '';		//entete
-	var $result	= '';		//affichage final
-	var $isbd = '';			//isbd notice
-	var $responsabilites =	array("responsabilites" => array(),"auteurs" => array());  //auteurs
-	var $statut = '' ;		//statut notice
-	var $tit_serie = '';	//titre serie
-	var $tit1 = '';			//titre 1
-	var $nb_expl = 0;		//nb exemplaires
+	public $notice_id = 0;		//id notice
+	public $notice = '';		//objet notice
+  	public $header = '';		//entete
+	public $result	= '';		//affichage final
+	public $isbd = '';			//isbd notice
+	public $responsabilites =	array("responsabilites" => array(),"auteurs" => array());  //auteurs
+	public $statut = '' ;		//statut notice
+	public $tit_serie = '';	//titre serie
+	public $tit1 = '';			//titre 1
+	public $nb_expl = 0;		//nb exemplaires
 
-	var $base_url = '';					//URL a associer aux elements cliquables
-  	var $action = '';					//action a effectuer pour retour des parametres		
-	var $action_values = array();		//tableau des elements à modifier dans l'action
+	public $base_url = '';					//URL a associer aux elements cliquables
+  	public $action = '';					//action a effectuer pour retour des parametres		
+	public $action_values = array();		//tableau des elements à modifier dans l'action
 		
-	var $code = '';			//isbn ou code EAN de la notice à afficher
-	var $titre = '';		//titre renvoye
-	var $auteur1 = '';		//auteur1 renvoye
-	var $editeur1 = '';		//editeur1 renvoye
-	var $collection = '';	//collection renvoyee
-	var $prix = '0.00';		//prix renvoye
+	public $code = '';			//isbn ou code EAN de la notice à afficher
+	public $titre = '';		//titre renvoye
+	public $auteur1 = '';		//auteur1 renvoye
+	public $editeur1 = '';		//editeur1 renvoye
+	public $collection = '';	//collection renvoyee
+	public $prix = '0.00';		//prix renvoye
 	
-	var $form_checker = ''; //Affichage d'une case à cocher sur le template
+	public $form_checker = ''; //Affichage d'une case à cocher sur le template
 
 	
 	// constructeur
-	function sel_mono_display($notice_id, $base_url, $form_checker='') {
-
-		if (!$notice_id) return;
-		$this->notice_id=$notice_id;
+	public function __construct($notice_id, $base_url, $form_checker='') {
+		$this->notice_id=$notice_id+0;
 	  	$this->base_url=$base_url;
 	  	$this->form_checker=$form_checker;
 	}
 	
 
 	//creation formulaire
-	function doForm() {
+	public function doForm() {
 	
 		$this->getData();
 		$this->responsabilites = get_notice_authors($this->notice_id) ;
@@ -72,7 +70,7 @@ class sel_mono_display {
 
 	
 	// récupération des valeurs en table
-	function getData() {
+	public function getData() {
 		global $dbh;
 		
 		$q = "SELECT * FROM notices WHERE notice_id='".$this->notice_id."' ";
@@ -87,7 +85,7 @@ class sel_mono_display {
 	
 
 	// creation header
-	function doHeader() {
+	public function doHeader() {
 		
 		global $dbh, $charset;
 		global $pmb_notice_reduit_format;
@@ -108,9 +106,9 @@ class sel_mono_display {
 			else $txt = $this->notice->commentaire_gestion ;
 		}
 		if ($txt) {
-			$statut = "<small><span $class_html style='margin-right: 3px;'><a href=# onmouseover=\"z=document.getElementById('zoom_statut".$this->notice_id."'); z.style.display=''; \" onmouseout=\"z=document.getElementById('zoom_statut".$this->notice_id."'); z.style.display='none'; \"><img src='./images/spacer.gif' width='10' height='10' /></a></span></small>";
+			$statut = "<small><span $class_html style='margin-right: 3px;'><a href=# onmouseover=\"z=document.getElementById('zoom_statut".$this->notice_id."'); z.style.display=''; \" onmouseout=\"z=document.getElementById('zoom_statut".$this->notice_id."'); z.style.display='none'; \"><img src='".get_url_icon('spacer.gif')."' width='10' height='10' /></a></span></small>";
 			$statut .= "<div id='zoom_statut".$this->notice_id."' style='border: solid 2px #555555; background-color: #FFFFFF; position: absolute; display:none; z-index: 2000;'><b>".nl2br(htmlentities($txt,ENT_QUOTES, $charset))."</b></div>" ;
-		} else $statut = "<small><span $class_html style='margin-right: 3px;'><img src='./images/spacer.gif' width='10' height='10' /></span></small>";
+		} else $statut = "<small><span $class_html style='margin-right: 3px;'><img src='".get_url_icon('spacer.gif')."' width='10' height='10' /></span></small>";
 		$this->statut = $statut ; 
 		
 		
@@ -135,8 +133,8 @@ class sel_mono_display {
 		if ($as!== FALSE && $as!== NULL) {
 			$auteur_0 = $this->responsabilites["auteurs"][$as] ;
 			$auteur = new auteur($auteur_0["id"]);
-			if ($auteur->isbd_entry) {
-				$lib_auteur=$auteur->isbd_entry;
+			if ($auteur->get_isbd()) {
+				$lib_auteur=$auteur->get_isbd();
 			}
 		} else {
 			$as = array_keys ($this->responsabilites["responsabilites"], "1" );
@@ -144,7 +142,7 @@ class sel_mono_display {
 				$indice = $as[$i] ;
 				$auteur_1 = $this->responsabilites["auteurs"][$indice];
 				$auteur = new auteur($auteur_1["id"]);
-				$aut1_libelle[]= $auteur->isbd_entry;
+				$aut1_libelle[]= $auteur->get_isbd();
 			}
 			$auteurs_liste = implode ("; ",$aut1_libelle) ;
 			if ($auteurs_liste) {
@@ -187,16 +185,16 @@ class sel_mono_display {
 		if($this->notice->subcoll_id) {
 			$collection = new subcollection($this->notice->subcoll_id);
 			$ed_obj = new editeur($collection->editeur) ;
-			$this->editeur1 = htmlentities($ed_obj->isbd_entry,ENT_NOQUOTES,$charset);
-			$this->collection = htmlentities($collection->isbd_entry,ENT_NOQUOTES,$charset);
+			$this->editeur1 = htmlentities($ed_obj->get_isbd(),ENT_NOQUOTES,$charset);
+			$this->collection = htmlentities($collection->get_isbd(),ENT_NOQUOTES,$charset);
 		} elseif ($this->notice->coll_id) {
 			$collection = new collection($this->notice->coll_id);
 			$ed_obj = new editeur($collection->parent) ;
-			$this->editeur1 = htmlentities($ed_obj->isbd_entry,ENT_NOQUOTES,$charset);
-			$this->collection = htmlentities($collection->isbd_entry,ENT_NOQUOTES,$charset);
+			$this->editeur1 = htmlentities($ed_obj->get_isbd(),ENT_NOQUOTES,$charset);
+			$this->collection = htmlentities($collection->get_isbd(),ENT_NOQUOTES,$charset);
 		} elseif ($this->notice->ed1_id) {
 			$editeur = new editeur($this->notice->ed1_id);
-			$this->editeur1 = htmlentities($editeur->isbd_entry,ENT_NOQUOTES,$charset);
+			$this->editeur1 = htmlentities($editeur->get_isbd(),ENT_NOQUOTES,$charset);
 		}
 		$this->ed_date = htmlentities($this->notice->year,ENT_NOQUOTES,$charset);
 		//renv. prix
@@ -205,7 +203,7 @@ class sel_mono_display {
 	
 	
 	// creation contenu
-	function doContent() {
+	public function doContent() {
 		global $tdoc;
 		global $fonction_auteur;
 		global $msg;
@@ -223,7 +221,7 @@ class sel_mono_display {
 		if ($as!== FALSE && $as!== NULL) {
 			$auteur_0 = $this->responsabilites["auteurs"][$as] ;
 			$auteur = new auteur($auteur_0["id"]);
-			$mention_resp_lib = $auteur->isbd_entry;
+			$mention_resp_lib = $auteur->get_isbd();
 			if ($auteur_0["fonction"]) {
 				$mention_resp_lib .= ", ".$fonction_auteur[$auteur_0["fonction"]];
 			}
@@ -234,7 +232,7 @@ class sel_mono_display {
 			$indice = $as[$i] ;
 			$auteur_1 = $this->responsabilites["auteurs"][$indice] ;
 			$auteur = new auteur($auteur_1["id"]);
-			$mention_resp_lib = $auteur->isbd_entry;
+			$mention_resp_lib = $auteur->get_isbd();
 			if ($auteur_1["fonction"]) {
 				$mention_resp_lib .= ", ".$fonction_auteur[$auteur_1["fonction"]];
 			}
@@ -245,7 +243,7 @@ class sel_mono_display {
 			$indice = $as[$i] ;
 			$auteur_2 = $this->responsabilites["auteurs"][$indice] ;
 			$auteur = new auteur($auteur_2["id"]);
-			$mention_resp_lib = $auteur->isbd_entry;
+			$mention_resp_lib = $auteur->get_isbd();
 			if ($auteur_2["fonction"]) {
 				$mention_resp_lib .= ", ".$fonction_auteur[$auteur_2["fonction"]];
 			}
@@ -263,23 +261,25 @@ class sel_mono_display {
 		
 		// zone de l'adresse
 		// on récupère la collection au passage, si besoin est
+		$editeurs = '';
+		$collections = '';
 		if($this->notice->subcoll_id) {
 			$collection = new subcollection($this->notice->subcoll_id);
 			$ed_obj = new editeur($collection->editeur) ;
-			$editeurs .= $ed_obj->isbd_entry; 
-			$collections = $collection->isbd_entry;
+			$editeurs .= $ed_obj->get_isbd(); 
+			$collections = $collection->get_isbd();
 		} elseif ($this->notice->coll_id) {
 			$collection = new collection($this->notice->coll_id);
 			$ed_obj = new editeur($collection->parent) ;
-				$editeurs .= $ed_obj->isbd_entry; 
-				$collections = $collection->isbd_entry;
+				$editeurs .= $ed_obj->get_isbd(); 
+				$collections = $collection->get_isbd();
 		} elseif ($this->notice->ed1_id) {
 			$editeur = new editeur($this->notice->ed1_id);
-			$editeurs .= $editeur->isbd_entry;
+			$editeurs .= $editeur->get_isbd();
 		}
 		if($this->notice->ed2_id) {
 			$editeur = new editeur($this->notice->ed2_id);
-			$ed_isbd=$editeur->isbd_entry;
+			$ed_isbd=$editeur->get_isbd();
 			$editeurs ? $editeurs .= '&nbsp;; '.$ed_isbd : $editeurs = $ed_isbd;
 		}
 		if($this->notice->year) {
@@ -290,17 +290,18 @@ class sel_mono_display {
 		}
 		
 		// zone de la collation
+		$collation = '';
 		if($this->notice->npages) {
-			$collation = $this->notice->npages;
+			$collation .= $this->notice->npages;
 		}
 		if($this->notice->ill) {
-			$collation .= ': '.$this->notice->ill;
+			$collation .= '&nbsp;: '.$this->notice->ill;
 		}
 		if($this->notice->size) {
-			$collation .= '; '.$this->notice->size;
+			$collation .= '&nbsp;; '.$this->notice->size;
 		}
 		if($this->notice->accomp) {
-			$collation .= '+ '.$this->notice->accomp;
+			$collation .= '&nbsp;+ '.$this->notice->accomp;
 		}
 		if($collation) {
 			$this->isbd .= ".&nbsp;-&nbsp;$collation";
@@ -315,10 +316,11 @@ class sel_mono_display {
 		if(substr(trim($this->isbd), -1) != "."){
 			$this->isbd .= '.';
 		}
+		$zoneNote = '';
 		// ISBN ou NO. commercial
 		if($this->notice->code) {
 			if(isISBN($this->notice->code)) {
-				$zoneNote = 'ISBN ';
+				$zoneNote = $msg['isbd_notice_isbn'].' ';
 			}
 			$zoneNote .= $this->notice->code;
 		}
@@ -343,15 +345,15 @@ class sel_mono_display {
 		if($this->notice->indexint) {
 			$indexint = new indexint($this->notice->indexint);
 			$indexint_isbd=$indexint->display;
-			$this->isbd .= "<br /><b>${msg['indexint_catal_title']}</b>&nbsp;: ".$indexint_isbd;
+			$this->isbd .= "<br /><b>".$msg['indexint_catal_title']."</b>&nbsp;: ".$indexint_isbd;
 		}
 	}	
 
 	
 	//génération du template javascript
-	function finalize() {
+	public function finalize() {
 		
-		global $msg;
+		global $msg,$charset;
 		
 		$javascript_template ="
 						<div id='el_!!id!!_Parent' class='notice-parent'><span class='acq_sel_display_middle'>";
@@ -367,7 +369,7 @@ class sel_mono_display {
 			$javascript_template.=">";
 		}
 		$javascript_template.="
-							<img src='./images/plus.gif' name='imEx' id='el_!!id!!_Img' title='".$msg['admin_param_detail']."' onClick=\"expandBase('el_!!id!!_', true); return false;\" />
+							<img src='".get_url_icon('plus.gif')."' name='imEx' id='el_!!id!!_Img' title='".$msg['admin_param_detail']."' onClick=\"expandBase('el_!!id!!_', true); return false;\" />
 							</span><span class='notice-heada'>!!header!!</span>
 							<div id='el_!!id!!_Child' class='notice-child' style='width:inherit;display:none;' >
 	   					 		!!isbd!!
@@ -397,37 +399,34 @@ class sel_mono_display {
 // définition de la classe d'affichage des périodiques en liste pour selecteur
 class sel_serial_display {
 
-	var $notice_id = 0;				// id de la notice à afficher 	
-	var $notice;					// objet notice (tel que fetché dans la table 'notices'
-	var $header	= '';				// chaine accueillant le chapeau de notice (peut-être cliquable)
+	public $notice_id = 0;				// id de la notice à afficher 	
+	public $notice;					// objet notice (tel que fetché dans la table 'notices'
+	public $header	= '';				// chaine accueillant le chapeau de notice (peut-être cliquable)
 
-	var $tit1 = '';					// valeur du titre 1
-	var $result = '';				// affichage final
-	var $level = 1;					// niveau d'affichage
-	var $isbd = '';					// isbd de la notice
-	var $nb_bull = 0;				// nombre de bulletins
-	var $nb_expl = 0;				// nombre d'exemplaires
-	var $nb_art = 0;				// nombre d'articles
-	var $responsabilites = array("responsabilites" => array(),"auteurs" => array());  // les auteurs
-	var $show_statut = 1;
-	var $aff_statut = '' ; 			// carré de couleur pour signaler le statut de la notice
+	public $tit1 = '';					// valeur du titre 1
+	public $result = '';				// affichage final
+	public $level = 1;					// niveau d'affichage
+	public $isbd = '';					// isbd de la notice
+	public $nb_bull = 0;				// nombre de bulletins
+	public $nb_expl = 0;				// nombre d'exemplaires
+	public $nb_art = 0;				// nombre d'articles
+	public $responsabilites = array("responsabilites" => array(),"auteurs" => array());  // les auteurs
+	public $show_statut = 1;
+	public $aff_statut = '' ; 			// carré de couleur pour signaler le statut de la notice
 
-  	var $base_url = '';				// URL à associer aux éléments cliquables
-  	var $action = '';				// URL à associer aux notices		
-	var $action_values = array();	// tableau des elements à modifier dans l'action
+  	public $base_url = '';				// URL à associer aux éléments cliquables
+  	public $action = '';				// URL à associer aux notices		
+	public $action_values = array();	// tableau des elements à modifier dans l'action
 
 	
 	// constructeur
-	function sel_serial_display ($notice_id, $base_url) {
-
-		if (!$notice_id) return;
-		$this->notice_id = $notice_id;
+	public function __construct($notice_id, $base_url) {
+		$this->notice_id = $notice_id+0;
 	  	$this->base_url = $base_url;
-	  	
 	}
 
 	//creation formulaire
-	function doForm() {
+	public function doForm() {
 			
 		$this->getData();
 		$this->responsabilites = get_notice_authors($this->notice_id) ;
@@ -440,7 +439,7 @@ class sel_serial_display {
 
 		
 	// récupération des valeurs en table
-	function getData() {
+	public function getData() {
 		global $dbh;
 		
 		$q = "SELECT * FROM notices WHERE notice_id=".$this->notice_id;
@@ -452,7 +451,7 @@ class sel_serial_display {
 	
 	
 	// creation header
-	function doHeader() {
+	public function doHeader() {
 		
 		global $dbh, $charset;
 		
@@ -477,10 +476,10 @@ class sel_serial_display {
 			}
 		}
 		if ($txt) {
-			$statut = "<small><span $class_html style='margin-right: 3px;'><a href=# onmouseover=\"z=document.getElementById('zoom_statut".$this->notice_id."'); z.style.display=''; \" onmouseout=\"z=document.getElementById('zoom_statut".$this->notice_id."'); z.style.display='none'; \"><img src='./images/spacer.gif' width='10' height='10' /></a></span></small>";
+			$statut = "<small><span $class_html style='margin-right: 3px;'><a href=# onmouseover=\"z=document.getElementById('zoom_statut".$this->notice_id."'); z.style.display=''; \" onmouseout=\"z=document.getElementById('zoom_statut".$this->notice_id."'); z.style.display='none'; \"><img src='".get_url_icon('spacer.gif')."' width='10' height='10' /></a></span></small>";
 			$statut .= "<div id='zoom_statut".$this->notice_id."' style='border: solid 2px #555555; background-color: #FFFFFF; position: absolute; display:none; z-index: 2000;'><b>".nl2br(htmlentities($txt,ENT_QUOTES, $charset))."</b></div>" ;
 		} else {
-			$statut = "<small><span $class_html style='margin-right: 3px;'><img src='./images/spacer.gif' width='10' height='10' /></span></small>";
+			$statut = "<small><span $class_html style='margin-right: 3px;'><img src='".get_url_icon('spacer.gif')."' width='10' height='10' /></span></small>";
 		}
 		$this->aff_statut = $statut ; 
 		
@@ -493,8 +492,8 @@ class sel_serial_display {
 		if ($as!== FALSE && $as!== NULL) {
 			$auteur_0 = $this->responsabilites["auteurs"][$as] ;
 			$auteur = new auteur($auteur_0["id"]);
-			if ($auteur->isbd_entry) {
-				$lib_auteur=$auteur->isbd_entry;
+			if ($auteur->get_isbd()) {
+				$lib_auteur=$auteur->get_isbd();
 			}
 		} else {
 			$as = array_keys ($this->responsabilites["responsabilites"], "1" ) ;
@@ -502,7 +501,7 @@ class sel_serial_display {
 				$indice = $as[$i] ;
 				$auteur_1 = $this->responsabilites["auteurs"][$indice] ;
 				$auteur = new auteur($auteur_1["id"]);
-				$aut1_libelle[]= $auteur->isbd_entry;
+				$aut1_libelle[]= $auteur->get_isbd();
 			}
 			$auteurs_liste = implode ("; ",$aut1_libelle) ;
 			if ($auteurs_liste) {
@@ -532,12 +531,12 @@ class sel_serial_display {
 
 	
 	// génération du template javascript
-	function initJavascript() {
+	public function initJavascript() {
 		global $msg;
 		
 		$javascript_template ="
 						<div id='el_!!id!!_Parent' class='notice-parent'>
-							<img src='./images/plus.gif' class='img_plus' name='imEx' id='el_!!id!!_Img' title='".$msg['admin_param_detail']."' onClick=\"expandBase('el_!!id!!_', true); return false;\" />
+							<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='el_!!id!!_Img' title='".$msg['admin_param_detail']."' onClick=\"expandBase('el_!!id!!_', true); return false;\" />
 							<span class='notice-heada'>!!header!!</span>
 							<div id='el_!!id!!_Child' class='notice-child' style='width:inherit;display:none;' >
 	   					 		!!serial_type!! !!isbd!!
@@ -549,7 +548,7 @@ class sel_serial_display {
 
 	
 	// creation contenu
-	function doContent() {
+	public function doContent() {
 		global $dbh, $msg;
 		global $fonction_auteur;
 		global $pmb_etat_collections_localise, $pmb_droits_explr_localises, $explr_visible_mod;
@@ -569,7 +568,7 @@ class sel_serial_display {
 		if ($as!== FALSE && $as!== NULL) {
 			$auteur_0 = $this->responsabilites["auteurs"][$as] ;
 			$auteur = new auteur($auteur_0["id"]);
-			$mention_resp_lib = $auteur->isbd_entry;
+			$mention_resp_lib = $auteur->get_isbd();
 			if ($auteur_0["fonction"]) {
 				$mention_resp_lib .= ", ".$fonction_auteur[$auteur_0["fonction"]];
 			}
@@ -581,7 +580,7 @@ class sel_serial_display {
 			$indice = $as[$i] ;
 			$auteur_1 = $this->responsabilites["auteurs"][$indice] ;
 			$auteur = new auteur($auteur_1["id"]);
-			$mention_resp_lib = $auteur->isbd_entry;
+			$mention_resp_lib = $auteur->get_isbd();
 			if ($auteur_1["fonction"]) {
 				$mention_resp_lib .= ", ".$fonction_auteur[$auteur_1["fonction"]];
 			}
@@ -593,7 +592,7 @@ class sel_serial_display {
 			$indice = $as[$i] ;
 			$auteur_2 = $this->responsabilites["auteurs"][$indice] ;
 			$auteur = new auteur($auteur_2["id"]);
-			$mention_resp_lib = $auteur->isbd_entry;
+			$mention_resp_lib = $auteur->get_isbd();
 			if ($auteur_2["fonction"]) {
 				$mention_resp_lib .= ", ".$fonction_auteur[$auteur_2["fonction"]];
 			}
@@ -608,11 +607,11 @@ class sel_serial_display {
 		// zone de l'adresse
 		if($this->notice->ed1_id) {
 			$editeur = new editeur($this->notice->ed1_id);
-			$editeurs .= $editeur->isbd_entry;
+			$editeurs .= $editeur->get_isbd();
 		}
 		if($this->notice->ed2_id) {
 			$editeur = new editeur($this->notice->ed2_id);
-			$ed_isbd=$editeur->isbd_entry; 
+			$ed_isbd=$editeur->get_isbd(); 
 			if($editeurs) {
 				$editeurs .= '&nbsp;; '.$ed_isbd;
 			} else {
@@ -634,7 +633,7 @@ class sel_serial_display {
 		if($this->notice->indexint) {
 			$indexint = new indexint($this->notice->indexint);
 			$indexint_isbd=$indexint->display;
-			$this->isbd .= "<br /><b>${msg['indexint_catal_title']}</b>&nbsp;: ".$indexint_isbd;
+			$this->isbd .= "<br /><b>".$msg['indexint_catal_title']."</b>&nbsp;: ".$indexint_isbd;
 		}
 					
 		// Si notice-mère alors on compte le nombre de numéros (bulletins)
@@ -657,7 +656,7 @@ class sel_serial_display {
 			if (pmb_mysql_num_rows($Query)>0)
 				{$this->isbd .="<br /><br />\n
 				<b>".$msg["serial_bulletinage_etat"]."</b>
-				<table border='0' class='expl-list'>
+				<table style='border:0px' class='expl-list'>
 				<tr><td><strong>$this->nb_bull</strong> ".$msg["serial_nb_bulletin"]."
 				<strong>$this->nb_expl</strong> ".$msg["bulletin_nb_ex"]."	
 				<strong>$this->nb_art</strong> ".$msg["serial_nb_articles"]."	
@@ -667,7 +666,7 @@ class sel_serial_display {
 			} else { // 0 bulletin
 				$this->isbd .="<br /><br />\n
 				<b>".$msg["serial_bulletinage_etat"]."</b>
-				<table border='0' class='expl-list'>
+				<table style='border:0px' class='expl-list'>
 				<tr><td><strong>$this->nb_bull</strong>
 				".$msg["serial_nb_bulletin"]." : <strong>";
 				$this->isbd .=$msg["bull_no_expl"];
@@ -705,7 +704,7 @@ class sel_serial_display {
 	
 	
 	// finalisation du résultat
-	function finalize() {
+	public function finalize() {
 		
 		global $msg ;
 		
@@ -720,34 +719,32 @@ class sel_serial_display {
 //définition de la classe d'affichage des bulletins en liste pour selecteur
 class sel_bulletin_display {
 
-	var $result = '';
-	var $bulletin_id=0;
-	var $bulletin = '';
-	var $nb_expl=0;
+	public $result = '';
+	public $bulletin_id=0;
+	public $bulletin = '';
+	public $nb_expl=0;
 	
- 	var $base_url = '';				// URL à associer aux éléments cliquables
-  	var $action = '';				// URL à associer aux notices		
-	var $action_values = array();	// tableau des elements à modifier dans l'action
+ 	public $base_url = '';				// URL à associer aux éléments cliquables
+  	public $action = '';				// URL à associer aux notices		
+	public $action_values = array();	// tableau des elements à modifier dans l'action
 	
-	var $titre = '';				//titre renvoye
-	var $editeur1 = '';				//editeur 1 renvoye
-	var $numero = '';				//numero renvoye
-	var $aff_date = '';				//date renvoyee
-	var $prix = '0.00';				//prix renvoye
-	var $code = '';					//code renvoye
+	public $titre = '';				//titre renvoye
+	public $editeur1 = '';				//editeur 1 renvoye
+	public $numero = '';				//numero renvoye
+	public $aff_date = '';				//date renvoyee
+	public $prix = '0.00';				//prix renvoye
+	public $code = '';					//code renvoye
 	
-	var $form_checker = ''; //Affichage d'une case à cocher sur le template
+	public $form_checker = ''; //Affichage d'une case à cocher sur le template
 	
 	//constructeur
-	function sel_bulletin_display($bulletin_id, $base_url, $form_checker='') {
-		
-		if(!$bulletin_id) return;
-		$this->bulletin_id=$bulletin_id;
+	public function __construct($bulletin_id, $base_url, $form_checker='') {
+		$this->bulletin_id=$bulletin_id+0;
 		$this->base_url=$base_url;
 		$this->form_checker=$form_checker;
 	}
 	
-	function doForm() {
+	public function doForm() {
 		
 		global $charset;
 		
@@ -756,7 +753,7 @@ class sel_bulletin_display {
 		$this->titre = $this->bulletin->tit1;
 		if ($this->bulletin->ed1_id) {
 			$ed1= new editeur($this->bulletin->ed1_id);
-			$this->editeur1 = $ed1->isbd_entry;
+			$this->editeur1 = $ed1->get_isbd();
 		}
 		if ($this->bulletin->bulletin_numero!=='') {
 			$this->numero = $this->bulletin->bulletin_numero;
@@ -803,7 +800,7 @@ class sel_bulletin_display {
 	}
 	
 	// récupération des valeurs en table
-	function getData() {
+	public function getData() {
 		
 		global $dbh, $msg;
 		
@@ -825,45 +822,43 @@ class sel_bulletin_display {
 //définition de la classe d'affichage des abonnements en liste pour selecteur
 class sel_abt_display {
 
-	var $abt_id=0;					//id abonnement
-	var $abt = '';					//objet abonnement 
-	var $header = '';				//entete
-	var $result = '';				// affichage final
-	var $isbd = '';					// isbd notice
-	var $responsabilites =	array("responsabilites" => array(),"auteurs" => array());  //auteurs
-	var $aff_date_echeance = '';	//date echeance abt actuel	
+	public $abt_id=0;					//id abonnement
+	public $abt = '';					//objet abonnement 
+	public $header = '';				//entete
+	public $result = '';				// affichage final
+	public $isbd = '';					// isbd notice
+	public $responsabilites =	array("responsabilites" => array(),"auteurs" => array());  //auteurs
+	public $aff_date_echeance = '';	//date echeance abt actuel	
 	
- 	var $base_url = '';				// URL à associer aux éléments cliquables
-  	var $action = '';				// URL à associer aux notices		
-	var $action_values = array();	// tableau des elements à modifier dans l'action
+ 	public $base_url = '';				// URL à associer aux éléments cliquables
+  	public $action = '';				// URL à associer aux notices		
+	public $action_values = array();	// tableau des elements à modifier dans l'action
 	
-	var $code = '';					//code renvoye
-	var $titre = '';				//titre renvoye
-	var $editeur1 = '';				//editeur 1 renvoye
-	var $periodicite = '';			//periodicite
-	var $duree = '';				//duree abt
-	var $prix = '0.00';				//prix renvoye
-	var $aff_date_debut = '';		//date debut abt renvoyee	
-	var $abt_name = '';		//nom abonnement renvoyee	
+	public $code = '';					//code renvoye
+	public $titre = '';				//titre renvoye
+	public $editeur1 = '';				//editeur 1 renvoye
+	public $periodicite = '';			//periodicite
+	public $duree = '';				//duree abt
+	public $prix = '0.00';				//prix renvoye
+	public $aff_date_debut = '';		//date debut abt renvoyee	
+	public $abt_name = '';		//nom abonnement renvoyee	
 	
-	var $form_checker = ''; //Affichage d'une case à cocher sur le template
+	public $form_checker = ''; //Affichage d'une case à cocher sur le template
 
 //TODO
-	var $nb_num = 0;				//nb numeros
+	public $nb_num = 0;				//nb numeros
 	
 	
 	//constructeur
-	function sel_abt_display($abt_id, $base_url, $form_checker='') {
-
-		if(!$abt_id) return;
-		$this->abt_id=$abt_id;
+	public function __construct($abt_id, $base_url, $form_checker='') {
+		$this->abt_id=$abt_id+0;
 		$this->base_url=$base_url;
 		$this->form_checker=$form_checker;
 	}
 	
 	
 	//creation formulaire
-	function doForm() {
+	public function doForm() {
 		
 		$this->getData();
 		$this->responsabilites = get_notice_authors($this->abt->num_notice) ;
@@ -874,7 +869,7 @@ class sel_abt_display {
 
 	
 	// récupération des valeurs en table
-	function getData() {
+	public function getData() {
 
 		global $dbh;
 		
@@ -895,7 +890,7 @@ class sel_abt_display {
 	
 	
 	// creation header
-	function doHeader() {
+	public function doHeader() {
 		
 		global $dbh, $msg, $charset;
 		
@@ -935,7 +930,7 @@ class sel_abt_display {
 		//renv. editeur1
 		if ($this->abt->ed1_id) {
 			$editeur = new editeur($this->abt->ed1_id);
-			$this->editeur1 = $editeur->isbd_entry;
+			$this->editeur1 = $editeur->get_isbd();
 		}
 		
 		//renv. periodicite 
@@ -961,7 +956,7 @@ class sel_abt_display {
 	
 	
 	// creation contenu
-	function doContent() {
+	public function doContent() {
 		
 		global $msg;
 		global $fonction_auteur;
@@ -975,7 +970,7 @@ class sel_abt_display {
 		if ($as!== FALSE && $as!== NULL) {
 			$auteur_0 = $this->responsabilites["auteurs"][$as] ;
 			$auteur = new auteur($auteur_0["id"]);
-			$mention_resp_lib = $auteur->isbd_entry;
+			$mention_resp_lib = $auteur->get_isbd();
 			if ($auteur_0["fonction"]) {
 				$mention_resp_lib .= ", ".$fonction_auteur[$auteur_0["fonction"]];
 			}
@@ -986,7 +981,7 @@ class sel_abt_display {
 			$indice = $as[$i] ;
 			$auteur_1 = $this->responsabilites["auteurs"][$indice] ;
 			$auteur = new auteur($auteur_1["id"]);
-			$mention_resp_lib = $auteur->isbd_entry;
+			$mention_resp_lib = $auteur->get_isbd();
 			if ($auteur_1["fonction"]) {
 				$mention_resp_lib .= ", ".$fonction_auteur[$auteur_1["fonction"]];
 			}
@@ -997,7 +992,7 @@ class sel_abt_display {
 			$indice = $as[$i] ;
 			$auteur_2 = $this->responsabilites["auteurs"][$indice] ;
 			$auteur = new auteur($auteur_2["id"]);
-			$mention_resp_lib = $auteur->isbd_entry;
+			$mention_resp_lib = $auteur->get_isbd();
 			if ($auteur_2["fonction"]) {
 				$mention_resp_lib .= ", ".$fonction_auteur[$auteur_2["fonction"]];
 			}
@@ -1011,7 +1006,7 @@ class sel_abt_display {
 		// zone de l'adresse
 		if($this->abt->ed1_id) {
 			$editeur = new editeur($this->abt->ed1_id);
-			$ed_isbd .= $editeur->isbd_entry;
+			$ed_isbd .= $editeur->get_isbd();
 		}
 		if($this->abt->year) {
 			$ed_isbd ? $ed_isbd .= ', '.$this->abt->year : $ed_isbd = $this->abt->year;
@@ -1026,9 +1021,9 @@ class sel_abt_display {
 	
 	
 	//génération du template javascript
-	function finalize() {
+	public function finalize() {
 		
-		global $msg;
+		global $msg,$charset;
 		
 		$javascript_template ="
 			<div id='el_!!id!!_Parent' class='notice-parent'><span class='acq_sel_display_middle'>";
@@ -1044,7 +1039,7 @@ class sel_abt_display {
 			$javascript_template.=">";
 		}
 		$javascript_template.="
-				<img src='./images/plus.gif' name='imEx' id='el_!!id!!_Img' title='".$msg['admin_param_detail']."' onClick=\"expandBase('el_!!id!!_', true); return false;\" />
+				<img src='".get_url_icon('plus.gif')."' name='imEx' id='el_!!id!!_Img' title='".$msg['admin_param_detail']."' onClick=\"expandBase('el_!!id!!_', true); return false;\" />
 				</span><span class='notice-heada'>!!header!!</span>
 				<div id='el_!!id!!_Child' class='notice-child' style='width:inherit;display:none;' >
    			 		!!serial_type!! !!isbd!!
@@ -1076,26 +1071,25 @@ require_once($class_path.'/tva_achats.class.php');
 //Classe d'affichage des frais dans un selecteur
 class sel_frais_display extends frais {
 	
-	var $result='';
-	var $lib_montant='';
-	var $taux_tva = '0.00';
+	public $result='';
+	public $lib_montant='';
+	public $taux_tva = '0.00';
 	
-	var $base_url = '';			//URL a associer aux elements cliquables
-	var $action = '';
-	var $action_values = array();
+	public $base_url = '';			//URL a associer aux elements cliquables
+	public $action = '';
+	public $action_values = array();
 	
-	var $form_checker = ''; //Affichage d'une case à cocher sur le template
+	public $form_checker = ''; //Affichage d'une case à cocher sur le template
 	
 	//Constructeur.	 
-	function sel_frais_display($id_frais, $base_url, $form_checker='') {
-		
-		if (!$id_frais) return;
-		parent::frais($id_frais);
+	public function __construct($id_frais, $base_url, $form_checker='') {
+		$id_frais += 0;
+		parent::__construct($id_frais);
 		$this->base_url=$base_url;
 		$this->form_checker=$form_checker;
 	}
 	
-	function doForm(){
+	public function doForm(){
 		
 		global $charset;
 		global $acquisition_gestion_tva, $pmb_gestion_devise;
@@ -1139,47 +1133,45 @@ class sel_frais_display extends frais {
 // définition de la classe d'affichage des articles en liste pour selecteur
 class sel_article_display {
 	
-	var $notice_id = 0;		//id notice
-	var $notice = '';		//objet notice
-  	var $header = '';		//entete
-	var $result	= '';		//affichage final
-	var $isbd = '';			//isbd notice
-	var $responsabilites =	array("responsabilites" => array(),"auteurs" => array());  //auteurs
-	var $statut = '' ;		//statut notice
-	var $tit_serie = '';	//titre serie
-	var $tit1 = '';			//titre 1
+	public $notice_id = 0;		//id notice
+	public $notice = '';		//objet notice
+  	public $header = '';		//entete
+	public $result	= '';		//affichage final
+	public $isbd = '';			//isbd notice
+	public $responsabilites =	array("responsabilites" => array(),"auteurs" => array());  //auteurs
+	public $statut = '' ;		//statut notice
+	public $tit_serie = '';	//titre serie
+	public $tit1 = '';			//titre 1
 
-	var $parent_title = '';
-	var $parent_numero = '';
-	var $parent_date = '';
-	var $parent_date_date = '';
-	var $parent_aff_date_date = '';
+	public $parent_title = '';
+	public $parent_numero = '';
+	public $parent_date = '';
+	public $parent_date_date = '';
+	public $parent_aff_date_date = '';
 	
-	var $base_url = '';					//URL a associer aux elements cliquables
-  	var $action = '';					//action a effectuer pour retour des parametres		
-	var $action_values = array();		//tableau des elements à modifier dans l'action
+	public $base_url = '';					//URL a associer aux elements cliquables
+  	public $action = '';					//action a effectuer pour retour des parametres		
+	public $action_values = array();		//tableau des elements à modifier dans l'action
 		
-	var $code = '';			//isbn ou code EAN de la notice à afficher
-	var $titre = '';		//titre renvoye
-	var $auteur1 = '';		//auteur1 renvoye
-	var $in_bull = '';		//lien bulletin renvoye
-	var $prix = '0.00';		//prix renvoye
+	public $code = '';			//isbn ou code EAN de la notice à afficher
+	public $titre = '';		//titre renvoye
+	public $auteur1 = '';		//auteur1 renvoye
+	public $in_bull = '';		//lien bulletin renvoye
+	public $prix = '0.00';		//prix renvoye
 	
-	var $form_checker = ''; //Affichage d'une case à cocher sur le template
+	public $form_checker = ''; //Affichage d'une case à cocher sur le template
 
 	
 	// constructeur
-	function sel_article_display($notice_id, $base_url, $form_checker='') {
-
-		if (!$notice_id) return;
-		$this->notice_id=$notice_id;
+	public function __construct($notice_id, $base_url, $form_checker='') {
+		$this->notice_id=$notice_id+0;
 	  	$this->base_url=$base_url;
 	  	$this->form_checker=$form_checker;
 	}
 	
 
 	//creation formulaire
-	function doForm() {
+	public function doForm() {
 	
 		$this->getData();
 		$this->responsabilites = get_notice_authors($this->notice_id) ;
@@ -1190,7 +1182,7 @@ class sel_article_display {
 
 	
 	// récupération des valeurs en table
-	function getData() {
+	public function getData() {
 		global $dbh,$msg;
 		
 		$q = "SELECT * FROM notices WHERE notice_id='".$this->notice_id."' ";
@@ -1217,7 +1209,7 @@ class sel_article_display {
 	}
 	
 	// creation header
-	function doHeader() {
+	public function doHeader() {
 		
 		global $dbh, $charset;
 		global $pmb_notice_reduit_format;
@@ -1238,9 +1230,9 @@ class sel_article_display {
 			else $txt = $this->notice->commentaire_gestion ;
 		}
 		if ($txt) {
-			$statut = "<small><span $class_html style='margin-right: 3px;'><a href=# onmouseover=\"z=document.getElementById('zoom_statut".$this->notice_id."'); z.style.display=''; \" onmouseout=\"z=document.getElementById('zoom_statut".$this->notice_id."'); z.style.display='none'; \"><img src='./images/spacer.gif' width='10' height='10' /></a></span></small>";
+			$statut = "<small><span $class_html style='margin-right: 3px;'><a href=# onmouseover=\"z=document.getElementById('zoom_statut".$this->notice_id."'); z.style.display=''; \" onmouseout=\"z=document.getElementById('zoom_statut".$this->notice_id."'); z.style.display='none'; \"><img src='".get_url_icon('spacer.gif')."' width='10' height='10' /></a></span></small>";
 			$statut .= "<div id='zoom_statut".$this->notice_id."' style='border: solid 2px #555555; background-color: #FFFFFF; position: absolute; display:none; z-index: 2000;'><b>".nl2br(htmlentities($txt,ENT_QUOTES, $charset))."</b></div>" ;
-		} else $statut = "<small><span $class_html style='margin-right: 3px;'><img src='./images/spacer.gif' width='10' height='10' /></span></small>";
+		} else $statut = "<small><span $class_html style='margin-right: 3px;'><img src='".get_url_icon('spacer.gif')."' width='10' height='10' /></span></small>";
 		$this->statut = $statut ; 
 		
 		$this->tit1 = $this->notice->tit1;		
@@ -1253,8 +1245,8 @@ class sel_article_display {
 		if ($as!== FALSE && $as!== NULL) {
 			$auteur_0 = $this->responsabilites["auteurs"][$as] ;
 			$auteur = new auteur($auteur_0["id"]);
-			if ($auteur->isbd_entry) {
-				$lib_auteur=$auteur->isbd_entry;
+			if ($auteur->get_isbd()) {
+				$lib_auteur=$auteur->get_isbd();
 			}
 		} else {
 			$as = array_keys ($this->responsabilites["responsabilites"], "1" );
@@ -1262,7 +1254,7 @@ class sel_article_display {
 				$indice = $as[$i] ;
 				$auteur_1 = $this->responsabilites["auteurs"][$indice];
 				$auteur = new auteur($auteur_1["id"]);
-				$aut1_libelle[]= $auteur->isbd_entry;
+				$aut1_libelle[]= $auteur->get_isbd();
 			}
 			$auteurs_liste = implode ("; ",$aut1_libelle) ;
 			if ($auteurs_liste) {
@@ -1305,7 +1297,7 @@ class sel_article_display {
 	
 	
 	// creation contenu
-	function doContent() {
+	public function doContent() {
 		global $tdoc;
 		global $fonction_auteur;
 	
@@ -1320,7 +1312,7 @@ class sel_article_display {
 		if ($as!== FALSE && $as!== NULL) {
 			$auteur_0 = $this->responsabilites["auteurs"][$as] ;
 			$auteur = new auteur($auteur_0["id"]);
-			$mention_resp_lib = $auteur->isbd_entry;
+			$mention_resp_lib = $auteur->get_isbd();
 			if ($auteur_0["fonction"]) {
 				$mention_resp_lib .= ", ".$fonction_auteur[$auteur_0["fonction"]];
 			}
@@ -1331,7 +1323,7 @@ class sel_article_display {
 			$indice = $as[$i] ;
 			$auteur_1 = $this->responsabilites["auteurs"][$indice] ;
 			$auteur = new auteur($auteur_1["id"]);
-			$mention_resp_lib = $auteur->isbd_entry;
+			$mention_resp_lib = $auteur->get_isbd();
 			if ($auteur_1["fonction"]) {
 				$mention_resp_lib .= ", ".$fonction_auteur[$auteur_1["fonction"]];
 			}
@@ -1342,7 +1334,7 @@ class sel_article_display {
 			$indice = $as[$i] ;
 			$auteur_2 = $this->responsabilites["auteurs"][$indice] ;
 			$auteur = new auteur($auteur_2["id"]);
-			$mention_resp_lib = $auteur->isbd_entry;
+			$mention_resp_lib = $auteur->get_isbd();
 			if ($auteur_2["fonction"]) {
 				$mention_resp_lib .= ", ".$fonction_auteur[$auteur_2["fonction"]];
 			}
@@ -1373,9 +1365,9 @@ class sel_article_display {
 
 	
 	//génération du template javascript
-	function finalize() {
+	public function finalize() {
 		
-		global $msg;
+		global $msg,$charset;
 		
 		$javascript_template ="
 						<div id='el_!!id!!_Parent' class='notice-parent'><span class='acq_sel_display_middle'>";
@@ -1391,7 +1383,7 @@ class sel_article_display {
 			$javascript_template.=">";
 		}
 		$javascript_template.="
-							<img src='./images/plus.gif' name='imEx' id='el_!!id!!_Img' title='".$msg['admin_param_detail']."' onClick=\"expandBase('el_!!id!!_', true); return false;\" />
+							<img src='".get_url_icon('plus.gif')."' name='imEx' id='el_!!id!!_Img' title='".$msg['admin_param_detail']."' onClick=\"expandBase('el_!!id!!_', true); return false;\" />
 							</span><span class='notice-heada'>!!header!!</span>
 							<div id='el_!!id!!_Child' class='notice-child' style='width:inherit;display:none;' >
 	   					 		!!isbd!!

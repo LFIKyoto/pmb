@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_root.class.php,v 1.1 2015-03-02 17:30:39 arenou Exp $
+// $Id: docwatch_root.class.php,v 1.3 2018-01-03 15:34:22 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -34,8 +34,8 @@ class docwatch_root{
 	
 	protected function get_value_from_form($name){
 		$var_name = $this->get_form_value_name($name);
-		global $$var_name;
-		return $$var_name;
+		global ${$var_name};
+		return ${$var_name};
 	}
 	
 	protected static function charset_normalize($elem,$input_charset){
@@ -55,6 +55,7 @@ class docwatch_root{
 	}
 	
 	protected static function clean_cp1252($str,$charset){
+		$cp1252_map = array();
 		switch($charset){
 			case "utf-8" :
 				$cp1252_map = array(
@@ -88,6 +89,7 @@ class docwatch_root{
 				);
 				break;
 			case "iso8859-1" :
+			case "iso-8859-1" :
 				$cp1252_map = array(
 				"\x80" => "EUR", /* EURO SIGN */
 				"\x82" => "\xab", /* SINGLE LOW-9 QUOTATION MARK */

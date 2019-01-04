@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_global_var.class.php,v 1.1 2013-01-02 11:07:10 arenou Exp $
+// $Id: cms_module_common_selector_global_var.class.php,v 1.3 2017-07-12 15:15:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 //require_once($base_path."/cms/modules/common/selectors/cms_module_selector.class.php");
@@ -37,13 +37,18 @@ class cms_module_common_selector_global_var extends cms_module_common_selector{
 	public function get_value(){
 		if(!$this->value){
 			$value = $this->parameters;
-			global $$value;
-			if(isset($$value)){
-				$this->value = $$value;
+			global ${$value};
+			if(isset(${$value})){
+				$this->value = ${$value};
 			}else{
 				$this->value = false;
 			}
 		}
 		return $this->value;
+	}
+	
+	public function get_human_description_selector(){
+		$description = $this->addslashes($this->format_text($this->parameters));
+		return $description;
 	}
 }

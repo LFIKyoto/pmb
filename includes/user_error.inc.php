@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: user_error.inc.php,v 1.16 2015-06-10 07:14:04 jpermanne Exp $
+// $Id: user_error.inc.php,v 1.25 2017-11-22 11:07:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -31,7 +31,7 @@ function error_message($error_title, $error_message, $back_button=0, $ret_adr=''
 	print "<br /><div class='erreur'>$msg[540]</div>
 		<div class='row'>
 		<div class='colonne10'>
-			<img src='./images/error.gif' align='left'>
+			<img src='".get_url_icon('error.gif')."' class='align_left'>
 			</div>
 		<div class='colonne80'>
 			<strong>$error_message</strong>
@@ -75,7 +75,7 @@ function return_error_message($error_title, $error_message, $back_button=0, $ret
 	<br /><div class='erreur'>$msg[540]</div>
 	<div class='row'>
 		<div class='colonne10'>
-			<img src='./images/error.gif' align='left'>
+			<img src='".get_url_icon('error.gif')."' class='align_left'>
 			</div>
 		<div class='colonne80'>
 			<strong>$error_message</strong>
@@ -107,7 +107,9 @@ function return_error_message($error_title, $error_message, $back_button=0, $ret
 			}
 			$ret_url = implode("?", $extract_url);
 		}
-		
+		if(strpos($ret_url, 'ajax.php') !== false) {
+			$ret_url=$_SERVER['HTTP_REFERER'];			
+		}
 		$retour .= "
 			<div class='row'>
 				<form class='form-$current_module' name='dummy' method=\"post\" action=\"".urldecode($ret_adr)."\">
@@ -116,6 +118,9 @@ function return_error_message($error_title, $error_message, $back_button=0, $ret
 				</form>
 				<script type='text/javascript'>
 					document.forms['dummy'].elements['ok'].focus();
+					if (typeof unload_off === 'function') {							
+						unload_off();
+					}
 				</script>
 				</div>
 				";
@@ -127,7 +132,6 @@ function return_error_message($error_title, $error_message, $back_button=0, $ret
 function error_message_history($error_title, $error_message, $back_button=0) {
 
 	global $msg;
-	global $base_path;
 	global $current_module ;
 	/*
 		paramètres : -->
@@ -141,17 +145,17 @@ function error_message_history($error_title, $error_message, $back_button=0) {
 	<br /><div class='erreur'>$msg[540]</div>
 	<div class='row'>
 		<div class='colonne10'>
-			<img src='$base_path/images/error.gif' align='left'>
+			<img src='".get_url_icon('error.gif')."' class='align_left'>
 			</div>
 		<div class='colonne80'>
 			<strong>$error_message</strong>
-			</div>
 		</div>
-		";
+	</div>
+	";
 
 	if($back_button) {
 		print "
-			<div class='row'>
+			<div class='row' id='error_message_history_button'>
 				<form class='form-$current_module' name='dummy'>
 				<input type='button' name='ok' class='bouton' value=' $msg[89] ' onClick='history.go(-1);'>
 				</form>
@@ -184,14 +188,14 @@ function choice_message($error_title, $error_message, $back_button=0, $ret_adr='
 
 	print "
 		<br />
-		<table border='0' align='center' bgcolor='#e0e0e0' class='fiche-lecteur' cellpadding='0' width='350'>
+		<table border='0' bgcolor='#e0e0e0' class='center fiche-lecteur' cellpadding='0' width='350'>
 			<tr>
 				<td class='error-header' colspan='2'>
 					$msg[540] <!--$msg[1001] : $error_title-->
 				</td>
 			</tr>
-				<td align='left'><br />
-					<img src='./images/error.gif' align='left'>
+				<td class='align_left'><br />
+					<img src='".get_url_icon('error.gif')."' class='align_left'>
 				</td>
 				<td><br />
 					<p class='error'>$error_message</p>
@@ -201,7 +205,7 @@ function choice_message($error_title, $error_message, $back_button=0, $ret_adr='
 	if($back_button) {
 		if(!$ret_adr) $ret_adr = $default_ret_adr;
 		print "<tr>
-			<td align='center' colspan='2'><br />
+			<td class='center' colspan='2'><br />
 			<form class='form-$current_module' name='dummy'>
 			<input type='button' name='ok' class='button' value=' $msg[89] ' onClick='document.location=\"$ret_adr\"'>
 			</form>
@@ -214,7 +218,7 @@ function choice_message($error_title, $error_message, $back_button=0, $ret_adr='
 	if($cancel_button) {
 		if(!$cancel_adr) $cancel_adr = $default_ret_adr;
 		print "<tr>
-			<td align='center' colspan='2'><br />
+			<td class='center' colspan='2'><br />
 			<form class='form-$current_module' name='dummy2'>
 			<input type='button' name='ok' class='button' value=' $msg[76] ' onClick='document.location=\"$cancel_adr\"'>
 			</form>
@@ -244,7 +248,7 @@ function form_error_message($error_title, $error_message, $libelle, $ret_adr='',
 	<br /><div class='erreur'>$msg[540]</div>
 	<div class='row'>
 		<div class='colonne10'>
-			<img src='./images/error.gif' align='left'>
+			<img src='".get_url_icon('error.gif')."' class='align_left'>
 			</div>
 		<div class='colonne80'>
 			<strong>$error_message</strong>
@@ -292,14 +296,14 @@ function information_message($error_title, $error_message, $back_button=0, $ret_
 
 	print "
 		<br />
-		<table border='0' align='center' bgcolor='#e0e0e0' class='fiche-lecteur' cellpadding='0' width='350'>
+		<table border='0' bgcolor='#e0e0e0' class='center fiche-lecteur' cellpadding='0' width='350'>
 			<tr>
 				<td class='error-header' colspan='2'>
 					$msg[540]<!--$msg[1001] : $error_title-->
 				</td>
 			</tr>
-				<td align='left'><br />
-					<img src='./images/idea.gif' align='left'>
+				<td class='align_left'><br />
+					<img src='".get_url_icon('idea.gif')."' class='align_left'>
 				</td>
 				<td><br />
 					<p class='error'>$error_message</p>
@@ -309,7 +313,7 @@ function information_message($error_title, $error_message, $back_button=0, $ret_
 	if($back_button) {
 		if(!$ret_adr) $ret_adr = $default_ret_adr;
 		print "<tr>
-			<td align='center' colspan='2'><br />
+			<td class='center' colspan='2'><br />
 			<form class='form-$current_module' name='dummy'>
 			<input type='button' name='ok' class='button' value=' $msg[89] ' onClick='document.location=\"$ret_adr\"'>
 			</form>
@@ -322,7 +326,7 @@ function information_message($error_title, $error_message, $back_button=0, $ret_
 	if($cancel_button) {
 		if(!$cancel_adr) $cancel_adr = $default_ret_adr;
 		print "<tr>
-			<td align='center' colspan='2'><br />
+			<td class='center' colspan='2'><br />
 			<form class='form-$current_module' name='dummy2'>
 			<input type='button' name='ok' class='button' value=' $msg[76] ' onClick='document.location=\"$cancel_adr\"'>
 			</form>
@@ -334,20 +338,21 @@ function information_message($error_title, $error_message, $back_button=0, $ret_
 }
 
 function warning($error_title, $error_message)  {
-global $base_path;
-	
-print "
-<table border='0' align='center' class='warning'>
-<tr>
-	<td valign='top' width='33'><img src='$base_path/images/error.gif'></td>
-	<td valign='top'><strong>$error_title</strong><br />
-	$error_message</td>
-</tr>
-</table>";
-
+	print "
+	<table border='0' class='center warning'>
+	<tr>
+		<td style='vertical-align:top; width:33px'><img src='".get_url_icon('error.gif')."'></td>
+		<td style='vertical-align:top'><strong>$error_title</strong><br />
+		$error_message</td>
+	</tr>
+	</table>";
 }
 
 function box_confirm_message($error_title, $error_message, $ret_adr='', $cancel_adr='', $confirm_texte_bouton='', $cancel_texte_bouton='') {
+	print return_box_confirm_message($error_title, $error_message, $ret_adr, $cancel_adr, $confirm_texte_bouton, $cancel_texte_bouton);
+}
+
+function return_box_confirm_message($error_title, $error_message, $ret_adr='', $cancel_adr='', $confirm_texte_bouton='', $cancel_texte_bouton='') {
 
 	global $msg;
  	global $current_module ;
@@ -366,21 +371,20 @@ function box_confirm_message($error_title, $error_message, $ret_adr='', $cancel_
 	//affichage
 
 	//affichage
-	print "<br /><div class='erreur'>$error_title</div>
+	$html = "<br />
+	<div class='erreur'>$error_title</div>
 	<div class='row'>
-	<div class='colonne10'>
-	<img src='./images/error.gif' align='left'>
+		<div class='colonne10'>
+			<img src='".get_url_icon('error.gif')."' class='align_left'>
+		</div>
+		<div class='colonne80'>
+			<strong>$error_message</strong>
+		</div>
 	</div>
-	<div class='colonne80'>
-	<strong>$error_message</strong>
-	</div>
+	<div class='row'>
+		<form class='form-$current_module' name='dummy'>
+			<input type='button' name='ok' class='bouton' value=\" ".$confirm_texte_bouton." \" onClick='document.location=\"$ret_adr\"'>
+			<input type='button' name='cancel' class='bouton' value=\" ".$cancel_texte_bouton." \" onClick='document.location=\"$cancel_adr\"'>
+		</form>
 	</div>";
-
-	print "
-		<div class='row'>
-			<form class='form-$current_module' name='dummy'>
-				<input type='button' name='ok' class='bouton' value=\" ".$confirm_texte_bouton." \" onClick='document.location=\"$ret_adr\"'>
-				<input type='button' name='cancel' class='bouton' value=\" ".$cancel_texte_bouton." \" onClick='document.location=\"$cancel_adr\"'>
-			</form>
-		</div>";
 }

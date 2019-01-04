@@ -2,17 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: thesaurus.tpl.php,v 1.9 2009-12-18 11:18:25 mbertin Exp $
+// $Id: thesaurus.tpl.php,v 1.12 2018-10-18 06:51:59 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 // templates pour la gestion des thesaurus
 
+global $thes_browser;
+global $thes_form;
 
 // $thes_browser : template du browser de thesaurus
 $thes_browser = "
 <div class='row'>
-	<h3>&nbsp;".$msg[thes_liste]."</h3>
+	<h3>&nbsp;".$msg['thes_liste']."</h3>
 </div>
 <br />
 <br />
@@ -24,7 +26,7 @@ $thes_browser = "
 <br />
 <br />
 <div class='row'>
-	<input class='bouton' type='button' value='".$msg[thes_ajouter]."' onclick = \"document.location = '!!action!!' \" />
+	<input class='bouton' type='button' value='".$msg['thes_ajouter']."' onclick = \"document.location = '!!action!!' \" />
 </div>
 
 ";
@@ -38,7 +40,7 @@ $thes_form = "
 	{
 		if(document.getElementById('libelle_thesaurus').value.length == 0)
 			{
-				var msg = \"".$msg[thes_libelle_manquant]."\";
+				var msg = \"".$msg['thes_libelle_manquant']."\";
 				alert(msg);
 	           	document.forms['thes_form'].elements['libelle_thesaurus'].focus();
 			return false;
@@ -48,10 +50,10 @@ $thes_form = "
 	
 function confirm_delete() {
 		has_categ='!!thesaurus_as_categ!!';
-        result = confirm(\"".$msg[confirm_suppr]."\");
+        result = confirm(\"".$msg['confirm_suppr']."\");
         if(result){
         	if(has_categ == 'oui'){
-        		if(confirm(\"".$msg[supp_thes_avec_categ]."\")){
+        		if(confirm(\"".$msg['supp_thes_avec_categ']."\")){
         			document.location='!!delete_url!!';
         		}else{
         			document.forms['thes_form'].elements['libelle_thesaurus'].focus();
@@ -78,12 +80,12 @@ function confirm_delete() {
 			<label class='etiquette' >".$msg[103]."</label><label class='etiquette'></label>
 		</div>
 		<div class='row'>
-			<input type='text' class='saisie-80em' id='libelle_thesaurus' name='libelle_thesaurus' value=\"!!libelle_thesaurus!!\" />
+			<input type='text' class='saisie-80em' id='libelle_thesaurus' name='libelle_thesaurus' data-translation-fieldname='libelle_thesaurus' value=\"!!libelle_thesaurus!!\" />
 		</div>
 
 		<!-- langue defaut -->
 		<div class='row'>
-			<label class='etiquette' >".$msg[thes_langue_defaut]."</label><label class='etiquette'></label>
+			<label class='etiquette' >".$msg['thes_langue_defaut']."</label><label class='etiquette'></label>
 		</div>
 		<div class='row'>
 			!!langue_defaut!! 

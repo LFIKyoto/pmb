@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_searcharticles.class.php,v 1.7 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: cms_module_common_datasource_searcharticles.class.php,v 1.8 2016-09-21 13:09:44 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -53,7 +53,7 @@ class cms_module_common_datasource_searcharticles extends cms_module_common_data
 					else $operator = "";
 					$where .= $operator." concat(article_title,' ',article_resume,' ',article_contenu) like '%".$word_query."%'";
 				}
-				$select .= "(trim(article_title) like '".$selector->get_value()."%')*0.2";
+				$select .= "(trim(article_title) like '".addslashes($selector->get_value())."%')*0.2";
 				$select .= ") as pert";
 				$where .= ")";
 				$query = "select distinct id_article,".$select." from cms_articles where ".$where;

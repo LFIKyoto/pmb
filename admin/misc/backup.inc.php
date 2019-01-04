@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: backup.inc.php,v 1.12 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: backup.inc.php,v 1.13 2017-10-27 13:37:34 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -125,7 +125,7 @@ if(!empty($file)) {
 				</td>
 			</tr>
 			<tr>
-				<td align='right'>
+				<td class='align_right'>
 					<input type='button' class='bouton' value='$msg[76]' onClick='document.location=\'./admin.php\''>
 					<input type='submit' class='bouton' value='$msg[77]' onClick='return test_form(this.form)'>
 				</td>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: classementGen.tpl.php,v 1.1 2015-03-30 07:14:50 jpermanne Exp $
+// $Id: classementGen.tpl.php,v 1.2 2016-06-15 12:43:33 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -18,7 +18,7 @@ $classementGen_selector = "<div data-dojo-type='dijit/form/DropDownButton' style
 						!!classements_liste!!
 					</select>
 			        <br />
-			 		<button data-dojo-type='dijit/form/Button' onclick=\"classementGen_save('!!object_type!!',!!object_id!!,'!!url_callback!!');return false;\" type='submit'>!!msg_object_classement_save!!</button>
+			 		<button data-dojo-type='dijit/form/Button' onclick=\"classementGen_save('!!object_type!!',!!object_id!!,'!!url_callback!!');return false;\" type='button'>!!msg_object_classement_save!!</button>
 			    </div>
 			</div>";
 

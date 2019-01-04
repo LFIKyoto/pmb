@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mailtpl.tpl.php,v 1.5 2015-06-11 14:17:59 dgoron Exp $
+// $Id: mailtpl.tpl.php,v 1.15 2018-12-18 09:15:05 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -22,26 +22,53 @@ $mailtpl_list_tpl="
 $mailtpl_list_line_tpl="
 <tr  class='!!odd_even!!' onmousedown=\"document.location='./admin.php?categ=mailtpl&sub=build&action=form&id_mailtpl=!!id!!';\"  style=\"cursor: pointer\" 
 onmouseout=\"this.className='!!odd_even!!'\" onmouseover=\"this.className='surbrillance'\">	
-	<td valign='top'>				
+	<td style='vertical-align:top'>				
 		!!name!!
 	</td> 	
 	
 </tr> 	
 ";
 
+$mailtpl_form_resavars = "
+	<select name='resavars_id' id='resavars_id'>
+		<option value=!!new_date!!>".$msg["scan_request_date"]."</option>
+		<option value=!!expl_title!!>".$msg["233"]."</option>
+		<option value=!!record_permalink!!>".$msg["cms_editorial_form_permalink"]."</option>
+	</select>
+	<input type='button' class='bouton' value=\" ".$msg["admin_mailtpl_form_selvars_insert"]." \" onClick=\"insert_vars(document.getElementById('resavars_id'), document.getElementById('f_message')); return false; \" />
+		";
+
 $mailtpl_form_selvars="
 <select name='selvars_id' id='selvars_id'>
-	<option value=!!empr_name!!>".$msg["selvars_empr_name"]."</option>
-	<option value=!!empr_first_name!!>".$msg["selvars_empr_first_name"]."</option>
-	<option value=!!empr_sexe!!>".$msg["selvars_empr_civilite"]."</option>
-	<option value=!!empr_cb!!>".$msg["selvars_empr_cb"]."</option>
-	<option value=!!empr_login!!>".$msg["selvars_empr_login"]."</option>
-	<option value=!!empr_mail!!>".$msg["selvars_empr_mail"]."</option>
-	<option value=!!empr_loans!!>".$msg["selvars_empr_loans"]."</option>
-	<option value=!!empr_resas!!>".$msg["selvars_empr_resas"]."</option>
-	<option value=!!empr_name_and_adress!!>".$msg["selvars_empr_name_and_adress"]."</option>
-	<option value=!!empr_all_information!!>".$msg["selvars_empr_all_information"]."</option>
-	<option value='".htmlentities("<a href='".$opac_url_base."empr.php?code=!!code!!&emprlogin=!!login!!&date_conex=!!date_conex!!'>".$msg["selvars_empr_auth_opac"]."</a>",ENT_QUOTES, $charset)."'>".$msg["selvars_empr_auth_opac"]."</option>
+	<optgroup label='".htmlentities($msg["selvars_empr_group_empr"],ENT_QUOTES, $charset)."'>
+		<option value=!!empr_name!!>".htmlentities($msg["selvars_empr_name"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_first_name!!>".htmlentities($msg["selvars_empr_first_name"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_sexe!!>".htmlentities($msg["selvars_empr_civilite"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_cb!!>".htmlentities($msg["selvars_empr_cb"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_login!!>".htmlentities($msg["selvars_empr_login"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_mail!!>".htmlentities($msg["selvars_empr_mail"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_loans!!>".htmlentities($msg["selvars_empr_loans"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_loans_late!!>".htmlentities($msg["selvars_empr_loans_late"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_resas!!>".htmlentities($msg["selvars_empr_resas"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_name_and_adress!!>".htmlentities($msg["selvars_empr_name_and_adress"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_dated!!>".htmlentities($msg["selvars_empr_dated"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_datef!!>".htmlentities($msg["selvars_empr_datef"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_all_information!!>".htmlentities($msg["selvars_empr_all_information"],ENT_QUOTES, $charset)."</option>
+		<option value='".htmlentities("<a href='".$opac_url_base."empr.php?code=!!code!!&emprlogin=!!login!!&date_conex=!!date_conex!!'>".$msg["selvars_empr_auth_opac"]."</a>",ENT_QUOTES, $charset)."'>".$msg["selvars_empr_auth_opac"]."</option>
+	</optgroup>
+	<optgroup label='".htmlentities($msg["selvars_empr_group_loc"],ENT_QUOTES, $charset)."'>
+		<option value=!!empr_loc_name!!>".htmlentities($msg["selvars_empr_loc_name"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_loc_adr1!!>".htmlentities($msg["selvars_empr_loc_adr1"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_loc_adr2!!>".htmlentities($msg["selvars_empr_loc_adr2"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_loc_cp!!>".htmlentities($msg["selvars_empr_loc_cp"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_loc_town!!>".htmlentities($msg["selvars_empr_loc_town"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_loc_phone!!>".htmlentities($msg["selvars_empr_loc_phone"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_loc_email!!>".htmlentities($msg["selvars_empr_loc_email"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_loc_website!!>".htmlentities($msg["selvars_empr_loc_website"],ENT_QUOTES, $charset)."</option>
+	</optgroup>
+	<optgroup label='".htmlentities($msg["selvars_empr_group_misc"],ENT_QUOTES, $charset)."'>
+		<option value=!!day_date!!>".htmlentities($msg["selvars_empr_day_date"],ENT_QUOTES, $charset)."</option>
+	</optgroup>
 </select>
 <input type='button' class='bouton' value=\" ".$msg["admin_mailtpl_form_selvars_insert"]." \" onClick=\"insert_vars(document.getElementById('selvars_id'), document.getElementById('f_message')); return false; \" />
 <script type='text/javascript'>
@@ -62,7 +89,7 @@ $mailtpl_form_selvars="
 		    var end_text = dest.value.substring(start);
 		    dest.value = start_text+selvars+end_text;
 		}else{
-			tinyMCE.execCommand('mceInsertContent',false,selvars);
+			tinyMCE_execCommand('mceInsertContent',false,selvars);
 		}
 	}
 	
@@ -91,7 +118,7 @@ $mailtpl_form_sel_img="
 		    var end_text = dest.value.substring(start);
 		    dest.value = start_text+sel_img+end_text;
 		}else{
-			tinyMCE.execCommand('InsertHTML',false,sel_img);
+			tinyMCE_execCommand('InsertHTML',false,sel_img);
 		}
 	}
 
@@ -99,6 +126,7 @@ $mailtpl_form_sel_img="
 ";
 $mailtpl_form_tpl="	
 	$pmb_javascript_office_editor
+	<script type='text/javascript' src='./javascript/tinyMCE_interface.js'></script>
 <script type='text/javascript'>
 	function test_form(form){
 		if((form.name.value.length == 0) )		{
@@ -137,13 +165,22 @@ $mailtpl_form_tpl="
 			<div class='row'>
 				!!selvars!!
 			</div>
-		</div>
-		!!sel_img!!		
+		</div>";
+		if($pdflettreresa_resa_prolong_email){
+			$mailtpl_form_tpl.="
+			<div class='row'>
+				<label class='etiquette'>".$msg["admin_mailtpl_form_resa_prolong_selvars"]."</label>
+				<div class='row'>
+					!!resavars!!
+				</div>
+			</div>";
+		}
+		$mailtpl_form_tpl.="!!sel_img!!
 		<div class='row'>
 			<input type='hidden' id='auto_id_list' name='auto_id_list' value='!!id_check_list!!' >
 			<label class='etiquette' for='form_comment'>$msg[procs_autorisations]</label>
-			<input type='button' class='bouton_small' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);' align='middle'>
-			<input type='button' class='bouton_small' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);' align='middle'>
+			<input type='button' class='bouton_small align_middle' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);'>
+			<input type='button' class='bouton_small align_middle' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);'>
 		</div>
 		<div class='row'>
 			!!autorisations_users!!
@@ -154,8 +191,9 @@ $mailtpl_form_tpl="
 	
 	<div class='row'>	
 		<div class='left'>
+			<input type='button' class='bouton' value='".$msg['76']."'  onclick=\"document.location='./admin.php?categ=mailtpl&sub=build'\"  />
 			<input type='button' class='bouton' value='".$msg['admin_mailtpl_save']."' onclick=\"document.getElementById('action').value='save';if (test_form(this.form)) this.form.submit();\" />
-			<input type='button' class='bouton' value='".$msg['admin_mailtpl_exit']."'  onclick=\"document.location='./admin.php?categ=mailtpl&sub=build'\"  />
+			!!duplicate!!
 		</div>
 		<div class='right'>
 			!!delete!!

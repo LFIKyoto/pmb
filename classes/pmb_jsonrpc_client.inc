@@ -21,6 +21,9 @@ along with JSON-RPC PHP; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+if(!isset($base_path)) $base_path = '.';
+require_once($base_path."/classes/encoding_normalize.class.php");
+
 /**
  * The object of this class are generic jsonRPC 1.0 clients
  * http://json-rpc.org/wiki/specification
@@ -178,7 +181,7 @@ class pmb_jsonrpc_client {
 			$request['auth_user'] = $this->authentication_user;
 			$request['auth_pw'] = $this->authentication_password;
 		}
-		$request = json_encode($request);
+		$request = encoding_normalize::json_encode($request);
 		$this->debug && $this->debug.='***** Request *****'."\n".$request."\n".'***** End Of request *****'."\n\n";
 		
 		// performs the HTTP POST
@@ -208,7 +211,7 @@ class pmb_jsonrpc_client {
 		
 		// debug output
 		if ($this->debug) {
-			echo nl2br($debug);
+			echo nl2br($this->debug);
 		}
 		
 		// final checks and return

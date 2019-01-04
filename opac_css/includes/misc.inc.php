@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: misc.inc.php,v 1.63.2.3 2015-11-30 08:57:33 mbertin Exp $
+// $Id: misc.inc.php,v 1.107 2018-10-11 08:08:20 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -15,28 +15,178 @@ require_once($class_path."/curl.class.php");
 $add_empty_words=semantique::add_empty_words();
 if ($add_empty_words) eval($add_empty_words);
 
+//Fonction pour gérer les images demandés par PMB
+function getimage_cache($notice_id=0, $etagere_id=0, $authority_id=0, $vigurl=0, $noticecode=0, $url_image=0){
+	global $pmb_notice_img_folder_id, $pmb_authority_img_folder_id, $opac_url_base, $dbh;
+
+	global $opac_img_cache_folder;
+
+	$img_cache_folder = $opac_img_cache_folder;
+
+	$stop = false;
+	$hash = $location = $hash_location = $hash_location_empty = "";
+
+	$imgpmb_name=$imgpmb_test="";
+	if($notice_id){
+		$imgpmb_name="img_".$notice_id;
+		$imgpmb_test=$pmb_notice_img_folder_id;
+	}elseif($etagere_id){
+		$imgpmb_name="img_etag_".$etagere_id;
+		$imgpmb_test=$pmb_notice_img_folder_id;
+	}elseif($authority_id){
+		$imgpmb_name="img_authority_".$authority_id;
+		$imgpmb_test=$pmb_authority_img_folder_id;
+	}
+
+	if(!$stop && $imgpmb_name && $imgpmb_test){
+		$req = "select repertoire_path from upload_repertoire where repertoire_id ='".$imgpmb_test."'";
+		$res = pmb_mysql_query($req,$dbh);
+		if(pmb_mysql_num_rows($res)){
+			$rep = pmb_mysql_fetch_array($res,PMB_MYSQL_NUM);
+			$location = $rep[0].$imgpmb_name;
+			if($img_cache_folder && file_exists($location)){
+				$hash = md5($opac_url_base.$location);
+				$hash_location = $img_cache_folder.$hash.".png";
+				if(file_exists($hash_location)){
+					$location = $hash_location;
+					$hash_location = "";
+				}
+			}else{
+				//Gestion de l'existance du fichier non géré, comme c'était le cas avant
+			}
+			$stop = true;
+		}
+	}
+
+	if(!$stop && $img_cache_folder){
+		$hash_image="";
+		if($vigurl){
+			$hash_image.=$vigurl;
+		}
+		if($noticecode){
+			$hash_image.=$noticecode;
+		}
+		if($url_image){
+			$hash_image.=$url_image;
+		}
+
+		if($hash_image){
+			$hash=md5($hash_image);
+			$image_rep_cache=$img_cache_folder.$hash.".png";
+			//Pour les images vides elles peuvent changer entre les PMB, la gestion et l'Opac
+			$hash_img_empty=md5($hash_image.$opac_url_base.'1');
+			$image_empty_rep_cache=$img_cache_folder.$hash_img_empty.".png";
+			if(file_exists($image_empty_rep_cache)){
+				$location = $image_empty_rep_cache;
+			}elseif(file_exists($image_rep_cache)){
+				$location = $image_rep_cache;
+			}else{
+				//on teste l'existence de répertoire de cache pour éviter les erreurs et les liens cassés
+				if (file_exists($img_cache_folder)) {
+					$hash_location = $image_rep_cache;
+					$hash_location_empty = $image_empty_rep_cache;
+				}
+			}
+		}
+	}
+
+	$tmp = array("hash" => $hash, "location" => $location, "hash_location" => $hash_location, "hash_location_empty" => $hash_location_empty);
+	return $tmp;
+}
+
+function getimage_url($code = "", $vigurl = "") {
+	global $opac_url_base, $opac_book_pics_url, $pmb_opac_url, $pmb_url_base;
+	global $pmb_img_cache_folder, $pmb_img_cache_url, $opac_img_cache_folder, $opac_img_cache_url;
+
+	$url_return = $notice_id = $etagere_id = $authority_id = $noticecode = $url_image = "" ;
+
+	$url_image = $opac_book_pics_url;
+	$prefix=$opac_url_base;
+	$img_cache_folder = $opac_img_cache_folder;
+	$img_cache_url = $opac_img_cache_url;
+	$cached_in_opac = 1;
+
+	if($code){
+		$noticecode = pmb_preg_replace('/-|\.| /', '', $code);
+	}else{
+		$noticecode = "";
+	}
+
+	$for_cut="";
+	$out = array();
+	if (($vigurl) && (preg_match('#^(.+)?getimage\.php(.+)?$#',$vigurl,$out))) {
+		if(isset($out[1]) && trim($out[1])){
+			$contruct_url = trim($out[1]);
+			if(($contruct_url == "./") || ($contruct_url == $opac_url_base) || ($contruct_url == $pmb_opac_url) || ($contruct_url == $pmb_url_base)){
+				//Je peux tenter de trouve une URL statique
+				if(isset($out[2])){
+					$for_cut = trim($out[2]);
+				}
+			}/*else{
+			//Impossible on vient d'un autre PMB, on prend l'URL telque
+			}*/
+		}elseif(isset($out[1]) && !trim($out[1])){//L'url de la vignette de la notice commence par getimage sans rien devant
+			//Je peux tenter de trouve une URL statique
+			if(isset($out[2])){
+				$for_cut = trim($out[2]);
+			}
+		}
+
+		if($for_cut){
+			$out2=array();
+			if(preg_match("#(notice_id|etagere_id|authority_id)=([0-9]+)#",$for_cut,$out2)){
+				switch ($out2[1]) {
+					case "notice_id":
+						$notice_id = $out2[2];
+						$url_return = $prefix."getimage.php?notice_id=".$notice_id;
+						break;
+					case "etagere_id":
+						$etagere_id = $out2[2];
+						$url_return = $prefix."getimage.php?etagere_id=".$etagere_id;
+						break;
+					case "authority_id":
+						$authority_id = $out2[2];
+						$url_return = $prefix."getimage.php?authority_id=".$authority_id;
+						break;
+				}
+			}
+		}
+	}
+
+	if((strpos($vigurl,'data:image',0) === 0) || (strpos($vigurl,"vig_num.php") !== FALSE ) || (strpos($vigurl,"vign_middle.php") !== FALSE )){
+		$url_return = $vigurl;
+	}elseif($img_cache_url && $img_cache_folder){
+		$manag_cache=getimage_cache($notice_id, $etagere_id, $authority_id, $vigurl, $noticecode, $url_image);
+		$out=array();
+		if($manag_cache["location"] && preg_match("#^".$img_cache_folder."(.+)$#",$manag_cache["location"],$out)){
+			$url_return = $img_cache_url.$out[1];
+		}
+	}
+
+	if(!$url_return){
+		$url_return = $prefix."getimage.php?url_image=".urlencode($url_image)."&amp;noticecode=!!noticecode!!&amp;vigurl=".urlencode($vigurl) ;
+		$url_return = str_replace("!!noticecode!!", $noticecode, $url_return) ;
+	}
+	return $url_return;
+}
+
 //Fonction de récupération d'une URL vignette
 function get_vignette($notice_id) {
-	global $opac_book_pics_url;
+	global $opac_book_pics_url, $opac_show_book_pics;
 	global $opac_url_base;
-	
+	$url_image_ok = "";
 	$requete="select code,thumbnail_url from notices where notice_id=$notice_id";
 	$res=pmb_mysql_query($requete);
-	
 	if ($res) {
 		$notice=pmb_mysql_fetch_object($res);
 		if ($notice->code || $notice->thumbnail_url) {
-			if ($notice->thumbnail_url) 
-				$url_image_ok=$notice->thumbnail_url;
-			else {
-				$code_chiffre = pmb_preg_replace('/-|\.| /', '', $notice->code);
-				$url_image = $opac_book_pics_url ;
-				$url_image = $opac_url_base."getimage.php?url_image=".urlencode($url_image)."&noticecode=!!noticecode!!&vigurl=".urlencode($notice->thumbnail_url) ;
-				$url_image_ok = str_replace("!!noticecode!!", $code_chiffre, $url_image) ;
+			if ($opac_show_book_pics=='1' && ($opac_book_pics_url || $notice->thumbnail_url)) {
+				$url_image_ok = getimage_url($notice->code, $notice->thumbnail_url);
 			}
 		}
-	} else {
-		$url_image_ok=$opac_url_base."images/vide.png";
+	}
+	if(!$url_image_ok){
+		$url_image_ok = get_url_icon("vide.png", 1);
 	}
 	return $url_image_ok;
 }
@@ -48,20 +198,8 @@ function get_vignette($notice_id) {
 
 
 function reg_diacrit($chaine) {
-	// Armelle : a priori inutile.
-	global $charset;
-	global $include_path;
-	// préparation d'une chaine pour requête par REGEXP
-	global $tdiac ;
-	if (!$tdiac) { 
-			$tdiac = new XMLlist("$include_path/messages/diacritique$charset.xml");
-			$tdiac->analyser();
-	}
-	foreach($tdiac->table as $wreplace => $wdiacritique) {
-			if(pmb_preg_match("/$wdiacritique/", $chaine))
-				$chaine = pmb_preg_replace("/$wdiacritique/", $wreplace, $chaine);
-	}
-		$tab = pmb_split('/\s/', $chaine);
+	$chaine = convert_diacrit($chaine);
+	$tab = pmb_split('/\s/', $chaine);
 	// mise en forme de la chaine pour les alternatives
 	// on fonctionne avec OU (pour l'instant)
 	if(sizeof($tab) > 1) {
@@ -78,15 +216,25 @@ function convert_diacrit($string) {
 	global $tdiac;
 	global $charset;
 	global $include_path;
+	global $tdiac_diacritique, $tdiac_replace; 
 	if(!$string) return;
 	if (!$tdiac) { 
-			$tdiac = new XMLlist("$include_path/messages/diacritique$charset.xml");
-			$tdiac->analyser();
+		$tdiac = new XMLlist($include_path."/messages/diacritique".$charset.".xml");
+		$tdiac->analyser();
 	}
-	foreach($tdiac->table as $wreplace => $wdiacritique) {
-		if(pmb_preg_match("/$wdiacritique/", $string))
-			$string = pmb_preg_replace("/$wdiacritique/", $wreplace, $string);
-	}	
+	if (!count($tdiac_diacritique) || !count($tdiac_replace)) {
+		$tdiac_diacritique = array();
+		$tdiac_replace = array();
+		foreach($tdiac->table as $wreplace => $wdiacritique) {
+			$wdiacritique = str_replace(array('(', ')'), "", $wdiacritique);
+			foreach (explode('|', $wdiacritique) as $wdiac) {
+				$tdiac_diacritique[] = $wdiac;
+				$tdiac_replace[] = $wreplace;
+			}
+			
+		}
+	}
+	$string = str_replace($tdiac_diacritique,$tdiac_replace,$string);
 	return $string;
 }
 
@@ -112,6 +260,26 @@ function strip_empty_chars($string) {
 	return $string;
 }
 
+function get_empty_words($lg = 0) {
+	global $got_empty_word;
+
+	if(!isset($got_empty_word[$lg]) || !$got_empty_word[$lg]) {
+		$got_empty_word[$lg] = array();
+		global $empty_word;
+		$got_empty_word[$lg] = $empty_word;
+		$mots = array();
+		$query = "select mot from mots join linked_mots on mots.id_mot = linked_mots.num_mot where type_lien = 4";
+		$result = pmb_mysql_query($query);
+		if($result && pmb_mysql_num_rows($result)) {
+			while($row = pmb_mysql_fetch_object($result)) {
+				$mots[] = $row->mot;
+			}
+			$got_empty_word[$lg] = array_diff($got_empty_word[$lg], $mots);
+		}
+	}
+	return $got_empty_word[$lg];
+}
+
 // strip_empty_words : fonction enlevant les mots vides d'une chaîne
 function strip_empty_words($string) {
 
@@ -119,7 +287,7 @@ function strip_empty_words($string) {
 	// c'est normalement la langue de catalogage...
 	// si après nettoyage des mots vide la chaine est vide alors on garde la chaine telle quelle (sans les accents)
 	
-	global $empty_word;
+	$empty_word = get_empty_words();
 	// nettoyage de l'entrée
 
 	// traitement des diacritiques
@@ -440,23 +608,25 @@ function do_image(&$entree, $code, $depliable ) {
 	global $opac_book_pics_url ;
 	global $opac_book_pics_msg;
 	global $opac_url_base ;
-	if ($code<>"") {
+	$image = "" ;
+	if ($code <> "") {
 		if ($opac_show_book_pics=='1' && $opac_book_pics_url) {
-			$code_chiffre = preg_replace('/-|\.| /', '', $code);
-			$url_image = $opac_book_pics_url ;
-			$url_image = $opac_url_base."getimage.php?url_image=".urlencode($url_image)."&noticecode=!!noticecode!!" ;
-			if ($depliable) $image = "<img src='$opac_url_base/images/vide.png' align='right' hspace='4' vspace='2' isbn='".$code_chiffre."' url_image='".$url_image."'>";
-				else {
-					$url_image_ok = str_replace("!!noticecode!!", $code_chiffre, $url_image) ;
-					$title_image_ok = htmlentities($opac_book_pics_msg, ENT_QUOTES, $charset);
-					$image = "<img src='".$url_image_ok."' title=\"".$title_image_ok."\" align='right' hspace='4' vspace='2'>";
-					}
-			} else $image="" ;
-		if ($image) $entree = "<table width='100%'><tr><td>$entree</td><td valign=top align=right>$image</td></tr></table>" ;
-			else $entree = "<table width='100%'><tr><td>$entree</td></tr></table>" ;
-
-		} else $entree = "<table width='100%'><tr><td>$entree</td></tr></table>" ;	
+			$url_image = getimage_url($code, "");
+			$title_image_ok = htmlentities($opac_book_pics_msg, ENT_QUOTES, $charset);
+			if ($depliable) {
+				$image = "<img src='".get_url_icon('vide.png', 1)."' title='".$title_image_ok."' class='align_right' hspace='4' vspace='2' vigurl='".$url_image."' >";
+			} else {
+				$image = "<img src='".$url_image."' title=\"".$title_image_ok."\" class='align_right' hspace='4' vspace='2'>";
+			}
+		}
 	}
+	
+	if ($image) {
+		$entree = "<table  style='width:100%'><tr><td>$entree</td><td style='vertical-align:top' class='align_right'>$image</td></tr></table>" ;
+	} else {
+		$entree = "<table  style='width:100%'><tr><td>$entree</td></tr></table>" ;
+	}
+}
 
 // ------------------------------------------------------------------
 //  pmb_preg_match($regex,$chaine) : recherche d'une regex
@@ -468,6 +638,19 @@ function pmb_preg_match($regex,$chaine) {
 	}
 	else {
 		return preg_match($regex.'u',$chaine);
+	}
+}
+
+// ------------------------------------------------------------------
+//  pmb_preg_grep($regex,$chaine) : recherche d'une regex
+// ------------------------------------------------------------------
+function pmb_preg_grep($regex,$chaine) {
+	global $charset;
+	if ($charset != 'utf-8') {
+		return preg_grep($regex,$chaine);
+	}
+	else {
+		return preg_grep($regex.'u',$chaine);
 	}
 }
 
@@ -537,7 +720,7 @@ function pmb_alphabetic($regex,$replace,$string) {
 	global $charset;
 	
 	if ($charset != 'utf-8') {
-		return preg_replace('/['.$regex.']/', ' ', $string);	
+		return preg_replace('/['.$regex.']/', $replace, $string);	
 	} else {
 		/*return preg_replace('/['.$regex
 				.'\x{0531}-\x{0587}\x{fb13}-\x{fb17}'
@@ -548,7 +731,7 @@ function pmb_alphabetic($regex,$replace,$string) {
 				.'\x{0386}\x{0388}-\x{038A}\x{038C}\x{038E}-\x{03A1}\x{03A3}-\x{03CE}\x{03D0}\x{03FF}\x{1F00}-\x{1F15}\x{1F18}-\x{1F1D}\x{1F20}-\x{1F45}\x{1F48}-\x{1F4D}\x{1F50}-\x{1F57}\x{1F59}\x{1F5B}\x{1F5D}\x{1F5F}-\x{1F7D}\x{1F80}-\x{1FB4}\x{1FB6}-\x{1FBC}\x{1FC2}-\x{1FC4}\x{1FC6}-\x{1FCC}\x{1FD0}-\x{1FD3}\x{1FD6}-\x{1FDB}\x{1FE0}-\x{1FEC}\x{1FF2}-\x{1FF4}\x{1FF6}-\x{1FFC}'
 				.'\x{10A0}-\x{10C5}\x{10D0}-\x{10FC}\x{2D00}-\x{2D25}'
 				.']/u', ' ', $string);*/
-		return preg_replace('/['.$regex.'\p{L}]/u', ' ', $string);//MB 28/10/14: http://www.regular-expressions.info/unicode.html
+		return preg_replace('/['.$regex.'\p{L}]/u', $replace, $string);//MB 28/10/14: http://www.regular-expressions.info/unicode.html
 	}
 }
 
@@ -571,6 +754,7 @@ function pmb_strlen($string) {
 function pmb_getcar($currentcar,$string) {
 	global $charset;
 	
+	if (!isset($string[$currentcar])) return '';
 	if ($charset != 'utf-8') 
 		return $string[$currentcar];
 	else {
@@ -701,10 +885,11 @@ function pmb_bidi($string) {
 }
 
 function gen_plus_form($id, $titre, $contenu,$startopen=false) {
+	global $msg;
 	return "	
 		<div class='row'></div>
 		<div id='$id' class='notice-parent'>
-			<img src='./getgif.php?nomgif=plus' name='imEx' id='$id" . "Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('$id', true); return false;\" hspace='3'>
+			<img src='./getgif.php?nomgif=plus' name='imEx' id='$id" . "Img' title='".addslashes($msg['plus_detail'])."' style='border:0px' onClick=\"expandBase('$id', true); return false;\" hspace='3'>
 			<span class='notice-heada'>
 				$titre
 			</span>
@@ -713,6 +898,15 @@ function gen_plus_form($id, $titre, $contenu,$startopen=false) {
 			$contenu
 		</div>
 		";
+}
+
+// ------------------------------------------------------------------
+//  pmb_sql_value($string) : renvoie la valeur de l'unique colonne (ou uniquement de la premiere) de la requete $rqt 
+// ------------------------------------------------------------------
+function pmb_sql_value($rqt) {
+	if($result=pmb_mysql_query($rqt))
+		if($row = pmb_mysql_fetch_row($result))	return $row[0];
+	return '';
 }
 
 // ------------------------------------------------------------------
@@ -744,14 +938,15 @@ function configurer_proxy_curl(&$curl,$url_asked=''){
 	
 	/*
 	* petit hack pour définir des options supplémentaires à curl
-	* les deux tableaux suivants peuvent être définis dans un fichier config_local.inc.php (attention, à reporter en gestion et opac)
+	* les deux tableaux suivants peuvent être définis dans un fichier pmb/opac_css/includes/opac_config_local.inc.php (attention, à reporter en gestion 'config_local.inc.php')
 	*
 	* Exemple $curl_addon_array_options
 	*
 	* $curl_addon_array_options = array(
 	* 		CURLOPT_POST => 1,
 	* 		CURLOPT_HEADER => false,
-	* 		CURLOPT_POSTFIELDS => $data
+	* 		CURLOPT_POSTFIELDS => $data,
+	*       CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4 // Pour forcer la résolution en IPV4
 	* );
 	*
 	* Exemple $curl_addon_array_exclude_proxy
@@ -797,8 +992,9 @@ function configurer_proxy_curl(&$curl,$url_asked=''){
 
 //remplacement espace insécable 0xA0: &nbsp; Non-breaking space => problème lié à certaine version de navigateur
 function clean_nbsp($input) {	
-	global $charset;
-    if($charset=="iso-8859-1")$input = str_replace(chr(0xa0), ' ', $input);
+    global $charset;
+    //if($charset=="iso-8859-1")$input = str_replace(chr(0xa0), ' ', $input);
+    $input = html_entity_decode(str_replace('&nbsp;',' ',htmlentities($input,ENT_QUOTES,$charset)),ENT_QUOTES,$charset);
     return $input;
 }
 
@@ -844,18 +1040,18 @@ function parseHTML($buffer){
 	return $htmlparser->exec_cmd(true);
 }
 
-function gen_plus($id,$titre,$contenu,$maximise=0,$script_before='', $script_after='') {
+function gen_plus($id, $titre, $contenu, $maximise=0, $script_before='', $script_after='', $class_parent='notice-parent', $class_child='notice-child') {
 	global $msg;
 	if($maximise) $max=" startOpen=\"Yes\""; else $max='';
 	return "	
 	<div class='row'></div>
-	<div id='$id' class='notice-parent'>
-		<img src='./getgif.php?nomgif=plus' class='img_plus' name='imEx' id='$id"."Img' title='".$msg['plus_detail']."' border='0' onClick=\"expandBase('$id', true); return false;\" hspace='3'>
+	<div id='$id' class='".$class_parent."'>
+		<img src='./getgif.php?nomgif=plus' class='img_plus' name='imEx' id='$id"."Img' title='".$msg['plus_detail']."' style='border:0px' onClick=\" $script_before expandBase('$id', true); $script_after return false;\" hspace='3'>
 		<span class='notice-heada'>
 			$titre
 		</span>
 	</div>
-	<div id='$id"."Child' class='notice-child' style='margin-bottom:6px;display:none;width:94%' $max>
+	<div id='$id"."Child' class='".$class_child."' style='margin-bottom:6px;display:none;width:94%' $max>
 		$contenu
 	</div>
 	";
@@ -951,10 +1147,11 @@ function get_msg_to_display($message) {
 	global $msg;
 
 	if (substr($message, 0, 4) == "msg:") {
-		return $msg[substr($message, 4)];
-	} else {
-		return $message;
+		if(isset($msg[substr($message, 4)])){
+			return $msg[substr($message, 4)]; 
+		}
 	}
+	return $message;
 }
 
 /**
@@ -988,22 +1185,12 @@ function add_value_session($code,$value, $in_array = true) {
 function generate_log() {
 	global $dbh,$log, $infos_notice, $infos_expl;
 
-	$rqt= " select empr_prof,empr_cp, empr_ville as ville, empr_year, empr_sexe, empr_login, empr_date_adhesion, empr_date_expiration, count(pret_idexpl) as nbprets, count(resa.id_resa) as nbresa, code.libelle as codestat, es.statut_libelle as statut, categ.libelle as categ, gr.libelle_groupe,dl.location_libelle as location
-								from empr e
-								left join empr_codestat code on code.idcode=e.empr_codestat
-								left join empr_statut es on e.empr_statut=es.idstatut
-								left join empr_categ categ on categ.id_categ_empr=e.empr_categ
-								left join empr_groupe eg on eg.empr_id=e.id_empr
-								left join groupe gr on eg.groupe_id=gr.id_groupe
-								left join docs_location dl on e.empr_location=dl.idlocation
-								left join resa on e.id_empr=resa_idempr
-								left join pret on e.id_empr=pret_idempr
-								where e.empr_login='".addslashes($_SESSION['user_code'])."'
-								group by resa_idempr, pret_idempr";
-	$res=pmb_mysql_query($rqt,$dbh);
-	if($res){
-		$empr_carac = pmb_mysql_fetch_array($res);
-		$log->add_log('empr',$empr_carac);
+	if($_SESSION['user_code']) {
+		$res=pmb_mysql_query($log->get_empr_query());
+		if($res){
+			$empr_carac = pmb_mysql_fetch_array($res);
+			$log->add_log('empr',$empr_carac);
+		}
 	}
 
 	$log->add_log('num_session',session_id());
@@ -1063,16 +1250,234 @@ function compresscss($content,$file,$relocate=true){
 }
 
 function get_url_icon($icon, $use_opac_url_base=0) {
+	global $base_path;
 	global $opac_url_base, $css;
 
 	if($use_opac_url_base) $url_base = $opac_url_base;
-	else $url_base = "./";
+	else $url_base = $base_path."/";
+	
+	$icon_name = str_replace(array('.svg', '.png', '.jpg', '.gif'), '', $icon);
+
 	// on cherche celle du style, du common, sinon celle par défaut
-	if(file_exists("./styles/".$css."/images/".$icon)) {
-		return $url_base."styles/".$css."/images/".$icon;
-	} elseif(file_exists("./styles/common/images/".$icon)) {
-		return $url_base."styles/common/images/".$icon;
-	} else {
-		return $url_base."images/".$icon;
+	if($url = search_url_icon_type("styles/".$css."/images/".$icon_name)){
+		return $url_base.$url;
 	}
+	if($url = search_url_icon_type("styles/common/images/".$icon_name)){
+		return $url_base.$url;
+	}
+	if($url = search_url_icon_type("images/".$icon_name)){
+		return $url_base.$url;
+	}
+	return $url_base."images/".$icon;
+	
+}
+
+function search_url_icon_type($icon) {
+	global $base_path;
+	
+	if(file_exists($base_path.'/'.$icon.'.svg')) {
+		return $icon.'.svg';		
+	}
+	if(file_exists($base_path.'/'.$icon.'.png')) {
+		return $icon.'.png';		
+	}
+	if(file_exists($base_path.'/'.$icon.'.jpg')) {
+		return $icon.'.jpg';		
+	}
+	if(file_exists($base_path.'/'.$icon.'.gif')) {
+		return $icon.'.gif';		
+	}
+	return '';
+}
+
+function gen_where_in($field, $elts, &$table_tempo_name=''){
+	global $dbh;
+	global $memo_tempo_table_to_rebuild;
+
+	if(!isset($memo_tempo_table_to_rebuild)) $memo_tempo_table_to_rebuild = array();
+
+	if(!is_array($elts)) {
+		$elts = str_replace("'", '', $elts);
+		$elts = str_replace('"', '', $elts);
+		$elts = explode(',', $elts);
+	}
+	if(!count($elts)) $elts = array();
+	if(!$table_tempo_name) $table_tempo_name = 'where_in_table'.md5(uniqid("",true));
+	$field_id = 'where_in_id';
+
+	$rqt = 'create temporary table IF NOT EXISTS '.$table_tempo_name.' ('.$field_id.' int, index using btree('.$field_id.')) engine=memory ';
+	pmb_mysql_query($rqt,$dbh);
+	$memo_tempo_table_to_rebuild[] = $rqt;
+	if(count($elts)) {
+		$rqt = 'INSERT INTO '.$table_tempo_name.' ('.$field_id.') VALUES ('.implode('),(',$elts).')';
+		$memo_tempo_table_to_rebuild[] = $rqt;
+		pmb_mysql_query($rqt,$dbh);
+	}
+	$field_id = $table_tempo_name.'.'.$field_id;
+	return ' join '.$table_tempo_name.' on '.$field.'='.$field_id.' ';
+}
+
+function gen_where_in_string($field, $elts){
+
+	if(!$elts) return '';
+	if(!is_array($elts)) {
+		$elts = str_replace("'", '', $elts);
+		$elts = str_replace('"', '', $elts);
+		$elts = explode(',', $elts);
+		if(!count($elts)) return '';
+	}
+
+	$prefix = str_replace('.', '', $field);
+
+	$query = " inner join (select '".$elts[0]."' as ".$prefix."x_";
+
+	for($i=1; $i<count($elts); $i++) {
+		$query.= " union all select '".$elts[$i]."'";
+	}
+	return $query.") as ".$prefix."x_where_in on ".$field." = ".$prefix."x_where_in.".$prefix."x_ ";
+}
+
+function aff_pagination ($url_base="", $nbr_lignes=0, $nb_per_page=0, $page=0, $etendue=10, $aff_nb_per_page=false, $aff_extr=false ) {
+
+	global $msg,$charset, $base_path;
+	global $opac_items_pagination_custom;
+
+	$nbepages = ceil($nbr_lignes/$nb_per_page);
+	$suivante = $page+1;
+	$precedente = $page-1;
+	$deb = $page - $etendue ;
+	if ($deb<1) $deb=1;
+	$fin = $page + $etendue ;
+	if($fin>$nbepages)$fin=$nbepages;
+
+	$nav_bar = "";
+
+	if ($aff_nb_per_page) {
+		$nav_bar = "<div class='left' ><input type='text' name='nb_per_page' id='nb_per_page' class='saisie-2em' value='".$nb_per_page."' />&nbsp;".htmlentities($msg['1905'], ENT_QUOTES, $charset)."&nbsp;";
+		$nav_bar.= "<input type='button' class='bouton' value='".$msg['actualiser']."' ";
+		$nav_bar.="onclick=\"try{
+			var page=".$page.";
+			var old_nb_per_page=".$nb_per_page.";
+			var nbr_lignes=".$nbr_lignes.";
+			var new_nb_per_page=document.getElementById('nb_per_page').value;
+			var new_nbepages=Math.ceil(nbr_lignes/new_nb_per_page);
+			if(page>new_nbepages) page=new_nbepages;
+			document.location='".$url_base."&page='+page+'&nbr_lignes=".$nbr_lignes."&nb_per_page='+new_nb_per_page;
+		}catch(e){}; \" /></div>";
+	}
+
+	if($aff_extr && (($page-$etendue)>1) ) {
+		$nav_bar .= "<a class='pagination_first' id='premiere' href='".$url_base."&page=1&nbr_lignes=".$nbr_lignes."&nb_per_page=".$nb_per_page."' ><img src='".get_url_icon('first.gif')."' style='border:0px' alt='".$msg['first_page']."' hspace='6' class='align_middle' title='".$msg['first_page']."' /></a>";
+	}
+
+	// affichage du lien precedent si necessaire
+	if($precedente > 0) {
+		$nav_bar .= "<a class='pagination_left' id='precedente' href='".$url_base."&page=".$precedente."&nbr_lignes=".$nbr_lignes."&nb_per_page=".$nb_per_page."' ><img src='".get_url_icon('left.gif')."' style='border:0px' alt='".$msg[48]."' hspace='6' class='align_middle' title='".$msg[48]."' /></a>";
+	}
+
+	for ($i = $deb; ($i <= $nbepages) && ($i<=$page+$etendue) ; $i++) {
+		if($i==$page) {
+			$nav_bar .= "<strong>".$i."</strong>";
+		} else {
+			$nav_bar .= "<a class='pagination_page' href='".$url_base."&page=".$i."&nbr_lignes=".$nbr_lignes."&nb_per_page=".$nb_per_page."' >".$i."</a>";
+		}
+		if($i<$nbepages) $nav_bar .= " ";
+	}
+
+
+	if ($suivante<=$nbepages) {
+		$nav_bar .= "<a class='pagination_right' href='".$url_base."&page=".$suivante."&nbr_lignes=".$nbr_lignes."&nb_per_page=".$nb_per_page."' ><img src='".get_url_icon('right.gif')."' style='border:0px' alt='".$msg[49]."' hspace='6' class='align_middle' title='".$msg[49]."' /></a>";
+	}
+
+	if($aff_extr && (($page+$etendue)<$nbepages) ) {
+		$nav_bar .= "<a class='pagination_last' id='derniere' href='".$url_base."&page=".$nbepages."&nbr_lignes=".$nbr_lignes."&nb_per_page=".$nb_per_page."' ><img src='".get_url_icon('last.gif')."' style='border:0px' alt='".$msg['last_page']."' hspace='6' class='align_middle' title='".$msg['last_page']."' /></a>";
+	}
+
+	$start_in_page = ((($page-1)*$nb_per_page)+1);
+	if(($start_in_page + $nb_per_page) > $nbr_lignes) {
+		$end_in_page = $nbr_lignes;
+	} else {
+		$end_in_page = ((($page-1)*$nb_per_page)+$nb_per_page);
+	}
+	$nav_bar .= " (".$start_in_page." - ".$end_in_page." / ".$nbr_lignes.")";
+
+	$pagination_nav_bar = "";
+	if($opac_items_pagination_custom) {
+		$pagination_custom = explode(',', $opac_items_pagination_custom);
+		if(count($pagination_custom)) {
+			$max_nb_elements = 0;
+			$nb_first_custom_element = $pagination_custom[0];
+			foreach ($pagination_custom as $nb_elements) {
+				$nb_elements = trim($nb_elements)+0;
+				if($nb_first_custom_element <= $nbr_lignes) {
+					if($nb_elements == $nb_per_page) $pagination_nav_bar .= "<b>";
+					$pagination_nav_bar .= " <a class='pagination_custom' id='pagination_custom' href='".$url_base."&page=1&nbr_lignes=".$nbr_lignes."&nb_per_page_custom=".$nb_elements."' >".$nb_elements."</a> ";
+					if($nb_elements == $nb_per_page) $pagination_nav_bar .= "</b>";
+				}
+				if($nb_elements > $max_nb_elements) {
+					$max_nb_elements = $nb_elements;
+				}
+			}
+			if(($max_nb_elements > $nbr_lignes) && ($nb_per_page < $nbr_lignes)) {
+				$pagination_nav_bar .= " <a class='pagination_custom' id='pagination_custom' href='".$url_base."&page=1&nbr_lignes=".$nbr_lignes."&nb_per_page_custom=".$nbr_lignes."' >".$msg['tout_afficher']."</a> ";
+			}
+			if($pagination_nav_bar) {
+				$pagination_nav_bar = "<span style='float:right;'> ".$msg['per_page']." ".$pagination_nav_bar."</span>";
+			}
+		}
+	}
+	$nav_bar = "<div class='center'>".$nav_bar.$pagination_nav_bar."</div>";
+	return $nav_bar ;
+}
+
+function pmb_base64_encode($elem){
+	if(is_array($elem)){
+		foreach ($elem as $key =>$value){
+			$elem[$key] = pmb_base64_encode($value);
+		}
+	}else if(is_object($elem)){
+		$elem = pmb_obj2array($elem);
+		$elem = pmb_base64_encode($elem);
+	}else{
+		$elem = base64_encode($elem);
+	}
+	
+	return $elem;
+}
+
+function pmb_base64_decode($elem){
+	if(is_array($elem)){
+		foreach ($elem as $key =>$value){
+			$elem[$key] = pmb_base64_decode($value);
+		}
+	}else if(is_object($elem)){
+		$elem = pmb_obj2array($elem);
+		$elem = pmb_base64_decode($elem);
+	}else{
+		$elem = base64_decode($elem);
+	}
+	return $elem;
+}
+
+function get_iso_lang_code($l='') {
+	global $lang;
+	if(!$l) $l = $lang;
+	return substr($l, 0, 2);	
+}
+
+function jscript_unload_question() {
+    global $msg;
+    return "
+	<script type=\"text/javascript\">
+        
+	    function unload_off(){
+	    	window.onbeforeunload = '';
+	    }
+	    function unload_on(){
+	    	window.onbeforeunload = function(e){
+	        	return '".$msg['message_unload_page']."';
+	   		}
+	    }
+	    unload_on();
+	</script>";
 }

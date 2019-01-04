@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: restaure.php,v 1.9 2013-04-08 14:56:08 mbertin Exp $
+// $Id: restaure.php,v 1.11 2017-11-24 14:54:25 ngantier Exp $
 
 @set_time_limit(1200);
 
@@ -29,7 +29,7 @@ $file_name=$tFilename[count($tFilename)-1];
 require_once("lib/api.inc.php");
 
 print "<div id=\"contenu-frame\">\n";
-echo "<center><h1>".sprintf($msg["sauv_misc_restaure"],$file_name)."</h1></center>\n";
+echo "<h1>".sprintf($msg["sauv_misc_restaure"],$file_name)."</h1>\n";
 
 echo "<form class='form-$current_module' name=\"infos\" action=\"restaure_act.php\" method=\"post\">\n";
 
@@ -39,7 +39,7 @@ echo "<input type=\"hidden\" name=\"logid\" value=\"$logid\" />";
 
 $infos=read_infos($filename);
 if (count($infos)==0) { echo "<h2>".$msg["sauv_misc_restaure_bad_sauv_file"]."</h2>"; exit(); }
-echo "<table align=center>\n";
+echo "<table class='center'>\n";
 echo "<tr><td style=\"border-width:1px;border-style:solid\"><b>".$msg["sauv_misc_restaure_set_name"]."</b></td><td style=\"border-width:1px;border-style:solid\">".$infos["Name"]."</td></tr>\n";
 echo "<tr><td style=\"border-width:1px;border-style:solid\"><b>".$msg["sauv_misc_restaure_date_sauv"]."</b></td><td style=\"border-width:1px;border-style:solid\">".$infos["Date"]."</td></tr>\n";
 echo "<tr><td style=\"border-width:1px;border-style:solid\"><b>".$msg["sauv_misc_restaure_hour_sauv"]."</b></td><td style=\"border-width:1px;border-style:solid\">".$infos["Start time"]."</td></tr>\n";
@@ -67,13 +67,13 @@ echo "<br /><br />";
 
 if ($infos["Compress"]==1) {
 	echo "<input type=\"hidden\" name=\"compress\" value=\"1\" />";
-	echo "<center><b>".$msg["sauv_misc_restaure_compressed"]." ";
+	echo "<b>".$msg["sauv_misc_restaure_compressed"]." ";
 	$tCompressCommand=explode(":",$infos["Compress commands"]);
 	echo "<input type=\"hidden\" name=\"decompress_type\" value=\"".$tCompressCommand[0]."\" />";
 	if ($tCompressCommand[0]=="internal") {
-		echo $msg["sauv_misc_restaure_bz2"]."</b></center>\n<br />\n";
+		echo $msg["sauv_misc_restaure_bz2"]."</b>\n<br />\n";
 	} else {
-		echo $msg["sauv_misc_restaure_external"]." ".$tCompressCommand[1].".</b></center>\n<br />\n";
+		echo $msg["sauv_misc_restaure_external"]." ".$tCompressCommand[1].".</b>\n<br />\n";
 		echo "<table>";
 		echo "<tr><td>".$msg["sauv_misc_restaure_dec_command"]."</td><td><input name=\"decompress\" type=\"text\" value=\"".$tCompressCommand[2]."\"></td></tr>\n";
 		echo "<tr><td>".$msg["sauv_misc_restaure_dec_ext"]."</td><td><input name=\"decompress_ext\" type=\"text\" value=\"".$tCompressCommand[3]."\"></td></tr>\n";
@@ -83,7 +83,7 @@ if ($infos["Compress"]==1) {
 echo "<br />";
 if ($infos["Crypt"]==1) {
 	echo "<input type=\"hidden\" name=\"crypt\" value=\"1\" />";
-	echo "<center><b>".$msg["sauv_misc_restaure_crypted"]."</b></center>\n<br />\n";
+	echo "<b>".$msg["sauv_misc_restaure_crypted"]."</b>\n<br />\n";
 	echo "<table>";
 	echo "<tr><td>".$msg["sauv_misc_restaure_ph1"]."</td><td><input type=\"password\" value=\"\" name=\"phrase1\"></td></tr>\n";
 	echo "<tr><td>".$msg["sauv_misc_restaure_ph2"]."</td><td><input type=\"password\" value=\"\" name=\"phrase2\"></td></tr>\n";
@@ -91,7 +91,7 @@ if ($infos["Crypt"]==1) {
 }
 echo "<br />";
 if ($critical==1) {
-	echo "<center><b>".$msg["sauv_misc_restaure_connect_infos"]."</b></center>\n<br />\n";
+	echo "<b>".$msg["sauv_misc_restaure_connect_infos"]."</b>\n<br />\n";
 	echo "<table>";
 	echo "<tr><td>".$msg["sauv_misc_restaure_host_addr"]."</td><td><input name=\"host\" type=\"text\"></td></tr>";
 	echo "<tr><td>".$msg["sauv_misc_restaure_user"]."</td><td><input name=\"db_user\" type=\"text\"></td></tr>";
@@ -100,7 +100,7 @@ if ($critical==1) {
 	echo "</table>\n";
 }
 
-echo "<center><input type=\"submit\" value=\"".$msg["sauv_misc_restaure_launch"]."\" onClick=\"return confirm('".$msg["sauv_misc_restaure_confirm"]."');\" class=\"bouton\">&nbsp<input type=\"button\" value=\"".$msg["sauv_annuler"]."\" class=\"bouton\" onClick=\"self.close()\"></center>";
+echo "<input type=\"submit\" value=\"".$msg["sauv_misc_restaure_launch"]."\" onClick=\"return confirm('".$msg["sauv_misc_restaure_confirm"]."');\" class=\"bouton\">&nbsp;<input type=\"button\" value=\"".$msg["sauv_annuler"]."\" class=\"bouton\" onClick=\"self.close()\">";
 echo "</form>";
 echo "</div>";
 ?>

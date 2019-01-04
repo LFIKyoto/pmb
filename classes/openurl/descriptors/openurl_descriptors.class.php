@@ -2,19 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: openurl_descriptors.class.php,v 1.1 2011-08-02 12:35:57 arenou Exp $
+// $Id: openurl_descriptors.class.php,v 1.3 2017-07-12 09:07:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/openurl/openurl.class.php");
 
 class openurl_descriptor extends openurl_root {
-	var $notice=array();		//	infos sur la notice
-	var $infos = array();		//	descripteur
-	var $entityType = "";		//	type d'entité associée
-	var $search_infos =array();	//	Infos pour la recherche dans le catalogue
+	public $notice=array();		//	infos sur la notice
+	public $infos = array();		//	descripteur
+	public $entityType = "";		//	type d'entité associée
+	public $search_infos =array();	//	Infos pour la recherche dans le catalogue
 	//on définit une bonne fois pour toute ce tableau!
-	var $crit_id = array(
+	public $crit_id = array(
 		'publisher' => 1,
 		'collection' => 2,
 		'title' => 3,
@@ -41,11 +41,11 @@ class openurl_descriptor extends openurl_root {
 		'serial_title' => 18
 	);
 
-    function openurl_descriptor($notice) {
+    public function __construct($notice) {
      	 $this->notice = $notice; 
     }
     
-    function setEntityType($type){
+    public function setEntityType($type){
     	switch ($type){
     		case "referent" :
     			$this->entityType = "rft";
@@ -71,7 +71,7 @@ class openurl_descriptor extends openurl_root {
     	}
     }
     
-	function serialize(){}
+	public static function serialize($tab){}
 }
 
 /*
@@ -79,8 +79,8 @@ class openurl_descriptor extends openurl_root {
  */
 class openurl_descriptor_identifier extends openurl_descriptor{
 
-	function openurl_descriptor_identifier($notice=array()) {
-		parent::openurl_descriptor($notice);
+	public function __construct($notice=array()) {
+		parent::__construct($notice);
 		$this->uri = parent::$uri."/nam";
 	}
 }
@@ -90,8 +90,8 @@ class openurl_descriptor_identifier extends openurl_descriptor{
  */
 class openurl_descriptor_byval extends openurl_descriptor{
 
-	function openurl_descriptor_byval($notice=array()) {
-		parent::openurl_descriptor($notice);
+	public function __construct($notice=array()) {
+		parent::__construct($notice);
 		$this->uri = parent::$uri."/fmt";
 	}
 }
@@ -101,8 +101,8 @@ class openurl_descriptor_byval extends openurl_descriptor{
  */
 class openurl_descriptor_byref extends openurl_descriptor{
 
-	function openurl_descriptor_byref($notice=array()) {
-		parent::openurl_descriptor($notice);
+	public function __construct($notice=array()) {
+		parent::__construct($notice);
 		$this->uri = parent::$uri."/fmt";
 	}
 }
@@ -112,7 +112,7 @@ class openurl_descriptor_byref extends openurl_descriptor{
  */
 class openurl_descriptor_private extends openurl_descriptor{
 
-	function openurl_descriptor_private($notice=array()) {
-		parent::openurl_descriptor($notice);
+	public function __construct($notice=array()) {
+		parent::__construct($notice);
 	}
 }

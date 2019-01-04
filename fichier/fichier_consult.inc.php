@@ -2,9 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fichier_consult.inc.php,v 1.4 2012-02-09 12:47:51 dbellamy Exp $
+// $Id: fichier_consult.inc.php,v 1.5 2017-04-20 16:25:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($idfiche)) $idfiche = 0;
+if(!isset($act)) $act = '';
+if(!isset($perso_word)) $perso_word = '';
+if(!isset($page)) $page = 0;
 
 require_once($class_path."/search.class.php");
 require_once($class_path."/parametres_perso.class.php");

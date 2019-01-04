@@ -1,4 +1,8 @@
 <?php
+// +-------------------------------------------------+
+// | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// +-------------------------------------------------+
+// $Id: cms_cache.class.php,v 1.6 2017-07-27 12:51:28 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -41,6 +45,9 @@ final class cms_cache{
 	 * @return bool true if exists in the array, false otherwise
 	 */
 	public static function get_at_cms_cache($cms_object){
+		if(!isset(self::$cms_cache_arrayObject[get_class($cms_object)][self::get_index($cms_object)])) {
+			self::$cms_cache_arrayObject[get_class($cms_object)][self::get_index($cms_object)] = null;
+		}
 		if(is_null(self::$cms_cache_arrayObject[get_class($cms_object)][self::get_index($cms_object)])){
 			return false;
 		}else{
@@ -78,5 +85,6 @@ final class cms_cache{
 		global $dbh;
 		
 		pmb_mysql_query("TRUNCATE TABLE cms_cache_cadres");
+		cms_build::$hash_cache_cadres = array();
 	}
 }

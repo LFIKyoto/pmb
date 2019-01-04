@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.13 2012-10-22 08:53:47 mbertin Exp $
+// $Id: main.inc.php,v 1.17 2017-12-29 10:08:49 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -56,8 +56,23 @@ switch ($quelle) {
 		print $catalog_layout ;
 		include ("./catalog/caddie/action/reindex.inc.php");
 		break;
+	case 'access_rights':
+		$catalog_layout = str_replace('<!--!!sous_menu_choisi!! -->', $msg["caddie_select_access_rights"], $catalog_layout);
+		print $catalog_layout ;
+		include ("./catalog/caddie/action/access_rights.inc.php");
+		break;
+	case 'scan_request':
+		$catalog_layout = str_replace('<!--!!sous_menu_choisi!! -->', $msg["scan_request_record_button"], $catalog_layout);
+		print $catalog_layout ;
+		include ("./catalog/caddie/action/scan_request.inc.php");
+		break;
+	case 'transfert_to_location':
+		$catalog_layout = str_replace('<!--!!sous_menu_choisi!! -->', $msg["caddie_menu_action_transfert_to_location"], $catalog_layout);
+		print $catalog_layout ;
+		include ("./catalog/caddie/action/transfert_to_location.inc.php");
+		break;
 	default:
-		$catalog_layout = str_replace('<!--!!sous_menu_choisi!! -->', "?", $catalog_layout);
+		$catalog_layout = str_replace('<!--!!sous_menu_choisi!! -->', "", $catalog_layout);
 		print $catalog_layout ;
 		print "<br /><br /><b>".$msg["caddie_select_action"]."</b>" ;
 		break;

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: origine_notice.inc.php,v 1.8 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: origine_notice.inc.php,v 1.10 2018-10-12 11:59:35 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+require_once($class_path."/list/configuration/notices/list_configuration_notices_orinot_ui.class.php");
 
 // gestion des codes statut exemplaires
 ?>
@@ -22,40 +24,8 @@ function test_form(form)
 
 <?php
 function show_orinot($dbh) {
-	global $msg;
-	global $charset ;
-
-	print "<table>
-	<tr>
-		<th>$msg[orinot_nom]</th>
-		<th>$msg[orinot_pays]</th>
-		<th>$msg[orinot_diffusable]</th>
-	</tr>";
-
-	// affichage du tableau des statuts
-	$requete = "SELECT orinot_id, orinot_nom, orinot_pays, orinot_diffusion FROM origine_notice ORDER BY orinot_nom ";
-	$res = pmb_mysql_query($requete, $dbh);
-	$nbr = pmb_mysql_num_rows($res);
-
-	$parity=1;
-	for($i=0;$i<$nbr;$i++) {
-		$row=pmb_mysql_fetch_object($res);
-		if ($parity % 2) {
-			$pair_impair = "even";
-			} else {
-				$pair_impair = "odd";
-				}
-		$parity += 1;
-		$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./admin.php?categ=notices&sub=orinot&action=modif&id=$row->orinot_id';\" ";
-        	
-		print pmb_bidi("<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td>".htmlentities($row->orinot_nom,ENT_QUOTES, $charset)."</td><td>".htmlentities($row->orinot_pays,ENT_QUOTES, $charset)."</td>");
-		if ($row->orinot_diffusion) print "<td>$msg[orinot_diffusable_oui]</td>";
-			else print "<td>$msg[orinot_diffusable_non]</td>";
-		print "</tr>";
-		}
-	print "</table>
-		<input class='bouton' type='button' value=' $msg[orinot_ajout] ' onClick=\"document.location='./admin.php?categ=notices&sub=orinot&action=add'\" />";
-	}
+	print list_configuration_notices_orinot_ui::get_instance()->get_display_list();
+}
 
 function orinot_form($nom="", $pays="FR", $diffusion=1, $id=0) {
 
@@ -65,8 +35,8 @@ function orinot_form($nom="", $pays="FR", $diffusion=1, $id=0) {
 
 	$admin_orinot_form = str_replace('!!id!!', $id, $admin_orinot_form);
 
-	if(!$id) $admin_orinot_form = str_replace('!!form_title!!', $msg[orinot_ajout], $admin_orinot_form);
-		else $admin_orinot_form = str_replace('!!form_title!!', $msg[orinot_modification], $admin_orinot_form);
+	if(!$id) $admin_orinot_form = str_replace('!!form_title!!', $msg['orinot_ajout'], $admin_orinot_form);
+		else $admin_orinot_form = str_replace('!!form_title!!', $msg['orinot_modification'], $admin_orinot_form);
 
 	$admin_orinot_form = str_replace('!!nom!!', htmlentities($nom,ENT_QUOTES, $charset), $admin_orinot_form);
 	$admin_orinot_form = str_replace('!!nom_suppr!!', addslashes($nom), $admin_orinot_form);
@@ -129,7 +99,7 @@ switch($action) {
 				$res = pmb_mysql_query($requete, $dbh);
 				show_orinot($dbh);
 				} else {
-					error_message(	"", $msg[orinot_used], 1, 'admin.php?categ=notices&sub=orinot&action=');
+					error_message(	"", $msg['orinot_used'], 1, 'admin.php?categ=notices&sub=orinot&action=');
 					}
 			} else show_orinot($dbh);
 		break;

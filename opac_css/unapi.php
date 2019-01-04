@@ -2,37 +2,15 @@
 // +--------------------------------------------------------------------------+
 // | PMB est sous licence GPL, la réutilisation du code est cadrée            |
 // +--------------------------------------------------------------------------+
-// $Id: unapi.php,v 1.3 2013-02-05 08:17:54 dbellamy Exp $
+// $Id: unapi.php,v 1.4 2018-02-08 15:18:05 dgoron Exp $
 
 $base_path=".";
 require_once($base_path."/includes/init.inc.php");
-require_once("./includes/error_report.inc.php") ;
-require_once("./includes/global_vars.inc.php");
-require_once('./includes/opac_config.inc.php');
-	
-// récupération paramètres MySQL et connection á la base
-require_once('./includes/opac_db_param.inc.php');
-require_once('./includes/opac_mysql_connect.inc.php');
-$dbh = connection_mysql();
-// (si la connection est impossible, le script die ici).
 
-require_once("./includes/misc.inc.php");
+//fichiers nécessaires au bon fonctionnement de l'environnement
+require_once($base_path."/includes/common_includes.inc.php");
 
-//Sessions !! Attention, ce doit être impérativement le premier include (à cause des cookies)
-require_once("./includes/session.inc.php");
-require_once('./includes/start.inc.php');
-require_once("./includes/check_session_time.inc.php");
-
-// récupération localisation
-require_once('./includes/localisation.inc.php');
-
-// version actuelle de l'opac
-require_once('./includes/opac_version.inc.php');
-
-// fonctions de gestion de formulaire
-require_once('./includes/javascript/form.inc.php');
 require_once('./includes/templates/common.tpl.php');
-require_once('./includes/divers.inc.php');
 require_once('./includes/notice_categories.inc.php');
 
 // classe de gestion des catégories
@@ -46,14 +24,10 @@ require_once($base_path.'/classes/indexint.class.php');
 // classe d'affichage des tags
 require_once($base_path.'/classes/tags.class.php');
 
-require_once($base_path."/includes/marc_tables/".$pmb_indexation_lang."/empty_words");
-
 // pour l'affichage correct des notices
 require_once($base_path."/includes/templates/common.tpl.php");
 require_once($base_path."/includes/templates/notice.tpl.php");
 require_once($base_path."/includes/navbar.inc.php");
-require_once($base_path."/includes/notice_authors.inc.php");
-require_once($base_path."/includes/notice_categories.inc.php");
 require_once($base_path."/includes/explnum.inc.php");
 
 require_once('./classes/notice_affichage.class.php');

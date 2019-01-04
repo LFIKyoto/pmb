@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: index_html.class.php,v 1.2 2012-03-23 14:10:19 dbellamy Exp $
+// $Id: index_html.class.php,v 1.3 2017-06-30 14:08:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,19 +11,19 @@ if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
  */
 class index_html{
 	
-	var $fichier='';
+	public $fichier='';
 	
 	/**
 	 * Constructeur
 	 */
-	function index_html($filename, $mimetype='', $extension=''){
+	public function __construct($filename, $mimetype='', $extension=''){
 		$this->fichier = $filename;
 	}
 	
 	/**
 	 * Récupération du texte à indexer dans le fichier HTML
 	 */
-	function get_text($filename){
+	public function get_text($filename){
 		
 		$fp = fopen($filename, "r");
 		while(!feof($fp)){

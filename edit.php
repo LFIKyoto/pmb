@@ -2,19 +2,20 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: edit.php,v 1.59.4.1 2015-09-22 13:17:41 ngantier Exp $
+// $Id: edit.php,v 1.76 2018-08-07 12:07:04 dgoron Exp $
 
 // définition du minimum nécéssaire 
 $base_path=".";                            
 $base_auth = "EDIT_AUTH";  
 $base_title = "\$msg[6]";
 $base_noheader=1;
-$base_nosession=1;
 $base_use_dojo = true;
+
+if(!isset($dest)) $dest = '';
 
 if ((isset($_GET["dest"])) && ($_GET["dest"]=="TABLEAUCSV" || $_GET["dest"]=="EXPORT_NOTI")) {
 	
-
+	$base_nosession=1;
 	$base_nocheck = 1 ;
 	$include_path = $base_path."/includes" ;
 	require_once("$include_path/db_param.inc.php");
@@ -37,27 +38,22 @@ require_once("$include_path/resa_func.inc.php");
 require_once("$include_path/resa_planning_func.inc.php");
 
 require_once("$include_path/explnum.inc.php");
-require_once("$class_path/serialcirc_diff.class.php");
+require_once($class_path."/serialcirc_diff.class.php");
+require_once($class_path."/serialcirc_print_fields.class.php");
+require_once ($class_path."/spreadsheet.class.php");
 // modules propres à edit.php ou à ses sous-modules
 require("$include_path/templates/edit.tpl.php");
-
+require_once ($class_path."/campaigns/campaigns_controller.class.php");
 
 // création de la page
 switch($dest) {
 	case "TABLEAU":
-		require_once ("$class_path/writeexcel/class.writeexcel_workbook.inc.php");
-		require_once ("$class_path/writeexcel/class.writeexcel_worksheet.inc.php");
-		header("Content-Type: application/x-msexcel; name=\"empr_list.xls\"");
-		header("Content-Disposition: inline; filename=\"tableau.xls\"");
-		$fichier_temp_nom=str_replace(" ","",microtime());
-		$fichier_temp_nom=str_replace("0.","",$fichier_temp_nom);
 		break;
 	case "TABLEAUHTML":
 		header("Content-Type: application/download\n");
 		header("Content-Disposition: atttachement; filename=\"tableau.html\"");
-		print "<html><head>" .
-		'<meta http-equiv=Content-Type content="text/html; charset='.$charset.'" />'.
-		"</head><body>";
+		print "<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" /></head>
+				<body>";
 		break;
 	case "TABLEAUCSV":
 		// header ("Content-Type: text/html; charset=".$charset);
@@ -68,6 +64,8 @@ switch($dest) {
 		// header ("Content-Type: text/html; charset=".$charset);
 		header("Content-Type: application/download\n");
 		header("Content-Disposition: atachement; filename=\"notices.doc\"");
+		break;
+	case "PLUGIN_FILE": // utiliser pour les plugins
 		break;
 	default:
         header ("Content-Type: text/html; charset=".$charset);
@@ -98,50 +96,53 @@ switch($categ) {
 		switch($sub) {
 			case "export_empr" :
 			default :
-				$serialcirc_diff=new serialcirc_diff($id_serialcirc,$num_abt);
-				$fname = tempnam("./temp", "$fichier_temp_nom.xls");
-				$workbook = new writeexcel_workbook($fname);
-				$worksheet = &$workbook->addworksheet();
-				$worksheet->write(0,0,$titre_page);
-				$i=0;
-				$j=0;
+				$serialcirc_diff = new serialcirc_diff($id_serialcirc,$num_abt);
+				$gen_tpl = new serialcirc_print_fields($serialcirc_diff->id);
+				$worksheet = new spreadsheet();
 				$worksheet->write(0,0,$serialcirc_diff->serial_info['serial_name']);
 				$worksheet->write(0,1,$serialcirc_diff->serial_info['abt_name']);
-				
-				$worksheet->write(2,0,$msg["serialcirc_print_empr_name"]);
-				$worksheet->write(2,1,$msg["relance_export_empr_surname"]);
-				$worksheet->write(2,2,$msg["relance_export_empr_mail"]);
-				$worksheet->write(2,3,$msg["serialcirc_print_empr_cb"]);
+
+				$i = 2;
+				$j = 0;
+				// On récupère les noms de colonnes
+				$header_list = $gen_tpl->get_header_list();
+				foreach ($header_list as $header) {
+					$worksheet->write($i, $j, $header);
+					$j++;
+				}
+				$i++;
+				$j = 0;
 				foreach($serialcirc_diff->diffusion as $diff){
-					if($diff['empr_type']==SERIALCIRC_EMPR_TYPE_empr){		
-						$worksheet->write(($i+3),$j,$serialcirc_diff->empr_info[ $diff['empr']['id_empr']]['nom']);	
-						$worksheet->write(($i+3),$j+1,$serialcirc_diff->empr_info[ $diff['empr']['id_empr']]['prenom']);	
-						$worksheet->write(($i+3),$j+2,$serialcirc_diff->empr_info[ $diff['empr']['id_empr']]['mail']);	
-						$worksheet->write(($i+3),$j+3,$serialcirc_diff->empr_info[ $diff['empr']['id_empr']]['cb']);			
+					if($diff['empr_type'] == SERIALCIRC_EMPR_TYPE_empr){
+						$data['empr_id'] = $diff['empr']['id_empr'];
+						$data_fields = $gen_tpl->get_line($data);
+						foreach ($data_fields as $field) {
+							$worksheet->write($i, $j, $field);
+							$j++;
+						}
 						$i++;
+						$j = 0;
 					}else{
 						$group_name= $diff['empr_name'];
 						if(count($diff['group'])){
 							foreach($diff['group'] as $empr){
-								$resp="";
+								$data['empr_id'] = $empr['num_empr'];
+								$data_fields = $gen_tpl->get_line($data);
+								$data_fields[] = $group_name;
 								if($empr['responsable']){
-									$resp=$msg["serialcirc_group_responsable"];
-								}	
-								$worksheet->write(($i+3),$j,$empr['empr']['nom']);	
-								$worksheet->write(($i+3),$j+1,$empr['empr']['prenom']);	
-								$worksheet->write(($i+3),$j+2,$empr['empr']['mail']);	
-								$worksheet->write(($i+3),$j+3,$empr['empr']['cb']);	
-								$worksheet->write(($i+3),$j+4,$group_name);				
-								$worksheet->write(($i+3),$j+5,$resp);			
+									$data_fields[] = $msg["serialcirc_group_responsable"];
+								}
+								foreach ($data_fields as $field) {
+									$worksheet->write($i, $j, $field);
+									$j++;
+								}
 								$i++;
+								$j = 0;
 							}
 						}
 					}
 				}		
-				$workbook->close();
-				$fh=fopen($fname, "rb");
-				fpassthru($fh);
-				unlink($fname);		
+				$worksheet->download('Circulation.xls');	
 			break;
 		}
 	break;
@@ -165,12 +166,12 @@ switch($categ) {
 				break;
 			case "categ_change" :
 				$titre_page = $msg["1120"].": ".$msg["edit_titre_empr_categ_change"];
-				if (($categ_action)&&($categ_action=="change_categ_empr")) {
+				if (isset($categ_action) && $categ_action=="change_categ_empr") {
 					for ($i=0; $i<count($empr); $i++) {
 						$id_empr=$empr[$i];
 						$action="empr_chang_categ_edit_".$id_empr;
-						global $$action;
-						$act=$$action;
+						global ${$action};
+						$act=${$action};
 						if ($act!=0) {
 							// on modifie la catégorie du lecteur si demandé
 							if($id_empr){
@@ -190,12 +191,12 @@ switch($categ) {
 				$restrict = " empr_date_expiration >= now() ";
 				include("./edit/empr_list.inc.php");
 				break;
-			}
+		}
 			
 		if (($sub=="limite")||($sub=="depasse")) {
 			if (($action)&&($action=="print_all")) {
-				print "<script>openPopUp('./pdf.php?pdfdoc=lettre_relance_adhesion&action=print_all&empr_location_id=$empr_location_id&empr_statut_edit=$empr_statut_edit&restricts=".rawurlencode(stripslashes($restrict))."', 'lettre', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes');</script>";	
-				if ($empr_relance_adhesion==1) print "<script>openPopUp('./mail.php?type_mail=mail_relance_adhesion&action=print_all&empr_location_id=$empr_location_id&empr_statut_edit=$empr_statut_edit&restricts=".rawurlencode(stripslashes($restrict))."', 'mail', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes, scrollbars=yes');</script>";
+				print "<script>openPopUp('./pdf.php?pdfdoc=lettre_relance_adhesion&action=print_all&empr_location_id=$empr_location_id&empr_statut_edit=$empr_statut_edit&restricts=".rawurlencode(stripslashes($restrict))."', 'lettre');</script>";	
+				if ($empr_relance_adhesion==1) print "<script>openPopUp('./mail.php?type_mail=mail_relance_adhesion&action=print_all&empr_location_id=$empr_location_id&empr_statut_edit=$empr_statut_edit&restricts=".rawurlencode(stripslashes($restrict))."', 'mail');</script>";
 			} 	
 		}
 		break ;
@@ -208,6 +209,12 @@ switch($categ) {
 				include("./edit/serials_manq.inc.php");
 				break;
 			*/
+			case "circ_state" :
+				if (!$dest) {
+					echo "<h1>".$msg["1150"]."&nbsp;:&nbsp;".$msg["serial_circ_state_edit"]."</h1>";
+				}
+				include("./edit/serials_circ_state.inc.php");
+				break;
 			case "simple_circ" :
 				echo "<h1>".$msg["1150"]."&nbsp;:&nbsp;".$msg["serial_simple_circ_edit"]."</h1>";
 				include("./edit/serials_simple_circ.inc.php");
@@ -253,6 +260,15 @@ switch($categ) {
 		//echo "<h1>".$msg["opac_admin_menu"]."&nbsp;:&nbsp;".$msg["stat_opac_menu"]."</h1>";
 		include("./edit/stat_opac.inc.php");
 		break;
+	
+	//OPAC
+	case "opac" :
+		switch($sub) {
+			case "campaigns" :
+				campaigns_controller::proceed($id);
+				break;
+		}
+		break;
 		
 	// Edition Template de notices
 	case "tpl" :
@@ -275,6 +291,9 @@ switch($categ) {
 	case "state" :
 		include($base_path."/edit/editions_state/main.inc.php");
 		break;
+	case "pnb" :
+		include($base_path."/edit/pnb.inc.php");
+		break;
 	// EDITIONS LIEES AUX EXEMPLAIRES
 	default:
 	case "expl":
@@ -290,12 +309,10 @@ switch($categ) {
 					break;	
 				case "retard" :
 					$titre_page = $msg[1110]." : ".$msg[1112];
-					$critere_requete=" and pret_retour < curdate() order by empr_nom, empr_prenom ";
 					include("./edit/expl.inc.php");
 					break;
 				case "retard_par_date" :
 					$titre_page = $msg[1110]." : ".$msg['edit_expl_retard_par_date'];
-					$critere_requete=" and pret_retour < curdate() order by pret_retour, empr_nom, empr_prenom ";
 					include("./edit/expl.inc.php");
 					break;
 				case "owner" :
@@ -306,18 +323,15 @@ switch($categ) {
 					include("./edit/relance.inc.php");
 					break;					
 				case 'short_loans' :
-					$titre_page = $msg['short_loans'];
-					$critere_requete=" and short_loan_flag='1' order by pret_retour ";
+					$titre_page = $msg['current_short_loans'];
 					include("./edit/expl.inc.php");
 					break;
 				case 'unreturned_short_loans' :
-					$titre_page = $msg['short_loans'];
-					$critere_requete=" and short_loan_flag='1' and pret_date < curdate() and pret_retour >= curdate() order by pret_retour ";
+					$titre_page = $msg['unreturned_short_loans'];
 					include("./edit/expl.inc.php");
 					break;
 				case 'overdue_short_loans' :
-					$titre_page = $msg['short_loans'];
-					$critere_requete=" and short_loan_flag='1' and pret_retour < curdate() order by pret_retour ";
+					$titre_page = $msg['overdue_short_loans'];
 					include("./edit/expl.inc.php");
 					break;					
 				default :
@@ -328,12 +342,28 @@ switch($categ) {
 					include("./edit/expl.inc.php");
 					break;
 				}
-		break;
+			break;
+		case 'sticks_sheet' :
+			echo "<h1>".$msg["sticks_sheet"]." : ".$msg["sticks_sheet_models"]."</h1>";
+			switch($sub) {
+				case 'models' :
+					include("./edit/sticks_sheet_models.inc.php");
+					break;
+			}
+			break;
+		case 'plugin' :
+			$plugins = plugins::get_instance();
+			$file = $plugins->proceed("edit",$plugin,$sub);
+			if($file){
+				include $file;
+			}
+			break;
 	}
 	switch($dest) {
 		case "TABLEAU":
 		case "TABLEAUCSV":
 		case "EXPORT_NOTI":
+		case "PLUGIN_FILE":
 			break;
 		case "TABLEAUHTML":
 			print $footer;

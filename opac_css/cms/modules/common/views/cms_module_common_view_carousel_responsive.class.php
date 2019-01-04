@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_carousel_responsive.class.php,v 1.7.2.4 2015-09-25 09:12:47 dgoron Exp $
+// $Id: cms_module_common_view_carousel_responsive.class.php,v 1.20 2018-08-24 08:44:59 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/h2o/h2o.php");
@@ -16,8 +16,8 @@ class cms_module_common_view_carousel_responsive extends cms_module_common_view_
 <ul id='carousel_{{id}}'>
 	{% for record in records %}
 		<li class='{{id}}_item'>
-			<a href='{{record.link}}' alt='{{record.title}}' title='{{record.title}}'>
-				<img src='{{record.vign}}'/>
+			<a href='{{record.link}}' title='{{record.title}}'>
+				<img src='{{record.vign}}' alt=''/>
 				<br />
 			</a>
 		</li>
@@ -28,7 +28,6 @@ class cms_module_common_view_carousel_responsive extends cms_module_common_view_
 	}
 	
 	public function get_form(){
-		if (!isset($this->parameters["advanced_parameters"]))	$this->parameters["advanced_parameters"] = $this->default_advanced_parameters;
 		if (!isset($this->parameters["no_image"]))				$this->parameters["no_image"] = "no_image_carousel.jpg";
 		//valeur par défaut des paramètres généraux
 		if (!isset($this->parameters["mode"]))					$this->parameters["mode"] = "horizontal";
@@ -60,7 +59,8 @@ class cms_module_common_view_carousel_responsive extends cms_module_common_view_
 		if (!isset($this->parameters["autocontrols_combine"]))	$this->parameters["autocontrols_combine"] = false;
 		if (!isset($this->parameters["auto_direction"]))		$this->parameters["auto_direction"] = "next";
 		if (!isset($this->parameters["auto_delay"]))			$this->parameters["auto_delay"] = 0;			
-					
+		if (!isset($this->parameters["used_template"]))			$this->parameters["used_template"] = "";
+		
 		$general_form = "
 				<div class='row'>
 					<div class='colonne3'>
@@ -251,8 +251,8 @@ class cms_module_common_view_carousel_responsive extends cms_module_common_view_
 					</div>
 					<div class='colonne-suite'>
 						<select name='cms_module_common_view_carousel_page_type'>
-								<option value='full' ".($this->parameters['page_type'] == "full" ? "selected='selected'" : "").">".$this->format_text($this->msg['cms_module_common_view_carousel_page_type_full'])."</option>
-								<option value='short' ".($this->parameters['page_type'] == "short" ? "selected='selected'" : "").">".$this->format_text($this->msg['cms_module_common_view_carousel_page_type_short'])."</option>
+								<option value='full' ".($this->parameters['pager_type'] == "full" ? "selected='selected'" : "").">".$this->format_text($this->msg['cms_module_common_view_carousel_page_type_full'])."</option>
+								<option value='short' ".($this->parameters['pager_type'] == "short" ? "selected='selected'" : "").">".$this->format_text($this->msg['cms_module_common_view_carousel_page_type_short'])."</option>
 						</select>
 					</div>
  				</div>
@@ -319,12 +319,12 @@ class cms_module_common_view_carousel_responsive extends cms_module_common_view_
 						<label for='cms_module_common_view_carousel_auto_controls_combine'>".$this->format_text($this->msg['cms_module_common_view_carousel_auto_controls_combine'])."</label>
 					</div>
 					<div class='colonne-suite'>
-						<input type='radio' name='cms_module_common_view_carousel_auto_controls_combine' value='1' ".($this->parameters['auto_controls_combine'] ? "checked='checked'" : "")."/>&nbsp;".$this->format_text($this->msg['cms_module_common_view_carousel_yes'])."
-				  &nbsp;<input type='radio' name='cms_module_common_view_carousel_auto_controls_combine' value='0' ".(!$this->parameters['auto_controls_combine'] ? "checked='checked'" : "")."/>&nbsp;".$this->format_text($this->msg['cms_module_common_view_carousel_no'])."
+						<input type='radio' name='cms_module_common_view_carousel_auto_controls_combine' value='1' ".($this->parameters['autocontrols_combine'] ? "checked='checked'" : "")."/>&nbsp;".$this->format_text($this->msg['cms_module_common_view_carousel_yes'])."
+				  &nbsp;<input type='radio' name='cms_module_common_view_carousel_auto_controls_combine' value='0' ".(!$this->parameters['autocontrols_combine'] ? "checked='checked'" : "")."/>&nbsp;".$this->format_text($this->msg['cms_module_common_view_carousel_no'])."
 					</div>
  				</div>";
 		
-		$form.= gen_plus("general_parameters", $this->format_text($this->msg['cms_module_common_view_carousel_general_parameters']),$general_form,true);
+		$form = gen_plus("general_parameters", $this->format_text($this->msg['cms_module_common_view_carousel_general_parameters']),$general_form,true);
 		$form.= gen_plus("advanced_parameters", $this->format_text($this->msg['cms_module_common_view_carousel_advanced_parameters']),$advanced_parameters);
 		$form.=
 				parent::get_form()
@@ -416,18 +416,40 @@ class cms_module_common_view_carousel_responsive extends cms_module_common_view_
 		global $base_path;
 		$headers = parent::get_headers($datas);		
 		$headers[]= "<script type='text/javascript' src='".$base_path."/cms/modules/common/includes/javascript/jquery.bxsliderv4.min.js'></script>";
+		$headers[]= "<script type='text/javascript'>
+		document.addEventListener('DOMContentLoaded', function(){
+		if (navigator.userAgent.search(\"Firefox\") >= 0) {
+		    var ff_version = navigator.userAgent.match(/Firefox\/([\d]+\.[\d])+/);
+		    ff_version = parseFloat(ff_version[1]);
+		    if(ff_version == 0 || ff_version >= 59) {
+		        $('body').on('mousedown', '.bx-viewport a', function() {
+		            var ff_link = $(this);
+		            var ff_href = ff_link.attr('href');
+		            if(ff_href) {
+		                location.href = ff_href;
+		                return false;
+		            }
+		        });
+		    }
+		}})</script>";
 		$headers[]= "<link rel='stylesheet' type='text/css' href='".$base_path."/cms/modules/common/includes/css/jquery.bxslider.css'/>";
 		return $headers;
 	}
 	
 	public function render($datas){
-		global $opac_default_style;
+	    global $opac_default_style, $base_path;
 		$html2return = "";
 		
 		//TODO VERIF DOM ET APPEL AU JS
 		if(count($datas['records'])){
 			$id = "carousel_".$this->get_module_dom_id();
 			$datas['id']=$this->get_module_dom_id();
+			if(!isset($datas['get_vars']) || !$datas['get_vars']){
+				$datas['get_vars'] = $_GET;
+			}
+			if(!isset($datas['post_vars']) || !$datas['post_vars']){
+				$datas['post_vars'] = $_POST;
+			}
 			//pour la no-image, on cherche celle du style, du common, du dossier image de base, sinon on sert celle par défaut
 			$path = "./styles/".$opac_default_style."/images/";
 			if(!file_exists(realpath($path)."/".$this->parameters['no_image'])){
@@ -442,45 +464,52 @@ class cms_module_common_view_carousel_responsive extends cms_module_common_view_
 			}
 			$datas['no_image_url'] = $path.$this->parameters['no_image'];
 			for($i=0 ; $i<count($datas['records']) ; $i++){
-				if($datas['records'][$i]['vign'] == ""){
+				if(!isset($datas['records'][$i]['vign']) || $datas['records'][$i]['vign'] == ""){
 					$datas['records'][$i]['vign'] = $datas['no_image_url'];
 				}
 			}
-			$html2return.= H2o::parseString($this->parameters['active_template'])->render($datas);
+			
+			$template_path = $base_path.'/temp/'.LOCATION.'_cms_carousel_responsive_view_'.$this->id;
+			if(!file_exists($template_path) || (md5($this->parameters['active_template']) != md5_file($template_path))){
+			    file_put_contents($template_path, $this->parameters['active_template']);
+			}
+			$H2o = H2o_collection::get_instance($template_path);
+			$html2return.= $H2o->render($datas);
+			
 			$html2return.= "
 		<script type='text/javascript'>
 			jQuery(document).ready(function() {
 				jQuery('#".$id."').bxSlider({
 					//parametres generaux
-					mode: 					'".$this->parameters['mode']."',
-					speed: 					".$this->parameters['speed'].",
-					pause: 					".$this->parameters['pause'].",	
-					autoStart: 				".($this->parameters['autostart'] ? "true" : "false").",
-					autoHover: 				".($this->parameters['autohover'] ? "true" : "false").",	
-					pager: 					".($this->parameters['pager'] ? "true" : "false").",	
-					moveSlides : 			'".$this->parameters['slide_quantity']."',	
-					minSlides: 				'".$this->parameters['display_min_quantity']."',	
-					maxSlides: 				'".$this->parameters['display_max_quantity']."',
-					slideWidth: 			'".$this->parameters['slide_width']."',
+					mode: 					'".(isset($this->parameters['mode']) ? $this->parameters['mode'] : '')."',
+					speed: 					'".(isset($this->parameters['speed']) ? $this->parameters['speed'] : '')."',
+					pause: 					'".(isset($this->parameters['pause']) ? $this->parameters['pause'] : '')."',	
+					autoStart: 				".(isset($this->parameters['autostart']) && $this->parameters['autostart'] ? "true" : "false").",
+					autoHover: 				".(isset($this->parameters['autohover']) && $this->parameters['autohover'] ? "true" : "false").",	
+					pager: 					".(isset($this->parameters['pager']) && $this->parameters['pager'] ? "true" : "false").",	
+					moveSlides : 			'".(isset($this->parameters['slide_quantity']) ? $this->parameters['slide_quantity'] : '')."',	
+					minSlides: 				'".(isset($this->parameters['display_min_quantity']) ? $this->parameters['display_min_quantity'] : '')."',	
+					maxSlides: 				'".(isset($this->parameters['display_max_quantity']) ? $this->parameters['display_max_quantity'] : '')."',
+					slideWidth: 			'".(isset($this->parameters['slide_width']) ? $this->parameters['slide_width'] : '')."',
 					//parametres avances
-					slideMargin: 			'".$this->parameters['slide_margin']."',
-					randomStart: 			".($this->parameters['randomStart'] ? "true" : "false").",
-					easing: 				'".$this->parameters["easing"]."',
-					captions: 				".($this->parameters['captions'] ? "true" : "false").",
-					adaptiveHeight:			".($this->parameters['adaptive_heigt'] ? "true" : "false").",
-					adaptiveHeightSpeed:	'".$this->parameters["adaptive_heigt_speed"]."',
-					pagerType:				'".$this->parameters["pager_type"]."',
-					pagerSeparator:			'".$this->parameters["pager_short_separator"]."',
-					controls:				".($this->parameters['controls'] ? "true" : "false").",
-					nextText:				'".$this->parameters["next_text"]."',
-					previouText:			'".$this->parameters["previous_text"]."',
-					autoControls: 			".($this->parameters['auto_controls'] ? "true" : "false").",
-					startText: 				'".$this->parameters["start_text"]."',
-					stopText: 				'".$this->parameters["stop_text"]."',
-					autoControlsCombine: 	".($this->parameters['autocontrols_combine'] ? "true" : "false").",
-					autoDirection: 			'".$this->parameters["auto_direction"]."',
-					autoDelay: 				'".$this->parameters["auto_delay"]."',
-					auto: 					".($this->parameters['autotransition'] ? "true" : "false")."
+					slideMargin: 			'".(isset($this->parameters['slide_margin']) ? $this->parameters['slide_margin'] : '')."',
+					randomStart: 			".(isset($this->parameters['randomStart']) && $this->parameters['randomStart'] ? "true" : "false").",
+					easing: 				'".(isset($this->parameters["easing"]) ? $this->parameters["easing"] : '')."',
+					captions: 				".(isset($this->parameters['captions']) && $this->parameters['captions'] ? "true" : "false").",
+					adaptiveHeight:			".(isset($this->parameters['adaptive_heigt']) && $this->parameters['adaptive_heigt'] ? "true" : "false").",
+					adaptiveHeightSpeed:	'".(isset($this->parameters["adaptive_heigt_speed"]) ? $this->parameters["adaptive_heigt_speed"] : '')."',
+					pagerType:				'".(isset($this->parameters["pager_type"]) ? $this->parameters["pager_type"] : '')."',
+					pagerSeparator:			'".(isset($this->parameters["pager_short_separator"]) ? $this->parameters["pager_short_separator"] : '')."',
+					controls:				".(isset($this->parameters['controls']) && $this->parameters['controls'] ? "true" : "false").",
+					nextText:				'".(isset($this->parameters["next_text"]) ? $this->parameters["next_text"] : '')."',
+					previouText:			'".(isset($this->parameters["previous_text"]) ? $this->parameters["previous_text"] : '')."',
+					autoControls: 			".(isset($this->parameters['auto_controls']) && $this->parameters['auto_controls'] ? "true" : "false").",
+					startText: 				'".(isset($this->parameters["start_text"]) ? $this->parameters["start_text"] : '')."',
+					stopText: 				'".(isset($this->parameters["stop_text"]) ? $this->parameters["stop_text"] : '')."',
+					autoControlsCombine: 	".(isset($this->parameters['autocontrols_combine']) && $this->parameters['autocontrols_combine'] ? "true" : "false").",
+					autoDirection: 			'".(isset($this->parameters["auto_direction"]) ? $this->parameters["auto_direction"] : '')."',
+					autoDelay: 				'".(isset($this->parameters["auto_delay"]) ? $this->parameters["auto_delay"] : '')."',
+					auto: 					".(isset($this->parameters['autotransition']) && $this->parameters['autotransition'] ? "true" : "false")."
 				});
 			});
 		</script>";
@@ -491,6 +520,7 @@ class cms_module_common_view_carousel_responsive extends cms_module_common_view_
 	protected function get_managed_template_form($cms_template){
 		global $opac_url_base;
 
+		$form ="";
 		if($cms_template != "new"){
 			$infos = $this->managed_datas['templates'][$cms_template];
 		}else{

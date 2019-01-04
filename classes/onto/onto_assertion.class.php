@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_assertion.class.php,v 1.5 2014-04-19 15:04:09 abacarisse Exp $
+// $Id: onto_assertion.class.php,v 1.6 2017-11-27 10:37:26 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -75,6 +75,9 @@ class onto_assertion {
 	}
 	
 	public function offset_get_object_property($offset){
-		return $this->object_properties[$offset];
+		if (isset($this->object_properties[$offset])) {
+			return $this->object_properties[$offset];
+		}
+		return null;
 	}
 } // end of onto_assertion

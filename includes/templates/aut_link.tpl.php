@@ -2,9 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: aut_link.tpl.php,v 1.4 2014-10-03 11:49:25 ngantier Exp $
+// $Id: aut_link.tpl.php,v 1.15 2017-11-30 10:22:23 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $add_aut_link;
+global $aut_link0, $aut_link1;
+global $form_aut_link, $form_aut_link_buttons;
 
 // templates pour la gestion des lien entre autorités
 $add_aut_link=" 
@@ -71,6 +75,7 @@ $add_aut_link="
 		f_aut_link_comment.setAttribute('name',nom_id);
 		f_aut_link_comment.setAttribute('type','text');
 		f_aut_link_comment.setAttribute('rows','2');
+		f_aut_link_comment.setAttribute('id','f_aut_link_comment'+suffixe);
 		f_aut_link_comment.setAttribute('cols','62');
 		f_aut_link_comment.className='saisie-80em';
 
@@ -87,8 +92,8 @@ $add_aut_link="
 		img_plus.className='img_plus';
 		img_plus.setAttribute('hspace','3');	
 		img_plus.setAttribute('border','0');	
-		img_plus.setAttribute('src','./images/plus.gif');
-		var onclick='if(document.getElementById(\"aut_link_viewcomment'+suffixe+'\").style.display==\"none\") {getElementById(\"img_plus'+suffixe+'\").setAttribute(\"src\",\"./images/minus.gif\");document.getElementById(\"aut_link_viewcomment'+suffixe+'\").style.display=\"inline\";}else {getElementById(\"img_plus'+suffixe+'\").setAttribute(\"src\",\"./images/plus.gif\");document.getElementById(\"aut_link_viewcomment'+suffixe+'\").style.display=\"none\";} ';
+		img_plus.setAttribute('src','".get_url_icon('plus.gif')."');
+		var onclick='if(document.getElementById(\"aut_link_viewcomment'+suffixe+'\").style.display==\"none\") {getElementById(\"img_plus'+suffixe+'\").setAttribute(\"src\",\"".get_url_icon('minus.gif')."\");document.getElementById(\"aut_link_viewcomment'+suffixe+'\").style.display=\"inline\";}else {getElementById(\"img_plus'+suffixe+'\").setAttribute(\"src\",\"".get_url_icon('plus.gif')."\");document.getElementById(\"aut_link_viewcomment'+suffixe+'\").style.display=\"none\";} ';
 		img_plus.setAttribute('onclick',onclick);			
 		
 		aut_link.appendChild(f_aut_link_type);		
@@ -111,7 +116,7 @@ $add_aut_link="
 	/*
 	 * 
 	 	<div id="elacquisitionParent" class="parent" width="100%">
-					<img src="./images/plus.gif" class="img_plus" name="imEx" id="elacquisitionImg" title="détail" onclick="expandBase('elacquisition', true); return false;" hspace="3" border="0">
+					<img src="'.get_url_icon('plus.gif').'" class="img_plus" name="imEx" id="elacquisitionImg" title="détail" onclick="expandBase('elacquisition', true); return false;" style="border:0px; margin:3px 3px">
 		</div> 
 					
 		<div id="elacquisitionChild" class="child" style="margin-bottom: 6px; display: block;">
@@ -124,54 +129,44 @@ $aut_link0 = "
 	<input type='hidden' name='max_aut_link' id='max_aut_link' value='!!max_aut_link!!'/>
 	<div class='row'>
 			!!aut_table_list!!
-		<input type='button' class='bouton_small' value='".$msg["parcourir"]."' 
-		onclick=\"
-			var selObj=document.getElementById('f_aut_link_table_list');
-			var selIndex=selObj.selectedIndex;
-			var table= selObj.options[selIndex].value;
-			openPopUp(
-			aut_link_table_select[table]+table, 
-			'select_categ', 700, 500, -2, -2, '$select_categ_prop')\" />
-		<input type='hidden' name='f_aut_link_id!!aut_link!!' id='f_aut_link_id!!aut_link!!' value='!!aut_link_id!!' />
-		<input type='hidden' name='f_aut_link_table!!aut_link!!' id='f_aut_link_table!!aut_link!!' value='!!aut_link_table!!' />		
-		<input type='button' class='bouton_small' value='+' onClick=\"add_aut_link();\"/>
-	
 	</div>
 	
 	<div class='row'>
 		!!aut_link_type!!
-		<img class='img_plus' border='0' hspace='3' src='./images/plus.gif' id='img_plus!!aut_link!!'
+		<img class='img_plus' border='0' hspace='3' src='".get_url_icon('plus.gif')."' id='img_plus!!aut_link!!'
 			onclick=\"
 				if(document.getElementById('aut_link_viewcomment!!aut_link!!').style.display=='none') {
-					document.getElementById('img_plus!!aut_link!!').src='./images/minus.gif';
+					document.getElementById('img_plus!!aut_link!!').src='".get_url_icon('minus.gif')."';
 					document.getElementById('aut_link_viewcomment!!aut_link!!').style.display='inline';
 				}
 				else {
-					document.getElementById('img_plus!!aut_link!!').src='./images/plus.gif';
+					document.getElementById('img_plus!!aut_link!!').src='".get_url_icon('plus.gif')."';
 					document.getElementById('aut_link_viewcomment!!aut_link!!').style.display='none';
 				}
 			\" 
 		/>		
-		<input type='text' class='saisie-80emr' id='f_aut_link_libelle!!aut_link!!' name='f_aut_link_libelle!!aut_link!!' readonly value=\"!!aut_link_libelle!!\" />
-		<input id='f_aut_link_reciproc!!aut_link!!' name='f_aut_link_reciproc!!aut_link!!' !!aut_link_reciproc!! type='checkbox'>
+		<input type='text' class='saisie-80emr' id='f_aut_link_libelle!!aut_link!!' data-form-name='f_aut_link_libelle' name='f_aut_link_libelle!!aut_link!!' readonly value=\"!!aut_link_libelle!!\" />
+		<input id='f_aut_link_reciproc!!aut_link!!' name='f_aut_link_reciproc!!aut_link!!' data-form-name='f_aut_link_reciproc' !!aut_link_reciproc!! type='checkbox'>
+		<input type='hidden' name='f_aut_link_id!!aut_link!!' data-form-name='f_aut_link_id' id='f_aut_link_id!!aut_link!!' value='!!aut_link_id!!' />
+			<input type='hidden' name='f_aut_link_table!!aut_link!!' data-form-name='f_aut_link_table' id='f_aut_link_table!!aut_link!!' value='!!aut_link_table!!' />
 		<input type='button' class='bouton_small' value='".$msg["raz"]."' onclick=\"this.form.f_aut_link_libelle!!aut_link!!.value=''; this.form.f_aut_link_id!!aut_link!!.value='0'; \" />
 	</div>
 	<div class='row' id='aut_link_viewcomment!!aut_link!!' style='display:none;'>
-		<textarea class='saisie-80em' name='f_aut_link_comment!!aut_link!!' cols='62' rows='2' >!!aut_link_comment!!</textarea>	
+		<textarea class='saisie-80em' name='f_aut_link_comment!!aut_link!!' id='f_aut_link_comment!!aut_link!!' data-form-name='f_aut_link_comment' cols='62' rows='2' >!!aut_link_comment!!</textarea>	
 	</div>
 	";
 	
 $aut_link1 = "
 	<div class='row'>
 		!!aut_link_type!!
-		<img class='img_plus' border='0' hspace='3' src='./images/plus.gif' id='img_plus!!aut_link!!'
+		<img class='img_plus' border='0' hspace='3' src='".get_url_icon('plus.gif')."' id='img_plus!!aut_link!!'
 			onclick=\"
 				if(document.getElementById('aut_link_viewcomment!!aut_link!!').style.display=='none') {
-					document.getElementById('img_plus!!aut_link!!').src='./images/minus.gif';
+					document.getElementById('img_plus!!aut_link!!').src='".get_url_icon('minus.gif')."';
 					document.getElementById('aut_link_viewcomment!!aut_link!!').style.display='inline';
 				}
 				else {
-					document.getElementById('img_plus!!aut_link!!').src='./images/plus.gif';
+					document.getElementById('img_plus!!aut_link!!').src='".get_url_icon('plus.gif')."';
 					document.getElementById('aut_link_viewcomment!!aut_link!!').style.display='none';
 				}
 			\" 
@@ -183,14 +178,26 @@ $aut_link1 = "
 		<input type='hidden' name='f_aut_link_table!!aut_link!!' id='f_aut_link_table!!aut_link!!' value='!!aut_link_table!!' />
 	</div>
 	<div class='row' id='aut_link_viewcomment!!aut_link!!' style='display:none;'>
-		<textarea class='saisie-80em' name='f_aut_link_comment!!aut_link!!' cols='62' rows='2' >!!aut_link_comment!!</textarea>	
+		<textarea class='saisie-80em' name='f_aut_link_comment!!aut_link!!' id='f_aut_link_comment!!aut_link!!' cols='62' rows='2' >!!aut_link_comment!!</textarea>	
 	</div>";
 
 $form_aut_link = "
-	<div class='row'>
-		<label class='etiquette' for='form_aut_link'>".$msg["aut_link"].$msg["renvoi_reciproque"]."</label>
-	</div>
-	<div id='add_aut_link'>
-		!!aut_link_contens!!
+	<div id='el7Child_0' class='row' movable='yes' title=\"".htmlentities($msg['aut_link'],ENT_QUOTES, $charset)."\">
+		<div class='row'>
+			<label class='etiquette' for='form_aut_link'>".$msg["aut_link"].$msg["renvoi_reciproque"]."</label>
+		</div>
+		<div id='add_aut_link'>
+			!!aut_link_contens!!
+		</div>
 	</div>";
+
+$form_aut_link_buttons = "<input type='button' class='bouton_small' value='".$msg["parcourir"]."' 
+		onclick=\"
+			var selObj=document.getElementById('f_aut_link_table_list');
+			var selIndex=selObj.selectedIndex;
+			var table= selObj.options[selIndex].value;
+			openPopUp(
+			aut_link_table_select[table]+table, 
+			'selector_category')\" />		
+		<input type='button' class='bouton_small' value='+' onClick=\"add_aut_link();\"/>";
 ?>

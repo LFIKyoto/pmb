@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: make_sugg.inc.php,v 1.14.4.1 2015-10-05 13:15:41 jpermanne Exp $
+// $Id: make_sugg.inc.php,v 1.19 2018-12-28 16:28:41 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -16,63 +16,65 @@ if($opac_show_help) $sug_form .= "
 <div class='row'>
 	$tooltip
 </div>";
+if(!isset($form_action) || !$form_action) $form_action = 'do_resa.php';
+
 $sug_form .= "
 <div id='make_sugg-container'>
-<form action=\"do_resa.php\" method=\"post\" name=\"empr_sugg\" enctype='multipart/form-data'>
+<form action='".$form_action."' method=\"post\" name=\"empr_sugg\" enctype='multipart/form-data'>
 	<input type='hidden' name='id_notice' value='!!id_notice!!' />
-	<table width='60%' cellpadding='5'>
+	<table style='width:60%' cellpadding='5'>
 		<tr>	
-			<td align=right>".htmlentities($msg["empr_sugg_tit"], ENT_QUOTES, $charset)."</td>
+			<td class='align_right'>".htmlentities($msg["empr_sugg_tit"], ENT_QUOTES, $charset)."</td>
 			<td>
 				<input type=\"hidden\" name=\"lvl\" value=\"valid_sugg\"/>
 				<input type=\"text\" id=\"tit\" name=\"tit\" size=\"50\" border=\"0\" value=\"!!titre_sugg!!\"/>
 			</td>
 		</tr>
 		<tr>
-			<td align=right>".htmlentities($msg["empr_sugg_aut"], ENT_QUOTES, $charset)."</td>
+			<td class='align_right'>".htmlentities($msg["empr_sugg_aut"], ENT_QUOTES, $charset)."</td>
 			<td>
 				<input type=\"text\" id=\"aut\" name=\"aut\" size=\"50\" border=\"0\" value=\"!!auteur_sugg!!\"/>
 			</td>
 		</tr>
 		<tr>
-			<td align=right>".htmlentities($msg["empr_sugg_edi"], ENT_QUOTES, $charset)."</td>
+			<td class='align_right'>".htmlentities($msg["empr_sugg_edi"], ENT_QUOTES, $charset)."</td>
 			<td>
 				<input type=\"text\" id=\"edi\" name=\"edi\" size=\"50\" border=\"0\" value=\"!!editeur_sugg!!\"/>
 			</td>
 		</tr>
 		<tr>
-			<td align=right>".htmlentities($msg["empr_sugg_code"], ENT_QUOTES, $charset)."</td>
+			<td class='align_right'>".htmlentities($msg["empr_sugg_code"], ENT_QUOTES, $charset)."</td>
 			<td>
 				<input type=\"text\" id=\"code\" name=\"code\" size=\"20\" border=\"0\" value=\"!!code_sugg!!\"/>
 			</td>
 		</tr>
 		<tr>
-			<td align=right>".htmlentities($msg["empr_sugg_prix"], ENT_QUOTES, $charset)."</td>
+			<td class='align_right'>".htmlentities($msg["empr_sugg_prix"], ENT_QUOTES, $charset)."</td>
 			<td>
 				<input type=\"text\" id=\"prix\" name=\"prix\" size=\"20\" border=\"0\" value=\"!!prix_sugg!!\"/>
 			</td>
 		</tr>
 		<tr>
-			<td align=right>".htmlentities($msg["empr_sugg_url"], ENT_QUOTES, $charset)."</td>
+			<td class='align_right'>".htmlentities($msg["empr_sugg_url"], ENT_QUOTES, $charset)."</td>
 			<td>
 				<input type='text' id=\"url_sug\" name=\"url_sug\" size=\"50\" border=\"0\" value=\"\"/>
 			</td>
 		</tr>
 		<tr>
-			<td align=right>".htmlentities($msg["empr_sugg_comment"], ENT_QUOTES, $charset)."<br /><i>".htmlentities($msg["empr_sugg_comment_jt"], ENT_QUOTES, $charset)."</i></td>
+			<td class='align_right'>".htmlentities($msg["empr_sugg_comment"], ENT_QUOTES, $charset)."<br /><i>".htmlentities($msg["empr_sugg_comment"], ENT_QUOTES, $charset)."</i></td>
 			<td>
 				<textarea id=\"comment\" name=\"comment\" cols=\"50\" rows='4' wrap='virtual'></textarea>
 			</td>
 		</tr>
 		<tr>
-			<td align=right>".htmlentities($msg["empr_sugg_datepubli"], ENT_QUOTES, $charset)."</td>
+			<td class='align_right'>".htmlentities($msg["empr_sugg_datepubli"], ENT_QUOTES, $charset)."</td>
 			<td>
 				<input type='text' id='date_publi' name='date_publi'>
 				<input type='button' class='bouton' id='date_publi_sug' name='date_publi_sug' value='...' onClick=\"window.open('./select.php?what=calendrier&caller=empr_sugg&param1=date_publi&param2=date_publi&auto_submit=NO&date_anterieure=YES', 'date_publi', 'toolbar=no, dependent=yes, width=250,height=250, resizable=yes')\"/>
 			</td>
 		</tr>		
 		<tr>
-			<td align=right>".htmlentities($msg["empr_sugg_qte"], ENT_QUOTES, $charset)."</td>
+			<td class='align_right'>".htmlentities($msg["empr_sugg_qte"], ENT_QUOTES, $charset)."</td>
 			<td>
 				<input type='text' id='nb' name='nb' size='5' value='1'>
 			</td>
@@ -82,14 +84,14 @@ if(!$_SESSION["id_empr_session"]) {
 	
 	$sug_form.= "
 		<tr>
-			<td align=right>".htmlentities($msg["empr_sugg_mail"], ENT_QUOTES, $charset)."</td>
+			<td class='align_right'>".htmlentities($msg["empr_sugg_mail"], ENT_QUOTES, $charset)."</td>
 			<td>
 				<input type=\"text\" id=\"mail\" name=\"mail\" size=\"50\" border=\"0\" value=\"".$empr_mail."\"/>
 			</td>
 		</tr>";
 }
 
-
+if(isset($id_notice)) $id_notice += 0; else $id_notice = 0; 
 if($id_notice){
 	$requete = "SELECT tit1 as titre, ed_name as editeur, CONCAT(author_name,' ',author_rejete) as auteur, prix, code 
 	FROM notices LEFT JOIN responsability ON responsability_notice=notice_id 
@@ -141,7 +143,7 @@ if ($opac_sugg_categ == '1' ) {
 	}
 	$sug_form.= "
 		<tr>
-			<td align=right>".htmlentities($msg['acquisition_categ'], ENT_QUOTES, $charset)."</td>
+			<td class='align_right'>".htmlentities($msg['acquisition_categ'], ENT_QUOTES, $charset)."</td>
 			<td>$sel_categ</td>
 		</tr>";
 	
@@ -159,7 +161,7 @@ if($_SESSION["id_empr_session"]) {
 		if ($opac_sugg_localises==1) {			
 			$sug_form.= "
 			<tr>
-				<td align=right>".htmlentities($msg['acquisition_location'], ENT_QUOTES, $charset)."</td>
+				<td class='align_right'>".htmlentities($msg['acquisition_location'], ENT_QUOTES, $charset)."</td>
 				<td>$list_locs</td>
 			</tr>";
 		} elseif ($opac_sugg_localises==2) {
@@ -173,27 +175,41 @@ if($_SESSION["id_empr_session"]) {
 	$res= pmb_mysql_query($req,$dbh);
 	$option = "<option value='0' selected>".htmlentities($msg['empr_sugg_no_src'],ENT_QUOTES,$charset)."</option>";
 	while(($src=pmb_mysql_fetch_object($res))){
-		$option .= "<option value='".$src->id_source."' $selected >".htmlentities($src->libelle_source,ENT_QUOTES,$charset)."</option>";
+		$option .= "<option value='".$src->id_source."'>".htmlentities($src->libelle_source,ENT_QUOTES,$charset)."</option>";
 	}
 	$selecteur = "<select id='sug_src' name='sug_src'>".$option."</select>";
 
 $sug_form .="<tr>
-			<td align=right>".htmlentities($msg['empr_sugg_src'], ENT_QUOTES, $charset)."</td>
+			<td class='align_right'>".htmlentities($msg['empr_sugg_src'], ENT_QUOTES, $charset)."</td>
 			<td>$selecteur</td>
 		</tr>"
 ;
 
 $sug_form.= "
 		<tr>
-			<td align=right>".htmlentities($msg["empr_sugg_piece_jointe"], ENT_QUOTES, $charset)."</td>
+			<td class='align_right'>".htmlentities($msg["empr_sugg_piece_jointe"], ENT_QUOTES, $charset)."</td>
 			<td>
 				<input type=\"file\" id=\"piece_jointe_sug\" name=\"piece_jointe_sug\" size=\"40\" border=\"0\"/>
 			</td>
 		</tr>";
+
+if(!$_SESSION["id_empr_session"]) {
+	$sug_form.= "
+		<tr>
+			<td>
+				&nbsp;
+			</td>
+			<td>
+				<img src='./includes/imageverifcode.inc.php'>
+				<br /><br /><h4><span>".$msg['empr_sugg_verifcode']."</span></h4><input type='text' class='subsform' name='sug_verifcode' value='' />
+			</td>
+		</tr>";
+}
+
 $sug_form.= "
 		<tr>
-			<td colspan=2 align=right>
-				<input type='button' class='bouton' name='ok' value='&nbsp;".addslashes($msg[empr_bt_valid_sugg])."&nbsp;' onClick='this.form.submit()'/>
+			<td colspan=2 class='align_right'>
+				<input type='button' class='bouton' name='ok' value='&nbsp;".addslashes($msg['empr_bt_valid_sugg'])."&nbsp;' onClick='this.form.submit()'/>
 			</td>
 		</tr>
 	</table>

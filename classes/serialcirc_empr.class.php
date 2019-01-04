@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_empr.class.php,v 1.5 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: serialcirc_empr.class.php,v 1.9 2017-08-23 08:29:16 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,10 +10,10 @@ require_once($include_path."/templates/serialcirc_empr.tpl.php");
 require_once($class_path."/serialcirc_diff.class.php");
 
 class serialcirc_empr{
-	var $empr_id;	// identifiant de l'emprunteur
-	var $serialcirc_list;	// tableau des abonnement de l'emprunteur
-	var $info;	// info des listes de circulation de l'emprunteur
-	var $serialcirc_circ_list =array(); //tableau des circulations en cours..
+	public $empr_id;	// identifiant de l'emprunteur
+	public $serialcirc_list;	// tableau des abonnement de l'emprunteur
+	public $info;	// info des listes de circulation de l'emprunteur
+	public $serialcirc_circ_list =array(); //tableau des circulations en cours..
 
 	public function __construct($empr_id){
 		$this->empr_id = $empr_id+0;
@@ -41,7 +41,7 @@ class serialcirc_empr{
 				if(!in_array($row->id_serialcirc,$this->serialcirc_circ_list)){
 					$this->serialcirc_circ_list[] = $row->id_serialcirc;
 				}
-				if(!$this->info[$row->id_serialcirc]){
+				if(!isset($this->info[$row->id_serialcirc]) || !$this->info[$row->id_serialcirc]){
 					$diff = new serialcirc_diff($row->id_serialcirc);
 					$this->info[$row->id_serialcirc] = $diff->serial_info;
 				}
@@ -80,7 +80,7 @@ class serialcirc_empr{
 							$result =pmb_mysql_query($query,$dbh);
 							if(pmb_mysql_num_rows($result)){
 								$row  = pmb_mysql_fetch_object($result);
-								if($row->notice_id){
+								if($row->expl_notice){
 									$notice = new mono_display($row->expl_notice);
 									$libelle = $notice->header;
 								}else{
@@ -114,7 +114,7 @@ class serialcirc_empr{
 							$result =pmb_mysql_query($query,$dbh);
 							if(pmb_mysql_num_rows($result)){
 								$row  = pmb_mysql_fetch_object($result);
-								if($row->notice_id){
+								if($row->expl_notice){
 									$notice = new mono_display($row->expl_notice);
 									$libelle = $notice->header;
 								}else{
@@ -127,6 +127,13 @@ class serialcirc_empr{
 					}
 					$item=$empr_serialcirc_circ_tmpl_item;
 					$css_class = ($i%2 == 0 ? "odd" :"even");
+					
+					if(!isset($this->info[$diff_id]['serial_link'])) $this->info[$diff_id]['serial_link'] = '';
+					if(!isset($this->info[$diff_id]['serial_name'])) $this->info[$diff_id]['serial_name'] = '';
+					if(!isset($this->info[$diff_id]['abt_name'])) $this->info[$diff_id]['abt_name'] = '';
+					if(!isset($this->info[$diff_id]['bulletinage_link'])) $this->info[$diff_id]['bulletinage_link'] = '';
+					if(!isset($this->info[$diff_id]['serialcirc_link'])) $this->info[$diff_id]['serialcirc_link'] = '';
+					
 					$item = str_replace("!!periodique!!","<a href='".$this->info[$diff_id]['serial_link']."'>".htmlentities($this->info[$diff_id]['serial_name'],ENT_QUOTES,$charset)."</a>",$item);
 					$item=str_replace('!!abt!!',   "<a href='".$this->info[$diff_id]['serialcirc_link']."'>".htmlentities($this->info[$diff_id]['abt_name'],ENT_QUOTES,$charset)."</a>" , $item);
 					$item=str_replace('!!bulletinage_see!!',   "<a href='".$this->info[$diff_id]['bulletinage_link']."'>".htmlentities($msg['link_notice_to_bulletinage'],ENT_QUOTES,$charset)."</a>" , $item);
@@ -167,8 +174,8 @@ class serialcirc_empr{
 		return $error_message;
 	}
 	
-	public function forward($serialscirc=array(),$new_empr_id=0){
-		global $dbh,$msg;
+	public function forward($serialscirc = array(), $new_empr_id = 0, $duplicate = false){
+		global $dbh, $msg, $charset;
 		$error_message = array();
 		$message = array();
 		$fowarded =false;
@@ -181,18 +188,22 @@ class serialcirc_empr{
 					$query = "select serialcirc_group.num_serialcirc_group_empr,abt_name, concat(empr_nom,' ',empr_prenom) as name from serialcirc_diff join serialcirc_group on num_serialcirc_group_diff = id_serialcirc_diff join serialcirc on id_serialcirc = num_serialcirc_diff_serialcirc join abts_abts on abt_id = num_serialcirc_abt join empr on id_empr=num_serialcirc_group_empr where num_serialcirc_diff_serialcirc = ".($serialscirc[$i]+0)." and serialcirc_diff_empr_type=1  and num_serialcirc_group_empr = ".($new_empr_id+0);
 					$result = pmb_mysql_query($query,$dbh);
 					if(!pmb_mysql_num_rows($result)){
-						$query = "update serialcirc_diff set num_serialcirc_diff_empr = ".($new_empr_id+0)." where num_serialcirc_diff_serialcirc = ".($serialscirc[$i]+0)." and num_serialcirc_diff_empr = ".$this->empr_id;
-						pmb_mysql_query($query,$dbh);
-						$query = "update serialcirc_group join serialcirc_diff on num_serialcirc_group_diff = id_serialcirc_diff join serialcirc on id_serialcirc = num_serialcirc_diff_serialcirc join abts_abts on abt_id = num_serialcirc_abt set num_serialcirc_group_empr = ".($new_empr_id+0)." where num_serialcirc_diff_serialcirc = ".($serialscirc[$i]+0)." and serialcirc_diff_empr_type=1  and num_serialcirc_group_empr = ".$this->empr_id;
-						pmb_mysql_query($query,$dbh);
+						if ($duplicate) {
+							$this->duplicate($serialscirc[$i], $new_empr_id);
+						} else {
+							$query = "update serialcirc_diff set num_serialcirc_diff_empr = ".($new_empr_id+0)." where num_serialcirc_diff_serialcirc = ".($serialscirc[$i]+0)." and num_serialcirc_diff_empr = ".$this->empr_id;
+							pmb_mysql_query($query,$dbh);
+							$query = "update serialcirc_group join serialcirc_diff on num_serialcirc_group_diff = id_serialcirc_diff join serialcirc on id_serialcirc = num_serialcirc_diff_serialcirc join abts_abts on abt_id = num_serialcirc_abt set num_serialcirc_group_empr = ".($new_empr_id+0)." where num_serialcirc_diff_serialcirc = ".($serialscirc[$i]+0)." and serialcirc_diff_empr_type=1  and num_serialcirc_group_empr = ".$this->empr_id;
+							pmb_mysql_query($query,$dbh);
+						}
 						$forwarded = true;
 					}else{
 						$row = pmb_mysql_fetch_object($result);
-						$error_message[] = sprintf($msg['serialcirc_forward_already_subcribed'],$row->abt_name,$row->name);
+						$error_message[] = sprintf(($duplicate ? $msg['serialcirc_duplicate_already_subcribed'] : $msg['serialcirc_forward_already_subcribed']), $row->abt_name, $row->name);
 					}
 				}else{
 					$row = pmb_mysql_fetch_object($result);
-					$error_message[] = sprintf($msg['serialcirc_forward_already_subcribed'],$row->abt_name,$row->name);
+					$error_message[] = sprintf(($duplicate ? $msg['serialcirc_duplicate_already_subcribed'] : $msg['serialcirc_forward_already_subcribed']), $row->abt_name, $row->name);
 				}
 			}
 		}
@@ -201,9 +212,45 @@ class serialcirc_empr{
 			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				$row = pmb_mysql_fetch_object($result);
-				$message[] = sprintf($msg['serialcirc_empr_forwarded'],"<a href='./circ.php?categ=pret&form_cb=".$row->empr_cb."'>".htmlentities($row->name,ENT_QUOTES,$charsset)."</a>");
+				$message[] = sprintf(($duplicate ? $msg['serialcirc_empr_duplicated'] : $msg['serialcirc_empr_forwarded']),"<a href='./circ.php?categ=pret&form_cb=".$row->empr_cb."'>".htmlentities($row->name, ENT_QUOTES, $charset)."</a>");
 			}
 		}
 		return array('messages'=>$message,'errors'=>$error_message);
+	}
+	
+	protected function duplicate($serialcirc, $new_empr_id) {
+		global $dbh;
+		
+		$query = 'select * from serialcirc_diff where num_serialcirc_diff_serialcirc = '.($serialcirc*1).' and num_serialcirc_diff_empr = '.$this->empr_id;
+		$result = pmb_mysql_query($query, $dbh);
+		
+		while ($row = pmb_mysql_fetch_assoc($result)) {
+			$query = 'select max(serialcirc_diff_order) from serialcirc_diff where num_serialcirc_diff_serialcirc = '.($serialcirc*1);
+			$order = pmb_mysql_result(pmb_mysql_query($query, $dbh), 0, 0)+1;
+			$query = 'insert into serialcirc_diff set num_serialcirc_diff_empr = '.($new_empr_id*1).', serialcirc_diff_order = '.$order;
+			foreach ($row as $column => $value) {
+				if (($column == 'id_serialcirc_diff') || ($column == 'num_serialcirc_diff_empr') || ($column == 'serialcirc_diff_order')) {
+					continue;
+				}
+				$query.= ', '.$column.' = "'.$value.'"';
+			}
+			pmb_mysql_query($query, $dbh);
+		}
+		
+		$query = 'select serialcirc_group.* from serialcirc_group join serialcirc_diff on num_serialcirc_group_diff = id_serialcirc_diff where num_serialcirc_diff_serialcirc = '.($serialcirc*1).' and num_serialcirc_group_empr = '.$this->empr_id;
+		$result = pmb_mysql_query($query, $dbh);
+		
+		while ($row = pmb_mysql_fetch_assoc($result)) {
+			$query = 'select max(serialcirc_group_order) from serialcirc_group join serialcirc_diff on num_serialcirc_group_diff = id_serialcirc_diff where num_serialcirc_diff_serialcirc = '.($serialcirc*1);
+			$order = pmb_mysql_result(pmb_mysql_query($query, $dbh), 0, 0)+1;
+			$query = 'insert into serialcirc_group set num_serialcirc_group_empr = '.($new_empr_id*1).', serialcirc_group_order = '.$order;
+			foreach ($row as $column => $value) {
+				if (($column == 'id_serialcirc_group') || ($column == 'num_serialcirc_group_empr') || ($column == 'serialcirc_group_order') || ($column == 'serialcirc_group_responsable')) {
+					continue;
+				}
+				$query.= ', '.$column.' = "'.$value.'"';
+			}
+			pmb_mysql_query($query, $dbh);
+		}
 	}
 } // class end

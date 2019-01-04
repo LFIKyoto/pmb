@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_instrument_admin.tpl.php,v 1.7 2015-02-02 10:03:06 ngantier Exp $
+// $Id: nomenclature_instrument_admin.tpl.php,v 1.9 2017-11-07 15:34:41 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -48,19 +48,19 @@ $nomenclature_instrument_list_tpl="
 
 $nomenclature_instrument_list_line_tpl="
 <tr  class='!!odd_even!!' onmouseout=\"this.className='!!odd_even!!'\" onmouseover=\"this.className='surbrillance'\">	
-	<td valign='top' style=\"cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=instrument&sub=instrument&action=form&id=!!id!!';\" >				
+	<td style=\"vertical-align:top; cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=instrument&sub=instrument&action=form&id=!!id!!';\" >				
 		!!code!!
 	</td> 
-	<td valign='top' style=\"cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=instrument&sub=instrument&action=form&id=!!id!!';\" >				
+	<td style=\"vertical-align:top; cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=instrument&sub=instrument&action=form&id=!!id!!';\" >				
 		!!name!!
 	</td> 
-	<td valign='top' style=\"cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=instrument&sub=instrument&action=form&id=!!id!!';\" >				
+	<td style=\"vertical-align:top; cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=instrument&sub=instrument&action=form&id=!!id!!';\" >				
 		!!musicstand!!
 	</td> 
-	<td valign='top' style=\"cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=instrument&sub=instrument&action=form&id=!!id!!';\" >				
+	<td style=\"vertical-align:top; cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=instrument&sub=instrument&action=form&id=!!id!!';\" >				
 		!!family!!
 	</td> 
-	<td valign='top' style=\"cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=instrument&sub=instrument&action=form&id=!!id!!';\" >				
+	<td style=\"vertical-align:top; cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=instrument&sub=instrument&action=form&id=!!id!!';\" >				
 		!!standard!!
 	</td>
 </tr> 	
@@ -71,8 +71,12 @@ $nomenclature_instrument_form_tpl="
 <script type='text/javascript'>
 
 	function test_form(form){
-		if((form.name.value.length == 0) || (form.code.value.length == 0))		{
-			alert('".$msg["admin_nomenclature_instrument_form_name_error"]."');
+		if(form.code.value.length == 0){
+			alert('".addslashes($msg["admin_nomenclature_instrument_form_code_error"])."');
+			return false;
+		}
+		if(form.name.value.length == 0){
+			alert('".addslashes($msg["admin_nomenclature_instrument_form_name_error"])."');
 			return false;
 		}
 		return true;

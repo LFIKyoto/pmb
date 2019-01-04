@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: auth_popup.class.php,v 1.4.4.1 2015-10-14 08:55:14 jpermanne Exp $
+// $Id: auth_popup.class.php,v 1.8 2018-04-19 12:20:35 dbellamy Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 // authentification via un "popup" à l'OPAC
@@ -11,13 +11,12 @@ require_once($include_path."/empr.inc.php");
 require_once($include_path."/empr_func.inc.php");
 
 class auth_popup {
-	var $callback_func ="";
-	var $callback_url = "";
-	var $new_tab=false;
+	public $callback_func ="";
+	public $callback_url = "";
+	public $new_tab=false;
 	
 
 	public function __construct(){
-		$this->load_js();
 	}
 	
 	
@@ -41,7 +40,7 @@ class auth_popup {
 				// si paramétrage authentification particulière
 				$empty_pwd=true;
 				$ext_auth=false;
-				if (file_exists($base_path.'/includes/ext_auth.inc.php')) { $file_orig="empr.php"; require_once($base_path.'/includes/ext_auth.inc.php'); }
+				if (file_exists($base_path.'/includes/ext_auth.inc.php')) { require_once($base_path.'/includes/ext_auth.inc.php'); }
 				$log_ok = connexion_empr();
 				print $popup_header;
 				if($log_ok){
@@ -85,11 +84,6 @@ class auth_popup {
 		print $html;	
 	}
 	
-	public function load_js(){
-		global $include_path;
-		// print "<script type='text/javascript' src='".$include_path."/javascript/auth_popup.js'></script>";
-	}	
-	
 	public function show_form(){
 		print "
 		<div id='auth_popup' style='z-index:9001;padding:10px;border:1px solid black;background-color:white;height:100px;position:absolute;top:auto;left:auto
@@ -116,15 +110,16 @@ class auth_popup {
 					<h4>".$message."</h4><br />
 					<input type='text' name='login' class='login' size='14' value=\"".$msg["common_tpl_cardnumber"]."\" onFocus=\"this.value='';\"><br />
 					<input type='password' name='password' class='password' size='8' value='' />&nbsp;&nbsp;
+                    <input type='hidden' name='auth_from' value='auth_popup' />
 					<input type='hidden' name='callback_func' value='".htmlentities($this->callback_func,ENT_QUOTES,$charset)."'/>
 					<input type='hidden' name='callback_url' value='".htmlentities($this->callback_url,ENT_QUOTES,$charset)."'/>
 					<input type='hidden' name='new_tab' value='".$this->new_tab."'/>
 					<input type='submit' name='ok' value='".$msg[11]."' class='bouton'>";
 		$form.="</form>";
 		if($opac_password_forgotten_show)	
-			$form.="<a href='#' onclick='window.parent.location = \"".$base_path."/askmdp.php\";'>".$msg["mdp_forgotten"]."</a>";
+			$form.="<a class='mdp_forgotten' href='#' onclick='window.parent.location = \"".$base_path."/askmdp.php\";'>".$msg["mdp_forgotten"]."</a>";
 		if ($opac_websubscribe_show) 
-			$form .= "<br /><a href='#' onclick='window.parent.location = \"".$base_path."/subscribe.php\";'>".$msg["subs_not_yet_subscriber"]."</a>";
+			$form .= "<br /><a class='subs_not_yet_subscriber' href='#' onclick='window.parent.location = \"".$base_path."/subscribe.php\";'>".$msg["subs_not_yet_subscriber"]."</a>";
 
 		$form.="
 			</span>

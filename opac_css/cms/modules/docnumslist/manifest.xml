@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.1.2.1 2015-09-25 12:29:57 arenou Exp $ -->
+$Id: manifest.xml,v 1.2 2015-10-07 14:36:00 arenou Exp $ -->
 
 <manifest>
 	<name lanf="fr_FR">Liste de document numériques</name>

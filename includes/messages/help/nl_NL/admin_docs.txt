@@ -1,4 +1,4 @@
-<h1>Beheer van exemplaren</h1>
+<h2>Beheer van exemplaren</h2>
 
 <p>In <b>Beheer van exemplaren</b> kun je de instellingen voor ontlening en de statistieken van documenten definiëren.
 <ul>

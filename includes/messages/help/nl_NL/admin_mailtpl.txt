@@ -1,4 +1,4 @@
-<h1>Administration des template mail</h1>
+<h2>Administration des template mail</h2>
 <p>Cette page permet d&apos;&eacute;diter des templates de mail pour effectuer du mailing</p>
 <p>Param&eacute;trage &agrave; effectuer:</p>
 

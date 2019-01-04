@@ -2,7 +2,7 @@
 // +--------------------------------------------------------------------------+
 // | PMB est sous licence GPL, la réutilisation du code est cadrée            |
 // +--------------------------------------------------------------------------+
-// $Id: download.php,v 1.2 2015-06-05 13:16:35 dgoron Exp $
+// $Id: download.php,v 1.7 2018-06-29 13:19:03 dgoron Exp $
 
 //Impression
 
@@ -18,6 +18,7 @@ require($base_path."/includes/init.inc.php");
 require_once($class_path."/sort.class.php");
 require_once($class_path."/search.class.php");
 require_once($class_path."/acces.class.php");
+require_once($class_path."/explnum.class.php");
 
 if (file_exists($include_path.'/print/print_options_subst.xml')){
 	$xml_print = new XMLlist($include_path.'/print/print_options_subst.xml');
@@ -35,11 +36,12 @@ if ($action_download=="download_prepare") {
 	print "<b>".$msg["download_size"]."</b>";
 	print"
 	<blockquote>
+		<input type='radio' name='pager' id='selected_elements' value='2' ".($download_options['selected_elements'] ? ' checked ' : '')."/><label for='selected_elements'>&nbsp;".$msg["download_size_selected_elements"]."</label><br />
 		<input type='radio' name='pager' id='current_page' value='1' ".($download_options['current_page'] ? ' checked ' : '')."/><label for='current_page'>&nbsp;".$msg["download_size_current_page"]."</label><br />
 		<input type='radio' name='pager' id='all' value='0' ".($download_options['all'] ? ' checked ' : '')."/><label for='all'>&nbsp;".$msg["download_size_all"]."</label>
 	</blockquote>";
 
-	$sort_info = $sort_id ? '<input type="hidden" name="sort_id" value="'.$sort_id.'">' : '';
+	$sort_info = !empty($sort_id) ? '<input type="hidden" name="sort_id" value="'.$sort_id.'">' : '';
 	
 	print"
 		<b>".$msg["download_output_title"]."</b>
@@ -48,8 +50,8 @@ if ($action_download=="download_prepare") {
 			<input type='radio' name='output_docnum' id='output_docnum_zip' value='zip' ".($download_options['output_docnum_zip'] ? ' checked ' : '')."/><label for='output_docnum_zip'>&nbsp;".$msg["download_output_zip"]."</label><br />
 		</blockquote>
 		<input type='hidden' name='current_download' value='$current_download'/>
-		<input type='hidden' name='notice_id' value='$notice_id'/>".$sort_info."
-		<center><input type='submit' value='".$msg["download_download"]."' class='bouton'/>&nbsp;<input type='button' value='".$msg["download_cancel"]."' class='bouton' onClick='self.close();'/></center>";
+		<input type='hidden' name='notice_id' value='".(isset($notice_id) ? $notice_id : 0)."'/>".$sort_info."
+		<span style='text-align:center'><input type='submit' value='".$msg["download_download"]."' class='bouton'/>&nbsp;<input type='button' value='".$msg["download_cancel"]."' class='bouton' onClick='self.close();'/></span>";
 	print "</form></body></html>";
 }
 
@@ -70,6 +72,11 @@ if (($action_download=="")&&($_SESSION["DOWNLOAD"])) {
 	$environement=$_SESSION["DOWNLOAD"];
 	$limit='';
 	if ($environement["TEXT_QUERY"]) {
+		if (count($environement["TEXT_LIST_QUERY"])) {
+			foreach($environement["TEXT_LIST_QUERY"] as $query) {
+				@pmb_mysql_query($query);
+			}
+		}
 		$requete=preg_replace('/limit\s+[0-9]\s*,*\s*[0-9]*\s*$/','',$environement["TEXT_QUERY"],1);
 	} else {
 		switch ($environement["SEARCH_TYPE"]) {
@@ -135,7 +142,7 @@ if (($action_download=="")&&($_SESSION["DOWNLOAD"])) {
 		
 				if( $rights & 4 || (is_null($dom_1))){
 					if (($ligne->explnum_data)||($ligne->explnum_path)) {
-						$explnum_list[] = $ligne;
+						$explnum_list[] = $ligne->explnum_id;
 					}
 				}
 			}
@@ -145,9 +152,9 @@ if (($action_download=="")&&($_SESSION["DOWNLOAD"])) {
 	if (count($explnum_list)) {
 		switch($environement['output_docnum']) {
 			case 'singly':
-				foreach ($explnum_list as $explnum) {
+				foreach ($explnum_list as $explnum_id) {
 					print "<script type='text/javascript'>
-						window.open('".$pmb_url_base."doc_num_data.php?explnum_id=".$explnum->explnum_id."&force_download=1','_blank','');
+						window.open('".$pmb_url_base."doc_num_data.php?explnum_id=".$explnum_id."&force_download=1','_blank','');
 						</script>";
 				}
 				break;
@@ -159,11 +166,12 @@ if (($action_download=="")&&($_SESSION["DOWNLOAD"])) {
 				$filename="temp/pmb_".$filename.".zip";
 				$res = $zip->open($filename, ZipArchive::CREATE);
 				if ($res) {
-					foreach ($explnum_list as $explnum) {
-						$zip->addFromString(reg_diacrit(basename($explnum->path)),file_get_contents($opac_url_base."doc_num_data.php?explnum_id=".$explnum->explnum_id));
+					foreach ($explnum_list as $explnum_id) {
+						$explnum = new explnum($explnum_id);
+						$zip->addFromString(reg_diacrit($explnum->get_file_name()),$explnum->get_file_content());
 					}
 					$zip->close();
-					
+
 					header("Content-disposition: attachment; filename=\"".basename($filename)."\"");
 					header("Content-Type: application/force-download");
 					header("Content-Transfer-Encoding: application/zip");

@@ -1,8 +1,3 @@
-define(
-({
-	buttonOk: "OK",
-	buttonCancel: "Peruuta",
-	buttonSave: "Tallenna",
-	itemClose: "Sulje"
-})
-);
+//>>built
+define("dijit/nls/fi/common",{buttonOk:"OK",buttonCancel:"Peruuta",buttonSave:"Tallenna",itemClose:"Sulje"});
+//# sourceMappingURL=common.js.map

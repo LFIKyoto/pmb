@@ -2,54 +2,54 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: interpreter.inc.php,v 1.2 2013-01-09 11:03:32 touraine37 Exp $
+// $Id: interpreter.inc.php,v 1.3 2017-01-25 17:07:05 dgoron Exp $
 require_once ($include_path . "/misc.inc.php");
 
-$func_format['romain']= aff_romain;
-$func_format['roman']= aff_romain;
-$func_format['date']= aff_date;
-$func_format['day']= aff_day;
-$func_format['dayofweek']= aff_dayofweek;
-$func_format['month']= aff_month;
-$func_format['week']= aff_week;
-$func_format['year']= aff_year;
-$func_format['str_day']= aff_str_day;
-$func_format['str_month']= aff_str_month;
-$func_format['str_short_day']= aff_str_short_day;
-$func_format['str_short_month']= aff_str_short_month;
-$func_format['season']= aff_season;
-$func_format['str_season']= aff_str_season;
-$func_format['seasonS']= aff_seasonS;
-$func_format['str_seasonS']= aff_str_seasonS;
-$func_format['sql']= aff_sql;
-$func_format['+']= aff_add;
-$func_format['-']= aff_sub;
-$func_format['*']= aff_mux;
-$func_format['%']= aff_mod;
-$func_format['/']= aff_div;
-$func_format['+day']= aff_add_day;
-$func_format['+month']= aff_add_month;
-$func_format['+year']= aff_add_year;
-$func_format['-day']= aff_sub_day;
-$func_format['-month']= aff_sub_month;
-$func_format['-year']= aff_sub_year;
-$func_format['quarter']= aff_quarter;
-$func_format['dayofyear']= aff_dayofyear;
-$func_format['curdate']= aff_curdate;
-$func_format['0day']= aff_0day;
-$func_format['0month']= aff_0month;
+$func_format['romain']= 'aff_romain';
+$func_format['roman']= 'aff_romain';
+$func_format['date']= 'aff_date';
+$func_format['day']= 'aff_day';
+$func_format['dayofweek']= 'aff_dayofweek';
+$func_format['month']= 'aff_month';
+$func_format['week']= 'aff_week';
+$func_format['year']= 'aff_year';
+$func_format['str_day']= 'aff_str_day';
+$func_format['str_month']= 'aff_str_month';
+$func_format['str_short_day']= 'aff_str_short_day';
+$func_format['str_short_month']= 'aff_str_short_month';
+$func_format['season']= 'aff_season';
+$func_format['str_season']= 'aff_str_season';
+$func_format['seasonS']= 'aff_seasonS';
+$func_format['str_seasonS']= 'aff_str_seasonS';
+$func_format['sql']= 'aff_sql';
+$func_format['+']= 'aff_add';
+$func_format['-']= 'aff_sub';
+$func_format['*']= 'aff_mux';
+$func_format['%']= 'aff_mod';
+$func_format['/']= 'aff_div';
+$func_format['+day']= 'aff_add_day';
+$func_format['+month']= 'aff_add_month';
+$func_format['+year']= 'aff_add_year';
+$func_format['-day']= 'aff_sub_day';
+$func_format['-month']= 'aff_sub_month';
+$func_format['-year']= 'aff_sub_year';
+$func_format['quarter']= 'aff_quarter';
+$func_format['dayofyear']= 'aff_dayofyear';
+$func_format['curdate']= 'aff_curdate';
+$func_format['0day']= 'aff_0day';
+$func_format['0month']= 'aff_0month';
 //     passer en majuscule la première lettre, 
-$func_format['1ucase']=aff_ucase_firstletter;
+$func_format['1ucase']='aff_ucase_firstletter';
 //    passer le tout en majuscules,
-$func_format['ucase']=aff_ucase;
+$func_format['ucase']='aff_ucase';
 //    passer les premières lettres de chaque mot en majuscule.
-$func_format['1ucasew']=aff_ucase_firstletter_word;
+$func_format['1ucasew']='aff_ucase_firstletter_word';
 
 //$func_format['']= ;
 
-$func_format['semester']= aff_semester;
-$func_format['ordinal']= aff_ordinal;
-$func_format['str_ordinal']= aff_str_ordinal;
+$func_format['semester']= 'aff_semester';
+$func_format['ordinal']= 'aff_ordinal';
+$func_format['str_ordinal']= 'aff_str_ordinal';
 
 $var_format = array();
 

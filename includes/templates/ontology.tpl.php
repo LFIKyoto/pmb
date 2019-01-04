@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ontology.tpl.php,v 1.3 2014-08-01 14:04:49 Alexandre Exp $
+// $Id: ontology.tpl.php,v 1.4 2017-02-03 12:00:48 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -325,7 +325,7 @@ function ontology_sel_!!fname!!(index) {
 		var cpt = 'nb_!!fname!!_';
 		
 		var deb_rech=document.getElementById(label).value;
-		openPopUp(\"select.php?what=ontology&caller=ontology_object_form&objs=\"+objs+\"&code=\"+code+\"&label=\"+label+\"&cpt=\"+cpt+\"&dyn=1&deb_rech=\"+encode_URL(deb_rech), 'select_object', 500, 400, 0, 0, 'infobar=no, status=no, scrollbars=yes, toolbar=no, menubar=no, dependent=yes, resizable=yes');
+		openPopUp(\"select.php?what=ontology&caller=ontology_object_form&objs=\"+objs+\"&code=\"+code+\"&label=\"+label+\"&cpt=\"+cpt+\"&dyn=1&deb_rech=\"+".pmb_escape()."(deb_rech), 'select_object', 500, 400, 0, 0, 'infobar=no, status=no, scrollbars=yes, toolbar=no, menubar=no, dependent=yes, resizable=yes');
 		return false;
 	
 	} catch(e){}

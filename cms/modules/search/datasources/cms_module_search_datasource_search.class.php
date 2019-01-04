@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_search_datasource_search.class.php,v 1.3 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: cms_module_search_datasource_search.class.php,v 1.4 2016-09-20 10:25:42 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -23,7 +23,7 @@ class cms_module_search_datasource_search extends cms_module_common_datasource{
 		$datas = array();
 		if($selector){
 			$dests =  $selector->get_value();
-			$query = "select managed_module_box from cms_managed_modules join cms_cadres on id_cadre = ".$this->cadre_parent." and cadre_object = managed_module_name";
+			$query = "select managed_module_box from cms_managed_modules join cms_cadres on id_cadre = '".($this->cadre_parent*1)."' and cadre_object = managed_module_name";
 			$result = pmb_mysql_query($query);
 			if(pmb_mysql_num_rows($result)){
 				$box = pmb_mysql_result($result,0,0);

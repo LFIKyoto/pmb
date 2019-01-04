@@ -2,23 +2,25 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: affiliate_search.class.php,v 1.14 2015-05-27 09:56:27 apetithomme Exp $
+// $Id: affiliate_search.class.php,v 1.27 2018-05-22 10:51:06 dgoron Exp $
 
 require_once($class_path."/connecteurs.class.php");
 require_once($class_path."/marc_table.class.php");
 require_once($include_path."/parser.inc.php");
 require_once($class_path."/search.class.php");
+require_once($class_path."/search_authorities.class.php");
 require_once($include_path."/notice_affichage.inc.php");
 require_once($include_path."/navbar.inc.php");
 require_once($include_path."/surlignage.inc.php");
+require_once($class_path."/suggest.class.php");
 /*
  *  Classe pilotant les recherches affiliées dans les sources externes
  */
  
 class affiliate_search {
-	var $affiliate_source = array();
-	var $affiliate_source_name = array();
-	var $look_array = array(
+	public $affiliate_source = array();
+	public $affiliate_source_name = array();
+	public $look_array = array(
 		"title" => 6,
 		"author" => 8,
 		"publisher" => 3,
@@ -32,7 +34,7 @@ class affiliate_search {
 		"all" => 7,
 		"concept" => 28
 	);
-	var $authorities_extended_array = array(
+	public $authorities_extended_array = array(
 		'2'  => "author",
 		'3'  => "publisher",
 		'4'  => "collection",
@@ -42,8 +44,10 @@ class affiliate_search {
 		'51' => "titre_uniforme",
 		'6'  => "serie"
 	);
-
-    function affiliate_search($user_query="",$search_type="notices") {
+	public $nb_results = 0;
+	public $filter = '';
+	
+    public function __construct($user_query="",$search_type="notices") {
     	$this->user_query = $user_query;
     	$this->search_type = $search_type;
     	$this->fetch_sources();
@@ -51,7 +55,7 @@ class affiliate_search {
     }
     
     //On récupère la liste des sources affiliées
-    function fetch_sources(){
+    public function fetch_sources(){
   		global $base_path;
   		
   		$connectors = new connecteurs();
@@ -75,11 +79,11 @@ class affiliate_search {
     	}  	
     }
     
-    function generateSearch(){
+    public function generateSearch(){
  		//A surcharger
     }
     
-    function generateGlobals(){
+    public function generateGlobals(){
     	global $search;
     	
     	$field_label = "f_".$this->look_array[$this->type];
@@ -88,29 +92,29 @@ class affiliate_search {
 		//opérateur
 		$op_="BOOLEAN";
 	    $op="op_0_".$field_label;
-	    global $$op;
-	    $$op=$op_;
+	    global ${$op};
+	    ${$op}=$op_;
 	    
 	   	//contenu de la recherche
 	    $field="field_0_".$field_label;
 	    $field_=array();
 	    $field_[0]=$this->user_query;
-		global $$field;
-		$$field=$field_;
+		global ${$field};
+		${$field}=$field_;
 	    
 	    //opérateur inter-champ
 	    $inter="inter_0_".$field_label;
-	    global $$inter;
-	    $$inter="and";
+	    global ${$inter};
+	    ${$inter}="and";
 	    		    		
 	    //variables auxiliaires
 	    $fieldvar_="fieldvar_0_".$field_label;
-	    global $$fieldvar_;
-	    $$fieldvar_="";
-	    $fieldvar=$$fieldvar_;
+	    global ${$fieldvar_};
+	    ${$fieldvar_}="";
+	    $fieldvar=${$fieldvar_};
     }
     
-    function addSources(){
+    public function addSources(){
     	global $search;
     	global $op_0_s_2;
 		global $field_0_s_2;
@@ -125,28 +129,28 @@ class affiliate_search {
 				$search[$i+1]=$search[$i];
 				$c_field = "field_".$i."_".$search[$i];
 				$n_field = "field_".($i+1)."_".$search[$i];
-				global $$c_field, $$n_field;
+				global ${$c_field}, ${$n_field};
 				
-				$$n_field=$$c_field;
-				$$c_field = "";
+				${$n_field}=${$c_field};
+				${$c_field} = "";
 				
 				$c_op = "op_".$i."_".$search[$i];
 				$n_op = "op_".($i+1)."_".$search[$i];
-				global $$c_op ,$$n_op;
-				$$n_op=$$c_op;
-				$$c_op = "";
+				global ${$c_op} ,${$n_op};
+				${$n_op}=${$c_op};
+				${$c_op} = "";
 				
 				$c_inter = "inter_".$i."_".$search[$i];
 				$n_inter = "inter_".($i+1)."_".$search[$i];
-				global $$c_inter,$$n_inter;
-				$$n_inter=$$c_inter;
-				$$c_inter = "";
+				global ${$c_inter},${$n_inter};
+				${$n_inter}=${$c_inter};
+				${$c_inter} = "";
 				
 				$c_fieldvar = "fieldvar_".$i."_".$search[$i];
 				$n_fieldvar = "fieldvar_".($i+1)."_".$search[$i];
-				global $$c_fieldvar,$$n_fieldvar;
-				$$n_fieldvar=$$c_fieldvar;
-				$$c_fieldvar = "";
+				global ${$c_fieldvar},${$n_fieldvar};
+				${$n_fieldvar}=${$c_fieldvar};
+				${$c_fieldvar} = "";
 			}
 			$search[0]="s_2";
 			$op_0_s_2="EQ";
@@ -154,15 +158,15 @@ class affiliate_search {
 		}
     }
     
-    function makeSearch(){
+    public function makeSearch(){
  		//A surcharger
     } 
     
-    function getNbResults(){
+    public function getNbResults(){
  		//A surcharger
     }
     
-    function getTotalNbResults(){
+    public function getTotalNbResults(){
     	$this->getNbResults();
     	if(is_array($this->getNbResults())){
 			$nb_results = $this->nb_results['total'];
@@ -170,7 +174,7 @@ class affiliate_search {
 		return $nb_results;
     }
     
-    function getResults(){
+    public function getResults(){
     	switch($this->search_type){
     		case "authorities" :
     			return $this->getAuthoritiesResults();
@@ -185,16 +189,14 @@ class affiliate_search {
     	}
     }
     
-    function getAuthoritiesResults(){
+    public function getAuthoritiesResults(){
 		//A surcharger
     }
     
-	function getNoticesResults() {
+	public function getNoticesResults() {
     	global $dbh;
     	global $begin_result_liste;
     	global $opac_notices_depliable;
-    	global $opac_show_suggest;
-    	global $opac_resa_popup;
     	global $opac_search_results_per_page;
     	$nb_per_page_search = $opac_search_results_per_page;
     	global $page;
@@ -202,7 +204,6 @@ class affiliate_search {
     	global $search;
     	global $msg;						
 						
-    	global $affich_tris_result_liste;
     	global $count;
     	global $add_cart_link;    	
     	if(!$page) $page = 1; 
@@ -232,13 +233,7 @@ class affiliate_search {
 		
 		if ($opac_notices_depliable) $this->results.= $begin_result_liste;
 		
-		if ($opac_show_suggest) {
-			$bt_sugg = "&nbsp;&nbsp;&nbsp;<span class=\"search_bt_sugg\"><a href=# ";		
-			if ($opac_resa_popup) $bt_sugg .= " onClick=\"w=window.open('./do_resa.php?lvl=make_sugg&oresa=popup','doresa','scrollbars=yes,width=600,height=600,menubar=0,resizable=yes'); w.focus(); return false;\"";
-			else $bt_sugg .= "onClick=\"document.location='./do_resa.php?lvl=make_sugg&oresa=popup' \" ";			
-			$bt_sugg.= " title='".$msg["empr_bt_make_sugg"]."' >".$msg['empr_bt_make_sugg']."</a></span>";
-			$this->results.= $bt_sugg;
-		}
+		$this->results.=suggest::get_add_link();
 		$this->results.="&nbsp;&nbsp;";
 		
 		flush();
@@ -262,60 +257,51 @@ class affiliate_search {
     	$this->results.= "</div>
 		</div>";
 		//gestion de la pagination...
-		$nbepages = ceil($this->getTotalNbResults()/$opac_search_results_per_page);
-		$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$this->results.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+		$this->results.=  $this->getNavigationBar();
 		return $this->results;
     }
    
-	function getNoticesAuthorityResults(){
+	public function getNoticesAuthorityResults(){
 		//A surcharger
 	}   
-	function make_hidden_search_form($url,$form_name="form_values",$target="",$close_form=true){
+	public function make_hidden_search_form($url,$form_name="form_values",$target="",$close_form=true){
 		$form = $this->external_search->make_hidden_search_form("",$form_name,"",$close_form);
 		return $form;
 	}
 	
-	function getAuthorityLabel($id,$type){
+	public function getAuthorityLabel($id,$type){
 		global $lang;
 		switch ($type){
 			case "author":
 				$aut=new auteur($id);
-				if($aut->rejete) $libelle = $aut->name.', '.$aut->rejete;
-				else $libelle = $aut->name;
-				if($aut->date) $libelle .= " ($aut->author_date)";
+				$libelle = $aut->get_isbd();
 				break;
 			case "category":
 				$libelle = categories::getlibelle($id,$lang);
 				break;
 			case "publisher":
 				$ed = new publisher($id);
-				$libelle=$ed->name;
-				if ($ed->ville) {
-					if ($ed->pays) $libelle.=" ($ed->ville - $ed->pays)";
-					else $libelle.=" ($ed->ville)";
-				}
+				$libelle = $ed->get_isbd();
 				break;
 			case "collection" :
 				$coll = new collection($id);
-				$libelle = $coll->name;
+				$libelle = $coll->get_isbd();
 				break;
 			case "subcollection" :
 				$coll = new subcollection($id);
-				$libelle = $coll->name;
+				$libelle = $coll->get_isbd();
 				break;
 			case "serie" :
 				$serie = new serie($id);
-				$libelle = $serie->name;
+				$libelle = $serie->get_isbd();
 				break;
 			case "indexint" :
 				$indexint = new indexint($id);
-				$libelle = $indexint->display ;
+				$libelle = $indexint->get_isbd();
 				break;
 			case "titre_uniforme" :
 				$tu = new titre_uniforme($id);
-				$libelle = $tu->name;
+				$libelle = $tu->get_isbd();
 				break;
 			default :
 				$libelle = "";
@@ -323,44 +309,51 @@ class affiliate_search {
 		}
 		return $libelle;
 	}
+	
+	//gestion de la pagination...
+	protected function getNavigationBar($nb_results=0) {
+		global $page;
+		global $opac_search_results_per_page;
+		global $mode;
+		
+		if(!$page) $page = 1;
+		if(!$nb_results) {
+			$nb_results = $this->getTotalNbResults();
+		}
+		$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results".($mode=='extended'?'&mode=extended':'')."&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
+		$nb_per_page_custom_url = "javascript:document.form_values.nb_per_page_custom.value=!!nb_per_page_custom!!";
+		$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results".($mode=='extended'?'&mode=extended':'')."&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
+		
+		$navigationBar = "<div id='navbar'><hr />\n<div style='text-align:center'>";
+		$navigationBar .= printnavbar($page, $nb_results, $opac_search_results_per_page, $url_page, $nb_per_page_custom_url, $action).
+		$navigationBar .= "</div></div>";
+		return $navigationBar;
+	}
 }
 
 /*
- * Classe de recherche sur les auteurs
+ * Classe de recherche sur les notices
  */
-class affiliate_search_author extends affiliate_search {
-	
-	function affiliate_search_author($user_query="",$search_type="notices"){
-		$this->type= "author";
-		parent::affiliate_search($user_query,$search_type);
-	} 
-	
-	function generateSearch(){
-		$this->generateGlobals();	
-		$this->addSources();
-    }	
-    
-    function makeSearch(){
-    	global $search;
-    	if($this->search_type == "authorities"){
-   			$search_file="search_simple_fields_authorities";
-    	}else $search_file="search_simple_fields_unimarc";
+class affiliate_search_records extends affiliate_search {
 
-    	$this->external_search=new search($search_file);
+	public function generateSearch(){
+		$this->generateGlobals();
+		$this->addSources();
+	}
+    
+    public function makeSearch(){
+    	global $search;
+    	$this->external_search=new search("search_simple_fields_unimarc");
 		$this->table_tempo = $this->external_search->make_search("f_".$this->look_array[$this->type]);
     }
-
-	function getNbResults(){
+    
+    public function getNbResults(){
     	if(!$this->nb_results){
     		if($this->table_tempo){
-    			if($this->search_type == "authorities"){
-   					$this->fetch_auteurs();
-    			}else{
-    				$requete="select count(1) from ".$this->table_tempo;
-					$resultat=pmb_mysql_query($requete);
-					$this->nb_results = @pmb_mysql_result($resultat,0,0); 
-					if(!$this->nb_results) $this->nb_results = 0;
-    			}
+    			$requete="select count(1) from ".$this->table_tempo;
+    			$resultat=pmb_mysql_query($requete);
+    			$this->nb_results = @pmb_mysql_result($resultat,0,0);
+    			if(!$this->nb_results) $this->nb_results = 0;
     		}else{
     			global $search;
     			$this->makeSearch();
@@ -368,9 +361,61 @@ class affiliate_search_author extends affiliate_search {
     		}
     	}
     	return $this->nb_results;
-    } 
+    }
+}
+
+/*
+ * Classe de recherche sur les autorités
+ */
+class affiliate_search_authorities extends affiliate_search {
+	
+	public function generateSearch(){
+		$this->generateGlobals();
+		$this->addSources();
+	}
+	
+	public function makeSearch(){
+		global $search;
+		if($this->search_type == "authorities"){
+			$search_file="search_simple_fields_authorities";
+		}else $search_file="search_simple_fields_unimarc";
+	
+		$this->external_search=new search_authorities($search_file);
+		$this->table_tempo = $this->external_search->make_search("f_".$this->look_array[$this->type]);
+	}
+	
+	public function getNbResults(){
+		if(!$this->nb_results){
+			if($this->table_tempo){
+				if($this->search_type == "authorities"){
+					$this->fetch_authorities();
+				}else{
+					$requete="select count(1) from ".$this->table_tempo;
+					$resultat=pmb_mysql_query($requete);
+					$this->nb_results = @pmb_mysql_result($resultat,0,0);
+					if(!$this->nb_results) $this->nb_results = 0;
+				}
+			}else{
+				global $search;
+				$this->makeSearch();
+				$this->getNbResults();
+			}
+		}
+		return $this->nb_results;
+	}
+}
+
+/*
+ * Classe de recherche sur les auteurs
+ */
+class affiliate_search_author extends affiliate_search_authorities {
+	
+	public function __construct($user_query="",$search_type="notices"){
+		$this->type= "author";
+		parent::__construct($user_query,$search_type);
+	}	
     
-	function getAuthoritiesResults(){
+	public function getAuthoritiesResults(){
     	global $msg;
     	global $opac_search_results_per_page;
     	global $page;
@@ -404,7 +449,7 @@ class affiliate_search_author extends affiliate_search {
 	    		$last_item = ($start_page+$opac_search_results_per_page) <= count($authors_tab) ? ($start_page+$opac_search_results_per_page) : count($authors_tab);
 	    		for($i = $start_page ; $i<$last_item ; $i++){
 	    			$this->authoritiesResult.= "
-					<li class='categ_colonne'><font class='notice_fort'><a href='#'  onclick='document.form_values.action=\"./index.php?lvl=external_authorities&type=author&filter=".$authors_tab[$i]['type']."&ext_value=".urlencode($authors_tab[$i]['value'])."\";document.form_values.submit();return false;'>".$authors_tab[$i]['label']."</a></font></li>";
+					<li class='categ_colonne'><span class='notice_fort'><a href='#'  onclick='document.form_values.action=\"./index.php?lvl=external_authorities&type=author&filter=".$authors_tab[$i]['type']."&ext_value=".urlencode($authors_tab[$i]['value'])."\";document.form_values.submit();return false;'>".$authors_tab[$i]['label']."</a></span></li>";
 	    		}
 
 		    	$this->authoritiesResult.= "
@@ -412,10 +457,7 @@ class affiliate_search_author extends affiliate_search {
 		    		</div>
 				</div>";
 				//gestion de la pagination...
-				$nbepages = ceil($this->getTotalNbResults()/$opac_search_results_per_page);
-				$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-				$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-				$this->authoritiesResult.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+				$this->authoritiesResult.=  $this->getNavigationBar();
  			}
     	}else{
     		global $search;
@@ -425,12 +467,10 @@ class affiliate_search_author extends affiliate_search {
     	return $this->authoritiesResult;
     } 
     	
-	function getNoticesAuthorityResults(){
+	public function getNoticesAuthorityResults(){
 		global $dbh;
     	global $begin_result_liste;
     	global $opac_notices_depliable;
-    	global $opac_show_suggest;
-    	global $opac_resa_popup;
     	global $opac_search_results_per_page;
     	$nb_per_page_search = $opac_search_results_per_page;
     	global $page;
@@ -439,7 +479,6 @@ class affiliate_search_author extends affiliate_search {
     	global $msg;
     	global $fonction_auteur;					
 						
-    	global $affich_tris_result_liste;
     	global $count;
     	global $add_cart_link;    	
     	
@@ -599,14 +638,11 @@ class affiliate_search_author extends affiliate_search {
 		//on a besoin d'un formulaire pour reposter la recherche
 		$this->results.= $this->make_hidden_search_form();
 		//gestion de la pagination...
-		$nbepages = ceil($nb_results/$opac_search_results_per_page);
-		$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$this->results.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+		$this->results.=  $this->getNavigationBar($nb_results);
 		return $this->results;	
 	}
 	
-	function fetch_auteurs() {
+	public function fetch_authorities() {
 		global $fonction_auteur;
 		global $dbh ;
 		global $opac_url_base ;
@@ -700,6 +736,7 @@ class affiliate_search_author extends affiliate_search {
 		$collectivities = array_unique($collectivities,SORT_REGULAR);
 		$congres = array_unique($congres,SORT_REGULAR);
 		
+		if(!is_array($this->nb_results)) $this->nb_results = array();
 		$this->nb_results['total'] = count($authors)+count($collectivities)+count($congres);
 		$this->nb_results['authors'] = count($authors);
 		$this->nb_results['coll'] = count($collectivities);
@@ -715,49 +752,14 @@ class affiliate_search_author extends affiliate_search {
 /*
  * Classe de recherche sur les auteurs
  */
-class affiliate_search_collection extends affiliate_search {
+class affiliate_search_collection extends affiliate_search_authorities {
 	
-	function affiliate_search_collection($user_query="",$search_type="notices"){
+	public function __construct($user_query="",$search_type="notices"){
 		$this->type= "collection";
-		parent::affiliate_search($user_query,$search_type);
+		parent::__construct($user_query,$search_type);
 	} 
-	
-	function generateSearch(){
-		$this->generateGlobals();	
-		$this->addSources();
-    }	
     
-    function makeSearch(){
-    	global $search;
-    	if($this->search_type == "authorities"){
-   			$search_file="search_simple_fields_authorities";
-    	}else $search_file="search_simple_fields_unimarc";
-
-    	$this->external_search=new search($search_file);
-		$this->table_tempo = $this->external_search->make_search("f_".$this->look_array[$this->type]);
-    }
-
-	function getNbResults(){
-    	if(!$this->nb_results){
-    		if($this->table_tempo){
-    			if($this->search_type == "authorities"){
-   					$this->fetch_collections();
-    			}else{
-    				$requete="select count(1) from ".$this->table_tempo;
-					$resultat=pmb_mysql_query($requete);
-					$this->nb_results = @pmb_mysql_result($resultat,0,0);
-					if(!$this->nb_results) $this->nb_results = 0;
-    			}
-    		}else{
-    			global $search;
-    			$this->makeSearch();
-    			$this->getNbResults();
-    		}
-    	}
-    	return $this->nb_results;
-    } 
-    
-   function getAuthoritiesResults(){
+   public function getAuthoritiesResults(){
     	global $msg;
     	global $opac_search_results_per_page;
     	global $page;
@@ -781,7 +783,7 @@ class affiliate_search_collection extends affiliate_search {
 	    		$last_item = ($start_page+$opac_search_results_per_page) <= count($coll) ? ($start_page+$opac_search_results_per_page) : count($coll);
 	    		for($i = $start_page ; $i<$last_item ; $i++){
 	    			$this->authoritiesResult.= "
-					<li class='categ_colonne'><font class='notice_fort'><a href='#'  onclick='document.form_values.action=\"./index.php?lvl=external_authorities&type=collection&ext_value=".urlencode($coll[$i])."\";document.form_values.submit();return false;'>".$coll[$i]."</a></font></li>";
+					<li class='categ_colonne'><span class='notice_fort'><a href='#'  onclick='document.form_values.action=\"./index.php?lvl=external_authorities&type=collection&ext_value=".urlencode($coll[$i])."\";document.form_values.submit();return false;'>".$coll[$i]."</a></span></li>";
 	    		}												
 
 		    	$this->authoritiesResult.= "
@@ -789,10 +791,7 @@ class affiliate_search_collection extends affiliate_search {
 		    		</div>
 				</div>";
 				//gestion de la pagination...
-				$nbepages = ceil($this->getTotalNbResults()/$opac_search_results_per_page);
-				$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-				$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-				$this->authoritiesResult.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+				$this->authoritiesResult.=  $this->getNavigationBar();
  			}
     	}else{
     		global $search;
@@ -802,12 +801,10 @@ class affiliate_search_collection extends affiliate_search {
     	return $this->authoritiesResult;
     }   
     
- 	function getNoticesAuthorityResults(){
+ 	public function getNoticesAuthorityResults(){
 		global $dbh;
     	global $begin_result_liste;
     	global $opac_notices_depliable;
-    	global $opac_show_suggest;
-    	global $opac_resa_popup;
     	global $opac_search_results_per_page;
     	$nb_per_page_search = $opac_search_results_per_page;
     	global $page;
@@ -816,7 +813,6 @@ class affiliate_search_collection extends affiliate_search {
     	global $msg;
     	global $fonction_auteur;					
 						
-    	global $affich_tris_result_liste;
     	global $count;
     	global $add_cart_link;    	
     	
@@ -936,19 +932,14 @@ class affiliate_search_collection extends affiliate_search {
 		//on a besoin d'un formulaire pour reposter la recherche
 		$this->results.= $this->make_hidden_search_form();
 		//gestion de la pagination...
-		$nbepages = ceil($nb_results/$opac_search_results_per_page);
-		$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$this->results.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+		$this->results.=  $this->getNavigationBar($nb_results);
 		return $this->results;	
 	}   
 	
-	function getNoticesResults() {
+	public function getNoticesResults() {
     	global $dbh;
     	global $begin_result_liste;
     	global $opac_notices_depliable;
-    	global $opac_show_suggest;
-    	global $opac_resa_popup;
     	global $opac_search_results_per_page;
     	$nb_per_page_search = $opac_search_results_per_page;
     	global $page;
@@ -956,7 +947,6 @@ class affiliate_search_collection extends affiliate_search {
     	global $search;
     	global $msg;						
 						
-    	global $affich_tris_result_liste;
     	global $count;
     	global $add_cart_link;    	
     	if(!$page) $page = 1; 
@@ -983,13 +973,7 @@ class affiliate_search_collection extends affiliate_search {
 		";
 
 		$this->results.= pmb_bidi("<h3>".$this->getTotalNbResults()." ".$msg['titles_found']." ".$this->external_search->make_human_query().activation_surlignage()."</h3>");
-		if ($opac_show_suggest) {
-			$bt_sugg = "&nbsp;&nbsp;&nbsp;<span class=\"search_bt_sugg\"><a href=# ";		
-			if ($opac_resa_popup) $bt_sugg .= " onClick=\"w=window.open('./do_resa.php?lvl=make_sugg&oresa=popup','doresa','scrollbars=yes,width=600,height=600,menubar=0,resizable=yes'); w.focus(); return false;\"";
-			else $bt_sugg .= "onClick=\"document.location='./do_resa.php?lvl=make_sugg&oresa=popup' \" ";			
-			$bt_sugg.= " title='".$msg["empr_bt_make_sugg"]."' >".$msg['empr_bt_make_sugg']."</a></span>";
-			$this->results.= $bt_sugg;
-		}
+		$this->results.=suggest::get_add_link();
 		flush();
 		
 		$entrepots_localisations = array();
@@ -1015,14 +999,11 @@ class affiliate_search_collection extends affiliate_search {
 		//on a besoin d'un formulaire pour reposter la recherche
 		//$this->results.= $this->make_hidden_search_form();
 		//gestion de la pagination...
-		$nbepages = ceil($this->getTotalNbResults()/$opac_search_results_per_page);
-		$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$this->results.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+		$this->results.=  $this->getNavigationBar();
 		return $this->results;
     }    
 
-	function fetch_collections() {
+	public function fetch_authorities() {
 		global $fonction_auteur;
 		global $dbh ;
 		global $opac_url_base ;
@@ -1038,161 +1019,45 @@ class affiliate_search_collection extends affiliate_search {
 			if(!in_array($infos[5],$collections))
 				$collections[]=$infos[5];
 		}
-				
+		if(!is_array($this->nb_results)) $this->nb_results = array();
 		$this->nb_results['total'] = count($collections);
 		return $collections;
 	} // fin fetch_collections	
 }
 
 
-class affiliate_search_abstract extends affiliate_search {
+class affiliate_search_abstract extends affiliate_search_records {
 	
-	function affiliate_search_abstract($user_query="",$search_type="notices"){
+	public function __construct($user_query="",$search_type="notices"){
 		$this->type= "abstract";
-		parent::affiliate_search($user_query,$search_type);
-	} 
-	
-	function generateSearch(){
-		$this->generateGlobals();	
-		$this->addSources();
-    }	
-    
-    function makeSearch(){
-    	global $search;
-    	$this->external_search=new search("search_simple_fields_unimarc");
-		$this->table_tempo = $this->external_search->make_search("f_".$this->look_array[$this->type]);
-    }
-
-	function getNbResults(){
-    	if(!$this->nb_results){
-    		if($this->table_tempo){
-   				$requete="select count(1) from ".$this->table_tempo;
-				$resultat=pmb_mysql_query($requete);
-				$this->nb_results = @pmb_mysql_result($resultat,0,0); 
-				if(!$this->nb_results) $this->nb_results = 0;
-    		}else{
-    			global $search;
-    			$this->makeSearch();
-    			$this->getNbResults();
-    		}
-    	}
-    	return $this->nb_results;
-    }  
+		parent::__construct($user_query,$search_type);
+	}
 }
 
-class affiliate_search_title extends affiliate_search {
+class affiliate_search_title extends affiliate_search_records {
 	
-	function affiliate_search_title($user_query=""){
+	public function __construct($user_query=""){
 		$this->type= "title";
-		parent::affiliate_search($user_query,"notices");
-	} 
-	
-	function generateSearch(){
-		$this->generateGlobals();	
-		$this->addSources();
-    }	
-    
-    function makeSearch(){
-    	global $search;
-    	$this->external_search=new search("search_simple_fields_unimarc");
-		$this->table_tempo = $this->external_search->make_search("f_".$this->look_array[$this->type]);
-    }
-
-	function getNbResults(){
-    	if(!$this->nb_results){
-    		if($this->table_tempo){
-   				$requete="select count(1) from ".$this->table_tempo;
-				$resultat=pmb_mysql_query($requete);
-				$this->nb_results = @pmb_mysql_result($resultat,0,0); 
-				if(!$this->nb_results) $this->nb_results = 0;
-    		}else{
-    			global $search;
-    			$this->makeSearch();
-    			$this->getNbResults();
-    		}
-    	}
-    	return $this->nb_results;
-    } 
+		parent::__construct($user_query,"notices");
+	}
 }
 
-class affiliate_search_all extends affiliate_search {
+class affiliate_search_all extends affiliate_search_records {
 	
-	function affiliate_search_all($user_query=""){
+	public function __construct($user_query=""){
 		$this->type= "all";
-		parent::affiliate_search($user_query,"notices");
+		parent::__construct($user_query,"notices");
 	} 
-	
-	function generateSearch(){
-		$this->generateGlobals();	
-		$this->addSources();
-    }	
-    
-    function makeSearch(){
-    	global $search;
-    	$this->external_search=new search("search_simple_fields_unimarc");
-		$this->table_tempo = $this->external_search->make_search("f_".$this->look_array[$this->type]);
-    }
-
-	function getNbResults(){
-    	if(!$this->nb_results){
-    		if($this->table_tempo){
-   				$requete="select count(1) from ".$this->table_tempo;
-				$resultat=pmb_mysql_query($requete);
-				$this->nb_results = @pmb_mysql_result($resultat,0,0); 
-				if(!$this->nb_results) $this->nb_results = 0;
-    		}else{
-    			global $search;
-    			$this->makeSearch();
-    			$this->getNbResults();
-    		}
-    	}
-    	return $this->nb_results;
-    } 
 }
 
-class affiliate_search_indexint extends affiliate_search {
+class affiliate_search_indexint extends affiliate_search_authorities {
 	
-	function affiliate_search_indexint($user_query="",$search_type="notices"){
+	public function __construct($user_query="",$search_type="notices"){
 		$this->type= "indexint";
-		parent::affiliate_search($user_query,$search_type);
+		parent::__construct($user_query,$search_type);
 	} 
-	
-	function generateSearch(){
-		$this->generateGlobals();	
-		$this->addSources();
-    }	
     
-    function makeSearch(){
-    	global $search;
-    	if($this->search_type == "authorities"){
-   			$search_file="search_simple_fields_authorities";
-    	}else $search_file="search_simple_fields_unimarc";
-
-    	$this->external_search=new search($search_file);
-		$this->table_tempo = $this->external_search->make_search("f_".$this->look_array[$this->type]);
-    }
-
-	function getNbResults(){
-    	if(!$this->nb_results){
-    		if($this->table_tempo){
-    			if($this->search_type == "authorities"){
-   					$this->fetch_indexint();
-    			}else{
-    				$requete="select count(1) from ".$this->table_tempo;
-					$resultat=pmb_mysql_query($requete);
-					$this->nb_results = @pmb_mysql_result($resultat,0,0);
-					if(!$this->nb_results) $this->nb_results = 0;
-    			}
-    		}else{
-    			global $search;
-    			$this->makeSearch();
-    			$this->getNbResults();
-    		}
-    	}
-    	return $this->nb_results;
-    } 
-    
-   function getAuthoritiesResults(){
+   public function getAuthoritiesResults(){
     	global $msg;
     	global $opac_search_results_per_page;
     	global $page;
@@ -1216,7 +1081,7 @@ class affiliate_search_indexint extends affiliate_search {
 	    		$last_item = ($start_page+$opac_search_results_per_page) <= count($indexint) ? ($start_page+$opac_search_results_per_page) : count($indexint);
 	    		for($i = $start_page ; $i<$last_item ; $i++){
 	    			$this->authoritiesResult.= "
-					<li><a href='#' onclick='document.form_values.action=\"./index.php?lvl=external_authorities&type=".$this->type."&ext_value=".urlencode($indexint[$i])."\";document.form_values.submit();return false;'><img border='0' src='./images/folder.gif'> ".$indexint[$i]."</a></li>";
+					<li><a href='#' onclick='document.form_values.action=\"./index.php?lvl=external_authorities&type=".$this->type."&ext_value=".urlencode($indexint[$i])."\";document.form_values.submit();return false;'><img style='border:0px' src='".get_url_icon('folder.gif')."'> ".$indexint[$i]."</a></li>";
 	    		}												
 
 		    	$this->authoritiesResult.= "
@@ -1224,10 +1089,7 @@ class affiliate_search_indexint extends affiliate_search {
 		    		</div>
 				</div>";
 				//gestion de la pagination...
-				$nbepages = ceil($this->getTotalNbResults()/$opac_search_results_per_page);
-				$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-				$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-				$this->authoritiesResult.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+				$this->authoritiesResult.=  $this->getNavigationBar();
  			}
     	}else{
     		global $search;
@@ -1237,12 +1099,10 @@ class affiliate_search_indexint extends affiliate_search {
     	return $this->authoritiesResult;
     }   
     
- 	function getNoticesAuthorityResults(){
+ 	public function getNoticesAuthorityResults(){
 		global $dbh;
     	global $begin_result_liste;
     	global $opac_notices_depliable;
-    	global $opac_show_suggest;
-    	global $opac_resa_popup;
     	global $opac_search_results_per_page;
     	$nb_per_page_search = $opac_search_results_per_page;
     	global $page;
@@ -1251,7 +1111,6 @@ class affiliate_search_indexint extends affiliate_search {
     	global $msg;
     	global $fonction_auteur;					
 						
-    	global $affich_tris_result_liste;
     	global $count;
     	global $add_cart_link;    	
     	
@@ -1349,19 +1208,14 @@ class affiliate_search_indexint extends affiliate_search {
 		//on a besoin d'un formulaire pour reposter la recherche
 		$this->results.= $this->make_hidden_search_form();
 		//gestion de la pagination...
-		$nbepages = ceil($nb_results/$opac_search_results_per_page);
-		$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$this->results.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+		$this->results.=  $this->getNavigationBar($nb_results);
 		return $this->results;	
 	}   
 	
-	function getNoticesResults() {
+	public function getNoticesResults() {
     	global $dbh;
     	global $begin_result_liste;
     	global $opac_notices_depliable;
-    	global $opac_show_suggest;
-    	global $opac_resa_popup;
     	global $opac_search_results_per_page;
     	$nb_per_page_search = $opac_search_results_per_page;
     	global $page;
@@ -1369,7 +1223,6 @@ class affiliate_search_indexint extends affiliate_search {
     	global $search;
     	global $msg;						
 						
-    	global $affich_tris_result_liste;
     	global $count;
     	global $add_cart_link;    	
     	if(!$page) $page = 1; 
@@ -1396,13 +1249,7 @@ class affiliate_search_indexint extends affiliate_search {
 		";
 
 		$this->results.= pmb_bidi("<h3>".$this->getTotalNbResults()." ".$msg['titles_found']." ".$this->external_search->make_human_query().activation_surlignage()."</h3>");
-		if ($opac_show_suggest) {
-			$bt_sugg = "&nbsp;&nbsp;&nbsp;<span class=\"search_bt_sugg\"><a href=# ";		
-			if ($opac_resa_popup) $bt_sugg .= " onClick=\"w=window.open('./do_resa.php?lvl=make_sugg&oresa=popup','doresa','scrollbars=yes,width=600,height=600,menubar=0,resizable=yes'); w.focus(); return false;\"";
-			else $bt_sugg .= "onClick=\"document.location='./do_resa.php?lvl=make_sugg&oresa=popup' \" ";			
-			$bt_sugg.= " title='".$msg["empr_bt_make_sugg"]."' >".$msg['empr_bt_make_sugg']."</a></span>";
-			$this->results.= $bt_sugg;
-		}
+		$this->results.=suggest::get_add_link();
 		flush();
 		
 		$entrepots_localisations = array();
@@ -1428,14 +1275,11 @@ class affiliate_search_indexint extends affiliate_search {
 		//on a besoin d'un formulaire pour reposter la recherche
 		//$this->results.= $this->make_hidden_search_form();
 		//gestion de la pagination...
-		$nbepages = ceil($this->getTotalNbResults()/$opac_search_results_per_page);
-		$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$this->results.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+		$this->results.=  $this->getNavigationBar();
 		return $this->results;
     }
     
-    function fetch_indexint(){
+    public function fetch_authorities(){
 		global $dbh ;
 		global $opac_url_base ;
 	
@@ -1456,49 +1300,14 @@ class affiliate_search_indexint extends affiliate_search {
     }
 }
 
-class affiliate_search_publisher extends affiliate_search {
+class affiliate_search_publisher extends affiliate_search_authorities {
 	
-	function affiliate_search_publisher($user_query="",$search_type="notices"){
+	public function __construct($user_query="",$search_type="notices"){
 		$this->type= "publisher";
-		parent::affiliate_search($user_query,$search_type);
+		parent::__construct($user_query,$search_type);
 	} 
-	
-	function generateSearch(){
-		$this->generateGlobals();	
-		$this->addSources();
-    }	
     
-    function makeSearch(){
-    	global $search;
-    	if($this->search_type == "authorities"){
-   			$search_file="search_simple_fields_authorities";
-    	}else $search_file="search_simple_fields_unimarc";
-
-    	$this->external_search=new search($search_file);
-		$this->table_tempo = $this->external_search->make_search("f_".$this->look_array[$this->type]);
-    }
-
-	function getNbResults(){
-    	if(!$this->nb_results){
-    		if($this->table_tempo){
-    			if($this->search_type == "authorities"){
-   					$this->fetch_publishers();
-    			}else{
-    				$requete="select count(1) from ".$this->table_tempo;
-					$resultat=pmb_mysql_query($requete);
-					$this->nb_results = @pmb_mysql_result($resultat,0,0); 
-					if(!$this->nb_results) $this->nb_results = 0;
-    			}
-    		}else{
-    			global $search;
-    			$this->makeSearch();
-    			$this->getNbResults();
-    		}
-    	}
-    	return $this->nb_results;
-    } 
-    
-   function getAuthoritiesResults(){
+   public function getAuthoritiesResults(){
     	global $msg;
     	global $opac_search_results_per_page;
     	global $page;
@@ -1522,7 +1331,7 @@ class affiliate_search_publisher extends affiliate_search {
 	    		$last_item = ($start_page+$opac_search_results_per_page) <= count($eds) ? ($start_page+$opac_search_results_per_page) : count($eds);
 	    		for($i = $start_page ; $i<$last_item ; $i++){
 	    			$this->authoritiesResult.= "
-					<li class='categ_colonne'><font class='notice_fort'><a href='#'  onclick='document.form_values.action=\"./index.php?lvl=external_authorities&type=publisher&ext_value=".urlencode($eds[$i])."\";document.form_values.submit();return false;'>".$eds[$i]."</a></font></li>";
+					<li class='categ_colonne'><span class='notice_fort'><a href='#'  onclick='document.form_values.action=\"./index.php?lvl=external_authorities&type=publisher&ext_value=".urlencode($eds[$i])."\";document.form_values.submit();return false;'>".$eds[$i]."</a></span></li>";
 	    		}												
 
 		    	$this->authoritiesResult.= "
@@ -1530,10 +1339,7 @@ class affiliate_search_publisher extends affiliate_search {
 		    		</div>
 				</div>";
 				//gestion de la pagination...
-				$nbepages = ceil($this->getTotalNbResults()/$opac_search_results_per_page);
-				$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-				$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-				$this->authoritiesResult.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+				$this->authoritiesResult.=  $this->getNavigationBar();
  			}
     	}else{
     		global $search;
@@ -1543,12 +1349,10 @@ class affiliate_search_publisher extends affiliate_search {
     	return $this->authoritiesResult;
     }   
     
- 	function getNoticesAuthorityResults(){
+ 	public function getNoticesAuthorityResults(){
 		global $dbh;
     	global $begin_result_liste;
     	global $opac_notices_depliable;
-    	global $opac_show_suggest;
-    	global $opac_resa_popup;
     	global $opac_search_results_per_page;
     	$nb_per_page_search = $opac_search_results_per_page;
     	global $page;
@@ -1557,7 +1361,6 @@ class affiliate_search_publisher extends affiliate_search {
     	global $msg;
     	global $fonction_auteur;					
 						
-    	global $affich_tris_result_liste;
     	global $count;
     	global $add_cart_link;    	
     	
@@ -1659,19 +1462,14 @@ class affiliate_search_publisher extends affiliate_search {
 		//on a besoin d'un formulaire pour reposter la recherche
 		$this->results.= $this->make_hidden_search_form();
 		//gestion de la pagination...
-		$nbepages = ceil($nb_results/$opac_search_results_per_page);
-		$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$this->results.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+		$this->results.=  $this->getNavigationBar($nb_results);
 		return $this->results;	
 	}   
 	
-	function getNoticesResults() {
+	public function getNoticesResults() {
     	global $dbh;
     	global $begin_result_liste;
     	global $opac_notices_depliable;
-    	global $opac_show_suggest;
-    	global $opac_resa_popup;
     	global $opac_search_results_per_page;
     	$nb_per_page_search = $opac_search_results_per_page;
     	global $page;
@@ -1679,7 +1477,6 @@ class affiliate_search_publisher extends affiliate_search {
     	global $search;
     	global $msg;						
 						
-    	global $affich_tris_result_liste;
     	global $count;
     	global $add_cart_link;    	
     	if(!$page) $page = 1; 
@@ -1706,13 +1503,7 @@ class affiliate_search_publisher extends affiliate_search {
 		";
 
 		$this->results.= pmb_bidi("<h3>".$this->getTotalNbResults()." ".$msg['titles_found']." ".$this->external_search->make_human_query().activation_surlignage()."</h3>");
-		if ($opac_show_suggest) {
-			$bt_sugg = "&nbsp;&nbsp;&nbsp;<span class=\"search_bt_sugg\"><a href=# ";		
-			if ($opac_resa_popup) $bt_sugg .= " onClick=\"w=window.open('./do_resa.php?lvl=make_sugg&oresa=popup','doresa','scrollbars=yes,width=600,height=600,menubar=0,resizable=yes'); w.focus(); return false;\"";
-			else $bt_sugg .= "onClick=\"document.location='./do_resa.php?lvl=make_sugg&oresa=popup' \" ";			
-			$bt_sugg.= " title='".$msg["empr_bt_make_sugg"]."' >".$msg['empr_bt_make_sugg']."</a></span>";
-			$this->results.= $bt_sugg;
-		}
+		$this->results.=suggest::get_add_link();
 		flush();
 		
 		$entrepots_localisations = array();
@@ -1738,14 +1529,11 @@ class affiliate_search_publisher extends affiliate_search {
 		//on a besoin d'un formulaire pour reposter la recherche
 		//$this->results.= $this->make_hidden_search_form();
 		//gestion de la pagination...
-		$nbepages = ceil($this->getTotalNbResults()/$opac_search_results_per_page);
-		$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$this->results.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+		$this->results.=  $this->getNavigationBar();
 		return $this->results;
     }    
 
-	function fetch_publishers() {
+	public function fetch_authorities() {
 		global $dbh ;
 		global $opac_url_base ;
 	
@@ -1760,90 +1548,28 @@ class affiliate_search_publisher extends affiliate_search {
 			if(!in_array($infos[5],$publishers))
 				$publishers[]=$infos[5];
 		}
-				
+		if(!is_array($this->nb_results)) $this->nb_results = array();
 		$this->nb_results['total'] = count($publishers);
 		return $publishers;
 	} // fin fetch_publishers	
 }
 
-class affiliate_search_keywords extends affiliate_search {
+class affiliate_search_keywords extends affiliate_search_records {
 	
-	function affiliate_search_keywords($user_query="",$search_type="notices"){
+	public function __construct($user_query="",$search_type="notices"){
 		$this->type= "keywords";
-		parent::affiliate_search($user_query,$search_type);
-	} 
-	
-	function generateSearch(){
-		$this->generateGlobals();	
-		$this->addSources();
-    }	
-    
-    function makeSearch(){
-    	global $search;
-    	$this->external_search=new search("search_simple_fields_unimarc");
-		$this->table_tempo = $this->external_search->make_search("f_".$this->look_array[$this->type]);
-    }
-
-	function getNbResults(){
-    	if(!$this->nb_results){
-    		if($this->table_tempo){
-   				$requete="select count(1) from ".$this->table_tempo;
-				$resultat=pmb_mysql_query($requete);
-				$this->nb_results = @pmb_mysql_result($resultat,0,0); 
-				if(!$this->nb_results) $this->nb_results = 0;
-    		}else{
-    			global $search;
-    			$this->makeSearch();
-    			$this->getNbResults();
-    		}
-    	}
-    	return $this->nb_results;
-    }  
+		parent::__construct($user_query,$search_type);
+	}  
 }
 
-class affiliate_search_category extends affiliate_search {
+class affiliate_search_category extends affiliate_search_authorities {
 	
-	function affiliate_search_category($user_query="",$search_type="notices"){
+	public function __construct($user_query="",$search_type="notices"){
 		$this->type= "category";
-		parent::affiliate_search($user_query,$search_type);
+		parent::__construct($user_query,$search_type);
 	} 
-	
-	function generateSearch(){
-		$this->generateGlobals();	
-		$this->addSources();
-    }	
     
-    function makeSearch(){
-    	global $search;
-    	if($this->search_type == "authorities"){
-   			$search_file="search_simple_fields_authorities";
-    	}else $search_file="search_simple_fields_unimarc";
-
-    	$this->external_search=new search($search_file);
-		$this->table_tempo = $this->external_search->make_search("f_".$this->look_array[$this->type]);
-    }
-
-	function getNbResults(){
-    	if(!$this->nb_results){
-    		if($this->table_tempo){
-    			if($this->search_type == "authorities"){
-   					$this->fetch_categories();
-    			}else{
-    				$requete="select count(1) from ".$this->table_tempo;
-					$resultat=pmb_mysql_query($requete);
-					$this->nb_results = @pmb_mysql_result($resultat,0,0); 
-					if(!$this->nb_results) $this->nb_results = 0;
-    			}
-    		}else{
-    			global $search;
-    			$this->makeSearch();
-    			$this->getNbResults();
-    		}
-    	}
-    	return $this->nb_results;
-    } 
-    
-   function getAuthoritiesResults(){
+   public function getAuthoritiesResults(){
     	global $msg;
     	global $opac_search_results_per_page;
     	global $page;
@@ -1867,7 +1593,7 @@ class affiliate_search_category extends affiliate_search {
 	    		$last_item = ($start_page+$opac_search_results_per_page) <= count($categ) ? ($start_page+$opac_search_results_per_page) : count($categ);
 	    		for($i = $start_page ; $i<$last_item ; $i++){
 	    			$this->authoritiesResult.= "
-					<li class='categ_colonne'><font class='notice_fort'><a href='#'  onclick='document.form_values.action=\"./index.php?lvl=external_authorities&type=".$this->type."&ext_value=".urlencode($categ[$i])."\";document.form_values.submit();return false;'>".$categ[$i]."</a></font></li>";
+					<li class='categ_colonne'><span class='notice_fort'><a href='#'  onclick='document.form_values.action=\"./index.php?lvl=external_authorities&type=".$this->type."&ext_value=".urlencode($categ[$i])."\";document.form_values.submit();return false;'>".$categ[$i]."</a></span></li>";
 	    		}												
 
 		    	$this->authoritiesResult.= "
@@ -1875,10 +1601,7 @@ class affiliate_search_category extends affiliate_search {
 		    		</div>
 				</div>";
 				//gestion de la pagination...
-				$nbepages = ceil($this->getTotalNbResults()/$opac_search_results_per_page);
-				$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-				$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-				$this->authoritiesResult.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+				$this->authoritiesResult.=  $this->getNavigationBar();
  			}
     	}else{
     		global $search;
@@ -1888,12 +1611,10 @@ class affiliate_search_category extends affiliate_search {
     	return $this->authoritiesResult;
     }   
     
- 	function getNoticesAuthorityResults(){
+ 	public function getNoticesAuthorityResults(){
 		global $dbh;
     	global $begin_result_liste;
     	global $opac_notices_depliable;
-    	global $opac_show_suggest;
-    	global $opac_resa_popup;
     	global $opac_search_results_per_page;
     	$nb_per_page_search = $opac_search_results_per_page;
     	global $page;
@@ -1902,7 +1623,6 @@ class affiliate_search_category extends affiliate_search {
     	global $msg;
     	global $fonction_auteur;					
 						
-    	global $affich_tris_result_liste;
     	global $count;
     	global $add_cart_link;    	
     	
@@ -2001,19 +1721,14 @@ class affiliate_search_category extends affiliate_search {
 		//on a besoin d'un formulaire pour reposter la recherche
 		$this->results.= $this->make_hidden_search_form();
 		//gestion de la pagination...
-		$nbepages = ceil($nb_results/$opac_search_results_per_page);
-		$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$this->results.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+		$this->results.= $this->getNavigationBar($nb_results);
 		return $this->results;	
 	}   
 	
-	function getNoticesResults() {
+	public function getNoticesResults() {
     	global $dbh;
     	global $begin_result_liste;
     	global $opac_notices_depliable;
-    	global $opac_show_suggest;
-    	global $opac_resa_popup;
     	global $opac_search_results_per_page;
     	$nb_per_page_search = $opac_search_results_per_page;
     	global $page;
@@ -2021,7 +1736,6 @@ class affiliate_search_category extends affiliate_search {
     	global $search;
     	global $msg;						
 						
-    	global $affich_tris_result_liste;
     	global $count;
     	global $add_cart_link;    	
     	if(!$page) $page = 1; 
@@ -2048,13 +1762,7 @@ class affiliate_search_category extends affiliate_search {
 		";
 
 		$this->results.= pmb_bidi("<h3>".$this->getTotalNbResults()." ".$msg['titles_found']." ".$this->external_search->make_human_query().activation_surlignage()."</h3>");
-		if ($opac_show_suggest) {
-			$bt_sugg = "&nbsp;&nbsp;&nbsp;<span class=\"search_bt_sugg\"><a href=# ";		
-			if ($opac_resa_popup) $bt_sugg .= " onClick=\"w=window.open('./do_resa.php?lvl=make_sugg&oresa=popup','doresa','scrollbars=yes,width=600,height=600,menubar=0,resizable=yes'); w.focus(); return false;\"";
-			else $bt_sugg .= "onClick=\"document.location='./do_resa.php?lvl=make_sugg&oresa=popup' \" ";			
-			$bt_sugg.= " title='".$msg["empr_bt_make_sugg"]."' >".$msg['empr_bt_make_sugg']."</a></span>";
-			$this->results.= $bt_sugg;
-		}
+		$this->results.=suggest::get_add_link();
 		flush();
 		
 		$entrepots_localisations = array();
@@ -2080,14 +1788,11 @@ class affiliate_search_category extends affiliate_search {
 		//on a besoin d'un formulaire pour reposter la recherche
 		//$this->results.= $this->make_hidden_search_form();
 		//gestion de la pagination...
-		$nbepages = ceil($this->getTotalNbResults()/$opac_search_results_per_page);
-		$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$this->results.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+		$this->results.=  $this->getNavigationBar();
 		return $this->results;
     }    
 
-	function fetch_categories() {
+	public function fetch_authorities() {
 		global $dbh ;
 		global $opac_url_base ;
 	
@@ -2102,55 +1807,20 @@ class affiliate_search_category extends affiliate_search {
 			if(!in_array($infos[5],$categ))
 				$categ[]=$infos[5];
 		}
-				
+		if(!is_array($this->nb_results)) $this->nb_results = array();
 		$this->nb_results['total'] = count($categ);
 		return $categ;
 	} // fin fetch_categories	
 }
 
-class affiliate_search_subcollection extends affiliate_search {
+class affiliate_search_subcollection extends affiliate_search_authorities {
 	
-	function affiliate_search_subcollection($user_query="",$search_type="notices"){
+	public function __construct($user_query="",$search_type="notices"){
 		$this->type= "subcollection";
-		parent::affiliate_search($user_query,$search_type);
+		parent::__construct($user_query,$search_type);
 	} 
-	
-	function generateSearch(){
-		$this->generateGlobals();	
-		$this->addSources();
-    }	
     
-    function makeSearch(){
-    	global $search;
-    	if($this->search_type == "authorities"){
-   			$search_file="search_simple_fields_authorities";
-    	}else $search_file="search_simple_fields_unimarc";
-
-    	$this->external_search=new search($search_file);
-		$this->table_tempo = $this->external_search->make_search("f_".$this->look_array[$this->type]);
-    }
-
-	function getNbResults(){
-    	if(!$this->nb_results){
-    		if($this->table_tempo){
-    			if($this->search_type == "authorities"){
-   					$this->fetch_subcollections();
-    			}else{
-    				$requete="select count(1) from ".$this->table_tempo;
-					$resultat=pmb_mysql_query($requete);
-					$this->nb_results = @pmb_mysql_result($resultat,0,0); 
-					if(!$this->nb_results) $this->nb_results = 0;
-    			}
-    		}else{
-    			global $search;
-    			$this->makeSearch();
-    			$this->getNbResults();
-    		}
-    	}
-    	return $this->nb_results;
-    } 
-    
-   function getAuthoritiesResults(){
+   public function getAuthoritiesResults(){
     	global $msg;
     	global $opac_search_results_per_page;
     	global $page;
@@ -2174,7 +1844,7 @@ class affiliate_search_subcollection extends affiliate_search {
 	    		$last_item = ($start_page+$opac_search_results_per_page) <= count($subcoll) ? ($start_page+$opac_search_results_per_page) : count($subcoll);
 	    		for($i = $start_page ; $i<$last_item ; $i++){
 	    			$this->authoritiesResult.= "
-					<li class='categ_colonne'><font class='notice_fort'><a href='#'  onclick='document.form_values.action=\"./index.php?lvl=external_authorities&type=subcollection&ext_value=".urlencode($subcoll[$i])."\";document.form_values.submit();return false;'>".$subcoll[$i]."</a></font></li>";
+					<li class='categ_colonne'><span class='notice_fort'><a href='#'  onclick='document.form_values.action=\"./index.php?lvl=external_authorities&type=subcollection&ext_value=".urlencode($subcoll[$i])."\";document.form_values.submit();return false;'>".$subcoll[$i]."</a></span></li>";
 	    		}												
 
 		    	$this->authoritiesResult.= "
@@ -2182,10 +1852,7 @@ class affiliate_search_subcollection extends affiliate_search {
 		    		</div>
 				</div>";
 				//gestion de la pagination...
-				$nbepages = ceil($this->getTotalNbResults()/$opac_search_results_per_page);
-				$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-				$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-				$this->authoritiesResult.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+				$this->authoritiesResult.=  $this->getNavigationBar();
  			}
     	}else{
     		global $search;
@@ -2195,12 +1862,10 @@ class affiliate_search_subcollection extends affiliate_search {
     	return $this->authoritiesResult;
     }   
     
- 	function getNoticesAuthorityResults(){
+ 	public function getNoticesAuthorityResults(){
 		global $dbh;
     	global $begin_result_liste;
     	global $opac_notices_depliable;
-    	global $opac_show_suggest;
-    	global $opac_resa_popup;
     	global $opac_search_results_per_page;
     	$nb_per_page_search = $opac_search_results_per_page;
     	global $page;
@@ -2209,7 +1874,6 @@ class affiliate_search_subcollection extends affiliate_search {
     	global $msg;
     	global $fonction_auteur;					
 						
-    	global $affich_tris_result_liste;
     	global $count;
     	global $add_cart_link;    	
     	
@@ -2336,19 +2000,14 @@ class affiliate_search_subcollection extends affiliate_search {
 		//on a besoin d'un formulaire pour reposter la recherche
 		$this->results.= $this->make_hidden_search_form();
 		//gestion de la pagination...
-		$nbepages = ceil($nb_results/$opac_search_results_per_page);
-		$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$this->results.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+		$this->results.= $this->getNavigationBar($nb_results);
 		return $this->results;	
 	}   
 	
-	function getNoticesResults() {
+	public function getNoticesResults() {
     	global $dbh;
     	global $begin_result_liste;
     	global $opac_notices_depliable;
-    	global $opac_show_suggest;
-    	global $opac_resa_popup;
     	global $opac_search_results_per_page;
     	$nb_per_page_search = $opac_search_results_per_page;
     	global $page;
@@ -2356,7 +2015,6 @@ class affiliate_search_subcollection extends affiliate_search {
     	global $search;
     	global $msg;						
 						
-    	global $affich_tris_result_liste;
     	global $count;
     	global $add_cart_link;    	
     	if(!$page) $page = 1; 
@@ -2383,13 +2041,7 @@ class affiliate_search_subcollection extends affiliate_search {
 		";
 
 		$this->results.= pmb_bidi("<h3>".$this->getTotalNbResults()." ".$msg['titles_found']." ".$this->external_search->make_human_query().activation_surlignage()."</h3>");
-		if ($opac_show_suggest) {
-			$bt_sugg = "&nbsp;&nbsp;&nbsp;<span class=\"search_bt_sugg\"><a href=# ";		
-			if ($opac_resa_popup) $bt_sugg .= " onClick=\"w=window.open('./do_resa.php?lvl=make_sugg&oresa=popup','doresa','scrollbars=yes,width=600,height=600,menubar=0,resizable=yes'); w.focus(); return false;\"";
-			else $bt_sugg .= "onClick=\"document.location='./do_resa.php?lvl=make_sugg&oresa=popup' \" ";			
-			$bt_sugg.= " title='".$msg["empr_bt_make_sugg"]."' >".$msg['empr_bt_make_sugg']."</a></span>";
-			$this->results.= $bt_sugg;
-		}
+		$this->results.=suggest::get_add_link();
 		flush();
 		
 		$entrepots_localisations = array();
@@ -2415,14 +2067,11 @@ class affiliate_search_subcollection extends affiliate_search {
 		//on a besoin d'un formulaire pour reposter la recherche
 		//$this->results.= $this->make_hidden_search_form();
 		//gestion de la pagination...
-		$nbepages = ceil($this->getTotalNbResults()/$opac_search_results_per_page);
-		$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$this->results.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+		$this->results.=  $this->getNavigationBar();
 		return $this->results;
     }    
 
-	function fetch_subcollections() {
+	public function fetch_authorities() {
 		global $dbh ;
 	
 		$auteurs = array() ;
@@ -2435,54 +2084,19 @@ class affiliate_search_subcollection extends affiliate_search {
 			if(!in_array($infos[5],$subcollections))
 				$subcollections[]=$infos[5];
 		}
-				
+		if(!is_array($this->nb_results)) $this->nb_results = array();
 		$this->nb_results['total'] = count($subcollections);
 		return $subcollections;
 	} // fin fetch_subcollections	
 }
-class affiliate_search_titre_uniforme extends affiliate_search {
+class affiliate_search_titre_uniforme extends affiliate_search_authorities {
 	
-	function affiliate_search_titre_uniforme($user_query="",$search_type="notices"){
+	public function __construct($user_query="",$search_type="notices"){
 		$this->type= "titre_uniforme";
-		parent::affiliate_search($user_query,$search_type);
+		parent::__construct($user_query,$search_type);
 	} 
-	
-	function generateSearch(){
-		$this->generateGlobals();	
-		$this->addSources();
-    }	
     
-    function makeSearch(){
-    	global $search;
-    	if($this->search_type == "authorities"){
-   			$search_file="search_simple_fields_authorities";
-    	}else $search_file="search_simple_fields_unimarc";
-
-    	$this->external_search=new search($search_file);
-		$this->table_tempo = $this->external_search->make_search("f_".$this->look_array[$this->type]);
-    }
-
-	function getNbResults(){
-    	if(!$this->nb_results){
-    		if($this->table_tempo){
-    			if($this->search_type == "authorities"){
-   					$this->fetch_tu();
-    			}else{
-    				$requete="select count(1) from ".$this->table_tempo;
-					$resultat=pmb_mysql_query($requete);
-					$this->nb_results = @pmb_mysql_result($resultat,0,0); 
-					if(!$this->nb_results) $this->nb_results = 0;
-    			}
-    		}else{
-    			global $search;
-    			$this->makeSearch();
-    			$this->getNbResults();
-    		}
-    	}
-    	return $this->nb_results;
-    } 
-    
-   function getAuthoritiesResults(){
+   public function getAuthoritiesResults(){
     	global $msg;
     	global $opac_search_results_per_page;
     	global $page;
@@ -2506,7 +2120,7 @@ class affiliate_search_titre_uniforme extends affiliate_search {
 	    		$last_item = ($start_page+$opac_search_results_per_page) <= count($tus) ? ($start_page+$opac_search_results_per_page) : count($tus);
 	    		for($i = $start_page ; $i<$last_item ; $i++){
 	    			$this->authoritiesResult.= "
-					<li class='categ_colonne'><font class='notice_fort'><a href='#'  onclick='document.form_values.action=\"./index.php?lvl=external_authorities&type=titre_uniforme&ext_value=".urlencode($tus[$i])."\";document.form_values.submit();return false;'>".$tus[$i]."</a></font></li>";
+					<li class='categ_colonne'><span class='notice_fort'><a href='#'  onclick='document.form_values.action=\"./index.php?lvl=external_authorities&type=titre_uniforme&ext_value=".urlencode($tus[$i])."\";document.form_values.submit();return false;'>".$tus[$i]."</a></span></li>";
 	    		}												
 
 		    	$this->authoritiesResult.= "
@@ -2514,10 +2128,7 @@ class affiliate_search_titre_uniforme extends affiliate_search {
 		    		</div>
 				</div>";
 				//gestion de la pagination...
-				$nbepages = ceil($this->getTotalNbResults()/$opac_search_results_per_page);
-				$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-				$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-				$this->authoritiesResult.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+				$this->authoritiesResult.= $this->getNavigationBar();
  			}
     	}else{
     		global $search;
@@ -2527,12 +2138,10 @@ class affiliate_search_titre_uniforme extends affiliate_search {
     	return $this->authoritiesResult;
     }   
     
- 	function getNoticesAuthorityResults(){
+ 	public function getNoticesAuthorityResults(){
 		global $dbh;
     	global $begin_result_liste;
     	global $opac_notices_depliable;
-    	global $opac_show_suggest;
-    	global $opac_resa_popup;
     	global $opac_search_results_per_page;
     	$nb_per_page_search = $opac_search_results_per_page;
     	global $page;
@@ -2541,7 +2150,6 @@ class affiliate_search_titre_uniforme extends affiliate_search {
     	global $msg;
     	global $fonction_auteur;					
 						
-    	global $affich_tris_result_liste;
     	global $count;
     	global $add_cart_link;    	
     	
@@ -2639,19 +2247,14 @@ class affiliate_search_titre_uniforme extends affiliate_search {
 		//on a besoin d'un formulaire pour reposter la recherche
 		$this->results.= $this->make_hidden_search_form();
 		//gestion de la pagination...
-		$nbepages = ceil($nb_results/$opac_search_results_per_page);
-		$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$this->results.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+		$this->results.=  $this->getNavigationBar($nb_results);
 		return $this->results;	
 	}   
 	
-	function getNoticesResults() {
+	public function getNoticesResults() {
     	global $dbh;
     	global $begin_result_liste;
     	global $opac_notices_depliable;
-    	global $opac_show_suggest;
-    	global $opac_resa_popup;
     	global $opac_search_results_per_page;
     	$nb_per_page_search = $opac_search_results_per_page;
     	global $page;
@@ -2659,7 +2262,6 @@ class affiliate_search_titre_uniforme extends affiliate_search {
     	global $search;
     	global $msg;						
 						
-    	global $affich_tris_result_liste;
     	global $count;
     	global $add_cart_link;    	
     	if(!$page) $page = 1; 
@@ -2686,13 +2288,7 @@ class affiliate_search_titre_uniforme extends affiliate_search {
 		";
 
 		$this->results.= pmb_bidi("<h3>".$this->getTotalNbResults()." ".$msg['titles_found']." ".$this->external_search->make_human_query().activation_surlignage()."</h3>");
-		if ($opac_show_suggest) {
-			$bt_sugg = "&nbsp;&nbsp;&nbsp;<span class=\"search_bt_sugg\"><a href=# ";		
-			if ($opac_resa_popup) $bt_sugg .= " onClick=\"w=window.open('./do_resa.php?lvl=make_sugg&oresa=popup','doresa','scrollbars=yes,width=600,height=600,menubar=0,resizable=yes'); w.focus(); return false;\"";
-			else $bt_sugg .= "onClick=\"document.location='./do_resa.php?lvl=make_sugg&oresa=popup' \" ";			
-			$bt_sugg.= " title='".$msg["empr_bt_make_sugg"]."' >".$msg['empr_bt_make_sugg']."</a></span>";
-			$this->results.= $bt_sugg;
-		}
+		$this->results.=suggest::get_add_link();
 		flush();
 		
 		$entrepots_localisations = array();
@@ -2718,14 +2314,11 @@ class affiliate_search_titre_uniforme extends affiliate_search {
 		//on a besoin d'un formulaire pour reposter la recherche
 		//$this->results.= $this->make_hidden_search_form();
 		//gestion de la pagination...
-		$nbepages = ceil($this->getTotalNbResults()/$opac_search_results_per_page);
-		$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$this->results.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+		$this->results.=  $this->getNavigationBar();
 		return $this->results;
     }    
 
-	function fetch_tu() {
+	public function fetch_authorities() {
 		global $dbh ;
 		global $opac_url_base ;
 	
@@ -2740,7 +2333,7 @@ class affiliate_search_titre_uniforme extends affiliate_search {
 			if(!in_array($infos[5],$tu))
 				$tu[]=$infos[5];
 		}
-				
+		if(!is_array($this->nb_results)) $this->nb_results = array();
 		$this->nb_results['total'] = count($tu);
 		return $tu;
 	} // fin fetch_tu
@@ -2749,7 +2342,7 @@ class affiliate_search_titre_uniforme extends affiliate_search {
 class affiliate_search_extended extends affiliate_search {
 //
 	
-	function affiliate_search_extended($user_query=""){
+	public function __construct($user_query=""){
 		$tempsearch = unserialize(stripslashes($user_query));
 		for($i = 0 ; $i<count($tempsearch['SEARCH']) ; $i++){
 			if($tempsearch[$i]['OP'] == "AUTHORITY"){
@@ -2765,25 +2358,23 @@ class affiliate_search_extended extends affiliate_search {
     	
 	} 
 		
-	function generateSearch(){
+	public function generateSearch(){
 		$this->external_search=new search("search_fields_unimarc");
 		$this->external_search->unserialize_search($this->serialized);
 		$this->addSources();
 		global $search;
     }	
 
-    function makeSearch(){
+    public function makeSearch(){
     	global $search;	
 		$this->external_search->remove_forbidden_fields();    	
 		$this->table_tempo = $this->external_search->make_search();
     }
     
-	function getNoticesResults() {
+	public function getNoticesResults() {
     	global $dbh;
     	global $begin_result_liste;
     	global $opac_notices_depliable;
-    	global $opac_show_suggest;
-    	global $opac_resa_popup;
     	global $opac_search_results_per_page;
     	$nb_per_page_search = $opac_search_results_per_page;
     	global $page;
@@ -2791,7 +2382,6 @@ class affiliate_search_extended extends affiliate_search {
     	global $search;
     	global $msg;						
 						
-    	global $affich_tris_result_liste;
     	global $count;
     	global $add_cart_link;    	
     	if(!$page) $page = 1; 
@@ -2821,13 +2411,7 @@ class affiliate_search_extended extends affiliate_search {
 		
 		if ($opac_notices_depliable) $this->results.= $begin_result_liste;
 		
-		if ($opac_show_suggest) {
-			$bt_sugg = "&nbsp;&nbsp;&nbsp;<span class=\"search_bt_sugg\"><a href=# ";		
-			if ($opac_resa_popup) $bt_sugg .= " onClick=\"w=window.open('./do_resa.php?lvl=make_sugg&oresa=popup','doresa','scrollbars=yes,width=600,height=600,menubar=0,resizable=yes'); w.focus(); return false;\"";
-			else $bt_sugg .= "onClick=\"document.location='./do_resa.php?lvl=make_sugg&oresa=popup' \" ";			
-			$bt_sugg.= " title='".$msg["empr_bt_make_sugg"]."' >".$msg['empr_bt_make_sugg']."</a></span>";
-			$this->results.= $bt_sugg;
-		}
+		$this->results.=suggest::get_add_link();
 		$this->results.="&nbsp;&nbsp;";
 		
 		flush();
@@ -2855,14 +2439,11 @@ class affiliate_search_extended extends affiliate_search {
     	$this->results.= "</div>
 		</div>";
 		//gestion de la pagination...
-		$nbepages = ceil($this->getTotalNbResults()/$opac_search_results_per_page);
-		$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$this->results.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+		$this->results.=  $this->getNavigationBar();
 		return $this->results;
     }
     
-	function getNbResults(){
+	public function getNbResults(){
     	if(!$this->nb_results){
     		if($this->table_tempo){
    				$requete="select count(1) from ".$this->table_tempo;
@@ -2879,49 +2460,14 @@ class affiliate_search_extended extends affiliate_search {
     } 
 }
 
-class affiliate_search_concept extends affiliate_search {
+class affiliate_search_concept extends affiliate_search_authorities {
 	
-	function affiliate_search_concept($user_query="",$search_type="notices"){
+	public function __construct($user_query="",$search_type="notices"){
 		$this->type= "concept";
-		parent::affiliate_search($user_query,$search_type);
+		parent::__construct($user_query,$search_type);
 	} 
-	
-	function generateSearch(){
-		$this->generateGlobals();	
-		$this->addSources();
-    }	
     
-    function makeSearch(){
-    	global $search;
-    	if($this->search_type == "authorities"){
-   			$search_file="search_simple_fields_authorities";
-    	}else $search_file="search_simple_fields_unimarc";
-
-    	$this->external_search=new search($search_file);
-		$this->table_tempo = $this->external_search->make_search("f_".$this->look_array[$this->type]);
-    }
-
-	function getNbResults(){
-    	if(!$this->nb_results){
-    		if($this->table_tempo){
-    			if($this->search_type == "authorities"){
-   					$this->fetch_concepts();
-    			}else{
-    				$requete="select count(1) from ".$this->table_tempo;
-					$resultat=pmb_mysql_query($requete);
-					$this->nb_results = @pmb_mysql_result($resultat,0,0); 
-					if(!$this->nb_results) $this->nb_results = 0;
-    			}
-    		}else{
-    			global $search;
-    			$this->makeSearch();
-    			$this->getNbResults();
-    		}
-    	}
-    	return $this->nb_results;
-    } 
-    
-   function getAuthoritiesResults(){
+   public function getAuthoritiesResults(){
     	global $msg;
     	global $opac_search_results_per_page;
     	global $page;
@@ -2945,7 +2491,7 @@ class affiliate_search_concept extends affiliate_search {
 	    		$last_item = ($start_page+$opac_search_results_per_page) <= count($concept) ? ($start_page+$opac_search_results_per_page) : count($concept);
 	    		for($i = $start_page ; $i<$last_item ; $i++){
 	    			$this->authoritiesResult.= "
-					<li class='concept_colonne'><font class='notice_fort'><a href='#'  onclick='document.form_values.action=\"./index.php?lvl=external_authorities&type=".$this->type."&ext_value=".urlencode($concept[$i])."\";document.form_values.submit();return false;'>".$concept[$i]."</a></font></li>";
+					<li class='concept_colonne'><span class='notice_fort'><a href='#'  onclick='document.form_values.action=\"./index.php?lvl=external_authorities&type=".$this->type."&ext_value=".urlencode($concept[$i])."\";document.form_values.submit();return false;'>".$concept[$i]."</a></span></li>";
 	    		}												
 
 		    	$this->authoritiesResult.= "
@@ -2953,10 +2499,7 @@ class affiliate_search_concept extends affiliate_search {
 		    		</div>
 				</div>";
 				//gestion de la pagination...
-				$nbepages = ceil($this->getTotalNbResults()/$opac_search_results_per_page);
-				$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-				$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-				$this->authoritiesResult.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+				$this->authoritiesResult.=  $this->getNavigationBar();
  			}
     	}else{
     		global $search;
@@ -2966,12 +2509,10 @@ class affiliate_search_concept extends affiliate_search {
     	return $this->authoritiesResult;
     }   
     
- 	function getNoticesAuthorityResults(){
+ 	public function getNoticesAuthorityResults(){
 		global $dbh;
     	global $begin_result_liste;
     	global $opac_notices_depliable;
-    	global $opac_show_suggest;
-    	global $opac_resa_popup;
     	global $opac_search_results_per_page;
     	$nb_per_page_search = $opac_search_results_per_page;
     	global $page;
@@ -2980,7 +2521,6 @@ class affiliate_search_concept extends affiliate_search {
     	global $msg;
     	global $fonction_auteur;					
 						
-    	global $affich_tris_result_liste;
     	global $count;
     	global $add_cart_link;    	
     	
@@ -3079,19 +2619,14 @@ class affiliate_search_concept extends affiliate_search {
 		//on a besoin d'un formulaire pour reposter la recherche
 		$this->results.= $this->make_hidden_search_form();
 		//gestion de la pagination...
-		$nbepages = ceil($nb_results/$opac_search_results_per_page);
-		$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$this->results.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+		$this->results.=  $this->getNavigationBar($nb_results);
 		return $this->results;	
 	}   
 	
-	function getNoticesResults() {
+	public function getNoticesResults() {
     	global $dbh;
     	global $begin_result_liste;
     	global $opac_notices_depliable;
-    	global $opac_show_suggest;
-    	global $opac_resa_popup;
     	global $opac_search_results_per_page;
     	$nb_per_page_search = $opac_search_results_per_page;
     	global $page;
@@ -3099,7 +2634,6 @@ class affiliate_search_concept extends affiliate_search {
     	global $search;
     	global $msg;						
 						
-    	global $affich_tris_result_liste;
     	global $count;
     	global $add_cart_link;    	
     	if(!$page) $page = 1; 
@@ -3126,13 +2660,7 @@ class affiliate_search_concept extends affiliate_search {
 		";
 
 		$this->results.= pmb_bidi("<h3>".$this->getTotalNbResults()." ".$msg['titles_found']." ".$this->external_search->make_human_query().activation_surlignage()."</h3>");
-		if ($opac_show_suggest) {
-			$bt_sugg = "&nbsp;&nbsp;&nbsp;<span class=\"search_bt_sugg\"><a href=# ";		
-			if ($opac_resa_popup) $bt_sugg .= " onClick=\"w=window.open('./do_resa.php?lvl=make_sugg&oresa=popup','doresa','scrollbars=yes,width=600,height=600,menubar=0,resizable=yes'); w.focus(); return false;\"";
-			else $bt_sugg .= "onClick=\"document.location='./do_resa.php?lvl=make_sugg&oresa=popup' \" ";			
-			$bt_sugg.= " title='".$msg["empr_bt_make_sugg"]."' >".$msg['empr_bt_make_sugg']."</a></span>";
-			$this->results.= $bt_sugg;
-		}
+		$this->results.=suggest::get_add_link();
 		flush();
 		
 		$entrepots_localisations = array();
@@ -3158,14 +2686,11 @@ class affiliate_search_concept extends affiliate_search {
 		//on a besoin d'un formulaire pour reposter la recherche
 		//$this->results.= $this->make_hidden_search_form();
 		//gestion de la pagination...
-		$nbepages = ceil($this->getTotalNbResults()/$opac_search_results_per_page);
-		$url_page = "javascript:document.form_values.page.value=!!page!!; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$action = "javascript:document.form_values.page.value=document.form.page.value; document.form_values.action = \"./index.php?lvl=more_results&tab=affiliate\"; document.form_values.affiliate_page.value=document.form_values.page.value; document.form_values.submit()";
-		$this->results.=  "<div id='navbar'><hr />\n<center>".printnavbar($page, $nbepages, $url_page,$action,"catal_pag")."</center></div>";
+		$this->results.=  $this->getNavigationBar();
 		return $this->results;
     }    
 
-	function fetch_concepts() {
+	public function fetch_authorities() {
 		global $dbh ;
 		global $opac_url_base ;
 	
@@ -3178,7 +2703,7 @@ class affiliate_search_concept extends affiliate_search {
 			if(!in_array($infos[5],$concept))
 				$concept[]=$infos[5];
 		}
-				
+		if(!is_array($this->nb_results)) $this->nb_results = array();		
 		$this->nb_results['total'] = count($concept);
 		return $concept;
 	} // fin fetch_concepts

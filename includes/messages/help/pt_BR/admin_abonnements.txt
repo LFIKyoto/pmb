@@ -1,4 +1,4 @@
-<h1>Gerenciamento de assinaturas</h1>
+<h2>Gerenciamento de assinaturas</h2>
 
 <p>Seção de <b>Gerenciamento de assinaturas</b> possibilita definir as configurações para as assinaturas.
 <ul>

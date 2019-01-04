@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_instrument_admin.class.php,v 1.10 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: nomenclature_instrument_admin.class.php,v 1.14 2017-11-21 12:00:59 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,7 +10,7 @@ require_once($include_path."/templates/nomenclature_instrument_admin.tpl.php");
 
 class nomenclature_instrument_admin {
 	protected $id=0;
-	var $info=array();
+	public $info=array();
 	
 	
 	public function __construct($id=0) {
@@ -117,7 +117,7 @@ class nomenclature_instrument_admin {
 					<div class='erreur'>$msg[540]</div>
 					<div class='row'>
 						<div class='colonne10'>
-							<img src='./images/error.gif' align='left'>
+							<img src='".get_url_icon('error.gif')."' class='align_left'>
 						</div>
 						<div class='colonne80'>
 							<strong>".$msg["admin_nomenclature_instrument_form_musicstand_standard_error"].$r_instrument->instrument_code." ( ".$r_instrument->instrument_name ." )</strong>
@@ -151,9 +151,11 @@ class nomenclature_instrument_admin {
 			$req="INSERT INTO nomenclature_instruments SET $fields ";	
 			pmb_mysql_query($req, $dbh);
 			$this->id = pmb_mysql_insert_id($dbh);
+			print display_notification($msg['account_types_success_saved']);
 		} else {
-			$req="UPDATE nomenclature_instruments SET $fields where id_instrument=".$this->id;	
-			pmb_mysql_query($req, $dbh);				
+			$req="UPDATE nomenclature_instruments SET $fields where id_instrument=".$this->id;
+			pmb_mysql_query($req, $dbh);
+			print display_notification($msg['account_types_success_saved']);
 		}	
 		$this->fetch_data();
 	}	

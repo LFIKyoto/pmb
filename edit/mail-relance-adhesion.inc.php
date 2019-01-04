@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mail-relance-adhesion.inc.php,v 1.23 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: mail-relance-adhesion.inc.php,v 1.27 2018-06-26 12:46:25 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($empr_categ_filter)) $empr_categ_filter = '';
+if(!isset($empr_codestat_filter)) $empr_codestat_filter = '';
 
 // popup de mail de relance d'adhésion
 /* reçoit : id_empr et éventuellement cb_doc */
@@ -14,19 +17,23 @@ require_once($include_path."/mail.inc.php") ;
 
 // l'objet du mail
 $var = "mailrelanceadhesion_objet";
-eval ("\$objet=\"".$$var."\";");
+eval ("\$objet=\"".addslashes(${$var})."\";");
+$objet = stripslashes($objet);
 
 // la formule de politesse du bas (le signataire)
 $var = "mailrelanceadhesion_fdp";
-eval ("\$fdp=\"".$$var."\";");
+eval ("\$fdp=\"".addslashes(${$var})."\";");
+$fdp = stripslashes($fdp);
 
 // le "Madame, Monsieur," ou tout autre truc du genre "Cher adhérent,"
 $var = "mailrelanceadhesion_madame_monsieur";
-eval ("\$madame_monsieur=\"".$$var."\";");
+eval ("\$madame_monsieur=\"".addslashes(${$var})."\";");
+$madame_monsieur = stripslashes($madame_monsieur);
 
 // le texte
 $var = "mailrelanceadhesion_texte";
-eval ("\$texte=\"".$$var."\";");
+eval ("\$texte=\"".addslashes(${$var})."\";");
+$texte = stripslashes($texte);
 
 if ($action=="print_all") {
 	// restriction localisation le cas échéant
@@ -37,13 +44,21 @@ if ($action=="print_all") {
 	}
 
 	// filtré par un statut sélectionné
+	$restrict_statut="";
 	if ($empr_statut_edit) {
 		if ($empr_statut_edit!=0) $restrict_statut = " AND empr_statut='$empr_statut_edit' ";
-			else $restrict_statut="";
-	} 
+	}
+	$restrict_categ = '';
+	if($empr_categ_filter) {
+		$restrict_categ = " AND empr_categ= '".$empr_categ_filter."' ";
+	}
+	$restrict_codestat = '';
+	if($empr_codestat_filter) {
+		$restrict_codestat = " AND empr_codestat= '".$empr_codestat_filter."' ";
+	}
 	$requete = "SELECT empr.id_empr  FROM empr, empr_statut ";
 	$restrict_empr = " WHERE 1 ";
-	$restrict_requete = $restrict_empr.$restrict_localisation.$restrict_statut." and ".$restricts;
+	$restrict_requete = $restrict_empr.$restrict_localisation.$restrict_statut.$restrict_categ.$restrict_codestat." and ".$restricts;
 	$requete .= $restrict_requete;
 	$requete.=" and empr_mail!=''";
 	$requete .= " and empr_statut=idstatut";
@@ -70,8 +85,8 @@ if ($action=="print_all") {
 	
 		$res_envoi=mailpmb($coords->prenom." ".$coords->nom, $coords->mail, $objet, $texte_mail, $biblio_name, $biblio_email, $headers, "", $PMBuseremailbcc,1);
 
-		if ($res_envoi) echo "<center><h3>".sprintf($msg["mail_retard_succeed"],$coords->mail)."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["mail_retard_close"]."</a></center><br /><br />".nl2br($texte_relance);
-			else echo "<center><h3>".sprintf($msg["mail_retard_failed"],$coords->mail)."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["mail_retard_close"]."</a></center>";
+		if ($res_envoi) echo "<h3>".sprintf($msg["mail_retard_succeed"],$coords->mail)."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["mail_retard_close"]."</a><br /><br />".nl2br($texte_relance);
+			else echo "<h3>".sprintf($msg["mail_retard_failed"],$coords->mail)."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["mail_retard_close"]."</a>";
 	}
 	pmb_mysql_free_result($res);
 } else {
@@ -91,6 +106,6 @@ if ($action=="print_all") {
 	
 	$res_envoi=mailpmb($coords->prenom." ".$coords->nom, $coords->mail, $objet, $texte_mail, $biblio_name, $biblio_email, $headers, "", $PMBuseremailbcc,1);
 
-	if ($res_envoi) echo "<center><h3>".sprintf($msg["mail_retard_succeed"],$coords->mail)."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["mail_retard_close"]."</a></center><br /><br />".nl2br($texte);
-		else echo "<center><h3>".sprintf($msg["mail_retard_failed"],$coords->mail)."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["mail_retard_close"]."</a></center>";
+	if ($res_envoi) echo "<h3>".sprintf($msg["mail_retard_succeed"],$coords->mail)."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["mail_retard_close"]."</a><br /><br />".nl2br($texte);
+		else echo "<h3>".sprintf($msg["mail_retard_failed"],$coords->mail)."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["mail_retard_close"]."</a>";
 }

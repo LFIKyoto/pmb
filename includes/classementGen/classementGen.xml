@@ -23,6 +23,13 @@
 			<autorisation_where>((autorisations='!!id!!') OR (autorisations LIKE '!!id!! %') OR (autorisations LIKE '% !!id!! %') OR (autorisations LIKE '% !!id!!'))</autorisation_where>
 		</type>
 		
+		<type name="authorities_caddie">
+			<table>authorities_caddie</table>
+			<table_id>idcaddie</table_id>
+			<table_classement_field>caddie_classement</table_classement_field>
+			<autorisation_where>((autorisations='!!id!!') OR (autorisations LIKE '!!id!! %') OR (autorisations LIKE '% !!id!! %') OR (autorisations LIKE '% !!id!!'))</autorisation_where>
+		</type>
+		
 		<type name="infopages">
 			<table>infopages</table>
 			<table_id>id_infopage</table_id>

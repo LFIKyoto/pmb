@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_articleslist_view_carousel.class.php,v 1.7 2015-03-10 14:19:39 dgoron Exp $
+// $Id: cms_module_articleslist_view_carousel.class.php,v 1.8 2017-07-27 14:50:32 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -59,7 +59,7 @@ class cms_module_articleslist_view_carousel extends cms_module_carousel_view_car
 				'children' => $this->prefix_var_tree($datas,"records[i]")
 			)
 		);
-		$format_datas = array_merge($format_datas,cms_module_common_view_django::get_format_data_structure());
+		$format_datas = array_merge($format_datas,parent::get_format_data_structure());
 		return $format_datas;
 	}
 }

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: audit.class.php,v 1.4 2015-05-20 14:49:27 dgoron Exp $
+// $Id: audit.class.php,v 1.5 2017-02-08 13:41:40 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -25,22 +25,32 @@ class audit {
 	*/
 	// ---------------------------------------------------------------
 	
-	var $type_obj;		// Types d'objets audités : définis dans config.inc.php
+	public $type_obj;		// Types d'objets audités : définis dans config.inc.php
 						// define('AUDIT_NOTICE'	,    1);
 						// define('AUDIT_EXPL'		,    2);
 						// define('AUDIT_BULLETIN'	,    3);
 						// define('AUDIT_ACQUIS'	,    4);
 						// define('AUDIT_PRET'		,    5);
+						// define('AUDIT_AUTHOR'	,    6);
+						// define('AUDIT_COLLECTION',   7);
+						// define('AUDIT_SUB_COLLECTION',8);
+						// define('AUDIT_INDEXINT'	,    9);
+						// define('AUDIT_PUBLISHER',    10);
+						// define('AUDIT_SERIE'	,    11);
+						// define('AUDIT_CATEG'	,    12);
+						// define('AUDIT_TITRE_UNIFORME',13);
 						// define('AUDIT_DEMANDE'	,    14);
 						// define('AUDIT_ACTION'	,    15);
 						// define('AUDIT_NOTE'		,    16);
-	var $object_id;		// id de l'objet audité
-	var $user_id;		// id de l'utilisateur lors de l'insertion dans la table
-	var $user_name;		// login de l'utilisateur lors de l'insertion dans la table, permet de conserver un truc même après suppression de l'utilisateur
-	var $type_modif;	// type de modification : 1 : INSERTION, 2 : MODIFICATION, 3 : MIGRATION
-	var $quand;			// timestamp lors de l'insertion dans la table
-	var $all_audit;		// tableau de toutes les lignes d'audit de l'objet
-	var $type_user;		// origine de l'utilisateur : 0 = user gestion, 1 = lecteur opac
+						// define('AUDIT_EDITORIAL_ARTICLE',20);
+						// define('AUDIT_EDITORIAL_SECTION',21);
+	public $object_id;		// id de l'objet audité
+	public $user_id;		// id de l'utilisateur lors de l'insertion dans la table
+	public $user_name;		// login de l'utilisateur lors de l'insertion dans la table, permet de conserver un truc même après suppression de l'utilisateur
+	public $type_modif;	// type de modification : 1 : INSERTION, 2 : MODIFICATION, 3 : MIGRATION
+	public $quand;			// timestamp lors de l'insertion dans la table
+	public $all_audit;		// tableau de toutes les lignes d'audit de l'objet
+	public $type_user;		// origine de l'utilisateur : 0 = user gestion, 1 = lecteur opac
 
 	/*
 	Variables globales nécéssaires 
@@ -73,25 +83,25 @@ class audit {
 	// ---------------------------------------------------------------
 	//		audit($type, $obj) : constructeur
 	// ---------------------------------------------------------------
-	function audit ($type=0, $obj=0) {
+	public function __construct($type=0, $obj=0) {
 		global $pmb_type_audit ; 
 		if (!$pmb_type_audit) return 0;
-		$this->type_obj = $type ;
-		$this->object_id = $obj ;		
+		$this->type_obj = $type+0;
+		$this->object_id = $obj+0;
 		$this->all_audit=array() ;
 	}
 	
 	// ---------------------------------------------------------------
 	//		get_all () : récupération toutes informations
 	// ---------------------------------------------------------------
-	function get_all() {
-		global $dbh, $pmb_type_audit, $msg ;
+	public function get_all() {
+		global $pmb_type_audit, $msg ;
 		if (!$pmb_type_audit) return 0;
 		$query = "select user_id, user_name, type_modif, quand, date_format(quand, '".$msg["format_date_heure"]."') as aff_quand, concat(prenom, ' ', nom) as prenom_nom  from audit left join users on user_id=userid where ";
 		$query .= "type_obj='$this->type_obj' AND ";
-		$query .= "object_id='$this->object_id' ";		
+		$query .= "object_id='$this->object_id' ";
 		$query .= "order by quand ";
-		$result = @pmb_mysql_query($query, $dbh);
+		$result = @pmb_mysql_query($query);
 		if(!$result) die("can't select from table audit left join users :<br /><b>$query</b> ");
 		while ($audit=pmb_mysql_fetch_object($result)) {
 			$this->all_audit[] = $audit ; 
@@ -101,7 +111,7 @@ class audit {
 	// ---------------------------------------------------------------
 	//		get_creation () : récupération création
 	// ---------------------------------------------------------------
-	function get_creation () {
+	public function get_creation () {
 		global $dbh, $pmb_type_audit ;
 		if (!$pmb_type_audit) return 0;
 		return $this->all_audit[0];
@@ -110,8 +120,8 @@ class audit {
 	// ---------------------------------------------------------------
 	//		get_last () : récupération dernière modification
 	// ---------------------------------------------------------------
-	function get_last () {
-		global $dbh, $pmb_type_audit ;
+	public function get_last () {
+		global $pmb_type_audit ;
 		if (!$pmb_type_audit) return 0;
 		return $this->all_audit[(count($this->all_audit)-1)];
 	}
@@ -119,10 +129,12 @@ class audit {
 	// ---------------------------------------------------------------
 	//		insert_creation ($type=0, $obj=0) : 
 	// ---------------------------------------------------------------
-	static function insert_creation ($type=0, $obj=0) {
-		global $dbh, $pmb_type_audit , $msg;
+	public static function insert_creation ($type=0, $obj=0) {
+		global $pmb_type_audit , $msg;
 		
 		if (!$pmb_type_audit) return 0;
+		$type += 0;
+		$obj += 0;
 		$query = "INSERT INTO audit SET ";
 		$query .= "type_obj='$type', ";
 		$query .= "object_id='$obj', ";
@@ -130,25 +142,27 @@ class audit {
 		$query .= "user_name='".$msg['audit_lecteur']."', ";
 		$query .= "type_modif=1, ";
 		$query .= "type_user=1 ";
-		$result = @pmb_mysql_query($query, $dbh);
-		if(!$result) die("can't INSERT into table audit :<br /><b>$query</b> ");
+		$result = @pmb_mysql_query($query);
+		if(!$result) return 0;
 		return 1;
 	}
 
 	// ---------------------------------------------------------------
 	//		insert_modif ($type=0, $obj=0) : 
 	// ---------------------------------------------------------------
-	static function insert_modif ($type=0, $obj=0) {
-		global $dbh, $pmb_type_audit, $msg ;
+	public static function insert_modif ($type=0, $obj=0) {
+		global $pmb_type_audit, $msg ;
 		
 		if (!$pmb_type_audit) return 0;
+		$type += 0;
+		$obj += 0;
 		if ($pmb_type_audit=='1') {
 			$query = "DELETE FROM audit WHERE ";
 			$query .= "type_obj='$type' AND ";
 			$query .= "object_id='$obj' AND ";
 			$query .= "type_modif=2 ";
-			$result = @pmb_mysql_query($query, $dbh);
-			if(!$result) die("can't DELETE FROM table audit :<br /><b>$query</b> ");
+			$result = @pmb_mysql_query($query);
+			if(!$result) return 0;
 		}
 		$query = "INSERT INTO audit SET ";
 		$query .= "type_obj='$type', ";
@@ -157,20 +171,20 @@ class audit {
 		$query .= "user_name='".$msg['audit_lecteur']."', ";
 		$query .= "type_modif=2, ";
 		$query .= "type_user=1 ";
-		$result = @pmb_mysql_query($query, $dbh);
+		$result = @pmb_mysql_query($query);
 		return 1;
 	}
 		
 	// ---------------------------------------------------------------
 	//		delete_audit ($type=0, $obj=0) : 
 	// ---------------------------------------------------------------
-	static function delete_audit ($type=0, $obj=0) {
-		global $dbh ;
-		
+	public static function delete_audit ($type=0, $obj=0) {
+		$type += 0;
+		$obj += 0;
 		$query = "DELETE FROM audit WHERE ";
 		$query .= "type_obj='$type' AND ";
 		$query .= "object_id in ($obj) ";
-		$result = @pmb_mysql_query($query, $dbh);
+		$result = @pmb_mysql_query($query);
 		return 1;
 	}
 	

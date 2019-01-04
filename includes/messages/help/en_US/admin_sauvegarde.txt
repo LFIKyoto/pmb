@@ -1,4 +1,4 @@
-<h1>Backup</h1>
+<h2>Backup</h2>
 </p><p>
 <b>Backup location</b> Backup location on the hard disk or network
 </p><p>

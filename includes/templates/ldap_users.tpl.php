@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // ? 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ldap_users.tpl.php,v 1.7 2009-05-16 11:19:55 dbellamy Exp $
+// $Id: ldap_users.tpl.php,v 1.8 2017-10-18 15:27:54 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -73,9 +73,9 @@ function setCheckboxColumn(theCheckbox){
 	<table class='table-but'><tr>
 	<td class='td-lbut'>
 			<table class='table-but'><tr>
-				<td class='td-lbut'><center>!!nav_barL!!</center></td>
+				<td class='td-lbut'>!!nav_barL!!</td>
 				<td class='td-cbutb'>!!nav_barC!!</td>
-				<td class='td-lbut'><center>!!nav_barR!!</center></td>
+				<td class='td-lbut'>!!nav_barR!!</td>
 			</tr></table>
 	</td>
 	<td class='td-cbut'>
@@ -139,9 +139,9 @@ function setCheckboxColumn(theCheckbox){
 	<table class='table-but'><tr>
 	<td class='td-lbut'>
 			<table class='table-but'><tr>
-				<td class='td-lbut'><center>!!nav_barL!!</center></td>
+				<td class='td-lbut'>!!nav_barL!!</td>
 				<td class='td-cbutb'>!!nav_barC!!</td>
-				<td class='td-lbut'><center>!!nav_barR!!</center></td>
+				<td class='td-lbut'>!!nav_barR!!</td>
 			</tr></table>
 	</td>
 	<td class='td-rbut'>

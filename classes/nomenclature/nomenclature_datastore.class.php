@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_datastore.class.php,v 1.13 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: nomenclature_datastore.class.php,v 1.14 2016-02-18 09:40:02 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
+require_once($class_path.'/encoding_normalize.class.php');
 
 class nomenclature_datastore {
 		
@@ -124,7 +125,7 @@ class nomenclature_datastore {
 		
 		$datas = nomenclature_datastore::get_datas();
 		$messages = nomenclature_datastore::get_messages();
-		
+
 		$formations_json_datastore = json_encode(encoding_normalize::utf8_normalize($datas["formations_datastore"]),JSON_HEX_APOS | JSON_HEX_QUOT);
 		$families_json_datastore = json_encode(encoding_normalize::utf8_normalize($datas["families_datastore"]),JSON_HEX_APOS | JSON_HEX_QUOT);
 		$instruments_json_datastore = json_encode(encoding_normalize::utf8_normalize($datas["instruments_datastore"]),JSON_HEX_APOS | JSON_HEX_QUOT);

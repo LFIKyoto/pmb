@@ -2,16 +2,16 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: remote_procedure_client.class.php,v 1.5 2014-06-19 07:27:03 mbertin Exp $
+// $Id: remote_procedure_client.class.php,v 1.7 2018-08-28 09:13:02 dbellamy Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 class remote_procedure_client {
-	var $server_adress="";
-	var $server_username="";
-	var $server_key="";
+	public $server_adress="";
+	public $server_username="";
+	public $server_key="";
 
-	function array_to_object($array, $recursive=false) {
+	public function array_to_object($array, $recursive=false) {
 		$return = new stdClass();
 		foreach ($array as $k => $v) {
 			if ($recursive && is_array($v)) {
@@ -25,13 +25,13 @@ class remote_procedure_client {
 		return $return;
 	}
 	
-	function remote_procedure_client($server_adress, $server_username, $server_key) {
+	public function __construct($server_adress, $server_username, $server_key) {
 		$this->server_adress = $server_adress;
 		$this->server_username = $server_username;
 		$this->server_key = $server_key;
 	}
 	
-	function get_procs($type="", $set="") {
+	public function get_procs($type="", $set="") {
 		global $charset, $class_path, $pmb_version_brut;
 		global $msg;
 		global $pmb_curl_proxy;
@@ -52,10 +52,19 @@ class remote_procedure_client {
 				$port_proxy = $param_proxy[1];
 				$user_proxy = $param_proxy[2];
 				$pwd_proxy = $param_proxy[3];
+				$context = stream_context_create([
+				    'ssl' => [
+				        // set some SSL/TLS specific options to ignore certificate verification with proxy
+				        'verify_peer' => 0,
+				        'verify_peer_name' => 0,
+				    ]
+				]);
 				$soap_client_parameters = array('proxy_host'     => $adresse_proxy,
 	                                  			'proxy_port'     => $port_proxy,
 	                                  			'proxy_login'    => $user_proxy,
-	                                  			'proxy_password' => $pwd_proxy);
+	                                  			'proxy_password' => $pwd_proxy,
+				                                'stream_context' => $context,
+				);
 			}
 			
 			$soap_client_parameters['features'] = SOAP_SINGLE_ELEMENT_ARRAYS;
@@ -127,7 +136,7 @@ class remote_procedure_client {
 		return $result;
 	}
 	
-	function get_proc($proc_id,$type="") {
+	public function get_proc($proc_id,$type="") {
 		global $msg;
 		$result = array("error_message" => "", "procedure" => NULL);
 		$procedures = $this->get_procs($type);
@@ -155,7 +164,7 @@ class remote_procedure_client {
 		return $result;
 	}
 	
-	function parse_parameters($parameters) {
+	public function parse_parameters($parameters) {
 		$parsed_parameters=array();
 		if (!$parameters || $parameters == "NULL") return;
 		$pp = _parser_text_no_function_($parameters);

@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.9 2012-07-20 13:22:46 arenou Exp $
+// $Id: main.inc.php,v 1.10 2017-02-08 09:57:47 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($notice_id)) $notice_id = 0;
+if(!isset($source)) $source = '';
 
 //verification des droits de modification notice
 $acces_m=1;

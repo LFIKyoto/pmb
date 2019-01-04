@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: impr_cote_suite.php,v 1.2 2009-10-26 17:56:23 dbellamy Exp $
+// $Id: impr_cote_suite.php,v 1.3 2017-08-07 12:14:47 jpermanne Exp $
 
 $base_path = "../../..";   
 $class_path = "$base_path/classes";
@@ -27,6 +27,20 @@ if ($pmb_label_construct_script) {
 		$liste = $myCart->get_cart("FLAG");
 	if ($elt_no_flag && !$elt_flag)
 		$liste = $myCart->get_cart("NOFLAG");
+	
+	//Tri des exemplaires par cote alphabétique
+	$ordered_list = array();
+	for ($i=0;$i<count($liste) ;$i++) {
+		$res = pmb_mysql_query('select expl_cote from exemplaires where expl_id = '.$liste[$i]);
+		$row = pmb_mysql_fetch_assoc($res);
+		
+		$ordered_list[] = array('id'=>$liste[$i], 'cote'=>$row['expl_cote']);
+	}
+	$cotes = array();
+	foreach ($ordered_list as $key => $val) {
+		$cotes[$key]  = $val['cote'];
+	}
+	array_multisort($cotes, SORT_ASC, $ordered_list);
 
 	// Démarrage et configuration du pdf
 	$nom_classe = $fpdf . "_Etiquette";
@@ -43,10 +57,10 @@ if ($pmb_label_construct_script) {
 	}
 
 	//Impression etiquettes
-	for ($i=0;$i<count($liste) ;$i++) {
+	for ($i=0;$i<count($ordered_list) ;$i++) {
 
 		$pdf->AddStick();
-		$content_src = $liste[$i];
+		$content_src = $ordered_list[$i]['id'];
 		foreach($content_type as $step=>$value) {
 
 			eval('print_'.$content_type[$step].'($pdf, $content_value[$step], $content_src); ');

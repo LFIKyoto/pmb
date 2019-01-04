@@ -2,48 +2,46 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: tu_notice.class.php,v 1.15 2015-06-22 13:34:19 arenou Exp $
+// $Id: tu_notice.class.php,v 1.45 2018-12-21 14:56:25 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/titre_uniforme.class.php");
-
+require_once($class_path."/authority.class.php");
+require_once($class_path."/indexation_stack.class.php");
 class tu_notice {
 	
 	// ---------------------------------------------------------------
 	//		propriétés de la classe
 	// ---------------------------------------------------------------	
-	var $id;		// MySQL id notice
-	var $ntu_data;	//données des titres uniformes lié a la notice 
-	var $ntu_form;
+	public $id;		// MySQL id notice
+	public $ntu_data;	//données des titres uniformes lié a la notice 
+	public $ntu_form;
+	public $oeuvre_events_order;
 	
 	// ---------------------------------------------------------------
 	//		tu_notice($id) : constructeur
 	// ---------------------------------------------------------------
-	function tu_notice($id=0,$recursif=0) {
-		if($id) {
+	public function __construct($id=0,$recursif=0) {
+		$this->id = $id+0;
+		if($this->id) {
 			// on cherche à atteindre une notice existante
-			$this->recursif=$recursif;
-			$this->id = $id;
-			$this->getData();
-		} else {
-			// la notice n'existe pas
-			$this->id = 0;
-			$this->getData();
+			$this->recursif=$recursif+0;
 		}
+		$this->getData();
 	}
 	
 	// ---------------------------------------------------------------
 	//		getData() : récupération infos auteur
 	// ---------------------------------------------------------------
-	function getData() {
-		global $dbh,$msg;
+	public function getData() {
+		global $msg;
 
 		$this->ntu_data=array();
+		$this->oeuvre_events_order=array();
 		if($this->id) {				
 			$requete = "SELECT * FROM notices_titres_uniformes WHERE ntu_num_notice=$this->id order by ntu_ordre";
-		
-			$result = pmb_mysql_query($requete, $dbh);
+			$result = pmb_mysql_query($requete);
 			$nb_result=0;
 			if(pmb_mysql_num_rows($result)) {
 				while(($res_tu = pmb_mysql_fetch_object($result))) {
@@ -55,7 +53,8 @@ class tu_notice {
 					$this->ntu_data[$nb_result]->langue=	$res_tu->ntu_langue;
 					$this->ntu_data[$nb_result]->version=	$res_tu->ntu_version;
 					$this->ntu_data[$nb_result]->mention=	$res_tu->ntu_mention;  
-					$this->ntu_data[$nb_result]->tu= new titre_uniforme($this->ntu_data[$nb_result]->num_tu);	
+					$authority = new authority(0, $this->ntu_data[$nb_result]->num_tu, AUT_TABLE_TITRES_UNIFORMES);
+					$this->ntu_data[$nb_result]->tu = $authority;
 					/*  Champs récupérés du titre uniforme:
 					 	name 			
 						tonalite
@@ -64,146 +63,250 @@ class tu_notice {
 						ref (array)
 						subdiv (array)
 					*/
+					// mémorisation de l'ordre des évenemments par leur date, si renseigné.
+					if(isset($this->ntu_data[$nb_result]->tu->get_object_instance()->get_oeuvre_events()[0]) && isset($this->ntu_data[$nb_result]->tu->get_object_instance()->get_oeuvre_events()[0]['date']) && $this->ntu_data[$nb_result]->tu->get_object_instance()->get_oeuvre_events()[0]['date']){
+						$this->oeuvre_events_order[$this->ntu_data[$nb_result]->tu->get_object_instance()->get_oeuvre_events()[0]['date']][]=$nb_result;
+					}
 					$nb_result++;
-				}				
+				}
+				krsort($this->oeuvre_events_order);
+				uasort($this->ntu_data, array('self', 'sort_tu'));				
 			} else {
 				// pas trouvé avec cette clé
-						
-				
 			}
 		}
 	}
 
-	function get_print_type($type=0) {
+	public function get_print_type() {
 		global $msg;
-		switch($type) {
-			
-			default:
-				if(!$this->ntu_data) return'';
-				$display="<b>".$msg["catal_onglet_titre_uniforme"]."</b>&nbsp;:";
-				$flag_first=0;
-				foreach ($this->ntu_data as $tu) {
-					if($flag_first)$display.="<br />";
-					$flag_first=1;
-					$link="<a href='./autorites.php?categ=titres_uniformes&sub=titre_uniforme_form&id=".$tu->num_tu."' class='lien_gestion'>
-					".$tu->tu->display."
-					</a>";
-					$biblio_fields=array(); 
-					if($tu->titre)$biblio_fields[]=$tu->titre;	
-					if($tu->date)$biblio_fields[]=$tu->date;	
-					if($tu->sous_vedette)$biblio_fields[]=$tu->sous_vedette;			
-					if($tu->langue)$biblio_fields[]=$tu->langue;			
-					if($tu->version)$biblio_fields[]=$tu->version;			
-					if($tu->mention)$biblio_fields[]=$tu->mention;			
-					$biblio_print=implode("; ",$biblio_fields);		
-					if($biblio_print)	$biblio_print=": ".$biblio_print;
-					$display.=" ".$link.$biblio_print;
-				}
-			break;	
-		}
-		return $display;
 		
+		if(!$this->ntu_data) return'';
+		$display="<b>".$msg["catal_onglet_titre_uniforme"]."</b>&nbsp;:";
+		$flag_first=0;
+		$printed=array();
+		foreach ($this->oeuvre_events_order as $elts){
+			foreach ($elts as $elt){
+				if($flag_first)$display.="<br />";
+				$flag_first=1;
+				$display.=" ".$this->get_link($this->ntu_data[$elt]);
+				$printed[]=$elt;
+			}
+		}
+		for($elt=0; $elt<count($this->ntu_data); $elt++) {
+			if(in_array($elt, $printed)) continue;
+			if($flag_first)$display.="<br />";
+			$flag_first=1;
+			$display.=" ".$this->get_link($this->ntu_data[$elt]);
+		}
+		return $display;		
 	}
 	
-	function get_form($form_name) {
+	public function get_link($tu){
+		return "<a href='./autorites.php?categ=see&sub=titre_uniforme&id=".$tu->num_tu."' class='lien_gestion'>".$tu->tu->get_isbd()."</a>";
+	}
+	
+	public function get_form($form_name) {
 		global $msg;
 
-		$i=0;
-		do {	
-			$values[$i]["id"]= $this->ntu_data[$i]->num_tu;
-			$values[$i]["label"]= $this->ntu_data[$i]->tu->display;
-			$j=0;
-			$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_titre_section"];
-			$values[$i]["objets"][$j]["name"]="ntu_titre";
-			$values[$i]["objets"][$j]["class"]="saisie-80em";
-			$values[$i]["objets"][$j]["value"]=$this->ntu_data[$i]->titre;
-			$j++;
-			$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_date"];
-			$values[$i]["objets"][$j]["name"]="ntu_date";
-			$values[$i]["objets"][$j]["class"]="saisie-80em";
-			$values[$i]["objets"][$j]["value"]=$this->ntu_data[$i]->date;
-			$j++;
-			$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_sous_vedette"];
-			$values[$i]["objets"][$j]["name"]="ntu_sous_vedette";
-			$values[$i]["objets"][$j]["class"]="saisie-80em";
-			$values[$i]["objets"][$j]["value"]=$this->ntu_data[$i]->sous_vedette;
-			$j++;
-			$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_langue"];
-			$values[$i]["objets"][$j]["name"]="ntu_langue";
-			$values[$i]["objets"][$j]["class"]="saisie-80em";
-			$values[$i]["objets"][$j]["value"]=$this->ntu_data[$i]->langue;
-			$j++;
-			$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_version"];
-			$values[$i]["objets"][$j]["name"]="ntu_version";
-			$values[$i]["objets"][$j]["class"]="saisie-80em";
-			$values[$i]["objets"][$j]["value"]=$this->ntu_data[$i]->version;
-			$j++;
-			$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_mention"];
-			$values[$i]["objets"][$j]["name"]="ntu_mention";
-			$values[$i]["objets"][$j]["class"]="saisie-80em";
-			$values[$i]["objets"][$j]["value"]=$this->ntu_data[$i]->mention;
-		} while	(++$i<count($this->ntu_data));
-		$this->ntu_form=$this->gen_input_selection($msg["catal_onglet_titre_uniforme"],$form_name,"titre_uniforme",$values,"titre_uniforme","saisie-80emr");
+		$values = array();
+		if(count($this->ntu_data)) {
+			$i=0;
+			do {
+				$values[$i]["id"]= $this->ntu_data[$i]->num_tu;
+				$values[$i]["label"]= $this->ntu_data[$i]->tu->get_isbd();
+				$j=0;
+				$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_titre_section"];
+				$values[$i]["objets"][$j]["name"]="ntu_titre";
+				$values[$i]["objets"][$j]["class"]="saisie-80em";
+				$values[$i]["objets"][$j]["value"]=$this->ntu_data[$i]->titre;
+				$j++;
+				$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_date"];
+				$values[$i]["objets"][$j]["name"]="ntu_date";
+				$values[$i]["objets"][$j]["class"]="saisie-80em";
+				$values[$i]["objets"][$j]["value"]=$this->ntu_data[$i]->date;
+				$j++;
+				$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_sous_vedette"];
+				$values[$i]["objets"][$j]["name"]="ntu_sous_vedette";
+				$values[$i]["objets"][$j]["class"]="saisie-80em";
+				$values[$i]["objets"][$j]["value"]=$this->ntu_data[$i]->sous_vedette;
+				$j++;
+				$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_langue"];
+				$values[$i]["objets"][$j]["name"]="ntu_langue";
+				$values[$i]["objets"][$j]["class"]="saisie-80em";
+				$values[$i]["objets"][$j]["value"]=$this->ntu_data[$i]->langue;
+				$j++;
+				$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_version"];
+				$values[$i]["objets"][$j]["name"]="ntu_version";
+				$values[$i]["objets"][$j]["class"]="saisie-80em";
+				$values[$i]["objets"][$j]["value"]=$this->ntu_data[$i]->version;
+				$j++;
+				$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_mention"];
+				$values[$i]["objets"][$j]["name"]="ntu_mention";
+				$values[$i]["objets"][$j]["class"]="saisie-80em";
+				$values[$i]["objets"][$j]["value"]=$this->ntu_data[$i]->mention;
+			} while	(++$i<count($this->ntu_data));
+		} else {
+			$values = array(
+					array(
+							'id' => 0,
+							'label' => '',
+							'objets' => array(
+									array(
+											'label' => $msg["catal_titre_uniforme_titre_section"],
+											'name' => "ntu_titre",
+											'class' => "saisie-80em",
+											'value' => ''
+									),
+									array(
+											'label' => $msg["catal_titre_uniforme_date"],
+											'name' => "ntu_date",
+											'class' => "saisie-80em",
+											'value' => ''
+									),
+									array(
+											'label' => $msg["catal_titre_uniforme_sous_vedette"],
+											'name' => "ntu_sous_vedette",
+											'class' => "saisie-80em",
+											'value' => ''
+									),
+									array(
+											'label' => $msg["catal_titre_uniforme_langue"],
+											'name' => "ntu_langue",
+											'class' => "saisie-80em",
+											'value' => ''
+									),
+									array(
+											'label' => $msg["catal_titre_uniforme_version"],
+											'name' => "ntu_version",
+											'class' => "saisie-80em",
+											'value' => ''
+									),
+									array(
+											'label' => $msg["catal_titre_uniforme_mention"],
+											'name' => "ntu_mention",
+											'class' => "saisie-80em",
+											'value' => ''
+									),
+							)
+					)
+			);
+		}
+		$this->ntu_form=static::gen_input_selection($msg["catal_onglet_titre_uniforme"],$form_name,"titre_uniforme",$values,"titre_uniforme","saisie-80emr");
 		return $this->ntu_form;
 	}
 		
-	static function get_form_import($form_name,$ntu_data) {
+	public static function get_form_import($form_name,$ntu_data) {
 		global $msg;
 
-		$i=0;
-		do {	
-			$values[$i]["id"]= $ntu_data[$i]->num_tu;
-			$values[$i]["label"]= $ntu_data[$i]->tu->name;
-			$j=0;
-			$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_titre_section"];
-			$values[$i]["objets"][$j]["name"]="ntu_titre";
-			$values[$i]["objets"][$j]["class"]="saisie-80em";
-			$values[$i]["objets"][$j]["value"]=$ntu_data[$i]->titre;
-			$j++;
-			$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_date"];
-			$values[$i]["objets"][$j]["name"]="ntu_date";
-			$values[$i]["objets"][$j]["class"]="saisie-80em";
-			$values[$i]["objets"][$j]["value"]=$ntu_data[$i]->date;
-			$j++;
-			$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_sous_vedette"];
-			$values[$i]["objets"][$j]["name"]="ntu_sous_vedette";
-			$values[$i]["objets"][$j]["class"]="saisie-80em";
-			$values[$i]["objets"][$j]["value"]=$ntu_data[$i]->sous_vedette;
-			$j++;
-			$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_langue"];
-			$values[$i]["objets"][$j]["name"]="ntu_langue";
-			$values[$i]["objets"][$j]["class"]="saisie-80em";
-			$values[$i]["objets"][$j]["value"]=$ntu_data[$i]->langue;
-			$j++;
-			$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_version"];
-			$values[$i]["objets"][$j]["name"]="ntu_version";
-			$values[$i]["objets"][$j]["class"]="saisie-80em";
-			$values[$i]["objets"][$j]["value"]=$ntu_data[$i]->version;
-			$j++;
-			$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_mention"];
-			$values[$i]["objets"][$j]["name"]="ntu_mention";
-			$values[$i]["objets"][$j]["class"]="saisie-80em";
-			$values[$i]["objets"][$j]["value"]=$ntu_data[$i]->mention;
-		} while	(++$i<count($ntu_data));
-		$ntu_form=tu_notice::gen_input_selection($msg["catal_onglet_titre_uniforme"],$form_name,"titre_uniforme",$values,"titre_uniforme","saisie-80emr");
+		$values = array();
+		if(count($ntu_data)) {
+			$i=0;
+			do {	
+				$values[$i]["id"]= $ntu_data[$i]->num_tu;
+				$values[$i]["label"]= $ntu_data[$i]->tu->name;
+				$j=0;
+				$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_titre_section"];
+				$values[$i]["objets"][$j]["name"]="ntu_titre";
+				$values[$i]["objets"][$j]["class"]="saisie-80em";
+				$values[$i]["objets"][$j]["value"]=$ntu_data[$i]->titre;
+				$j++;
+				$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_date"];
+				$values[$i]["objets"][$j]["name"]="ntu_date";
+				$values[$i]["objets"][$j]["class"]="saisie-80em";
+				$values[$i]["objets"][$j]["value"]=$ntu_data[$i]->date;
+				$j++;
+				$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_sous_vedette"];
+				$values[$i]["objets"][$j]["name"]="ntu_sous_vedette";
+				$values[$i]["objets"][$j]["class"]="saisie-80em";
+				$values[$i]["objets"][$j]["value"]=$ntu_data[$i]->sous_vedette;
+				$j++;
+				$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_langue"];
+				$values[$i]["objets"][$j]["name"]="ntu_langue";
+				$values[$i]["objets"][$j]["class"]="saisie-80em";
+				$values[$i]["objets"][$j]["value"]=$ntu_data[$i]->langue;
+				$j++;
+				$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_version"];
+				$values[$i]["objets"][$j]["name"]="ntu_version";
+				$values[$i]["objets"][$j]["class"]="saisie-80em";
+				$values[$i]["objets"][$j]["value"]=$ntu_data[$i]->version;
+				$j++;
+				$values[$i]["objets"][$j]["label"]=$msg["catal_titre_uniforme_mention"];
+				$values[$i]["objets"][$j]["name"]="ntu_mention";
+				$values[$i]["objets"][$j]["class"]="saisie-80em";
+				$values[$i]["objets"][$j]["value"]=$ntu_data[$i]->mention;
+			} while	(++$i<count($ntu_data));
+		} else {
+			$values = array(
+					array(
+							'id' => 0,
+							'label' => '',
+							'objets' => array(
+									array(
+											'label' => $msg["catal_titre_uniforme_titre_section"],
+											'name' => "ntu_titre",
+											'class' => "saisie-80em",
+											'value' => ''
+									),
+									array(
+											'label' => $msg["catal_titre_uniforme_date"],
+											'name' => "ntu_date",
+											'class' => "saisie-80em",
+											'value' => ''
+									),
+									array(
+											'label' => $msg["catal_titre_uniforme_sous_vedette"],
+											'name' => "ntu_sous_vedette",
+											'class' => "saisie-80em",
+											'value' => ''
+									),
+									array(
+											'label' => $msg["catal_titre_uniforme_langue"],
+											'name' => "ntu_langue",
+											'class' => "saisie-80em",
+											'value' => ''
+									),
+									array(
+											'label' => $msg["catal_titre_uniforme_version"],
+											'name' => "ntu_version",
+											'class' => "saisie-80em",
+											'value' => ''
+									),
+									array(
+											'label' => $msg["catal_titre_uniforme_mention"],
+											'name' => "ntu_mention",
+											'class' => "saisie-80em",
+											'value' => ''
+									)
+							)
+					)
+			);
+		}
+		$ntu_form=static::gen_input_selection($msg["catal_onglet_titre_uniforme"],$form_name,"titre_uniforme",$values,"titre_uniforme","saisie-80emr");
 		return $ntu_form;
 	}	
 	
-	function gen_input_selection($label,$form_name,$item,$values,$what_sel,$class='saisie-80em' ) {  
+	public static function gen_input_selection($label,$form_name,$item,$values,$what_sel,$class='saisie-80em', $show_other_fields=1) {  
 	
 		global $msg, $charset;
 		$select_prop = "scrollbars=yes, toolbar=no, dependent=yes, resizable=yes";
 		$link="'./select.php?what=$what_sel&caller=$form_name&param1=f_".$item."_code!!num!!&param2=f_".$item."!!num!!&deb_rech='+".pmb_escape()."(this.form.f_".$item."!!num!!.value), '$what_sel', 400, 400, -2, -2, '$select_prop'";
 		$size_item=strlen($item)+2;
-				
+		
+		$show_other_fields_plus_js = '';
+		$show_other_fields_plus = '';
+		if(!$show_other_fields) {		    
+		    $show_other_fields_plus_js = "img_" . $item . ".style.display='none';";
+		    $show_other_fields_plus = "display:none;";
+		}
 		$script_js="
 		<script>
 		var memo_id='';
 				
 		function tu_add_callback(field,tu_id){
-			if(typeof(tu_callback_perso) != 'undefined'){
-				var tu_id = document.getElementById(document.getElementById(field).getAttribute('autfield')).value;
-				tu_callback_perso(tu_id);
+			if(typeof(formMapperCallback) != 'undefined'){
+				//var tu_id = document.getElementById(document.getElementById(field).getAttribute('autfield')).value;
+		          var tu_id = document.getElementById('f_titre_uniforme_code0').value;
+				formMapperCallback(tu_id);
 			}
 		}		
 				
@@ -212,8 +315,13 @@ class tu_notice {
 			if(memo_id) name=memo_id.substring(4);  
 			else name=this.getAttribute('id').substring(4);
 			memo_id='';	    
-			name_id = name.substr(0,nom.length)+'_code'+name.substr(nom.length);
-			openPopUp('./select.php?what=$what_sel&caller=$form_name&param1='+name_id+'&param2='+name+'&callback=tu_add_callback', '$what_sel', 400, 400, -2, -2, '$select_prop');	        
+			var indice = name.substr(nom.length);
+			name_id = name.substr(0,nom.length)+'_code'+indice;
+			if(indice == 0){
+			openPopUp('./select.php?what=$what_sel&caller=$form_name&param1='+name_id+'&param2='+name+'&callback=tu_add_callback&deb_rech='+document.getElementById(nom+indice).value, 'selector');	        
+			}else{
+			 openPopUp('./select.php?what=$what_sel&caller=$form_name&param1='+name_id+'&param2='+name+'&deb_rech='+document.getElementById(nom+indice).value, 'selector');
+	        }	        
 	    }
 	    function fonction_raz_".$item."() {
 	        name=this.getAttribute('id').substring(4);
@@ -231,12 +339,13 @@ class tu_notice {
 	      	".$item.".style.display='block';
 	      		      	
 	      	img_".$item."= document.createElement('img');
-			img_".$item.".setAttribute('src','./images/plus.gif');  
+			img_".$item.".setAttribute('src','".get_url_icon('plus.gif')."');  
 			img_".$item.".setAttribute('class','img_plus');
 			img_".$item.".setAttribute('name','imEx');
 			img_".$item.".setAttribute('id','tu'+suffixe+'Img');
 			img_".$item.".setAttribute('onclick',\"expandBase(this.id.substring(0,this.id.length - 3), true); return false;\");
 			img_".$item.".setAttribute('border','0');	
+            " . $show_other_fields_plus_js . "
 	        
 	        nom_id = 'f_".$item."'+suffixe;
 	        f_".$item." = document.createElement('input');
@@ -245,7 +354,7 @@ class tu_notice {
 	        f_".$item.".setAttribute('type','text');
 	        f_".$item.".className='$class';
 	        f_".$item.".setAttribute('value','');
-	        f_".$item.".setAttribute('callback','tu_add_callback');
+	        //f_".$item.".setAttribute('callback','tu_add_callback');
 			f_".$item.".setAttribute('completion','".$item."');
 			f_".$item.".setAttribute('autfield','f_".$item."_code'+suffixe);
 	        
@@ -322,9 +431,10 @@ class tu_notice {
 		//template de zone de texte pour chaque valeur				
 		$aff="
 		<div style='display: block;' id='tu!!num!!Parent' class='parent'>
-			<img src='./images/plus.gif' class='img_plus' name='imEx' id='tu!!num!!Img' title='Zone des notes' onclick=\"expandBase('tu!!num!!', true); return false;\" border='0'>
-			<input type='text' class='$class' id='f_".$item."!!num!!' name='f_".$item."!!num!!' value='!!label_element!!' autfield='f_".$item."_code!!num!!' completion=\"".$item."\" callback=\"tu_add_callback\"/>
-			<input type='hidden' id='f_".$item."_code!!num!!' name='f_".$item."_code!!num!!' value='!!id_element!!'>
+			<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='tu!!num!!Img' title='Zone des notes' onclick=\"expandBase('tu!!num!!', true); return false;\" style='border:0px;"
+			    . $show_other_fields_plus . "'>
+			<input type='text' data-form-name='f_".$item."' class='$class' id='f_".$item."!!num!!' name='f_".$item."!!num!!' value='!!label_element!!' autfield='f_".$item."_code!!num!!' completion=\"".$item."\" !!tu_callback!! />
+			<input type='hidden' data-form-name='f_".$item."_code' id='f_".$item."_code!!num!!' name='f_".$item."_code!!num!!' value='!!id_element!!'>
 			!!bouton_parcourir!!
 			<input type='button' class='bouton' value='".$msg["raz"]."' onclick=\"this.form.f_".$item."!!num!!.value='';this.form.f_".$item."_code!!num!!.value='';\" />
 			!!bouton_ajouter!!
@@ -336,28 +446,39 @@ class tu_notice {
 		<div class='row'>
 			<label for='!!name!!!!num!!' class='etiquette'>!!label!!</label></div>
 		<div class='row'>
-			<input type='text' class='!!class!!' id='!!name!!!!num!!' name='!!name!!!!num!!' value=\"!!value!!\" />
+			<input type='text' class='!!class!!' id='!!name!!!!num!!' name='!!name!!!!num!!' value=\"!!value!!\" data-form-name='!!name!!' />
 		</div>";	
 
 		if($what_sel)$bouton_parcourir="<input type='button' id='sel_f_".$item."!!num!!' class='bouton' value='".$msg["parcourir"]."' onclick=\"memo_id=this.getAttribute('id');fonction_selecteur_".$item."();\" />";
 		else $bouton_parcourir="";
 		$aff= str_replace('!!bouton_parcourir!!', $bouton_parcourir, $aff);	
 
-		$template=$script_js."<div id=add".$item."' class='row'>";
+		$template=$script_js."<div id='add".$item."' class='row'>";
 		$template.="<div class='row'><label for='f_".$item."' class='etiquette'>".$label."</label></div>";
 		$num=0;
-		if(!$values[0])$values[0]="";
-		foreach($values as $value) {			
+		if(!isset($values[0]) || !$values[0]) {
+			$values[0]["label"] = "";
+			$values[0]["id"]= 0;
+			$values[0]["objets"] = array();
+		}
+		foreach($values as $value) {
 			$label_element=$value["label"];
-			$id_element=$value["id"];			
+			$id_element=$value["id"];
 			$temp= str_replace('!!id_element!!', $id_element, $aff);	
 			$temp= str_replace('!!label_element!!', htmlentities($label_element,ENT_QUOTES,$charset), $temp);	
 			$temp= str_replace('!!num!!', $num, $temp);	
 			
-			if(!$num) $temp= str_replace('!!bouton_ajouter!!', " <input class='bouton' value='".$msg["req_bt_add_line"]."' onclick='add_".$item."();' type='button'>", $temp);	
-			else $temp= str_replace('!!bouton_ajouter!!', "", $temp);	
-			$template.=$temp;			
+			
+			if(!$num){
+			    $temp= str_replace('!!bouton_ajouter!!', " <input class='bouton' value='".$msg["req_bt_add_line"]."' onclick='add_".$item."();' type='button'>", $temp);	
+			    $temp= str_replace('!!tu_callback!!', 'callback="tu_add_callback"', $temp);
+			}else{ 
+			    $temp= str_replace('!!bouton_ajouter!!', "", $temp);
+			    $temp= str_replace('!!tu_callback!!', '', $temp);
+			}	
+			$template.=$temp;
 			// option
+			if(is_array($value["objets"]))
 			foreach($value["objets"] as $objet) {
 				
 				$option = str_replace('!!label!!', $objet["label"], $aff_option);		
@@ -367,9 +488,11 @@ class tu_notice {
 				$option = str_replace('!!value!!', htmlentities($objet["value"],ENT_QUOTES,$charset), $option);	
 				$template.=$option;	
 			}
-			$template.="</div>";				
+			$template.="</div>";
 			if(!$num) {				
+				$script_option_js = '';
 				$j=0;
+				if(is_array($value["objets"]))
 				foreach($value["objets"] as $objet) {
 					// Ajout des javascript qui permet la répétabilité des champs option 			
 					$option_js = str_replace('!!label!!', addslashes($objet["label"]), $script_js_option);		
@@ -388,11 +511,12 @@ class tu_notice {
 		$template.="</div><div id='add".$item."'/>
 		</div>";
 		return $template;		
-	}	
+	}
+	
 	// ---------------------------------------------------------------
 	//		show_form : affichage du formulaire de saisie
 	// ---------------------------------------------------------------
-	function show_form() {
+	public function show_form() {
 	
 		global $msg;
 		global $titre_uniforme_form;
@@ -424,16 +548,16 @@ class tu_notice {
 		
 		$titre_uniforme_form = str_replace('!!nom!!',				htmlentities($this->name,ENT_QUOTES, $charset), $titre_uniforme_form);
 				
-		$distribution_form=$this->gen_input_selection($msg["aut_titre_uniforme_form_distribution"],"saisie_titre_uniforme","distrib",$this->distrib,"","saisie-80em");
+		$distribution_form=static::gen_input_selection($msg["aut_titre_uniforme_form_distribution"],"saisie_titre_uniforme","distrib",$this->distrib,"","saisie-80em");
 		$titre_uniforme_form = str_replace("<!--	Distribution instrumentale et vocale (pour la musique)	-->",$distribution_form, $titre_uniforme_form);
 
-		$ref_num_form=$this->gen_input_selection($msg["aut_titre_uniforme_form_ref_numerique"],"saisie_titre_uniforme","ref",$this->ref,"","saisie-80em");
+		$ref_num_form=static::gen_input_selection($msg["aut_titre_uniforme_form_ref_numerique"],"saisie_titre_uniforme","ref",$this->ref,"","saisie-80em");
 		$titre_uniforme_form = str_replace("<!--	Référence numérique (pour la musique)	-->",$ref_num_form, $titre_uniforme_form);
 		
 		$titre_uniforme_form = str_replace('!!tonalite!!',			htmlentities($this->tonalite,ENT_QUOTES, $charset),	$titre_uniforme_form);				
 		$titre_uniforme_form = str_replace('!!comment!!',			htmlentities($this->comment,ENT_QUOTES, $charset),	$titre_uniforme_form);
 
-		$sub_form=$this->gen_input_selection($msg["aut_titre_uniforme_form_subdivision_forme"],"saisie_titre_uniforme","subdiv",$this->subdiv,"","saisie-80em");
+		$sub_form=static::gen_input_selection($msg["aut_titre_uniforme_form_subdivision_forme"],"saisie_titre_uniforme","subdiv",$this->subdiv,"","saisie-80em");
 		$titre_uniforme_form = str_replace('<!-- Subdivision de forme -->',	$sub_form, $titre_uniforme_form);
 		
 		$titre_uniforme_form = str_replace('!!remplace!!',			$button_remplace,	$titre_uniforme_form);
@@ -444,13 +568,14 @@ class tu_notice {
 		$titre_uniforme_form = str_replace('!!user_input!!',		htmlentities($user_input,ENT_QUOTES, $charset),						$titre_uniforme_form);
 		$titre_uniforme_form = str_replace('!!nbr_lignes!!',		$nbr_lignes,														$titre_uniforme_form);
 		$titre_uniforme_form = str_replace('!!page!!',				$page,																$titre_uniforme_form);
+		$titre_uniforme_form = str_replace('!!controller_url_base!!', './autorites.php?categ=titres_uniformes', 						$titre_uniforme_form);
 		print $titre_uniforme_form;
 	}
 	
 	// ---------------------------------------------------------------
 	//		replace_form : affichage du formulaire de remplacement
 	// ---------------------------------------------------------------
-	function replace_form() {
+	public function replace_form() {
 		global $titre_uniforme_replace;
 		global $msg;
 		global $include_path;
@@ -459,9 +584,10 @@ class tu_notice {
 			require_once("$include_path/user_error.inc.php");
 			error_message($msg[161], $msg[162], 1, './autorites.php?categ=titres_uniformes&sub=&id=');
 			return false;
-		}	
+		}
 		$titre_uniforme_replace=str_replace('!!old_titre_uniforme_libelle!!', $this->display, $titre_uniforme_replace);
 		$titre_uniforme_replace=str_replace('!!id!!', $this->id, $titre_uniforme_replace);
+		$titre_uniforme_replace=str_replace('!!controller_url_base!!', './autorites.php?categ=titres_uniformes', $titre_uniforme_replace);
 		print $titre_uniforme_replace;
 		return true;
 	}
@@ -470,7 +596,7 @@ class tu_notice {
 	// ---------------------------------------------------------------
 	//		delete() : suppression 
 	// ---------------------------------------------------------------
-	function delete() {
+	public function delete() {
 		global $dbh;
 		global $msg;
 		
@@ -485,25 +611,20 @@ class tu_notice {
 	// ---------------------------------------------------------------
 	//		replace($by) : remplacement 
 	// ---------------------------------------------------------------
-	function replace($by) {
-	
+	public function replace($by) {
 		global $msg;
-		global $dbh;
 	
 		if (($this->id == $by) || (!$this->id))  {
 			return $msg[223];
 		}
-		
-
 //		titre_uniforme::update_index($by);
-		
 		return FALSE;
 	}
 	
 	// ---------------------------------------------------------------
 	//		update($value) : mise à jour 
 	// ---------------------------------------------------------------
-	function update($values) {
+	public function update($values) {
 	
 		global $dbh;
 		global $msg;
@@ -538,7 +659,7 @@ class tu_notice {
 	//		import() : import d'un titre_uniforme
 	// ---------------------------------------------------------------
 	// fonction d'import de notice titre_uniforme 
-	function import($data) {
+	public function import($data) {
 	// To do
 	
 	}
@@ -546,7 +667,7 @@ class tu_notice {
 	// ---------------------------------------------------------------
 	//		search_form() : affichage du form de recherche
 	// ---------------------------------------------------------------
-	function search_form() {
+	public function search_form() {
 		global $user_query, $user_input;
 		global $msg, $charset;
 		
@@ -563,16 +684,32 @@ class tu_notice {
 	//---------------------------------------------------------------
 	// update_index($id) : maj des n-uplets la table notice_global_index en rapport avec cet author	
 	//---------------------------------------------------------------
-	static function update_index($id) {
+	public static function update_index($id) {
 		global $dbh;
 		// On cherche tous les n-uplet de la table notice correspondant à ce titre_uniforme.
 		$found = pmb_mysql_query("select ntu_num_notice from notices_titres_uniformes where ntu_num_tu = ".$id,$dbh);
 		// Pour chaque n-uplet trouvés on met a jour la table notice_global_index avec l'auteur modifié :
 		while(($mesNotices = pmb_mysql_fetch_object($found))) {
 			$notice_id = $mesNotices->ntu_num_notice;
-			notice::majNoticesGlobalIndex($notice_id);
-			notice::majNoticesMotsGlobalIndex($notice_id);
+			indexation_stack::push($notice_id, TYPE_NOTICE);
 		}
+	}
+	
+	public static function sort_tu($first_one,$second_one){
+		$mc_oeuvre_nature = marc_list_collection::get_instance('oeuvre_nature');
+		$nature_keys = array_keys($mc_oeuvre_nature->table);
+		if(array_search($first_one->tu->get_object_instance()->oeuvre_nature, $nature_keys) == array_search($second_one->tu->get_object_instance()->oeuvre_nature, $nature_keys)){
+			return 0;
+		}  
+		return (array_search($first_one->tu->get_object_instance()->oeuvre_nature, $nature_keys) < array_search($second_one->tu->get_object_instance()->oeuvre_nature, $nature_keys)) ? -1 : 1;
+	} 
+	
+	public static function create_tu_notice_link($num_tu, $num_notice, $ordre = 0) {
+		$query = "INSERT INTO notices_titres_uniformes SET
+						ntu_num_notice='" . $num_notice . "',
+						ntu_num_tu='" . $num_tu . "',
+						ntu_ordre= ". $ordre;
+		pmb_mysql_query($query);
 	}
 	
 } // class auteur

@@ -2,21 +2,22 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: affichage.class.php,v 1.11 2014-01-20 08:11:23 arenou Exp $
+// $Id: affichage.class.php,v 1.12 2017-05-10 17:16:13 arenou Exp $
 
 class affichage {
-	var $doc;				//le document numérique à afficher
-	var $params;			//paramètres éventuels
-	var $driver;			//driver de la visionneuse
-	var $allowedFunctions = array();
+	public $doc;				//le document numérique à afficher
+	public $params;			//paramètres éventuels
+	public $driver;			//driver de la visionneuse
+	public $allowedFunctions = array();
+	public $message;
 	
-    function affichage($doc) {
+	public function __construct($doc) {
     	$this->doc = $doc; 
     	$this->driver = $doc->driver;
     	$this->params = $doc->params;
     }
     
-    function fetchDisplay(){
+    public function fetchDisplay(){
     	global $visionneuse_path,$base_path;
      	//le titre
     	$this->toDisplay["titre"] = $this->doc->titre;
@@ -42,7 +43,7 @@ class affichage {
     
 	
     //exécution de l'appel AJAX
-    function exec($method){
+    public function exec($method){
     	if($this->checkAllowedFunction($method)){
     		$this->{$method}();
     	}else{
@@ -53,6 +54,10 @@ class affichage {
 
 	function checkAllowedFunction($method){
     	return in_array($method,$this->allowedFunction);
-    }
+	}
+	
+	public function setMessage($message){
+		$this->message = $message;
+	}
 }
 ?>

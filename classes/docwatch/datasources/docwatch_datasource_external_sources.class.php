@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_datasource_external_sources.class.php,v 1.2.4.1 2015-09-07 13:18:24 jpermanne Exp $
+// $Id: docwatch_datasource_external_sources.class.php,v 1.4 2018-05-16 09:09:35 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -49,7 +49,7 @@ class docwatch_datasource_external_sources extends docwatch_datasource{
 				if($infos['notice']){
 					$z=new z3950_notice("unimarc",$infos['notice'],$infos['source_id']);
 					$record = array();
-					$record["num_notice"] = $item;
+					$record["num_notice"] = 0;
 					$record["type"] = "repository";
 					$record["title"] = $z->titles[0];
 					$record["summary"] = $z->abstract_note;

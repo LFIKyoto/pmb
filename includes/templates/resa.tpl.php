@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: resa.tpl.php,v 1.15 2012-01-27 14:35:48 ngantier Exp $
+// $Id: resa.tpl.php,v 1.16 2017-01-26 16:07:10 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+if(!isset($id_empr)) $id_empr = 0;
+if(!isset($groupID)) $groupID = 0;
 
 // en-tête et pied de page
 $layout_begin = "

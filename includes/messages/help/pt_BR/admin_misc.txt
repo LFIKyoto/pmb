@@ -1,4 +1,4 @@
-<h1>Ferramentas</h1>
+<h2>Ferramentas</h2>
 <p>Várias opções estão disponíveis aqui.</p>
 </p>
 <b>Limpeza da base de dados</b> ajuda com: remoção de registros sem cópia, etc.</p><p>

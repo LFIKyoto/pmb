@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export_notices.inc.php,v 1.6 2015-04-03 11:16:16 jpermanne Exp $
+// $Id: export_notices.inc.php,v 1.7 2018-07-30 14:20:31 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -35,6 +35,9 @@ function cree_export_notices($liste=array(), $typeexport='pmbxml2marciso', $expl
 				$z ++;
 			} else $z++;
 		}
+	}
+	if($n_notices>0){
+		$e_notice=$export->get_header().$e_notice.$export->get_footer();
 	}
 	return $e_notice ;
 }

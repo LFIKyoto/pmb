@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: zotero.class.php,v 1.2 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: zotero.class.php,v 1.6 2017-07-12 15:15:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,17 +13,11 @@ require_once($class_path."/xml_dom.class.php");
 class zotero extends connector {
 
 	//Variables internes pour la progression de la récupération des notices
-	public $callback_progress;		//Nom de la fonction de callback progression passée par l'appellant
-	public $source_id;				//Numéro de la source en cours de synchro
 	public $n_recu = 0;				//Nombre de notices reçues
 	public $n_total = 0;			//Nombre total de notices
-
-	//Résultat de la synchro
-	public $error;					//Y-a-t-il eu une erreur
-	public $error_message;			//Si oui, message correspondant
 	
 	public function __construct($connector_path="") {
-		parent::connector($connector_path);
+		parent::__construct($connector_path);
 	}
 
 	public function get_id() {
@@ -35,15 +29,6 @@ class zotero extends connector {
 		return 1;
 	}
 
-	public function unserialize_source_params($source_id) {
-		$params=$this->get_source_params($source_id);
-		if ($params['PARAMETERS']) {
-			$vars=unserialize($params['PARAMETERS']);
-			$params['PARAMETERS']=$vars;
-		}
-		return $params;
-	}
-
 	public function source_get_property_form($source_id) {
 		global $charset;
 		 
@@ -52,8 +37,8 @@ class zotero extends connector {
 			//Affichage du formulaire avec $params['PARAMETERS']
 			$vars=unserialize($params['PARAMETERS']);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}
 		}
 		$form="
@@ -162,11 +147,8 @@ class zotero extends connector {
 
 	//Récupération  des propriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
 	public function fetch_default_global_values() {
-		$this->timeout=5;
+		parent::fetch_default_global_values();
 		$this->repository=1;
-		$this->retry=3;
-		$this->ttl=1800;
-		$this->parameters='';
 	}
 
 	
@@ -260,8 +242,8 @@ class zotero extends connector {
 				//Mise à jour
 				if ($ref) {
 					//Suppression anciennes notices
-					$q="delete from entrepot_source_".$this->source_id." where ref='".addslashes($ref)."'";
-					@pmb_mysql_query($q,$dbh);
+					$this->delete_from_entrepot($this->source_id, $ref);
+					$this->delete_from_external_count($this->source_id, $ref);
 
 					//Insertion de l'entête
 					$n_header["rs"]=$rec_uni_dom->get_value("unimarc/notice/rs");
@@ -272,15 +254,10 @@ class zotero extends connector {
 					$n_header["dt"]=$rec_uni_dom->get_value("unimarc/notice/dt");
 		
 					//Récupération d'un ID
-					$requete="insert into external_count (recid, source_id) values('".addslashes($this->get_id()." ".$this->source_id." ".$ref)."', ".$this->source_id.")";
-					$rid=pmb_mysql_query($requete);
-					if ($rid) $recid=pmb_mysql_insert_id();
-		
+					$recid = $this->insert_into_external_count($this->source_id, $ref);
+					
 					foreach($n_header as $hc=>$code) {
-						$requete="insert into entrepot_source_".$this->source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid) values(
-						'".addslashes($this->get_id())."',".$this->source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
-						'".$hc."','',-1,0,'".addslashes($code)."','',$recid)";
-						pmb_mysql_query($requete);
+						$this->insert_header_into_entrepot($this->source_id, $ref, $date_import, $hc, $code, $recid, $search_id);
 					}
 		
 					for ($i=0; $i<count($fs); $i++) {
@@ -292,21 +269,14 @@ class zotero extends connector {
 								$usubfield=$ss[$j]["ATTRIBS"]["c"];
 								$value=$rec_uni_dom->get_datas($ss[$j]);
 								$subfield_order=$j;
-								$requete="insert into entrepot_source_".$this->source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid) values(
-								'".addslashes($this->get_id())."',".$this->source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
-								'".addslashes($ufield)."','".addslashes($usubfield)."',".$field_order.",".$subfield_order.",'".addslashes($value)."',
-								' ".addslashes(strip_empty_words($value))." ',$recid)";
-								pmb_mysql_query($requete);
+								$this->insert_content_into_entrepot($this->source_id, $ref, $date_import, $ufield, $usubfield, $field_order, $subfield_order, $value, $recid);
 							}
 						} else {
 							$value=$rec_uni_dom->get_datas($fs[$i]);
-							$requete="insert into entrepot_source_".$this->source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid) values(
-							'".addslashes($this->get_id())."',".$this->source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
-							'".addslashes($ufield)."','".addslashes($usubfield)."',".$field_order.",".$subfield_order.",'".addslashes($value)."',
-							' ".addslashes(strip_empty_words($value))." ',$recid)";
-							pmb_mysql_query($requete);
+							$this->insert_content_into_entrepot($this->source_id, $ref, $date_import, $ufield, $usubfield, $field_order, $subfield_order, $value, $recid);
 						}
 					}
+					$this->rec_isbd_record($this->source_id, $ref, $recid);
 				}
 			}
 		}
@@ -338,14 +308,6 @@ class zotero extends connector {
 			}
 		}
 	}
-	
-	public function cancel_maj($source_id) {
-		return false;
-	}
-
-	public function break_maj($source_id) {
-		return false;
-	}
 
 	public function form_pour_maj_entrepot($source_id,$sync_form="sync_form") {
 
@@ -362,19 +324,6 @@ class zotero extends connector {
 		$form .= "</blockquote>";
 		return $form;
 	}
-
-	//Nécessaire pour passer les valeurs obtenues dans form_pour_maj_entrepot au javascript asynchrone
-	public function get_maj_environnement($source_id) {
-		// 		global $form_from;
-		// 		global $form_until;
-		// 		global $form_radio;
-		// 		$envt=array();
-		// 		$envt['form_from']=$form_from;
-		// 		$envt['form_until']=$form_until;
-		// 		$envt['form_radio']=$form_radio;
-		return $envt;
-	}
-
 
 	public function maj_entrepot($source_id,$callback_progress='',$recover=false,$recover_env='') {
 		global $dbh, $charset;

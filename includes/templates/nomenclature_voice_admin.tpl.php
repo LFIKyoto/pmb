@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_voice_admin.tpl.php,v 1.6 2015-02-05 09:48:18 ngantier Exp $
+// $Id: nomenclature_voice_admin.tpl.php,v 1.7 2017-11-07 15:34:41 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -25,14 +25,14 @@ $nomenclature_voice_list_tpl="
 
 $nomenclature_voice_list_line_tpl="
 <tr  class='!!odd_even!!' onmouseout=\"this.className='!!odd_even!!'\" onmouseover=\"this.className='surbrillance'\">	
-	<td valign='top'>				
+	<td style='vertical-align:top'>				
 		<input class='bouton_small' type='button' onclick=\"document.location='./admin.php?categ=voice&sub=voice&action=up&id=!!id!!'\" value='-'>
 		<input class='bouton_small' type='button' onclick=\"document.location='./admin.php?categ=voice&sub=voice&action=down&id=!!id!!'\" value='+'>
 	</td> 
-	<td valign='top' style=\"cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=voice&sub=voice&action=form&id=!!id!!';\" >				
+	<td style=\"vertical-align:top; cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=voice&sub=voice&action=form&id=!!id!!';\" >				
 		!!code!!
 	</td> 
-	<td valign='top' style=\"cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=voice&sub=voice&action=form&id=!!id!!';\" >				
+	<td style=\"vertical-align:top; cursor: pointer\" onmousedown=\"document.location='./admin.php?categ=voice&sub=voice&action=form&id=!!id!!';\" >				
 		!!name!!
 	</td> 
 </tr> 	

@@ -2,15 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dataref.inc.php,v 1.8 2015-05-25 13:59:40 dgoron Exp $
+// $Id: dataref.inc.php,v 1.14 2018-03-23 15:41:28 apetithomme Exp $
 
 // references des index sur les tables
 
 // prevents direct script access
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-// PMB version : 4.2.0 
-// PMB database version v5.18
+// PMB version : 5.0.0 
+// PMB database version v5.22
 
 // generated from DATABASE bibli 2015-05-15 18:20:39
 
@@ -111,6 +111,10 @@ $tabindexref["aut_link"]["PRIMARY"][]="aut_link_from_num";
 $tabindexref["aut_link"]["PRIMARY"][]="aut_link_to";
 $tabindexref["aut_link"]["PRIMARY"][]="aut_link_to_num";
 $tabindexref["aut_link"]["PRIMARY"][]="aut_link_type";
+$tabindexref["aut_link"]["i_from"][]="aut_link_from";
+$tabindexref["aut_link"]["i_from"][]="aut_link_from_num";
+$tabindexref["aut_link"]["i_to"][]="aut_link_to";
+$tabindexref["aut_link"]["i_to"][]="aut_link_to_num";
 
 
 //  ###################### author_custom
@@ -133,8 +137,66 @@ $tabindexref["author_custom_values"]["i_acv_d"][]="author_custom_date";
 $tabindexref["author_custom_values"]["i_acv_f"][]="author_custom_float";
 
 
+//  ###################### authorities
+$tabindexref["authorities"]["PRIMARY"][]="id_authority";
+$tabindexref["authorities"]["i_a_num_object_type_object"][]="num_object";
+$tabindexref["authorities"]["i_a_num_object_type_object"][]="type_object";
+$tabindexref["authorities"]["i_a_num_statut"][]="num_statut";
+
+
+//  ###################### authorities_caddie
+$tabindexref["authorities_caddie"]["PRIMARY"][]="idcaddie";
+$tabindexref["authorities_caddie"]["caddie_type"][]="type";
+
+
+//  ###################### authorities_caddie_content
+$tabindexref["authorities_caddie_content"]["PRIMARY"][]="caddie_id";
+$tabindexref["authorities_caddie_content"]["PRIMARY"][]="object_id";
+$tabindexref["authorities_caddie_content"]["object_id"][]="object_id";
+
+
+//  ###################### authorities_caddie_procs
+$tabindexref["authorities_caddie_procs"]["PRIMARY"][]="idproc";
+
+
+//  ###################### authorities_fields_global_index
+$tabindexref["authorities_fields_global_index"]["PRIMARY"][]="id_authority";
+$tabindexref["authorities_fields_global_index"]["PRIMARY"][]="code_champ";
+$tabindexref["authorities_fields_global_index"]["PRIMARY"][]="code_ss_champ";
+$tabindexref["authorities_fields_global_index"]["PRIMARY"][]="ordre";
+$tabindexref["authorities_fields_global_index"]["i_value"][]="value";
+$tabindexref["authorities_fields_global_index"]["i_id_value"][]="id_authority";
+$tabindexref["authorities_fields_global_index"]["i_id_value"][]="value";
+$tabindexref["authorities_fields_global_index"]["i_code_champ_code_ss_champ"][]="code_champ";
+$tabindexref["authorities_fields_global_index"]["i_code_champ_code_ss_champ"][]="code_ss_champ";
+$tabindexref["authorities_fields_global_index"]["i_id_authority"][]="id_authority";
+
+
 //  ###################### authorities_sources
 $tabindexref["authorities_sources"]["PRIMARY"][]="id_authority_source";
+$tabindexref["authorities_sources"]["i_num_authority_authority_type"][]="num_authority";
+$tabindexref["authorities_sources"]["i_num_authority_authority_type"][]="authority_type";
+
+
+//  ###################### authorities_statuts
+$tabindexref["authorities_statuts"]["PRIMARY"][]="id_authorities_statut";
+
+
+//  ###################### authorities_words_global_index
+$tabindexref["authorities_words_global_index"]["PRIMARY"][]="id_authority";
+$tabindexref["authorities_words_global_index"]["PRIMARY"][]="code_champ";
+$tabindexref["authorities_words_global_index"]["PRIMARY"][]="code_ss_champ";
+$tabindexref["authorities_words_global_index"]["PRIMARY"][]="num_word";
+$tabindexref["authorities_words_global_index"]["PRIMARY"][]="position";
+$tabindexref["authorities_words_global_index"]["PRIMARY"][]="field_position";
+$tabindexref["authorities_words_global_index"]["code_champ"][]="code_champ";
+$tabindexref["authorities_words_global_index"]["i_id_mot"][]="num_word";
+$tabindexref["authorities_words_global_index"]["i_id_mot"][]="id_authority";
+$tabindexref["authorities_words_global_index"]["i_code_champ_code_ss_champ_num_word"][]="code_champ";
+$tabindexref["authorities_words_global_index"]["i_code_champ_code_ss_champ_num_word"][]="code_ss_champ";
+$tabindexref["authorities_words_global_index"]["i_code_champ_code_ss_champ_num_word"][]="num_word";
+$tabindexref["authorities_words_global_index"]["i_num_word"][]="num_word";
+$tabindexref["authorities_words_global_index"]["i_id_authority"][]="id_authority";
 
 
 //  ###################### authors
@@ -142,6 +204,9 @@ $tabindexref["authors"]["PRIMARY"][]="author_id";
 $tabindexref["authors"]["author_see"][]="author_see";
 $tabindexref["authors"]["author_name"][]="author_name";
 $tabindexref["authors"]["author_rejete"][]="author_rejete";
+$tabindexref["authors"]["i_author_type"][]="author_type";
+$tabindexref["authors"]["i_index_author_author_type"][]="index_author";
+$tabindexref["authors"]["i_index_author_author_type"][]="author_type";
 
 
 //  ###################### authperso
@@ -150,6 +215,7 @@ $tabindexref["authperso"]["PRIMARY"][]="id_authperso";
 
 //  ###################### authperso_authorities
 $tabindexref["authperso_authorities"]["PRIMARY"][]="id_authperso_authority";
+$tabindexref["authperso_authorities"]["i_authperso_authority_authperso_num"][]="authperso_authority_authperso_num";
 
 
 //  ###################### authperso_custom
@@ -190,6 +256,16 @@ $tabindexref["bannette_contenu"]["PRIMARY"][]="num_bannette";
 $tabindexref["bannette_contenu"]["PRIMARY"][]="num_notice";
 $tabindexref["bannette_contenu"]["date_ajout"][]="date_ajout";
 $tabindexref["bannette_contenu"]["i_num_notice"][]="num_notice";
+
+
+//  ###################### bannette_empr_categs
+$tabindexref["bannette_empr_categs"]["PRIMARY"][]="empr_categ_num_bannette";
+$tabindexref["bannette_empr_categs"]["PRIMARY"][]="empr_categ_num_categ";
+
+
+//  ###################### bannette_empr_groupes
+$tabindexref["bannette_empr_groupes"]["PRIMARY"][]="empr_groupe_num_bannette";
+$tabindexref["bannette_empr_groupes"]["PRIMARY"][]="empr_groupe_num_groupe";
 
 
 //  ###################### bannette_equation
@@ -292,6 +368,7 @@ $tabindexref["categories"]["PRIMARY"][]="num_noeud";
 $tabindexref["categories"]["PRIMARY"][]="langue";
 $tabindexref["categories"]["categ_langue"][]="langue";
 $tabindexref["categories"]["libelle_categorie"][]="libelle_categorie";
+$tabindexref["categories"]["i_num_thesaurus"][]="num_thesaurus";
 
 
 //  ###################### classements
@@ -327,14 +404,20 @@ $tabindexref["cms_build"]["i_build_obj_build_version_num"][]="build_version_num"
 //  ###################### cms_cache_cadres
 $tabindexref["cms_cache_cadres"]["PRIMARY"][]="cache_cadre_hash";
 $tabindexref["cms_cache_cadres"]["PRIMARY"][]="cache_cadre_type_content";
+$tabindexref["cms_cache_cadres"]["i_cache_cadre_create_date"][]="cache_cadre_create_date";
 
 
 //  ###################### cms_cadre_content
 $tabindexref["cms_cadre_content"]["PRIMARY"][]="id_cadre_content";
+$tabindexref["cms_cadre_content"]["i_cadre_content_num_cadre"][]="cadre_content_num_cadre";
+$tabindexref["cms_cadre_content"]["i_cadre_content_num_cadre_content_cadre_content_type"][]="cadre_content_num_cadre_content";
+$tabindexref["cms_cadre_content"]["i_cadre_content_num_cadre_content_cadre_content_type"][]="cadre_content_type";
 
 
 //  ###################### cms_cadres
 $tabindexref["cms_cadres"]["PRIMARY"][]="id_cadre";
+$tabindexref["cms_cadres"]["i_cadre_memo_url"][]="cadre_memo_url";
+$tabindexref["cms_cadres"]["i_cadre_object"][]="cadre_object";
 
 
 //  ###################### cms_collections
@@ -345,12 +428,15 @@ $tabindexref["cms_collections"]["i_cms_collection_title"][]="collection_title";
 //  ###################### cms_documents
 $tabindexref["cms_documents"]["PRIMARY"][]="id_document";
 $tabindexref["cms_documents"]["i_cms_document_title"][]="document_title";
+$tabindexref["cms_documents"]["i_document_num_object_document_type_object"][]="document_num_object";
+$tabindexref["cms_documents"]["i_document_num_object_document_type_object"][]="document_type_object";
 
 
 //  ###################### cms_documents_links
 $tabindexref["cms_documents_links"]["PRIMARY"][]="document_link_type_object";
 $tabindexref["cms_documents_links"]["PRIMARY"][]="document_link_num_object";
 $tabindexref["cms_documents_links"]["PRIMARY"][]="document_link_num_document";
+$tabindexref["cms_documents_links"]["i_document_link_num_document"][]="document_link_num_document";
 
 
 //  ###################### cms_editorial_custom
@@ -399,6 +485,7 @@ $tabindexref["cms_editorial_words_global_index"]["PRIMARY"][]="code_champ";
 $tabindexref["cms_editorial_words_global_index"]["PRIMARY"][]="code_ss_champ";
 $tabindexref["cms_editorial_words_global_index"]["PRIMARY"][]="num_word";
 $tabindexref["cms_editorial_words_global_index"]["PRIMARY"][]="position";
+$tabindexref["cms_editorial_words_global_index"]["i_num_word"][]="num_word";
 
 
 //  ###################### cms_hash
@@ -431,6 +518,10 @@ $tabindexref["cms_sections"]["i_cms_section_num_parent"][]="section_num_parent";
 //  ###################### cms_sections_descriptors
 $tabindexref["cms_sections_descriptors"]["PRIMARY"][]="num_section";
 $tabindexref["cms_sections_descriptors"]["PRIMARY"][]="num_noeud";
+
+
+//  ###################### cms_toolkits
+$tabindexref["cms_toolkits"]["PRIMARY"][]="cms_toolkit_name";
 
 
 //  ###################### cms_vars
@@ -479,6 +570,11 @@ $tabindexref["collections_state"]["i_colls_serial"][]="id_serial";
 $tabindexref["collections_state"]["i_colls_loc"][]="location_id";
 
 
+//  ###################### collstate_bulletins
+$tabindexref["collstate_bulletins"]["PRIMARY"][]="collstate_bulletins_num_collstate";
+$tabindexref["collstate_bulletins"]["PRIMARY"][]="collstate_bulletins_num_bulletin";
+
+
 //  ###################### collstate_custom
 $tabindexref["collstate_custom"]["PRIMARY"][]="idchamp";
 
@@ -519,6 +615,11 @@ $tabindexref["connectors_categ_sources"]["i_num_source"][]="num_source";
 
 //  ###################### connectors_out
 $tabindexref["connectors_out"]["PRIMARY"][]="connectors_out_id";
+
+
+//  ###################### connectors_out_oai_deleted_records
+$tabindexref["connectors_out_oai_deleted_records"]["PRIMARY"][]="num_set";
+$tabindexref["connectors_out_oai_deleted_records"]["PRIMARY"][]="num_notice";
 
 
 //  ###################### connectors_out_oai_tokens
@@ -563,6 +664,26 @@ $tabindexref["connectors_out_sources_esgroups"]["PRIMARY"][]="connectors_out_sou
 $tabindexref["connectors_sources"]["PRIMARY"][]="source_id";
 
 
+//  ###################### contact_form_objects
+$tabindexref["contact_form_objects"]["PRIMARY"][]="id_object";
+
+
+//  ###################### contribution_area_areas
+$tabindexref["contribution_area_areas"]["PRIMARY"][]="id_area";
+
+
+//  ###################### contribution_area_equations
+$tabindexref["contribution_area_equations"]["PRIMARY"][]="contribution_area_equation_id";
+
+
+//  ###################### contribution_area_forms
+$tabindexref["contribution_area_forms"]["PRIMARY"][]="id_form";
+
+
+//  ###################### contribution_area_status
+$tabindexref["contribution_area_status"]["PRIMARY"][]="contribution_area_status_id";
+
+
 //  ###################### coordonnees
 $tabindexref["coordonnees"]["PRIMARY"][]="id_contact";
 $tabindexref["coordonnees"]["i_num_entite"][]="num_entite";
@@ -582,6 +703,21 @@ $tabindexref["demandes_actions"]["i_deadline_action"][]="deadline_action";
 $tabindexref["demandes_actions"]["i_num_demande"][]="num_demande";
 $tabindexref["demandes_actions"]["i_actions_user"][]="actions_num_user";
 $tabindexref["demandes_actions"]["i_actions_user"][]="actions_type_user";
+
+
+//  ###################### demandes_custom
+$tabindexref["demandes_custom"]["PRIMARY"][]="idchamp";
+
+
+//  ###################### demandes_custom_lists
+$tabindexref["demandes_custom_lists"]["i_demandes_custom_champ"][]="demandes_custom_champ";
+$tabindexref["demandes_custom_lists"]["i_demandes_champ_list_value"][]="demandes_custom_champ";
+$tabindexref["demandes_custom_lists"]["i_demandes_champ_list_value"][]="demandes_custom_list_value";
+
+
+//  ###################### demandes_custom_values
+$tabindexref["demandes_custom_values"]["i_demandes_custom_champ"][]="demandes_custom_champ";
+$tabindexref["demandes_custom_values"]["i_demandes_custom_origine"][]="demandes_custom_origine";
 
 
 //  ###################### demandes_notes
@@ -637,6 +773,10 @@ $tabindexref["docs_type"]["PRIMARY"][]="idtyp_doc";
 
 //  ###################### docwatch_categories
 $tabindexref["docwatch_categories"]["PRIMARY"][]="id_category";
+
+
+//  ###################### docwatch_datasource_monitoring_website
+$tabindexref["docwatch_datasource_monitoring_website"]["PRIMARY"][]="datasource_monitoring_website_num_datasource";
 
 
 //  ###################### docwatch_datasources
@@ -698,6 +838,7 @@ $tabindexref["empr"]["i_empr_codestat"][]="empr_codestat";
 $tabindexref["empr"]["i_empr_location"][]="empr_location";
 $tabindexref["empr"]["i_empr_statut"][]="empr_statut";
 $tabindexref["empr"]["i_empr_typabt"][]="type_abt";
+$tabindexref["empr"]["i_empr_login"][]="empr_login";
 
 
 //  ###################### empr_caddie
@@ -790,6 +931,7 @@ $tabindexref["es_cache_blob"]["PRIMARY"][]="es_cache_owner";
 $tabindexref["es_cache_blob"]["cache_index"][]="es_cache_owner";
 $tabindexref["es_cache_blob"]["cache_index"][]="es_cache_objectformat";
 $tabindexref["es_cache_blob"]["cache_index"][]="es_cache_objecttype";
+$tabindexref["es_cache_blob"]["i_es_cache_expirationdate"][]="es_cache_expirationdate";
 
 
 //  ###################### es_cache_int
@@ -826,6 +968,9 @@ $tabindexref["es_esusers"]["esuser_username"][]="esuser_username";
 
 //  ###################### es_methods
 $tabindexref["es_methods"]["PRIMARY"][]="id_method";
+$tabindexref["es_methods"]["i_groupe_method_available"][]="groupe";
+$tabindexref["es_methods"]["i_groupe_method_available"][]="method";
+$tabindexref["es_methods"]["i_groupe_method_available"][]="available";
 
 
 //  ###################### es_methods_users
@@ -835,6 +980,7 @@ $tabindexref["es_methods_users"]["PRIMARY"][]="num_user";
 
 //  ###################### es_searchcache
 $tabindexref["es_searchcache"]["PRIMARY"][]="es_searchcache_searchid";
+$tabindexref["es_searchcache"]["i_es_searchcache_date"][]="es_searchcache_date";
 
 
 //  ###################### es_searchsessions
@@ -881,6 +1027,27 @@ $tabindexref["explnum"]["explnum_bulletin"][]="explnum_bulletin";
 $tabindexref["explnum"]["explnum_repertoire"][]="explnum_repertoire";
 $tabindexref["explnum"]["i_explnum_nomfichier"][]="explnum_nomfichier";
 $tabindexref["explnum"]["i_f_explnumwew"][]="explnum_index_wew";
+$tabindexref["explnum"]["i_e_explnum_signature"][]="explnum_signature";
+
+
+//  ###################### explnum_custom
+$tabindexref["explnum_custom"]["PRIMARY"][]="idchamp";
+
+
+//  ###################### explnum_custom_lists
+$tabindexref["explnum_custom_lists"]["explnum_custom_champ"][]="explnum_custom_champ";
+$tabindexref["explnum_custom_lists"]["explnum_champ_list_value"][]="explnum_custom_champ";
+$tabindexref["explnum_custom_lists"]["explnum_champ_list_value"][]="explnum_custom_list_value";
+
+
+//  ###################### explnum_custom_values
+$tabindexref["explnum_custom_values"]["explnum_custom_champ"][]="explnum_custom_champ";
+$tabindexref["explnum_custom_values"]["i_encv_st"][]="explnum_custom_small_text";
+$tabindexref["explnum_custom_values"]["i_encv_t"][]="explnum_custom_text";
+$tabindexref["explnum_custom_values"]["i_encv_i"][]="explnum_custom_integer";
+$tabindexref["explnum_custom_values"]["i_encv_d"][]="explnum_custom_date";
+$tabindexref["explnum_custom_values"]["i_encv_f"][]="explnum_custom_float";
+$tabindexref["explnum_custom_values"]["explnum_custom_origine"][]="explnum_custom_origine";
 
 
 //  ###################### explnum_doc
@@ -921,6 +1088,36 @@ $tabindexref["explnum_location"]["PRIMARY"][]="num_explnum";
 $tabindexref["explnum_location"]["PRIMARY"][]="num_location";
 
 
+//  ###################### explnum_lenders
+$tabindexref["explnum_lenders"]["PRIMARY"][]="explnum_lender_num_explnum";
+$tabindexref["explnum_lenders"]["PRIMARY"][]="explnum_lender_num_lender";
+
+
+//  ###################### explnum_licence
+$tabindexref["explnum_licence"]["PRIMARY"][]="id_explnum_licence";
+
+
+//  ###################### explnum_licence_profile_explnums
+$tabindexref["explnum_licence_profile_explnums"]["PRIMARY"][]="explnum_licence_profile_explnums_explnum_num";
+$tabindexref["explnum_licence_profile_explnums"]["PRIMARY"][]="explnum_licence_profile_explnums_profile_num";
+$tabindexref["explnum_licence_profile_explnums"]["i_elpe_explnum_profile_num"][]="explnum_licence_profile_explnums_profile_num";
+
+
+//  ###################### explnum_licence_profile_rights
+$tabindexref["explnum_licence_profile_rights"]["PRIMARY"][]="explnum_licence_profile_num";
+$tabindexref["explnum_licence_profile_rights"]["PRIMARY"][]="explnum_licence_right_num";
+
+
+//  ###################### explnum_licence_profiles
+$tabindexref["explnum_licence_profiles"]["PRIMARY"][]="id_explnum_licence_profile";
+$tabindexref["explnum_licence_profiles"]["i_elp_explnum_licence_num"][]="explnum_licence_profile_explnum_licence_num";
+
+
+//  ###################### explnum_licence_rights
+$tabindexref["explnum_licence_rights"]["PRIMARY"][]="id_explnum_licence_right";
+$tabindexref["explnum_licence_rights"]["i_elr_explnum_licence_num"][]="explnum_licence_right_explnum_licence_num";
+
+
 //  ###################### external_count
 $tabindexref["external_count"]["PRIMARY"][]="rid";
 $tabindexref["external_count"]["recid"][]="recid";
@@ -944,6 +1141,11 @@ $tabindexref["explnum_statut"]["PRIMARY"][]="id_explnum_statut";
 
 //  ###################### facettes
 $tabindexref["facettes"]["PRIMARY"][]="id_facette";
+$tabindexref["facettes"]["i_facette_visible"][]="facette_visible";
+
+
+//  ###################### facettes_external
+$tabindexref["facettes_external"]["PRIMARY"][]="id_facette";
 
 
 //  ###################### faq_questions
@@ -969,15 +1171,17 @@ $tabindexref["faq_questions_fields_global_index"]["i_code_champ_code_ss_champ"][
 //  ###################### faq_questions_words_global_index
 $tabindexref["faq_questions_words_global_index"]["PRIMARY"][]="id_faq_question";
 $tabindexref["faq_questions_words_global_index"]["PRIMARY"][]="code_champ";
+$tabindexref["faq_questions_words_global_index"]["PRIMARY"][]="code_ss_champ";
 $tabindexref["faq_questions_words_global_index"]["PRIMARY"][]="num_word";
 $tabindexref["faq_questions_words_global_index"]["PRIMARY"][]="position";
-$tabindexref["faq_questions_words_global_index"]["PRIMARY"][]="code_ss_champ";
+$tabindexref["faq_questions_words_global_index"]["PRIMARY"][]="field_position";
 $tabindexref["faq_questions_words_global_index"]["code_champ"][]="code_champ";
 $tabindexref["faq_questions_words_global_index"]["i_id_mot"][]="num_word";
 $tabindexref["faq_questions_words_global_index"]["i_id_mot"][]="id_faq_question";
 $tabindexref["faq_questions_words_global_index"]["i_code_champ_code_ss_champ_num_word"][]="code_champ";
 $tabindexref["faq_questions_words_global_index"]["i_code_champ_code_ss_champ_num_word"][]="code_ss_champ";
 $tabindexref["faq_questions_words_global_index"]["i_code_champ_code_ss_champ_num_word"][]="num_word";
+$tabindexref["faq_questions_words_global_index"]["i_num_word"][]="num_word";
 
 
 //  ###################### faq_themes
@@ -994,6 +1198,40 @@ $tabindexref["fiche"]["PRIMARY"][]="id_fiche";
 
 //  ###################### frais
 $tabindexref["frais"]["PRIMARY"][]="id_frais";
+
+
+//  ###################### frbr_cadres
+$tabindexref["frbr_cadres"]["PRIMARY"][]="id_cadre";
+
+
+//  ###################### frbr_cadres_content
+$tabindexref["frbr_cadres_content"]["PRIMARY"][]="id_cadre_content";
+
+
+//  ###################### frbr_datanodes
+$tabindexref["frbr_datanodes"]["PRIMARY"][]="id_datanode";
+
+
+//  ###################### frbr_datanodes_content
+$tabindexref["frbr_datanodes_content"]["PRIMARY"][]="id_datanode_content";
+
+
+//  ###################### frbr_managed_entities
+$tabindexref["frbr_managed_entities"]["PRIMARY"][]="managed_entity_name";
+
+
+//  ###################### frbr_pages
+$tabindexref["frbr_pages"]["PRIMARY"][]="id_page";
+
+
+//  ###################### frbr_pages_content
+$tabindexref["frbr_pages_content"]["PRIMARY"][]="id_page_content";
+
+
+//  ###################### frbr_place
+$tabindexref["frbr_place"]["PRIMARY"][]="place_num_page";
+$tabindexref["frbr_place"]["PRIMARY"][]="place_num_cadre";
+$tabindexref["frbr_place"]["PRIMARY"][]="place_cadre_type";
 
 
 //  ###################### gestfic0_custom
@@ -1014,6 +1252,11 @@ $tabindexref["gestfic0_custom_values"]["i_gcv_t"][]="gestfic0_custom_text";
 $tabindexref["gestfic0_custom_values"]["i_gcv_i"][]="gestfic0_custom_integer";
 $tabindexref["gestfic0_custom_values"]["i_gcv_d"][]="gestfic0_custom_date";
 $tabindexref["gestfic0_custom_values"]["i_gcv_f"][]="gestfic0_custom_float";
+
+
+//  ###################### grids_generic
+$tabindexref["grids_generic"]["PRIMARY"][]="grid_generic_type";
+$tabindexref["grids_generic"]["PRIMARY"][]="grid_generic_filter";
 
 
 //  ###################### grilles
@@ -1066,12 +1309,17 @@ $tabindexref["harvest_src"]["PRIMARY"][]="id_harvest_src";
 $tabindexref["import_marc"]["PRIMARY"][]="id_import";
 $tabindexref["import_marc"]["i_nonot_orig"][]="no_notice";
 $tabindexref["import_marc"]["i_nonot_orig"][]="origine";
+$tabindexref["import_marc"]["i_origine"][]="origine";
 
 
 //  ###################### index_concept
 $tabindexref["index_concept"]["PRIMARY"][]="num_object";
 $tabindexref["index_concept"]["PRIMARY"][]="type_object";
 $tabindexref["index_concept"]["PRIMARY"][]="num_concept";
+$tabindexref["index_concept"]["i_num_concept_type_object"][]="num_concept";
+$tabindexref["index_concept"]["i_num_concept_type_object"][]="type_object";
+$tabindexref["index_concept"]["i_type_object_num_object"][]="type_object";
+$tabindexref["index_concept"]["i_type_object_num_object"][]="num_object";
 
 
 //  ###################### indexint
@@ -1118,6 +1366,11 @@ $tabindexref["liens_actes"]["i_num_acte_lie"][]="num_acte_lie";
 //  ###################### lignes_actes
 $tabindexref["lignes_actes"]["PRIMARY"][]="id_ligne";
 $tabindexref["lignes_actes"]["num_acte"][]="num_acte";
+
+
+//  ###################### lignes_actes_applicants
+$tabindexref["lignes_actes_applicants"]["PRIMARY"][]="ligne_acte_num";
+$tabindexref["lignes_actes_applicants"]["PRIMARY"][]="empr_num";
 
 
 //  ###################### lignes_actes_relances
@@ -1217,6 +1470,7 @@ $tabindexref["nomenclature_musicstands"]["PRIMARY"][]="id_musicstand";
 
 //  ###################### nomenclature_notices_nomenclatures
 $tabindexref["nomenclature_notices_nomenclatures"]["PRIMARY"][]="id_notice_nomenclature";
+$tabindexref["nomenclature_notices_nomenclatures"]["i_notice_nomenclature_num_notice"][]="notice_nomenclature_num_notice";
 
 
 //  ###################### nomenclature_types
@@ -1255,6 +1509,8 @@ $tabindexref["notices"]["i_notice_n_hierar"][]="niveau_hierar";
 $tabindexref["notices"]["notice_eformat"][]="eformat";
 $tabindexref["notices"]["i_date_parution"][]="date_parution";
 $tabindexref["notices"]["i_not_statut"][]="statut";
+$tabindexref["notices"]["i_map_echelle_num"][]="map_echelle_num";
+$tabindexref["notices"]["i_map_projection_num"][]="map_projection_num";
 
 
 //  ###################### notices_authorities_sources
@@ -1309,6 +1565,7 @@ $tabindexref["notices_fields_global_index"]["PRIMARY"][]="ordre";
 $tabindexref["notices_fields_global_index"]["i_value"][]="value";
 $tabindexref["notices_fields_global_index"]["i_code_champ_code_ss_champ"][]="code_champ";
 $tabindexref["notices_fields_global_index"]["i_code_champ_code_ss_champ"][]="code_ss_champ";
+$tabindexref["notices_fields_global_index"]["i_id_notice"][]="id_notice";
 
 
 //  ###################### notices_global_index
@@ -1325,27 +1582,32 @@ $tabindexref["notices_langues"]["PRIMARY"][]="code_langue";
 //  ###################### notices_mots_global_index
 $tabindexref["notices_mots_global_index"]["PRIMARY"][]="id_notice";
 $tabindexref["notices_mots_global_index"]["PRIMARY"][]="code_champ";
+$tabindexref["notices_mots_global_index"]["PRIMARY"][]="code_ss_champ";
 $tabindexref["notices_mots_global_index"]["PRIMARY"][]="num_word";
 $tabindexref["notices_mots_global_index"]["PRIMARY"][]="position";
-$tabindexref["notices_mots_global_index"]["PRIMARY"][]="code_ss_champ";
+$tabindexref["notices_mots_global_index"]["PRIMARY"][]="field_position";
 $tabindexref["notices_mots_global_index"]["code_champ"][]="code_champ";
 $tabindexref["notices_mots_global_index"]["i_id_mot"][]="num_word";
 $tabindexref["notices_mots_global_index"]["i_id_mot"][]="id_notice";
 $tabindexref["notices_mots_global_index"]["i_code_champ_code_ss_champ_num_word"][]="code_champ";
 $tabindexref["notices_mots_global_index"]["i_code_champ_code_ss_champ_num_word"][]="code_ss_champ";
 $tabindexref["notices_mots_global_index"]["i_code_champ_code_ss_champ_num_word"][]="num_word";
+$tabindexref["notices_mots_global_index"]["i_num_word"][]="num_word";
+$tabindexref["notices_mots_global_index"]["i_id_notice"][]="id_notice";
 
 
 //  ###################### notices_relations
-$tabindexref["notices_relations"]["PRIMARY"][]="num_notice";
-$tabindexref["notices_relations"]["PRIMARY"][]="linked_notice";
+$tabindexref["notices_relations"]["PRIMARY"][]="id_notices_relations";
 $tabindexref["notices_relations"]["linked_notice"][]="linked_notice";
 $tabindexref["notices_relations"]["relation_type"][]="relation_type";
+$tabindexref["notices_relations"]["num_notice"][]="num_notice";
+$tabindexref["notices_relations"]["direction"][]="direction";
 
 
 //  ###################### notices_titres_uniformes
 $tabindexref["notices_titres_uniformes"]["PRIMARY"][]="ntu_num_notice";
 $tabindexref["notices_titres_uniformes"]["PRIMARY"][]="ntu_num_tu";
+$tabindexref["notices_titres_uniformes"]["i_ntu_ntu_num_tu"][]="ntu_num_tu";
 
 
 //  ###################### notice_statut
@@ -1363,9 +1625,18 @@ $tabindexref["notice_tplcode"]["PRIMARY"][]="notplcode_typdoc";
 $tabindexref["notice_tplcode"]["PRIMARY"][]="notplcode_niveau_biblio";
 
 
+//  ###################### notice_usage
+$tabindexref["notice_usage"]["PRIMARY"][]="id_usage";
+$tabindexref["notice_usage"]["usage_libelle"][]="usage_libelle";
+
+
 //  ###################### onto_uri
 $tabindexref["onto_uri"]["PRIMARY"][]="uri_id";
 $tabindexref["onto_uri"]["uri"][]="uri";
+
+
+//  ###################### ontologies
+$tabindexref["ontologies"]["PRIMARY"][]="id_ontology";
 
 
 //  ###################### opac_filters
@@ -1407,6 +1678,9 @@ $tabindexref["origine_notice"]["orinot_nom"][]="orinot_nom";
 //  ###################### ouvertures
 $tabindexref["ouvertures"]["PRIMARY"][]="date_ouverture";
 $tabindexref["ouvertures"]["PRIMARY"][]="num_location";
+$tabindexref["ouvertures"]["i_ouvert_num_location_date_ouverture"][]="ouvert";
+$tabindexref["ouvertures"]["i_ouvert_num_location_date_ouverture"][]="num_location";
+$tabindexref["ouvertures"]["i_ouvert_num_location_date_ouverture"][]="date_ouverture";
 
 
 //  ###################### paiements
@@ -1424,6 +1698,12 @@ $tabindexref["param_subst"]["PRIMARY"][]="subst_sstype_param";
 $tabindexref["parametres"]["PRIMARY"][]="id_param";
 $tabindexref["parametres"]["typ_sstyp"][]="type_param";
 $tabindexref["parametres"]["typ_sstyp"][]="sstype_param";
+
+
+//  ###################### parametres_uncached
+$tabindexref["parametres_uncached"]["PRIMARY"][]="id_param";
+$tabindexref["parametres_uncached"]["typ_sstyp"][]="type_param";
+$tabindexref["parametres_uncached"]["typ_sstyp"][]="sstype_param";
 
 
 //  ###################### pclassement
@@ -1453,6 +1733,25 @@ $tabindexref["pret_archive"]["i_pa_expl_bulletin"][]="arc_expl_bulletin";
 $tabindexref["pret_archive"]["i_pa_arc_fin"][]="arc_fin";
 $tabindexref["pret_archive"]["i_pa_arc_empr_categ"][]="arc_empr_categ";
 $tabindexref["pret_archive"]["i_pa_arc_expl_location"][]="arc_expl_location";
+
+
+//  ###################### pret_custom
+$tabindexref["pret_custom"]["PRIMARY"][]="idchamp";
+
+
+//  ###################### pret_custom_lists
+$tabindexref["pret_custom_lists"]["i_pret_custom_champ"][]="pret_custom_champ";
+$tabindexref["pret_custom_lists"]["i_pret_champ_list_value"][]="pret_custom_champ";
+$tabindexref["pret_custom_lists"]["i_pret_champ_list_value"][]="pret_custom_list_value";
+
+
+//  ###################### pret_custom_values
+$tabindexref["pret_custom_values"]["i_pret_custom_champ"][]="pret_custom_champ";
+$tabindexref["pret_custom_values"]["i_pret_custom_origine"][]="pret_custom_origine";
+
+
+//  ###################### print_cart_tpl
+$tabindexref["print_cart_tpl"]["PRIMARY"][]="id_print_cart_tpl";
 
 
 //  ###################### procs
@@ -1516,6 +1815,32 @@ $tabindexref["rapport_demandes"]["PRIMARY"][]="id_item";
 $tabindexref["recouvrements"]["PRIMARY"][]="recouvr_id";
 
 
+//  ###################### rent_account_types_sections
+$tabindexref["rent_account_types_sections"]["PRIMARY"][]="account_type_num_section";
+$tabindexref["rent_account_types_sections"]["PRIMARY"][]="account_type_marclist";
+
+
+//  ###################### rent_accounts
+$tabindexref["rent_accounts"]["PRIMARY"][]="id_account";
+
+
+//  ###################### rent_accounts_invoices
+$tabindexref["rent_accounts_invoices"]["PRIMARY"][]="account_invoice_num_account";
+$tabindexref["rent_accounts_invoices"]["PRIMARY"][]="account_invoice_num_invoice";
+
+
+//  ###################### rent_invoices
+$tabindexref["rent_invoices"]["PRIMARY"][]="id_invoice";
+
+
+//  ###################### rent_pricing_system_grids
+$tabindexref["rent_pricing_system_grids"]["PRIMARY"][]="id_pricing_system_grid";
+
+
+//  ###################### rent_pricing_systems
+$tabindexref["rent_pricing_systems"]["PRIMARY"][]="id_pricing_system";
+
+
 //  ###################### resa
 $tabindexref["resa"]["PRIMARY"][]="id_resa";
 $tabindexref["resa"]["resa_date_fin"][]="resa_date_fin";
@@ -1523,6 +1848,7 @@ $tabindexref["resa"]["resa_date"][]="resa_date";
 $tabindexref["resa"]["resa_cb"][]="resa_cb";
 $tabindexref["resa"]["i_idbulletin"][]="resa_idbulletin";
 $tabindexref["resa"]["i_idnotice"][]="resa_idnotice";
+$tabindexref["resa"]["i_resa_idempr"][]="resa_idempr";
 
 
 //  ###################### resa_archive
@@ -1550,13 +1876,16 @@ $tabindexref["resa_ranger"]["PRIMARY"][]="resa_cb";
 
 
 //  ###################### responsability
+$tabindexref["responsability"]["PRIMARY"][]="id_responsability";
 $tabindexref["responsability"]["PRIMARY"][]="responsability_author";
 $tabindexref["responsability"]["PRIMARY"][]="responsability_notice";
 $tabindexref["responsability"]["PRIMARY"][]="responsability_fonction";
 $tabindexref["responsability"]["responsability_notice"][]="responsability_notice";
+$tabindexref["responsability"]["i_responsability_author"][]="responsability_author";
 
 
 //  ###################### responsability_tu
+$tabindexref["responsability_tu"]["PRIMARY"][]="id_responsability_tu";
 $tabindexref["responsability_tu"]["PRIMARY"][]="responsability_tu_author_num";
 $tabindexref["responsability_tu"]["PRIMARY"][]="responsability_tu_num";
 $tabindexref["responsability_tu"]["PRIMARY"][]="responsability_tu_fonction";
@@ -1597,6 +1926,34 @@ $tabindexref["sauv_sauvegardes"]["PRIMARY"][]="sauv_sauvegarde_id";
 //  ###################### sauv_tables
 $tabindexref["sauv_tables"]["PRIMARY"][]="sauv_table_id";
 $tabindexref["sauv_tables"]["sauv_table_nom"][]="sauv_table_nom";
+
+
+//  ###################### scan_request_explnum
+$tabindexref["scan_request_explnum"]["PRIMARY"][]="scan_request_explnum_num_request";
+$tabindexref["scan_request_explnum"]["PRIMARY"][]="scan_request_explnum_num_explnum";
+
+
+//  ###################### scan_request_linked_records
+$tabindexref["scan_request_linked_records"]["PRIMARY"][]="scan_request_linked_record_num_request";
+$tabindexref["scan_request_linked_records"]["PRIMARY"][]="scan_request_linked_record_num_notice";
+$tabindexref["scan_request_linked_records"]["PRIMARY"][]="scan_request_linked_record_num_bulletin";
+
+
+//  ###################### scan_request_priorities
+$tabindexref["scan_request_priorities"]["PRIMARY"][]="id_scan_request_priority";
+
+
+//  ###################### scan_request_status
+$tabindexref["scan_request_status"]["PRIMARY"][]="id_scan_request_status";
+
+
+//  ###################### scan_request_status_workflow
+$tabindexref["scan_request_status_workflow"]["PRIMARY"][]="scan_request_status_workflow_from_num";
+$tabindexref["scan_request_status_workflow"]["PRIMARY"][]="scan_request_status_workflow_to_num";
+
+
+//  ###################### scan_requests
+$tabindexref["scan_requests"]["PRIMARY"][]="id_scan_request";
 
 
 //  ###################### search_cache
@@ -1675,6 +2032,38 @@ $tabindexref["series"]["PRIMARY"][]="serie_id";
 //  ###################### sessions
 
 
+//  ###################### sessions_tokens
+$tabindexref["sessions_tokens"]["PRIMARY"][]="sessions_tokens_SESSID";
+$tabindexref["sessions_tokens"]["PRIMARY"][]="sessions_tokens_type";
+$tabindexref["sessions_tokens"]["i_st_sessions_tokens_type"][]="sessions_tokens_type";
+$tabindexref["sessions_tokens"]["i_st_sessions_tokens_token"][]="sessions_tokens_token";
+
+
+//  ###################### shorturls
+$tabindexref["shorturls"]["PRIMARY"][]="id_shorturl";
+$tabindexref["shorturls"]["i_shorturl_hash"][]="shorturl_hash";
+
+
+//  ###################### skos_custom
+$tabindexref["skos_custom"]["PRIMARY"][]="idchamp";
+
+
+//  ###################### skos_custom_lists
+$tabindexref["skos_custom_lists"]["skos_custom_champ"][]="skos_custom_champ";
+$tabindexref["skos_custom_lists"]["skos_champ_list_value"][]="skos_custom_champ";
+$tabindexref["skos_custom_lists"]["skos_champ_list_value"][]="skos_custom_list_value";
+
+
+//  ###################### skos_custom_values
+$tabindexref["skos_custom_values"]["skos_custom_champ"][]="skos_custom_champ";
+$tabindexref["skos_custom_values"]["i_encv_st"][]="skos_custom_small_text";
+$tabindexref["skos_custom_values"]["i_encv_t"][]="skos_custom_text";
+$tabindexref["skos_custom_values"]["i_encv_i"][]="skos_custom_integer";
+$tabindexref["skos_custom_values"]["i_encv_d"][]="skos_custom_date";
+$tabindexref["skos_custom_values"]["i_encv_f"][]="skos_custom_float";
+$tabindexref["skos_custom_values"]["skos_custom_origine"][]="skos_custom_origine";
+
+
 //  ###################### skos_fields_global_index
 $tabindexref["skos_fields_global_index"]["PRIMARY"][]="id_item";
 $tabindexref["skos_fields_global_index"]["PRIMARY"][]="code_champ";
@@ -1698,6 +2087,7 @@ $tabindexref["skos_words_global_index"]["i_id_mot"][]="id_item";
 $tabindexref["skos_words_global_index"]["i_code_champ_code_ss_champ_num_word"][]="code_champ";
 $tabindexref["skos_words_global_index"]["i_code_champ_code_ss_champ_num_word"][]="code_ss_champ";
 $tabindexref["skos_words_global_index"]["i_code_champ_code_ss_champ_num_word"][]="num_word";
+$tabindexref["skos_words_global_index"]["i_num_word"][]="num_word";
 
 
 //  ###################### source_sync
@@ -1727,6 +2117,10 @@ $tabindexref["statopac_vues"]["PRIMARY"][]="id_vue";
 
 //  ###################### statopac_vues_col
 $tabindexref["statopac_vues_col"]["PRIMARY"][]="id_col";
+
+
+//  ###################### sticks_sheets
+$tabindexref["sticks_sheets"]["PRIMARY"][]="id_sticks_sheet";
 
 
 //  ###################### storages
@@ -1773,6 +2167,7 @@ $tabindexref["suggestions_origine"]["PRIMARY"][]="num_suggestion";
 $tabindexref["suggestions_origine"]["PRIMARY"][]="type_origine";
 $tabindexref["suggestions_origine"]["i_origine"][]="origine";
 $tabindexref["suggestions_origine"]["i_origine"][]="type_origine";
+$tabindexref["suggestions_origine"]["i_num_suggestion"][]="num_suggestion";
 
 
 //  ###################### suggestions_source
@@ -1804,8 +2199,14 @@ $tabindexref["thesaurus"]["PRIMARY"][]="id_thesaurus";
 $tabindexref["thesaurus"]["libelle_thesaurus"][]="libelle_thesaurus";
 
 
+//  ###################### thresholds
+$tabindexref["thresholds"]["PRIMARY"][]="id_threshold";
+
+
 //  ###################### titres_uniformes
 $tabindexref["titres_uniformes"]["PRIMARY"][]="tu_id";
+$tabindexref["titres_uniformes"]["i_tu_tu_oeuvre_type"][]="tu_oeuvre_type";
+$tabindexref["titres_uniformes"]["i_tu_tu_oeuvre_nature"][]="tu_oeuvre_nature";
 
 
 //  ###################### transacash
@@ -1814,6 +2215,8 @@ $tabindexref["transacash"]["PRIMARY"][]="transacash_id";
 
 //  ###################### transactions
 $tabindexref["transactions"]["PRIMARY"][]="id_transaction";
+$tabindexref["transactions"]["i_realisee"][]="realisee";
+$tabindexref["transactions"]["i_compte_id"][]="compte_id";
 
 
 //  ###################### transactype
@@ -1823,6 +2226,8 @@ $tabindexref["transactype"]["PRIMARY"][]="transactype_id";
 //  ###################### transferts
 $tabindexref["transferts"]["PRIMARY"][]="id_transfert";
 $tabindexref["transferts"]["etat_transfert"][]="etat_transfert";
+$tabindexref["transferts"]["i_etat_transfert_origine"][]="etat_transfert";
+$tabindexref["transferts"]["i_etat_transfert_origine"][]="origine";
 
 
 //  ###################### transferts_demande
@@ -1831,6 +2236,7 @@ $tabindexref["transferts_demande"]["num_transfert"][]="num_transfert";
 $tabindexref["transferts_demande"]["num_location_source"][]="num_location_source";
 $tabindexref["transferts_demande"]["num_location_dest"][]="num_location_dest";
 $tabindexref["transferts_demande"]["num_expl"][]="num_expl";
+$tabindexref["transferts_demande"]["i_resa_trans"][]="resa_trans";
 
 
 //  ###################### transferts_source
@@ -1872,6 +2278,21 @@ $tabindexref["tu_custom_values"]["i_tcv_f"][]="tu_custom_float";
 //  ###################### tu_distrib
 $tabindexref["tu_distrib"]["PRIMARY"][]="distrib_num_tu";
 $tabindexref["tu_distrib"]["PRIMARY"][]="distrib_ordre";
+
+
+//  ###################### tu_oeuvres_events
+$tabindexref["tu_oeuvres_events"]["i_toe_oeuvre_event_tu_num"][]="oeuvre_event_tu_num";
+$tabindexref["tu_oeuvres_events"]["i_toe_oeuvre_event_authperso_authority_num"][]="oeuvre_event_authperso_authority_num";
+
+
+//  ###################### tu_oeuvres_links
+$tabindexref["tu_oeuvres_links"]["PRIMARY"][]="oeuvre_link_from";
+$tabindexref["tu_oeuvres_links"]["PRIMARY"][]="oeuvre_link_to";
+$tabindexref["tu_oeuvres_links"]["PRIMARY"][]="oeuvre_link_type";
+$tabindexref["tu_oeuvres_links"]["PRIMARY"][]="oeuvre_link_expression";
+$tabindexref["tu_oeuvres_links"]["PRIMARY"][]="oeuvre_link_other_link";
+$tabindexref["tu_oeuvres_links"]["i_oeuvre_link_from"][]="oeuvre_link_from";
+$tabindexref["tu_oeuvres_links"]["i_oeuvre_link_to"][]="oeuvre_link_to";
 
 
 //  ###################### tu_ref
@@ -1916,6 +2337,7 @@ $tabindexref["users_groups"]["i_users_groups_grp_name"][]="grp_name";
 
 //  ###################### vedette
 $tabindexref["vedette"]["PRIMARY"][]="id_vedette";
+$tabindexref["vedette"]["i_grammar"][]="grammar";
 
 
 //  ###################### vedette_link
@@ -1938,6 +2360,13 @@ $tabindexref["vedette_object"]["i_vedette_object_vedette"][]="num_vedette";
 //  ###################### visionneuse_params
 $tabindexref["visionneuse_params"]["PRIMARY"][]="visionneuse_params_id";
 $tabindexref["visionneuse_params"]["visionneuse_params_class"][]="visionneuse_params_class";
+
+
+//  ###################### visits_statistics
+$tabindexref["visits_statistics"]["PRIMARY"][]="visits_statistics_id";
+$tabindexref["visits_statistics"]["i_vs_visits_statistics_date"][]="visits_statistics_date";
+$tabindexref["visits_statistics"]["i_vs_visits_statistics_location_visits_statistics_type"][]="visits_statistics_location";
+$tabindexref["visits_statistics"]["i_vs_visits_statistics_location_visits_statistics_type"][]="visits_statistics_type";
 
 
 //  ###################### voir_aussi

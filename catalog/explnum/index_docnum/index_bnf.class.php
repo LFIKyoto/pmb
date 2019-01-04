@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: index_bnf.class.php,v 1.2 2012-03-23 14:10:19 dbellamy Exp $
+// $Id: index_bnf.class.php,v 1.3 2017-06-30 14:08:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($class_path."/xml_dom.class.php");
@@ -11,20 +11,20 @@ require_once($class_path."/xml_dom.class.php");
  */
 class index_bnf{
 	
-	var $fichier='';
-	var $zip = "";
+	public $fichier='';
+	public $zip = "";
 	
 	/**
 	 * Constructeur
 	 */
-	function index_bnf($filename, $mimetype='', $extension=''){
+	public function __construct($filename, $mimetype='', $extension=''){
 		$this->fichier = $filename;
 	}
 	
 	/**
 	 * Récupération du texte à indexer dans l'archive
 	 */
-	function get_text($filename){
+	public function get_text($filename){
 		$this->zip = zip_open($filename);
  		if ($this->zip) {
 			while ($zip_entry = zip_read($this->zip)) {

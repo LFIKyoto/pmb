@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sessions.inc.php,v 1.2.4.1 2015-10-07 12:46:15 arenou Exp $
+// $Id: sessions.inc.php,v 1.9 2018-08-08 09:34:36 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -36,10 +36,17 @@ function checkEmpr($SESSNAME, $allow=0,$user_connexion='') {
 	$opac_duration_session_auth = pmb_mysql_result($result, 0, 0);
 	
 	// récupère les infos de session dans les cookies
-	$PHPSESSID = $_COOKIE["$SESSNAME-SESSID"];
-	if ($user_connexion) $PHPSESSLOGIN = $user_connexion; 
-	else $PHPSESSLOGIN = $_COOKIE["$SESSNAME-LOGIN"];
-	$PHPSESSNAME = $_COOKIE["$SESSNAME-SESSNAME"];
+	$PHPSESSID = (isset($_COOKIE["$SESSNAME-SESSID"]) ? $_COOKIE["$SESSNAME-SESSID"] : '');
+	if ($user_connexion) {
+		$PHPSESSLOGIN = $user_connexion; 
+	} else {
+		if(isset($_COOKIE["$SESSNAME-LOGIN"])) {
+			$PHPSESSLOGIN = $_COOKIE["$SESSNAME-LOGIN"];
+		} else {
+			$PHPSESSLOGIN = '';
+		}
+	}
+	$PHPSESSNAME = (isset($_COOKIE["$SESSNAME-SESSNAME"]) ? $_COOKIE["$SESSNAME-SESSNAME"] : '');
 	
 	// on récupère l'IP du client
 	$ip = $_SERVER['REMOTE_ADDR'];
@@ -105,6 +112,7 @@ function startSession($SESSNAME, $login) {
 	global $dbh; // le lien MySQL
 	global $stylesheet; /* pour qu'à l'ouverture de la session le user récupère de suite son style */
 	global $checkempr_type_erreur ;
+	global $PMBdatabase ;
 	
 	// nettoyage des sessions 'oubliées'
 	cleanTable($SESSNAME);
@@ -151,10 +159,10 @@ function startSession($SESSNAME, $login) {
 	setcookie($SESSNAME."-DATABASE", $PMBdatabase, 0);
 
 	// mise à disposition des variables de la session
-	define('SESSlogin'	, $login);
-	define('SESSname'	, $SESSNAME);
-	define('SESSid'		, $SESSID);
-	define('SESSstart'	, $SESSstart);
+	if(!defined('SESSlogin')) define('SESSlogin'	, $login);
+	if(!defined('SESSname')) define('SESSname'	, $SESSNAME);
+	if(!defined('SESSid')) define('SESSid'		, $SESSID);
+	if(!defined('SESSstart')) define('SESSstart'	, $SESSstart);
 	
 	//Ouverture de la session php
 	header("Expires: Sat, 01 Jan 2000 00:00:00 GMT");
@@ -209,8 +217,8 @@ function sessionDelete($SESSNAME) {
 
 	// effacement de la session de la table des sessions
 
-	$query = "DELETE FROM sessions WHERE login='$login'";
-	$query .= " AND SESSNAME='$SESSNAME' and SESSID='$PHPSESSID'";
+	$query = "DELETE FROM sessions WHERE login='".addslashes($login)."'";
+	$query .= " AND SESSNAME='".addslashes($SESSNAME)."' and SESSID='".addslashes($PHPSESSID)."'";
 
 	$result = @pmb_mysql_query($query, $dbh);
 	if($result)
@@ -227,16 +235,20 @@ function check_anonymous_session($SESSNAME){
 	$checkempr_type_erreur = CHECK_EMPR_NO_SESSION ;
 	
 	// récupère les infos de session dans les cookies
-	$PHPSESSID = $_COOKIE["$SESSNAME-SESSID"];
-	$PHPSESSLOGIN = $_COOKIE["$SESSNAME-LOGIN"];
-	$PHPSESSNAME = $_COOKIE["$SESSNAME-SESSNAME"];
+	$PHPSESSID = (isset($_COOKIE["$SESSNAME-SESSID"]) ? $_COOKIE["$SESSNAME-SESSID"] : '');
+	if(isset($_COOKIE["$SESSNAME-LOGIN"])) {
+		$PHPSESSLOGIN = $_COOKIE["$SESSNAME-LOGIN"];
+	} else {
+		$PHPSESSLOGIN = '';
+	}
+	$PHPSESSNAME = (isset($_COOKIE["$SESSNAME-SESSNAME"]) ? $_COOKIE["$SESSNAME-SESSNAME"] : '');
 	
 	// on récupère l'IP du client
 	$ip = $_SERVER['REMOTE_ADDR'];
 	
 	// recherche de la session ouverte dans la table
 	$query = "SELECT SESSID, login, IP, SESSstart, LastOn, SESSNAME FROM sessions WHERE ";
-	$query .= "SESSID='$PHPSESSID'";
+	$query .= "SESSID='".addslashes($PHPSESSID)."'";
 	$result = pmb_mysql_query($query, $dbh);
 	$numlignes = pmb_mysql_num_rows($result);	
 	if(!$numlignes){

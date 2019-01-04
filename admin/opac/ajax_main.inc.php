@@ -1,18 +1,25 @@
 <?php
 // +-------------------------------------------------+
-// © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: 
+// $Id: ajax_main.inc.php,v 1.8 2018-10-12 11:59:35 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-require_once("$class_path/facette_search_opac.class.php");
+require_once($class_path."/facettes_controller.class.php");
 
-switch($section){
-	case "lst_facette":
-		$facette = new facette_search();
-		print $facette->create_list_subfields($list_crit,$sub_field,$suffixe_id,$no_label);
-		
-	break;
-}
-	
+switch ($sub) {
+	case 'search_persopac':
+		switch($action) {
+			case "list":
+				require_once($class_path.'/list/lists_controller.class.php');
+				lists_controller::proceed_ajax($object_type, 'configuration/'.$categ);
+				break;
+		}
+		break;
+	default:
+		if(!isset($type)) $type = 'notices';
+		$facettes_controller = new facettes_controller(0, $type);
+		$facettes_controller->proceed_ajax();
+		break;
+}	

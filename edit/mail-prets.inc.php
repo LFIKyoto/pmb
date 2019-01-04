@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mail-prets.inc.php,v 1.9 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: mail-prets.inc.php,v 1.13 2017-10-18 13:38:12 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -63,26 +63,8 @@ while ($data1=pmb_mysql_fetch_array($req1)) {
 			$res = pmb_mysql_query($requete);
 			$expl = pmb_mysql_fetch_object($res);
 	
-			$responsabilites=array() ;
-			$header_aut = "" ;
 			$responsabilites = get_notice_authors(($expl->m_id+$expl->s_id)) ;
-			$as = array_search ("0", $responsabilites["responsabilites"]) ;
-			if ($as!== FALSE && $as!== NULL) {
-				$auteur_0 = $responsabilites["auteurs"][$as] ;
-				$auteur = new auteur($auteur_0["id"]);
-				$header_aut .= $auteur->isbd_entry;
-				} else {
-					$aut1_libelle=array();
-					$as = array_keys ($responsabilites["responsabilites"], "1" ) ;
-					for ($i = 0 ; $i < count($as) ; $i++) {
-						$indice = $as[$i] ;
-						$auteur_1 = $responsabilites["auteurs"][$indice] ;
-						$auteur = new auteur($auteur_1["id"]);
-						$aut1_libelle[]= $auteur->isbd_entry;
-					}
-			
-					$header_aut .= implode (", ",$aut1_libelle) ;
-				}
+			$header_aut = gen_authors_header($responsabilites);
 			$header_aut ? $auteur=" / ".$header_aut : $auteur="";
 	
 			// récupération du titre de série
@@ -98,7 +80,7 @@ while ($data1=pmb_mysql_fetch_array($req1)) {
 			}
 
 			$texte_mail.=$expl->tit.$auteur."\r\n";
-			$texte_mail.="    -".$msg[fpdf_date_pret]." : ".$expl->aff_pret_date." ".$msg[fpdf_retour_prevu]." : ".$expl->aff_pret_retour."\r\n";
+			$texte_mail.="    -".$msg['fpdf_date_pret']." : ".$expl->aff_pret_date." ".$msg['fpdf_retour_prevu']." : ".$expl->aff_pret_retour."\r\n";
 			$texte_mail.="    -".$expl->location_libelle.": ".$expl->section_libelle." (".$expl->expl_cb.")\r\n\r\n";
 			$i++;
 		}
@@ -108,14 +90,18 @@ while ($data1=pmb_mysql_fetch_array($req1)) {
 	$texte_mail.=$formule."\r\n\r\n".mail_bloc_adresse();
 	
 	/* Récupération du nom, prénom et mail de l'utilisateur */
-	$requete="select id_empr, empr_mail, empr_nom, empr_prenom from empr where id_empr=$id_empr";
+	if ($id_groupe) {
+		$requete="select id_empr, empr_mail, empr_nom, empr_prenom from empr, groupe where empr.id_empr=groupe.resp_groupe and id_groupe=$id_groupe";
+	} else {
+		$requete="select id_empr, empr_mail, empr_nom, empr_prenom from empr where id_empr=$id_empr";
+	}
 	$res=pmb_mysql_query($requete);
 	$coords=pmb_mysql_fetch_object($res);
 	$headers .= "Content-type: text/plain; charset=".$charset."\n";
 	$res_envoi=mailpmb($coords->empr_prenom." ".$coords->empr_nom, $coords->empr_mail, $objet,$texte_mail, $biblio_name, $biblio_email,$headers, "", $PMBuseremailbcc,1);
 
-	if ($res_envoi) echo "<center><h3>".sprintf($msg["mail_retard_succeed"],$coords->empr_mail)."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["mail_retard_close"]."</a></center><br /><br />".nl2br($texte_mail);
-	else echo "<center><h3>".sprintf($msg["mail_retard_failed"],$coords->empr_mail)."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["mail_retard_close"]."</a></center>";
+	if ($res_envoi) echo "<h3>".sprintf($msg["mail_retard_succeed"],$coords->empr_mail)."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["mail_retard_close"]."</a><br /><br />".nl2br($texte_mail);
+	else echo "<h3>".sprintf($msg["mail_retard_failed"],$coords->empr_mail)."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["mail_retard_close"]."</a>";
 
 
 

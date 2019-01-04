@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: history_functions.inc.php,v 1.1 2007-07-31 13:26:41 jlesaint Exp $
+// $Id: history_functions.inc.php,v 1.2 2018-08-17 10:33:03 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -12,9 +12,9 @@ if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 
 function suppr_histo($id_suppr,$tableau_suppr) {
-	if (!$tableau_suppr[$id_suppr]) {
+	if (!isset($tableau_suppr[$id_suppr])) {
 		for ($i=0;$i<=count($_SESSION["session_history"])-1;$i++) {
-			if ($_SESSION["session_history"][$i]["NOTI"]["SEARCH_TYPE"]=="extended") {
+			if (isset($_SESSION["session_history"][$i]['NOTI']) && $_SESSION["session_history"][$i]["NOTI"]["SEARCH_TYPE"]=="extended") {
 				$bool=false;
 				for ($j=0;$j<=count($_SESSION["session_history"][$i]["NOTI"]["POST"]["search"])-1;$j++) {
 					if ($_SESSION["session_history"][$i]["NOTI"]["POST"]["search"][$j]=="s_1") {

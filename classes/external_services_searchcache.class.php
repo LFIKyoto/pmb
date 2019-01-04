@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: external_services_searchcache.class.php,v 1.17 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: external_services_searchcache.class.php,v 1.20 2017-07-12 15:15:00 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,21 +14,21 @@ require_once("$class_path/search.class.php");
 
 
 class external_services_searchcache {
-	var $search_unique_id;
-	var $search=NULL;
-	var $cache_date=0;
-	var $outdated=true;
-	var $serialized_search = "";
-	var $search_realm="";
-	var $PMBUserId=-1; //-1 : ne pas tenir compte; 0 : utilisateur par défaut; x: utilisateur  d'id x
-	var $OPACEmprId=-1; //-1: ne pas tenir compte; 0 : utilisateur par défaut; x: emprunteur d'id x
-	var $cache_duration=3600;
-	var $id_prefix="";//Prefixe pour les IDs, dès fois qu'on veuille faire la même recherche avec des durées de cache différentes
-	var $cache = NULL;
-	var $external_search = false;
-	var $source_ids = array();
+	public $search_unique_id;
+	public $search=NULL;
+	public $cache_date=0;
+	public $outdated=true;
+	public $serialized_search = "";
+	public $search_realm="";
+	public $PMBUserId=-1; //-1 : ne pas tenir compte; 0 : utilisateur par défaut; x: utilisateur  d'id x
+	public $OPACEmprId=-1; //-1: ne pas tenir compte; 0 : utilisateur par défaut; x: emprunteur d'id x
+	public $cache_duration=3600;
+	public $id_prefix="";//Prefixe pour les IDs, dès fois qu'on veuille faire la même recherche avec des durées de cache différentes
+	public $cache = NULL;
+	public $external_search = false;
+	public $source_ids = array();
 	
-	function external_services_searchcache($search_realm, $search_unique_id='', $PMBUserId=-1, $OPACEmprId=-1, $cache_duration=false, $id_prefix="", $newsearch=false) {
+	public function __construct($search_realm, $search_unique_id='', $PMBUserId=-1, $OPACEmprId=-1, $cache_duration=false, $id_prefix="", $newsearch=false) {
 		global $dbh, $pmb_external_service_search_cache, $search;
 
 		$opac_realm=false;
@@ -84,8 +84,8 @@ class external_services_searchcache {
 			global $field_0_s_2;
 			$field_0_s_2=$this->source_ids;
 			$inter="inter_1_".$search[1];
-			global $$inter;
-			$$inter="and";
+			global ${$inter};
+			${$inter}="and";
 			
 		}
 
@@ -112,7 +112,15 @@ class external_services_searchcache {
 			$this->cache_duration = $cache_duration;
 		$this->cache = new external_services_cache('es_cache_blob', $this->cache_duration);
 			
-		$this->cache->delete_objectref_list_multiple_using_query(CACHE_TYPE_NOTICE, "SELECT es_searchcache_searchid FROM es_searchcache WHERE es_searchcache_date + INTERVAL 1 WEEK < NOW()", 'pmbesSearch');
+		$sql = "SELECT es_searchcache_searchid FROM es_searchcache WHERE es_searchcache_date + INTERVAL 1 WEEK < NOW()";
+		$res = pmb_mysql_query($sql, $dbh);
+		if (pmb_mysql_num_rows($res)) {
+			$array_id = array();
+			while ($row = pmb_mysql_fetch_object($res)) {
+				$array_id[] = $row->es_searchcache_searchid;
+			}
+			$this->cache->delete_objectref_list_multiple(CACHE_TYPE_NOTICE, $array_id, 'pmbesSearch');
+		}
 		$sql2 = "DELETE FROM es_searchcache WHERE es_searchcache_date + INTERVAL ".$this->cache_duration." SECOND < NOW()";
 		pmb_mysql_query($sql2, $dbh);
 			
@@ -175,13 +183,13 @@ class external_services_searchcache {
 
 	}
 	
-	function decale($var,$var1) {
-		global $$var;
-		global $$var1;
-		$$var1=$$var;
+	public function decale($var,$var1) {
+		global ${$var};
+		global ${$var1};
+		${$var1}=${$var};
 	}	
 	
-	function unserialize_search($ssearch) {
+	public function unserialize_search($ssearch) {
 		$this->search->unserialize_search($ssearch);
 		$this->serialized_search = $this->search->serialize_search();
 		if (!$this->search_unique_id) {
@@ -189,7 +197,7 @@ class external_services_searchcache {
 		}
 	}
 	
-	function update() {
+	public function update() {
 		global $dbh, $gestion_acces_active, $gestion_acces_empr_notice;
 		//Si la recherche est encore bonne, on la garde.
 		if (!$this->outdated)
@@ -308,13 +316,13 @@ class external_services_searchcache {
 		$this->outdated = false;
 	}
 	
-	function get_result_count($delete_expired=true) {
+	public function get_result_count($delete_expired=true) {
 		global $dbh;
 		$count = $this->cache->get_objectref_listcount(CACHE_TYPE_NOTICE, $this->search_realm."_".$this->search_unique_id, 'pmbesSearch',$delete_expired);
 		return $count;
 	}
 	
-	function get_results($first_index, $number_to_fetch, $sort_type="",$delete_expired=true) {
+	public function get_results($first_index, $number_to_fetch, $sort_type="",$delete_expired=true) {
 		global $dbh;
 		$this->update();
 
@@ -350,7 +358,7 @@ class external_services_searchcache {
 		
 	}
 	
-	function get_typdoc_list() {
+	public function get_typdoc_list() {
 		if ($this->external_search)
 			return array();
 		global $dbh;

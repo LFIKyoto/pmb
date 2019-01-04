@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-
+// $Id: opac_db_param.inc.php,v 1.8 2015-01-21 09:40:42 mbertin Exp $
 // paramètres d'accès à la base MySQL
 
 // prevents direct script access
@@ -11,8 +11,8 @@ if(preg_match('/opac_db_param\.inc\.php/', $_SERVER['REQUEST_URI'])) {
 }
 
 // inclure ici les tableaux des bases de données accessibles
-$_tableau_databases[0]="pmb" ;
-$_libelle_databases[0]="pmb" ;
+$_tableau_databases[0]="bibli" ;
+$_libelle_databases[0]="bibli" ;
 
 // pour multi-bases
 if (!$database) {
@@ -37,14 +37,13 @@ switch(LOCATION):
 		//$time_zone = 'Europe/Paris'; //Pour modifier l'heure PHP
 		//$time_zone_mysql =  "'-00:00'"; //Pour modifier l'heure MySQL
 		break;
-	case 'pmb':
+	case 'bibli':
 		define('SQL_SERVER', 'localhost');		// nom du serveur
 		define('USER_NAME', 'bibli');		// nom utilisateur
 		define('USER_PASS', 'Ich-Mag-Lesen');		// mot de passe
 		define('DATA_BASE', 'pmb');		// nom base de données
 		define('SQL_TYPE',  'mysql');			// Type de serveur de base de données
-		// Encode de caracteres de la base de données 
-		$charset = "utf-8" ;
+		//$charset = 'utf-8'; || $charset = 'iso-8859-1';
 		//$time_zone = 'Europe/Paris'; //Pour modifier l'heure PHP
 		//$time_zone_mysql =  "'-00:00'"; //Pour modifier l'heure MySQL
 		break;

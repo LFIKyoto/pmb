@@ -3,210 +3,111 @@
 
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sel_editeur.tpl.php,v 1.18.6.2 2015-10-15 13:49:20 jpermanne Exp $
+// $Id: sel_editeur.tpl.php,v 1.29 2018-01-24 10:54:46 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
+require_once($base_path."/selectors/templates/sel_authorities.tpl.php");
+
 // templates du sélecteur éditeur
-
-//--------------------------------------------
-//	$nb_per_page : nombre de lignes par page
-//--------------------------------------------
-// nombre de références par pages
-if ($nb_per_page_p_select != "") 
-	$nb_per_page = $nb_per_page_p_select ;
-	else $nb_per_page = 10;
-
-//-------------------------------------------
-//	$sel_header : header
-//-------------------------------------------
-$sel_header = "
-<div class='row'>
-	<label for='titre_select_editeur' class='etiquette'>$msg[196]</label>
-	</div>	
-<div class='row'>
-";
 
 //-------------------------------------------
 //	$jscript : script de m.a.j. du parent
 //-------------------------------------------
-/* pour $dyn=3, renseigner les champs suivants: (passé dans l'url)
- *
-* $max_field : nombre de champs existant
-* $field_id : id de la clé
-* $field_name_id : id  du champ text
-* $add_field : nom de la fonction permettant de rajouter un champ
-*
-*/
+
+global $dyn;
+global $jscript;
+global $jscript_common_authorities_unique, $jscript_common_authorities_link;
+global $p1, $p2, $p3, $p4, $p5, $p6, $infield;
+global $selector_publisher_form;
+
 if ($dyn==3) {
-	$jscript ="
-<script type='text/javascript'>
-	function set_parent(f_caller, id_value, libelle_value){
-		var w=window;
-		var i=0;
-		if(!(typeof w.opener.$add_field == 'function')) {
-			w.opener.document.getElementById('$field_id').value = id_value;
-			w.opener.document.getElementById('$field_name_id').value = reverse_html_entities(libelle_value);
-			parent.parent.close();
-			return;
-		}
-		var n_element=w.opener.document.forms[f_caller].elements['$max_field'].value;
-		var flag = 1;
-		
-		//Vérification que l'élément n'est pas déjà sélectionnée
-		for (var i=0; i<n_element; i++) {
-			if (w.opener.document.getElementById('$field_id'+i).value==id_value) {
-				alert('".$msg["term_already_in_use"]."');
-				flag = 0;
-				break;
-			}
-		}
-		if (flag) {
-			for (var i=0; i<n_element; i++) {
-				if ((w.opener.document.getElementById('$field_id'+i).value==0)||(w.opener.document.getElementById('$field_id'+i).value=='')) break;
-			}
-		
-			if (i==n_element) w.opener.$add_field();
-			w.opener.document.getElementById('$field_id'+i).value = id_value;
-			w.opener.document.getElementById('$field_name_id'+i).value = reverse_html_entities(libelle_value);
-		}	
-	}
-</script>";
+	$jscript = $jscript_common_authorities_unique;
 }elseif ($dyn==2) { // Pour les liens entre autorités
+	$jscript = $jscript_common_authorities_link;
+}else {
 	$jscript = "
 	<script type='text/javascript'>
 	<!--
-	function set_parent(f_caller, id_value, libelle_value)
-	{	
-		w=window;
-		n_aut_link=w.opener.document.forms[f_caller].elements['max_aut_link'].value;
-		flag = 1;	
-		//Vérification que l'autorité n'est pas déjà sélectionnée
-		for (i=0; i<n_aut_link; i++) {
-			if (w.opener.document.getElementById('f_aut_link_id'+i).value==id_value && w.opener.document.getElementById('f_aut_link_table'+i).value==$p1) {
-				alert('".$msg["term_already_in_use"]."');
-				flag = 0;
-				break;
+	function set_parent(f_caller, id_value, libelle_value,callback){
+		if(f_caller=='search_form'){
+			var p1 = '$p1';
+			var p2 = '$p2';
+			//on enlève le dernier _X
+			var tmp_p1 = p1.split('_');
+			var tmp_p1_length = tmp_p1.length;
+			tmp_p1.pop();
+			var p1bis = tmp_p1.join('_');
+			
+			var tmp_p2 = p2.split('_');
+			var tmp_p2_length = tmp_p2.length;
+			tmp_p2.pop();
+			var p2bis = tmp_p2.join('_');
+		
+			var max_aut = window.parent.document.getElementById(p1bis.replace('id','max_aut'));
+			if(max_aut && (p1bis.replace('id','max_aut').substr(-7)=='max_aut')){
+				var trouve=false;
+				var trouve_id=false;
+				for(i_aut=0;i_aut<=max_aut.value;i_aut++){
+					if(window.parent.document.getElementById(p1bis+'_'+i_aut).value==0){
+						window.parent.document.getElementById(p1bis+'_'+i_aut).value=id_value;
+						window.parent.document.getElementById(p2bis+'_'+i_aut).value=reverse_html_entities(libelle_value);
+						trouve=true;
+						break;
+					}else if(window.parent.document.getElementById(p1bis+'_'+i_aut).value==id_value){
+						trouve_id=true;
+					}
+				}
+				if(!trouve && !trouve_id){
+					window.parent.add_line(p1bis.replace('_id',''));
+					window.parent.document.getElementById(p1bis+'_'+i_aut).value=id_value;
+					window.parent.document.getElementById(p2bis+'_'+i_aut).value=reverse_html_entities(libelle_value);
+				}
+				if(callback)
+					window.parent[callback](p1bis.replace('_id','')+'_'+i_aut);
+			}else{
+				set_parent_value(f_caller, '".$p1."', id_value);
+				set_parent_value(f_caller, '".$p2."', reverse_html_entities(libelle_value));".
+				($p3 ? "set_parent_value(f_caller, '".$p3."', '0');" : "").
+				($p4 ? "set_parent_value(f_caller, '".$p4."', '');" : "").
+				($p5 ? "set_parent_value(f_caller, '".$p5."', '0');" : "").
+				($p6 ? "set_parent_value(f_caller, '".$p6."', '');" : "")."
+				if(callback)
+					window.parent[callback]('$infield');
+				closeCurrentEnv();
 			}
-		}	
-		if (flag) {
-			for (i=0; i<n_aut_link; i++) {
-				if ((w.opener.document.getElementById('f_aut_link_id'+i).value==0)||(w.opener.document.getElementById('f_aut_link_id'+i).value=='')) break;
-			}	
-			if (i==n_aut_link) w.opener.add_aut_link();
-			
-			var selObj = w.opener.document.getElementById('f_aut_link_table_list');
-			var selIndex=selObj.selectedIndex;
-			w.opener.document.getElementById('f_aut_link_table'+i).value= selObj.options[selIndex].value;
-			
-			w.opener.document.getElementById('f_aut_link_id'+i).value = id_value;
-			w.opener.document.getElementById('f_aut_link_libelle'+i).value = reverse_html_entities('['+selObj.options[selIndex].text+']'+libelle_value);		
-		}	
+		}else{
+			set_parent_value(f_caller, '".$p1."', id_value);
+			set_parent_value(f_caller, '".$p2."', reverse_html_entities(libelle_value));".
+			($p3 ? "set_parent_value(f_caller, '".$p3."', '0');" : "").
+			($p4 ? "set_parent_value(f_caller, '".$p4."', '');" : "").
+			($p5 ? "set_parent_value(f_caller, '".$p5."', '0');" : "").
+			($p6 ? "set_parent_value(f_caller, '".$p6."', '');" : "")."
+			if(callback)
+				window.parent[callback]('$infield');
+			closeCurrentEnv();
+		}
 	}
 	-->
 	</script>
 	";
-}else 
-$jscript = "
-<script type='text/javascript'>
-<!--
-function set_parent(f_caller, id_value, libelle_value,callback)
-{
-	if(f_caller=='search_form'){
-		var p1 = '$p1';
-		var p2 = '$p2';
-		//on enlève le dernier _X
-		var tmp_p1 = p1.split('_');
-		var tmp_p1_length = tmp_p1.length;
-		tmp_p1.pop();
-		var p1bis = tmp_p1.join('_');
-		
-		var tmp_p2 = p2.split('_');
-		var tmp_p2_length = tmp_p2.length;
-		tmp_p2.pop();
-		var p2bis = tmp_p2.join('_');
-	
-		var max_aut = window.opener.document.getElementById(p1bis.replace('id','max_aut'));
-		if(max_aut){
-			var trouve=false;
-			var trouve_id=false;
-			for(i_aut=0;i_aut<=max_aut.value;i_aut++){
-				if(window.opener.document.getElementById(p1bis+'_'+i_aut).value==0){
-					window.opener.document.getElementById(p1bis+'_'+i_aut).value=id_value;
-					window.opener.document.getElementById(p2bis+'_'+i_aut).value=reverse_html_entities(libelle_value);
-					trouve=true;
-					break;
-				}else if(window.opener.document.getElementById(p1bis+'_'+i_aut).value==id_value){
-					trouve_id=true;
-				}
-			}
-			if(!trouve && !trouve_id){
-				window.opener.add_line(p1bis.replace('_id',''));
-				window.opener.document.getElementById(p1bis+'_'+i_aut).value=id_value;
-				window.opener.document.getElementById(p2bis+'_'+i_aut).value=reverse_html_entities(libelle_value);
-			}
-			if(callback)
-				window.opener[callback](p1bis.replace('_id','')+'_'+i_aut);
-		}else{
-			window.opener.document.forms[f_caller].elements['$p1'].value = id_value;
-			window.opener.document.forms[f_caller].elements['$p2'].value = reverse_html_entities(libelle_value);".
-			($p3 ? "window.opener.document.forms[f_caller].elements['$p3'].value = '0';" : "").
-			($p4 ? "window.opener.document.forms[f_caller].elements['$p4'].value = '';" : "").
-			($p5 ? "window.opener.document.forms[f_caller].elements['$p5'].value = '0';" : "").
-			($p6 ? "window.opener.document.forms[f_caller].elements['$p6'].value = '';" : "")."
-			if(callback)
-				window.opener[callback]('$infield');
-			window.close();
-		}
-	}else{
-		window.opener.document.forms[f_caller].elements['$p1'].value = id_value;
-		window.opener.document.forms[f_caller].elements['$p2'].value = reverse_html_entities(libelle_value);".
-		($p3 ? "window.opener.document.forms[f_caller].elements['$p3'].value = '0';" : "").
-		($p4 ? "window.opener.document.forms[f_caller].elements['$p4'].value = '';" : "").
-		($p5 ? "window.opener.document.forms[f_caller].elements['$p5'].value = '0';" : "").
-		($p6 ? "window.opener.document.forms[f_caller].elements['$p6'].value = '';" : "")."
-		if(callback)
-			window.opener[callback]('$infield');
-		window.close();
-	}
 }
--->
-</script>
-";
-
-//-------------------------------------------
-//	$sel_search_form : module de recherche
-//-------------------------------------------
-$sel_search_form ="
-<form name='search_form' method='post' action='$base_url'>
-<input type='text' name='f_user_input' value=\"!!deb_rech!!\" />&nbsp;
-<input type='submit' class='bouton_small' value='$msg[142]' />&nbsp;
-!!bouton_ajouter!!
-</form>
-<script type='text/javascript'>
-<!--
-	document.forms['search_form'].elements['f_user_input'].focus();
--->
-</script>
-";
 
 // ------------------------------------------
-// 	$publisher_form : form saisie éditeur
+// 	$selector_publisher_form : form saisie éditeur
 // ------------------------------------------
-$publisher_form = "
+$selector_publisher_form = "
 <script type='text/javascript'>
 <!--
-	function test_form(form)
-	{
-		if(form.ed_nom.value.length == 0)
-			{
-				return false;
-			}
+	function test_form(form){
+		if(form.ed_nom.value.length == 0){
+			return false;
+		}
 		return true;
 	}
 -->
 </script>
-<form name='saisie_editeur' method='post' action=\"$base_url&action=update\">
+<form name='saisie_editeur' method='post' action=\"!!base_url!!&action=update\">
 <!-- ajouter un éditeur -->
 <h3>$msg[143]</h3>
 <div class='form-contenu'>
@@ -248,18 +149,11 @@ $publisher_form = "
 		</div>
 	</div>
 <div class='row'>
-	<input type='button' class='bouton_small' value='$msg[76]' onClick=\"document.location='$base_url';\">
-	<input type='submit' value='$msg[77]' class='bouton_small' onClick=\"return test_form(this.form)\">
+	<input type='button' id='btcancel' class='bouton_small' value='$msg[76]' onClick=\"document.location='!!base_url!!';\">
+	<input type='submit' id='btsubmit' value='$msg[77]' class='bouton_small' onClick=\"return test_form(this.form)\">
 	</div>
 </form>
 <script type='text/javascript'>
 	document.forms['saisie_editeur'].elements['ed_nom'].focus();
 </script>
-";
-
-//-------------------------------------------
-//	$sel_footer : footer
-//-------------------------------------------
-$sel_footer = "
-</div>
 ";

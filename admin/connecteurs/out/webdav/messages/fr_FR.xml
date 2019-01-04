@@ -7,7 +7,7 @@
 		© 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs
 		(voir www.sigb.net)
 		****************************************************************************************
-		$Id: fr_FR.xml,v 1.7.2.1 2015-10-13 08:01:50 ngantier Exp $
+		$Id: fr_FR.xml,v 1.12 2016-03-31 08:55:44 dgoron Exp $
 	-->
 
 <XMLlist>
@@ -31,4 +31,18 @@
 	<entry code="webdav_default_docnum_statut">Statut par défaut du document numérique à sa création</entry>
 	<entry code="webdav_select_tree_elem">Sélectionnez un élément</entry>
 	<entry code="webdav_metasMapper_class">Choix de la classe pour le traitement des metas données</entry>
+	<entry code="webdav_collections_group_tree">Type de collections dans l'arborescence</entry>
+	<entry code="webdav_collections_group_standard">Standard</entry>
+	<entry code="webdav_collections_group_scan_request">Demande de numérisation</entry>
+	<entry code="webdav_collection_typdoc">Type de document</entry>
+	<entry code="webdav_collection_status">Statut</entry>
+	<entry code="webdav_collection_categorie">Catégorie</entry>
+	<entry code="webdav_collection_indexint">Indexation décimale</entry>
+	<entry code="webdav_collection_liste_lecture">Liste de lecture</entry>
+	<entry code="webdav_collection_liste_lecture_tag">Listes de lecture classées</entry>
+	<entry code="webdav_collection_priority">Priorité</entry>
+	<entry code="webdav_collection_music">Musique</entry>
+	<entry code="webdav_collection_music_concept_before">Concept à associer aux partitions avant exécution</entry>
+	<entry code="webdav_collection_music_concept_after">Concept à associer aux partitions après exécution</entry>
+	<entry code="webdav_collection_music_concept_blank">Concept à associer aux partitions originales</entry>
 </XMLlist>

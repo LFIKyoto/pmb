@@ -2,19 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: temps.class.php,v 1.3 2015-04-03 11:16:27 jpermanne Exp $
+// $Id: temps.class.php,v 1.4 2017-06-30 14:08:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 class temps{
 	
-	var $id_element = 0;
-	var $champ_entree = "";
-	var $champ_sortie = "";
-	var $display="";
-	var $idobjet = 0;
+	public $id_element = 0;
+	public $champ_entree = "";
+	public $champ_sortie = "";
+	public $display="";
+	public $idobjet = 0;
 	
-	function temps($id_elt,$fieldElt){
+	public function __construct($id_elt,$fieldElt){
 		global $quoifaire;
 		
 		$this->id_element = $id_elt;
@@ -35,7 +35,7 @@ class temps{
 		}
 	}
 	
-	function make_display(){
+	public function make_display(){
 		global $msg, $dbh,$charset;
 		
 		$rqt = "select temps_passe from demandes_actions where id_action='".$this->idobjet."'";
@@ -55,7 +55,7 @@ class temps{
 		$this->display = $display;
 	}
 	
-	function update(){
+	public function update(){
 		
 		global $dbh, $temps, $msg;		
 		

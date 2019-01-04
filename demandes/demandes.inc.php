@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes.inc.php,v 1.12 2015-04-03 11:16:18 jpermanne Exp $
+// $Id: demandes.inc.php,v 1.13 2017-08-30 09:26:24 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 require_once($class_path."/demandes_types.class.php");
@@ -11,6 +11,7 @@ require_once($class_path."/demandes_actions.class.php");
 require_once($class_path."/rapport.class.php");
 require_once($base_path."/demandes/export_format/report_to_rtf.class.php");
 
+if(!isset($idaction)) $idaction = 0;
 
 $demande = new demandes($iddemande);
 $actions = new demandes_actions($idaction);

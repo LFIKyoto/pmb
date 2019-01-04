@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_itemslist_view_django.class.php,v 1.1.4.1 2015-10-09 13:49:20 dgoron Exp $
+// $Id: cms_module_itemslist_view_django.class.php,v 1.3 2016-02-12 10:13:45 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,10 +12,17 @@ class cms_module_itemslist_view_django extends cms_module_common_view_django{
 		parent::__construct($id);
 		$this->default_template = "<div>
 {% for item in items %}
-<h3>{{item.title}}</h3>
-<img src='{{item.logo_url}}'/>
-<blockquote>{{item.summary}}</blockquote>
-<blockquote>{{item.content}}</blockquote>
+{% if item.interesting %}
+{% if item.status!=2 %}
+<div>
+    <a href='{{item.url}}' title='Source' target='_blank'>
+        <h3>{{item.title}}</h3>
+    </a>
+    <blockquote>{{item.publication_date}} / {{item.source.title}}</blockquote>
+    <blockquote>{{item.summary}}</blockquote>
+</div>
+{% endif %}
+{% endif %}
 {% endfor %}
 </div>";
 	}

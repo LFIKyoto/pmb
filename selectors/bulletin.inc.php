@@ -2,30 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bulletin.inc.php,v 1.8 2015-07-01 10:48:31 jpermanne Exp $
+// $Id: bulletin.inc.php,v 1.13 2017-11-21 14:23:55 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // la variable $caller, passée par l'URL, contient le nom du form appelant
 $base_url = "./select.php?what=bulletin&caller=$caller&param1=$param1&param2=$param2&no_display=$no_display&bt_ajouter=$bt_ajouter&idperio=$idperio";
 
-// contenu popup sélection emprunteur
-require('./selectors/templates/sel_bulletin.tpl.php');
+$selector_bulletin = new selector_bulletin(stripslashes($user_input));
+$selector_bulletin->proceed();
 
-// affichage du header
-print $sel_header;
-
-// traitement en entrée des requêtes utilisateur
-if ($deb_rech) $f_user_input = $deb_rech ;
-if($f_user_input=="" && $user_input=="") {
-	$user_input='';
-} else {
-	// traitement de la saisie utilisateur
-	if ($user_input) $f_user_input=$user_input;
-	if (($f_user_input)&&(!$user_input)) $user_input=$f_user_input;	
-}
-
-function show_results ($dbh, $user_input, $nbr_lignes=0, $page=0, $id = 0) {
+function show_results ($user_input, $nbr_lignes=0, $page=0, $id = 0) {
 	global $nb_per_page;
 	global $base_url;
 	global $caller;
@@ -36,7 +23,7 @@ function show_results ($dbh, $user_input, $nbr_lignes=0, $page=0, $id = 0) {
 	
 	if(!$idperio){
 		$requete = "SELECT bulletin_notice FROM bulletins where bulletin_id=".$no_display." ";
-		$res = @pmb_mysql_query($requete, $dbh);
+		$res = @pmb_mysql_query($requete);
 		if(!($bull=pmb_mysql_fetch_object($res))) {
 			error_message($msg["searcher_syntax_error"],sprintf($msg["searcher_syntax_error_desc"],$aq->current_car,$aq->input_html,$aq->error_message));
 			exit;
@@ -53,7 +40,7 @@ function show_results ($dbh, $user_input, $nbr_lignes=0, $page=0, $id = 0) {
 	}  else {
 		$requete = "SELECT COUNT(1) FROM bulletins where bulletin_numero like '%".str_replace("*","%",$user_input)."%' and bulletin_id!='".$no_display."' and bulletin_notice =$bulletin_notice ";		
 	}	
-	$res = pmb_mysql_query($requete, $dbh);
+	$res = pmb_mysql_query($requete);
 	$nbr_lignes = @pmb_mysql_result($res, 0, 0);
 
 	if(!$page) $page=1;
@@ -64,7 +51,7 @@ function show_results ($dbh, $user_input, $nbr_lignes=0, $page=0, $id = 0) {
 		if($user_input=="") $requete = "SELECT bulletin_numero,mention_date, date_date,bulletin_titre,bulletin_id FROM bulletins where bulletin_id!=".$no_display." and bulletin_notice =$bulletin_notice ORDER BY date_date LIMIT $debut,$nb_per_page ";
 		else $requete = "SELECT bulletin_numero,mention_date,bulletin_titre,bulletin_id FROM bulletins where bulletin_numero like '%".str_replace("*","%",$user_input)."%' and bulletin_id!=".$no_display." and bulletin_notice =$bulletin_notice ORDER BY date_date LIMIT $debut,$nb_per_page ";
 		
-		$res = @pmb_mysql_query($requete, $dbh);
+		$res = @pmb_mysql_query($requete);
 		print "<table><tr>";
 		while(($bull=pmb_mysql_fetch_object($res))) {
 			$notice_entry = $bull->bulletin_titre."&nbsp;".$bull->mention_date;
@@ -83,24 +70,15 @@ function show_results ($dbh, $user_input, $nbr_lignes=0, $page=0, $id = 0) {
 		$precedente = $page-1;
 
 		// affichage du lien précédent si nécéssaire
-		print '<hr /><div align=center>';
+		print '<hr /><div class="center">';
 		if($precedente > 0)
-		print "<a href='$base_url&page=$precedente&nbr_lignes=$nbr_lignes&user_input=".rawurlencode(stripslashes($user_input))."'><img src='./images/left.gif' border='0' title='$msg[48]' alt='[$msg[48]]' hspace='3' align='middle' /></a>";
+		print "<a href='$base_url&page=$precedente&nbr_lignes=$nbr_lignes&user_input=".rawurlencode(stripslashes($user_input))."'><img src='".get_url_icon('left.gif')."' style='border:0px; margin:3px 3px' title='$msg[48]' alt='[$msg[48]]' class='align_middle' /></a>";
 		for($i = 1; $i <= $nbepages; $i++) {
 			if($i==$page)
 				print "<b>$i/$nbepages</b>";
 		}
 		if($suivante<=$nbepages)
-			print "<a href='$base_url&page=$suivante&nbr_lignes=$nbr_lignes&user_input=".rawurlencode(stripslashes($user_input))."'><img src='./images/right.gif' border='0' title='$msg[49]' alt='[$msg[49]]' hspace='3' align='middle' /></a>";
+			print "<a href='$base_url&page=$suivante&nbr_lignes=$nbr_lignes&user_input=".rawurlencode(stripslashes($user_input))."'><img src='".get_url_icon('right.gif')."' style='border:0px; margin:3px 3px' title='$msg[49]' alt='[$msg[49]]' class='align_middle' /></a>";
 		}
 		print '</div>';
 }
-
-// affichage des membres de la page
-
-$sel_search_form = str_replace("!!deb_rech!!", stripslashes($f_user_input), $sel_search_form);
-print $sel_search_form;
-print $jscript;
-show_results($dbh, $user_input, $nbr_lignes, $page);
-
-print $sel_footer;

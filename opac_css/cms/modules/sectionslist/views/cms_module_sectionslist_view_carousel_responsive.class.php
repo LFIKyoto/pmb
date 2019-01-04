@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_sectionslist_view_carousel_responsive.class.php,v 1.2 2015-06-08 09:12:09 arenou Exp $
+// $Id: cms_module_sectionslist_view_carousel_responsive.class.php,v 1.3 2018-08-24 08:44:59 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,8 +15,8 @@ class cms_module_sectionslist_view_carousel_responsive extends cms_module_common
 <ul id='carousel_{{id}}'>
 	{% for record in records %}
 		<li class='{{id}}_item'>
-			<a href='{{record.link}}' alt='{{record.title}}' title='{{record.title}}'>
-				<img src='{% if record.logo.exists %}{{record.logo.vign}}{% else %}{{no_image_url}}{% endif %}'/>
+			<a href='{{record.link}}' title='{{record.title}}'>
+				<img src='{% if record.logo.exists %}{{record.logo.vign}}{% else %}{{no_image_url}}{% endif %}' alt=''/>
 				<br />
 			</a>
 		</li>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dsi_auto.php,v 1.4 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: dsi_auto.php,v 1.6 2017-07-12 15:15:01 tsamson Exp $
 
 // définition du minimum nécéssaire 
 $base_path=".";                            
@@ -42,20 +42,20 @@ if (!$dsi_auto) die("DSI Auto pas activée sur base $database (user=$user) Versio
 		$field_deb = substr($field,0,6);
 		switch ($field_deb) {
 			case "deflt_" :
-				global $$field;
-				$$field=$field_values[$i];
+				global ${$field};
+				${$field}=$field_values[$i];
 				break;
 			case "deflt2" :
-				global $$field;
-				$$field=$field_values[$i];
+				global ${$field};
+				${$field}=$field_values[$i];
 				break;
 			case "param_" :
-				global $$field;
-				$$field=$field_values[$i];
+				global ${$field};
+				${$field}=$field_values[$i];
 				break ;
 			case "value_" :
-				global $$field;
-				$$field=$field_values[$i];
+				global ${$field};
+				${$field}=$field_values[$i];
 				break ;
 			default :
 				break ;
@@ -93,7 +93,7 @@ require_once("./dsi/func_equ.inc.php");
 require_once("./dsi/func_diff.inc.php");
 require_once("./dsi/func_rss.inc.php");
 
-$action_diff_aff = "<h1>".$msg[dsi_dif_auto_titre]."</h1>" ;
+$action_diff_aff = "<h1>".$msg['dsi_dif_auto_titre']."</h1>" ;
 
 // récupérer les bannettes à diffuser
 

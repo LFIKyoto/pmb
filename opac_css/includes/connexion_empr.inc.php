@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: connexion_empr.inc.php,v 1.12.2.1 2015-10-28 16:20:36 jpermanne Exp $
+// $Id: connexion_empr.inc.php,v 1.15 2018-11-20 10:23:13 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -161,4 +161,35 @@ function do_formulaire_connexion() {
 	}
 	return $loginform ;
 
+}
+
+function get_default_connexion_form() {
+	global $msg,$charset ;
+	global $opac_websubscribe_show,$opac_password_forgotten_show;
+	
+	$loginform_forgotten='';
+	if($opac_password_forgotten_show) {
+		$loginform_forgotten="&nbsp;<input type='button' class='bouton' onclick=\"document.forms['loginform'].action='askmdp.php';document.forms['loginform'].submit();\" value='".htmlentities($msg['mdp_forgotten'],ENT_QUOTES,$charset)."'/>";
+	}
+	$url_redirect = (!empty($_SERVER['SCRIPT_URI']) ? $_SERVER['SCRIPT_URI'] : 'empr.php').(!empty($_SERVER['QUERY_STRING']) ? "?".$_SERVER['QUERY_STRING'] : "");
+	$loginform = "
+	<div class='popup_connexion_empr'>
+		<h3>".$msg['authentification_page_mandatory']."</h3>
+		<blockquote>
+		<form action='".$url_redirect."' method='post' name='loginform'>
+			<label>".$msg['resa_empr_login']."</label><br />
+			<input type='text' name='login' size='20' border='0' value=\"".$msg['common_tpl_cardnumber']."\" onFocus=\"this.value='';\"><br />
+			<label>".$msg['resa_empr_password']."</label><br />
+			<input type='password' name='password' size='20' border='0' value='' onFocus=\"this.value='';\"><br />
+			<input type='hidden' id='direct_access' name='direct_access' value='".(!empty($_SERVER['HTTP_REFERER']) ? 0 : 1)."' />
+			<input type='submit' name='ok' value=\"".$msg[11]."\" class='bouton'> $loginform_forgotten ";
+		
+	if($opac_websubscribe_show==2){
+		$loginform.="&nbsp;<input type='button' class='bouton' onclick=\"document.forms['loginform'].action='subscribe.php';document.forms['loginform'].submit();\" value='".htmlentities($msg['websubscribe_label'],ENT_QUOTES,$charset)."'/>";
+	}
+	$loginform.="
+		</form>
+		</blockquote>
+	</div>";
+	return $loginform;
 }

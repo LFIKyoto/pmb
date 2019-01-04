@@ -1,11 +1,11 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: misc.js,v 1.6 2014-05-04 09:56:03 Alexandre Exp $
+// $Id: misc.js,v 1.17 2017-10-13 10:53:49 dgoron Exp $
 
 
-// Fonction check_checkbox : Permet de changer l'états d'une liste de checkbox.
-// checkbox_list : Liste d'id des checkbox séparée par |
+// Fonction check_checkbox : Permet de changer l'etats d'une liste de checkbox.
+// checkbox_list : Liste d'id des checkbox separee par |
 // level: 1 (checked) ou 0;
 function check_checkbox(checkbox_list,level) {
 	var ids,id,state;
@@ -19,17 +19,17 @@ function check_checkbox(checkbox_list,level) {
 
 
 /* -------------------------------------------------------------------------------------
- *		Déroulement du menu vertical sur clic, enregistrement
- *		des préférences sur ctrl+clic avec ajax
+ *		Deroulement du menu vertical sur clic, enregistrement
+ *		des preferences sur ctrl+clic avec ajax
  *
  *		menuHide - setMenu - menuSelectH3 - setMenuHide - menuAutoHide
  * ----------------------------------------------------------------------------------- */
 
 /* -----------------------------------------------------------------------------------
  * Fonction menuHide
- * gestionnaire général pour masquer le menu, declenche sur onclick du <span>
+ * gestionnaire general pour masquer le menu, declenche sur onclick du <span>
  */
-// si l'utilisateur n'enregistre pas de préférences,  on rétracte/déplie le menu.
+// si l'utilisateur n'enregistre pas de preferences,  on retracte/deplie le menu.
 function menuHide(obj,event){
 	var ctrl = event.ctrlKey || event.metaKey;
 	if (ctrl){setMenu(event);}
@@ -38,7 +38,7 @@ function menuHide(obj,event){
 
 /* -----------------------------------------------------------------------------------
  * Fonction setMenu
- * sauve-restaure les preferences sur le déroulement par défaut du menu selectionne
+ * sauve-restaure les preferences sur le deroulement par defaut du menu selectionne
  */
 // Variables globales
 var hlist=new Array();
@@ -49,7 +49,7 @@ function setMenu(){
 	var childs = menu.childNodes;
 	var parseH3=0;
 	
-	//on relève l'etat du menu
+	//on releve l'etat du menu
 	var values="";
 	var j=1;
 	for(i=0; i<childs.length; i++){
@@ -84,7 +84,7 @@ function setMenu(){
 
 /* -------------------------------------------------------------------------------------
  * Fonction menuHideObject
- * Masque ou affiche le menu sous le H3 sélectionné
+ * Masque ou affiche le menu sous le H3 selectionne
  */
 function menuHideObject(obj,force) {
 	var pointer=obj;
@@ -153,8 +153,8 @@ function menuGlobalHide(boollist){
 
 /* --------------------------------------------------------------------------------------
  * Fonction menuAutoHide
- * Recuppere les preferences d'affichage de l'user, si != 0 elles sont définies
- * et on deplie/replie les menus avec l'appel à menuGlobalHide
+ * Recuppere les preferences d'affichage de l'user, si != 0 elles sont definies
+ * et on deplie/replie les menus avec l'appel e menuGlobalHide
  */
 function menuAutoHide(){
 	if (!trueids) {
@@ -168,4 +168,195 @@ function menuAutoHide(){
 			menuGlobalHide(getHide.get_text());	
 		}
 	} else if (trueids!="0") menuGlobalHide(trueids);	
+}
+
+/* --------------------------------------------------------------------------------------
+ * Fonction addLoadEvent
+ * Empile les differentes fonctions a appeler quand la page est chargee
+ */
+function addLoadEvent(func) {
+  if (window.addEventListener)
+    window.addEventListener("load", func, false);
+  else if (window.attachEvent)
+    window.attachEvent("onload", func);
+  else { // fallback
+    var old = window.onload;
+    window.onload = function() {
+      if (old) old();
+      func();
+    };
+  }
+}
+
+var pmbForm = {
+    fieldToObject: function fieldToObject(inputNode){
+
+        var ret = null;
+        if(inputNode){
+            var _in = inputNode.name, type = (inputNode.type || "").toLowerCase();
+            if(_in && type && !inputNode.disabled){
+            	if(type == "textarea" && inputNode.id !="" && inputNode.value == ""){ //Test tinymce
+            		if(typeof tinyMCE != 'undefined' && tinyMCE.get(inputNode.id)){
+            			return tinyMCE.get(inputNode.id).getContent();
+            		}
+            	}
+                if(type == "radio" || type == "checkbox"){
+                    if(inputNode.checked){
+                        ret = inputNode.value;
+                    }
+                }else if(inputNode.multiple){
+                    ret = [];
+                    var nodes = [inputNode.firstChild];
+                    while(nodes.length){
+                        for(var node = nodes.pop(); node; node = node.nextSibling){
+                            if(node.nodeType == 1 && node.tagName.toLowerCase() == "option"){
+                                if(node.selected){
+                                    ret.push(node.value);
+                                }
+                            }else{
+                                if(node.nextSibling){
+                                    nodes.push(node.nextSibling);
+                                }
+                                if(node.firstChild){
+                                    nodes.push(node.firstChild);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }else{
+                    ret = inputNode.value;
+                }
+            }
+        }
+        
+        if(!ret && pmbForm.include.indexOf(type)!= -1){
+        	var form = inputNode.form;
+        	var widgetNode = form.querySelector('[widgetid="'+inputNode.name+'"]');
+        	if(widgetNode){
+        		var widget = dijit.byId(widgetNode.getAttribute('widgetid'));
+        	} else {
+        		var widgetNode2 = form.querySelector('[widgetid="'+inputNode.name+'_form"]');
+            	if(widgetNode2){
+            		var widget = dijit.byId(widgetNode2.getAttribute('widgetid'));
+            	}
+        	}
+        	if (widget) {
+        		return widget.get('value') ? widget.get('value') : '';
+        	}
+        }
+        return ret;
+    },
+    setValue: function(obj, name, value){
+    	if(value === null){
+    		return;
+    	}
+    	var val = obj[name];
+    	if(typeof val == "string"){
+    		obj[name] = [val, value];
+    	}else if(Array.isArray(val)){
+    		val.push(value);
+    	}else{
+    		obj[name] = value;
+    	}
+	},
+	exclude: ["file", "submit", "image", "reset", "button"],
+	include: ['text', 'hidden', 'textarea'],
+    toObject: function formToObject(formNode){
+        var ret = {}, elems = document.getElementById(formNode).elements;
+        for(var i = 0, l = elems.length; i < l; ++i){
+            var item = elems[i], _in = item.name, type = (item.type || "").toLowerCase();
+            if(_in && type && pmbForm.exclude.indexOf(type) < 0 && !item.disabled){
+                pmbForm.setValue(ret, _in, pmbForm.fieldToObject(item));
+                if(type == "image"){
+                    ret[_in + ".x"] = ret[_in + ".y"] = ret[_in].x = ret[_in].y = 0;
+                }
+            }
+        }
+        return ret; 
+    },
+
+    toQuery: function formToQuery(formNode){
+        return ioq.objectToQuery(pmbForm.toObject(formNode));
+    },
+
+    toJson: function formToJson(formNode,prettyPrint){
+
+        return JSON.stringify(pmbForm.toObject(formNode), null, prettyPrint ? 4 : 0);
+    }
+};
+
+function preLoadScripts(domNode){
+	if(domNode){
+		var scripts = domNode.querySelectorAll('script');
+		scripts = Array.prototype.slice.call(scripts);
+		var tabScripts = new Array();
+		scripts.forEach(function(script){
+			var newScript = document.createElement('script');
+			var scriptAttributes = Array.prototype.slice.call(script.attributes);
+			scriptAttributes.forEach(function(attribute){
+				newScript.setAttribute(attribute.name, attribute.value);
+			});			
+			if (script.innerHTML.trim() != '' ) {
+				newScript.innerHTML = script.innerHTML;
+			}			
+			newScript.domNode = domNode;
+			tabScripts.push(newScript);
+			script.parentNode.removeChild(script);
+		});
+		loadScripts(tabScripts);		
+		var nodes = document.querySelectorAll("[data-dojo-type]");
+		var tabNodes = Array.prototype.slice.call(nodes);
+		tabNodes.forEach(function(node){
+			if (parentElement != node.parentElement) {
+				if (!node.getAttribute('widgetid')) {
+					dojo.parser.parse(node.parentElement);
+				}
+				var parentElement = node.parentElement;
+			}				
+		});
+	}
+}
+function loadScripts(tabScripts){
+	if(tabScripts.length){
+		var currentScript = tabScripts.shift();
+		if (currentScript.src) {
+			//l'evenement onload ne fonctionne que sur des scripts avec l'attribut src
+			currentScript.onload = currentScript.onreadystatechange =  function(){
+				loadScripts(tabScripts);
+			}
+			currentScript.domNode.appendChild(currentScript);
+		} else {
+			currentScript.domNode.appendChild(currentScript);
+			loadScripts(tabScripts);
+		}
+	}
+};
+
+function empty_dojo_calendar_by_id(id){
+	require(["dijit/registry"], function(registry) {registry.byId(id).set('value',null);});
+}
+
+function aide_regex() {
+	openPopUp('./help.php?whatis=regex', 'regex_howto');
+}
+
+function closeCurrentEnv(){
+	window.parent.require(["dojo/topic"],
+		function(topic){
+			topic.publish("SelectorTab", "SelectorTab", "closeCurrentTab");
+		}
+	);
+}
+
+function set_parent_value(f_caller, id, value){
+	window.parent.document.forms[f_caller].elements[id].value = value;
+}
+
+function get_parent_value(f_caller, id){
+	return window.parent.document.forms[f_caller].elements[id].value;
+}
+
+function set_parent_focus(f_caller, id){
+	window.parent.document.forms[f_caller].elements[id].focus();
 }

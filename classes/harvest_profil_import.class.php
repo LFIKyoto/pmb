@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: harvest_profil_import.class.php,v 1.2 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: harvest_profil_import.class.php,v 1.4 2017-07-12 15:14:59 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,17 +12,17 @@ require_once($include_path."/parser.inc.php");
    
 
 class harvest_profil_import {
-	var $id=0;
-	var $info=array();
-	var $fields_id=array();
-	var $fields=array();
+	public $id=0;
+	public $info=array();
+	public $fields_id=array();
+	public $fields=array();
 	
-	function harvest_profil_import($id=0) {
+	public function __construct($id=0) {
 		$this->id=$id+0;
 		$this->fetch_data();
 	}
 	
-	function fetch_data() {
+	public function fetch_data() {
 		global $include_path;
 		
 		$this->info=array();
@@ -64,11 +64,12 @@ class harvest_profil_import {
 			}
 		}	
 		
-		if($this->info['num_harvest'])$this->info['harvest']=new harvest($this->info['num_harvest']);
-		//printr($this->info);
+		if(isset($this->info['num_harvest']) && $this->info['num_harvest']) {
+			$this->info['harvest']=new harvest($this->info['num_harvest']);
+		}
 	}
 	   
-	function get_notice($id,$notice_uni="") {
+	public function get_notice($id,$notice_uni="") {
 		$memo=array();
 		
 		$req="select * from notices where notice_id=".$id." ";
@@ -103,7 +104,7 @@ class harvest_profil_import {
 		}
 	}
        
-	function get_form() {
+	public function get_form() {
 		global $harvest_form_tpl, $harvest_form_elt_tpl,$msg,$charset;
 		global $harvest_form_elt_ajax_tpl,$harvest_form_elt_src_tpl;
 		
@@ -149,7 +150,7 @@ class harvest_profil_import {
 	}
 	
 
-	function save($data) {
+	public function save($data) {
 		global $dbh;
 		if(!$this->id){ // Ajout
 			$req="INSERT INTO harvest_profil_import SET 
@@ -169,8 +170,8 @@ class harvest_profil_import {
 		$cpt_fields=0;
 		foreach($this->fields as $field ){
 			$var="flagtodo_".$field["ID"];
-			global $$var;
-    		$flagtodo=$$var+0;
+			global ${$var};
+    		$flagtodo=${$var}+0;
     		
 			$req="INSERT INTO harvest_profil_import_field SET 
 				num_harvest_profil_import=".$this->id.",
@@ -185,7 +186,7 @@ class harvest_profil_import {
 		$this->fetch_data();
 	}	
 	
-	function delete() {
+	public function delete() {
 		global $dbh;		
 		$req=" DELETE from harvest_profil_import_field WHERE num_harvest_profil_import_field=".$this->id;
 		pmb_mysql_query($req, $dbh);				
@@ -200,13 +201,13 @@ class harvest_profil_import {
 
 
 class harvest_profil_imports {	
-	var $info=array();
+	public $info=array();
 	
-	function harvest_profil_imports() {
+	public function __construct() {
 		$this->fetch_data();
 	}
 	
-	function fetch_data() {
+	public function fetch_data() {
 		$this->info=array();
 		$i=0;
 		$req="select * from harvest_profil_import ";		
@@ -220,7 +221,7 @@ class harvest_profil_imports {
 		//printr($this->info);
 	}
 		
-	function get_list() {
+	public function get_list() {
 		global $harvest_list_tpl,$harvest_list_line_tpl,$msg;
 		
 		$tpl=$harvest_list_tpl;
@@ -239,7 +240,7 @@ class harvest_profil_imports {
 		return $tpl;
 	}	
 	
-	function get_sel($sel_name,$sel_id=0) {
+	public function get_sel($sel_name,$sel_id=0) {
 		global $msg;
 		
 		$tpl="<select name='$sel_name' >";				

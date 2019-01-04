@@ -2,17 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: semantique.class.php,v 1.12 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: semantique.class.php,v 1.13 2017-07-13 12:14:17 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 class semantique {
 
-    function semantique() {
+    public function __construct() {
     }
     
     //fonction qui récupére les synonymes d'un mot
-    static function list_synonyms($mot) {
+    public static function list_synonyms($mot) {
     	$t=array();
     	$rqt="select id_mot from mots where mot='".addslashes($mot)."'";
     	$execute_query=pmb_mysql_query($rqt);
@@ -33,7 +33,7 @@ class semantique {
     }
         
     //fonction qui récupére le code php en base des mots vides du dernier calcul
-    static function add_empty_words() {
+    public static function add_empty_words() {
     	//ajout des mots vides calculés
 		$rqt="select php_empty_words from empty_words_calculs where archive_calcul=1";
 		$execute_query=pmb_mysql_query($rqt);
@@ -44,7 +44,7 @@ class semantique {
     }
     
 	//fonction qui calcule les mots vides par rapport à l'index globale des mots
-	static function calculate_empty_words($nb_notices_calcul=0) {
+	public static function calculate_empty_words($nb_notices_calcul=0) {
 				
 		//si mot pas de lien suppression du mot
 		@pmb_mysql_query("delete from mots where id_mot in (select num_mot from linked_mots where linked_mots.type_lien=2 group by num_mot) and id_mot not in (select num_linked_mot from linked_mots group by num_linked_mot)");
@@ -53,6 +53,8 @@ class semantique {
 					
 		//si le paramètre de nombre de notices pour lequel le mot est considéré vide est vide, on considère que ce nombre est la moitié des notices 
 		//si le nombre de notices pour lequel le mot est présent est supérieur au paramètre 		
+		$nb_notices_calcul += 0;
+		
 		if (!$nb_notices_calcul) $nb_noti="*2>nb";
 			else  $nb_noti=">".$nb_notices_calcul;
 		
@@ -82,7 +84,7 @@ class semantique {
 		
 	}
 	
-	static function gen_table_empty_word() {
+	public static function gen_table_empty_word() {
 		//ajout des mots pour remplir  $empty_word[]
 		global $empty_word;
 		pmb_mysql_query("delete from empty_words_calculs");	

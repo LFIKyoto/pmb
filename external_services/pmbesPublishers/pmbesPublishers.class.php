@@ -2,31 +2,27 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesPublishers.class.php,v 1.6 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: pmbesPublishers.class.php,v 1.7 2017-06-22 08:49:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/external_services.class.php");
 
 class pmbesPublishers extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
-	var $es;				//Classe mère qui implémente celle-ci !
-	var $msg;
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	
-	function list_publisher_notices($publisher_id, $OPACUserId=-1) {
+	public function list_publisher_notices($publisher_id, $OPACUserId=-1) {
 		global $dbh;
 		global $msg;
 		$result = array();
@@ -49,7 +45,7 @@ class pmbesPublishers extends external_services_api_class {
 		return $result;
 	}
 	
-	function get_publisher_information($publisher_id) {
+	public function get_publisher_information($publisher_id) {
 		global $dbh;
 		global $msg;
 		$result = array();
@@ -80,7 +76,7 @@ class pmbesPublishers extends external_services_api_class {
 		return $result;
 	}
 
-	function get_publisher_information_and_notices($publisher_id, $OPACUserId=-1) {
+	public function get_publisher_information_and_notices($publisher_id, $OPACUserId=-1) {
 		return array(
 			"information" => $this->get_publisher_information($publisher_id),
 			"notice_ids" => $this->list_publisher_notices($publisher_id, $OPACUserId=-1)

@@ -2,15 +2,15 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_group.class.php,v 1.2 2015-04-03 11:16:18 jpermanne Exp $
+// $Id: serialcirc_group.class.php,v 1.3 2017-05-05 09:12:15 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 class serialcirc_group {
-	//var $id_serialcirc_group;	// identifiant unique
-	var $num_serialcirc_diff;	// identifiant dans la liste de diffusion
-	var $members;				// tableau contenant les infos d'un membre du groupe
-	var $responsable;			// responsable du groupe
+	//public $id_serialcirc_group;	// identifiant unique
+	public $num_serialcirc_diff;	// identifiant dans la liste de diffusion
+	public $members;				// tableau contenant les infos d'un membre du groupe
+	public $responsable;			// responsable du groupe
 	
 	public function __construct($id_serialcirc_diff){
 		$this->num_serialcirc_diff = $id_serialcirc_diff*1;

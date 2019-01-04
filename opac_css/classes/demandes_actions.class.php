@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes_actions.class.php,v 1.12.2.1 2015-09-24 15:48:15 dgoron Exp $
+// $Id: demandes_actions.class.php,v 1.19 2017-11-30 10:00:36 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,39 +15,38 @@ require_once($include_path."/templates/demandes_actions.tpl.php");
 
 class demandes_actions{
 	
-	var $id_action = 0;
-	var $type_action = 0;
-	var $statut_action = 0;
-	var $sujet_action = '';
-	var $detail_action = '';
-	var $time_elapsed = 0;
-	var $date_action = '0000-00-00';
-	var $deadline_action = '0000-00-00';
-	var $progression_action = 0;
-	var $prive_action = 0;
-	var $cout = 0;
-	var $num_demande = 0;
-	var $libelle_demande = '';
-	var $actions_num_user = 0;
-	var $actions_type_user = 0;
-	var $createur_action ="";
-	var $list_type = array();
-	var $list_statut = array();
-	var $workflow = array();
-	var $notes = array();
-	var $actions_read_gestion = 0; // alerte sur la lecture de l'action en gestion par l'utilisateur
-	var $actions_read_opac = 0; // alerte sur la lecture de l'action en opac par le lecteur
-	var $last_modified=0;
+	public $id_action = 0;
+	public $type_action = 0;
+	public $statut_action = 0;
+	public $sujet_action = '';
+	public $detail_action = '';
+	public $time_elapsed = 0;
+	public $date_action = '0000-00-00';
+	public $deadline_action = '0000-00-00';
+	public $progression_action = 0;
+	public $prive_action = 0;
+	public $cout = 0;
+	public $num_demande = 0;
+	public $libelle_demande = '';
+	public $actions_num_user = 0;
+	public $actions_type_user = 0;
+	public $createur_action ="";
+	public $list_type = array();
+	public $list_statut = array();
+	public $workflow = array();
+	public $notes = array();
+	public $actions_read_gestion = 0; // alerte sur la lecture de l'action en gestion par l'utilisateur
+	public $actions_read_opac = 0; // alerte sur la lecture de l'action en opac par le lecteur
+	public $last_modified=0;
 	/*
 	 * Constructeur
 	 */
-	function demandes_actions($id=0,$lazzy_load=true){
-		global $base_path, $dbh, $iddemande;
-		
+	public function __construct($id=0,$lazzy_load=true){
+		$id += 0;
 		$this->fetch_data($id,$lazzy_load);
 	}
 	
-	function fetch_data($id=0,$lazzy_load=true){
+	public function fetch_data($id=0,$lazzy_load=true){
 		global $base_path, $dbh, $iddemande;
 		
 		if($this->id_action && !$id){
@@ -142,7 +141,7 @@ class demandes_actions{
 			$query='SELECT id_note,date_note FROM demandes_notes WHERE num_action='.$this->id_action.' AND prive!=1 ORDER BY id_note ASC';
 			$result=pmb_mysql_query($query);
 			
-			while($note=pmb_mysql_fetch_array($result,MYSQL_ASSOC)){
+			while($note=pmb_mysql_fetch_array($result,PMB_MYSQL_ASSOC)){
 				if($lazzy_load){
 					$this->notes[$note['id_note']]=new stdClass();
 					$this->notes[$note['id_note']]->id_note=$note['id_note'];
@@ -161,7 +160,7 @@ class demandes_actions{
 	/*
 	 * Cherche la note la plus récente grace à l'audit
 	 */
-	static function get_last_modified_note($notes){
+	public static function get_last_modified_note($notes){
 		$temp=0;
 		foreach($notes as $id_note=>$note){
 			//On cherche la derniere note modifiée
@@ -185,7 +184,7 @@ class demandes_actions{
 	/*
 	 * Affichage du formulaire de création/modification
 	 */
-	function show_modif_form(){
+	public function show_modif_form(){
 		
 		global $form_modif_action,$msg, $charset,$type_action,$iddemande;
 		
@@ -249,7 +248,7 @@ class demandes_actions{
 		print $form_modif_action;
 	}
 	
-	function getStatut($idstatut=0){
+	public function getStatut($idstatut=0){
 		foreach($this->list_statut as $key=>$value){
 			if($idstatut){
 				if($value['id']==$idstatut){
@@ -263,7 +262,7 @@ class demandes_actions{
 		}	
 	}
 	
-	function getType($idtype=0){
+	public function getType($idtype=0){
 		foreach($this->list_type as $key=>$value){
 			if($idtype){
 				if($value['id']==$idtype){
@@ -280,7 +279,7 @@ class demandes_actions{
 	/*
 	 * Formulaire de consultation d'une action
 	 */
-	function show_consultation_form(){
+	public function show_consultation_form(){
 		
 		global $idetat,$form_consult_action, $msg, $charset, $pmb_gestion_devise, $dbh, $pmb_type_audit;
 		
@@ -315,7 +314,7 @@ class demandes_actions{
 	/*
 	 * Formulaire d'ajout/modification d'un document numérique
 	 */
-	function show_docnum_form(){
+	public function show_docnum_form(){
 		
 		global $form_add_docnum, $msg,$dbh, $charset,$explnumdoc_id,$explnum_doc;
 		
@@ -363,7 +362,7 @@ class demandes_actions{
 	/*
 	 * Retourne un sélecteur avec les types d'action
 	 */
-	function getTypeSelector($idtype=0){
+	public function getTypeSelector($idtype=0){
 		
 		global $charset, $msg;
 		
@@ -383,7 +382,7 @@ class demandes_actions{
 	/*
 	 * Affiche la liste des boutons correspondants au statut en cours
 	*/
-	function getDisplayStateBtn($list_statut=array(),$multi=0){
+	public function getDisplayStateBtn($list_statut=array(),$multi=0){
 		global $charset,$msg;
 		
 		if($multi){
@@ -403,7 +402,7 @@ class demandes_actions{
 	/*
 	 * Retourne un sélecteur avec les statuts d'action
 	 */
-	function getStatutSelector($idstatut=0,$ajax=false){
+	public function getStatutSelector($idstatut=0,$ajax=false){
 		
 		global $charset;
 		
@@ -419,7 +418,7 @@ class demandes_actions{
 		return $selector;
 	}
 	
-	static function get_values_from_form(&$action){
+	public static function get_values_from_form(&$action){
 		global $idaction,$sujet, $idtype, $idstatut;
 		global $date_debut, $date_fin, $detail,$id_empr;
 		global $time_elapsed, $progression,$cout,$iddemande, $ck_prive, $pmb_type_audit, $opac_demandes_no_action;
@@ -446,7 +445,7 @@ class demandes_actions{
 	/*
 	 * Insertion/Modification d'une action
 	*/
-	static function save(&$action){
+	public static function save(&$action){
 		global $dbh, $pmb_type_audit, $opac_demandes_no_action;
 		if($opac_demandes_no_action) return;
 		
@@ -489,9 +488,8 @@ class demandes_actions{
 			actions_num_user='".$action->actions_num_user."',
 			actions_type_user='".$action->actions_type_user."',
 			actions_read_gestion='1',
-			actions_read_opac='1' 
+			actions_read_opac='1'
 			";
-			
 			pmb_mysql_query($query,$dbh);
 			$action->id_action = pmb_mysql_insert_id($dbh);
 			$action->actions_num_user = $id_empr;
@@ -518,7 +516,7 @@ class demandes_actions{
 	/*
 	 * Changement de statut d'une action
 	*/
-	static function change_statut($statut,$action){
+	public static function change_statut($statut,$action){
 		global $dbh, $pmb_type_audit , $PMBuserid;
 	
 		$query = "update demandes_actions set statut_action=$statut where id_action='".$action->id_action."'";
@@ -532,7 +530,7 @@ class demandes_actions{
 	/*
 	 * Affichage de la liste des actions
 	 */
-	static function show_list_actions($actions,$id_demande,$last_modified=0,$allow_expand=true){
+	public static function show_list_actions($actions,$id_demande,$last_modified=0,$allow_expand=true){
 		
 		global $form_liste_action, $dbh,$msg, $pmb_gestion_devise, $charset, $pmb_type_audit, $ck_vue,$form_see_docnum;
 		
@@ -572,16 +570,16 @@ class demandes_actions{
 				$liste.="<div $onclick class='form-list-actions ".$pair_impair."' ".$tr_javascript.$style." >";
 				$liste.="<div style=\"float:left;padding-top: 6px;\">";
 				if($action->actions_read_opac == 1){
-					$liste .= "<img hspace=\"3\" border=\"0\" ".$onclick." title=\"\" id=\"read".$action->id_action."Img1\" name=\"imRead\" class=\"img_plus\" src=\"".get_url_icon('notification_empty.png')."\" style='display:none;margin:0 5px'>
-								<img style=\"margin:0 5px\" hspace=\"3\" border=\"0\" ".$onclick." title=\"\" id=\"read".$action->id_action."Img2\" name=\"imRead\" class=\"img_plus\" src=\"".get_url_icon('notification_new.png')."\">";
+					$liste .= "<img hspace=\"3\" border=\"0\" ".$onclick." title=\"\" id=\"read".$action->id_action."Img1\" class=\"img_plus\" src=\"".get_url_icon('notification_empty.png')."\" style='display:none;margin:0 5px'>
+								<img style=\"margin:0 5px\" hspace=\"3\" border=\"0\" ".$onclick." title=\"\" id=\"read".$action->id_action."Img2\" class=\"img_plus\" src=\"".get_url_icon('notification_new.png')."\">";
 				} else {
-					$liste .= "<img style=\";margin:0 5px\" hspace=\"3\" border=\"0\" ".$onclick." title=\"\" id=\"read".$action->id_action."Img1\" name=\"imRead\" class=\"img_plus\" src=\"".get_url_icon('notification_empty.png')."\" >
-								<img hspace=\"3\" border=\"0\" ".$onclick." title=\"\" id=\"read".$action->id_action."Img2\" name=\"imRead\" class=\"img_plus\" src=\"".get_url_icon('notification_new.png')."\" style='display:none;margin:0 5px'>";
+					$liste .= "<img style=\";margin:0 5px\" hspace=\"3\" border=\"0\" ".$onclick." title=\"\" id=\"read".$action->id_action."Img1\" class=\"img_plus\" src=\"".get_url_icon('notification_empty.png')."\" >
+								<img hspace=\"3\" border=\"0\" ".$onclick." title=\"\" id=\"read".$action->id_action."Img2\" class=\"img_plus\" src=\"".get_url_icon('notification_new.png')."\" style='display:none;margin:0 5px'>";
 				}
 
 				foreach($action->workflow->getTypeList() as $id=>$value){
 					if($value['id']==$action->type_action && $value['image']){
-						$liste.="<img hspace=\"3\" border=\"0\" title=\"".$value['comment']."\" src=\"./images/".$value['image']."\" style=\"height:16px;margin:0 5px\" />";
+						$liste.="<img hspace=\"3\" border=\"0\" title=\"".$value['comment']."\" src=\"".get_url_icon($value['image'])."\" style=\"height:16px;margin:0 5px\" />";
 					}
 				}
 				$liste.="</div>";
@@ -620,13 +618,15 @@ class demandes_actions{
 					window.onload(expand_note('note'+document.getElementById('last_modified').value,document.getElementById('last_modified').value, true));
 				}
 			";
+		} else {
+			$script="";
 		}
 		$form_liste_action = str_replace('!!script_expand!!',$script,$form_liste_action);
 		
-		return $form_liste_action;		
+		return $form_liste_action;
 	}
 	
-	static function show_action_docnum($action){
+	public static function show_action_docnum($action){
 		global $dbh,$msg,$form_see_docnum;
 		
 		
@@ -656,7 +656,7 @@ class demandes_actions{
 	/*
 	 * Suppression d'une action 
 	 */
-	static function delete(demandes_actions $action){
+	public static function delete(demandes_actions $action){
 		
 		global $dbh,$chk;
 		
@@ -680,7 +680,7 @@ class demandes_actions{
 	/*
 	 * Liste des actions Questions/Réponses ouverte ou en attente
 	 */
-	function show_com_form(){
+	public function show_com_form(){
 		global $form_communication, $dbh, $charset, $msg;
 		
 		
@@ -693,7 +693,7 @@ class demandes_actions{
 		$res_dmde=pmb_mysql_query($req_dmde,$dbh);
 		if(pmb_mysql_num_rows($res_dmde)){
 			while(($dmde=pmb_mysql_fetch_object($res_dmde))){
-				$dmde_action = "onclick=document.location='./demandes.php?categ=gestion&act=see_dmde&iddemande=".$dmde->id_demande."'";
+				$dmde_action = "onclick=\"document.location='./demandes.php?categ=gestion&act=see_dmde&iddemande=".$dmde->id_demande."'\"";
 				$list .= "<tr id='demande_$dmde->id_demande' $dmde_action style='cursor: pointer'>";
 				$list .= "<td colspan=8>".htmlentities($dmde->titre_demande,ENT_QUOTES,$charset)."</td>";
 				$list .= "</tr>";	
@@ -713,7 +713,7 @@ class demandes_actions{
 						}
 						$parity += 1;
 						$tr_javascript = "onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='".$pair_impair."'\" ";
-						$action = "onclick=document.location='./demandes.php?categ=action&act=see&idaction=".$com->id_action."'";
+						$action = "onclick=\"document.location='./demandes.php?categ=action&act=see&idaction=".$com->id_action."'\"";
 						$list .= 
 						"<tr class='$pair_impair' id='act_$com->id_action' $tr_javascript style='cursor: pointer'>
 					 		<td>&nbsp;</td>
@@ -721,7 +721,7 @@ class demandes_actions{
 							<td $action>".htmlentities($com->detail_action,ENT_QUOTES,$charset)."</td>				
 							<td $action>".htmlentities(formatdate($com->date_action),ENT_QUOTES,$charset)."</td>
 							<td $action>".htmlentities($com->temps_passe.$msg['demandes_action_time_unit'],ENT_QUOTES,$charset)."</td>
-							<td $action><img src=\"./images/jauge.png\" height='15px' width=\"".$com->progression_action."%\" title='".$com->progression_action."%' /></td>
+							<td $action><img src='".get_url_icon('jauge.png')."' height='15px' width=\"".$com->progression_action."%\" title='".$com->progression_action."%' /></td>
 							<td><input type='checkbox' id='chk[".$com->id_action."]' name='chk[]' value='".$com->id_action."'></td>
 						</tr>";
 					}
@@ -742,7 +742,7 @@ class demandes_actions{
 	/*
 	 * Liste des RDV planifiés
 	 */
-	function show_planning_form(){
+	public function show_planning_form(){
 		global $form_communication, $dbh, $charset, $msg;
 		
 		
@@ -755,7 +755,7 @@ class demandes_actions{
 		$res_dmde=pmb_mysql_query($req_dmde,$dbh);
 		if(pmb_mysql_num_rows($res_dmde)){
 			while(($dmde=pmb_mysql_fetch_object($res_dmde))){
-				$dmde_action = "onclick=document.location='./demandes.php?categ=gestion&act=see_dmde&iddemande=".$dmde->id_demande."'";
+				$dmde_action = "onclick=\"document.location='./demandes.php?categ=gestion&act=see_dmde&iddemande=".$dmde->id_demande."'\"";
 				$list .= "<tr id='demande_$dmde->id_demande' $dmde_action style='cursor: pointer'>";
 				$list .= "<td colspan=8>".htmlentities($dmde->titre_demande,ENT_QUOTES,$charset)."</td>";
 				$list .= "</tr>";	
@@ -775,7 +775,7 @@ class demandes_actions{
 						}
 						$parity += 1;
 						$tr_javascript = "onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='".$pair_impair."'\" ";
-						$action = "onclick=document.location='./demandes.php?categ=action&act=see&idaction=".$com->id_action."'";
+						$action = "onclick=\"document.location='./demandes.php?categ=action&act=see&idaction=".$com->id_action."'\"";
 						$list .= 
 						"<tr class='$pair_impair' id='act_$com->id_action' $tr_javascript style='cursor: pointer'>
 					 		<td>&nbsp;</td>
@@ -783,7 +783,7 @@ class demandes_actions{
 							<td $action>".htmlentities($com->detail_action,ENT_QUOTES,$charset)."</td>				
 							<td $action>".htmlentities(formatdate($com->date_action),ENT_QUOTES,$charset)."</td>
 							<td $action>".htmlentities($com->temps_passe.$msg['demandes_action_time_unit'],ENT_QUOTES,$charset)."</td>
-							<td $action><img src=\"./images/jauge.png\" height='15px' width=\"".$com->progression_action."%\" title='".$com->progression_action."%' /></td>
+							<td $action><img src='".get_url_icon('jauge.png')."' height='15px' width=\"".$com->progression_action."%\" title='".$com->progression_action."%' /></td>
 							<td><input type='checkbox' id='chk[".$com->id_action."]' name='chk[]' value='".$com->id_action."'></td>
 						</tr>";
 					}
@@ -802,7 +802,7 @@ class demandes_actions{
 	/*
 	 * Formulaire qui gère l'affichage des actions
 	 */
-	function show_rdv_val_form(){
+	public function show_rdv_val_form(){
 		global $form_communication, $dbh, $charset, $msg;
 		
 		$req_dmde = "select id_demande, titre_demande from demandes
@@ -814,7 +814,7 @@ class demandes_actions{
 		$res_dmde=pmb_mysql_query($req_dmde,$dbh);
 		if(pmb_mysql_num_rows($res_dmde)){
 			while(($dmde=pmb_mysql_fetch_object($res_dmde))){
-				$dmde_action = "onclick=document.location='./demandes.php?categ=gestion&act=see_dmde&iddemande=".$dmde->id_demande."'";
+				$dmde_action = "onclick=\"document.location='./demandes.php?categ=gestion&act=see_dmde&iddemande=".$dmde->id_demande."'\"";
 				$list .= "<tr id='demande_$dmde->id_demande' $dmde_action style='cursor: pointer'>";
 				$list .= "<td colspan=8>".htmlentities($dmde->titre_demande,ENT_QUOTES,$charset)."</td>";
 				$list .= "</tr>";	
@@ -834,7 +834,7 @@ class demandes_actions{
 						}
 						$parity += 1;
 						$tr_javascript = "onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='".$pair_impair."'\" ";
-						$action = "onclick=document.location='./demandes.php?categ=action&act=see&idaction=".$com->id_action."'";
+						$action = "onclick=\"document.location='./demandes.php?categ=action&act=see&idaction=".$com->id_action."'\"";
 						$list .= 
 						"<tr class='$pair_impair' id='act_$com->id_action' $tr_javascript style='cursor: pointer'>
 					 		<td>&nbsp;</td>
@@ -842,7 +842,7 @@ class demandes_actions{
 							<td $action>".htmlentities($com->detail_action,ENT_QUOTES,$charset)."</td>				
 							<td $action>".htmlentities(formatdate($com->date_action),ENT_QUOTES,$charset)."</td>
 							<td $action>".htmlentities($com->temps_passe.$msg['demandes_action_time_unit'],ENT_QUOTES,$charset)."</td>
-							<td $action><img src=\"./images/jauge.png\" height='15px' width=\"".$com->progression_action."%\" title='".$com->progression_action."%' /></td>
+							<td $action><img src='".get_url_icon('jauge.png')."' height='15px' width=\"".$com->progression_action."%\" title='".$com->progression_action."%' /></td>
 							<td><input type='checkbox' id='chk[".$com->id_action."]' name='chk[]' value='".$com->id_action."'></td>
 						</tr>";
 					}
@@ -861,7 +861,7 @@ class demandes_actions{
 	/*
 	 * Ferme toutes les discussions en cours
 	 */
-	function close_fil(){
+	public function close_fil(){
 		global $chk, $dbh;
 		
 		for($i=0;$i<count($chk);$i++){		
@@ -873,7 +873,7 @@ class demandes_actions{
 	/*
 	 * Annule tous les RDV
 	 */
-	function close_rdv(){
+	public function close_rdv(){
 		global $chk, $dbh;
 		
 		for($i=0;$i<count($chk);$i++){		
@@ -885,7 +885,7 @@ class demandes_actions{
 	/*
 	 * Valide tous les RDV
 	 */
-	function valider_rdv(){
+	public function valider_rdv(){
 		global $chk, $dbh;
 		
 		for($i=0;$i<count($chk);$i++){		
@@ -897,7 +897,7 @@ class demandes_actions{
 	/*
 	 * Retourne le nom de celui qui a créé l'action
 	 */
-	function getCreateur($id_createur,$type_createur=0){
+	public function getCreateur($id_createur,$type_createur=0){
 		global $dbh;
 		
 		if(!$type_createur)
@@ -916,7 +916,7 @@ class demandes_actions{
 	/*
 	 * fonction qui renvoie un booléen indiquant si une action a été lue ou pas
 	*/
-	static function read($action,$side="_opac"){
+	public static function read($action,$side="_opac"){
 		global $dbh;
 		$read  = false;
 		$query = "SELECT actions_read".$side." FROM demandes_actions WHERE id_action=".$action->id_action;
@@ -933,7 +933,7 @@ class demandes_actions{
 	/*
 	 * Change l'alerte de l'action : si elle est lue, elle passe en non lue et inversement
 	*/
-	static function change_read($action,$side="_opac"){
+	public static function change_read($action,$side="_opac"){
 		global $dbh;
 		
 		$read = demandes_actions::read($action,$side);
@@ -954,7 +954,7 @@ class demandes_actions{
 	/*
 	 * changement forcé de la mention "lue" ou "pas lue" de l'action
 	*/
-	static function action_read($id_action,$booleen=true, $side="_opac"){
+	public static function action_read($id_action,$booleen=true, $side="_opac"){
 		global $dbh;
 		
 		$value = "";
@@ -964,13 +964,13 @@ class demandes_actions{
 			$value = 1;
 		}
 		$query = "UPDATE demandes_actions SET actions_read".$side."=".$value." WHERE id_action=".$id_action;
-		pmb_mysql_query($query,$dbh);		
+		pmb_mysql_query($query,$dbh);
 	}
 	
 	/*
 	 * Met à jour les alertes sur l'action et la demande dont dépend la note
 	*/
-	static function action_majParentEnfant($id_action,$id_demande,$side="_opac"){
+	public static function action_majParentEnfant($id_action,$id_demande,$side="_opac"){
 		global $dbh;
 	
 		$ok = false;

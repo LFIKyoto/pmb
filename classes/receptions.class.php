@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: receptions.class.php,v 1.7 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: receptions.class.php,v 1.9 2017-04-19 12:37:03 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,6 +14,8 @@ if(!defined('TYP_ACT_CDE')) define('TYP_ACT_CDE', 0);	//				0 = Commande
 if(!defined('TYP_ACT_DEV')) define('TYP_ACT_DEV', 1);	//				1 = Demande de devis
 if(!defined('TYP_ACT_LIV')) define('TYP_ACT_LIV', 2);	//				2 = Bon de Livraison
 if(!defined('TYP_ACT_FAC')) define('TYP_ACT_FAC', 3);	//				3 = Facture
+if(!defined('TYP_ACT_RENT_ACC')) define('TYP_ACT_RENT_ACC', 4);	//		4 = Demande/Décompte de location
+if(!defined('TYP_ACT_RENT_INV')) define('TYP_ACT_RENT_INV', 5);	//		5 = Facture de Location
 
 if(!defined('STA_ACT_ALL')) define('STA_ACT_ALL', -1);	//Statut acte	-1 = Tous
 if(!defined('STA_ACT_AVA')) define('STA_ACT_AVA', 1);	//				1 = A valider
@@ -25,28 +27,25 @@ if(!defined('STA_ACT_ARC')) define('STA_ACT_ARC', 32);	//				32 = Archivé
 
 class receptions {
 	
-	var $id_bibli=0;
-	var $id_exer=0;
-	var $type_acte=TYP_ACT_CDE;
-	var $filtre_actes='';
-	var $filtre_lignes='';
-	var $filtre_origines='';
-	var $nb_lignes=0;
-	var $t_list=array();
-	var $error='';
-	
+	public $id_bibli=0;
+	public $id_exer=0;
+	public $type_acte=TYP_ACT_CDE;
+	public $filtre_actes='';
+	public $filtre_lignes='';
+	public $filtre_origines='';
+	public $nb_lignes=0;
+	public $t_list=array();
+	public $error='';
 	
 	//Constructeur
-	function receptions($id_bibli,$id_exer) {
-		
-		$this->id_bibli=$id_bibli;
-		$this->id_exer=$id_exer;
+	public function __construct($id_bibli,$id_exer) {
+		$this->id_bibli=$id_bibli+0;
+		$this->id_exer=$id_exer+0;
 	}
 	
 	
 	//cree les filtres des requetes de selection
-	function setFiltres($tab_fou=array(),$tab_empr=array(),$tab_user=array(), $tab_rub=array(), $chk_dev='0',$cde_query='', $lgstat_filter=array(), $date_inf='', $date_sup='') {
-			
+	public function setFiltres($tab_fou=array(),$tab_empr=array(),$tab_user=array(), $tab_rub=array(), $chk_dev='0',$cde_query='', $lgstat_filter=array(), $date_inf='', $date_sup='') {
 		$this->filtre_actes="actes.num_entite='".$this->id_bibli."' and actes.num_exercice='".$this->id_exer."' and (actes.statut & ".STA_ACT_ENC." = ".STA_ACT_ENC.") ";
 		
 		$type_acte=TYP_ACT_CDE;
@@ -83,7 +82,6 @@ class receptions {
 			$this->filtre_lignes.= "and lignes_actes.statut in ('".implode("','",$lgstat_filter)."') ";
 		}
 		
-		
 		$filtre_empr='';
 		$filtre_user='';
 		if (is_array($tab_empr) && count($tab_empr)) {
@@ -99,13 +97,10 @@ class receptions {
 		} elseif ($filtre_user){
 			$this->filtre_origines= "and (".$filtre_user.") ";
 		}
-		
 	}
 	
-	
 	//Compte le nb de lignes d'acte en reception
-	function calcNbLignes($all_query='') {
-		
+	public function calcNbLignes($all_query='') {
 		global $dbh,$msg;
 		
 		//analyse_query 
@@ -283,18 +278,15 @@ class receptions {
 		}
 		 
 	}
-
 	
-	function getError() {
+	public function getError() {
 		return $this->error;
 	}
 	
-	
 	//Retourne les lignes d'acte en reception
-	function getLignes() {
+	public function getLignes() {
 		return $this->t_list;
 	}
-	
 }
 
 ?>

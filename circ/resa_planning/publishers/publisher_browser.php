@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: publisher_browser.php,v 1.4 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: publisher_browser.php,v 1.6 2017-11-22 11:07:34 dgoron Exp $
 
 // page d'affichage du browser de collections
 
@@ -41,10 +41,10 @@ jump_anchor('$ancre');
 $browser_url = "./publisher_browser.php?id_empr=$id_empr&groupID=$groupID";
 
 // définition de variables
-$open_folder = "<img src=\"../../../images/folderopen.gif\" border=\"0\" align=\"top\" hspace='3'>";
-$closed_folder = "<img src=\"../../../images/folderclosed.gif\" border=\"0\" align=\"top\" hspace='3'>";
-$up_folder = "<img src=\"../../../images/folderup.gif\" border=\"0\" align=\"top\" hspace='3'>";
-$document = "<img src=\"../../../images/doc.gif\" border=\"0\" align=\"top\" hspace='3'>";
+$open_folder = "<img src='".get_url_icon('folderopen.gif')."' border=\"0\" class='align_top' hspace='3'>";
+$closed_folder = "<img src='".get_url_icon('folderclosed.gif')."' border=\"0\" class='align_top' hspace='3'>";
+$up_folder = "<img src='".get_url_icon('folderup.gif')."' border=\"0\" class='align_top' hspace='3'>";
+$document = "<img src='".get_url_icon('doc.gif')."' border=\"0\" class='align_top' hspace='3'>";
 
 // affichage de l'entête
 print "<div id='contenu-frame'>";

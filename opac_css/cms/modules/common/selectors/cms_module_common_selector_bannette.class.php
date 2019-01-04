@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_bannette.class.php,v 1.2 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: cms_module_common_selector_bannette.class.php,v 1.3 2018-02-12 10:20:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -34,7 +34,7 @@ class cms_module_common_selector_bannette extends cms_module_common_selector{
 	}
 	
 	protected function gen_select(){
-		$query= "select id_bannette, nom_bannette from bannettes where (bannette_auto = 1)  order by nom_bannette";
+		$query= "select id_bannette, nom_bannette from bannettes order by nom_bannette";
 		$result = pmb_mysql_query($query);
 		$select = "
 					<select name='".$this->get_form_value_name("id_bannette")."[]'>";

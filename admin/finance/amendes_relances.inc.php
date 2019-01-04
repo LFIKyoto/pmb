@@ -2,12 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: amendes_relances.inc.php,v 1.9 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: amendes_relances.inc.php,v 1.12 2017-02-20 19:04:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-//Gestion des amendes
+if(!isset($quota)) $quota = '';
+if(!isset($elements)) $elements = '';
 
+//Gestion des amendes
 require_once("$include_path/templates/finance.tpl.php");
 require_once($class_path."/quotas.class.php");
 
@@ -70,7 +72,7 @@ function show_lost_status_form() {
 	</form>	
 	";	
 	
-	$requete="select idstatut,statut_libelle from docs_statut";
+	$requete="select idstatut,statut_libelle from docs_statut order by statut_libelle";
 	$resultat=pmb_mysql_query($requete, $dbh);
 	$list_statut="<select name='statut_perdu' id='statut_perdu'>\n";
 	while ($r=pmb_mysql_fetch_object($resultat)) {
@@ -134,7 +136,7 @@ if ($pmb_gestion_amende==1) {
 				$finance_amende_relance_form=str_replace("!!relance_1!!",htmlentities($finance_relance_1,ENT_QUOTES,$charset),$finance_amende_relance_form);
 				$finance_amende_relance_form=str_replace("!!relance_2!!",htmlentities($finance_relance_2,ENT_QUOTES,$charset),$finance_amende_relance_form);
 				$finance_amende_relance_form=str_replace("!!relance_3!!",htmlentities($finance_relance_3,ENT_QUOTES,$charset),$finance_amende_relance_form);
-				$requete="select idstatut,statut_libelle from docs_statut";
+				$requete="select idstatut,statut_libelle from docs_statut order by statut_libelle";
 				$resultat=pmb_mysql_query($requete);
 				$list_statut="<select name='statut_perdu' id='statut_perdu'>\n";
 				while ($r=pmb_mysql_fetch_object($resultat)) {

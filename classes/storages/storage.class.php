@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: storage.class.php,v 1.3 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: storage.class.php,v 1.7 2018-10-18 10:08:16 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -24,7 +24,7 @@ class storage {
 			$obj = storages::get_storage_class($this->id);
 		}else{
 			require_once($class_path."/storages/".$class.".class.php");
-			$obj = new $class($id);
+			$obj = new $class($this->id);
 		}
 		return $obj->get_params_form();
 	}
@@ -40,7 +40,27 @@ class storage {
 		}		
 	}
 	
- 	public function upload_process(){
+ 	public function upload_process($ajax = true, $field_name = ""){
+ 		if ($ajax) {
+ 			return $this->ajax_upload_process($field_name);
+ 		}
+ 		return $this->post_upload_process($field_name);
+ 	}
+ 	
+ 	public function post_upload_process($field_name){
+ 		$protocol = $_SERVER["SERVER_PROTOCOL"];
+ 		$uploadDir = "./temp/";
+ 		if (is_dir($uploadDir)) {
+ 			if (is_writable($uploadDir)) {
+ 				return $this->get_file_post($field_name);
+ 			}else{
+//  				header($protocol.' 405 Method Not Allowed');
+//  				exit('Upload directory is not writable.');
+ 			}
+ 		}
+ 	}
+ 	
+ 	public function ajax_upload_process($field_name = ""){
  		global $fnc;
  		$protocol = $_SERVER["SERVER_PROTOCOL"];
  		$uploadDir = "./temp/";
@@ -49,7 +69,7 @@ class storage {
 			case 'upl':
 				if (is_dir($uploadDir)) {
 					if (is_writable($uploadDir)) {
-						return $this->get_file();
+						return array($this->get_file());
 					}else{
  						header($protocol.' 405 Method Not Allowed');
  						exit('Upload directory is not writable.');
@@ -115,9 +135,17 @@ class storage {
  		$headers = getallheaders();
  		$protocol = $_SERVER["SERVER_PROTOCOL"];
  		
- 		if (!isset($headers['Content-Length'])) {
- 			header($protocol.' 411 Length Required');
- 			exit('Header \'Content-Length\' not set.');
+ 	 	if (!isset($headers['Content-Length'])) {
+			if (!isset($headers['CONTENT_LENGTH'])) {
+				if (!isset($headers['X-File-Size'])) {
+					header($protocol.' 411 Length Required');
+					exit('Header \'Content-Length\' not set.');
+				}else{
+					$headers['Content-Length']=preg_replace('/\D*/', '', $headers['X-File-Size']);
+				}
+			}else{
+				$headers['Content-Length']=$headers['CONTENT_LENGTH'];
+			}
  		}
  		
  		/*if (isset($headers['Content-Type'], $headers['X-File-Size'], $headers['X-File-Name']) &&
@@ -129,7 +157,6 @@ class storage {
  			$file = new stdClass();
  			$file->name = preg_replace('/[^ \.\w_\-]*/', '', basename($headers['X-File-Name']));
  			$file->size = preg_replace('/\D*/', '', $headers['X-File-Size']);
- 		
  			// php://input bypasses the ini settings, we have to limit the file size ourselves:
  			// Find smallest init setting and set upload limit accordingly.
  			$maxUpload = $this->getBytes(ini_get('upload_max_filesize')); // can only be set in php.ini and not by ini_set()
@@ -137,7 +164,6 @@ class storage {
  			$memoryLimit = $this->getBytes(ini_get('memory_limit'));
  			$limit = min($maxUpload, $maxPost, $memoryLimit);
  			if ($headers['Content-Length'] > $limit) {
- 				return false;
  				header($protocol.' 403 Forbidden');
  				exit('File size to big. Limit is '.$limit. ' bytes.');
  			}
@@ -156,8 +182,8 @@ class storage {
  		
  			// Since I don't know if the header content-length can be spoofed/is reliable, I check the file size again after it is uploaded
  			if (mb_strlen($file->content) > $limit) {
- 				return false;
  				header($protocol.' 403 Forbidden');
+ 				return false;
  			}
  			$this->numWrittenBytes = file_put_contents("./temp/".$file->name, $file->content);
  			if ($this->numWrittenBytes !== false) {
@@ -168,15 +194,39 @@ class storage {
  				}
  				return $success;
  			}else {
- 				return false;
  				header($protocol.' 505 Internal Server Error');
+ 				return false;
  			}
  		}else {
- 			return false;
  			header($protocol.' 500 Internal Server Error');
  			$this->debug($headers);
  			exit('Correct headers are not set.');
  		}		
+ 	}
+
+ 	//Fonction permettant de récupérer les fichiers postés
+ 	protected function get_file_post($field_name = ""){
+ 		/**
+ 		 * TODO: test mimetype
+ 		 */
+ 		$file_names = array();
+ 		if(isset($_FILES)){
+ 			foreach($_FILES[$field_name]['name'] as $key => $name){
+ 				$i = 1;
+ 				$name = $name['value'];
+ 				while(file_exists("./temp/".$name)){
+ 					if($i == 1){
+ 						$name = substr($name,0,strrpos($name,"."))."_".$i.substr($name,strrpos($name,"."));
+ 					}else{
+ 						$name = substr($name,0,strrpos($name,($i-1).".")).$i.substr($name,strrpos($name,"."));
+ 					}
+ 					$i++;
+ 				}
+ 				move_uploaded_file($_FILES[$field_name]['tmp_name'][$key]['value'], './temp/'.$name);
+ 				$file_names[] = $this->add($name);
+ 			}
+ 		}
+ 		return $file_names;
  	}
  	
  	public function debug($tab){
@@ -214,7 +264,7 @@ class storage {
 	}
 	
 	//a surcharger
-	public function get_uploaded_fileinfos(){
+	public function get_uploaded_fileinfos($filepath){
 		
 	}
 	
@@ -224,12 +274,12 @@ class storage {
 	}
 	
 	
-	public function get_mimetype(){
+	public function get_mimetype($filepath){
 		$finfo = new finfo(FILEINFO_MIME);
 		//petit hack pour les formats exotiques(type BNF)
 		$arrayMimetypess = array("application/bnf+zip");
 		$arrayExtensions = array(".bnf");
-		$original_extension = (false === $pos = strrpos($this->filepath, '.')) ? '' : substr($this->filepath, $pos);
+		$original_extension = (false === $pos = strrpos($filepath, '.')) ? '' : substr($filepath, $pos);
 		if(in_array($original_extension,$arrayExtensions)){
 			for($i=0 ; $i<count($arrayExtensions) ; $i++){
 				if($arrayExtensions[$i] == $original_extension){
@@ -237,7 +287,7 @@ class storage {
 				}
 			}
 		}else{
-			$infos = $finfo->file($this->filepath);
+			$infos = $finfo->file($filepath);
 			return substr($infos,0,strpos($infos,";"));
 		}
 	}

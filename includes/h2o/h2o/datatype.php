@@ -1,44 +1,44 @@
 <?php
 class StreamWriter {
-    var $buffer = array();
-    var $close;
+    public $buffer = array();
+    public $close;
 
-    function __construct() {
+    public function __construct() {
         $this->close = false;
     }
 
-    function write($data) {
+    public function write($data) {
         if ($this->close)
             new Exception('tried to write to closed stream');
         $this->buffer[] = $data;
     }
 
-    function close() {
+    public function close() {
         $this->close = true;
         return implode('', $this->buffer);
     }
 }
 
 class Evaluator {
-    static function gt($l, $r) { return $l > $r; }
-    static function ge($l, $r) { return $l >= $r; }
+    static public function gt($l, $r) { return $l > $r; }
+    static public function ge($l, $r) { return $l >= $r; }
 
-    static function lt($l, $r) { return $l < $r; }
-    static function le($l, $r) { return $l <= $r; }
+    static public function lt($l, $r) { return $l < $r; }
+    static public function le($l, $r) { return $l <= $r; }
 
-    static function eq($l, $r) { return $l == $r; }
-    static function ne($l, $r) { return $l != $r; }
+    static public function eq($l, $r) { return $l == $r; }
+    static public function ne($l, $r) { return $l != $r; }
 
-    static function not_($bool) { return !$bool; }
-    static function and_($l, $r) { return ($l && $r); }
-    static function or_($l, $r) { return ($l && $r); }
+    static public function not_($bool) { return !$bool; }
+    static public function and_($l, $r) { return ($l && $r); }
+    static public function or_($l, $r) { return ($l && $r); }
 
     # Currently only support single expression with no preceddence ,no boolean expression
     #    [expression] =  [optional binary] ? operant [ optional compare operant]
     #    [operant] = variable|string|numeric|boolean
     #    [compare] = > | < | == | >= | <=
     #    [binary]    = not | !
-    static function exec($args, $context) {
+    static public function exec($args, $context) {
         $argc = count($args);
         $first = array_shift($args);
         $first = $context->resolve($first);
@@ -65,14 +65,14 @@ class Evaluator {
  * $type of token, Block | Variable
  */
 class H2o_Token {
-    function __construct ($type, $content, $position) {
+    public function __construct ($type, $content, $position) {
         $this->type = $type;
         $this->content = $content;
         $this->result='';
         $this->position = $position;
     }
 
-    function write($content){
+    public function write($content){
         $this->result= $content;
     }
 }
@@ -81,30 +81,30 @@ class H2o_Token {
  * a token stream
  */
 class TokenStream  {
-    var $pushed;
-    var $stream;
-    var $closed;
-    var $c;
+    public $pushed;
+    public $stream;
+    public $closed;
+    public $c;
 
-    function __construct() {
+    public function __construct() {
         $this->pushed = array();
         $this->stream = array();
         $this->closed = false;
     }
 
-    function pop() {
+    public function pop() {
         if (count($this->pushed))
         return array_pop($this->pushed);
         return array_pop($this->stream);
     }
 
-    function feed($type, $contents, $position) {
+    public function feed($type, $contents, $position) {
         if ($this->closed)
             throw new Exception('cannot feed closed stream');
         $this->stream[] = new H2o_Token($type, $contents, $position);
     }
 
-    function push($token) {
+    public function push($token) {
         if (is_null($token))
             throw new Exception('cannot push NULL');
         if ($this->closed)
@@ -113,41 +113,41 @@ class TokenStream  {
             $this->stream[] = $token;
     }
 
-    function close() {
+    public function close() {
         if ($this->closed)
         new Exception('cannot close already closed stream');
         $this->closed = true;
         $this->stream = array_reverse($this->stream);
     }
 
-    function isClosed() {
+    public function isClosed() {
         return $this->closed;
     }
 
-    function current() {
+    public function current() {
         return $this->c ;
     }
 
-    function next() {
+    public function next() {
         return $this->c = $this->pop();
     }
 }
 
 class H2o_Info {
-    var $h2o_safe = array('filters', 'extensions', 'tags');
-    var $name = 'H2o Template engine';
-    var $description = "Django inspired template system";
-    var $version = H2O_VERSION;
+    public $h2o_safe = array('filters', 'extensions', 'tags');
+    public $name = 'H2o Template engine';
+    public $description = "Django inspired template system";
+    public $version = H2O_VERSION;
 
-    function filters() {
+    public function filters() {
         return array_keys(h2o::$filters);
     }
     
-    function tags() {
+    public function tags() {
         return array_keys(h2o::$tags);
     }
     
-    function extensions() {
+    public function extensions() {
         return array_keys(h2o::$extensions);
     }
 }

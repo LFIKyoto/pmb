@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: common.tpl.php,v 1.6 2015-06-22 08:29:09 jpermanne Exp $
+// $Id: common.tpl.php,v 1.10 2017-10-20 12:50:06 ngantier Exp $
 
 // template for PMB OPAC
 
@@ -54,12 +54,10 @@ if (!$_SESSION["user_code"]) {
 //HEADER : short_header = pour les popups
 //         std_header = pour les pages standards
 
-$std_header.="
-<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"
-    \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">
-<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"fr\" >
+$std_header.="<!DOCTYPE html>
+<html>
 <head>
-	<meta http-equiv=\"content-type\" content=\"text/html; charset=$charset\" />
+	<meta charset=\"".$charset."\">
 	<meta name=\"author\" content=\"PMB Group\" />
 
 	<meta name=\"keywords\" content=\"OPAC, web, library, opensource, catalog, catalogue, bibliothèque, médiathèque, pmb, phpmybibli\" />
@@ -122,11 +120,10 @@ function show_what(quoi, id) {
 <script type='text/javascript' src='./includes/javascript/tablist.js'></script>
 	<div id=\"container\"><div id=\"main\">!!home_on_top!!
 						\n";
-$short_header="
-<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"
-    \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">
-<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"fr\" >
+$short_header="<!DOCTYPE html>
+<html>
 <head>
+	<meta charset=\"".$charset."\">
 	<link rel=\"stylesheet\" href=\"./styles/".$css."/".$css.".css\" />
 </head>
 
@@ -134,11 +131,10 @@ $short_header="
 
 $short_footer="</body></html>";
 
-$popup_header="
-<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"
-    \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">
-<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"fr\" >
+$popup_header="<!DOCTYPE html>
+<html>
 <head>
+	<meta charset=\"".$charset."\">
 	<link rel=\"stylesheet\" href=\"./styles/".$css."/".$css.".css\" />
 	<title>".$msg['opac_title']." $opac_biblio_name.</title>
 </head>
@@ -182,8 +178,8 @@ $home_on_left = "<div id=\"accueil\">\n
 
 	
 if ($opac_logosmall<>"") 
-	$home_on_left .= "<p class=\"centered\"><a href='./index.php?css=$css'><img src='".$opac_logosmall."'  border='0' align='center'/></a></p>\n";
-	else $home_on_left .= "<p class=\"centered\"><a href='./index.php?css=$css'><img src='./images/home1.jpg' border='0' align='center'/></a></p>\n";
+	$home_on_left .= "<p class=\"centered\"><a href='./index.php?css=$css'><img src='".$opac_logosmall."'  border='0' class='center'/></a></p>\n";
+	else $home_on_left .= "<p class=\"centered\"><a href='./index.php?css=$css'><img src='./images/home1.jpg' border='0' class='center'/></a></p>\n";
 	
 // affichage du choix de langue  
 $common_tpl_lang_select="<div id='lang_select'><h3 ><span>!!msg_lang_select!!</span></h3><span>!!lang_select!!</span></div>\n";
@@ -212,14 +208,14 @@ if (!$_SESSION["user_code"])
 //<a href='http://opacnd.hcp.ma/' target='_blank'>
 
 
-//<img src='./images/home.gif' title='Opac Site du Centre National de Documentation' border='0' align='absmiddle'/> 
+//<img src='".get_url_icon("home.gif")."' title='Opac Site du Centre National de Documentation' border='0' align='absmiddle'/> 
 
 //</a>
 	
 	//<span onclick='document.location=\"./index.php?css=$css\"' style='cursor: pointer;'>
 	<a href='http://opacnd.hcp.ma/' target='_blank'/><img src='./images/home1.gif' title='Opac Site du Centre National de Documentation' border='0' align='absmiddle'/> //</span>
 
-//<span onclick='document.location=\"./index.php?css=$css\"' style='cursor: pointer;'><a href='http://opacnd.hcp.ma/' target='_blank'/><img src='./images/home.gif' align='absmiddle'/> ".$msg["welcome_page"]."</span>
+//<span onclick='document.location=\"./index.php?css=$css\"' style='cursor: pointer;'><a href='http://opacnd.hcp.ma/' target='_blank'/><img src='".get_url_icon("home.gif")."' align='absmiddle'/> ".$msg["welcome_page"]."</span>
 		</div>\n";
 
 
@@ -334,7 +330,7 @@ $liens_opac['lien_rech_bulletin'] 		= "./index.php?css=$css&lvl=bulletin_display
 $liens_opac['lien_rech_concept'] 		= "./index.php?css=$css&lvl=concept_see&id=!!id!!";
 $liens_opac['lien_rech_authperso'] 		= "./index.php?css=$css&lvl=authperso_see&id=!!id!!";
 
-$begin_result_liste = "<a href='javascript:expandAll()'><img src='./images/expand_all.gif' border='0' id='expandall'></a>&nbsp;<a href='javascript:collapseAll()'><img src='./images/collapse_all.gif' border='0' id='collapseall'></a><br />" ;
+$begin_result_liste = "<a href='javascript:expandAll()'><img src='".get_url_icon("expand_all.gif")."' border='0' id='expandall'></a>&nbsp;<a href='javascript:collapseAll()'><img src='".get_url_icon("collapse_all.gif")."' border='0' id='collapseall'></a><br />" ;
 
 define( 'AFF_ETA_NOTICES_NON', 0 );
 define( 'AFF_ETA_NOTICES_ISBD', 1 );

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_record_child_ui.class.php,v 1.8 2015-04-10 09:26:25 dgoron Exp $
+// $Id: nomenclature_record_child_ui.class.php,v 1.10 2016-06-01 08:19:26 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -37,19 +37,6 @@ class nomenclature_record_child_ui {
 		$this->id=$id*1;
 		$this->record_child = new nomenclature_record_child($this->id);
 	} // end of member function __construct
-
-	
-	public function create_record_child($id_parent){		
-		global $record_child_data;
-		
-		return $this->record_child->create_record_child($id_parent,$record_child_data);
-	}
-	
-	public function get_child($id_parent){
-		global $record_child_data;
-	
-		return $this->record_child->get_child($id_parent,$record_child_data);
-	}
 		
 	public function get_form(){		
 		$data= encoding_normalize::json_encode($this->record_child->get_data());		
@@ -80,7 +67,22 @@ class nomenclature_record_child_ui {
 			$isbd.="
 				<b>".$msg["nomenclature_isbd_child_formation"]."</b> : ".$data["formation_name"].$type_display."<br/>
 				<b>".$msg["nomenclature_isbd_child_musicstand"]."</b> : ".$data["musicstand_name"]."<br/>
-				<b>".$msg["nomenclature_isbd_child_instrument"]."</b> : ".$data["instrument_name"]."<br/>
+				<b>".$msg["nomenclature_isbd_child_instrument"]."</b> : ".$data["instrument_name"]."<br/>";
+			if($data["other"]) {
+				$other_instruments = explode('/', $data["other"]);
+				$other_instruments_name = array();
+				foreach ($other_instruments as $other_instrument) {
+					$instrument_name = nomenclature_instrument::get_instrument_name_from_code($other_instrument);
+					if($instrument_name) {
+						$other_instruments_name[] = $instrument_name;
+					}
+				}
+				if(count($other_instruments_name)) {
+					$isbd.="
+						<b>".$msg["nomenclature_isbd_child_other_instruments"]."</b> : ".implode(' / ', $other_instruments_name)."<br />";
+				}
+			}
+			$isbd.="
 				<b>".$msg["nomenclature_isbd_child_effective"]."</b> : " .$data["effective"]."<br/>
 				<b>".$msg["nomenclature_isbd_child_order"]."</b> : " .$data["order"]."<br/>			
 			";

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_carousel_view_carousel.class.php,v 1.22 2014-12-18 16:31:50 dgoron Exp $
+// $Id: cms_module_carousel_view_carousel.class.php,v 1.29 2018-08-24 08:44:59 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/h2o/h2o.php");
@@ -16,8 +16,8 @@ class cms_module_carousel_view_carousel extends cms_module_common_view_django{
 <ul id='carousel_{{id}}'>
 	{% for record in records %}
 		<li class='{{id}}_item'>
-			<a href='{{record.link}}' alt='{{record.title}}' title='{{record.title}}'>
-				<img src='{{record.vign}}'/>
+			<a href='{{record.link}}' title='{{record.title}}'>
+				<img src='{{record.vign}}' alt=''/>
 				<br />
 			</a>
 		</li>
@@ -28,9 +28,19 @@ class cms_module_carousel_view_carousel extends cms_module_common_view_django{
 	}
 	
 	public function get_form(){
-		if(!$this->parameters['css']){
-			$this->parameters['css'] = $this->managed_datas['css'];
+		if(!isset($this->parameters['css']) || !$this->parameters['css']){
+			$this->parameters['css'] = (isset($this->managed_datas['css']) ? $this->managed_datas['css'] : '');
 		}
+		if (!isset($this->parameters["mode"]))				$this->parameters["mode"] = "";
+		if (!isset($this->parameters["speed"]))				$this->parameters["speed"] = "";
+		if (!isset($this->parameters["pause"]))				$this->parameters["pause"] = "";
+		if (!isset($this->parameters["display_quantity"]))	$this->parameters["display_quantity"] = "";
+		if (!isset($this->parameters["slide_quantity"]))	$this->parameters["slide_quantity"] = "";
+		if (!isset($this->parameters["autostart"]))			$this->parameters["autostart"] = "";
+		if (!isset($this->parameters["autohover"]))			$this->parameters["autohover"] = "";
+		if (!isset($this->parameters["pager"]))				$this->parameters["pager"] = "";
+		if (!isset($this->parameters["used_template"]))		$this->parameters["used_template"] = "";
+		
 		$form = "
 			<div class='row'>
 				<div class='row'>
@@ -165,13 +175,25 @@ class cms_module_carousel_view_carousel extends cms_module_common_view_django{
 	}
 	
 	public function render($datas){
+	    global $base_path;
 		$html2return = "";
 		if(count($datas['records'])){
 			try{
 				$id = "carousel_".$this->get_module_dom_id();
 				$datas['id']=$this->get_module_dom_id();
-				$html2return.= H2o::parseString($this->parameters['active_template'])->render($datas);
-			
+				if(!isset($datas['get_vars']) || !$datas['get_vars']){
+					$datas['get_vars'] = $_GET;
+				}
+				if(!isset($datas['post_vars']) || !$datas['post_vars']){
+					$datas['post_vars'] = $_POST;
+				}
+				$template_path = $base_path.'/temp/'.LOCATION.'_cms_carousel_view_'.$this->id;
+				if(!file_exists($template_path) || (md5($this->parameters['active_template']) != md5_file($template_path))){
+				    file_put_contents($template_path, $this->parameters['active_template']);
+				}
+				$H2o = H2o_collection::get_instance($template_path);
+				$html2return.= $H2o->render($datas);
+				
 				$html2return.= "
 			<script type='text/javascript'>
 				jQuery(document).ready(function() {";
@@ -193,8 +215,8 @@ class cms_module_carousel_view_carousel extends cms_module_common_view_django{
 				$html2return.= "
 					jQuery('#".$id."').bxSlider({
 						mode: '".$this->parameters['mode']."',
-						speed: ".$this->parameters['speed'].",
-						pause: ".$this->parameters['pause'].",
+						speed: '".$this->parameters['speed']."',
+						pause: '".$this->parameters['pause']."',
 						auto: true,
 						autoStart: ".($this->parameters['autostart'] ? "true" : "false").",
 						autoHover: ".($this->parameters['autohover'] ? "true" : "false").",
@@ -241,6 +263,7 @@ class cms_module_carousel_view_carousel extends cms_module_common_view_django{
 	protected function get_managed_template_form($cms_template){
 		global $opac_url_base;
 
+		$form ="";
 		if($cms_template != "new"){
 			$infos = $this->managed_datas['templates'][$cms_template];
 		}else{
@@ -251,7 +274,7 @@ class cms_module_carousel_view_carousel extends cms_module_common_view_django{
 		}
 		
 		if(!$this->managed_datas) $this->managed_datas = array();
-		if ($this->managed_datas['css'] == ""){
+		if (!isset($this->managed_datas['css']) || $this->managed_datas['css'] == ""){
 			$this->managed_datas['css'] = "
 #{{identifiant_dom_du_cadre}} {
 	overflow : hidden;
@@ -309,7 +332,7 @@ class cms_module_carousel_view_carousel extends cms_module_common_view_django{
 				</div>
 			</div>";		
 		// css
-		$form.="<h3>".$this->format_text($this->msg['cms_manage_module'])."</h3>
+		$form.="
 			<div class='row'>
 				<div class='colonne3'>
 					<label for='cms_module_carousel_view_carousel_manage_default_css'>".$this->format_text($this->msg['cms_module_carousel_manage_default_css'])."</label>
@@ -343,13 +366,16 @@ class cms_module_carousel_view_carousel extends cms_module_common_view_django{
 	}	
 
 	public function get_format_data_structure(){
-		$datas = new cms_module_carousel_datasource_notices();
-		$format_datas = $datas->get_format_data_structure();
- 		$format_datas[0]['children'][] = array(
- 				'var' => "records[i].content",
- 				'desc' => $this->msg['cms_module_carousel_view_carousel_record_content_desc']
- 		);
-		$format_datas = array_merge($format_datas,parent::get_format_data_structure());
-		return $format_datas;
+		if (get_called_class() == "cms_module_carousel_view_carousel") {
+			$datas = new cms_module_carousel_datasource_notices();
+			$format_datas = $datas->get_format_data_structure();
+ 			$format_datas[0]['children'][] = array(
+ 					'var' => "records[i].content",
+ 					'desc' => $this->msg['cms_module_carousel_view_carousel_record_content_desc']
+	 		);
+			$format_datas = array_merge($format_datas,parent::get_format_data_structure());
+			return $format_datas;
+		}
+		return parent::get_format_data_structure();
 	}
 }

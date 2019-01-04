@@ -55,7 +55,7 @@ class Font {
      * @param string Font color
      * @param string Background color of font
      */
-    function Font($size = 10, $font = '', $fontColor = '', $backColor = '') {      
+    function __construct($size = 10, $font = '', $fontColor = '', $backColor = '') {      
       	$this->size = $size;
 		$this->font = $font;
 		$this->fontColor = Util::formatColor($fontColor);

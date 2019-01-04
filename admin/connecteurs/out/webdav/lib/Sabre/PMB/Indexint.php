@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: Indexint.php,v 1.7 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: Indexint.php,v 1.8 2016-01-26 15:36:15 dgoron Exp $
 namespace Sabre\PMB;
 
 class Indexint extends Collection {
@@ -34,12 +34,7 @@ class Indexint extends Collection {
 	}
 
 	function getName() {
-		global $charset;
-		if($charset != "utf-8"){
-			return utf8_encode($this->indexint->name." - ".$this->indexint->comment.""." (I".$this->indexint->indexint_id.")");
-		}else{
-			return $this->indexint->name." - ".$this->indexint->comment.""." (I".$this->indexint->indexint_id.")";
-		}
+		return $this->format_name($this->indexint->name." - ".$this->indexint->comment.""." (I".$this->indexint->indexint_id.")");
 	}
 	
 	function need_to_display($categ_id){

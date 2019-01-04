@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_persopac.class.php,v 1.22 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: search_persopac.class.php,v 1.46 2018-12-20 11:00:19 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,179 +13,217 @@ require_once("$include_path/templates/search_persopac.tpl.php");
 require_once("$class_path/search.class.php");
 require_once("$class_path/translation.class.php");
 require_once("$class_path/XMLlist.class.php");
+require_once("$class_path/search_universes/search_segment_search_perso.class.php");
+require_once($class_path."/entities.class.php");
+require_once($class_path."/list/configuration/opac/list_configuration_opac_search_persopac_ui.class.php");
+
 class search_persopac {
-	var $name="";
-	var $shortname="";
-	var $query="";
-	var $human="";
-	var $directlink="";
-	var $limitsearch="";
-	var $empr_categ_restrict = array();	
+	public $id=0;
+	public $name="";
+	public $shortname="";
+	public $query="";
+	public $human="";
+	public $directlink="";
+	public $limitsearch="";
+	public $order;
+	public $type;
+	public $empr_categ_restrict = array();	
 
 	// constructeur
-	function search_persopac($id=0) {
-		global $search_persopac_link;
-		// si id, allez chercher les infos dans la base
-		if($id) {
-			$this->id = $id;
-			$this->fetch_data();
-		}	
-		if(!$search_persopac_link)$search_persopac_link=$this->get_link();
-		return $this->id;
+	public function __construct($id=0) {
+		$this->id = intval($id);
+		$this->fetch_data();
 	}
     
 	// récupération des infos en base
-	function fetch_data() {
-		global $dbh;
-		
-		$myQuery = pmb_mysql_query("SELECT * FROM search_persopac WHERE search_id='".$this->id."' LIMIT 1", $dbh);
-		$myreq= pmb_mysql_fetch_object($myQuery);
-		
-		$this->name=$myreq->search_name;
-		$this->shortname=$myreq->search_shortname;
-		$this->query=$myreq->search_query;
-		$this->human=$myreq->search_human;
-		$this->directlink=$myreq->search_directlink;
-		$this->limitsearch=$myreq->search_limitsearch;
-		$this->empr_categ_restrict = array();
-		
-		$req  = "select id_categ_empr from search_persopac_empr_categ where id_search_persopac = ".$this->id;
-		$res = pmb_mysql_query($req);
-		if(pmb_mysql_num_rows($res)){
-			while ($obj = pmb_mysql_fetch_object($res)){
-				$this->empr_categ_restrict[]=$obj->id_categ_empr;
+	public function fetch_data() {
+		if($this->id) {
+			$result = pmb_mysql_query("SELECT * FROM search_persopac WHERE search_id='".$this->id."'");
+			$row = pmb_mysql_fetch_object($result);
+			$this->name = $row->search_name;
+			$this->shortname = $row->search_shortname;
+			$this->query = $row->search_query;
+			$this->human = $row->search_human;
+			$this->directlink = $row->search_directlink;
+			$this->limitsearch = $row->search_limitsearch;
+			$this->order = $row->search_order;
+			$this->type = $row->search_type;
+			
+			$this->empr_categ_restrict = array();
+			$query  = "select id_categ_empr from search_persopac_empr_categ where id_search_persopac = ".$this->id;
+			$result = pmb_mysql_query($query);
+			if(pmb_mysql_num_rows($result)){
+				while ($row = pmb_mysql_fetch_object($result)){
+					$this->empr_categ_restrict[]=$row->id_categ_empr;
+				}
 			}
 		}
+		$this->load_xml();
 	}
 
-	function get_link() {
-		global $dbh;	
-		$myQuery = pmb_mysql_query("SELECT * FROM search_persopac order by search_name ", $dbh);
+	protected function set_order_in_database($id, $order) {
+		if($id) {
+			$query = "update search_persopac set search_order = '".$order."' where search_id = ".$id;
+			pmb_mysql_query($query);
+		}
+	}
+	
+	public function get_link() {
+		$result = pmb_mysql_query("SELECT * FROM search_persopac order by search_order, search_name ");
 		$this->search_persopac_list=array();
-		$link="";
-		if(pmb_mysql_num_rows($myQuery)){
+		if(pmb_mysql_num_rows($result)){
 			$i=0;
-			while(($r=pmb_mysql_fetch_object($myQuery))) {
+			while(($row=pmb_mysql_fetch_object($result))) {
+				if($row->search_order == ($i+1)) {
+					$order = $row->search_order;
+				} else {
+					$this->set_order_in_database($row->search_id, ($i+1));
+					$order = ($i+1);
+				}
 				$this->search_persopac_list[$i]= new stdClass();
-				$this->search_persopac_list[$i]->id=$r->search_id;
-				$this->search_persopac_list[$i]->name=$r->search_name;
-				$this->search_persopac_list[$i]->shortname=$r->search_shortname;
-				$this->search_persopac_list[$i]->query=$r->search_query;
-				$this->search_persopac_list[$i]->human=$r->search_human;
-				$this->search_persopac_list[$i]->directlink=$r->search_directlink;	
-				$this->search_persopac_list[$i]->limitsearch=$r->search_limitsearch;							
+				$this->search_persopac_list[$i]->id=$row->search_id;
+				$this->search_persopac_list[$i]->name=$row->search_name;
+				$this->search_persopac_list[$i]->shortname=$row->search_shortname;
+				$this->search_persopac_list[$i]->query=$row->search_query;
+				$this->search_persopac_list[$i]->human=$row->search_human;
+				$this->search_persopac_list[$i]->directlink=$row->search_directlink;
+				$this->search_persopac_list[$i]->limitsearch=$row->search_limitsearch;
+				$this->search_persopac_list[$i]->order=$order;
+				$this->search_persopac_list[$i]->type=$row->search_type;
 				$i++;			
 			}	
 		}
 		return true;
 	}
 
-	// fonction de mise à jour ou de création 
-	function update($value) {	
-		global $dbh,$msg,$search_persopac_link;
-		$fields="";
-		foreach($value as $key => $val) {
-			if($key != "search_empr_restrict"){
-				if($fields) $fields.=","; 
-				$fields.=" $key='$val' ";	
-			}
-		}	
+	public function set_properties_from_form() {
+		global $name, $shortname, $query, $human, $directlink, $directlink_auto_submit, $limitsearch;
+		global $empr_restrict, $type;
+		
+		$this->name = stripslashes($name);
+		$this->shortname = stripslashes($shortname);
+		$this->query = stripslashes($query);
+		$this->human = stripslashes($human);
+		$this->directlink = $directlink;
+		if($this->directlink && $directlink_auto_submit) {
+			$this->directlink += 1;
+		}
+		$this->limitsearch = $limitsearch;
+		$this->empr_categ_restrict = $empr_restrict;
+		if (!empty($type)) {
+		    $this->type = $type;
+		}
+	}
+	
+	public function set_order($order=0) {
+		$order += 0;
+		if(!$order) {
+			$query = "select max(search_order) as max_order from search_persopac";
+			$result = pmb_mysql_query($query);
+			$order = pmb_mysql_result($result, 0)+1;
+		}
+		$this->order = $order;
+	}
+	
+	public function save() {
+		global $msg;
+		
+		if(!$this->id) {
+			$this->set_order(0);
+		}
+		$fields = "
+			search_name = '".addslashes($this->name)."',	
+			search_shortname = '".addslashes($this->shortname)."',
+			search_query = '".addslashes($this->query)."',
+			search_human = '".addslashes($this->human)."',
+			search_directlink = '".$this->directlink."',
+			search_limitsearch = '".$this->limitsearch."',
+			search_order = '".$this->order."',
+			search_type = '".$this->type."'
+			";
 		if($this->id) {
 			// modif
-			$no_erreur=pmb_mysql_query("UPDATE search_persopac SET $fields WHERE search_id=".$this->id, $dbh);	
+			$no_erreur=pmb_mysql_query("UPDATE search_persopac SET $fields WHERE search_id=".$this->id);
 			if(!$no_erreur) {
-				error_message($msg["search_persopac_form_edit"], $msg["search_persopac_form_add_error"],1);	
+				error_message($msg["search_persopac_form_edit"], $msg["search_persopac_form_add_error"],1);
 				exit;
 			}
-			
+				
 		} else {
 			// create
-			$no_erreur=pmb_mysql_query("INSERT INTO search_persopac SET $fields ", $dbh);
-			$this->id = pmb_mysql_insert_id($dbh);
+			$no_erreur=pmb_mysql_query("INSERT INTO search_persopac SET $fields ");
+			$this->id = pmb_mysql_insert_id();
 			if(!$no_erreur) {
 				error_message($msg["search_persopac_form_add"], $msg["search_persopac_form_add_error"],1);
 				exit;
 			}
-		}	
+		}
 		//on s'occupe maintenant de la restriction par caégories de lecteur
-		$req = "delete from search_persopac_empr_categ where id_search_persopac = ".$this->id;
-		pmb_mysql_query($req);
-		if(count($value->search_empr_restrict)>0){
-			foreach($value->search_empr_restrict as $id_categ_empr){
-				$req= "insert into search_persopac_empr_categ set id_search_persopac=".$this->id.", id_categ_empr=".$id_categ_empr;
-				pmb_mysql_query($req);
+		$query = "delete from search_persopac_empr_categ where id_search_persopac = ".$this->id;
+		pmb_mysql_query($query);
+		if(count($this->empr_categ_restrict)){
+			foreach($this->empr_categ_restrict as $id_categ_empr){
+				$query = "insert into search_persopac_empr_categ set id_search_persopac=".$this->id.", id_categ_empr=".$id_categ_empr;
+				pmb_mysql_query($query);
 			}
 		}
-		
-		// rafraischissement des données
-		$this->fetch_data();
-		$search_persopac_link=$this->get_link();
+		$translation = new translation($this->id,"search_persopac");
+		$translation->update("search_name", "name");
+		$translation->update("search_shortname", "shortname");
 		return $this->id;
 	}
 
-	function update_from_form() {
-		global $name,$shortname,$query,$human,$directlink,$limitsearch,$thesaurus_liste_trad,$empr_restrict;
-		$value = new stdClass();
-		$value->search_name=$name;
-		$value->search_shortname=$shortname;
-		$value->search_query=$query;
-		$value->search_human=$human;
-		$value->search_directlink=$directlink;
-		$value->search_limitsearch=$limitsearch;
-		$value->search_empr_restrict=$empr_restrict;
-		
-		$this->update($value); 	
-		$trans= new translation($this->id,"search_persopac","search_name",$thesaurus_liste_trad);	
-		$trans->update("name");
-		$trans= new translation($this->id,"search_persopac","search_shortname",$thesaurus_liste_trad);	
-		$trans->update("shortname");	
-	}
-
 	// fonction générant le form de saisie 
-	function do_form() {
+	public function do_form() {
 		global $msg,$tpl_search_persopac_form,$charset,$base_path;	
-		global $thesaurus_liste_trad;
 		global $id_search_persopac;
+		global $search_type;
+		
+		//search_type
+		if (!empty($search_type)) {
+		    $this->type = $search_type;
+		}else{ //On met sur notice par défaut maintenant qu'il y'a un sélecteur
+			$this->type = 'notices';
+		}
 		// titre formulaire
-		$my_search=new search(false,"search_fields_opac","$base_path/temp/");
+		$my_search = $this->get_search_from_type();
+
 		if($this->id) {
-			$libelle=$msg["search_persopac_form_edit"];
+			$libelle=$msg["search_persopac_form_edit"] . ' ( ' . $this->get_entities_msg($this->type) . ' )';
 			$link_delete="<input type='button' class='bouton' value='".$msg[63]."' onClick=\"confirm_delete();\" />";
 			$button_modif_requete = "<input type='button' class='bouton' value=\"".$msg["search_perso_modif_requete"]."\" onClick=\"document.modif_requete_form_".$this->id.".submit();\">";
 			
 			//Mémorisation de recherche prédéfinie en édition
 	 		if ($id_search_persopac) {
 	 			$this->query=$my_search->serialize_search();
-	 			$this->human = $my_search->make_human_query();
 	 			$my_search->unserialize_search($this->query);
 	 		} else {
 				$my_search->unserialize_search($this->query);
 				$this->query=$my_search->serialize_search();
-				$this->human = $my_search->make_human_query();
 	 		}
 	 		$form_modif_requete = $this->make_hidden_search_form();
 		} else {
-			$libelle=$msg["search_persopac_form_add"];
+			$libelle=$msg["search_persopac_form_add"] . ' ( ' . $this->get_entities_msg($this->type) . ' )';
 			$link_delete="";
 			$button_modif_requete = "";
 			$form_modif_requete = "";
 	
 	 		$this->query=$my_search->serialize_search();
-	 		$this->human = $my_search->make_human_query();
 		}
+
+	 	$this->human = $my_search->make_human_query();
+		
 		// Champ éditable
 		$tpl_search_persopac_form = str_replace('!!id!!', htmlentities($this->id,ENT_QUOTES,$charset), $tpl_search_persopac_form);
 		
-		$trans= new translation($this->id,"search_persopac","search_name",$thesaurus_liste_trad);
-		$field_name=$trans->get_form($msg["search_persopac_form_name"],"form_nom","name",$this->name,"saisie-80em");	
-		$tpl_search_persopac_form = str_replace('!!name!!', $field_name, $tpl_search_persopac_form);
-	
-		$trans= new translation($this->id,"search_persopac","search_shortname",$thesaurus_liste_trad);
-		$field_name=$trans->get_form($msg["search_persopac_form_shortname"],"shortname","shortname",$this->shortname,"saisie-80em");		
-		$tpl_search_persopac_form = str_replace('!!shortname!!', $field_name, $tpl_search_persopac_form);
+		$tpl_search_persopac_form = str_replace('!!name!!', $this->name, $tpl_search_persopac_form);
+		$tpl_search_persopac_form = str_replace('!!shortname!!', $this->shortname, $tpl_search_persopac_form);
 		$checked='';
 		if($this->directlink) $checked= " checked='checked' ";
 		$tpl_search_persopac_form = str_replace('!!directlink!!', $checked, $tpl_search_persopac_form);
+		$checked='';
+		if($this->directlink == 2) $checked= " checked='checked' ";
+		$tpl_search_persopac_form = str_replace('!!directlink_auto_submit!!', $checked, $tpl_search_persopac_form);
 		$checked='';
 		if($this->limitsearch) $checked= " checked='checked' ";
 		$tpl_search_persopac_form = str_replace('!!limitsearch!!', $checked, $tpl_search_persopac_form);
@@ -193,7 +231,7 @@ class search_persopac {
 		$tpl_search_persopac_form = str_replace('!!query!!', htmlentities($this->query,ENT_QUOTES,$charset), $tpl_search_persopac_form);
 		$tpl_search_persopac_form = str_replace('!!human!!', htmlentities($this->human,ENT_QUOTES,$charset), $tpl_search_persopac_form);
 		
-		$action="./admin.php?categ=opac&sub=search_persopac&section=liste&action=collstate_update&serial_id=".$this->serial_id."&id=".$this->id;
+		$action="./admin.php?categ=opac&sub=search_persopac&section=liste&action=collstate_update".(!empty($this->serial_id) ? "&serial_id=".$this->serial_id : "")."&id=".$this->id;
 		$tpl_search_persopac_form = str_replace('!!action!!', $action, $tpl_search_persopac_form);
 		$tpl_search_persopac_form = str_replace('!!delete!!', $link_delete, $tpl_search_persopac_form);
 		$tpl_search_persopac_form = str_replace('!!libelle!!',htmlentities($libelle,ENT_QUOTES,$charset) , $tpl_search_persopac_form);
@@ -206,16 +244,18 @@ class search_persopac {
 		$res = pmb_mysql_query($requete);
 		if(pmb_mysql_num_rows($res)>0){
 			$categ = "
-			<label for='empr_restrict'>".$msg['search_perso_form_user_restrict']."</label><br />
+			<label for='empr_restrict'>".htmlentities($msg['search_perso_form_user_restrict'],ENT_QUOTES,$charset)."</label><br />
 			<select id='empr_restrict' name='empr_restrict[]' multiple>";
 			while($obj = pmb_mysql_fetch_object($res)){
 				$categ.="
-				<option value='".$obj->id_categ_empr."' ".(in_array($obj->id_categ_empr,$this->empr_categ_restrict) ? "selected=selected" : "") .">".$obj->libelle."</option>";
+				<option value='".$obj->id_categ_empr."' ".(in_array($obj->id_categ_empr,$this->empr_categ_restrict) ? "selected=selected" : "") .">".htmlentities($obj->libelle,ENT_QUOTES,$charset)."</option>";
 			}
 			$categ.="
 			</select>";
 		}else $categ = "";
 		$tpl_search_persopac_form = str_replace('!!categorie!!', $categ, $tpl_search_persopac_form);
+		
+		$tpl_search_persopac_form = str_replace('!!type!!', "<input type='hidden' id='type' name='type' value='" . $this->type . "' >", $tpl_search_persopac_form);
 		
 		$tpl_search_persopac_form = str_replace('!!requete!!', htmlentities($this->query,ENT_QUOTES, $charset), $tpl_search_persopac_form);
 		$tpl_search_persopac_form = str_replace('!!requete_human!!', $this->human, $tpl_search_persopac_form);
@@ -223,91 +263,106 @@ class search_persopac {
 		$tpl_search_persopac_form = str_replace('!!bouton_modif_requete!!', $button_modif_requete,  $tpl_search_persopac_form);
 		$tpl_search_persopac_form = str_replace('!!form_modif_requete!!', $form_modif_requete,  $tpl_search_persopac_form);
 		
+		$translation = new translation($this->id, 'search_persopac');
+		$tpl_search_persopac_form .= $translation->connect('search_persopac_form');
 		return $tpl_search_persopac_form;	
 	}
 
 
-	function do_list() {
-		global $tpl_search_persopac_liste_tableau,$tpl_search_persopac_liste_tableau_ligne;	
-			
-		// liste des lien de recherche directe
-		$liste="";
+	public function do_list() {
+		global $action;
+		
 		// pour toute les recherche de l'utilisateur
-		for($i=0;$i<count($this->search_persopac_list);$i++) {
-			if ($i % 2) $pair_impair = "even"; else $pair_impair = "odd";
-	/*		
-			//composer le formulaire de la recherche
-			$my_search=new search();
-			$my_search->unserialize_search($this->search_persopac_list[$i]->query);
-			$forms_search.= $my_search->make_hidden_search_form("./catalog.php?categ=search&mode=6","search_form".$this->search_persopac_list[$i]->id);
-	*/		
-			
-	        $td_javascript=" ";
-	        $tr_surbrillance = "onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='".$pair_impair."'\" ";
-	
-	        $line = str_replace('!!td_javascript!!',$td_javascript , $tpl_search_persopac_liste_tableau_ligne);
-	        $line = str_replace('!!tr_surbrillance!!',$tr_surbrillance , $line);
-	        $line = str_replace('!!pair_impair!!',$pair_impair , $line);
-	
-			$line =str_replace('!!id!!', $this->search_persopac_list[$i]->id, $line);
-			$line = str_replace('!!name!!', $this->search_persopac_list[$i]->name, $line);
-			$line = str_replace('!!human!!', $this->search_persopac_list[$i]->human, $line);		
-			$line = str_replace('!!shortname!!', $this->search_persopac_list[$i]->shortname, $line);
-			if($this->search_persopac_list[$i]->directlink)
-				$directlink="<img src='./images/tick.gif' border='0'  hspace='0' align='middle'  class='bouton-nav' value='=' />";
-			else $directlink="";
-			$line = str_replace('!!directlink!!', $directlink, $line);
-			
-			$liste.=$line;
+		$this->get_link();
+		switch ($action) {
+			case 'up':
+			case 'down':
+				$instance = list_configuration_opac_search_persopac_ui::get_instance(array(), array(), array('by' => 'search_order', 'asc_desc' => 'asc'));
+				break;
+			case 'save_order':
+				$instance = list_configuration_opac_search_persopac_ui::get_instance();
+				$instance->run_action_save_order();
+				break;
+			default:
+				$instance = list_configuration_opac_search_persopac_ui::get_instance();
+				break;
 		}
-		$tpl_search_persopac_liste_tableau = str_replace('!!lignes_tableau!!',$liste , $tpl_search_persopac_liste_tableau);
-		return $forms_search.$tpl_search_persopac_liste_tableau;	
+		return $instance->get_display_list();	
 	}
 
-	function delete() {
-		global $dbh,$search_persopac_link;
-		
+	public function delete() {		
 		if($this->id) {
-			pmb_mysql_query("DELETE from search_persopac WHERE search_id='".$this->id."' ", $dbh);
+			pmb_mysql_query("DELETE from search_persopac WHERE search_id='".$this->id."' ");
 			pmb_mysql_query("delete from search_persopac_empr_categ where id_search_persopac = ".$this->id);
+			search_segment_search_perso::on_delete_search_perso($this->id);
+		}	
+	}
+
+	public function up() {
+		$query = "select search_order from search_persopac where search_id=".$this->id;
+		$result = pmb_mysql_query($query);
+		$order = pmb_mysql_result($result, 0, 0);
+		$query = "select max(search_order) as order_max from search_persopac where search_order < $order";
+		$result=pmb_mysql_query($query);
+		$order_max=@pmb_mysql_result($result, 0, 0);
+		if ($order_max) {
+			$query="select search_id from search_persopac where search_order=$order_max limit 1";
+			$result=pmb_mysql_query($query);
+			$id_search_up=pmb_mysql_result($result,0,0);
+			$query="update search_persopac set search_order='".$order_max."' where search_id=".$this->id;
+			pmb_mysql_query($query);
+			$query="update search_persopac set search_order='".$order."' where search_id=".$id_search_up;
+			pmb_mysql_query($query);
 		}
-		$search_persopac_link=$this->get_link();	
 	}
-
-	function add_search(){
-		global $include_path,$pmb_opac_url;
-		global $lang,$msg,$base_path;
 	
-		$save_msg=$msg;
-		// Recherche du fichier lang de l'opac
-		$url=$pmb_opac_url."includes/messages/$lang.xml";
-		$fichier_xml=$base_path."/temp/opac_lang.xml";
+	public function down() {
+		$query = "select search_order from search_persopac where search_id=".$this->id;
+		$result = pmb_mysql_query($query);
+		$order = pmb_mysql_result($result, 0, 0);
+		$query = "select min(search_order) as order_min from search_persopac where search_order > $order";
+		$result=pmb_mysql_query($query);
+		$order_min=@pmb_mysql_result($result, 0, 0);
+		if ($order_min) {
+			$query="select search_id from search_persopac where search_order=$order_min limit 1";
+			$result=pmb_mysql_query($query);
+			$id_search_down=pmb_mysql_result($result,0,0);
+			$query="update search_persopac set search_order='".$order_min."' where search_id=".$this->id;
+			pmb_mysql_query($query);
+			$query="update search_persopac set search_order='".$order."' where search_id=".$id_search_down;
+			pmb_mysql_query($query);
+		}
+	}
+	
+	public function add_search(){
+	    global $msg, $search_type, $charset, $filter_group;
+	    
+	    if (!empty($search_type)) {
+	        $this->type = $search_type;
+	    }else{ //On met sur notice par défaut maintenant qu'il y'a un sélecteur
+			$this->type = 'notices';
+		}
+		$this->init_filter_group();
+	    $onchange = 'onchange="document.location=\'./admin.php?categ=opac&sub=search_persopac&section=liste&action=add&search_type=\'+this.value+\'&id='.$this->id.'\'"';
+		$form = '<h3>'.htmlentities($msg['admin_contribution_area_equation_type'], ENT_QUOTES, $charset).'</h3>';
+		$form .= $this->get_entities_selector($onchange);
 		
-		$this->curl_load_file($url,$fichier_xml);	
-		$messages = new XMLlist("$base_path/temp/opac_lang.xml", 0);
-		$messages->analyser();
-		$msg = $messages->table;
-		
-		$url=$pmb_opac_url."includes/search_queries/search_fields.xml";
-		$fichier_xml="$base_path/temp/search_fields_opac.xml";
-		
-		$this->curl_load_file($url,$fichier_xml);
-		$my_search=new search(false,"search_fields_opac","$base_path/temp/");
-		$form= $my_search->show_form("./admin.php?categ=opac&sub=search_persopac&section=liste&action=build",
+		$my_search = $this->get_search_from_type();
+		$form.= $my_search->show_form("./admin.php?categ=opac&sub=search_persopac&section=liste&action=build",
 			"","","./admin.php?categ=opac&sub=search_persopac&section=liste&action=form".($this->id ? "&id=".$this->id : ""));
-		print $form;	
-		$msg=$save_msg;
+		print $form;
 	}
 
-	function continu_search(){
-		
+	public function continu_search(){
+		global $msg,$base_path;
+
 		$my_search=new search(false,"search_fields_opac");
 		$form= $my_search->show_form("./admin.php?categ=opac&sub=search_persopac&section=liste&action=build",
 			"","","./admin.php?categ=opac&sub=search_persopac&section=liste&action=form");
 		print $form;
 	}
 
-	function curl_load_file($url, $filename) {
+	public function curl_load_file($url, $filename) {
 		global $opac_curl_available, $msg ;
 		if (!$opac_curl_available) die("PHP Curl must be available");
 		//Calcul du subst
@@ -318,6 +373,14 @@ class search_persopac {
 	    $filename_subst=str_replace(".xml","_subst.xml",$filename);
 	 	$fp = fopen($filename_subst, "w+");    
 		curl_setopt($curl, CURLOPT_FILE, $fp);
+		
+		//pour déclarer un certificat ou des options supplémentaires sur le même domaine
+		if (strpos($url,$_SERVER["HTTP_HOST"])) {
+			global $curl_addon_array_cert;
+			if (is_array($curl_addon_array_cert) && count($curl_addon_array_cert)) {
+				curl_setopt_array($curl, $curl_addon_array_cert);
+			}
+		}
 		
 		if(curl_exec ($curl)) {
 			fclose($fp);
@@ -335,7 +398,7 @@ class search_persopac {
 	}
 
 	// pour maj de requete de recherche prédéfinie
-	function make_hidden_search_form($url="") {
+	public function make_hidden_search_form($url="") {
 		global $search;
 		global $charset;
 	 	
@@ -345,21 +408,21 @@ class search_persopac {
 	
 		for ($i=0; $i<count($search); $i++) {
 			$inter="inter_".$i."_".$search[$i];
-			global $$inter;
+			global ${$inter};
 			$op="op_".$i."_".$search[$i];
-			global $$op;
+			global ${$op};
 			$field_="field_".$i."_".$search[$i];
-			global $$field_;
-			$field=$$field_;
+			global ${$field_};
+			$field=${$field_};
 			//Récupération des variables auxiliaires
 			$fieldvar_="fieldvar_".$i."_".$search[$i];
-			global $$fieldvar_;
-			$fieldvar=$$fieldvar_;
+			global ${$fieldvar_};
+			$fieldvar=${$fieldvar_};
 			if (!is_array($fieldvar)) $fieldvar=array();
 	
 			$r.="<input type='hidden' name='search[]' value='".htmlentities($search[$i],ENT_QUOTES,$charset)."'/>";
-			$r.="<input type='hidden' name='".$inter."' value='".htmlentities($$inter,ENT_QUOTES,$charset)."'/>";
-			$r.="<input type='hidden' name='".$op."' value='".htmlentities($$op,ENT_QUOTES,$charset)."'/>";
+			$r.="<input type='hidden' name='".$inter."' value='".htmlentities(${$inter},ENT_QUOTES,$charset)."'/>";
+			$r.="<input type='hidden' name='".$op."' value='".htmlentities(${$op},ENT_QUOTES,$charset)."'/>";
 			for ($j=0; $j<count($field); $j++) {
 				$r.="<input type='hidden' name='".$field_."[]' value='".htmlentities($field[$j],ENT_QUOTES,$charset)."'/>";
 			}
@@ -374,5 +437,109 @@ class search_persopac {
 		$r.="</form>";
 		return $r;
 	}
+	
+	public function load_xml() {
+		global $pmb_opac_url,$lang,$base_path;
+		
+		// Recherche du fichier lang de l'opac
+		$url = $pmb_opac_url."includes/messages/$lang.xml";
+		$fichier_xml = $base_path."/temp/opac_lang.xml";
+		$this->curl_load_file($url,$fichier_xml);
+		
+		$url = $pmb_opac_url."includes/search_queries/search_fields.xml";
+		$fichier_xml="$base_path/temp/search_fields_opac.xml";
+		$this->curl_load_file($url,$fichier_xml);
+	}
+	
+	protected function get_search_from_type() {
+	    global $base_path;
+	    switch ($this->type) {
+	        case 'notices' :
+	            return new search(false,"search_fields_opac","$base_path/temp/");
+	        default:
+	            return new search_authorities(false,"search_fields_authorities");
+	    }
+	}
+	
+	protected function get_entities_selector($onchange = '') {
+        global $msg, $charset, $search_type;
+
+        $entities = $this->get_entities_msg();        
+       	$html = '';
+       	foreach ($entities as $value => $label) {
+       		$html .= '<option value="'.$value.'" '.($value == $search_type ? 'selected="selected"' : '').'>'.htmlentities($label, ENT_QUOTES, $charset).'</option>';
+       	}        
+	    return '
+		    <select name="type" id="type" '.$onchange.'>
+                '.$html.'
+		    </select>
+	    ';
+	}
+	
+	protected function get_entities_msg($entitie = '') {
+        global $msg, $charset;
+        
+        $authpersos=authpersos::get_instance();
+        $authperso_infos = $authpersos->get_data();
+        $authperso_values = array();
+        if(count($authperso_infos)){
+        	foreach($authperso_infos as $authperso_info){
+        		$authperso_values[$authperso_info['id']] =  $authperso_info['name'];
+        	}
+        }        
+		$entities = array(
+				'notices' => $msg['288'],
+				'authors' => $msg['isbd_author'],
+				'categories' => $msg['isbd_categories'],
+				'concepts' => $msg['search_concept_title'],
+				'collections' => $msg['isbd_collection'],
+				'indexint' => $msg['isbd_indexint'],
+				'publishers' => $msg['isbd_editeur'],
+				'series' => $msg['isbd_serie'],
+				'subcollections' => $msg['isbd_subcollection'],
+				'titres_uniformes' => $msg['isbd_titre_uniforme'],
+		);
+        $entities = $entities + $authperso_values;
+        if($entitie) return $entities[$entitie];
+        else return $entities;
+	}
+	
+	protected function init_filter_group(){
+		global $filter_group;
+		
+		switch ($this->type) {
+			case 'authors':
+				$filter_group = 1;
+				break;
+			case 'categories':
+				$filter_group = 2;
+				break;
+			case 'concepts':
+				$filter_group = 11;
+				break;
+			case 'collections':
+				$filter_group = 4;
+				break;
+			case 'indexint':
+				$filter_group = 8;
+				break;
+			case 'publishers':
+				$filter_group = 3;
+				break;
+			case 'series':
+				$filter_group = 6;
+				break;
+			case 'subcollections':
+				$filter_group = 5;
+				break;
+			case 'titres_uniformes':
+				$filter_group = 7;
+				break;
+			case is_numeric($this->type):
+				$filter_group = 1000 + $this->type; 
+				break;
+		}
+	}
+	
 
 } // fin définition classe

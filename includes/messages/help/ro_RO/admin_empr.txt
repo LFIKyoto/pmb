@@ -1,4 +1,4 @@
-<h1>Administration des lecteurs</h1>
+<h2>Administration des lecteurs</h2>
 <p>Les diff&eacute;rents codes affect&eacute;s &agrave; chacun des utilisateurs de la m&eacute;diath&egrave;que permettent d'obtenir des statistiques sur le public de la m&eacute;diath&egrave;que.
 </p>
 

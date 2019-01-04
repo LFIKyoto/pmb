@@ -2,30 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notes.inc.php,v 1.3 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: notes.inc.php,v 1.6 2017-11-21 14:23:55 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // la variable $caller, passée par l'URL, contient le nom du form appelant
 $base_url = "./select.php?what=notes&caller=$caller&param1=$param1&param2=$param2&idaction=$idaction&current_note=$current_note";
 
-// contenu popup sélection notes
-require('./selectors/templates/sel_notes.tpl.php');
+$selector_notes = new selector_notes(stripslashes($user_input));
+$selector_notes->proceed();
 
-// affichage du header
-print $sel_header;
-
-// traitement en entrée des requêtes utilisateur
-if ($deb_rech) $f_user_input = $deb_rech ;
-if($f_user_input=="" && $user_input=="") {
-	$user_input='';
-} else {
-	// traitement de la saisie utilisateur
-	if ($user_input) $f_user_input=$user_input;
-	if (($f_user_input)&&(!$user_input)) $user_input=$f_user_input;	
-}
-
-function show_results($dbh,$user_input,$nbr_lignes=0,$page=0){
+function show_results($user_input,$nbr_lignes=0,$page=0){
 	global $nb_per_page;
 	global $base_url;
 	global $caller;
@@ -40,7 +27,7 @@ function show_results($dbh,$user_input,$nbr_lignes=0,$page=0){
 	} else {		
 		$req_count = "select count(1) from demandes_notes where num_action='".$idaction."' and contenu like '%".$user_input."%' and id_note !='".$current_note."'";
 	}
-	$res = pmb_mysql_query($req_count, $dbh);
+	$res = pmb_mysql_query($req_count);
 	$nbr_lignes = @pmb_mysql_result($res, 0, 0);
 	
 	if(!$page) $page=1;
@@ -54,7 +41,7 @@ function show_results($dbh,$user_input,$nbr_lignes=0,$page=0){
 			$req = "select id_note, date_note, CONCAT(SUBSTRING(contenu,1,50),'','...') as note from demandes_notes where num_action='".$idaction."' and contenu like '%".$user_input."%' and id_note !='".$current_note."'";
 		}
 		
-		$res = pmb_mysql_query($req,$dbh);
+		$res = pmb_mysql_query($req);
 		while(($note = pmb_mysql_fetch_object($res))){
 			print "<div class='row'>";
 			print "<a href='#' onclick=\"set_parent('$caller', '$note->id_note', '".htmlentities(addslashes($note->note),ENT_QUOTES,$charset)."')\"> [".htmlentities(formatdate($note->date_note),ENT_QUOTES,$charset).'] '.htmlentities($note->note,ENT_QUOTES,$charset)."</a>";
@@ -67,17 +54,10 @@ function show_results($dbh,$user_input,$nbr_lignes=0,$page=0){
 		$suivante = $page+1;
 		$precedente = $page-1;
 	}
-	print "<div class='row'>&nbsp;<hr /></div><div align='center'>";
+	print "<div class='row'>&nbsp;<hr /></div><div class='center'>";
 	$url_base = $base_url."&user_input=".rawurlencode(stripslashes($user_input));
 	$nav_bar = aff_pagination ($url_base, $nbr_lignes, $nb_per_page, $page, 10, false, true) ;
 	print $nav_bar;
 	print "</div>";
 }
-
-// affichage des membres de la page
-$sel_search_form = str_replace("!!deb_rech!!", stripslashes($f_user_input), $sel_search_form);
-print $sel_search_form;
-print $jscript;
-show_results($dbh, $user_input, $nbr_lignes, $page);
-print $sel_footer;
 ?>

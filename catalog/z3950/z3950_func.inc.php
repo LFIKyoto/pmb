@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: z3950_func.inc.php,v 1.17.4.1 2015-11-22 18:02:57 Alexandre Exp $
+// $Id: z3950_func.inc.php,v 1.19 2017-05-17 14:59:37 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+require_once($class_path.'/audit.class.php');
 
 function z_gen_combo_box ( $selected , $nom ) {
 	global $msg;
@@ -65,7 +67,7 @@ function showButRes(){
 				top.framedepartz3950.droite_but.document.getElementById('visible2').style.visibility=\"visible\";
 			}else {
 				setTimeout(afficherFenetre,500);
-		    }
+			}
 		}
 		-->
 		</script>";

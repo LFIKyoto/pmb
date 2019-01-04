@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: taches.tpl.php,v 1.4 2013-10-15 07:38:15 dgoron Exp $
+// $Id: taches.tpl.php,v 1.5 2017-01-26 15:36:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+if(!isset($planificateur_id)) $planificateur_id = 0;
+if(!isset($subaction)) $subaction = '';
 
 $template_result = "
 <form name='planificateur_form_del' action='$base_path/admin.php?categ=planificateur&sub=manager&task=task_del&planificateur_id=".$planificateur_id."&confirm=1' method='post' class='form-$current_module'>

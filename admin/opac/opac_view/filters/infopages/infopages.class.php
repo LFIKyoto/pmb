@@ -2,21 +2,21 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: infopages.class.php,v 1.3 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: infopages.class.php,v 1.7 2017-11-21 12:00:59 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path,$base_path,$include_path;
 
 class infopages {    
-    function infopages($id_vue,$local_msg) {
+    public function __construct($id_vue,$local_msg) {
     	$this->id_vue=$id_vue;
     	$this->path="infopages";
     	$this->msg=$local_msg;
     	$this->fetch_data();    	   	
     }
     
-    function fetch_data() {
+    public function fetch_data() {
 		global $dbh;
 			
 		$this->selected_list=array();
@@ -44,15 +44,15 @@ class infopages {
 		return true;
  	}
        
-	function get_all_elements(){	
+	public function get_all_elements(){	
 		return $this->ids;
 	}
     	
-	function get_elements(){		
+	public function get_elements(){		
 		return $this->all_ids;
 	}		
 	
-	function get_form(){
+	public function get_form(){
 		global $msg;
 		global $tpl_liste_item_tableau,$tpl_liste_item_tableau_ligne;
 		
@@ -63,7 +63,10 @@ class infopages {
 		// liste des lien de recherche directe
 		$liste="";
 		// pour toute les recherche de l'utilisateur
+		$liste_id = array();
+		
 		for($i=0;$i<count($this->liste_item);$i++) {
+			$liste_id[] = 'infopages_selected_'.$this->liste_item[$i]->id;
 			if ($i % 2) $pair_impair = "even"; else $pair_impair = "odd";			
 	        $td_javascript=" ";
 	        $tr_surbrillance = "onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='".$pair_impair."'\" ";
@@ -76,20 +79,26 @@ class infopages {
 			if($this->liste_item[$i]->selected) $checked="checked";else $checked="";			
 			$line =str_replace('!!selected!!', $checked, $line);
 			$line = str_replace('!!name!!', $this->liste_item[$i]->name, $line);
-			$line = str_replace('!!human!!', $this->liste_item[$i]->human, $line);		
-			$line = str_replace('!!shortname!!', $this->liste_item[$i]->shortname, $line);
-			if($this->liste_item[$i]->directlink)
-				$directlink="<img src='./images/tick.gif' border='0'  hspace='0' align='middle'  class='bouton-nav' value='=' />";
-			else $directlink="";
-			$line = str_replace('!!directlink!!', $directlink, $line);
+// 			$line = str_replace('!!human!!', $this->liste_item[$i]->human, $line);		
+// 			$line = str_replace('!!shortname!!', $this->liste_item[$i]->shortname, $line);
+// 			if($this->liste_item[$i]->directlink)
+// 				$directlink="<img src='".get_url_icon('tick.gif')."' border='0'  hspace='0' class='align_middle'  class='bouton-nav' value='=' />";
+// 			else $directlink="";
+// 			$line = str_replace('!!directlink!!', $directlink, $line);
 			
 			$liste.=$line;
 		}
 		$tpl_liste_item_tableau = str_replace('!!lignes_tableau!!',$liste , $tpl_liste_item_tableau);
-		return $forms_search.$tpl_liste_item_tableau;	
+		
+		if (count($liste_id)) {
+			$tpl_liste_item_tableau .= "<input type='button' class='bouton_small align_middle' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(\"".implode("|",$liste_id)."\",1);'>";
+			$tpl_liste_item_tableau .= "<input type='button' class='bouton_small align_middle' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(\"".implode("|",$liste_id)."\",0);'>";
+		}
+		
+		return $tpl_liste_item_tableau;
 	}	
 	
-	function save_form(){
+	public function save_form(){
 		global $dbh;
 
 		$req="delete FROM opac_filters where opac_filter_view_num=".$this->id_vue." and  opac_filter_path='".$this->path."' ";

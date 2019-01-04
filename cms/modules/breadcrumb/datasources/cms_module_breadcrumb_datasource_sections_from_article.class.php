@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_breadcrumb_datasource_sections_from_article.class.php,v 1.4 2015-04-03 11:16:27 jpermanne Exp $
+// $Id: cms_module_breadcrumb_datasource_sections_from_article.class.php,v 1.6 2016-12-01 12:07:57 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -28,31 +28,34 @@ class cms_module_breadcrumb_datasource_sections_from_article extends cms_module_
 		if($selector){
 			$article_id = $selector->get_value();
 			if($article_id){
+				$article = new cms_article($article_id);
+				$datas['article'] = $article->format_datas();
+				$datas['sections'] = array();
 				$sections = array();
-				$query = "select num_section from cms_articles where id_article = ".$article_id;
+				$query = "select num_section from cms_articles where id_article = '".($article_id*1)."'";
 				$result = pmb_mysql_query($query);
 				if(pmb_mysql_num_rows($result)){
 					$section_id = pmb_mysql_result($result,0,0);
 					if($section_id){
-						$datas = array();
 						$i=0;
 						do {
 							$i++;
-							$query = "select id_section,section_num_parent from cms_sections where id_section = ".$section_id;
+							$query = "select id_section,section_num_parent from cms_sections where id_section = '".($section_id*1)."'";
 							$result = pmb_mysql_query($query);
 							if(pmb_mysql_num_rows($result)){
 								$row = pmb_mysql_fetch_object($result);
 								$section_id = $row->section_num_parent;
-								$datas[] = $row->id_section;
+								$datas['sections'][] = $row->id_section;
 								
 							}else{
 								break;
 							}
 						//en théorie on sort toujours, mais comme c'est un pays formidable, on lock à 100 itérations...
 						}while ($row->section_num_parent != 0 || $i>100);
-						return array_reverse($datas);
+						$datas['sections'] = array_reverse($datas['sections']);
 					}
 				}
+				return $datas;
 			}
 		}
 		return false;

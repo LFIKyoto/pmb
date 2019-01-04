@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_watch_selector_watch_by_item.class.php,v 1.2 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: cms_module_watch_selector_watch_by_item.class.php,v 1.3 2016-09-20 10:25:41 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -26,7 +26,7 @@ class cms_module_watch_selector_watch_by_item extends cms_module_common_selector
 		global $dbh;
 		if($this->parameters['sub_selector']){
 			$sub_selector = new $this->parameters['sub_selector']($this->get_sub_selector_id($this->parameters['sub_selector']));
-			$value = $sub_selector->get_value();
+			$value = $sub_selector->get_value()*1;
 			if ($value) {
 				$query="select item_num_watch from docwatch_items where id_item='".$value."'";
 				$result = pmb_mysql_query($query,$dbh);

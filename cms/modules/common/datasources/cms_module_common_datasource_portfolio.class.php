@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_portfolio.class.php,v 1.4 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: cms_module_common_datasource_portfolio.class.php,v 1.8 2017-03-17 15:22:26 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,12 +11,13 @@ class cms_module_common_datasource_portfolio extends cms_module_common_datasourc
 	public function __construct($id=0){
 		parent::__construct($id);
 		$this->sortable = true;
-		if(!$this->parameters['sort_by']){
+		if(!isset($this->parameters['sort_by']) || !$this->parameters['sort_by']){
 			$this->parameters['sort_by'] = "document_create_date";
 		}
-		if(!$this->parameters['sort_order']){
+		if(!isset($this->parameters['sort_order']) || !$this->parameters['sort_order']){
 			$this->parameters['sort_order'] = "desc";
 		}
+		$this->limitable = true;
 	}
 	/*
 	 * On défini les sélecteurs utilisable pour cette source de donnée
@@ -50,9 +51,11 @@ class cms_module_common_datasource_portfolio extends cms_module_common_datasourc
 			
 			
 			$valid = $this->filter_datas($docs['type_object'], array($docs['num_object']));
-			if(($docs['num_object'] == $valid[0]) && is_array($docs['ids'])){
+			if(($docs['num_object'] == $valid[0]) && isset($docs['ids']) && is_array($docs['ids'])){
+				array_walk($docs['ids'], 'static::int_caster');
 				if($this->parameters['sort_by']){
-					$query = "select id_document from cms_documents where id_document in (".implode(",",$docs['ids']).") order by ".$this->parameters['sort_by']." ".$this->parameters['sort_order'];
+					$query = "select id_document from cms_documents where id_document in ('".implode("','",$docs['ids'])."') order by ".$this->parameters['sort_by']." ".$this->parameters['sort_order'];
+					if($this->parameters['nb_max_elements']) $query.=' limit '.$this->parameters['nb_max_elements']*1;
 					$result = pmb_mysql_query($query,$dbh);
 					if(pmb_mysql_num_rows($result)){
 						$docs['ids'] = array();

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_type_article_generic.class.php,v 1.2.4.1 2015-11-03 12:14:22 jpermanne Exp $
+// $Id: cms_module_common_selector_type_article_generic.class.php,v 1.4 2016-02-24 11:13:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -49,7 +49,7 @@ class cms_module_common_selector_type_article_generic extends cms_module_common_
 		if(pmb_mysql_num_rows($result)){
 			while($r = pmb_mysql_fetch_object($result)){
 				$select.="
-				<option value='".$r->idchamp."'".($r->idchamp==$this->parameters["type_editorial_field"] ? "selected='selected'" : "").">".htmlentities($r->titre,ENT_QUOTES,$charset)."</option>";
+				<option value='".$r->idchamp."'".($r->idchamp==$this->parameters["type_editorial_field"] ? "selected='selected'" : "").">".$this->format_text($r->titre)."</option>";
 			}
 		}else{
 			$select.= "

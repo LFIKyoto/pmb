@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes_notes.tpl.php,v 1.10 2015-05-20 14:39:30 dgoron Exp $
+// $Id: demandes_notes.tpl.php,v 1.12 2017-09-28 09:23:36 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -49,7 +49,7 @@ $form_table_note ="
 <script type='text/javascript'>
 function confirm_delete()
 {
-	phrase = \"{$msg[demandes_note_confirm_suppr]}\";
+	phrase = \"".$msg['demandes_note_confirm_suppr']."\";
 	result = confirm(phrase);
 	if(result){
 		return true;
@@ -76,7 +76,7 @@ $form_modif_note="
 <script type='text/javascript'>
 function confirm_delete()
 {
-	phrase = \"{$msg[demandes_note_confirm_suppr]}\";
+	phrase = \"".$msg['demandes_note_confirm_suppr']."\";
 	result = confirm(phrase);
 	if(result){
 		return true;
@@ -99,7 +99,7 @@ function confirm_delete()
 		</div>
 		<div class='row'>
 			<input type='hidden' id='date_note' name='date_note' value='!!date_note!!' />
-			<input type='button' class='bouton' id='date_note_btn' name='date_note_btn' value='!!date_note_btn!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=modif_note&date_caller=!!date_note!!&param1=date_note&param2=date_note_btn&auto_submit=NO&date_anterieure=YES', 'date_note', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\"/>
+			<input type='button' class='bouton' id='date_note_btn' name='date_note_btn' value='!!date_note_btn!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=modif_note&date_caller=!!date_note!!&param1=date_note&param2=date_note_btn&auto_submit=NO&date_anterieure=YES', 'calendar')\"/>
 		</div>
 		<div class='row'>
 			<label class='etiquette'>".$msg['demandes_note_contenu']."</label>
@@ -139,7 +139,7 @@ function confirm_delete()
 function test_form(form) {	
 
 	if((form.contenu_note.value.length == 0)){
-		alert(\"$msg[demandes_note_create_ko]\");
+		alert(\"".$msg['demandes_note_create_ko']."\");
 		return false;
     } 
     

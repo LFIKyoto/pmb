@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_build.class.php,v 1.65.2.2 2015-09-30 13:43:13 vtouchard Exp $
+// $Id: cms_build.class.php,v 1.83 2018-10-24 12:34:04 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,20 +12,23 @@ require_once($class_path."/autoloader.class.php");
 $autoloader = new autoloader();
 $autoloader->add_register("cms_modules",true);		
 require_once($class_path."/cms/cms_modules_parser.class.php");
+
 class cms_build{	
-	var $dom;
-	var $headers = array(
+	public $dom;
+	public $headers = array(
 		'add' => array(),
 		'replace' => array()
 	);
-	var $id_version; // version du portail
-	var $fixed_cadres = array();
+	public $id_version; // version du portail
+	public $fixed_cadres = array();
+	public static $hash_cache_cadres = array();
+	
 	//Constructeur	 
-	function cms_build(){
+	public function __construct(){
 
 	}	
 	
-	function transform_html($html){
+	public function transform_html($html){
 		global $lvl,$pageid,$search_type_asked;
 		global $charset, $is_opac_included;
 		global $opac_compress_css;
@@ -119,7 +122,8 @@ class cms_build{
 								$tmp=array();
 								$tmp=explode('=', $param);
 								if(sizeof($tmp)==2){
-									if(${$tmp[0]}!=$tmp[1] && ($tmp[0]=="lvl" || $tmp[0]=="search_type_asked" || $tmp[0]=="pageid")){
+									global ${$tmp[0]};
+									if(${$tmp[0]} != $tmp[1] && ($tmp[0]=="lvl" || $tmp[0]=="search_type_asked" || $tmp[0]=="pageid")){
 										//si le cadre rentre dans le cas ou il n'appartient pas à la page courante.
 										$cadreOk=false;
 									}
@@ -133,7 +137,7 @@ class cms_build{
 					$ordered_cadres = $this->order_cadres($cadres,$cache_cadre_object);
 					foreach($ordered_cadres as $cadre){
 						$this->apply_change($cadre,$cache_cadre_object);
-						if($cadre->build_div){
+						if(is_object($cadre) && $cadre->build_div){
 							$this->add_div($cadre->build_obj);
 						}
 					}
@@ -214,7 +218,7 @@ class cms_build{
 		return $html;
 	}
 	
-	function add_div($id){	
+	public function add_div($id){	
 		
 		$node = $this->dom->getElementById($id);
 		if(!$node) return;
@@ -225,28 +229,28 @@ class cms_build{
 		$node->parentNode->insertBefore($obj_div,$node);
 	}
 		
-	function clear_session_version(){
+	public function clear_session_version(){
 		$_SESSION["build_id_version"]="";
 	}
 	
-	function get_version_public(){
+	public function get_version_public(){
 		global $dbh,$opac_cms;
 		global $build_id_version; // passer en get si constrution de l'opac en cours
 		if($build_id_version){
 			$_SESSION["build_id_version"]=$build_id_version;
 		} else{
-			$build_id_version=$_SESSION["build_id_version"];
+			$build_id_version=(isset($_SESSION["build_id_version"]) ? $_SESSION["build_id_version"] : '');
 		}
 		if($build_id_version ) {			
 			// mode opac en constuction
 			$requete = "select * from cms_version where 
-			id_version='$build_id_version'
+			id_version='".($build_id_version*1)."'
 			order by version_date desc 
 			";	
 		} elseif($opac_cms){
 			// mode opac, on prend la dernière version
 			$requete = "select * from cms_version where 
-			version_cms_num=$opac_cms
+			version_cms_num= '".($opac_cms*1)."'
 			order by version_date desc 
 			";		
 		}else{
@@ -260,18 +264,20 @@ class cms_build{
 		}	
 	}
 
-	function apply_change($cadre,&$cache_cadre_object){
+	public function apply_change($cadre,&$cache_cadre_object){
 		global $charset,$opac_parse_html;
+		
+		if(!is_object($cadre)) return false;
 		if(substr($cadre->build_obj,0,strlen("cms_module_"))=="cms_module_"){
 			if($cadre->empty && $_SESSION["cms_build_activate"]){
 				$id_cadre= substr($cadre->build_obj,strrpos($cadre->build_obj,"_")+1);
 				$obj=cms_modules_parser::get_module_class_by_id($id_cadre);
 				if($obj){
-					$query = "select cadre_name from cms_cadres where id_cadre = ".$id_cadre;
+					$query = "select cadre_name from cms_cadres where id_cadre = '".($id_cadre*1)."'";
 					$result = pmb_mysql_query($query);
 					$row = pmb_mysql_fetch_object($result);
 					
-					$html ="<span id='".$cadre->build_obj."' class='cmsNoStyles' type='cms_module_hidden' cadre_style='".$cadre->build_css."'><div id='".$cadre->build_obj."_conteneur' class='cms_module_hidden' style='display:none'>".$row->cadre_name."<div style='".$cadre->build_css."'></div></div></pan>";
+					$html ="<span id='".$cadre->build_obj."' class='cmsNoStyles' type='cms_module_hidden' cadre_style='".$cadre->build_css."'><div id='".$cadre->build_obj."_conteneur' class='cms_module_hidden' style='display:none'>".$obj->get_human_description()."<div style='".$cadre->build_css."'></div></div></span>";
 					$tmp_dom = new domDocument();
 					if($charset == "utf-8"){
 						@$tmp_dom->loadHTML("<?xml version='1.0' encoding='$charset'>".$html);
@@ -288,7 +294,7 @@ class cms_build{
 				}
 			}else if(!$cadre->empty){
 				$id_cadre= substr($cadre->build_obj,strrpos($cadre->build_obj,"_")+1);
-				if($cache_cadre_object[$cadre->build_obj]){
+				if(isset($cache_cadre_object[$cadre->build_obj]) && $cache_cadre_object[$cadre->build_obj]){
 					$obj=$cache_cadre_object[$cadre->build_obj];
 				}else{
 					$obj=cms_modules_parser::get_module_class_by_id($id_cadre);
@@ -336,7 +342,7 @@ class cms_build{
 		}else{
 			if($cadre->build_type == "cadre" && $cadre->empty == 1 && $_SESSION["cms_build_activate"]){
 				
-				$html ="<span id='".$cadre->build_obj."' class='cmsNoStyles' type='cms_module_hidden' cadre_style='".$cadre->build_css."'><div id='".$cadre->build_obj."_conteneur' class='cms_module_hidden' style='display:none'>".$cadre->build_obj."<div style='".$cadre->build_css."'></div></div></pan>";
+				$html ="<span id='".$cadre->build_obj."' class='cmsNoStyles' type='cms_module_hidden' cadre_style='".$cadre->build_css."'><div id='".$cadre->build_obj."_conteneur' class='cms_module_hidden' style='display:none'>".$cadre->build_obj."<div style='".$cadre->build_css."'></div></div></span>";
 				$tmp_dom = new domDocument();
 				if($charset == "utf-8"){
 					@$tmp_dom->loadHTML("<?xml version='1.0' encoding='$charset'>".$html);
@@ -353,7 +359,7 @@ class cms_build{
 	}
 	
 	
-	function order_cadres($cadres,&$cache_cadre_object){
+	public function order_cadres($cadres,&$cache_cadre_object){
 		//on retente de mettre de l'ordre dans tout ca...
 		//init
 		$ordered_cadres = array();
@@ -361,6 +367,7 @@ class cms_build{
 		$zone = "";
 		//on élimine ce qui n'est pas dans le dom (ou ne va pas l'être)
 		for($i=0 ; $i<count($cadres) ; $i++){
+			$cadres[$i]->empty=0;
 			if(!$zone) $zone = $cadres[$i]->build_parent;
 			if(substr($cadres[$i]->build_obj,0,strlen("cms_module_"))=="cms_module_"){
 				$id_cadre= substr($cadres[$i]->build_obj,strrpos($cadres[$i]->build_obj,"_")+1);
@@ -370,7 +377,7 @@ class cms_build{
 						$cadres_dom[] = $res["value"];						
 					}
 				}else{
-					if($cache_cadre_object[$cadres[$i]->build_obj]){
+					if(isset($cache_cadre_object[$cadres[$i]->build_obj])){
 						$obj=$cache_cadre_object[$cadres[$i]->build_obj];
 					}else{
 						$obj=cms_modules_parser::get_module_class_by_id($id_cadre);
@@ -406,7 +413,7 @@ class cms_build{
 		$i=0;
 		$nb =count($cadres);
 		while(count($cadres)){
-			$ordered_cadres[] =$this->get_next_cadre($cadres,$zone,$ordered_cadres[count($ordered_cadres)-1]->build_obj);
+			$ordered_cadres[] =$this->get_next_cadre($cadres,$zone,(is_object($ordered_cadres[count($ordered_cadres)-1]) ? $ordered_cadres[count($ordered_cadres)-1]->build_obj : ''));
 			if($i==$nb) break;
 			$i++;
 		}
@@ -422,19 +429,21 @@ class cms_build{
 	 * Permets la gestion du cache pour les cadres du portail dans l'opac
 	 */
 	protected function manage_cache_cadres($todo,$build_object_name="",$content_type="",$content=""){
-		$res=array($todo=>false,"value"=>"");
+		global $cms_cache_ttl;//Variable en seconde
+		
+		$return = array($todo=>false,"value"=>"");
+		
 		if($_SESSION["cms_build_activate"]){
-			return $res;
-		}
-		
+			return $return;
+		}		
 		if($todo == "clean"){
-			global $cms_cache_ttl;//Variable en seconde
-			$requete="DELETE FROM cms_cache_cadres WHERE NOW() > DATE_ADD(`cache_cadre_create_date`, INTERVAL ".($cms_cache_ttl*1)." SECOND)";
-			pmb_mysql_query($requete);
-			$res=array($todo=>true,"value"=>"");
-			return $res;
+			$requete="DELETE FROM cms_cache_cadres WHERE DATE_SUB(NOW(), INTERVAL ".($cms_cache_ttl*1)." SECOND) > cache_cadre_create_date";
+			$res = pmb_mysql_query($requete);
+			if(pmb_mysql_affected_rows()) {
+				cms_build::$hash_cache_cadres = array();
+			}
+			return array($todo=>true,"value"=>"");
 		}
-		
 		
 		$elems = explode("_",$build_object_name);
 		$id = array_pop($elems);
@@ -443,8 +452,7 @@ class cms_build{
 		$my_hash_cadre = call_user_func(array($cadre_name,"get_hash_cache"), $build_object_name,$id);
 		//il est possible que la méthode ne nous retourne pas de cache, cela signifie que l'on ne doit pas cacher les éléments associés
 		if(!$my_hash_cadre){
-			$res=array($todo=>false,"value"=>"");
-			return $res;
+			return array($todo=>false,"value"=>"");
 		}
 		
 		switch ($todo) {
@@ -452,6 +460,7 @@ class cms_build{
 				$requete="SELECT cache_cadre_hash,cache_cadre_content  FROM cms_cache_cadres WHERE cache_cadre_hash='".addslashes($my_hash_cadre)."' AND cache_cadre_type_content='".addslashes($content_type)."'";
 				$res=pmb_mysql_query($requete);
 				if($res && pmb_mysql_num_rows($res)){
+					cms_build::$hash_cache_cadres[] = $my_hash_cadre.$content_type;					
 					$html = pmb_mysql_result($res,0,1);
 					if($html){
 						if($content_type == "object"){
@@ -462,10 +471,11 @@ class cms_build{
 					}else{
 						$value = "";
 					}
-					$res=array($todo=>true,"value"=>$value);
+					return array($todo=>true,"value"=>$value);
 				}
 				break;
 			case "insert":
+				if(in_array($my_hash_cadre.$content_type, cms_build::$hash_cache_cadres)) return array($todo=>true,"value"=>"");
 				$cache_cadre_content="";
 				if($content_type == "object"){
 					if($content){
@@ -474,18 +484,18 @@ class cms_build{
 				}else{
 					$cache_cadre_content=$content;
 				}
+				cms_build::$hash_cache_cadres[] = $my_hash_cadre.$content_type;
 				$requete="INSERT INTO cms_cache_cadres(cache_cadre_hash,cache_cadre_type_content,cache_cadre_content) VALUES('".addslashes($my_hash_cadre)."','".addslashes($content_type)."','".addslashes($cache_cadre_content)."')";
 				$res2=pmb_mysql_query($requete);
 				if($res2){
-					$res=array($todo=>true,"value"=>"");
+					return array($todo=>true,"value"=>""); 
 				}
 				break;
 		}
-		
-		return $res;
+		return $return;
 	}
 	
-	function get_next_cadre(&$cadres,$zone,$before=""){
+	public function get_next_cadre(&$cadres,$zone,$before=""){
 		$next = false;
 		//on commence par aller par rapport au dynamiques
 		
@@ -509,7 +519,7 @@ class cms_build{
 		return $next;
 	}
 	
-	function setAllId($DOMNode){
+	public function setAllId($DOMNode){
   		if($DOMNode->hasChildNodes()){
   			for ($i=0; $i<$DOMNode->childNodes->length;$i++) {
   				$this->setAllId($DOMNode->childNodes->item($i));
@@ -523,12 +533,13 @@ class cms_build{
       	}
 	}
 	
-	function apply_dom_change($id,$infos){	
+	public function apply_dom_change($id,$infos){	
 		//on s'assure que la zone existe !
 		$parent = $this->dom->getElementById($infos->build_parent);
 		if($parent){
 			$node = $this->dom->getElementById($id);
 			if($node){
+				if(!isset($infos->empty)) $infos->empty = '';
 				if(!$infos->empty){
 					//on ajoute l'attribut fixed si on est sur un élément fixé!
 					if($infos->build_fixed){
@@ -543,14 +554,14 @@ class cms_build{
 		}
 	}
 
-	function add_css($node,$css){
+	public function add_css($node,$css){
 		if($css){
 			$node->setAttribute("style",$css);
 		}
 		return $node;
 	}
 
-	function get_first_child($zone) {
+	public function get_first_child($zone) {
 		$childs=$zone->childNodes;
 		$first_child=null;
 		for ($i=0; $i<$childs->length;$i++) {
@@ -563,7 +574,7 @@ class cms_build{
 		return $first_child;
 	}
 	
-	function get_nextSibling($zone,$field) {
+	public function get_nextSibling($zone,$field) {
 		$childs=$zone->childNodes;
 		$next=null;
 		$found=0;
@@ -581,7 +592,7 @@ class cms_build{
 		return $next;
 	}
 	
-	function get_previousSibling($zone,$field) {
+	public function get_previousSibling($zone,$field) {
 		$childs=$zone->childNodes;
 		$previous=null;
 		for ($i=0; $i<$childs->length;$i++) {
@@ -598,7 +609,7 @@ class cms_build{
 		return null;
 	}	
 
-	function place($node,$parent,$infos){
+	public function place($node,$parent,$infos){
 		$previous_brother = $this->get_previous_node_id($infos);
 		if($previous_brother!== false){
 			if($previous_brother!= ""){
@@ -636,7 +647,7 @@ class cms_build{
 		}
 	}
 	
-	function get_previous_node_id($infos){
+	public function get_previous_node_id($infos){
 		if($this->dom->getElementById($infos->build_child_before)){
 			return $infos->build_child_before;
 		}else{
@@ -644,12 +655,12 @@ class cms_build{
 		}
 	}
 
-	function _get_previous_node_id($node_id){
+	public function _get_previous_node_id($node_id){
 		if($node_id === ""){
 			return $node_id;
 		}else{
 			//if($this->dom->getElementById($node_id)){
-				$query = "select build_child_before from cms_build where build_obj = '".$node_id."' and  build_version_num= '".$this->id_version."' ";
+				$query = "select build_child_before from cms_build where build_obj = '".addslashes($node_id)."' and  build_version_num= '".$this->id_version."' ";
 				$result = pmb_mysql_query($query);
 				if(pmb_mysql_num_rows($result)){
 					$previous = pmb_mysql_result($result,0,0);
@@ -666,16 +677,16 @@ class cms_build{
 
 	}
 
-	function get_next_node_id($infos){
+	public function get_next_node_id($infos){
 		return $this->_get_next_node_id($infos->build_obj);
 	}
 	
-	function _get_next_node_id($node_id){
+	public function _get_next_node_id($node_id){
 		if($node_id === ""){
 			return $node_id;
 		}else{
 			//if($this->dom->getElementById($node_id)){
-				$query = "select build_child_after from cms_build where build_obj = '".$node_id."' and  build_version_num= '".$this->id_version."'";
+				$query = "select build_child_after from cms_build where build_obj = '".addslashes($node_id)."' and  build_version_num= '".$this->id_version."'";
 				$result = pmb_mysql_query($query);
 				if(pmb_mysql_num_rows($result)){
 					$next = pmb_mysql_result($result,0,0);
@@ -691,19 +702,31 @@ class cms_build{
 		}
 	}
 	
-	function insert_headers(){
+	public function insert_headers(){
+		global $charset;
+		
 		if(count($this->headers['add'])){
 			$headers = implode("\n",$this->headers['add']);
 			$tmp_dom = new domDocument();
-			@$tmp_dom->loadHTML($headers);
+			if($charset == "utf-8"){
+				@$tmp_dom->loadHTML("<?xml version='1.0' encoding='$charset'>".$headers);
+			}else{
+				@$tmp_dom->loadHTML($headers);
+			}
 			for ($i=0 ; $i<$tmp_dom->getElementsByTagName("head")->item(0)->childNodes->length ; $i++){
-				$this->dom->getElementsByTagName("head")->item(0)->appendChild($this->dom->importNode($tmp_dom->getElementsByTagName("head")->item(0)->childNodes->item($i),true));
+				if(is_object($this->dom->getElementsByTagName("head")->item(0))) {
+					$this->dom->getElementsByTagName("head")->item(0)->appendChild($this->dom->importNode($tmp_dom->getElementsByTagName("head")->item(0)->childNodes->item($i),true));
+				}
 			}
 		}
 		if(count($this->headers['replace'])){
 			$tmp_dom = new domDocument();
 			foreach($this->headers['replace'] as $header){
-				@$tmp_dom->loadHTML($header);
+				if($charset == "utf-8"){
+					@$tmp_dom->loadHTML("<?xml version='1.0' encoding='$charset'>".$header);
+				}else{
+					@$tmp_dom->loadHTML($header);
+				}
 				for ($i=0 ; $i<$tmp_dom->getElementsByTagName("head")->item(0)->childNodes->length ; $i++){
 					$new_item = $tmp_dom->getElementsByTagName("head")->item(0)->childNodes->item($i);
 					$to_check = $this->dom->getElementsByTagName($new_item->nodeName);

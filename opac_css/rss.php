@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rss.php,v 1.12 2015-03-13 15:37:26 apetithomme Exp $
+// $Id: rss.php,v 1.13 2016-02-23 10:49:46 mbertin Exp $
 
 $base_path=".";
 $include_path=$base_path."/includes";
@@ -56,5 +56,5 @@ if (!$flux->contenu_du_flux) {
 	}
 	$flux->stocke_cache() ;
 } 
-@header('Content-type: text/xml');
+@header("Content-type: text/xml; charset=".$charset);
 echo $flux->contenu_du_flux ;

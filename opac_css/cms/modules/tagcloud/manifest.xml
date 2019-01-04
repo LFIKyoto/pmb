@@ -4,10 +4,11 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.3 2014-06-27 15:24:36 arenou Exp $ -->
+$Id: manifest.xml,v 1.4 2016-09-20 10:25:41 apetithomme Exp $ -->
 
 <manifest>
-	<name>Nuage de Tags</name>
+	<name lang="fr_FR">Nuage de Tags</name>
+	<name lang="en_UK">Tag cloud</name>
 	<author>
 		<name>Arnaud RENOU / Nicolas Gantier</name>
 		<organisation>PMB Services</organisation>

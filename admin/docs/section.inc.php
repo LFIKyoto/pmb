@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: section.inc.php,v 1.22 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: section.inc.php,v 1.24 2018-10-12 11:59:35 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+require_once($class_path."/list/configuration/docs/list_configuration_docs_section_ui.class.php");
 
 // gestion des codes section exemplaires
 ?>
@@ -22,47 +24,7 @@ function test_form(form)
 </script>
 <?php
 function show_section($dbh) {
-	global $msg;
-
-	print "<table>
-	<tr>
-		<th>".$msg[103]."</th>
-		<th>".$msg['opac_object_visible_short']."</th>
-		<th>".$msg['section_visible_loc']."</th>
-		<th>".$msg['proprio_codage_proprio']."</th>
-		<th>".$msg['import_codage']."</th>
-	</tr>";
-
-	$requete = "SELECT idsection, section_libelle, sdoc_codage_import, sdoc_owner, lender_libelle, section_visible_opac FROM docs_section left join lenders on sdoc_owner=idlender ORDER BY section_libelle";
-	$res = pmb_mysql_query($requete, $dbh);
-	$nbr = pmb_mysql_num_rows($res);
-
-	$parity=1;
-	for($i=0;$i<$nbr;$i++) {
-		$row=pmb_mysql_fetch_object($res);
-		$rqtloc = "select location_libelle from docsloc_section, docs_location where num_section='$row->idsection' and idlocation=num_location order by location_libelle " ;
-		$resloc = pmb_mysql_query($rqtloc, $dbh);
-		$localisations=array();
-		while ($loc=pmb_mysql_fetch_object($resloc)) $localisations[]=$loc->location_libelle ;
-		$locaff = implode("<br />",$localisations) ;
-		if ($parity % 2) {
-			$pair_impair = "even";
-			} else {
-				$pair_impair = "odd";
-				}
-		$parity += 1;
-        $tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./admin.php?categ=docs&sub=section&action=modif&id=$row->idsection';\" ";
-       	if ($row->sdoc_owner) print pmb_bidi("<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td><i>$row->section_libelle</i></td>");
-			else print pmb_bidi("<tr class='$pair_impair' $tr_javascript style='cursor: pointer'><td><strong>$row->section_libelle</strong></td>"); 
-		if ($row->section_visible_opac) $visible="X" ; 
-			else $visible="&nbsp;" ;
-		print "<td>$visible</td>" ;
-		print "<td>$locaff</td>" ;
-		print pmb_bidi("<td>$row->lender_libelle</td>") ;
-		print pmb_bidi("<td>$row->sdoc_codage_import</td></tr>");
-	}
-	print "</table>
-		<input class='bouton' type='button' value=' $msg[110] ' onClick=\"document.location='./admin.php?categ=docs&sub=section&action=add'\" />";
+	print list_configuration_docs_section_ui::get_instance()->get_display_list();
 }
 
 function section_form($libelle="", $sdoc_codage_import="", $sdoc_owner=0, $id=0, $section_pic="", $section_visible_opac=1, $num_locations=array()) {
@@ -188,17 +150,17 @@ switch($action) {
 						show_section($dbh);
 					}else {
 						$msg_suppr_err = $admin_liste_jscript;
-						$msg_suppr_err .= $msg["section_used_abts"]." <a href='#' onclick=\"showListItems(this);return(false);\" what='section_abts' item='".$id."' total='".$total."' alt=\"".$msg["admin_abts_list"]."\" title=\"".$msg["admin_abts_list"]."\"><img src='./images/req_get.gif'></a>" ;
+						$msg_suppr_err .= $msg["section_used_abts"]." <a href='#' onclick=\"showListItems(this);return(false);\" what='section_abts' item='".$id."' total='".$total."' alt=\"".$msg["admin_abts_list"]."\" title=\"".$msg["admin_abts_list"]."\"><img src='".get_url_icon('req_get.gif')."'></a>" ;
 						error_message(	$msg[294], $msg_suppr_err, 1, 'admin.php?categ=docs&sub=section&action=');
 					}	
 				} else {
 					$msg_suppr_err = $admin_liste_jscript;
-					$msg_suppr_err .= $msg["section_used_users"]." <a href='#' onclick=\"showListItems(this);return(false);\" what='section_users' item='".$id."' total='".$compt."' alt=\"".$msg["admin_users_list"]."\" title=\"".$msg["admin_users_list"]."\"><img src='./images/req_get.gif'></a>" ;
+					$msg_suppr_err .= $msg["section_used_users"]." <a href='#' onclick=\"showListItems(this);return(false);\" what='section_users' item='".$id."' total='".$compt."' alt=\"".$msg["admin_users_list"]."\" title=\"".$msg["admin_users_list"]."\"><img src='".get_url_icon('req_get.gif')."'></a>" ;
 					error_message(	$msg[294], $msg_suppr_err, 1, 'admin.php?categ=docs&sub=section&action=');
 				}
 			} else {
 				$msg_suppr_err = $admin_liste_jscript;
-				$msg_suppr_err .= $msg[1702]." <a href='#' onclick=\"showListItems(this);return(false);\" what='section_docs' item='".$id."' total='".$total."' alt=\"".$msg["admin_docs_list"]."\" title=\"".$msg["admin_docs_list"]."\"><img src='./images/req_get.gif'></a>" ;
+				$msg_suppr_err .= $msg[1702]." <a href='#' onclick=\"showListItems(this);return(false);\" what='section_docs' item='".$id."' total='".$total."' alt=\"".$msg["admin_docs_list"]."\" title=\"".$msg["admin_docs_list"]."\"><img src='".get_url_icon('req_get.gif')."'></a>" ;
 				error_message(	$msg[294], $msg_suppr_err, 1, 'admin.php?categ=docs&sub=section&action=');
 			}
 		} else show_section($dbh);

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestion_multi.class.php,v 1.14 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: suggestion_multi.class.php,v 1.19 2017-11-23 10:12:31 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,19 +15,19 @@ require_once($base_path."/classes/suggestions_unimarc.class.php");
 
 class suggestion_multi{
 	
-	var $liste_sugg=array();
+	public $liste_sugg=array();
 	
 	/**
 	 * Constructeur
 	 */
-	function suggestion_multi($tableau_sugg=array()){
+	public function __construct($tableau_sugg=array()){
 		$this->liste_sugg = $tableau_sugg;
 	}
 	
 	/**
 	 * Formulaire de saisie des suggestions multiples
 	 */
-	function display_form(){
+	public function display_form(){
 		global $dbh, $multi_sug_form,$charset, $msg, $sug_src;
 		
 		//On charge la liste des sources
@@ -44,20 +44,20 @@ class suggestion_multi{
 			$multi_sug_form = str_replace('!!max_ligne!!',$nb_lignes,$multi_sug_form);
 			$ligne = "
 				<tr id='sugg_0'>
-					<td><input type='texte' name='sugg_tit_0' id='sugg_tit_0' value=''  disabled /></td>
-					<td><input type='texte' name='sugg_aut_0' id='sugg_aut_0' value='' disabled /></td>
-					<td><input type='texte' name='sugg_edi_0' id='sugg_edi_0' value='' disabled /></td>
-					<td><input type='texte' name='sugg_code_0' id='sugg_code_0' value='' disabled /></td>
-					<td><input type='texte' name='sugg_prix_0' id='sugg_prix_0' value='' disabled /></td>
-					<td><input type='texte' name='sugg_url_0' id='sugg_url_0' value='' disabled /></td>
+					<td><input type='text' name='sugg_tit_0' id='sugg_tit_0' value=''  disabled /></td>
+					<td><input type='text' name='sugg_aut_0' id='sugg_aut_0' value='' disabled /></td>
+					<td><input type='text' name='sugg_edi_0' id='sugg_edi_0' value='' disabled /></td>
+					<td><input type='text' name='sugg_code_0' id='sugg_code_0' value='' disabled /></td>
+					<td><input type='text' name='sugg_prix_0' id='sugg_prix_0' value='' disabled /></td>
+					<td><input type='text' name='sugg_url_0' id='sugg_url_0' value='' disabled /></td>
 					<td><textarea name='sugg_com_0' id='sugg_com_0' disabled ></textarea></td>
-					<td><input type='texte' name='sugg_date_0' id='sugg_date_0' value='' disabled /></td>
+					<td><input type='text' name='sugg_date_0' id='sugg_date_0' value='' disabled /></td>
 					<td>
 						<select id='sugg_src_0' name='sugg_src_0' disabled >
 							$option
 						</select>
 					</td>
-					<td><input type='texte' name='sugg_qte_0' id='sugg_qte_0' value='1' disabled /></td>
+					<td><input type='text' name='sugg_qte_0' id='sugg_qte_0' value='1' disabled /></td>
 					<td id='act_btn_0'><input type='button' name='add_line_0' id='add_line_0' value='+' onclick=\"add_line(0);\"/></td>
 				</tr>";
 		} else {
@@ -110,20 +110,20 @@ class suggestion_multi{
 				}
 				
 				$ligne .= "<tr id='sugg_$i'>
-					<td><input type='texte' name='sugg_tit_$i' id='sugg_tit_$i' value='".htmlentities($titre,ENT_QUOTES,$charset)."' /></td>
-					<td><input type='texte' name='sugg_aut_$i' id='sugg_aut_$i' value='".htmlentities($auteur,ENT_QUOTES,$charset)."' /></td>
-					<td><input type='texte' name='sugg_edi_$i' id='sugg_edi_$i' value='".htmlentities($editeur,ENT_QUOTES,$charset)."' /></td>
-					<td><input type='texte' name='sugg_code_$i' id='sugg_code_$i' value='".htmlentities($code,ENT_QUOTES,$charset)."' /></td>
-					<td><input type='texte' name='sugg_prix_$i' id='sugg_prix_$i' value='".$prix."' /></td>
-					<td><input type='texte' name='sugg_url_$i' id='sugg_url_$i' value='".htmlentities($url,ENT_QUOTES,$charset)."' /></td>
+					<td><input type='text' name='sugg_tit_$i' id='sugg_tit_$i' value='".htmlentities($titre,ENT_QUOTES,$charset)."' /></td>
+					<td><input type='text' name='sugg_aut_$i' id='sugg_aut_$i' value='".htmlentities($auteur,ENT_QUOTES,$charset)."' /></td>
+					<td><input type='text' name='sugg_edi_$i' id='sugg_edi_$i' value='".htmlentities($editeur,ENT_QUOTES,$charset)."' /></td>
+					<td><input type='text' name='sugg_code_$i' id='sugg_code_$i' value='".htmlentities($code,ENT_QUOTES,$charset)."' /></td>
+					<td><input type='text' name='sugg_prix_$i' id='sugg_prix_$i' value='".$prix."' /></td>
+					<td><input type='text' name='sugg_url_$i' id='sugg_url_$i' value='".htmlentities($url,ENT_QUOTES,$charset)."' /></td>
 					<td><textarea name='sugg_com_$i' id='sugg_com_$i'></textarea></td>
-					<td><input type='texte' name='sugg_date_$i' id='sugg_date_$i' value='".htmlentities($date,ENT_QUOTES,$charset)."' /></td>
+					<td><input type='text' name='sugg_date_$i' id='sugg_date_$i' value='".htmlentities($date,ENT_QUOTES,$charset)."' /></td>
 					<td>
 						<select id='sugg_src_$i' name='sugg_src_$i'>
 							$option
 						</select>
 					</td>
-					<td><input type='texte' name='sugg_qte_$i' id='sugg_qte_$i' value='1' /></td>";
+					<td><input type='text' name='sugg_qte_$i' id='sugg_qte_$i' value='1' /></td>";
 				
 				if($i==count($liste)-1){	
 					$ligne .= "<td id='act_btn_$i'><input type='button' name='add_line_$i' id='add_line_$i' value='+' onclick=\"add_line($i);\"/></td>";
@@ -145,7 +145,7 @@ class suggestion_multi{
 	/*
 	 * Enregistrement d'une suggestion multiple
 	 */
-	function save(){
+	public function save(){
 		
 		global $dbh, $max_nblignes, $msg, $id_empr, $empr_location, $num_categ;
 		
@@ -154,39 +154,39 @@ class suggestion_multi{
 			$code = "sugg_code_".$i; $prix = "sugg_prix_".$i; $com = "sugg_com_".$i;
 			$url = "sugg_url_".$i; $qte = "sugg_qte_".$i; $src = "sugg_src_".$i;
 			$date = "sugg_date_".$i; $unimarc = "id_unimarc_".$i; $notice =  "id_notice_".$i;
-			global $sug_tr, $$tit, $$aut, $$edi, $$code, $$com, $$prix, $$url, $$qte, $$src, $$date, $$unimarc, $$notice;
+			global $sug_tr, ${$tit}, ${$aut}, ${$edi}, ${$code}, ${$com}, ${$prix}, ${$url}, ${$qte}, ${$src}, ${$date}, ${$unimarc}, ${$notice};
 				
-			if(isset($$tit)){
-				if(!is_numeric($$qte)){
-					print "<strong>".$msg[empr_sugg_qte_error]."<strong>";
+			if(isset(${$tit})){
+				if(!is_numeric(${$qte})){
+					print "<strong>".$msg['empr_sugg_qte_error']."<strong>";
 					return;
-				} else if(!$$tit || (!$$edi && !$$aut && !$$code)) {
+				} else if(!${$tit} || (!${$edi} && !${$aut} && !${$code})) {
 					print "<strong>".str_replace('\n','<br />',$msg['empr_sugg_ko'])."<strong>";
 					return;
-				} else if(!suggestions::exists($id_empr,$$tit,$$aut,$$edi,$$code)) {
-					$$prix = str_replace(',','.',$$prix);
+				} else if(!suggestions::exists($id_empr,${$tit},${$aut},${$edi},${$code})) {
+					${$prix} = str_replace(',','.',${$prix});
 					$req="insert into suggestions set 
-							titre='".$$tit."',
-							auteur='".$$aut."',
-							editeur='".$$edi."',
-							code='".$$code."',
-							prix='".$$prix."',
-							commentaires='".$$com."',
-							url_suggestion='".$$url."',
-							nb='".$$qte."',
-							sugg_source='".$$src."',
+							titre='".${$tit}."',
+							auteur='".${$aut}."',
+							editeur='".${$edi}."',
+							code='".${$code}."',
+							prix='".${$prix}."',
+							commentaires='".${$com}."',
+							url_suggestion='".${$url}."',
+							nb='".${$qte}."',
+							sugg_source='".${$src}."',
 							statut=1,
-							date_publication='".$$date."',
+							date_publication='".${$date}."',
 							date_creation='".date("Y-m-d")."',
 							sugg_location='".$empr_location."',
 							num_categ='".$num_categ."'
 							";
-					if($$unimarc){
-						$uni = new suggestions_unimarc($$unimarc);
+					if(${$unimarc}){
+						$uni = new suggestions_unimarc(${$unimarc});
 						$req .= ", notice_unimarc ='".addslashes($uni->sugg_uni_notice)."'";							
 					}
-					if($$notice){
-						$req .= ", num_notice ='".$$notice."'";
+					if(${$notice}){
+						$req .= ", num_notice ='".${$notice}."'";
 					}
 					pmb_mysql_query($req,$dbh);
 					$idSugg = pmb_mysql_insert_id();
@@ -201,9 +201,9 @@ class suggestion_multi{
 					$su = new suggestions($idSugg);
 					suggestions::alert_mail_sugg_users_pmb(1, $id_empr, $su->get_table(), $su->sugg_location) ;
 						
-					print $msg['empr_sugg_ok'];
+					print $msg['empr_sugg_ok'] . ' : <span>' . stripslashes(${$tit}) . '</span><br/>';
 				} else {
-					print $msg['empr_sugg_already_exist'];
+					print $msg['empr_sugg_already_exist'] . ' : <span>' . stripslashes(${$tit}) . '</span><br/>';
 				}
 			}
 		}

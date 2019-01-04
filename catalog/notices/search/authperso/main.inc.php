@@ -1,6 +1,8 @@
 <?php
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+if(!isset($no_rec_history)) $no_rec_history = '';
+
 // page de switch recherche titre de série
 
 require_once($class_path."/searcher.class.php");
@@ -19,6 +21,8 @@ $link_explnum_bulletin = "./catalog.php?categ=serials&sub=bulletinage&action=exp
 $browser_url = "./catalog/notices/search/authperso/authperso_browser.php?mode=$mode";
 
 $rec_history=true;
+
+if(!isset($page))  $page = '';
 
 if (($no_rec_history)&&((string)$page=="")) {
 	$_SESSION["CURRENT"]=count($_SESSION["session_history"]);

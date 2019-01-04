@@ -4,29 +4,29 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: z_progression_visible2.php,v 1.6.16.1 2015-11-22 18:02:32 Alexandre Exp $
+// $Id: z_progression_visible2.php,v 1.8 2017-01-31 15:41:41 dgoron Exp $
 
-// définition du minimum nécéssaire 
+// définition du minimum nécéssaire
 $base_path="../..";
-$base_auth = "CATALOGAGE_AUTH";  
-$base_title = "";    
+$base_auth = "CATALOGAGE_AUTH";
+$base_title = "";
 //permet d'appliquer le style de l'onglet ou apparait la frame
 $current_alert = "catalog";
-require_once ("$base_path/includes/init.inc.php");  
+require_once ("$base_path/includes/init.inc.php");
 
 
 // avec MSIE le bouton resultats est toujour visible
 // avec Mozilla/Firefox il devient visible à la fin de yaz_wait()
 // avec autres browser je ne sais pas ;-)
- 
+
 $visi='hidden';
-if (preg_match('/\bMSIE\b/i',$_SERVER[HTTP_USER_AGENT])){
+if (preg_match('/\bMSIE\b/i',$_SERVER['HTTP_USER_AGENT'])){
 	$visi='"visible"';
 }
 
 print "
 <!--
-$_SERVER[HTTP_USER_AGENT]
+".$_SERVER['HTTP_USER_AGENT']."
 -->
 <div id='contenu-frame' style='background-color: inherit;'>
 	<div id='visible2' style='visibility: $visi;'>

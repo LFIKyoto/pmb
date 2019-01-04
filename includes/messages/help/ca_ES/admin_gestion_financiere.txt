@@ -1,4 +1,4 @@
-<h1>Gesti&oacute; financera dels usuaris</h1>
+<h2>Gesti&oacute; financera dels usuaris</h2>
 <p>La gesti&oacute; financera dels usuaris permet generar els moviment financers associats
 als usuaris :
 </p>

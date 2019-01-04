@@ -1,4 +1,4 @@
-<h1>Eines</h1>
+<h2>Eines</h2>
 <p>Trobaràs aquí diferents opcions. </p>
 <p>
 <b>Neteja de la base</b> permet realitzar el mantenimet de les dades  : suprimir els registres sense exemplar, etc.

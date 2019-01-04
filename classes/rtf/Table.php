@@ -52,7 +52,7 @@ class Table {
 	 * Constructor. Internal use.
 	 * @access public
 	 */
-	function Table(&$container, $alignment = 'left') {	    
+	function __construct(&$container, $alignment = 'left') {	    
 		$this->rtf = &$container->rtf;	
 		$this->container = &$container;	  
 		

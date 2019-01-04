@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sms.class.php,v 1.5 2011-12-28 13:19:48 pmbs Exp $
+// $Id: sms.class.php,v 1.7 2018-11-28 15:47:50 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -34,11 +34,19 @@ class smstrend {
 	private $login='';
 	private $password='';
 	private $tpoa='';
+	private $messageQty='GOLD';
+	private $messageType='PLUS';
 	
-	function smstrend ($param_list) {		
+	function __construct ($param_list) {		
 		$this->login=$param_list["login"];
 		$this->password=$param_list["password"];
 		$this->tpoa=$param_list["tpoa"];
+		if ($param_list["messageQty"]) {
+			$this->messageQty=$param_list["messageQty"];
+		}
+		if ($param_list["messageType"]) {
+			$this->messageType=$param_list["messageType"];
+		}
 	}
 	
 	function send_sms($telephone, $message) {
@@ -51,8 +59,8 @@ class smstrend {
 			"login"=>$this->login,
 			"password"=>$this->password,
 			"mobile"=>$telephone,
-			"messageQty"=>"GOLD",
-			"messageType"=>"PLUS",
+			"messageQty"=>$this->messageQty,
+			"messageType"=>$this->messageType,
 			"tpoa"=>$this->tpoa, //$object_message,
 			"message"=>$message
 		);
@@ -80,7 +88,7 @@ class sms_rouenbs {
 	private $ws;
 	private $from='';
 	
-	function sms_rouenbs ($param_list) {
+	function __construct ($param_list) {
 		$this->from=$param_list['from'];
 		global $class_path;
 		require_once($class_path.'/ws_rouenbs.class.php');

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesOPACEmpr.class.php,v 1.36 2015-06-02 13:48:57 dgoron Exp $
+// $Id: pmbesOPACEmpr.class.php,v 1.40 2019-01-02 15:40:50 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,22 +15,20 @@ define("LIST_LOAN_CURRENT",1);
 define("LIST_LOAN_PRECEDENT",2);
 
 class pmbesOPACEmpr extends external_services_api_class{
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	
-	function check_auth(&$empr_login, &$empr_password, &$empr_id) {
+	public function check_auth(&$empr_login, &$empr_password, &$empr_id) {
 		//grassement copié de opac_css/includes/empr_func.inc.php
 		global $dbh, $verif_empr_ldap;
 		
@@ -114,7 +112,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		}		
 	}
 	
-	function check_auth_md5($empr_login, $empr_password_md5, &$empr_id) {
+	public function check_auth_md5($empr_login, $empr_password_md5, &$empr_id) {
 		//grassement copié de opac_css/includes/empr_func.inc.php
 		//note: cette fonction ne permet pas l'autentification synchronisée sur ldap
 		global $dbh, $verif_empr_ldap;
@@ -157,7 +155,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		}		
 	}
 	
-	function retrieve_session_information($session_id, $no_update_session=false) {
+	public function retrieve_session_information($session_id, $no_update_session=false) {
 		if (!$session_id)
 			return;
 		//Allons chercher les infos
@@ -176,7 +174,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $session_info;
 	}
 	
-	function login($empr_login, $empr_password) {
+	public function login($empr_login, $empr_password) {
 		$empr_id = 0;
 		if (!$this->check_auth($empr_login, $empr_password, $empr_id))
 			return 0;
@@ -196,7 +194,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $session_info["sess_id"];
 	}
 	
-	function login_md5($empr_login, $empr_password) {
+	public function login_md5($empr_login, $empr_password) {
 		$empr_id = 0;
 		if (!$this->check_auth_md5($empr_login, $empr_password, $empr_id))
 			return 0;
@@ -216,7 +214,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $session_info["sess_id"];
 	}
 	
-	function logout($session_id) {
+	public function logout($session_id) {
 		if (!$session_id)
 			return;
 
@@ -227,7 +225,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		}
 	}
 	
-	function get_account_info($session_id) {
+	public function get_account_info($session_id) {
 		if (!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -258,7 +256,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $result;
 	}
 	
-	function change_password($session_id, $old_password, $new_password) {
+	public function change_password($session_id, $old_password, $new_password) {
 		global $dbh;
 		
 		global $charset;
@@ -297,7 +295,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return true;
 	}
 	
-	function list_loans($session_id, $loan_type) {
+	public function list_loans($session_id, $loan_type) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -382,7 +380,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $results;
 	}
 	
-	function list_resas($session_id) {
+	public function list_resas($session_id) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -429,7 +427,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $results;
 	}
 	
-	function delete_resa($session_id, $resa_id) {
+	public function delete_resa($session_id, $resa_id) {
 		global $dbh;
 		if (!$session_id)
 			return FALSE;
@@ -470,7 +468,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return TRUE;
 	}
 	
-	function list_suggestions($session_id) {
+	public function list_suggestions($session_id) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -517,7 +515,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $results;
 	}
 	
-	function add_review($session_id, $notice_id, $note, $comment, $subject) {
+	public function add_review($session_id, $notice_id, $note, $comment, $subject) {
 		global $dbh, $msg, $opac_avis_allow;
 		
 		global $charset;
@@ -561,14 +559,12 @@ class pmbesOPACEmpr extends external_services_api_class{
 		//Copié de /opac_css/avis.php
 		$masque="@<[\/\!]*?[^<>]*?>@si";
 		$commentaire = preg_replace($masque,'',$comment);
-		$sql="insert into avis (num_empr,num_notice,note,sujet,commentaire) values ('$empr_id','$notice_id','$note','".addslashes($subject)."','".addslashes($comment)."')";
+		$sql="insert into avis (num_empr,num_notice,type_object,note,sujet,commentaire) values ('$empr_id','$notice_id','1','$note','".addslashes($subject)."','".addslashes($comment)."')";
 		$res = pmb_mysql_query($sql, $dbh);
 		return $res != false ? 1 : 0;
-
-		break;
 	}
 	
-	function add_tag($session_id, $notice_id, $tag) {
+	public function add_tag($session_id, $notice_id, $tag) {
 		global $dbh, $msg, $opac_allow_add_tag;
 		if (!$session_id)
 			return 0;
@@ -614,7 +610,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return pmb_mysql_query($sql, $dbh) != false ? 1 : 0;
 	}
 	
-	function list_suggestion_categories($session_id) {
+	public function list_suggestion_categories($session_id) {
 		global $dbh, $msg, $opac_sugg_categ;
 		if (!$session_id)
 			return 0;
@@ -636,7 +632,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $results;
 	}
 
-	function list_suggestion_sources($session_id) {
+	public function list_suggestion_sources($session_id) {
 		global $dbh, $msg, $opac_sugg_categ;
 		if (!$session_id)
 			return 0;
@@ -659,14 +655,14 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $results;
 	}
 	
-	function list_suggestion_sources_and_categories($session_id) {
+	public function list_suggestion_sources_and_categories($session_id) {
 		return array(
 			'sources' => $this->proxy_parent->pmbesOPACEmpr_list_suggestion_sources($session_id),
 			'categories' => $this->proxy_parent->pmbesOPACEmpr_list_suggestion_categories($session_id),
 		);
 	}
 	
-	function list_locations($session_id) {
+	public function list_locations($session_id) {
 		global $dbh;
 		if (!$session_id)
 			return 0;
@@ -678,7 +674,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesOPACGeneric_list_locations();
 	}
 	
-	function add_suggestion($session_id, $title, $author, $editor, $isbn_or_ean, $price, $url, $comment, $sugg_categ, $sugg_location) {
+	public function add_suggestion($session_id, $title, $author, $editor, $isbn_or_ean, $price, $url, $comment, $sugg_categ, $sugg_location) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return 0;
@@ -752,7 +748,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return 0;
 	}
 	
-	function add_suggestion2($session_id, $suggestion) {
+	public function add_suggestion2($session_id, $suggestion) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return 0;
@@ -840,7 +836,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return 0;
 	}
 
-	function edit_suggestion($session_id, $suggestion) {
+	public function edit_suggestion($session_id, $suggestion) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return FALSE;
@@ -929,7 +925,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return true;
 	}
 	
-	function delete_suggestion($session_id, $suggestion_id) {
+	public function delete_suggestion($session_id, $suggestion_id) {
 		global $dbh;
 		if (!$session_id)
 			return FALSE;
@@ -950,7 +946,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return TRUE;
 	}
 	
-	function list_resa_locations($session_id) {
+	public function list_resa_locations($session_id) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -981,7 +977,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $results;
 	}
 	
-	function can_reserve_notice($session_id, $id_notice, $id_bulletin) {
+	public function can_reserve_notice($session_id, $id_notice, $id_bulletin) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return FALSE;
@@ -994,7 +990,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 	}
 	
 	//TODO: vérifier tous les comportements de cette fonction et y placer un mécanisme gestion des messages d'erreur
-	function add_resa($session_id, $id_notice, $id_bulletin, $location) {
+	public function add_resa($session_id, $id_notice, $id_bulletin, $location) {
 		global $dbh, $msg;
 		$results=array();
 		if (!$session_id){
@@ -1020,7 +1016,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 			
 
 	
-	function list_abonnements($session_id) {
+	public function list_abonnements($session_id) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1063,7 +1059,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		
 	}
 	
-	function list_cart_content($session_id) {
+	public function list_cart_content($session_id) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1087,7 +1083,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $results;
 	}
 	
-	function empty_cart($session_id) {
+	public function empty_cart($session_id) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1110,7 +1106,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $results;
 	}
 	
-	function add_notices_to_cart($session_id, $notice_ids) {
+	public function add_notices_to_cart($session_id, $notice_ids) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return 0;
@@ -1154,7 +1150,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return true;
 	}
 	
-	function delete_notices_from_cart($session_id, $notice_ids) {
+	public function delete_notices_from_cart($session_id, $notice_ids) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return 0;
@@ -1186,7 +1182,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return true;
 	}
 	
-	function list_shelves($session_id) {
+	public function list_shelves($session_id) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1198,7 +1194,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesOPACGeneric_list_shelves($empr_id);
 	}
 	
-	function retrieve_shelf_content($session_id, $shelf_id) {
+	public function retrieve_shelf_content($session_id, $shelf_id) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1210,7 +1206,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesOPACGeneric_retrieve_shelf_content($shelf_id, $empr_id);
 	}
 	
-	function simpleSearch($session_id, $searchType=0,$searchTerm="") {
+	public function simpleSearch($session_id, $searchType=0,$searchTerm="") {
 		if (!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1221,7 +1217,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesSearch_simpleSearch($searchType, $searchTerm, -1, $empr_id);
 	}
 	
-	function simpleSearchLocalise($session_id, $searchType=0,$searchTerm="",$location,$section=0) {
+	public function simpleSearchLocalise($session_id, $searchType=0,$searchTerm="",$location,$section=0) {
 		if (!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1232,7 +1228,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesSearch_simpleSearchLocalise($searchType, $searchTerm, -1, $empr_id,$location,$section);
 	}
 
-	function get_sort_types($session_id) {
+	public function get_sort_types($session_id) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1244,7 +1240,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesSearch_get_sort_types();
 	}
 	
-	function fetchSearchRecords($session_id, $searchId, $firstRecord, $recordCount, $recordFormat, $recordCharset='iso-8859-1') {
+	public function fetchSearchRecords($session_id, $searchId, $firstRecord, $recordCount, $recordFormat, $recordCharset='iso-8859-1') {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1256,7 +1252,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesSearch_fetchSearchRecords($searchId, $firstRecord, $recordCount, $recordFormat, $recordCharset, true, true);
 	}
 	
-	function fetchSearchRecordsSorted($session_id, $searchId, $firstRecord, $recordCount, $recordFormat, $recordCharset='iso-8859-1', $sort_type="") {
+	public function fetchSearchRecordsSorted($session_id, $searchId, $firstRecord, $recordCount, $recordFormat, $recordCharset='iso-8859-1', $sort_type="") {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1268,7 +1264,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesSearch_fetchSearchRecordsSorted($searchId, $firstRecord, $recordCount, $recordFormat, $recordCharset, true, true, $sort_type);
 	}
 	
-	function fetchSearchRecordsArray($session_id, $searchId, $firstRecord, $recordCount, $recordCharset='iso-8859-1') {
+	public function fetchSearchRecordsArray($session_id, $searchId, $firstRecord, $recordCount, $recordCharset='iso-8859-1') {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1280,7 +1276,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesSearch_fetchSearchRecordsArray($searchId, $firstRecord, $recordCount, $recordCharset, true, true);
 	}
 	
-	function fetchSearchRecordsArraySorted($session_id, $searchId, $firstRecord, $recordCount, $recordCharset='iso-8859-1', $sort_type="") {
+	public function fetchSearchRecordsArraySorted($session_id, $searchId, $firstRecord, $recordCount, $recordCharset='iso-8859-1', $sort_type="") {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1292,7 +1288,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesSearch_fetchSearchRecordsArraySorted($searchId, $firstRecord, $recordCount, $recordCharset, true, true, $sort_type);
 	}
 	
-	function getAdvancedSearchFields($session_id, $fetch_values=false) {
+	public function getAdvancedSearchFields($session_id, $fetch_values=false) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1306,7 +1302,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesSearch_getAdvancedSearchFields("opac|search_fields", $lang, $fetch_values);
 	}
 	
-	function getAdvancedExternalSearchFields($session_id, $fetch_values=false) {
+	public function getAdvancedExternalSearchFields($session_id, $fetch_values=false) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1321,7 +1317,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesSearch_getAdvancedSearchFields("opac|search_fields_unimarc", $lang, $fetch_values);
 	}
 	
-	function advancedSearch($session_id, $search_description) {
+	public function advancedSearch($session_id, $search_description) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1333,7 +1329,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesSearch_advancedSearch("opac|search_fields", $search_description, -1, $empr_id);
 	}
 
-	function advancedSearchExternal($session_id, $search_description, $source_ids) {
+	public function advancedSearchExternal($session_id, $search_description, $source_ids) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return FALSE;
@@ -1349,7 +1345,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesSearch_advancedSearch("opac|search_fields_unimarc|sources(".implode(',',$source_ids).")", $search_description, -1, 0);
 	}
 	
-	function fetch_notice_items($session_id, $notice_id) {
+	public function fetch_notice_items($session_id, $notice_id) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1364,7 +1360,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesItems_fetch_notice_items($notice_id, $empr_id);
 	}
 
-	function fetch_item($session_id, $item_cb='', $item_id='') {
+	public function fetch_item($session_id, $item_cb='', $item_id='') {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1379,7 +1375,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesItems_fetch_item($item_cb, $item_id, $empr_id);
 	}
 	
-	function listNoticeExplNums($session_id, $notice_id) {
+	public function listNoticeExplNums($session_id, $notice_id) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1394,7 +1390,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesNotices_listNoticeExplNums($notice_id, $empr_id);
 	}
 	
-	function listBulletinExplNums($session_id, $bulletinId) {
+	public function listBulletinExplNums($session_id, $bulletinId) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1409,7 +1405,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesNotices_listBulletinExplNums($bulletinId, $empr_id);
 	}
 	
-	function fetchNoticeList($session_id, $noticelist, $recordFormat, $recordCharset) {
+	public function fetchNoticeList($session_id, $noticelist, $recordFormat, $recordCharset) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1427,7 +1423,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesNotices_fetchNoticeList($noticelist, $recordFormat, $recordCharset, true, true);
 	}
 	
-	function fetchExternalNoticeList($session_id, $noticelist, $recordFormat, $recordCharset) {
+	public function fetchExternalNoticeList($session_id, $noticelist, $recordFormat, $recordCharset) {
 		if (!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1438,7 +1434,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesNotices_fetchExternalNoticeList($noticelist, $recordFormat, $recordCharset);
 	}
 	
-	function fetchNoticeListFull($session_id, $noticelist, $recordFormat, $recordCharset, $includeLinks) {
+	public function fetchNoticeListFull($session_id, $noticelist, $recordFormat, $recordCharset, $includeLinks) {
 		if (!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1460,7 +1456,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $results;
 	}
 	
-	function fetchNoticeByExplCb($session_id, $expl_cb, $recordFormat, $recordCharset) {
+	public function fetchNoticeByExplCb($session_id, $expl_cb, $recordFormat, $recordCharset) {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1475,7 +1471,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesNotices_fetchNoticeByExplCb($empr_id,$expl_cb, $recordFormat, $recordCharset, true, true);
 	}
 	
-	function findNoticeBulletinId($session_id,$noticeId) {
+	public function findNoticeBulletinId($session_id,$noticeId) {
 		if (!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1489,7 +1485,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesNotices_findNoticeBulletinId($noticeId);
 	}		
 	
-	function get_author_information_and_notices($session_id, $author_id) {
+	public function get_author_information_and_notices($session_id, $author_id) {
 		if (!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1503,7 +1499,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesAuthors_get_author_information_and_notices($author_id, $empr_id);
 	}
 	
-	function get_collection_information_and_notices($session_id, $collection_id) {
+	public function get_collection_information_and_notices($session_id, $collection_id) {
 		if (!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1517,7 +1513,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesCollections_get_collection_information_and_notices($collection_id, $empr_id);
 	}
 	
-	function get_subcollection_information_and_notices($session_id, $subcollection_id) {
+	public function get_subcollection_information_and_notices($session_id, $subcollection_id) {
 		if (!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1531,7 +1527,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesCollections_get_subcollection_information_and_notices($subcollection_id, $empr_id);
 	}
 	
-	function get_publisher_information_and_notices($session_id, $publisher_id) {
+	public function get_publisher_information_and_notices($session_id, $publisher_id) {
 		if (!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1546,7 +1542,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesPublishers_get_publisher_information_and_notices($publisher_id, $empr_id);
 	}
 	
-	function list_thesauri($session_id) {
+	public function list_thesauri($session_id) {
 		if (!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1556,7 +1552,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesThesauri_list_thesauri($empr_id);
 	}
 	
-	function fetch_thesaurus_node_full($session_id,$node_id) {
+	public function fetch_thesaurus_node_full($session_id,$node_id) {
 		if (!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1570,7 +1566,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesThesauri_fetch_node_full($node_id, $empr_id);
 	}
 	
-	function self_Checkout($session_id,$expl_cb){
+	public function self_Checkout($session_id,$expl_cb){
 		if(!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1580,7 +1576,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesSelfServices_self_checkout($expl_cb,$empr_id);
 	}
 	
-	function fetchNoticesCollstates($session_id,$serialIds){
+	public function fetchNoticesCollstates($session_id,$serialIds){
 		if(!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1594,7 +1590,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesNotices_fetchNoticesCollstates($serialIds,$emprId);
 	}
 	
-	function fetch_notices_bulletins($session_id,$noticelist){
+	public function fetch_notices_bulletins($session_id,$noticelist){
 		if(!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1608,7 +1604,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesNotices_fetch_notices_bulletins($noticelist,$emprId);
 	}
 	
-	function fetchNoticeListFullWithBullId($session_id, $noticelist, $recordFormat, $recordCharset, $includeLinks=true) {
+	public function fetchNoticeListFullWithBullId($session_id, $noticelist, $recordFormat, $recordCharset, $includeLinks=true) {
 		if (!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1630,7 +1626,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $results;
 	}
 
-	function fetchNoticesBulletinsList($session_id,$noticelist){
+	public function fetchNoticesBulletinsList($session_id,$noticelist){
 		if(!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1644,7 +1640,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesNotices_fetchNoticesBulletinsList($noticelist,$emprId);	
 	}	
 	
-	function fetchSearchRecordsFull($session_id, $searchId, $firstRecord, $recordCount,  $recordCharset='iso-8859-1') {
+	public function fetchSearchRecordsFull($session_id, $searchId, $firstRecord, $recordCount,  $recordCharset='iso-8859-1') {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1656,7 +1652,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesSearch_fetchSearchRecordsFull($searchId, $firstRecord, $recordCount,  $recordCharset, true, true);
 	}
 	
-	function fetchSearchRecordsFullSorted($session_id, $searchId, $firstRecord, $recordCount,  $recordCharset='iso-8859-1', $sort_type="") {
+	public function fetchSearchRecordsFullSorted($session_id, $searchId, $firstRecord, $recordCount,  $recordCharset='iso-8859-1', $sort_type="") {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1668,7 +1664,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesSearch_fetchSearchRecordsFullSorted($searchId, $firstRecord, $recordCount,  $recordCharset, true, true, $sort_type);
 	}
 	
-	function fetchSearchRecordsFullWithBullId($session_id, $searchId, $firstRecord, $recordCount,  $recordCharset='iso-8859-1') {
+	public function fetchSearchRecordsFullWithBullId($session_id, $searchId, $firstRecord, $recordCount,  $recordCharset='iso-8859-1') {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1680,7 +1676,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesSearch_fetchSearchRecordsFullWithBullId($searchId, $firstRecord, $recordCount,  $recordCharset, true, true);
 	}
 	
-	function fetchSearchRecordsFullWithBullIdSorted($session_id, $searchId, $firstRecord, $recordCount,  $recordCharset='iso-8859-1', $sort_type="") {
+	public function fetchSearchRecordsFullWithBullIdSorted($session_id, $searchId, $firstRecord, $recordCount,  $recordCharset='iso-8859-1', $sort_type="") {
 		global $dbh, $msg;
 		if (!$session_id)
 			return array();
@@ -1692,7 +1688,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesSearch_fetchSearchRecordsFullSorted($searchId, $firstRecord, $recordCount,  $recordCharset, true, true, $sort_type);
 	}
 	
-	function fetchSerialList($session_id) {
+	public function fetchSerialList($session_id) {
 		if(!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1706,7 +1702,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesNotices_fetchSerialList($emprId);
 	}
 	
-	function listExternalSources($session_id) {
+	public function listExternalSources($session_id) {
 		if(!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1716,7 +1712,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesSearch_listExternalSources($emprId);
 	}
 	
-	function fetchBulletinListFull($session_id,$bulletinlist, $recordFormat, $recordCharset) {
+	public function fetchBulletinListFull($session_id,$bulletinlist, $recordFormat, $recordCharset) {
 		if(!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1730,7 +1726,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $this->proxy_parent->pmbesNotices_fetchBulletinListFull($bulletinlist, $recordFormat, $recordCharset);
 	}
 	
-	function getReadingLists($session_id) {
+	public function getReadingLists($session_id) {
 		if(!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1760,7 +1756,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $results;
 	}
 	
-	function getPublicReadingLists($session_id) {
+	public function getPublicReadingLists($session_id) {
 		if(!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1789,7 +1785,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return $results;
 	}
 	
-	function addNoticesToReadingList($session_id, $list_id, $notice_ids) {
+	public function addNoticesToReadingList($session_id, $list_id, $notice_ids) {
 		if(!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1828,7 +1824,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return TRUE;
 	}
 	
-	function removeNoticesFromReadingList($session_id, $list_id, $notice_ids) {
+	public function removeNoticesFromReadingList($session_id, $list_id, $notice_ids) {
 		if(!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1859,7 +1855,7 @@ class pmbesOPACEmpr extends external_services_api_class{
 		return TRUE;
 	}
 
-	function emptyReadingList($session_id, $list_id) {
+	public function emptyReadingList($session_id, $list_id) {
 		if(!$session_id)
 			return array();
 		$session_info = $this->retrieve_session_information($session_id);
@@ -1882,6 +1878,28 @@ class pmbesOPACEmpr extends external_services_api_class{
 		$sql = "update opac_liste_lecture set notices_associees = '".addslashes(implode(',', $list_content))."' where id_liste = ".$list_id;
 		pmb_mysql_query($sql);
 		return TRUE;
+	}
+	
+	public function listFacets($session_id, $searchId, $fields = array(), $filters = array()) {
+		if (!$session_id)
+			return array();
+		$session_info = $this->retrieve_session_information($session_id);
+		$empr_id = $session_info["empr_id"];
+		if (!$empr_id)
+			return array();
+	
+		return $this->proxy_parent->pmbesSearch_listFacets($searchId, $fields, $filters);
+	}
+	
+	public function listRecordsFromFacets($session_id, $searchId, $filters = array()) {
+		if (!$session_id)
+			return array();
+		$session_info = $this->retrieve_session_information($session_id);
+		$empr_id = $session_info["empr_id"];
+		if (!$empr_id)
+			return array();
+		
+		return $this->proxy_parent->pmbesSearch_listRecordsFromFacets($searchId, $filters);
 	}
 }
 

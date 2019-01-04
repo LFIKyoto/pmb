@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: faq_question.class.php,v 1.8 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: faq_question.class.php,v 1.11 2018-07-25 12:15:55 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/templates/faq_question.tpl.php");
@@ -82,12 +82,14 @@ class faq_question  {
 	public function get_form($id_demande=0,$action="./demandes.php?categ=faq&sub=question"){
 		global $faq_question_form;
 		global $msg, $charset;
-		global $pmb_javascript_office_editor;
+		global $pmb_javascript_office_editor,$base_path;
 		global $lang;
 		global $faq_question_first_desc,$faq_question_other_desc;
 		
- 		if ($pmb_javascript_office_editor)
- 			print $pmb_javascript_office_editor ;
+		if ($pmb_javascript_office_editor) {
+			print $pmb_javascript_office_editor ;
+			print "<script type='text/javascript' src='".$base_path."/javascript/tinyMCE_interface.js'></script>";
+		}
 		
  		if($id_demande && !$this->id){
  			$query = "select date_demande,date_format(date_demande, '".$msg["format_date"]."') as aff_date_demande, sujet_demande, libelle_theme,libelle_type, reponse_finale from demandes d, demandes_theme dt, demandes_type dy where dy.id_type=d.type_demande and dt.id_theme=d.theme_demande and id_demande='".$id_demande."'";
@@ -150,10 +152,10 @@ class faq_question  {
 		</select>";
 		$form = str_replace("!!statut_selector!!", $statut, $form);
 		
-		$form = str_replace("!!question!!", htmlentities(strip_tags($this->question),ENT_QUOTES,$charset), $form);
+		$form = str_replace("!!question!!", htmlentities($this->question,ENT_QUOTES,$charset), $form);
 		$form = str_replace("!!question_date!!", htmlentities($this->aff_date_demande,ENT_QUOTES,$charset), $form);
 		
-		$form = str_replace("!!answer!!", htmlentities(strip_tags($this->answer),ENT_QUOTES,$charset), $form);
+		$form = str_replace("!!answer!!", htmlentities($this->answer,ENT_QUOTES,$charset), $form);
 		$form = str_replace("!!answer_date!!", htmlentities($this->aff_date_answer,ENT_QUOTES,$charset), $form);
 		
 		
@@ -209,9 +211,9 @@ class faq_question  {
 			$this->descriptors=array();
 			for ($i=0 ; $i<$max_categ ; $i++){
 				$categ_id = 'f_categ_id'.$i;
-				global $$categ_id;
-				if(($$categ_id*1) > 0){
-					$this->descriptors[] = $$categ_id;
+				global ${$categ_id};
+				if((${$categ_id}*1) > 0){
+					$this->descriptors[] = ${$categ_id};
 				}
 			}
 		}else{

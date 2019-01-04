@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_categories.inc.php,v 1.12.2.1 2015-12-04 14:25:09 jpermanne Exp $
+// $Id: notice_categories.inc.php,v 1.19 2017-07-12 15:15:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once("$class_path/notice.class.php");
 require_once("$class_path/audit.class.php");
+require_once($class_path."/notice_relations.class.php");
 
 // récupération des categories d'une notice
 
@@ -25,7 +26,7 @@ function get_notice_categories($notice=0) {
 
 	$res_sql = pmb_mysql_query($rqt, $dbh);
 	while ($notice=pmb_mysql_fetch_object($res_sql)) {
-		$categ = new category($notice->categ_id);
+		$categ = authorities_collection::get_authority(AUT_TABLE_CATEG, $notice->categ_id);
 		$categories[] = array( 
 				'categ_id' => $notice->categ_id,
 				'categ_parent' => $notice->categ_parent,
@@ -43,7 +44,7 @@ function update_notice_categories_from_form($id_notice=0, $id_bulletin=0) {
 		$query = "select * from bulletins where bulletin_id=".$id_bulletin;
 		$result = pmb_mysql_query($query,$dbh);
 		if ($result) {
-			$row = mysql_fetch_object($result);
+			$row = pmb_mysql_fetch_object($result);
 			if ($row->num_notice) {
 				$id_notice = $row->num_notice; 
 			} else {
@@ -63,8 +64,7 @@ function update_notice_categories_from_form($id_notice=0, $id_bulletin=0) {
 				$requete="update bulletins set num_notice=".$id_notice." where bulletin_id=".$id_bulletin;
 				pmb_mysql_query($requete);
 				//Mise à jour des liens bulletin -> notice mère
-				$requete="insert into notices_relations (num_notice,linked_notice,relation_type,rank) values(".$id_notice.",".$row->bulletin_notice.",'b',1)";
-				pmb_mysql_query($requete);
+				notice_relations::insert($id_notice, $row->bulletin_notice, 'b', 1, 'up', false);
 			}
 		}
 	}
@@ -74,7 +74,7 @@ function update_notice_categories_from_form($id_notice=0, $id_bulletin=0) {
 	$result = pmb_mysql_query($query);
 	$ordre_categ = 0;
 	if ($result) {
-		$row = mysql_fetch_object($result);
+		$row = pmb_mysql_fetch_object($result);
 		if (isset($row->ordre)) {
 			$ordre_categ = $row->ordre;
 		}
@@ -83,15 +83,15 @@ function update_notice_categories_from_form($id_notice=0, $id_bulletin=0) {
 		$rqt_ins = "INSERT INTO notices_categories (notcateg_notice, num_noeud, ordre_categorie) VALUES ";
 		for ($i=0; $i< $f_nb_categ; $i++) {
 			$var_categ = "f_categ$i" ;
-			global $$var_categ;
-			if ($$var_categ) {
+			global ${$var_categ};
+			if (${$var_categ}) {
 				$var_categid = "f_categ_id$i" ;
-				global $$var_categid;
-				$rqt_sel = "SELECT notcateg_notice FROM notices_categories WHERE notcateg_notice='".$id_notice."' and num_noeud='".$$var_categid."' ";
+				global ${$var_categid};
+				$rqt_sel = "SELECT notcateg_notice FROM notices_categories WHERE notcateg_notice='".$id_notice."' and num_noeud='".${$var_categid}."' ";
 				$res_sel = pmb_mysql_query($rqt_sel, $dbh);
 				if ($res_sel && !pmb_mysql_num_rows($res_sel)) {
 					$ordre_categ++;
-					$rqt = $rqt_ins . " ('".$id_notice."','".$$var_categid."',$ordre_categ) " ;
+					$rqt = $rqt_ins . " ('".$id_notice."','".${$var_categid}."',$ordre_categ) " ;
 					$res_ins = @pmb_mysql_query($rqt, $dbh);
 				}
 			}
@@ -121,7 +121,7 @@ function get_notice_langues($notice=0, $quelle_langues=0) {
 }
 
 function construit_liste_langues($tableau) {
-
+	$langues = "";
 	for ($i = 0 ; $i < sizeof($tableau) ; $i++) {
 		if ($langues) $langues.=" ";
 		$langues .= $tableau[$i]["langue"]." (<i>".$tableau[$i]["lang_code"]."</i>)";

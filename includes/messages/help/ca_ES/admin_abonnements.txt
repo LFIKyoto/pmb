@@ -1,4 +1,4 @@
-<h1>Administració de les subscripcions</h1>
+<h2>Administració de les subscripcions</h2>
 
 <p>La secció <b>administració de les subscripcions</b> permet definir els par&agrave;metres de l'aplicaci&oacute; per les subscripcions.
 <ul>

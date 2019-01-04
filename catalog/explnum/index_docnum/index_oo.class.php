@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: index_oo.class.php,v 1.3 2012-03-23 14:10:19 dbellamy Exp $
+// $Id: index_oo.class.php,v 1.4 2017-06-30 14:08:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,15 +13,16 @@ require_once($class_path."/zip.class.php");
  */
 class index_oo{
 	
-	var $fichier='';
-	function index_oo($filename, $mimetype='', $extension=''){
+	public $fichier='';
+	
+	public function __construct($filename, $mimetype='', $extension=''){
 		$this->fichier = $filename;
 	}
 	
 	/**
 	 * Méthode qui retourne le texte à indexer des docs OpenOffice
 	 */
-	function get_text($filename){
+	public function get_text($filename){
 		global $charset;
 		$zip = new zip($filename);
 		$texte = $zip->getFileContent("content.xml");			

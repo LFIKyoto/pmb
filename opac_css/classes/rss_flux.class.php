@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rss_flux.class.php,v 1.31.4.1 2015-09-16 15:20:52 jpermanne Exp $
+// $Id: rss_flux.class.php,v 1.41 2018-04-27 13:21:51 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,47 +12,42 @@ class rss_flux {
 // ---------------------------------------------------------------
 //		proprietes de la classe
 // ---------------------------------------------------------------
-	var $id_rss_flux = 0;	
-	var $nom_rss_flux = ""; 
-	var $link_rss_flux = "" ;
-	var $descr_rss_flux = "" ;
-	var $lang_rss_flux = "" ;
-	var $copy_rss_flux = "" ;
-	var $editor_rss_flux = "" ;
-	var $webmaster_rss_flux = "" ;
-	var $ttl_rss_flux = 0 ;
-	var $img_url_rss_flux = "" ;
-	var $img_title_rss_flux = "" ;
-	var $img_link_rss_flux = "" ;
+	public $id_rss_flux = 0;	
+	public $nom_rss_flux = ""; 
+	public $link_rss_flux = "" ;
+	public $descr_rss_flux = "" ;
+	public $lang_rss_flux = "" ;
+	public $copy_rss_flux = "" ;
+	public $editor_rss_flux = "" ;
+	public $webmaster_rss_flux = "" ;
+	public $ttl_rss_flux = 0 ;
+	public $img_url_rss_flux = "" ;
+	public $img_title_rss_flux = "" ;
+	public $img_link_rss_flux = "" ;
 
-	var	$format_flux = "";
-	var $contenu_du_flux = "" ; // le flux genere precedemment et mis en cache, vide si doit etre renouvele
-	var $export_court_flux = 0;
-	var $tpl_rss_flux = 0;
+	public $format_flux = "";
+	public $contenu_du_flux = "" ; // le flux genere precedemment et mis en cache, vide si doit etre renouvele
+	public $export_court_flux = 0;
+	public $tpl_rss_flux = 0;
 	
-	var	$nb_paniers = 0;
-	var	$nb_bannettes = 0;
-	var	$num_paniers = array();
-	var	$num_bannettes = array();
-	var	$notices = "";
+	public $nb_paniers = 0;
+	public $nb_bannettes = 0;
+	public $num_paniers = array();
+	public $num_bannettes = array();
+	public $notices = "";
 	
 	// ---------------------------------------------------------------
 	//		constructeur
 	// ---------------------------------------------------------------
-	function rss_flux($id=0) {
-		if ($id) {
-			$this->id_rss_flux = $id;
-			$this->getData();
-		} else {
-			$this->id_rss_flux = 0;
-			$this->getData();
-		}
+	public function __construct($id=0) {
+		$this->id_rss_flux = $id+0;
+		$this->getData();
 	}
 	
 	// ---------------------------------------------------------------
 	//		getData() : recuperation infos
 	// ---------------------------------------------------------------
-	function getData() {
+	public function getData() {
 		global $dbh;
 		
 		if (!$this->id_rss_flux) {
@@ -123,7 +118,7 @@ class rss_flux {
 	// ---------------------------------------------------------------
 	//		show_form : affichage du formulaire de saisie
 	// ---------------------------------------------------------------
-	function show_form() {
+	public function show_form() {
 	
 		global $msg, $charset;
 		global $dsi_flux_form;
@@ -193,7 +188,7 @@ class rss_flux {
 	// ---------------------------------------------------------------
 	//		delete() : suppression 
 	// ---------------------------------------------------------------
-	function delete() {
+	public function delete() {
 		global $dbh;
 		global $msg;
 		
@@ -210,7 +205,7 @@ class rss_flux {
 	// ---------------------------------------------------------------
 	//		update 
 	// ---------------------------------------------------------------
-	function update($temp) {
+	public function update($temp) {
 	
 		global $dbh;
 		
@@ -256,7 +251,7 @@ class rss_flux {
 	// ---------------------------------------------------------------
 	//		compte_elements() : methode pour pouvoir recompter en dehors !
 	// ---------------------------------------------------------------
-	function compte_elements() {
+	public function compte_elements() {
 		global $dbh ;
 		
 		$this->nb_paniers=0;
@@ -282,7 +277,7 @@ class rss_flux {
 	// ---------------------------------------------------------------
 	//		generation du fichier XML
 	// ---------------------------------------------------------------
-	function xmlfile() {
+	public function xmlfile() {
 		
 		global $pmb_bdd_version, $charset ;
 		if (!$charset) $charset='ISO-8859-1';
@@ -322,7 +317,7 @@ class rss_flux {
 	// ---------------------------------------------------------------
 	//		stocke_cache($cache) : stockage du flux en cache pour eviter de le recalculer a chaque appel 
 	// ---------------------------------------------------------------
-	function stocke_cache() {
+	public function stocke_cache() {
 		global $dbh;
 		global $msg;
 		
@@ -336,47 +331,55 @@ class rss_flux {
 	// ---------------------------------------------------------------
 	//		id des notices concernees, attention, on n'envoie que les publiques (statuts de notices)
 	// ---------------------------------------------------------------
-	function items_notices() {
+	public function items_notices() {
 	
 		global $dbh, $liens_opac ;
 		global $charset;
 		global $opac_flux_rss_notices_order ;
 		global $opac_notice_affichage_class;
+		global $deflt2docs_location;
 		
 		if (!$this->nb_bannettes && !$this->nb_paniers) {
 			$this->notices = "";
 			return;
 		}
+		$retour_aff = '';
 		if (!$opac_flux_rss_notices_order) $opac_flux_rss_notices_order="index_serie, tnvol, index_sew";	
 		if (!$charset) $charset='ISO-8859-1';
 		
 		if ($this->nb_bannettes) {
-			$rqt[] = "select distinct notice_id, index_sew, create_date, update_date, index_serie, tnvol 
+			$rqt[] = "select distinct notice_id, niveau_biblio, index_sew, create_date, update_date, index_serie, tnvol, year, date_parution 
 					from notices join bannette_contenu on num_notice=notice_id 
 							join notice_statut on statut=id_notice_statut 
 					where notice_visible_opac=1 and notice_visible_opac_abon=0 and num_bannette in (".implode(",",$this->num_bannettes).") ";
 		}
 		if ($this->nb_paniers) {
-			$rqt[] = "select distinct notice_id, index_sew, create_date, update_date, index_serie, tnvol 
+			$rqt[] = "select distinct notice_id, niveau_biblio, index_sew, create_date, update_date, index_serie, tnvol, year, date_parution 
 					from notices join caddie_content on object_id=notice_id 
 							join notice_statut on statut=id_notice_statut 
 					where notice_visible_opac=1 and notice_visible_opac_abon=0 and caddie_id in (".implode(",",$this->num_paniers).") ";
 		}
 		$rqtfinale = implode(' union ',$rqt) ;
 		pmb_mysql_query("create temporary table tmpfluxrss ENGINE=MyISAM $rqtfinale ",$dbh); // Thu, 27 Apr 2006 23:40:11 +0100
-		$query_not = "select distinct notice_id, index_sew, DATE_FORMAT(create_date,'%a, %e %b %Y %T +0100') as pubdate from tmpfluxrss order by $opac_flux_rss_notices_order" ;
+		$query_not = "select distinct notice_id, niveau_biblio, index_sew, DATE_FORMAT(create_date,'%a, %e %b %Y %T') as pubdate from tmpfluxrss order by $opac_flux_rss_notices_order" ;
 		$res = pmb_mysql_query($query_not,$dbh);
 		while (($tmp=pmb_mysql_fetch_object($res))) {
 			if($opac_notice_affichage_class != ""){
-				$notice = new $opac_notice_affichage_class($tmp->notice_id, $liens_opac, "", 1);
-			}else $notice = new notice_affichage($tmp->notice_id, $liens_opac, "", 1);
+				$notice = new $opac_notice_affichage_class($tmp->notice_id, $liens_opac, "", 1, 0, 0, 1, true);
+			}else $notice = new notice_affichage($tmp->notice_id, $liens_opac, "", 1, 0, 0, 1, true);
 			$notice->visu_expl = 0 ;
 			$notice->visu_explnum = 0 ;
 			$notice->do_header_without_html();
+			if($tmp->niveau_biblio == 'b') {
+				$bulletin_id = pmb_mysql_result(pmb_mysql_query("select bulletin_id from bulletins where num_notice = ".$tmp->notice_id), 0, 'bulletin_id');
+				$permalink = str_replace("!!id!!", $bulletin_id, $liens_opac['lien_rech_bulletin']);
+			} else {
+				$permalink = str_replace("!!id!!", $tmp->notice_id, $liens_opac['lien_rech_notice']);
+			}
 			$retour_aff .= "<item>
 								<title>".htmlspecialchars ($notice->notice_header_without_html,ENT_QUOTES, $charset)."</title>
 								<pubDate>".htmlspecialchars ($tmp->pubdate,ENT_QUOTES, $charset)."</pubDate>
-								<link>".htmlspecialchars (str_replace("!!id!!", $tmp->notice_id, $liens_opac['lien_rech_notice']),ENT_QUOTES, $charset)."</link>" ;
+								<link>".htmlspecialchars ($permalink, ENT_QUOTES, $charset)."</link>" ;
 
 			$desc='';
 			$desc_explnum='';
@@ -384,7 +387,7 @@ class rss_flux {
 				$notice->do_isbd(1,0);
 				$desc=$notice->notice_isbd;
 			}elseif($this->tpl_rss_flux){
-				$noti_tpl=new notice_tpl_gen($this->tpl_rss_flux);
+				$noti_tpl = notice_tpl_gen::get_instance($this->tpl_rss_flux);
 				$desc.=$noti_tpl->build_notice($tmp->notice_id,$deflt2docs_location);
 			}else{
 				switch ($this->format_flux) {
@@ -398,7 +401,7 @@ class rss_flux {
 					default :
 						$notice->do_isbd(0,0);
 						$desc=$notice->notice_isbd;
-						$desc_explnum=$this->do_explnum($tmp->notice_id);
+						$desc_explnum=$this->do_explnum($tmp->notice_id,$tmp->niveau_biblio);
 				}
 			}
 
@@ -417,37 +420,33 @@ class rss_flux {
 		$this->notices = $retour_aff ;
 	}
 	
-	function do_image($code,$vigurl="",$tit1="") {
+	public function do_image($code,$vigurl="",$tit1="") {
 		global $charset;
 		global $opac_show_book_pics ;
 		global $opac_book_pics_url ;
 		global $opac_book_pics_msg ;
 		global $opac_url_base ;
 		global $msg;
-	
+		$image = "";
 		if ($code<>"" || $vigurl<>"") {
 			if ($opac_show_book_pics=='1' && ($opac_book_pics_url || $vigurl)) {
-				$code_chiffre = pmb_preg_replace('/-|\.| /', '', $code);
-				$url_image = $opac_book_pics_url ;
-				$url_image = $opac_url_base."getimage.php?url_image=".urlencode($url_image)."&noticecode=!!noticecode!!&vigurl=".urlencode($vigurl) ;
-				$url_image_ok = str_replace("!!noticecode!!", $code_chiffre, $url_image) ;
-				if ($vigurl) {
-					$title_image_ok = "";
-				} else {
-					$title_image_ok = htmlentities($opac_book_pics_msg, ENT_QUOTES, $charset);			
+				$url_image_ok=getimage_url($code, $vigurl);
+				$title_image_ok = "";
+				if(!$vigurl) {
+					$title_image_ok = htmlentities($opac_book_pics_msg, ENT_QUOTES, $charset);
 				}
 				if(!trim($title_image_ok)){
 					$title_image_ok = htmlentities($tit1, ENT_QUOTES, $charset);
 				}
-				$image = "<img src='".$url_image_ok."' title=\"".$title_image_ok."\" align='right' hspace='4' vspace='2'  alt='".$msg["opac_notice_vignette_alt"]."'/>";
-			} else $image="" ;
-		} else $image="" ;
+				$image = "<img src='".$url_image_ok."' title=\"".$title_image_ok."\" class='align_right' hspace='4' vspace='2'  alt='".$msg["opac_notice_vignette_alt"]."'/>";
+			}
+		}
 		return $image ;
 	}
 	
 	
 	// fonction retournant les infos d'exemplaires numeriques pour une notice
-	function do_explnum($no_notice) {
+	public function do_explnum($no_notice,$niveau_biblio="m") {
 	
 		global $dbh;
 		global $charset;
@@ -460,10 +459,20 @@ class rss_flux {
 		
 		// recuperation du nombre d'exemplaires
 		$requete = "SELECT explnum_id, explnum_notice, explnum_nom, explnum_mimetype, explnum_url, length(explnum_data) as taille ";
-		$requete .= "FROM explnum join explnum_statut on id_explnum_statut = explnum_docnum_statut where explnum_visible_opac=1 and explnum_visible_opac_abon=0 ";
-		$requete .= "AND explnum_notice in (SELECT notice_id FROM notices join notice_statut on statut=id_notice_statut ";
-		$requete .= "WHERE explnum_notice=".$no_notice." and explnum_visible_opac=1 and explnum_visible_opac_abon=0) ";
-		$requete .= "ORDER BY explnum_mimetype, explnum_id ";
+		$requete .= "FROM explnum JOIN explnum_statut on explnum_statut.id_explnum_statut = explnum.explnum_docnum_statut ";
+		if($niveau_biblio != "b"){
+			$requete .= "JOIN notices ON explnum.explnum_notice=notice_id AND explnum.explnum_bulletin=0 ";
+			$requete .= "JOIN notice_statut ON notices.statut=notice_statut.id_notice_statut ";
+			$requete .= "WHERE explnum.explnum_notice='".$no_notice."' ";
+		}else{//Pour les notices de bulletin
+			$requete .= "JOIN bulletins ON explnum.explnum_bulletin=bulletins.bulletin_id AND explnum.explnum_notice=0 ";
+			$requete .= "JOIN notices ON bulletins.num_notice=notices.notice_id ";
+			$requete .= "JOIN notice_statut ON notices.statut=notice_statut.id_notice_statut ";
+			$requete .= "WHERE bulletins.num_notice='".$no_notice."' ";
+		}
+		$requete .= "AND explnum_statut.explnum_visible_opac=1 and explnum_statut.explnum_visible_opac_abon=0 ";
+		$requete .= "AND notice_statut.explnum_visible_opac=1 and notice_statut.explnum_visible_opac_abon=0 ";
+		$requete .= "ORDER BY explnum_mimetype, explnum_id";
 		$res = pmb_mysql_query($requete, $dbh);
 		
 		$retour = "";

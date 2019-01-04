@@ -2,19 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: comment_opac.class.php,v 1.2 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: comment_opac.class.php,v 1.3 2017-04-26 10:20:06 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 class comment_opac{
 	
-	var $id_element = 0;
-	var $champ_entree = "";
-	var $champ_sortie = "";
-	var $display="";
-	var $idobjet = 0;
+	public $id_element = 0;
+	public $champ_entree = "";
+	public $champ_sortie = "";
+	public $display="";
+	public $idobjet = 0;
 	
-	function comment_opac($id_elt,$fieldElt){
+	public function __construct($id_elt,$fieldElt){
 		global $quoifaire;
 		
 		$this->id_element = $id_elt;
@@ -26,7 +26,7 @@ class comment_opac{
 		$this->idobjet = $ids[1];
 	}
 	
-	function make_display(){
+	public function make_display(){
 		global $msg, $charset,$dbh;
 
 		$req="SELECT * from perio_relance where rel_id=".$this->idobjet."";	
@@ -47,7 +47,7 @@ class comment_opac{
 		$this->display = $display;
 	}
 	
-	function update(){
+	public function update(){
 		
 		global $dbh, $comment_opac;		
 		

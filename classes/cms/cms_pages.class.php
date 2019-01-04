@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_pages.class.php,v 1.4 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: cms_pages.class.php,v 1.6 2017-07-12 15:15:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -38,18 +38,6 @@ class cms_pages {
 			}
 		}
 		//printr($this->data);
-	}	
-
-	function get_pages_classement_list($classement_selected=""){
-		global $charset,$msg;
-		$tpl="";
-		if(!$classement_selected)	$tpl.="<option value='' selected='selected'></option>";
-		else $tpl.="<option value=''></option>";
-		foreach($this->pages_classement_list as $classement=> $val){
-			if($classement_selected==$classement)$selected=" selected='selected' "; else $selected="";
-			$tpl.="<option value='".htmlentities($classement ,ENT_QUOTES, $charset)."' $selected>".htmlentities($classement ,ENT_QUOTES, $charset)."</option>";			
-		}
-		return $tpl;
 	}
 	
 	public function get_list($tpl="",$item_tpl=""){
@@ -64,8 +52,7 @@ class cms_pages {
 		foreach($this->data as $id => $page ){
 			if(!$item_tpl)$item=$cms_pages_list_item_tpl;
 			else $item=	$item_tpl;		
-			if($pair_impair == "even") $pair_impair = "odd"; else $pair_impair = "even";	
-			$classement_list= $this->get_pages_classement_list($infos->cadre_classement);
+			if($pair_impair == "even") $pair_impair = "odd"; else $pair_impair = "even";
 						
 			$item = str_replace("!!pair_impair!!",$pair_impair,$item);			
 			$item = str_replace("!!name!!",htmlentities($page['name'],ENT_QUOTES, $charset),$item);
@@ -198,11 +185,11 @@ class cms_page {
 			$cpt=$i+1;
 			$name="var_name_".$cpt;
 			$comment="var_comment_".$cpt;
-			global $$name;
-			global $$comment;
-			if($$name){
-				$this->vars[$i]['name']=stripslashes( $$name);
-				$this->vars[$i]['comment']=stripslashes( $$comment);			
+			global ${$name};
+			global ${$comment};
+			if(${$name}){
+				$this->vars[$i]['name']=stripslashes( ${$name});
+				$this->vars[$i]['comment']=stripslashes( ${$comment});			
 			}	
 		}			
 		

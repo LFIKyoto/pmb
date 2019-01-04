@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docbnf.class.php,v 1.3 2013-04-17 12:45:51 arenou Exp $
+// $Id: docbnf.class.php,v 1.4 2017-02-28 12:28:34 dgoron Exp $
 
 
 if (stristr ($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
@@ -255,7 +255,7 @@ class docbnf {
 		return array('matches' => $matches);
 	}
 	
-	function get_paragraphe($string){
+	public function get_paragraphe($string){
 		$current = $string;
 		$paragraphe = "";
 		while($current->nodeName != "TextBlock"){
@@ -289,7 +289,7 @@ class docbnf {
 		return $paragraphe;
 	}
 	
-	function getTDM(){
+	public function getTDM(){
 		if(!$this->tdm && $this->file_exists($this->get_file_path("T".$this->ref.".xml"))){
 			
 			$xml = new domDocument();
@@ -302,12 +302,12 @@ class docbnf {
 		return $this->tdm;
 	}
 	
-	function getBookmarks(){
+	public function getBookmarks(){
 		$this->getTDM();
 		return $this->bookmarks;
 	}
 	
-	function parseTDM($encoding,$element,$deep=0){
+	public function parseTDM($encoding,$element,$deep=0){
 		foreach($element->childNodes as $child){
 			switch ($child->tagName){
 				case "head" :
@@ -377,7 +377,7 @@ class docbnf {
 		return $this->tdm;
 	}
 	
-	function generatePDF($pdfParams){
+	public function generatePDF($pdfParams){
 		$this->convert = new fpdf_bnf($pdfParams);
 		$this->convert->SetMargins(0,0);
 		$this->convert->SetAutoPageBreak(true,0);
@@ -422,7 +422,7 @@ class docbnf {
 		return true;		
 	}
 	
-	function generateOCR($pageName){
+	public function generateOCR($pageName){
 		if($this->file_exists($this->get_file_path("X/".$pageName.".xml.gz"))){
 			$filepath = $this->get_file($this->get_file_path("X/".$pageName.".xml.gz"));
 			print $file_path;
@@ -535,7 +535,7 @@ class docbnf {
 		}
 	}
 	
-	function generateBookmarks(){
+	public function generateBookmarks(){
 		$this->getTDM();
 		for($i=0 ; $i<count($this->bookmarks) ; $i++){
 			$item = $this->bookmarks[$i];
@@ -551,7 +551,7 @@ class docbnf {
 		}
 	}
 	
-	function getImagePath($image){
+	public function getImagePath($image){
 		$image = str_replace("T",$this->resolution,$image);
 		$img_path = $this->resolution."/".$image.".PNG";
 		if(!$this->file_exists($this->get_file_path($img_path))){
@@ -569,11 +569,11 @@ class docbnf {
  		return realpath("./temp/".$image.".jpg");
 	}
 	
-	function get_file($file_path){
+	public function get_file($file_path){
 		return $this->get_file_path($file_path);
 	}
 	
-	function getPagesSizes(){
+	public function getPagesSizes(){
 		//pour chaque page
 		if(!$this->pagesSizes){
 			$pages = $this->refnum->getElementsByTagName("vueObjet");
@@ -599,24 +599,24 @@ class docbnf {
  */
 
 class fpdf_bnf extends fpdf{
-	var $logoUrl;	//url du logo déposé sur chaque page...
-	var $header;	//header de page...
-	var $footers;	//pied de page du document...
-	var $resolution;
+	public $logoUrl;	//url du logo déposé sur chaque page...
+	public $header;	//header de page...
+	public $footers;	//pied de page du document...
+	public $resolution;
 
-	var $outlines=array();
-	var $OutlineRoot;
+	public $outlines=array();
+	public $OutlineRoot;
 
 
-	function __construct($params=array()){
-		parent::FPDF();
+	public function __construct($params=array()){
+		parent::__construct();
 		$this->footers = $params['footers'];
 		$this->setCreator(utf8_decode($params['creator']));
 		$this->SetTextColor(0);
 		$this->cMargin = 0;
 	}
 
-	function getSize($dimension,$resolution){
+	public function getSize($dimension,$resolution){
 		$this->resolution = $resolution;
 		$dimension = explode(",",$dimension);
 		$resolution = explode(",",$resolution);
@@ -628,11 +628,11 @@ class fpdf_bnf extends fpdf{
 		return $size;
 	}
 
-	function convertPxToMm($px,$dpi=0){
+	public function convertPxToMm($px,$dpi=0){
 		return ($px*25.4)/($dpi ? $dpi : $this->resolution);
 	}
 
-	function Footer(){
+	public function Footer(){
 		if ($this->logoUrl !="") $this->Image($this->logoUrl,10,8,20);
 		if ($this->header) {
 			$this->SetFont('Arial',"",14);
@@ -662,7 +662,7 @@ class fpdf_bnf extends fpdf{
 		}
 	}
 
-	function Error($msg){
+	public function Error($msg){
 		//erreur sur la classe FDPF, on la log avant d'arreter la génération...
 // 		logMsg($msg);
 		//Fatal error
@@ -675,7 +675,7 @@ class fpdf_bnf extends fpdf{
 	 		*  Modifié par Arnaud RENOU (prise en compte d'un numéro de page        *
 	 				*************************************************************************/
 
-	function Bookmark($txt, $page=-1, $level=0, $y=0)	{
+	public function Bookmark($txt, $page=-1, $level=0, $y=0)	{
 		if($y==-1)
 			$y=$this->GetY();
 		if($page == -1){
@@ -683,11 +683,11 @@ class fpdf_bnf extends fpdf{
 		}
 		$this->outlines[]=array('t'=>$txt, 'l'=>$level, 'y'=>($this->h-$y)*$this->k, 'p'=>$page);
 	}
-	function BookmarkUTF8($txt,$page=-1, $level=0, $y=0){
+	public function BookmarkUTF8($txt,$page=-1, $level=0, $y=0){
 		$this->Bookmark($this->_UTF8toUTF16($txt),$page, $level,$y);
 	}
 
-	function _putbookmarks(){
+	public function _putbookmarks(){
 		$nb=count($this->outlines);
 		if($nb==0)
 			return;
@@ -746,12 +746,12 @@ class fpdf_bnf extends fpdf{
 		$this->_out('endobj');
 	}
 
-	function _putresources(){
+	public function _putresources(){
 		parent::_putresources();
 		$this->_putbookmarks();
 	}
 
-	function _putcatalog(){
+	public function _putcatalog(){
 		parent::_putcatalog();
 		if(count($this->outlines)>0)
 		{

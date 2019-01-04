@@ -1,36 +1,101 @@
+<!-- $Id: gabarit.html,v 1.8 2018-07-05 12:58:03 ccraig Exp $ -->
+
+<style type="text/css">
+.aut_display_table {
+	display: table;
+}
+
+.aut_display_row {
+	display: table-row;
+}
+
+.aut_display_cell {
+	display: table-cell;
+	padding-right: 5px;
+}
+
+#aut_details .vignetteimg {
+	margin-left: 0;
+	margin-bottom: 12px;
+}
+</style>
+
 <div id="aut_details">
 	{% block header %}
-		<h3><span>Détail de l'autorité</span></h3>
+		<h3><span>{{ msg.detail_authority_title }}</span></h3>
 	{% endblock %}
 	<div id="aut_details_container">
 		<div id="aut_see" class="aut_see">
-			{% block aut_see %}
-				{% block title %}
-					<h3>{{authority.isbd_entry}}</h3>
-				{% endblock %}
-				{% block details %}
-					<p>Détails de notre autorité</p>
-				{% endblock %}
-				{% block aut_linked %}
-					{% if aut_link.display %}
-						<div class="aut_linked">
-							{{aut_link.display }}
+			<table class="table_aut_see">
+				<tr id="authority_container">
+					<td>
+						<div id="authority_display_table" class="aut_display_table">
+							{% block aut_see %}
+								{% if authority.thumbnail_url %}
+									{{ authority.thumbnail }}
+								{% endif %}
+								{% block title %}
+									<h3>{{authority.isbd}}</h3>
+								{% endblock %}
+								{% block details %}
+									<p>DÃ©tails de notre autoritÃ©</p>
+								{% endblock %}
+								{% block aut_linked %}
+									{% if aut_link.display %}
+										<div class="aut_linked aut_display_row">
+											<div class="aut_display_cell">
+												<b>{{ msg.aut_link }} :</b>
+											</div>
+											<div class="aut_display_cell">
+												{{ aut_link.display }}
+											</div>
+										</div>
+									{% endif %}
+								{% endblock %}
+								{% block indexing_concepts %}
+									{% for indexing_concept in authority.indexing_concepts %}
+										{% if loop.first %}
+											<div class="aut_display_row">
+												<div class="aut_display_cell">
+													<b>{{ msg.ontology_skos_concept }} :</b>
+												</div>
+												<div class="aut_display_cell">
+										{% else %}
+											<br />
+										{% endif %}
+										<a href="{{ indexing_concept.permalink }}">{{ indexing_concept.isbd }}</a>
+										{% if loop.last %}
+												</div>
+											</div>
+										{% endif %}
+									{% endfor %}
+								{% endblock %}	
+								{% block concept_composed %}
+									<div class="aut_display_row concepts_composed">	
+										{{authority.concepts_composed }}
+									</div>
+								{% endblock %}
+								{% block pperso %}
+									{% for pperso in authority.p_perso %}
+										{% if pperso.AFF %}
+											<div class="aut_display_row">
+												<div class="aut_display_cell">
+													{{ pperso.TITRE }}
+												</div>
+												<div class="aut_display_cell">
+													{{ pperso.AFF }}
+												</div>
+											</div>
+										{% endif %}
+									{% endfor %}
+								{% endblock %}
+								{% block enrichment %}
+								{% endblock %}
+							{% endblock %}
 						</div>
-					{% endif %}
-				{% endblock %}
-				{% block indexing_concepts %}
-					<div class="indexing_concepts">	
-						{{authority.indexing_concepts }}
-					</div>
-				{% endblock %}	
-				{% block concept_composed %}
-					<div class="concepts_composed">	
-						{{authority.concepts_composed }}
-					</div>
-				{% endblock %}
-				{% block enrichment %}
-				{% endblock %}
-			{% endblock %}	
+					</td>
+				</tr>
+			</table>	
 		</div>
 		{% block records %}
 			<div id='aut_details_liste'>

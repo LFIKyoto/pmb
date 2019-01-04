@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: openurl_context_object_kev_mtx_ctx.class.php,v 1.1 2011-08-02 12:36:00 arenou Exp $
+// $Id: openurl_context_object_kev_mtx_ctx.class.php,v 1.4 2018-11-14 11:36:17 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,8 +12,8 @@ require_once($class_path.'/openurl/serialize/openurl_serialize_kev_mtx.class.php
 
 class openurl_context_object_kev_mtx_ctx extends openurl_context_object {
 
-    function openurl_context_object_kev_mtx_ctx() {
-    	parent::openurl_context_object();
+    public function __construct() {
+    	parent::__construct();
     	$this->uri = $this->uri.":kev:mtx:ctx"; 
     	self::$serialize = "kev_mtx";
     	$infos=array();
@@ -23,18 +23,18 @@ class openurl_context_object_kev_mtx_ctx extends openurl_context_object {
     	$this->infos = $infos;
     }
     
-    function addEntity($entity){
+    public function addEntity($entity){
     	$this->entities[] = $entity;
     }
     
-	function serialize($debug=false){
+	public function serialize_infos($debug=false){
 		if($debug){
 			highlight_string("ContextObject :".print_r($this->infos,true));
 		}
 		$this->context = openurl_serialize_kev_mtx::serialize($this->infos);
 		//on ajoute les entités
 		foreach($this->entities as $entity){
-			$entity_serialized = $entity->serialize($debug);
+			$entity_serialized = $entity->serialize_infos($debug);
 			if($entity_serialized != ""){
 				$this->context .= "&".$entity_serialized;
 			}
@@ -42,7 +42,7 @@ class openurl_context_object_kev_mtx_ctx extends openurl_context_object {
 		return $this->context;
 	}
 	
-	function unserialize($str){
+	public function unserialize($str){
 		$params = $this->explodeSerializedStr($str);
 		global $openurl_map;
 		$referent = $referring_entity = $requester = $service_type = $resolver = $referrer = array();
@@ -93,7 +93,7 @@ class openurl_context_object_kev_mtx_ctx extends openurl_context_object {
 		$this->getServices();
 	}
 	
-	function explodeSerializedStr($str){
+	public function explodeSerializedStr($str){
 		$value_name = $value = $tmp = "";
 		$params = array();
 		for($i=0 ; $i<strlen($str) ; $i++){
@@ -131,12 +131,12 @@ class openurl_context_object_kev_mtx_ctx extends openurl_context_object {
 		return $params;	
 	}
 	
-	function getServices(){
+	public function getServices(){
 		//pour le moment, juste la recherche
 		$this->getSearch();
 	}
 	
-	function getSearch(){
+	public function getSearch(){
 		global $opac_url_base;
 		global $search;
 		$search = array();	
@@ -192,7 +192,7 @@ class openurl_context_object_kev_mtx_ctx extends openurl_context_object {
 		</script>";
 	}
 	
-	function generateEntitySearch($entity_search){
+	public function generateEntitySearch($entity_search){
 		global $search;
 		$search = $ent_search = array();
 		foreach($entity_search->descriptors as $desc){
@@ -208,28 +208,29 @@ class openurl_context_object_kev_mtx_ctx extends openurl_context_object {
 				for ($j=0 ; $j<count($ent_search[$i]) ; $j++){
 					$search[$n]= "f_".$ent_search[$i][$j]['id'];
 					$op = "op_".$n."_".$search[$n];
-					global $$op;
-					$$op = $ent_search[$i][$j]['op'];
+					global ${$op};
+					${$op} = $ent_search[$i][$j]['op'];
 					$field = "field_".$n."_".$search[$n];
-					global $$field;
+					global ${$field};
 					${$field}[0] = $ent_search[$i][$j]['value'];
 					if(count($ent_search[$i][$j]['var'])>0){
 						$fieldvar = "fieldvar_".$n."_".$search[$n];
-						global $$fieldvar;
+						global ${$fieldvar};
 						for($k=0 ; $k<count($ent_search[$i][$j]['var']) ; $k++){
 							${$fieldvar}[$ent_search[$i][$j]['var'][$k]['name']][0] = $ent_search[$i][$j]['var'][$k]['value'];
 						}
 					}
 					$inter="inter_".$n."_".$search[$n];
-					global $$inter;
+					global ${$inter};
 					if($n>0){
-						$$inter = ($i>0 ? "or" : "and");
+						${$inter} = ($i>0 ? "or" : "and");
 					}
 					$n++;
 				}
 			}
-			$entity_search = search::serialize_search();
-			search::destroy_global_env();
+			$s = new search();
+			$entity_search = $s->serialize_search();
+			$s->destroy_global_env();
 		}else{
 			$entity_search = "";
 		}

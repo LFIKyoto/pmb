@@ -2,19 +2,15 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesThesauri.class.php,v 1.5 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: pmbesThesauri.class.php,v 1.6 2017-06-22 08:49:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/external_services.class.php");
 
 class pmbesThesauri extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
-	var $es;				//Classe mère qui implémente celle-ci !
-	var $msg;
 	
-	function list_thesauri($OPACUserId=-1) {
+	public function list_thesauri($OPACUserId=-1) {
 		$thesauri = thesaurus::getThesaurusList();
 		$results = array();
 		global $opac_thesaurus, $opac_thesaurus_defaut;
@@ -34,7 +30,7 @@ class pmbesThesauri extends external_services_api_class {
 		return $results;
 	}
 
-	function fetch_node_notice_ids($node_id, $OPACUserId=-1) {
+	public function fetch_node_notice_ids($node_id, $OPACUserId=-1) {
 		$node_id += 0;
 		if (!$node_id)
 			return FALSE;
@@ -105,14 +101,14 @@ class pmbesThesauri extends external_services_api_class {
 		
 	}
 	
-	function fetch_node_full($node_id, $OPACUserId=-1) {
+	public function fetch_node_full($node_id, $OPACUserId=-1) {
 		return array(
 			'node' => $this->proxy_parent->pmbesThesauri_fetch_node($node_id, $OPACUserId),
 			'notice_ids' => $this->proxy_parent->pmbesThesauri_fetch_node_notice_ids($node_id, $OPACUserId)
 		);
 	}
 	
-	function fetch_node($node_id, $OPACUserId=-1) {
+	public function fetch_node($node_id, $OPACUserId=-1) {
 		$node_id += 0;
 		if (!$node_id)
 			return FALSE;

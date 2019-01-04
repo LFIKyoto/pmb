@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.8 2015-03-30 07:14:50 jpermanne Exp $
+// $Id: main.inc.php,v 1.9 2017-05-06 12:03:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -24,7 +24,8 @@ switch ($quoi) {
 		$catalog_layout = str_replace('<!--!!sous_menu_choisi!! -->', $msg["classementGen_list_libelle"], $catalog_layout);
 		print $catalog_layout ;
 		$baseLink="./catalog.php?categ=caddie&sub=gestion&quoi=classementGen";
-		include($include_path.'/classementGen.inc.php');
+		$classementGen = new classementGen($categ,0);
+		$classementGen->proceed($action);
 		break;
 	case 'panier':
 	default:

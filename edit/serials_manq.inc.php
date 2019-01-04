@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serials_manq.inc.php,v 1.11 2015-06-14 11:47:07 Alexandre Exp $
+// $Id: serials_manq.inc.php,v 1.14 2017-11-21 12:01:00 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -166,7 +166,7 @@ if($nbr_lignes) {
 
 	if($precedente > 0){
 		$nav_bar .= "<a href='./edit.php?categ=serial&sub=collect&page=$precedente&nbr_lignes=$nbr_lignes&form_cb=".rawurlencode($form_cb)."'>
-					<img src='./images/left.gif' border='0' title='$msg[48] alt='[$msg[48]]' hspace='3' align='middle'></a>";
+					<img src='".get_url_icon('left.gif')."' style='border:0px; margin:3px 3px' title='$msg[48] alt='[$msg[48]]' class='align_middle'></a>";
 					}
 
 	for($i = 1; $i <= $nbepages; $i++) {
@@ -177,7 +177,7 @@ if($nbr_lignes) {
 
 	if($suivante<=$nbepages)
 		$nav_bar .= "<a href='./edit.php?categ=serial&sub=collect&page=$suivante&nbr_lignes=$nbr_lignes&form_cb=".rawurlencode($form_cb)."'>
-					<img src='./images/right.gif' border='0' title='$msg[49] alt='[$msg[49]]' hspace='3' align='middle'></a>";
+				<img src='".get_url_icon('right.gif')."' style='border:0px; margin:3px 3px' title='$msg[49] alt='[$msg[49]]' class='align_middle'></a>";
 
 	// affichage du résultat
 

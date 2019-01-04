@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: openurl_transport.class.php,v 1.1 2011-08-02 12:36:00 arenou Exp $
+// $Id: openurl_transport.class.php,v 1.4 2018-11-14 11:36:17 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -19,13 +19,13 @@ function _getMapItem_($param){
 }
 
 class openurl_transport extends openurl_root{
-	var $infos= array();		// Infos générales concernant le transport
-	var $service_address = "";	// URL du service
-	var $contextObject;			// ContextObject à transporter
-	var $serialized_tsp="";		// infos du transport sérialisées
-	var $serialized_obj="";		// ContextObject sérialisé
+	public $infos= array();		// Infos générales concernant le transport
+	public $service_address = "";	// URL du service
+	public $contextObject;			// ContextObject à transporter
+	public $serialized_tsp="";		// infos du transport sérialisées
+	public $serialized_obj="";		// ContextObject sérialisé
     
-    function openurl_transport($url) {
+    public function __construct($url) {
     	$this->service_address = $url;
     	$this->uri = parent::$uri."/tsp";
         $this->infos = array(
@@ -34,19 +34,19 @@ class openurl_transport extends openurl_root{
     	);
     }
 
-    function addContext($context){
+    public function addContext($context){
     	$this->infos['url_ctx_fmt'] = $context->uri;
     	$this->contextObject = $context;
     }
 
-	function serialize($debug=false){
+	public function serialize_infos($debug=false){
 		if($debug){
 			highlight_string("Transport :".print_r($this->infos,true));
 		}
 		return openurl_serialize_kev_mtx::serialize($this->infos);
     }
 
-    function unserialize($str){
+    public function unserialize($str){
     	global $include_path;
     	global $openurl_map;
     	global $url_ctx_val,$url_ctx_ref;
@@ -71,19 +71,19 @@ class openurl_transport extends openurl_root{
 }
 
 class openurl_transport_byref extends openurl_transport{
-	var $notice_id;
-	var $source_id;
-	var $byref_url;
+	public $notice_id;
+	public $source_id;
+	public $byref_url;
 	
-    function openurl_transport_byref($url,$notice_id,$source_id,$byref_url) {
-    	parent::openurl_transport($url);
+    public function __construct($url,$notice_id,$source_id,$byref_url) {
+    	parent::__construct($url);
     	$this->notice_id = $notice_id;
     	$this->source_id = $source_id;
     	$this->byref_url = $byref_url;
     }
     
-    function generateURL($debug=false){
-    	if(!$this->serialized_tsp) $this->serialized_tsp = $this->serialize($debug);
+    public function generateURL($debug=false){
+    	if(!$this->serialized_tsp) $this->serialized_tsp = $this->serialize_infos($debug);
     	if(!$this->serialized_obj) $this->serialized_obj = openurl_serialize_kev_mtx::serialize(array('url_ctx_ref' => $this->byref_url."?notice_id=".$this->notice_id."&in_id=".$this->source_id."&uri=".$this->contextObject->uri));
     	return $this->service_address.(strpos($this->service_address,"?")===false ? "?":"&").$this->serialized_tsp.($this->serialized_obj ? "&".$this->serialized_obj : "");
     }    
@@ -91,24 +91,24 @@ class openurl_transport_byref extends openurl_transport{
 
 class openurl_transport_byval extends openurl_transport{
 
-    function openurl_transport_byval($url) {
-    	parent::openurl_transport($url);
+    public function __construct($url) {
+    	parent::__construct($url);
     }
-    function generateURL($debug=false){
-    	if(!$this->serialized_tsp) $this->serialized_tsp = $this->serialize($debug);
-    	if(!$this->serialized_obj) $this->serialized_obj = openurl_serialize_kev_mtx::serialize(array('url_ctx_val' => $this->contextObject->serialize($debug)));
+    public function generateURL($debug=false){
+    	if(!$this->serialized_tsp) $this->serialized_tsp = $this->serialize_infos($debug);
+    	if(!$this->serialized_obj) $this->serialized_obj = openurl_serialize_kev_mtx::serialize(array('url_ctx_val' => $this->contextObject->serialize_infos($debug)));
     	return $this->service_address.(strpos($this->service_address,"?")===false ? "?":"&").$this->serialized_tsp.($this->serialized_obj ? "&".$this->serialized_obj : "");
     } 
 }
 class openurl_transport_inline extends openurl_transport{
 
-    function openurl_transport_inline($url) {
-    	parent::openurl_transport($url);
+    public function __construct($url) {
+    	parent::__construct($url);
     }
 
-    function generateURL($debug=false){
-    	if(!$this->serialized_tsp) $this->serialized_tsp = $this->serialize($debug);
-    	if(!$this->serialized_obj) $this->serialized_obj = $this->contextObject->serialize($debug);
+    public function generateURL($debug=false){
+    	if(!$this->serialized_tsp) $this->serialized_tsp = $this->serialize_infos($debug);
+    	if(!$this->serialized_obj) $this->serialized_obj = $this->contextObject->serialize_infos($debug);
     	return $this->service_address.(strpos($this->service_address,"?")===false ? "?":"&").$this->serialized_tsp.($this->serialized_obj ? "&".$this->serialized_obj : "");
     }    
 }

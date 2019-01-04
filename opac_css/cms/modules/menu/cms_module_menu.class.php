@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_menu.class.php,v 1.16 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: cms_module_menu.class.php,v 1.18 2017-11-21 12:01:00 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -28,7 +28,7 @@ class cms_module_menu extends cms_module_common_module {
 						<a href='".$base_path."/cms.php?categ=manage&sub=".str_replace("cms_module_","",$this->class_name)."&quoi=module&menu=".$key."&action=get_form'>".$this->format_text($menu_infos['name'])."</a>
 					&nbsp;
 						<a href='".$base_path."/cms.php?categ=manage&sub=".str_replace("cms_module_","",$this->class_name)."&quoi=module&menu_delete=".$key."&action=save_form' onclick='return confirm(\"".$this->format_text($this->msg['cms_module_menu_delete_menu'])."\")'>
-							<img src='".$base_path."/images/trash.png' alt='".$this->format_text($this->msg['cms_module_root_delete'])."' title='".$this->format_text($this->msg['cms_module_root_delete'])."'/>
+							<img src='".get_url_icon('trash.png')."' alt='".$this->format_text($this->msg['cms_module_root_delete'])."' title='".$this->format_text($this->msg['cms_module_root_delete'])."'/>
 						</a>
 					</p>";
 			}
@@ -493,7 +493,7 @@ class cms_module_menu extends cms_module_common_module {
 				}
 				
 				$this->managed_datas['module']['menus'][$menu]['items'] = $tree[0]['items'];
-				$query = "replace into cms_managed_modules set managed_module_name = '".$this->class_name."', managed_module_box = '".$this->addslashes(serialize($this->managed_datas))."'";
+				$query = "replace into cms_managed_modules set managed_module_name = '".addslashes($this->class_name)."', managed_module_box = '".$this->addslashes(serialize($this->managed_datas))."'";
 				pmb_mysql_query($query);
 				$response['content'] = "OK";
 				$response['content-type'] = "application/json"; 

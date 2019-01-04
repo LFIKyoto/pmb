@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : Marco VANINETTI                                                           |
 // +-------------------------------------------------+
-// $Id: z_progression_cache.php,v 1.36.4.1 2015-11-22 18:01:05 Alexandre Exp $
+// $Id: z_progression_cache.php,v 1.42 2018-10-30 13:54:50 dgoron Exp $
 
 // définition du minimum nécéssaire
 $base_path="../..";
@@ -21,7 +21,7 @@ require_once ("z3950_func.inc.php");
 require ('notice.inc.php');
 // new for decoding record sutrs
 require_once ("z3950_sutrs.inc.php");
-include("$class_path/z3950_notice.class.php");
+require_once("$class_path/z3950_notice.class.php");
 
 //Correction mystérieuse : visiblement la fonction yaz_search impacte la variable global $limite... modifié en $limite_notices
 $limite_notices+=0;
@@ -32,20 +32,27 @@ function critere_isbn ($val1) {
 		$val1 = z_EANtoISBN($val1);
 		// si échec, on prend l'EAN comme il vient
 		if(!$val1) $val1 = $val;
+	} else {
+		if(isISBN($val1)) {
+			// si la saisie est un ISBN
+			$val1 = z_formatISBN($val1,13);
+			// si échec, ISBN erroné on le prend sous cette forme
+			if(!$val1) $val1 = $val;
 		} else {
-			if(isISBN($val1)) {
-				// si la saisie est un ISBN
-				$val1 = z_formatISBN($val1,13);
-				// si échec, ISBN erroné on le prend sous cette forme
-				if(!$val1) $val1 = $val;
-				} else {
-					// ce n'est rien de tout ça, on prend la saisie telle quelle
-					$val1 = $val;
-					}
-			}
-	return $val1;
+			// ce n'est rien de tout ça, on prend la saisie telle quelle
+			$val1 = $val;
+		}
 	}
+	return $val1;
+}
 
+function get_z_term($critere_name, $critere_num, $value, $troncature="") {
+	$term="@attr 1=".$critere_num." @attr 4=1 \"".$value.$troncature."\" ";
+	if($critere_name == "isbn" && isISBN13($value)) {
+		$term="@or ".$term." @attr 1=".$critere_num." @attr 4=1 \"".formatISBN($value, 10).$troncature."\" ";
+	}
+	return $term;
+}
 
 $mioframe="frame1";
 //affiche_jsscript ("configuring the connections...", "#FFB7B7", $mioframe);
@@ -62,7 +69,7 @@ $rqt_bib_attr=pmb_mysql_query("select attr_libelle from z_attr group by attr_lib
 while ($linea=pmb_mysql_fetch_array($rqt_bib_attr)) {
 	$attr_libelle=$linea["attr_libelle"];
 	$var = "attr_".strtolower($attr_libelle) ;
-	$$var = "" ;
+	${$var} = "" ;
 }
 
 $rq_bib_z3950=pmb_mysql_query("select * from z_bib $selection_bib order by bib_nom, bib_id ");
@@ -84,7 +91,7 @@ while ($ligne=pmb_mysql_fetch_array($rq_bib_z3950)) {
 		$attr_libelle=$linea["attr_libelle"];
 		$attr_attr=$linea["attr_attr"];
 		$var = "attr_".strtolower($attr_libelle) ;
-		$$var = $attr_attr ;
+		${$var} = $attr_attr ;
 	}
 
 	// On détermine la requête à envoyer
@@ -118,6 +125,8 @@ while ($ligne=pmb_mysql_fetch_array($rq_bib_z3950)) {
 		case "isbn" :
 			$critere1=$attr_isbn;
 			//$val1=critere_isbn($val1);
+			// On enlève les tirets pour de meilleurs résultats
+			$val1 = str_replace('-', '', $val1);
 			break;
 		case "issn" :
 			$critere1=$attr_issn;
@@ -137,6 +146,9 @@ while ($ligne=pmb_mysql_fetch_array($rq_bib_z3950)) {
 		case "ean" :
 			$critere1=$attr_ean;
 			break;
+		case "notice_id" :
+		    $critere1=$attr_notice_id;
+		    break;
 		case "allfields" :
 			$critere1=$attr_allfields;
 			break;
@@ -167,6 +179,8 @@ while ($ligne=pmb_mysql_fetch_array($rq_bib_z3950)) {
 		case "isbn" :
 			$critere2=$attr_isbn;
 			//$val2=critere_isbn($val2);
+			// On enlève les tirets pour de meilleurs résultats
+			$val2 = str_replace('-', '', $val2);
 			break;
 		case "issn" :
 			$critere2=$attr_issn;
@@ -186,6 +200,9 @@ while ($ligne=pmb_mysql_fetch_array($rq_bib_z3950)) {
 		case "ean" :
 			$critere2=$attr_ean;
 			break;
+		case "notice_id" :
+		    $critere2=$attr_notice_id;
+		    break;
 		case "allfields" :
 			$critere2=$attr_allfields;
 			break;
@@ -195,17 +212,17 @@ while ($ligne=pmb_mysql_fetch_array($rq_bib_z3950)) {
 
 	$term="";
 
-
 	if ($val1 != "" AND $val2 == "" AND $critere1 != "" ) {
-		$term="@attr 1=$critere1 @attr 4=1 \"$val1$troncature\" ";
-		}
+		$term = get_z_term($crit1, $critere1, $val1, $troncature);
+	}
 	if ($val1 == "" AND $val2 != "" AND $critere2 != "" ) {
-		$term="@attr 1=$critere2 @attr 4=1 \"$val2$troncature\" ";
-		}
+		$term = get_z_term($crit2, $critere2, $val2, $troncature);
+	}
 	if ($val1 != "" AND $val2 != "" AND $critere1 != "" AND $critere2 != "" ) {
-		$term="$booleen @attr 1=$critere1 @attr 4=1 \"$val1$troncature\"  @attr 1=$critere2 @attr 4=1 \"$val2$troncature\" ";
-		}
-
+		$term1 = get_z_term($crit1, $critere1, $val1, $troncature);
+		$term2 = get_z_term($crit2, $critere2, $val2, $troncature);
+		$term=$booleen." ".$term1." ".$term2;
+	}
 	if ($term == "") {
 		//$stato[$bib_id]=0;
 		//$map[$bib_id] = 0;
@@ -265,7 +282,7 @@ while (list($bib_id,$id)=each($map)){
 		$error = yaz_error($id);
 		$error_info = yaz_addinfo($id);
 		if (!empty($error)) {
-			$msg1 = $msg[z3950_echec_rech]." : ".$error.", ". $error_info;
+			$msg1 = $msg['z3950_echec_rech']." : ".$error.", ". $error_info;
 			affiche_jsscript ($msg1, "z3950_failed", $bib_id);
 			yaz_close ($id);
 		} else {
@@ -273,12 +290,12 @@ while (list($bib_id,$id)=each($map)){
 			$hits+=0;
 			if ($hits>$limite_notices) {
 				$lim_recherche=$limite_notices;
-				$msg1 = str_replace ("!!limite!!", $limite_notices, $msg[z3950_recup_encours]) ;
+				$msg1 = str_replace ("!!limite!!", $limite_notices, $msg['z3950_recup_encours']) ;
 				$msg1 = str_replace ("!!hits!!", $hits, $msg1) ;
 				affiche_jsscript ($msg1, "", $bib_id);
 			} else {
 				$lim_recherche=$hits;
-				$msg1= str_replace ("!!hits!!", $hits, $msg[z3950_recup]) ;
+				$msg1= str_replace ("!!hits!!", $hits, $msg['z3950_recup']) ;
 				affiche_jsscript ($msg1, "", $bib_id);
 			}
 			$total=0;
@@ -341,7 +358,7 @@ while (list($bib_id,$id)=each($map)){
 				} // fin du if qui vérifie que la notice n'est pas vide
 			} // fin for
 			yaz_close ($id);
-			$msg1 = str_replace ("!!total!!", $total, $msg[z3950_recup_fini]) ;
+			$msg1 = str_replace ("!!total!!", $total, $msg['z3950_recup_fini']) ;
 			$msg1 = str_replace ("!!hits!!", $hits, $msg1) ;
 			affiche_jsscript ($msg1, "z3950_succeed", $bib_id);
 		} // fin if else error

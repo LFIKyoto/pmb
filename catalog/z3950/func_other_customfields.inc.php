@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: func_other_customfields.inc.php,v 1.3.4.2 2015-09-25 15:20:19 jpermanne Exp $
+// $Id: func_other_customfields.inc.php,v 1.7 2017-12-04 10:33:10 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -137,9 +137,47 @@ function traite_categories_from_form() {
 	$categories = array () ;
 	for ($i=0; $i< $max_categ ; $i++) {
 		$var_categ = "f_categ_id$i" ;
-		global $$var_categ ;
-		if ($$var_categ) 
-			$categories[] = array('categ_id' => $$var_categ );
+		global ${$var_categ} ;
+		if (${$var_categ}) 
+			$categories[] = array('categ_id' => ${$var_categ} );
 		}
 	return $categories ;
+}
+
+function traite_concepts_for_form($tableau_606 = array()) {
+	global $charset, $msg, $pmb_keyword_sep, $rameau;
+	$rameau = "" ;
+	$info_606_a = $tableau_606["info_606_a"] ;
+	$info_606_j = $tableau_606["info_606_j"] ;
+	$info_606_x = $tableau_606["info_606_x"] ;
+	$info_606_y = $tableau_606["info_606_y"] ;
+	$info_606_z = $tableau_606["info_606_z"] ;
+
+	$champ_rameau="";
+	for ($a=0; $a<sizeof($info_606_a); $a++) {
+		$libelle_final="";
+		$libelle_j="";
+		for ($j=0; $j<sizeof($info_606_j[$a]); $j++) {
+			if (!$libelle_j) $libelle_j .= trim($info_606_j[$a][$j]) ;
+			else $libelle_j .= " -- ".trim($info_606_j[$a][$j]) ;
+		}
+		if (!$libelle_j) $libelle_final = trim($info_606_a[$a][0]) ; else $libelle_final = trim($info_606_a[$a][0])." -- ".$libelle_j ;
+		if (!$libelle_final) break ;
+		for ($j=0; $j<sizeof($info_606_x[$a]); $j++) {
+			$libelle_final .= " -- ".trim($info_606_x[$a][$j]) ;
+		}
+		for ($j=0; $j<sizeof($info_606_y[$a]); $j++) {
+			$libelle_final .= " -- ".trim($info_606_y[$a][$j]) ;
+		}
+		for ($j=0; $j<sizeof($info_606_z[$a]); $j++) {
+			$libelle_final .= " -- ".trim($info_606_z[$a][$j]) ;
+		}
+		if ($champ_rameau) $champ_rameau.=" @@@ ";
+		$champ_rameau.=$libelle_final;
+	}
+
+	return array(
+			"form" => "",
+			"message" => htmlentities($champ_rameau,ENT_QUOTES,$charset)
+	);
 }

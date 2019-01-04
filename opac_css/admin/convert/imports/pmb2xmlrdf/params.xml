@@ -7,5 +7,5 @@
 	<!-- Type de l'entrée -->
 	<input type="xml" rootelement="*" noticeelement="notice" specialexport="yes" />
 	<!-- Type de sortie -->
-	<output importable="no" type="custom" script="output_rdf.inc.php" suffix="xml" mimetype="application/xml" specialdoctype="no"/>
+	<output importable="no" type="custom" script="pmb2xmlrdf_output.class.php" suffix="xml" mimetype="application/xml" specialdoctype="no"/>
 </params>

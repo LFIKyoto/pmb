@@ -1,4 +1,4 @@
-<h1>Administration of the OPAC</h1>
+<h2>Administration of the OPAC</h2>
 
 <p>
 The <b>Administration of the OPAC</b> section lets you configure the modules of the OPAC.

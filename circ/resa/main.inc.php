@@ -2,9 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.16 2015-04-24 14:20:58 dbellamy Exp $
+// $Id: main.inc.php,v 1.18 2017-07-28 14:00:16 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($id_empr)) $id_empr = 0; else $id_empr += 0;
+if(!isset($id_notice)) $id_notice = 0; else $id_notice += 0;
+if(!isset($id_bulletin)) $id_bulletin = 0; else $id_bulletin += 0;
 
 // page de switch recherche notice
 
@@ -99,7 +103,6 @@ if (!$id_empr) {
 					include('./circ/resa/authors/main.inc.php');
 					break;
 			}
-			print $layout_end;
 		}
 	}
 }

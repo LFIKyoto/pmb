@@ -2,10 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_record_child.class.php,v 1.9 2015-04-10 09:26:25 dgoron Exp $
+// $Id: nomenclature_record_child.class.php,v 1.29 2018-03-29 10:17:47 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
+require_once($class_path.'/notice.class.php');
+require_once($class_path.'/audit.class.php');
+require_once($class_path."/notice_relations.class.php");
 
 /**
  * class nomenclature_record_child
@@ -34,7 +37,8 @@ class nomenclature_record_child {
 	protected $num_voice;	
 	protected $voice;		
 	protected $num_workshop;	
-	protected $workshop;	
+	protected $workshop;
+	protected $num_nomenclature;
 		
 	/**
 	 * Constructeur
@@ -63,6 +67,7 @@ class nomenclature_record_child {
 		$this->set_other("");
 		$this->set_num_voice(0);
 		$this->set_num_workshop(0);
+		$this->set_num_nomenclature(0);
 		if($this->id){
 			$query = "select * from nomenclature_children_records where child_record_num_record = ".$this->id;
 			$result = pmb_mysql_query($query,$dbh);
@@ -77,10 +82,12 @@ class nomenclature_record_child {
 					$this->set_other($row->child_record_other);
 					$this->set_num_voice($row->child_record_num_voice);
 					$this->set_num_workshop($row->child_record_num_workshop);
-				}		
+					$this->set_num_nomenclature($row->child_record_num_nomenclature);
+				}
+				$record_formation = new nomenclature_record_formation($this->num_nomenclature);
 				$query="select notice_nomenclature_label, linked_notice from notices_relations, nomenclature_notices_nomenclatures where 
 				linked_notice= notice_nomenclature_num_notice	and num_notice='".$this->id."' and notice_nomenclature_num_formation=".$row->child_record_num_formation." 				
-				and relation_type='".$pmb_nomenclature_record_children_link."'";				
+				and relation_type='".$pmb_nomenclature_record_children_link."' and notice_nomenclature_order='".$record_formation->order."'";				
 				$result_parent = pmb_mysql_query($query,$dbh);
 				if(pmb_mysql_num_rows($result_parent)){
 					if($row_parent = pmb_mysql_fetch_object($result_parent)){
@@ -92,14 +99,14 @@ class nomenclature_record_child {
 		}
 	}
 	
-	public function get_data(){
+	public function get_data($duplicate = false){
 		return(
 			array(
 				"nature"=>$this->nature,
 				"num_formation"=>$this->get_num_formation(),
 				"formation_name"=>$this->formation->get_name(),
 				"formation_label"=>$this->formation_label,	
-				"id_parent"=>$this->id_parent,					
+				"id_parent"=> ($duplicate ? 0 : $this->id_parent),					
 				"num_type"=>$this->get_num_type(),
 				"type_name"=>$this->type->get_name(),
 				"num_musicstand"=>$this->get_num_musicstand(),
@@ -113,9 +120,10 @@ class nomenclature_record_child {
 				"voice_name"=>$this->voice->get_name(),
 				"num_workshop"=>$this->get_num_workshop(),
 				"workshop_name"=>$this->workshop->get_name(),
+				"num_nomenclature" => $this->get_num_nomenclature(),
 			)
-		);		
-	}	
+		);
+	}
 
 	public function get_num_formation(){
 		return $this->num_formation;		
@@ -209,7 +217,7 @@ class nomenclature_record_child {
 		global $nomenclature_record_partial_num_instrument;
 		global $nomenclature_record_partial_other_instruments;
 		global $nomenclature_record_partial_num_voice;
-		global $nomenclature_record_partial_effectve;
+		global $nomenclature_record_partial_effective;
 		global $nomenclature_record_partial_order;
 		
 		$formation_detail = explode("_",$nomenclature_record_partial_formation);
@@ -217,8 +225,8 @@ class nomenclature_record_child {
 		$data["num_type"]		= $formation_detail[1]*1;
 		$data["num_musicstand"]	= $nomenclature_record_partial_musicstand*1;
 		$data["num_instrument"]	= $nomenclature_record_partial_num_instrument*1;
-		$data["effective"]		= $nomenclature_record_partial_order*1;
-		$data["order"]			= $nomenclature_record_partial_effectve*1;
+		$data["effective"]		= $nomenclature_record_partial_effective*1;
+		$data["order"]			= $nomenclature_record_partial_order*1;
 		$data["num_voice"]		= $nomenclature_record_partial_num_voice*1;
 		$data["num_workshop"]	= $nomenclature_record_partial_workshop*1;		
 		$data["other"]			= stripslashes($nomenclature_record_partial_other_instruments);
@@ -239,7 +247,8 @@ class nomenclature_record_child {
 		child_record_order='".$data["order"]."',
 		child_record_other='".addslashes($data["other"])."',
 		child_record_num_voice='".$data["num_voice"]."',
-		child_record_num_workshop='".$data["num_workshop"]."'
+		child_record_num_workshop='".$data["num_workshop"]."',
+		child_record_num_nomenclature='".$data["num_nomenclature"]."'
 		";
 		
 		$req="INSERT INTO nomenclature_children_records SET $fields ";
@@ -263,23 +272,24 @@ class nomenclature_record_child {
 		global $dbh;
 		global $pmb_nomenclature_record_children_link;
 		
-		$query="select * from notices_relations where linked_notice='".$id_parent."' and relation_type='".$pmb_nomenclature_record_children_link."'";
+		$query='select notices_relations.num_notice from notices_relations join nomenclature_children_records as children on 
+				notices_relations.num_notice = children.child_record_num_record
+				where notices_relations.linked_notice = "'.$id_parent.'" 
+				and notices_relations.relation_type = "'.$pmb_nomenclature_record_children_link.'"
+				and children.child_record_num_formation = "'.($data['num_formation']*1).'"
+				and children.child_record_num_musicstand = "'.($data['num_musicstand']*1).'"
+				and children.child_record_num_instrument = "'.($data['num_instrument']*1).'"
+				and children.child_record_num_voice = "'.($data['num_voice']*1).'"
+				and children.child_record_other = "'.(isset($data['other']) ? $data['other'] : '').'"
+				and children.child_record_effective = "'.($data['effective']*1).'"
+				and children.child_record_order = "'.($data['order']*1).'"
+				and children.child_record_num_nomenclature = "'.($data['num_nomenclature']*1).'"
+				and children.child_record_num_workshop = "'.($data['num_workshop']*1).'"		
+				';
 		$result = pmb_mysql_query($query,$dbh);
 		if(pmb_mysql_num_rows($result)){
-			while($row = pmb_mysql_fetch_object($result)){
-				$child_id=$row->num_notice;
-				$child=new nomenclature_record_child($child_id);
-				$child_data=$child->get_data();
-				
-				if($child_data["num_formation"]!=$data["num_formation"])continue;
-				if($child_data["num_musicstand"]!=$data["num_musicstand"])continue;
-				if($child_data["num_instrument"]!=$data["num_instrument"])continue;
-				if($child_data["num_voice"]!=$data["num_voice"])continue;
-				if($child_data["other"]!=$data["other"])continue;
-				if($child_data["effective"]!=$data["effective"])continue;
-				if($child_data["order"]!=$data["order"])continue;
-				return $child_id;
-			}
+			$row = pmb_mysql_fetch_object($result);
+			return $row->num_notice;
 		}
 		return 0;	
 	}
@@ -287,29 +297,39 @@ class nomenclature_record_child {
 	public function create_record_child($id_parent,$data){
 		global $dbh;
 		global $pmb_nomenclature_record_children_link;
-	
-		$tit1="Notice fille temporaire de la nomenclature $id_parent";
-		
-		$fields="
-		tit1='".addslashes($tit1)."'
-		";
-	
+		global $typdoc; //La classe acces (gérant les droits d'acces utilisateur à besoin du type doc en global)
+		$tit1 = 'Notice fille temporaire de la nomenclature '.$id_parent;
+		$fields = ' tit1 = "'.addslashes($tit1).'" ';
+		if ($id_parent) {
+			$query = 'select typdoc,statut from notices where notice_id = '.$id_parent;
+			$result = pmb_mysql_query($query, $dbh);
+			if ($result){
+				$row = pmb_mysql_fetch_object($result);
+				$fields.= ', typdoc = "'.$row->typdoc.'" ';
+				$fields.= ', statut = "'.$row->statut.'" ';
+			}
+		}
+
 		$req="INSERT INTO notices SET $fields ";
 		pmb_mysql_query($req, $dbh);
-		$this->id=pmb_mysql_insert_id();
+		
+		//traitement audit
+	    $this->id = pmb_mysql_insert_id($dbh);
+	    audit::insert_creation (AUDIT_NOTICE, $this->id) ;
+
 		if(!$this->id) return 0;
+		
 		if(!$data["rank"]) $data["rank"]=1;
-		$requete='INSERT INTO notices_relations VALUES("'.$this->id.'","'.$id_parent.'","'.$pmb_nomenclature_record_children_link.'","'.$data["rank"].'")';
-		pmb_mysql_query($requete,$dbh);
-	
+		$inserted = notice_relations::insert($this->id, $id_parent, $pmb_nomenclature_record_children_link, $data["rank"]);
+			
+		notice::calc_access_rights($this->id);
+		
 		$this->save($data);
 		
 		$this->fetch_datas();
 		$data=$this->get_data();
 		
-		$tit1=$data["instrument_name"].$data["voice_name"];
-		if($data["musicstand_name"])$tit1.=" / ".$data["musicstand_name"];
-		if($data["formation_label"])$tit1.=" / ".$data["formation_label"];
+		$tit1 = $this->get_child_record_title($data);
 		
 		$fields="
 		tit1='".addslashes($tit1)."'
@@ -318,17 +338,10 @@ class nomenclature_record_child {
 		$req="UPDATE notices SET $fields where notice_id= ".$this->id;
 		pmb_mysql_query($req, $dbh);
 		
-		// permet de charger la bonne langue, mot vide...
-		$info=notice::indexation_prepare($this->id);
-		// Mise a jour des index de la notice
-		notice::majNotices($this->id);
-		// Mise a jour de la table notices_global_index
-		notice::majNoticesGlobalIndex($this->id);
-		// Mise a jour de la table notices_mots_global_index
-		notice::majNoticesMotsGlobalIndex($this->id);
-		// restaure l'environnement de langue
-		notice::indexation_restaure($info);
-		return array('id'=>$this->id, 'title'=> $tit1);
+		// Mise à jour de tous les index de la notice
+		notice::majNoticesTotal($this->id);
+		
+		return array('id'=>$this->id, 'title'=> $tit1, 'reverse_id_notices_relations' => $inserted['reverse_id_notices_relations'], 'reverse_num_reverse_link' => $inserted['reverse_num_reverse_link']);
 	}
 		
 	public function get_index() {
@@ -349,7 +362,7 @@ class nomenclature_record_child {
 		$num_parent+=0;
 		
 		//formations
-		$query = "select 
+		$query = "select nomenclature_notices_nomenclatures.id_notice_nomenclature,
 				nomenclature_notices_nomenclatures.notice_nomenclature_num_formation,
 				nomenclature_notices_nomenclatures.notice_nomenclature_num_type,
 				nomenclature_notices_nomenclatures.notice_nomenclature_label,
@@ -363,7 +376,7 @@ class nomenclature_record_child {
 		$result = pmb_mysql_query($query,$dbh);
 		if(pmb_mysql_num_rows($result)){
 			while($row = pmb_mysql_fetch_object($result)){
-				$possible_values['formations'][$row->notice_nomenclature_num_formation."_".$row->notice_nomenclature_num_type] = $row->formation_name.($row->type_name ? " / ".$row->type_name : "").($row->notice_nomenclature_label ? " - ".$row->notice_nomenclature_label : "");
+				$possible_values['formations'][$row->id_notice_nomenclature] = $row->formation_name.($row->type_name ? " / ".$row->type_name : "").($row->notice_nomenclature_label ? " - ".$row->notice_nomenclature_label : "");
 			}
 		}
 		//pupitres..
@@ -384,5 +397,55 @@ class nomenclature_record_child {
 		}
 		return $possible_values;
 	} 
+	
+	public function get_child_record_title($data){
+		$tit1 = "";
+		$tit1.= $data["instrument_name"].$data["voice_name"];
+		if ($data["other"]){
+			$other_instruments = explode('/', $data["other"]);
+			$other_instruments_name = array();
+			foreach ($other_instruments as $other_instrument) {
+				$instrument_name = nomenclature_instrument::get_instrument_name_from_code($other_instrument);
+				if($instrument_name) {
+					$other_instruments_name[] = $instrument_name;
+				}
+			}
+			if(count($other_instruments_name)) {
+				if($tit1 != '')$tit1.=' / ';
+				$tit1.=implode('/', $other_instruments_name);
+			}
+		}
+		if ($data["order"] && !$data['num_workshop'] && $data['num_musicstand']){
+			$tit1.=" ".$data["order"];
+		}
+		if ($data["musicstand_name"])$tit1.=" / ".$data["musicstand_name"];
+		if ($data["formation_label"])$tit1.=" / ".$data["formation_label"];
+		return $tit1;
+	}
+	
+	public function set_num_nomenclature($num_nomenclature){
+		$this->num_nomenclature = $num_nomenclature;
+	}
+	
+	public function get_num_nomenclature(){
+		return $this->num_nomenclature;
+	}
+	
+	public function update_record_child($data){
+		global $dbh;
+		$this->delete();
+		$this->save($data);
+		$data = $this->get_data();
+		$tit1 = $this->get_child_record_title($data);
+		
+		$query = "UPDATE notices SET tit1='".addslashes($tit1)."' where notice_id= ".$this->id;
+		pmb_mysql_query($query, $dbh);
+		notice::manage_access_rights($this->id);
+	    audit::insert_modif (AUDIT_NOTICE, $this->id) ;
+	}
+	
+	public function delete_record_child(){
+		notice::del_notice($this->id);
+	}
 } // end of nomenclature_record_child
 

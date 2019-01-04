@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_records_ui.class.php,v 1.2 2014-10-07 10:34:18 arenou Exp $
+// $Id: vedette_records_ui.class.php,v 1.3 2015-12-10 11:18:08 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -29,7 +29,11 @@ class vedette_records_ui extends vedette_element_ui{
 	 */
 	public static function get_create_box_js($params = array()){
 		global $vedette_records_tpl;
-		return $vedette_records_tpl["vedette_records_script"];
+		if(!in_array('vedette_records_script', parent::$created_boxes)){
+			array_push(parent::$created_boxes, 'vedette_records_script');
+			return $vedette_records_tpl["vedette_records_script"];
+		}
+		return '';
 	}
 	
 	/**

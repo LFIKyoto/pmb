@@ -2,17 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: acquisitions.inc.php,v 1.5 2015-04-03 11:16:18 jpermanne Exp $
+// $Id: acquisitions.inc.php,v 1.8 2017-11-22 11:07:34 dgoron Exp $
 
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // la taille d'un paquet a traiter
 $lot = ACQUISITION_PAQUET_SIZE; // defini dans ./params.inc.php
-
-// taille de la jauge pour affichage
-$jauge_size = GAUGE_SIZE;
-$jauge_size .= "px";
 
 // initialisation de la borne de départ
 if (!isset($start)) $start=0;
@@ -30,23 +26,11 @@ switch ($index_quoi) {
 			$count = pmb_mysql_result($actes, 0, 0);
 		}
 		
-		print "<br /><br /><h2 align='center'>".htmlentities($msg["nettoyage_reindex_sug"], ENT_QUOTES, $charset)."</h2>";
+		print "<br /><br /><h2 class='center'>".htmlentities($msg["nettoyage_reindex_sug"], ENT_QUOTES, $charset)."</h2>";
 	
 		$query = pmb_mysql_query("SELECT id_suggestion, titre, editeur, auteur, code, commentaires FROM suggestions LIMIT ".$start.", ".$lot." ");
 		if(pmb_mysql_num_rows($query)) {
-		
-			// définition de l'état de la jauge
-			$state = floor($start / ($count / $jauge_size));
-			$state .= "px";
-			// mise à jour de l'affichage de la jauge
-			print "<table border='0' align='center' width='$jauge_size' cellpadding='0'><tr><td class='jauge' width='100%'>";
-			print "<img src='../../images/jauge.png' width='$state' height='16px'></td></tr></table>";
-			
-			// calcul pourcentage avancement
-			$percent = floor(($start/$count)*100);
-			
-			// affichage du % d'avancement et de l'état
-			print "<div align='center'>$percent%</div>";
+			print netbase::get_display_progress($start, $count);
 			
 			while($row = pmb_mysql_fetch_object($query)) {
 				
@@ -60,36 +44,12 @@ switch ($index_quoi) {
 			}
 			pmb_mysql_free_result($query);
 			$next = $start + $lot;
-			print "
-				<form class='form-$current_module' name='current_state' action='./clean.php' method='post'>
-				<input type='hidden' name='v_state' value=\"".urlencode($v_state)."\">
-				<input type='hidden' name='spec' value=\"$spec\">
-				<input type='hidden' name='start' value=\"$next\">
-				<input type='hidden' name='count' value=\"$count\">
-				<input type='hidden' name='index_quoi' value=\"SUGGESTIONS\">
-				</form>
-				<script type=\"text/javascript\"><!-- 
-					setTimeout(\"document.forms['current_state'].submit()\",1000); 
-					-->
-				</script>";
+			print netbase::get_current_state_form($v_state, $spec, 'SUGGESTIONS', $next, $count);
 		} else {
 			// mise à jour de l'affichage de la jauge
-			print "<table border='0' align='center' width='$table_size' cellpadding='0'><tr><td class='jauge'>";
-			print "<img src='../../images/jauge.png' width='$jauge_size' height='16'></td></tr></table>";
-			print "<div align='center'>100%</div>";
-			$v_state .= "<br /><img src=../../images/d.gif hspace=3>".htmlentities($msg["nettoyage_reindex_sug"], ENT_QUOTES, $charset)." $count ".htmlentities($msg["nettoyage_res_reindex_sug"], ENT_QUOTES, $charset);
-			print "
-				<form class='form-$current_module' name='current_state' action='./clean.php' method='post'>
-				<input type='hidden' name='v_state' value=\"".urlencode($v_state)."\">
-				<input type='hidden' name='spec' value=\"$spec\">
-				<input type='hidden' name='start' value='0'>
-				<input type='hidden' name='count' value='0'>
-				<input type='hidden' name='index_quoi' value=\"ENTITES\">
-				</form>
-				<script type=\"text/javascript\"><!-- 
-					setTimeout(\"document.forms['current_state'].submit()\",1000); 
-					-->
-				</script>";	
+			print netbase::get_display_final_progress();
+			$v_state .= "<br /><img src='".get_url_icon('d.gif')."' hspace=3>".htmlentities($msg["nettoyage_reindex_sug"], ENT_QUOTES, $charset)." $count ".htmlentities($msg["nettoyage_res_reindex_sug"], ENT_QUOTES, $charset);
+			print netbase::get_current_state_form($v_state, $spec, 'ENTITES');
 		}
 	
 		break ;
@@ -100,23 +60,11 @@ switch ($index_quoi) {
 			$count = pmb_mysql_result($entites, 0, 0);
 		}
 		
-		print "<br /><br /><h2 align='center'>".htmlentities($msg["nettoyage_reindex_ent"], ENT_QUOTES, $charset)."</h2>";
+		print "<br /><br /><h2 class='center'>".htmlentities($msg["nettoyage_reindex_ent"], ENT_QUOTES, $charset)."</h2>";
 	
 		$query = pmb_mysql_query("SELECT id_entite, raison_sociale FROM entites LIMIT ".$start.", ".$lot." ");
 		if(pmb_mysql_num_rows($query)) {
-		
-			// définition de l'état de la jauge
-			$state = floor($start / ($count / $jauge_size));
-			$state .= "px";
-			// mise à jour de l'affichage de la jauge
-			print "<table border='0' align='center' width='$jauge_size' cellpadding='0'><tr><td class='jauge' width='100%'>";
-			print "<img src='../../images/jauge.png' width='$state' height='16px'></td></tr></table>";
-			
-			// calcul pourcentage avancement
-			$percent = floor(($start/$count)*100);
-			
-			// affichage du % d'avancement et de l'état
-			print "<div align='center'>$percent%</div>";
+			print netbase::get_display_progress($start, $count);
 			
 			while($row = pmb_mysql_fetch_object($query)) {
 				
@@ -130,36 +78,12 @@ switch ($index_quoi) {
 			}
 			pmb_mysql_free_result($query);
 			$next = $start + $lot;
-			print "
-				<form class='form-$current_module' name='current_state' action='./clean.php' method='post'>
-				<input type='hidden' name='v_state' value=\"".urlencode($v_state)."\">
-				<input type='hidden' name='spec' value=\"$spec\">
-				<input type='hidden' name='start' value=\"$next\">
-				<input type='hidden' name='count' value=\"$count\">
-				<input type='hidden' name='index_quoi' value=\"ENTITES\">
-				</form>
-				<script type=\"text/javascript\"><!-- 
-					setTimeout(\"document.forms['current_state'].submit()\",1000); 
-					-->
-				</script>";
+			print netbase::get_current_state_form($v_state, $spec, 'ENTITES', $next, $count);
 		} else {
 			// mise à jour de l'affichage de la jauge
-			print "<table border='0' align='center' width='$table_size' cellpadding='0'><tr><td class='jauge'>";
-			print "<img src='../../images/jauge.png' width='$jauge_size' height='16'></td></tr></table>";
-			print "<div align='center'>100%</div>";
-			$v_state .= "<br /><img src=../../images/d.gif hspace=3>".htmlentities($msg["nettoyage_reindex_ent"], ENT_QUOTES, $charset)." $count ".htmlentities($msg["nettoyage_res_reindex_ent"], ENT_QUOTES, $charset);
-			print "
-				<form class='form-$current_module' name='current_state' action='./clean.php' method='post'>
-				<input type='hidden' name='v_state' value=\"".urlencode($v_state)."\">
-				<input type='hidden' name='spec' value=\"$spec\">
-				<input type='hidden' name='start' value='0'>
-				<input type='hidden' name='count' value='0'>
-				<input type='hidden' name='index_quoi' value=\"ACTES\">
-				</form>
-				<script type=\"text/javascript\"><!-- 
-					setTimeout(\"document.forms['current_state'].submit()\",1000); 
-					-->
-				</script>";	
+			print netbase::get_display_final_progress();
+			$v_state .= "<br /><img src='".get_url_icon('d.gif')."' hspace=3>".htmlentities($msg["nettoyage_reindex_ent"], ENT_QUOTES, $charset)." $count ".htmlentities($msg["nettoyage_res_reindex_ent"], ENT_QUOTES, $charset);
+			print netbase::get_current_state_form($v_state, $spec, 'ACTES');
 		}
 	
 		break ;
@@ -171,23 +95,11 @@ switch ($index_quoi) {
 			$count = pmb_mysql_result($actes, 0, 0);
 		}
 		
-		print "<br /><br /><h2 align='center'>".htmlentities($msg["nettoyage_reindex_act"], ENT_QUOTES, $charset)."</h2>";
+		print "<br /><br /><h2 class='center'>".htmlentities($msg["nettoyage_reindex_act"], ENT_QUOTES, $charset)."</h2>";
 		
 		$query = pmb_mysql_query("SELECT actes.id_acte, actes.numero, entites.raison_sociale, actes.commentaires, actes.reference FROM actes, entites where num_fournisseur=id_entite LIMIT ".$start.", ".$lot." ");
 		if(pmb_mysql_num_rows($query)) {
-		
-			// définition de l'état de la jauge
-			$state = floor($start / ($count / $jauge_size));
-			$state .= "px";
-			// mise à jour de l'affichage de la jauge
-			print "<table border='0' align='center' width='$jauge_size' cellpadding='0'><tr><td class='jauge' width='100%'>";
-			print "<img src='../../images/jauge.png' width='$state' height='16px'></td></tr></table>";
-			
-			// calcul pourcentage avancement
-			$percent = floor(($start/$count)*100);
-			
-			// affichage du % d'avancement et de l'état
-			print "<div align='center'>$percent%</div>";
+			print netbase::get_display_progress($start, $count);
 			
 			while($row = pmb_mysql_fetch_object($query)) {
 				
@@ -213,36 +125,12 @@ switch ($index_quoi) {
 			}
 			pmb_mysql_free_result($query);
 			$next = $start + $lot;
-			print "
-				<form class='form-$current_module' name='current_state' action='./clean.php' method='post'>
-				<input type='hidden' name='v_state' value=\"".urlencode($v_state)."\">
-				<input type='hidden' name='spec' value=\"$spec\">
-				<input type='hidden' name='start' value=\"$next\">
-				<input type='hidden' name='count' value=\"$count\">
-				<input type='hidden' name='index_quoi' value=\"ACTES\">
-				</form>
-				<script type=\"text/javascript\"><!-- 
-					setTimeout(\"document.forms['current_state'].submit()\",1000); 
-					-->
-				</script>";
+			print netbase::get_current_state_form($v_state, $spec, 'ACTES', $next, $count);
 		} else {
 			// mise à jour de l'affichage de la jauge
-			print "<table border='0' align='center' width='$table_size' cellpadding='0'><tr><td class='jauge'>";
-			print "<img src='../../images/jauge.png' width='$jauge_size' height='16'></td></tr></table>";
-			print "<div align='center'>100%</div>";
-			$v_state .= "<br /><img src=../../images/d.gif hspace=3>".htmlentities($msg["nettoyage_reindex_act"], ENT_QUOTES, $charset)." $count ".htmlentities($msg["nettoyage_res_reindex_act"], ENT_QUOTES, $charset);
-			print "
-				<form class='form-$current_module' name='current_state' action='./clean.php' method='post'>
-				<input type='hidden' name='v_state' value=\"".urlencode($v_state)."\">
-				<input type='hidden' name='spec' value=\"$spec\">
-				<input type='hidden' name='start' value='0'>
-				<input type='hidden' name='count' value='0'>
-				<input type='hidden' name='index_quoi' value=\"FINI\">
-				</form>
-				<script type=\"text/javascript\"><!-- 
-					setTimeout(\"document.forms['current_state'].submit()\",1000); 
-					-->
-				</script>";	
+			print netbase::get_display_final_progress();
+			$v_state .= "<br /><img src='".get_url_icon('d.gif')."' hspace=3>".htmlentities($msg["nettoyage_reindex_act"], ENT_QUOTES, $charset)." $count ".htmlentities($msg["nettoyage_res_reindex_act"], ENT_QUOTES, $charset);
+			print netbase::get_current_state_form($v_state, $spec, 'FINI');
 		}
 	
 		break ;
@@ -250,7 +138,7 @@ switch ($index_quoi) {
 	
 	case 'FINI':
 		$spec = $spec - INDEX_ACQUISITIONS;
-		$v_state .= "<br /><img src=../../images/d.gif hspace=3>".htmlentities($msg["nettoyage_reindex_acq_fini"],ENT_QUOTES,$charset);
+		$v_state .= "<br /><img src='".get_url_icon('d.gif')."' hspace=3>".htmlentities($msg["nettoyage_reindex_acq_fini"],ENT_QUOTES,$charset);
 		print "
 			<form class='form-$current_module' name='process_state' action='./clean.php?spec=$spec&start=0' method='post'>
 				<input type='hidden' name='v_state' value=\"".urlencode($v_state)."\">

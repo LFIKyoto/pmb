@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- $Id: search_fields_empr.xml,v 1.14.4.1 2015-11-09 09:08:33 jpermanne Exp $ -->
+<!-- $Id: search_fields_empr.xml,v 1.21 2018-10-03 08:20:11 dgoron Exp $ -->
 <pmbfields>
 
 	<!-- Zone fixedFields :
@@ -300,6 +300,24 @@
 				<main><![CDATA[select distinct id_empr from empr where empr_date_expiration>='!!p!!' ]]></main>		
 			</query>
 		</field>
+		<field title="msg:empr_date_create" id="52">
+			<input type='date' placeholder='msg:format_date_input_placeholder'/>
+			<query for="EQ">
+				<main><![CDATA[select distinct id_empr from empr where empr_creation like '!!p!! %' ]]></main>			
+			</query>
+			<query for="LT">
+				<main><![CDATA[select distinct id_empr from empr where empr_creation<'!!p!! 00:00:00' ]]></main>			
+			</query>
+			<query for="GT">
+				<main><![CDATA[select distinct id_empr from empr where empr_creation>'!!p!! 23:59:59' ]]></main>			
+			</query>
+			<query for="LTEQ">
+				<main><![CDATA[select distinct id_empr from empr where empr_creation<='!!p!! 23:59:59' ]]></main>			
+			</query>
+			<query for="GTEQ">
+				<main><![CDATA[select distinct id_empr from empr where empr_creation>='!!p!! 00:00:00' ]]></main>		
+			</query>
+		</field>
 		<field title="msg:empr_date_update" id="7">
 			<input type='date' placeholder='msg:format_date_input_placeholder'/>
 			<query for="EQ">
@@ -383,6 +401,7 @@
 				<options>
 					<option value="1">msg:126</option>
 					<option value="2">msg:127</option>
+					<option value="0">msg:128</option>
 				</options>	
 			</input>
 			<query for="EQ">
@@ -462,8 +481,9 @@
 			</query>
 		</field>
 		<field title="msg:empr_langue_opac" id="16" separator='msg:537'>
-			<input type="query_list">
-				<query>SELECT distinct empr_lang from empr</query>
+			<input type="marc_list">
+				<name>languages</name>
+				<restrictquery>SELECT group_concat(distinct empr_lang SEPARATOR ',') as all_languages from empr</restrictquery>
 			</input>
 			<query for="EQ">
 				 <main><![CDATA[select distinct id_empr from empr where (empr_lang='!!p!!') ]]></main>						
@@ -956,53 +976,61 @@
 	<dynamicFields>
 		<fieldType type="empr" prefix="empr">
 			<field dataType="small_text" id="1">
-				<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+				<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth,date_flot">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND (!!multiple_term!!)]]></main>
 					<multipleTerm>empr_custom_small_text like '%!!p!!%'</multipleTerm>
 					<multipleOperator>or</multipleOperator>
 				</query>
-				<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+				<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth,date_flot">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND (!!multiple_term!!)]]></main>
 					<multipleTerm>empr_custom_small_text like '%!!p!!%'</multipleTerm>
 					<multipleOperator>and</multipleOperator>
 				</query>
-				<query for="STARTWITH" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="STARTWITH" notAllowedFor="list,query_list,marclist,query_auth,date_flot" regDiacrit="no">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_small_text like '!!p!!%']]></main>
 				</query>
-				<query for="ENDWITH" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="ENDWITH" notAllowedFor="list,query_list,marclist,query_auth,date_flot" regDiacrit="no">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_small_text like '%!!p!!']]></main>
 				</query>
-				<query for="EXACT" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="EXACT" notAllowedFor="list,query_list,marclist,query_auth,date_flot" regDiacrit="no">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_small_text = '!!p!!']]></main>
+				</query>
+				<query for="NEAR" notAllowedFor="text,list,query_list,query_auth,date_box,comment,external,url,resolve,marclist,html,text_i18n,q_txt_i18n,date_inter">
+				</query>
+				<query for="LTEQ" notAllowedFor="text,list,query_list,query_auth,date_box,comment,external,url,resolve,marclist,html,text_i18n,q_txt_i18n,date_inter">
+				</query>
+				<query for="GTEQ" notAllowedFor="text,list,query_list,query_auth,date_box,comment,external,url,resolve,marclist,html,text_i18n,q_txt_i18n,date_inter">
+				</query>
+				<query for="BETWEEN" notAllowedFor="text,list,query_list,query_auth,date_box,comment,external,url,resolve,marclist,html,text_i18n,q_txt_i18n,date_inter">
 				</query>
 				<query for="EQ">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_small_text = '!!p!!']]></main>
 				</query>
-				<query for="ISEMPTY">
+				<query for="ISEMPTY" notAllowedFor="date_flot">
 					<main><![CDATA[SELECT DISTINCT id_empr FROM empr LEFT JOIN empr_custom_values ON id_empr=empr_custom_origine AND empr_custom_champ=!!field!! WHERE empr_custom_small_text='' OR empr_custom_small_text IS NULL]]></main>
 				</query>
-				<query for="ISNOTEMPTY">
+				<query for="ISNOTEMPTY" notAllowedFor="date_flot">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ = !!field!! AND empr_custom_small_text != '']]></main>
 				</query>
 			</field>
 			<field dataType="text" id="2">
-				<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+				<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND (!!multiple_term!!)]]></main>
 					<multipleTerm>empr_custom_text like '%!!p!!%'</multipleTerm>
 					<multipleOperator>or</multipleOperator>
 				</query>
-				<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+				<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND (!!multiple_term!!)]]></main>
 					<multipleTerm>empr_custom_text like '%!!p!!%'</multipleTerm>
 					<multipleOperator>and</multipleOperator>
 				</query>
-				<query for="STARTWITH" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="STARTWITH" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_text like '!!p!!%']]></main>
 				</query>
-				<query for="ENDWITH" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="ENDWITH" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_text like '%!!p!!']]></main>
 				</query>
-				<query for="EXACT" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="EXACT" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_text = '!!p!!']]></main>
 				</query>
 				<query for="EQ">
@@ -1019,16 +1047,16 @@
 				<query for="EQ">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_integer = '!!p!!']]></main>
 				</query>
-				<query for="LT" notAllowedFor="list,query_list,marclist">
+				<query for="LT" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_integer < '!!p!!']]></main>
 				</query>
-				<query for="GT" notAllowedFor="list,query_list,marclist">
+				<query for="GT" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_integer > '!!p!!']]></main>
 				</query>
-				<query for="LTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="LTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_integer <= '!!p!!']]></main>
 				</query>
-				<query for="GTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_integer >= '!!p!!']]></main>
 				</query>
 				<query for="ISEMPTY">
@@ -1042,16 +1070,16 @@
 				<query for="EQ">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_float = '!!p!!']]></main>
 				</query>
-				<query for="LT" notAllowedFor="list,query_list,marclist">
+				<query for="LT" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_float < '!!p!!']]></main>
 				</query>
-				<query for="GT" notAllowedFor="list,query_list,marclist">
+				<query for="GT" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_float > '!!p!!']]></main>
 				</query>
-				<query for="LTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="LTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_float <= '!!p!!']]></main>
 				</query>
-				<query for="GTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_float >= '!!p!!']]></main>
 				</query>
 				<query for="ISEMPTY">
@@ -1065,16 +1093,16 @@
 				<query for="EQ">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_date = '!!p!!']]></main>
 				</query>
-				<query for="LT" notAllowedFor="list,query_list,marclist">
+				<query for="LT" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_date < '!!p!!']]></main>
 				</query>
-				<query for="GT" notAllowedFor="list,query_list,marclist">
+				<query for="GT" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_date > '!!p!!']]></main>
 				</query>
-				<query for="LTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="LTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_date <= '!!p!!']]></main>
 				</query>
-				<query for="GTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT DISTINCT empr_custom_origine AS id_empr FROM empr_custom_values WHERE empr_custom_champ=!!field!! AND empr_custom_date >= '!!p!!']]></main>
 				</query>
 				<query for="ISEMPTY">
@@ -1100,12 +1128,14 @@
 		<operator name="STARTWITH">msg:commence_par_query</operator>
 		<operator name="ENDWITH">msg:finit_par_query</operator>
 		<operator name="EXACT">msg:exactement_comme_query</operator>
-		<operator name="EQ">=</operator>
-		<operator name="GT">&gt;</operator>
-		<operator name="LT">&lt;</operator>
-		<operator name="GTEQ">&gt;=</operator>
-		<operator name="LTEQ">&lt;=</operator>
+		<operator name="EQ">msg:eq_query</operator>
+		<operator name="GT">msg:gt_query</operator>
+		<operator name="LT">msg:lt_query</operator>
+		<operator name="GTEQ">msg:gteq_query</operator>
+		<operator name="LTEQ">msg:lteq_query</operator>
 		<operator name="ISEMPTY" emptyAllowed="yes">msg:est_vide_query</operator>
 		<operator name="ISNOTEMPTY" emptyAllowed="yes">msg:pas_vide_query</operator>
+		<operator name="BETWEEN">msg:search_between_query</operator>
+		<operator name="NEAR">msg:parperso_option_duration_type0</operator>
 	</operators>
 </pmbfields>

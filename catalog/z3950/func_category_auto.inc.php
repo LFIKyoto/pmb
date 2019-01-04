@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: func_category_auto.inc.php,v 1.3 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: func_category_auto.inc.php,v 1.4 2016-09-07 08:35:37 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -147,7 +147,7 @@ function traite_categories_from_form() {
        		$id_thes=$value["id_thes"];
        		foreach ( $value["wording"] as $key => $lib ) {
        			if($key && $lib !=":"){
-       				$id_parent=create_categ($lib,$id_thes,$id_parent,$value["create_node"]);
+       				$id_parent=create_categ_z3950($lib,$id_thes,$id_parent,$value["create_node"]);
        			}
 			}
 			if($id_parent){
@@ -155,7 +155,7 @@ function traite_categories_from_form() {
        		}
 			
        }else{
-       		$id_noeud=create_categ($value["wording"],$value["id_thes"],$value["id_parent"]);
+       		$id_noeud=create_categ_z3950($value["wording"],$value["id_thes"],$value["id_parent"]);
        		if($id_noeud){
        			$categ_retour[]['categ_id'] = $id_noeud ;
        		}
@@ -166,7 +166,7 @@ function traite_categories_from_form() {
 }
 
 
-function create_categ($tab_categ,$id_thes,$id_parent,$create_node=true){
+function create_categ_z3950($tab_categ,$id_thes,$id_parent,$create_node=true){
 	global $lang;
 	if(trim($tab_categ)){
 		$resultat = categories::searchLibelle(addslashes($tab_categ), $id_thes, $lang,$id_parent);				

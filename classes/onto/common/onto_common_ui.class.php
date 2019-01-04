@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_ui.class.php,v 1.19 2014-09-17 10:41:18 arenou Exp $
+// $Id: onto_common_ui.class.php,v 1.27 2018-11-29 13:58:12 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -20,7 +20,38 @@ class onto_common_ui extends onto_root_ui{
 	 * @return string $form
 	 */
 	public static function get_search_form($controler,$params){
-		return;
+		
+		if(!$controler->class_is_indexed($params->sub)){
+			return "";
+		}
+		global $msg,$charset,$base_path,$ontology_tpl;
+		
+		$title = '';
+		$classes = $controler->get_classes();
+		foreach($classes as $class){
+			if($class->pmb_name == $params->sub){
+				$title.= $controler->get_label($class->pmb_name);
+			}
+		}
+		
+		$onchange_scheme_list_selector = '';
+		$name_scheme_list_selector = 'concept_scheme';
+		$id_scheme_list_selector = 'id_concept_scheme';
+		
+		$form = $ontology_tpl['search_form'];
+		$form = str_replace('!!search_form_action!!', $base_path.'/'.$controler->get_base_resource().'categ='.$params->categ.'&sub='.$params->sub.'&id=&action=search', $form);
+		$form = str_replace('!!search_form_last_link!!', $base_path.'/'.$controler->get_base_resource().'categ='.$params->categ.'&sub='.$params->sub.'&id=&action=last', $form);
+		$form = str_replace('!!search_form_title!!', $title, $form);
+		if(isset($msg['onto_'.$controler->get_onto_name().'_add_'.$params->sub])){
+			$add_msg = $msg['onto_'.$controler->get_onto_name().'_add_'.$params->sub];
+		}else{
+			$add_msg = sprintf($msg['onto_common_add'], $controler->get_label($params->sub));
+		}
+		$form = str_replace('!!search_form_user_input!!',stripslashes(htmlentities($params->user_input,ENT_QUOTES,$charset)),$form);
+		$form = str_replace('!!search_form_add_value_onclick!!','document.location=\'./'.$controler->get_base_resource().'categ='.$params->categ.'&sub='.$params->sub.'&id=&action=edit&concept_scheme='.$params->concept_scheme.'&parent_id='.$params->parent_id.'\'', $form);
+		$form = str_replace('!!search_form_add_value!!',htmlentities($add_msg,ENT_QUOTES,$charset), $form);
+		
+		return $form;
 	}
 	
 	/**
@@ -35,6 +66,7 @@ class onto_common_ui extends onto_root_ui{
 		global $list_range_links_form;
 		global $sel_no_available_search_form;
 		global $msg;
+		global $pmb_popup_form_display_mode;
 		
 		if($params->objs){
 			$property=$controler->get_onto_property_from_pmb_name($params->objs);
@@ -79,7 +111,11 @@ class onto_common_ui extends onto_root_ui{
 		
 		//TODO formulaire d'ajout générique...
 		
-		$onclick = "document.location=\"".$params->base_url."&range=".$params->range."&action=selector_add\"";
+		if($pmb_popup_form_display_mode == 2) {
+			$onclick = "document.location=\"".$params->base_url."&range=".$params->range."&action=edit\"";
+		} else {
+			$onclick = "document.location=\"".$params->base_url."&range=".$params->range."&action=selector_add\"";
+		}
 		$form = str_replace("!!add_button_onclick!!", $onclick, $form);
 		
 		$form.= $jscript;
@@ -116,11 +152,11 @@ class onto_common_ui extends onto_root_ui{
 				$current_element_form = $element_form;
 				$current_element_form = str_replace("!!caller!!", $params->caller, $current_element_form);
 				$current_element_form = str_replace("!!element!!", $params->element, $current_element_form);
-				$current_element_form = str_replace("!!order!!", $params->order, $current_element_form);
-				$current_element_form = str_replace("!!uri!!", $uri, $current_element_form);
+				$current_element_form = str_replace("!!order!!", (!empty($params->order) ? $params->order : 0), $current_element_form);
+				$current_element_form = str_replace("!!uri!!", ($params->return_concept_id ? onto_common_uri::get_id($uri) : $uri), $current_element_form);
 				$current_element_form = str_replace("!!range!!", $element ? $element : $controler->get_class_uri($params->sub), $current_element_form);
 				$current_element_form = str_replace("!!callback!!", $params->callback, $current_element_form);
-				$item_label = (isset($item[substr($lang,0,2)]) ? $item[substr($lang,0,2)] : $item['default']);
+				$item_label = (isset($item[$lang]) ? $item[$lang] : $item['default']);
 				$current_element_form = str_replace("!!item_libelle!!", htmlentities($item_label,ENT_QUOTES,$charset), $current_element_form);
 				if($multiple_range){
 					$item = "[".$controler->get_class_label($element)."] ".$item_label;
@@ -132,7 +168,7 @@ class onto_common_ui extends onto_root_ui{
 				$elements_form.= $current_element_form;
 			}
 			$list = str_replace("!!elements_form!!", $elements_form, $list);
-			$list = str_replace("!!aff_pagination!!", aff_pagination($params->base_url,$elements['nb_total_elements'],$elements['nb_onto_element_per_page'], $params->page, 10, true, true ), $list);
+			$list = str_replace("!!aff_pagination!!", aff_pagination($params->base_url.(isset($params->deb_rech) ? '&deb_rech='.$params->deb_rech : ''),$elements['nb_total_elements'],$elements['nb_onto_element_per_page'], $params->page, 10, true, true ), $list);
 		}else{
 			$list = $msg["1915"];
 		}
@@ -146,17 +182,17 @@ class onto_common_ui extends onto_root_ui{
 	 * @param onto_param $params
 	 */
 	public static function get_list($controler,$params){
-		global $msg,$charset,$ontology_tpl;
+		global $msg,$charset,$ontology_tpl,$lang;
 		
 		$elements = $controler->get_list_elements($params);
-
-		$list=$ontology_tpl['list']; 
+		
+		$list="<h3>".$elements['nb_total_elements']." ".$msg['onto_nb_results']."</h3>".$ontology_tpl['list'];
 		$list=str_replace("!!list_header!!", htmlentities($msg['103'],ENT_QUOTES,$charset), $list);
 		$list_content='';
 		foreach($elements['elements'] as $uri => $item){
 			$line=$ontology_tpl['list_line'];
-			$line=str_replace("!!list_line_href!!",'./autorites.php?categ='.$params->categ.'&sub='.$params->sub.'&action=edit&id='.onto_common_uri::get_id($uri) , $line);
-			$line=str_replace("!!list_line_libelle!!",htmlentities((isset($item[substr($lang,0,2)]) ? $item[substr($lang,0,2)] : $item['default']),ENT_QUOTES,$charset) , $line);
+			$line=str_replace("!!list_line_href!!",'./'.$controler->get_base_resource().'categ='.$params->categ.'&sub='.$params->sub.'&action=edit&id='.onto_common_uri::get_id($uri) , $line);
+			$line=str_replace("!!list_line_libelle!!",htmlentities((isset($item[$lang]) ? $item[$lang] : $item['default']),ENT_QUOTES,$charset) , $line);
 			$list_content.= $line;
 		}
 		
@@ -168,9 +204,9 @@ class onto_common_ui extends onto_root_ui{
 			$add_msg = sprintf($msg['onto_common_add'],$controler->get_label($params->sub));
 		}
 		
-		$list=str_replace("!!list_onclick!!",'document.location=\'./autorites.php?categ='.$params->categ.'&sub='.$params->sub.'&id=&action=edit\'' , $list);
+		$list=str_replace("!!list_onclick!!",'document.location=\'./'.$controler->get_base_resource().'categ='.$params->categ.'&sub='.$params->sub.'&id=&action=edit\'' , $list);
 		$list=str_replace("!!list_value!!",htmlentities($add_msg,ENT_QUOTES,$charset) , $list);
-		$list=str_replace("!!list_pagination!!",aff_pagination("./autorites.php?categ=".$params->categ."&sub=".$params->sub."&action=".$params->action,$elements['nb_total_elements'],$elements['nb_onto_element_per_page'], $params->page, 10, true, true ) , $list);
+		$list=str_replace("!!list_pagination!!",aff_pagination("./".$controler->get_base_resource()."categ=".$params->categ."&sub=".$params->sub."&action=".$params->action."&user_input=".$params->user_input,$elements['nb_total_elements'],$elements['nb_onto_element_per_page'], $params->page, 10, true, true ) , $list);
 		
 		return $list;
 	}
@@ -232,8 +268,8 @@ class onto_common_ui extends onto_root_ui{
 			$list_content .= $current_assertion;
 		}
 		$list = str_replace("!!list_content!!", $list_content, $list);
-		$list = str_replace("!!href_cancel!!", "./autorites.php?categ=".$params->categ."&sub=".$params->sub."&id=".$params->id."&action=edit", $list);
-		$list = str_replace("!!href_continue!!", "./autorites.php?categ=".$params->categ."&sub=".$params->sub."&id=".$params->id."&action=delete", $list);
+		$list = str_replace("!!href_cancel!!", "./".$controler->get_base_resource()."categ=".$params->categ."&sub=".$params->sub."&id=".$params->id."&action=edit", $list);
+		$list = str_replace("!!href_continue!!", "./".$controler->get_base_resource()."categ=".$params->categ."&sub=".$params->sub."&id=".$params->id."&action=delete", $list);
 		
 		return $list;
 	}

@@ -2,12 +2,16 @@
 // +-------------------------------------------------+
 // ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serial_func.inc.php,v 1.80 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: serial_func.inc.php,v 1.100 2018-08-30 14:09:07 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once("$class_path/docs_location.class.php");
 require_once ($include_path."/avis_notice.inc.php");
+require_once($include_path.'/h2o/pmb_h2o.inc.php');
+require_once($class_path.'/records_tabs.class.php');
+require_once($class_path.'/notice.class.php');
+require_once ($class_path."/caddie/caddie_controller.class.php");
 
 // résultat de recherche pour gestion des périodiques
 function show_serial_info($serial_id, $page, $nbr_lignes) {
@@ -16,40 +20,46 @@ function show_serial_info($serial_id, $page, $nbr_lignes) {
 	global $msg;
 	global $nb_per_page_a_search;
 	global $charset;
-	global $deflt_collstate_location,$location;
+	global $deflt_collstate_location,$deflt_bulletinage_location,$location;
 	global $pmb_etat_collections_localise,$pmb_droits_explr_localises,$explr_invisible,$explr_visible_unmod;
 	// barre de restriction des bulletins affichés
 	global $aff_bulletins_restrict_numero, $aff_bulletins_restrict_date, $aff_bulletins_restrict_periode ;
-	
-	global $view;
 	global $sort_children;
 	global $pmb_opac_url;
-	if ($pmb_etat_collections_localise) {
-		if($view == "collstate"){
-			global $id;
-			if((isset($id)) && $deflt_collstate_location === "0"){//Affiche tous les états de collection après création/modification
-				$location=$deflt_collstate_location;
-			}else{
-				$location=((string)$location==""?$deflt_collstate_location:$location);
-			}
-		}else{
-			$location=((string)$location==""?$deflt_collstate_location:$location);
-		}
-	}
+	global $pmb_url_base, $categ, $sub, $quoi, $view, $tab_page, $tab_nb_per_page;
+	global $bull_date_start,$bull_date_end;
+	global $pmb_collstate_advanced;
+	global $current;
 	
+	
+	if($view == "collstate"){
+	    if ($pmb_etat_collections_localise) {
+	        global $id;
+	        if((isset($id) && $id) && $deflt_collstate_location === "0"){//Affiche tous les états de collection après création/modification
+	            $location=$deflt_collstate_location;
+	        }else{
+	            $location=((string)$location==""?$deflt_collstate_location:$location);
+	        }
+	    }
+	}else{
+        $location=((string)$location==""?$deflt_bulletinage_location:$location);
+    }
+	
+	$url_suffix = "";
+	if ($quoi) $url_suffix .= "&quoi=".$quoi;
+	if ($tab_page) $url_suffix .= "&tab_page=".$tab_page."&tab_nb_per_page=".$tab_nb_per_page;
 	// lien d'ajout d'une notice mère à un caddie
-	$selector_prop = "toolbar=no, dependent=yes, width=500, height=400, resizable=yes, scrollbars=yes";
-	$cart_click_noti = "onClick=\"openPopUp('./cart.php?object_type=NOTI&item=!!item!!', 'cart', 600, 700, -2, -2, '$selector_prop')\"";
-	$cart_link = "<img src='./images/basket_small_20x20.gif' align='middle' alt='basket' title=\"${msg[400]}\" $cart_click_noti>";
+	$cart_click_noti = "onClick=\"openPopUp('./cart.php?object_type=NOTI&item=!!item!!', 'cart')\"";
+	$cart_link = "<img src='".get_url_icon('basket_small_20x20.gif')."' class='align_middle' alt='basket' title=\"${msg[400]}\" $cart_click_noti>";
 	
 	if ($current!==false) {
-		$print_action = "&nbsp;<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&notice_id=".$serial_id."&action_print=print_prepare','print',500,600,-2,-2,'scrollbars=yes,menubar=0'); w.focus(); return false;\"><img src='./images/print.gif' border='0' align='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"/></a>";
+		$print_action = "&nbsp;<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&notice_id=".$serial_id."&action_print=print_prepare','print'); w.focus(); return false;\"><img src='".get_url_icon('print.gif')."' style='border:0px' class='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"/></a>";
 	}
 	
 	$visualise_click_notice="
 	<script type=\"text/javascript\" src='./javascript/select.js'></script>
 	
-	<a href='#' onClick='show_frame(\"$pmb_opac_url"."notice_view.php?id=$serial_id\")'><img src='./images/search.gif' align='middle' title=\"${msg["noti_see_gestion"]}\" name='imEx'  border='0' /></a>";
+	<a href='#' onClick='show_frame(\"$pmb_opac_url"."notice_view.php?id=$serial_id\")'><img src='".get_url_icon('search.gif')."' class='align_middle' title=\"${msg["noti_see_gestion"]}\" style='border:0px' /></a>";
 	 
 	$base_url = "./catalog.php?categ=serials&sub=view&serial_id=$serial_id";
 	$serial_action_bar = str_replace('!!serial_id!!', $serial_id, $serial_action_bar);
@@ -70,19 +80,21 @@ function show_serial_info($serial_id, $page, $nbr_lignes) {
 		global $avis_quoifaire,$valid_id_avis;
 		$perio_isbd = str_replace('<!-- !!avis_notice!! -->', avis_notice($serial_id,$avis_quoifaire,$valid_id_avis), $perio_isbd);
 	
+		$perio_isbd = str_replace('<!-- !!caddies_notice!! -->', caddie_controller::get_display_list_from_item('display', 'NOTI', $serial_id), $perio_isbd);
+		
 		if (!$page) $page=1;
 		$debut = ($page-1)*$nb_per_page_a_search;
-	
+		$nb_bull_loc = 0;
 		switch ($view) {
 			case "abon":
-				$base_url = "./catalog.php?categ=serials&sub=view&serial_id=$serial_id&view=abon";
+				$base_url = "./catalog.php?categ=serials&sub=view&serial_id=$serial_id&view=abon".$url_suffix;
 				require_once("views/view_abon.inc.php");
 				break;
 			case "modele":
 				require_once("views/view_modeles.inc.php");
 				break;
 			case "collstate":
-				$base_url = "./catalog.php?categ=serials&sub=view&serial_id=$serial_id&view=collstate";
+				$base_url = "./catalog.php?categ=serials&sub=view&serial_id=$serial_id&view=collstate".$url_suffix;
 				require_once("views/view_collstate.inc.php");
 				break;				
 			default:
@@ -106,20 +118,22 @@ function show_serial_info($serial_id, $page, $nbr_lignes) {
 					$clause .= " and mention_date like '%".$aff_bulletins_restrict_periode_traite."%'" ;
 					$base_url .= "&aff_bulletins_restrict_periode=".urlencode($aff_bulletins_restrict_periode) ;
 				}
-				
+				$base_url .= $url_suffix;
+
+				$filter_date=compare_date($bull_date_start,$bull_date_end);
 				//On compte les expl de la localisation
-				$rqt="SELECT COUNT(1) FROM bulletins ".($location?", exemplaires":"")." WHERE ".($location?"(expl_bulletin=bulletin_id and expl_location='$location' or expl_location is null) and ":"")." bulletin_notice='$serial_id'  ";
+				$rqt="SELECT COUNT(1) FROM bulletins ".($location?", exemplaires":"")." WHERE ".($location?"(expl_bulletin=bulletin_id and expl_location='$location' or expl_location is null) and ":"")." bulletin_notice='$serial_id' $filter_date ";
 				$myQuery = pmb_mysql_query($rqt, $dbh);
 				$nb_expl_loc = pmb_mysql_result($myQuery,0,0);
 		
 				//On compte les bulletins de la localisation
-				$rqt="SELECT count(distinct bulletin_id) FROM bulletins ".($location?",exemplaires ":"")." WHERE ".($location?"(expl_bulletin=bulletin_id and expl_location='$location') and ":"")." bulletin_notice='$serial_id' ";
+				$rqt="SELECT count(distinct bulletin_id) FROM bulletins ".($location?",exemplaires ":"")." WHERE ".($location?"(expl_bulletin=bulletin_id and expl_location='$location') and ":"")." bulletin_notice='$serial_id' $filter_date ";
 				$myQuery = pmb_mysql_query($rqt, $dbh);
-				if ($execute_query&&pmb_mysql_num_rows($myQuery)) {
+				if ($myQuery && pmb_mysql_num_rows($myQuery)) {
 					$nb_bull_loc = pmb_mysql_result($myQuery,0,0);
 				}
 				//On compte les bulletinsà afficher
-				$rqt="SELECT count(distinct bulletin_id) FROM bulletins ".($location?", exemplaires":"")." WHERE ".($location?"(expl_bulletin=bulletin_id and expl_location='$location' or expl_location is null) and ":"")." bulletin_notice='$serial_id' $clause ";
+				$rqt="SELECT count(distinct bulletin_id) FROM bulletins ".($location?", exemplaires":"")." WHERE ".($location?"(expl_bulletin=bulletin_id and expl_location='$location' or expl_location is null) and ":"")." bulletin_notice='$serial_id' $clause $filter_date ";
 				$myQuery = pmb_mysql_query($rqt, $dbh);
 				$nbr_lignes = pmb_mysql_result($myQuery,0,0);
 				
@@ -153,37 +167,40 @@ function show_serial_info($serial_id, $page, $nbr_lignes) {
 	  	$serial_action_bar = str_replace('!!nb_expl!!', $isbd->serial_nb_exemplaires, $serial_action_bar);
 	  	$serial_action_bar = str_replace('!!nb_etat_coll!!', $isbd->serial_nb_etats_collection, $serial_action_bar);
 	  	$serial_action_bar = str_replace('!!nb_abo!!', $isbd->serial_nb_abo_actif, $serial_action_bar);
+
+	  	// Titre de la page
+	  	print '<script type="text/javascript">document.title = "'.addslashes(pmb_bidi($isbd->notice->tit1)).'";</script>';
 	  	
 	    // titre général du périodique
-	  	print pmb_bidi("<div class='row'>
-	  			<div class='notice-perio'>$isbd->aff_statut
-					<h2 style='display: inline;'>".str_replace('!!item!!', $serial_id, $cart_link).$print_action.$visualise_click_notice." ".$perio_header."</h2>
-	        					<div class='row'>$perio_isbd</div>
-							<div class='row'>$collections_state</div>
-	        				<hr />
-	        				<div class='row'>
-	        					$serial_action_bar
-	        					</div>
-	        				</div>
-	        			</div>");
+	  	print pmb_bidi("
+	  			<div class='row'>
+	  				<div class='notice-perio'>
+						<h3 style='display: inline;' class='notice-perio-title'>".$isbd->aff_statut.str_replace('!!item!!', $serial_id, $cart_link).$print_action.$visualise_click_notice." ".$perio_header."</h3>
+        				<div class='row'>".$perio_isbd."</div>
+        				<hr />
+        				<div class='row'>".$serial_action_bar."</div>
+	        		</div>
+	        	</div>");
 		
 		// bulletinage
 		$onglets = "
 		<div id='content_onglet_perio'>
-			<span class='".((!$view)?"onglet-perio-selected'>":"onglets-perio'>")."<a href=\"#\" onClick=\"document.location='catalog.php?categ=serials&sub=view&serial_id=".$serial_id."'\">".$msg["abts_onglet_bull"]."</a></span>
-			<span class='".(($view=="abon")?"onglet-perio-selected'>":"onglets-perio'>")."<a href=\"#\" onClick=\"document.location='catalog.php?categ=serials&sub=view&serial_id=".$serial_id."&view=abon'\">".$msg["abts_onglet_abt"]."</a></span>
-			<span class='".(($view=="modele")?"onglet-perio-selected'>":"onglets-perio'>")."<a href=\"#\"  onClick=\"document.location='catalog.php?categ=serials&sub=view&serial_id=".$serial_id."&view=modele'\">".$msg["abts_onglet_modele"]."</a></span>
-			<span class='".(($view=="collstate")?"onglet-perio-selected'>":"onglets-perio'>")."<a href=\"#\"  onClick=\"document.location='catalog.php?categ=serials&sub=view&serial_id=".$serial_id."&view=collstate'\">".$msg["abts_onglet_collstate"]."</a></span>
+			<span class='".((!$view)?"onglet-perio-selected'>":"onglets-perio'>")."<a href=\"#\" onClick=\"document.location='catalog.php?categ=serials&sub=view&serial_id=".$serial_id.$url_suffix."'\">".$msg["abts_onglet_bull"]."</a></span>
+			<span class='".(($view=="abon")?"onglet-perio-selected'>":"onglets-perio'>")."<a href=\"#\" onClick=\"document.location='catalog.php?categ=serials&sub=view&serial_id=".$serial_id."&view=abon".$url_suffix."'\">".$msg["abts_onglet_abt"]."</a></span>
+			<span class='".(($view=="modele")?"onglet-perio-selected'>":"onglets-perio'>")."<a href=\"#\"  onClick=\"document.location='catalog.php?categ=serials&sub=view&serial_id=".$serial_id."&view=modele".$url_suffix."'\">".$msg["abts_onglet_modele"]."</a></span>
+			<span class='".(($view=="collstate")?"onglet-perio-selected'>":"onglets-perio'>")."<a href=\"#\"  onClick=\"document.location='catalog.php?categ=serials&sub=view&serial_id=".$serial_id."&view=collstate".$url_suffix."'\">".$msg["abts_onglet_collstate"]."</a></span>
 		</div>
 		";
-		
 		print $onglets;
+		
 		$totaux_loc="";
 		$temp_location=0;
 		$list_locs="";
+		
 		switch($view) {
 			case "modele":
 				$list_locs="";
+				$link_bulletinage = "";
 			break;
 			case "abon":
 				if ($location) $temp_location=$location;
@@ -196,8 +213,7 @@ function show_serial_info($serial_id, $page, $nbr_lignes) {
 					$list_locs=docs_location::gen_combo_box_empr($temp_location,1,"document.filter_form.location.value=this.options[this.selectedIndex].value; document.filter_form.submit();");
 				}				
 				$link_bulletinage = "<input type='button' class='bouton' value='".$msg["collstate_add_collstate"]."' 
-				onClick=\"document.location='./catalog.php?categ=serials&sub=collstate_form&serial_id=$serial_id&id=';\">";
-				
+				onClick=\"document.location='./catalog.php?categ=serials&sub=collstate_form&serial_id=$serial_id&id=';\">";				
 			break;
 			default:
 				if ($location) $temp_location=$location;	
@@ -221,7 +237,7 @@ function show_serial_info($serial_id, $page, $nbr_lignes) {
 				$totaux_loc
 			</div>
 			<div class='row'>
-				<div align='center'>
+				<div class='center'>
 					$pages_display
 				</div>
 			</div>
@@ -229,13 +245,41 @@ function show_serial_info($serial_id, $page, $nbr_lignes) {
 				$bulletins
 			</div>
 			<div class='row'>
-				<div align='center'>
+				<div class='center'>
 					$pages_display
 				</div>
 			</div>
 		</div>");
-	
+		$template_path_serial_tabs =  "./includes/templates/records/records_elements_tabs.html";
+		if(file_exists("./includes/templates/records/records_elements_tabs_subst.html")){
+			$template_path_serial_tabs =  "./includes/templates/records/records_elements_tabs_subst.html";
+		}
+		if(file_exists($template_path_serial_tabs)){
+			$h2o_serial_tabs = H2o_collection::get_instance($template_path_serial_tabs);
+			$records_tabs = new records_tabs(new notice($isbd->notice_id));
+			$records_list_ui = $records_tabs->get_record()->get_records_list_ui();
+			if ($records_list_ui) $records_list_ui->set_current_url($pmb_url_base.'catalog.php?categ='.$categ.'&sub='.$sub.'&serial_id='.$isbd->notice_id.'&quoi='.$quoi.($view ? '&view='.$view : ''));
+			print $h2o_serial_tabs->render(array('records_tabs' => $records_tabs));
+		}
 	}
+}
+
+function compare_date($date_debut="", $date_fin="") {
+	$restrict = '';
+	if($date_debut && $date_fin) {
+		if($date_fin<$date_debut) {
+			$restrict = " and date_date between '".$date_fin."' and '".$date_debut."' ";
+		} else if($date_fin == $date_debut) {
+			$restrict = " and date_date='".$date_debut."' ";
+		} else {
+			$restrict = " and date_date between '".$date_debut."' and '".$date_fin."' ";
+		}
+	} else if($date_debut) {
+		$restrict = " and date_date >='".$date_debut."' ";
+	} else if($date_fin) {
+		$restrict = " and date_date <='".$date_fin."' ";
+	}
+	return $restrict;
 }
 
 // affichage de la liste utilisateurs pour sélection

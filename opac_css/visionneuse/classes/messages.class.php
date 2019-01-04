@@ -2,38 +2,40 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: messages.class.php,v 1.2 2013-04-04 13:22:52 mbertin Exp $
+// $Id: messages.class.php,v 1.8 2018-05-17 09:27:49 dgoron Exp $
+
+
+require_once($class_path."/cache_factory.class.php");
 
 class message {
 	
-	var $analyseur;
-	var $fichierXml;
-	var $fichierXmlSubst; // nom du fichier XML de substitution au cas où.
-	var $current;
-	var $table;
-	var $tablefav;
-	var $flag_fav;
-	var $s;
-	var $flag_elt ; // pour traitement des entrées supprimées
-	var $flag_order;
-	var $order;
+	public $analyseur;
+	public $fichierXml;
+	public $fichierXmlSubst; // nom du fichier XML de substitution au cas où.
+	public $current;
+	public $table;
+	public $tablefav;
+	public $flag_fav;
+	public $s;
+	public $flag_elt ; // pour traitement des entrées supprimées
+	public $flag_order;
+	public $order;
 
 	// constructeur
-	function message($fichier, $s=1) {
+	public function __construct($fichier, $s=1) {
 		$this->fichierXml = $fichier;
 		$this->fichierXmlSubst = str_replace(".xml", "", $fichier)."_subst.xml" ;
 		$this->s = $s;
 		$this->flag_order = false;
 		$this->analyser();
 	}
-		                
 
 	//Méthodes
-	function debutBalise($parser, $nom, $attributs) {
+	public function debutBalise($parser, $nom, $attributs) {
 		global $_starttag; $_starttag=true;
 		if($nom == 'ENTRY' && $attributs['CODE'])
 			$this->current = $attributs['CODE'];
-		if($nom == 'ENTRY' && $attributs['ORDER']) {
+		if($nom == 'ENTRY' && !empty($attributs['ORDER'])) {
 			$this->flag_order = true;
 			$this->order[$attributs['CODE']] =  $attributs['ORDER'];
 			}
@@ -44,7 +46,7 @@ class message {
 	}
 	
 	//Méthodes
-	function debutBaliseSubst($parser, $nom, $attributs) {
+	public function debutBaliseSubst($parser, $nom, $attributs) {
 		global $_starttag; $_starttag=true;
 		if($nom == 'ENTRY' && $attributs['CODE']) {
 			$this->flag_elt = false ;
@@ -59,14 +61,14 @@ class message {
 			}
 	}
 	
-	function finBalise($parser, $nom) {
+	public function finBalise($parser, $nom) {
 		// ICI pour affichage des codes des messages en dur 
-		if ($_SESSION["CHECK-MESSAGES"]==1 && strpos($this->fichierXml, "messages"))
+		if (isset($_SESSION["CHECK-MESSAGES"]) && $_SESSION["CHECK-MESSAGES"]==1 && strpos($this->fichierXml, "messages"))
 			$this->table[$this->current] = "__".$this->current."##".$this->table[$this->current]."**";
 		$this->current = '';
 		}
 
-	function finBaliseSubst($parser, $nom) {
+	public function finBaliseSubst($parser, $nom) {
 		// ICI pour affichage des codes des messages en dur 
 		if ($_SESSION["CHECK-MESSAGES"]==1 && strpos($this->fichierXml, "messages"))
 			$this->table[$this->current] = "__".$this->current."##".$this->table[$this->current]."**";
@@ -75,7 +77,7 @@ class message {
 		$this->flag_fav =  false;
 		}
 	
-	function texte($parser, $data) {
+	public function texte($parser, $data) {
 		global $_starttag; 
 		if($this->current)
 			if ($_starttag) {
@@ -84,7 +86,7 @@ class message {
 			} else $this->table[$this->current] .= $data;
 		}
 
-	function texteSubst($parser, $data) {
+	public function texteSubst($parser, $data) {
 		global $_starttag; 
 		$this->flag_elt = true ;
 		if ($this->current) {
@@ -98,75 +100,147 @@ class message {
 	
 
  // Modif Armelle Nedelec recherche de l'encodage du fichier xml et transformation en charset'
- 	function analyser() 
+ 	public function analyser() 
  	{
- 		global $charset;
-		if (!($fp = @fopen($this->fichierXml, "r"))) {
-			die("impossible d'ouvrir le fichier XML $this->fichierXml");
-			}
-		$file_size=filesize ($this->fichierXml);
-		$data = fread ($fp, $file_size);
-
- 		$rx = "/<?xml.*encoding=[\'\"](.*?)[\'\"].*?>/m";
-		if (preg_match($rx, $data, $m)) $encoding = strtoupper($m[1]);
-			else $encoding = "ISO-8859-1";
-		
- 		$this->analyseur = xml_parser_create($encoding);
- 		xml_parser_set_option($this->analyseur, XML_OPTION_TARGET_ENCODING, $charset);		
-		xml_parser_set_option($this->analyseur, XML_OPTION_CASE_FOLDING, true);
-		xml_set_object($this->analyseur, $this);
-		xml_set_element_handler($this->analyseur, "debutBalise", "finBalise");
-		xml_set_character_data_handler($this->analyseur, "texte");
-	
-		fclose($fp);
-
-		if ( !xml_parse( $this->analyseur, $data, TRUE ) ) {
-			die( sprintf( "erreur XML %s à la ligne: %d ( $this->fichierXml )\n\n",
-			xml_error_string(xml_get_error_code( $this->analyseur ) ),
-			xml_get_current_line_number( $this->analyseur) ) );
+ 		global $charset,$visionneuse_path,$KEY_CACHE_FILE_XML;
+ 		$fileInfo = pathinfo($this->fichierXml);
+		$fileName = preg_replace("/[^a-z0-9]/i","",$fileInfo['dirname'].$fileInfo['filename'].$charset);
+		if($this->fichierXmlSubst && file_exists($this->fichierXmlSubst)){
+			$tempFile = $visionneuse_path."/temp/XMLWithSubst".$fileName.".tmp";
+			$with_subst=true;
+		}else{
+			$tempFile = $visionneuse_path."/temp/XML".$fileName.".tmp";
+			$with_subst=false;
 		}
-
-		xml_parser_free($this->analyseur);
-
-		if ($fp = @fopen($this->fichierXmlSubst, "r")) {
-			$file_sizeSubst=filesize ($this->fichierXmlSubst);
-			$data = fread ($fp, $file_sizeSubst);
-			fclose($fp);
+ 		$dejaParse = false;
+ 		
+ 		$cache_php=cache_factory::getCache();
+ 		$key_file="";
+ 		if ($cache_php) {
+ 			$key_file=getcwd().$fileName.filemtime($this->fichierXml);
+ 			if($this->fichierXmlSubst && file_exists($this->fichierXmlSubst)){
+ 				$key_file.=filemtime($this->fichierXmlSubst);
+ 			}
+ 			$key_file=$KEY_CACHE_FILE_XML.md5($key_file);
+ 			if($tmp_key = $cache_php->getFromCache($key_file)){
+ 				if($tables = $cache_php->getFromCache($tmp_key)){
+ 					if(count($tables) == 1){
+	 					$this->table = $tables[0];
+ 						$dejaParse = true;
+ 					}
+ 				}
+ 			}
+ 		}else{
+	 		if (file_exists($tempFile) ) {
+	 			//Le fichier XML original a-t-il été modifié ultérieurement ?
+				if(filemtime($this->fichierXml)>filemtime($tempFile)){
+					//on va re-générer le pseudo-cache
+					unlink($tempFile);
+				} else {
+					//On regarde aussi si le fichier subst à été modifié après le fichier temp
+					if($with_subst){
+						if(filemtime($this->fichierXmlSubst)>filemtime($tempFile)){
+							//on va re-générer le pseudo-cache
+							unlink($tempFile);
+						} else {
+							$dejaParse = true;
+						}
+					}else{
+						$dejaParse = true;
+					}
+				}
+	 		}
+	 		if ($dejaParse) {
+	 			$tmp = fopen($tempFile, "r");
+	 			$tables = unserialize(fread($tmp,filesize($tempFile)));
+	 			fclose($tmp);
+	 			if(count($tables) == 1){
+	 				$this->table = $tables[0];	 				
+	 			}else{
+	 				unlink($tempFile);
+	 				$dejaParse = false;
+	 			}
+	 		}
+ 		}
+ 		
+ 		if(!$dejaParse){
+			if (!($fp = @fopen($this->fichierXml, "r"))) {
+				die("impossible d'ouvrir le fichier XML $this->fichierXml");
+				}
+			$file_size=filesize ($this->fichierXml);
+			$data = fread ($fp, $file_size);
+	
 	 		$rx = "/<?xml.*encoding=[\'\"](.*?)[\'\"].*?>/m";
 			if (preg_match($rx, $data, $m)) $encoding = strtoupper($m[1]);
 				else $encoding = "ISO-8859-1";
-			$this->analyseur = xml_parser_create($encoding);
-			xml_parser_set_option($this->analyseur, XML_OPTION_TARGET_ENCODING, $charset);		
+			
+	 		$this->analyseur = xml_parser_create($encoding);
+	 		xml_parser_set_option($this->analyseur, XML_OPTION_TARGET_ENCODING, $charset);		
 			xml_parser_set_option($this->analyseur, XML_OPTION_CASE_FOLDING, true);
 			xml_set_object($this->analyseur, $this);
-			xml_set_element_handler($this->analyseur, "debutBaliseSubst", "finBaliseSubst");
-			xml_set_character_data_handler($this->analyseur, "texteSubst");
+			xml_set_element_handler($this->analyseur, "debutBalise", "finBalise");
+			xml_set_character_data_handler($this->analyseur, "texte");
+		
+			fclose($fp);
+	
 			if ( !xml_parse( $this->analyseur, $data, TRUE ) ) {
-				die( sprintf( "erreur XML %s à la ligne: %d ( $this->fichierXmlSubst )\n\n",
+				die( sprintf( "erreur XML %s à la ligne: %d ( $this->fichierXml )\n\n",
 				xml_error_string(xml_get_error_code( $this->analyseur ) ),
 				xml_get_current_line_number( $this->analyseur) ) );
-				}
+			}
+	
 			xml_parser_free($this->analyseur);
+	
+			if ($fp = @fopen($this->fichierXmlSubst, "r")) {
+				$file_sizeSubst=filesize ($this->fichierXmlSubst);
+				$data = fread ($fp, $file_sizeSubst);
+				fclose($fp);
+		 		$rx = "/<?xml.*encoding=[\'\"](.*?)[\'\"].*?>/m";
+				if (preg_match($rx, $data, $m)) $encoding = strtoupper($m[1]);
+					else $encoding = "ISO-8859-1";
+				$this->analyseur = xml_parser_create($encoding);
+				xml_parser_set_option($this->analyseur, XML_OPTION_TARGET_ENCODING, $charset);		
+				xml_parser_set_option($this->analyseur, XML_OPTION_CASE_FOLDING, true);
+				xml_set_object($this->analyseur, $this);
+				xml_set_element_handler($this->analyseur, "debutBaliseSubst", "finBaliseSubst");
+				xml_set_character_data_handler($this->analyseur, "texteSubst");
+				if ( !xml_parse( $this->analyseur, $data, TRUE ) ) {
+					die( sprintf( "erreur XML %s à la ligne: %d ( $this->fichierXmlSubst )\n\n",
+					xml_error_string(xml_get_error_code( $this->analyseur ) ),
+					xml_get_current_line_number( $this->analyseur) ) );
+					}
+				xml_parser_free($this->analyseur);
+				}
+			if ($this->s) {
+				reset($this->table);
+				$tmp=array();
+				$tmp=array_map("convert_diacrit",$this->table);//On enlève les accents
+				$tmp=array_map("strtoupper",$tmp);//On met en majuscule
+				asort($tmp);//Tri sur les valeurs en majuscule sans accent
+				foreach ( $tmp as $key => $value ) {
+	       			$tmp[$key]=$this->table[$key];//On reprend les bons couples clé / libellé
+				}
+				$this->table=$tmp;
 			}
-		if ($this->s) {
-			reset($this->table);
-			$tmp=array();
-			$tmp=array_map("convert_diacrit",$this->table);//On enlève les accents
-			$tmp=array_map("strtoupper",$tmp);//On met en majuscule
-			asort($tmp);//Tri sur les valeurs en majuscule sans accent
-			foreach ( $tmp as $key => $value ) {
-       			$tmp[$key]=$this->table[$key];//On reprend les bons couples clé / libellé
+			if($this->flag_order == true){
+				$table_tmp = array();
+				asort($this->order);
+				foreach ($this->order as $key =>$value){
+					$table_tmp[$key] = $this->table[$key];
+					unset($this->table[$key]);
+				}
+				$this->table = array_merge($table_tmp,$this->table);
 			}
-			$this->table=$tmp;
-		}
-		if($this->flag_order == true){
-			$table_tmp = array();
-			asort($this->order);
-			foreach ($this->order as $key =>$value){
-				$table_tmp[$key] = $this->table[$key];
-				unset($this->table[$key]);
+			//on écrit le temporaire
+			if ($key_file) {
+				$key_file_content=$KEY_CACHE_FILE_XML.md5(serialize(array($this->table)));
+				$cache_php->setInCache($key_file_content, array($this->table));
+				$cache_php->setInCache($key_file,$key_file_content);
+			}else{
+				$tmp = fopen($tempFile, "wb");
+				fwrite($tmp,serialize(array($this->table)));
+				fclose($tmp);
 			}
-			$this->table = array_merge($table_tmp,$this->table);
-		}
+ 		}
 	}
 }

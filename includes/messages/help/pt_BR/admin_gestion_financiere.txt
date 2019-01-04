@@ -1,4 +1,4 @@
-<h1>Gestão financeira</h1>
+<h2>Gestão financeira</h2>
 <p>Este módulo permite que você gerencie transações financeiras relacionadas às assinaturas dos membros:</p>
 <ul>
 <li>relacionamento

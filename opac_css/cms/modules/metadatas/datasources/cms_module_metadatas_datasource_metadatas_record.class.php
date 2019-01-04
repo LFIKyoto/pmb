@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_metadatas_datasource_metadatas_record.class.php,v 1.1 2014-12-18 10:20:09 dgoron Exp $
+// $Id: cms_module_metadatas_datasource_metadatas_record.class.php,v 1.9 2018-08-23 15:09:39 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -18,12 +18,41 @@ class cms_module_metadatas_datasource_metadatas_record extends cms_module_metada
 	public function get_available_selectors(){
 		return array(
 				"cms_module_common_selector_record",
+				"cms_module_common_selector_record_permalink",
 				"cms_module_common_selector_env_var",
 				"cms_module_common_selector_type_article",
 				"cms_module_common_selector_type_section",
 				"cms_module_common_selector_type_article_generic",
 				"cms_module_common_selector_type_section_generic"
 		);
+	}
+	
+	protected function get_record_content($notice_class) {
+		global $opac_notices_format;
+		global $opac_notices_format_django_directory;
+		global $record_css_already_included;
+		global $include_path;
+		
+		$content = '';
+		if(isset($this->parameters['used_template']) && $this->parameters['used_template']){
+			$tpl = notice_tpl_gen::get_instance($this->parameters['used_template']);
+			$content = $tpl->build_notice($notice_class->id);
+		}else{
+			if($opac_notices_format == AFF_ETA_NOTICES_TEMPLATE_DJANGO){
+				if (!$opac_notices_format_django_directory) $opac_notices_format_django_directory = "common";
+				if (!$record_css_already_included) {
+					if (file_exists($include_path."/templates/record/".$opac_notices_format_django_directory."/styles/style.css")) {
+						$content .= "<link type='text/css' href='./includes/templates/record/".$opac_notices_format_django_directory."/styles/style.css' rel='stylesheet'></link>";
+					}
+					$record_css_already_included = true;
+				}
+				$content .= record_display::get_display_extended($notice_class->id);
+			}else {
+				$notice_class->do_isbd();
+				$content = $notice_class->notice_isbd;
+			}
+		}
+		return $content;
 	}
 	
 	/*
@@ -33,6 +62,7 @@ class cms_module_metadatas_datasource_metadatas_record extends cms_module_metada
 		global $opac_show_book_pics;
 		global $opac_book_pics_url;
 		global $opac_url_base;
+		global $base_path;
 		//on commence par récupérer l'identifiant retourné par le sélecteur...
 		if($this->parameters['selector'] != ""){
 			for($i=0 ; $i<count($this->selectors) ; $i++){
@@ -52,17 +82,9 @@ class cms_module_metadatas_datasource_metadatas_record extends cms_module_metada
 				
 				$datas = array();
 				$notice_class = new notice($notice);
-				if ($opac_show_book_pics=='1' && ($opac_book_pics_url || $notice_class->thumbnail_url)) {
-					$code_chiffre = pmb_preg_replace('/-|\.| /', '', $notice_class->code);
-					$url_image = $opac_book_pics_url ;
-					$url_image = $opac_url_base."getimage.php?url_image=".urlencode($url_image)."&noticecode=!!noticecode!!&vigurl=".urlencode($notice_class->thumbnail_url) ;
-					if ($notice_class->thumbnail_url){
-						$url_vign=$notice_class->thumbnail_url;
-					}else if($code_chiffre){
-						$url_vign = str_replace("!!noticecode!!", $code_chiffre, $url_image) ;
-					}else {
-						$url_vign = $opac_url_base."images/vide.png";
-					}
+				$url_vign = "";
+				if (($notice_class->code || $notice_class->thumbnail_url) && ($opac_show_book_pics=='1' && ($opac_book_pics_url || $notice_class->thumbnail_url))) {
+					$url_vign = getimage_url($notice_class->code, $notice_class->thumbnail_url);
 				}
 				$datas = array(
 						'id' => $notice_class->id,
@@ -70,9 +92,10 @@ class cms_module_metadatas_datasource_metadatas_record extends cms_module_metada
 						'link' => $this->get_constructed_link("notice",$notice_class->id),
 						'logo_url' => $url_vign,
 						'header' => $notice_class->notice_header,
-						'resume' => $notice_class->n_resume,
-						'content' => $content,
-						'type' => 'notice'
+						'resume' => $notice_class->n_resume, 
+						'content' => $this->get_record_content($notice_class),
+						'type' => 'notice',
+						'record' => $notice_class
 				);
 				$datas["details"] = $datas;
 				$datas = array_merge($datas,parent::get_datas());
@@ -81,8 +104,14 @@ class cms_module_metadatas_datasource_metadatas_record extends cms_module_metada
 					if (is_array($metadatas["metadatas"])) {
 						foreach ($metadatas["metadatas"] as $key=>$value) {
 							try {
-								$group_metadatas[$i]["metadatas"][$key] = H2o::parseString($value)->render($datas);
+								$template_path = $base_path.'/temp/'.LOCATION.'_datasource_metadatas_records_'.$this->id;
+								if(!file_exists($template_path) || (md5($value) != md5_file($template_path))){
+								    file_put_contents($template_path, $value);
+								}
+								$H2o = H2o_collection::get_instance($template_path);
+								$group_metadatas[$i]["metadatas"][$key] = $H2o->render($datas);
 							}catch(Exception $e){
+							    
 							}
 						}
 					}
@@ -125,6 +154,10 @@ class cms_module_metadatas_datasource_metadatas_record extends cms_module_metada
 								array(
 										'var' => "link",
 										'desc'=> $this->msg['cms_module_metadatas_datasource_record_link_desc']
+								),
+								array(
+										'var' => "record",
+										'desc'=> $this->msg['cms_module_metadatas_datasource_record_data']
 								)
 						)
 				),
@@ -139,5 +172,33 @@ class cms_module_metadatas_datasource_metadatas_record extends cms_module_metada
 		);
 		$format_datas = array_merge(parent::get_format_data_structure(),$format_datas);
 		return $format_datas;
+	}
+	
+	public function get_form(){
+		$form = parent::get_form();
+	
+		if (!isset($this->parameters["used_template"]))		$this->parameters["used_template"] = "";
+		$form.="
+			<div class='row'>
+				<div class='colonne3'>
+					<label for='cms_module_metadatas_datasource_record_used_template'>".$this->format_text($this->msg['cms_module_metadatas_datasource_record_used_template'])."</label>
+				</div>
+				<div class='colonne-suite'>";
+		
+		$form.= notice_tpl::gen_tpl_select("cms_module_metadatas_datasource_record_used_template",$this->parameters['used_template']);
+		$form.="
+				</div>
+			</div>
+		";
+	
+		return $form;
+	}
+	
+	public function save_form(){
+		global $cms_module_metadatas_datasource_record_used_template;
+	
+		$this->parameters['used_template'] = $cms_module_metadatas_datasource_record_used_template;
+	
+		return parent::save_form();
 	}
 }

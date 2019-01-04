@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: visu_ex.inc.php,v 1.28 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: visu_ex.inc.php,v 1.35 2017-11-21 12:01:00 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 $prefix_url_image="./";
-if (!$back_to_visu){
-	get_cb_expl($msg[375], $msg[661], $msg[circ_tit_form_cb_expl], './circ.php?categ=visu_ex', 1);
+if (!isset($back_to_visu)){
+	get_cb_expl($msg[375], $msg[661], $msg['circ_tit_form_cb_expl'], './circ.php?categ=visu_ex');
 	if($form_cb_expl){
 		$query = "select expl_id, expl_notice, pret_flag, pret_idempr from docs_statut, exemplaires left join pret on pret_idexpl=expl_id where expl_cb='$form_cb_expl' and expl_statut=idstatut ";
 		$result = pmb_mysql_query($query, $dbh);
@@ -23,7 +23,7 @@ if (!$back_to_visu){
 				// print $begin_result_liste;
 				print print_info($stuff,1,1);
 				// pour affichage de l'image de couverture
-				if ($pmb_book_pics_show=='1' && (($pmb_book_pics_url && $stuff->code) || $stuff->thumbnail_url))
+				if ($pmb_book_pics_show=='1' && (($pmb_book_pics_url && $stuff->code) || (isset($stuff->thumbnail_url) && $stuff->thumbnail_url)))
 					print "<script type='text/javascript'>
 						<!--
 						var img = document.getElementById('PMBimagecover".$expl_lu->expl_notice."');
@@ -229,7 +229,7 @@ if (!$back_to_visu){
 	    if ($page>0) {
 	    	$nav_bar .= "<a href='#' onClick='document.search_form.page.value-=1; ";
 	    	$nav_bar .= "document.search_form.submit(); return false;'>";
-	    	$nav_bar .= "<img src='./images/left.gif' border='0'  title='".$msg[48]."' alt='[".$msg[48]."]' hspace='3' align='middle'/>";
+	    	$nav_bar .= "<img src='".get_url_icon('left.gif')."' style='border:0px; margin:3px 3px' title='".$msg[48]."' alt='[".$msg[48]."]' class='align_middle'/>";
 		    $nav_bar .= "</a>";
 		}
 	        
@@ -249,10 +249,10 @@ if (!$back_to_visu){
 		if(($page+1)<$n_max_page) {
 	    	$nav_bar .= "<a href='#' onClick=\"if ((isNaN(document.search_form.page.value))||(document.search_form.page.value=='')) document.search_form.page.value=1; else document.search_form.page.value=parseInt(document.search_form.page.value)+parseInt(1); ";
 	    	$nav_bar .= "document.search_form.submit(); return false;\">";
-	    	$nav_bar .= "<img src='./images/right.gif' border='0' title='".$msg[49]."' alt='[".$msg[49]."]' hspace='3' align='middle'>";
+	    	$nav_bar .= "<img src='".get_url_icon('right.gif')."' style='border:0px; margin:3px 3px' title='".$msg[49]."' alt='[".$msg[49]."]' class='align_middle'>";
 	    	$nav_bar .= "</a>";
 	    } else 	$nav_bar .= "";
-		$nav_bar = "<div align='center'>$nav_bar</div>";
+		$nav_bar = "<div class='center'>$nav_bar</div>";
 	   	echo $nav_bar ;
 	}  
 }

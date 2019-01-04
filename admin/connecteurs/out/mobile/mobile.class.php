@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mobile.class.php,v 1.6 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: mobile.class.php,v 1.8 2017-07-12 15:15:02 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,20 +16,20 @@ require_once($class_path."/XMLtabs.class.php");
 
 class mobile extends connecteur_out {
 	
-	function get_config_form() {
+	public function get_config_form() {
 		//Rien
 		return '';
 	}
 	
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		return;
 	}
 	
-	function instantiate_source_class($source_id) {
+	public function instantiate_source_class($source_id) {
 		return new mobile_source($this, $source_id, $this->msg);
 	}
 	
-	function process($source_id, $pmb_user_id) {
+	public function process($source_id, $pmb_user_id) {
 		global $opac_url_base,$opac_biblio_name,$charset;
 		$plop = $opac_biblio_name;		
 		$source = new mobile_source($this, $source_id, $this->msg);
@@ -44,19 +44,19 @@ class mobile extends connecteur_out {
 }
 
 class mobile_source extends connecteur_out_source {
-	var $onglets = array();
+	public $onglets = array();
 	
-	function mobile_source($connector, $id, $msg) {
+	public function __construct($connector, $id, $msg) {
 		global $include_path;
 		
-		parent::connecteur_out_source($connector, $id, $msg);
+		parent::__construct($connector, $id, $msg);
 		//Onglets dispo dans l'appli
 		$xml = new XMLtabs($include_path."/mobile/tabs.xml");
 		$xml->analyser();
 		$this->onglets = $xml->table;
 		}
 	
-	function get_config_form() {
+	public function get_config_form() {
 		global $charset, $dbh, $pmb_url_base;
 		
 		$result = parent::get_config_form();
@@ -427,7 +427,7 @@ class mobile_source extends connecteur_out_source {
 		return $result;
 	}
 	
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		global $dbh;
 		global $proxyUrl,$appTitle,$firstTab,$firstInfoPage,$heartShelf,$search_nbResultsByPage,$shelf_nbResultsByPage;
 		global $allowTypDocFilter,$allowCheckIn;
@@ -451,9 +451,9 @@ class mobile_source extends connecteur_out_source {
 		//le tableau des onglets activés ou non
 		$this->config['activeTabs']=array();
 		foreach($this->onglets as $ongletName => $value){
-			global $$ongletName;
-			if(isset($$ongletName)){
-				$this->config['activeTabs'][$ongletName]=$$ongletName;
+			global ${$ongletName};
+			if(isset(${$ongletName})){
+				$this->config['activeTabs'][$ongletName]=${$ongletName};
 			}else{
 				$this->config['activeTabs'][$ongletName]=0;
 			}

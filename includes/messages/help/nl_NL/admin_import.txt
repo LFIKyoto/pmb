@@ -1,4 +1,4 @@
-<h1>Administration des imports</h1>
+<h2>Administration des imports</h2>
 <p>Cette page permet de g&eacute;rer les imports de donn&eacute;es li&eacute;es &agrave; des ouvrages et/ou &agrave; des exemplaires.</p>
 <p>La proc&eacute;dure se fait en diff&eacute;rents temps : 
 <ul>

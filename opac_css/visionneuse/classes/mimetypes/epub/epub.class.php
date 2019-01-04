@@ -2,22 +2,22 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: epub.class.php,v 1.3 2015-04-03 10:20:10 arenou Exp $
+// $Id: epub.class.php,v 1.5 2017-07-03 09:07:10 dgoron Exp $
 
 require_once($visionneuse_path."/classes/mimetypes/affichage.class.php");
 require_once($visionneuse_path."/../classes/epubData.class.php");
 require_once($visionneuse_path."/classes/mimetypes/converter_factory.class.php");
 
 class epub extends affichage{
-	var $doc;					//le document numérique à afficher
-	var $driver;				//class driver de la visionneuse
-	var $params;				//paramètres éventuels
-	var $toDisplay= array();	//tableau des infos à afficher	
-	var $tabParam = array();	//tableau décrivant les paramètres de la classe
-	var $parameters = array();	//tableau des paramètres de la classe
-	var $ebook; 				//l'objet ebook
+	public $doc;					//le document numérique à afficher
+	public $driver;				//class driver de la visionneuse
+	public $params;				//paramètres éventuels
+	public $toDisplay= array();	//tableau des infos à afficher	
+	public $tabParam = array();	//tableau décrivant les paramètres de la classe
+	public $parameters = array();	//tableau des paramètres de la classe
+	public $ebook; 				//l'objet ebook
  
-    function epub($doc=0) {
+    public function __construct($doc=0) {
     	if($doc){
     		$this->doc = $doc; 
     		$this->driver = $doc->driver;
@@ -26,13 +26,13 @@ class epub extends affichage{
     	}
     }
     
-    function fetchDisplay(){
+    public function fetchDisplay(){
     	global $visionneuse_path;
     	
     	//le document
     	$this->driver->cleanCache();
-    	if (!$this->driver->isInCache($this->doc->id)) {
-    		$this->driver->setInCache($this->doc->id,$this->driver->openCurrentDoc());
+  		if (!$this->driver->isInCache($this->doc->id)) {
+    		$this->driver->copyCurrentDocInCache();
     	}
     	$ebook = new epubData($this->driver->get_cached_filename($this->doc->id));
      	//le titre
@@ -249,7 +249,7 @@ class epub extends affichage{
     	return $this->toDisplay;
     }
     
-    function render(){
+    public function render(){
     	global $visionneuse_path;
     	
     	$ebook = new epubData($this->driver->get_cached_filename($this->doc->id));
@@ -261,7 +261,7 @@ class epub extends affichage{
     	print $ebook->getPageContent($this->driver->getParam("page"));
     }
     
-    function getTabParam(){
+    public function getTabParam(){
     	$this->tabParam = array(
 			"size_x"=>array("type"=>"text","name"=>"size_x","value"=>$this->parameters['size_x'],"desc"=>"Largeur du document en % de l'espace visible"),
 			"size_y"=>array("type"=>"text","name"=>"size_y","value"=>$this->parameters['size_y'],"desc"=>"Hauteur du document en % de l'espace visible")
@@ -269,19 +269,19 @@ class epub extends affichage{
        	return $this->tabParam;
     }
     
-	function getParamsPerso(){
+	public function getParamsPerso(){
 		$params = $this->driver->getClassParam('epub');
 		$this->unserializeParams($params);
 		if($this->parameters['size_x'] == 0) $this->parameters['size_x'] = $this->driver->getParam("maxX");
 		if($this->parameters['size_y'] == 0) $this->parameters['size_y'] = $this->driver->getParam("maxY");
 	}
 	
-	function unserializeParams($paramsToUnserialized){
+	public function unserializeParams($paramsToUnserialized){
 		$this->parameters = unserialize($paramsToUnserialized);
 		return $this->parameters;
 	}
 	
-	function serializeParams($paramsToSerialized){
+	public function serializeParams($paramsToSerialized){
 		$this->parameters =$paramsToSerialized;
 		return serialize($paramsToSerialized);
 	}

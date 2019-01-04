@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- $Id: search_fields_unimarc.xml,v 1.26 2015-05-07 07:36:37 jpermanne Exp $ -->
+<!-- $Id: search_fields_unimarc.xml,v 1.30 2018-10-04 14:34:23 dgoron Exp $ -->
 <pmbfields>
 	<!-- Zone fixedFields :
 		Liste des champs de recherche possibles de la base de données
@@ -541,28 +541,28 @@
 				<main><![CDATA[select distinct recid as notice_id,i_value from entrepot_source_!!current_source!! where source_id in (!!selected_sources!!)]]></main>
 			</query>
 		</field>
-		<field title="msg:date_creation_query" id="41" unimarcField="dc">
+		<field title="msg:date_creation_query" id="41" unimarcField="100$a">
 			<input type='date'/>
 			<variable name="selected_sources" type="global"/>
 			<query for="EQ">
-				<repeat name="current_source" on="selected_sources" separator="," operator="union" orderTerm="date_import"/>
-				<main>select distinct recid as notice_id, date_import from entrepot_source_!!current_source!! where date_import='!!p!!' and source_id in (!!selected_sources!!)</main>
+				<main><![CDATA[select distinct recid as notice_id, i_value from entrepot_source_!!current_source!! where concat(SUBSTR(value, 1, 4), '-', SUBSTR(value, 5, 2), '-', SUBSTR(value, 7, 2)) = '!!p!!' and (ufield='100' and usubfield in ('a')) and source_id in (!!selected_sources!!)]]></main>
+				<repeat name="current_source" on="selected_sources" separator="," operator="union" orderTerm="i_value"/>
 			</query>
 			<query for="LT">
-				<repeat name="current_source" on="selected_sources" separator="," operator="union" orderTerm="date_import"/>
-				<main>select distinct recid as notice_id, date_import from entrepot_source_!!current_source!! where date_import&lt;'!!p!!' and source_id in (!!selected_sources!!)</main>
+				<repeat name="current_source" on="selected_sources" separator="," operator="union" orderTerm="i_value"/>
+				<main><![CDATA[select distinct recid as notice_id, i_value from entrepot_source_!!current_source!! where concat(SUBSTR(value, 1, 4), '-', SUBSTR(value, 5, 2), '-', SUBSTR(value, 7, 2)) < '!!p!!' and (ufield='100' and usubfield in ('a')) and source_id in (!!selected_sources!!)]]></main>
 			</query>
 			<query for="GT">
-				<repeat name="current_source" on="selected_sources" separator="," operator="union" orderTerm="date_import"/>
-				<main>select distinct recid as notice_id, date_import from entrepot_source_!!current_source!! where date_import&gt;'!!p!!' and source_id in (!!selected_sources!!)</main>
+				<repeat name="current_source" on="selected_sources" separator="," operator="union" orderTerm="i_value"/>
+				<main><![CDATA[select distinct recid as notice_id, i_value from entrepot_source_!!current_source!! where concat(SUBSTR(value, 1, 4), '-', SUBSTR(value, 5, 2), '-', SUBSTR(value, 7, 2)) > '!!p!!' and (ufield='100' and usubfield in ('a')) and source_id in (!!selected_sources!!)]]></main>
 			</query>
 			<query for="LTEQ">
-				<repeat name="current_source" on="selected_sources" separator="," operator="union" orderTerm="date_import"/>
-				<main>select distinct recid as notice_id, date_import from entrepot_source_!!current_source!! where date_import&lt;='!!p!!' and source_id in (!!selected_sources!!)</main>
+				<repeat name="current_source" on="selected_sources" separator="," operator="union" orderTerm="i_value"/>
+				<main><![CDATA[select distinct recid as notice_id, i_value from entrepot_source_!!current_source!! where concat(SUBSTR(value, 1, 4), '-', SUBSTR(value, 5, 2), '-', SUBSTR(value, 7, 2)) <= '!!p!!' and (ufield='100' and usubfield in ('a')) and source_id in (!!selected_sources!!)]]></main>
 			</query>
 			<query for="GTEQ">
-				<repeat name="current_source" on="selected_sources" separator="," operator="union" orderTerm="date_import"/>
-				<main>select distinct recid as notice_id, date_import from entrepot_source_!!current_source!! where date_import&gt;='!!p!!' and source_id in (!!selected_sources!!)</main>
+				<repeat name="current_source" on="selected_sources" separator="," operator="union" orderTerm="i_value"/>
+				<main><![CDATA[select distinct recid as notice_id, i_value from entrepot_source_!!current_source!! where concat(SUBSTR(value, 1, 4), '-', SUBSTR(value, 5, 2), '-', SUBSTR(value, 7, 2)) >= '!!p!!' and (ufield='100' and usubfield in ('a')) and source_id in (!!selected_sources!!)]]></main>
 			</query>
 		</field>
 		<field title="msg:print_numeric_ex_title" id="44" unimarcField="FORBIDDEN" visibility="no">
@@ -581,6 +581,19 @@
 			<query for="CONTAINS">
 				<repeat name="current_source" on="selected_sources" separator="," operator="union" orderTerm="value"/>
 				<main><![CDATA[select distinct recid as notice_id, value from entrepot_source_!!current_source!! where (value like '%!!p!!%') and (ufield='856' and usubfield in ('u')) and source_id in (!!selected_sources!!)]]></main>
+			</query>
+		</field>
+		<field title="msg:in_catalog" id="111">
+			<input type="list">
+				<options>
+					<option value="not in">msg:39</option>
+					<option value="in">msg:40</option>
+				</options>	
+			</input>
+			<variable name="selected_sources" type="global"/>
+			<query for="EQ">
+			<repeat name="current_source" on="selected_sources" separator="," operator="union" orderTerm="i_value"/>
+				<main><![CDATA[select distinct recid as notice_id,i_value from entrepot_source_!!current_source!! where concat(connector_id,' ',source_id,' ',ref) !!p!! (select recid from notices_externes)]]></main>			
 			</query>
 		</field>
 		<field title="msg:localisation_sort" id="16" separator="msg:exemplaires_query" unimarcField="FORBIDDEN" visibility="no">
@@ -1105,23 +1118,23 @@
 	<dynamicFields visible="no">
 		<fieldType type="notices" prefix="d">
 			<field dataType="small_text" id="1">
-				<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+				<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where !!multiple_term!! order by index_serie, tnvol, index_sew]]></main>
 					<multipleTerm>notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_small_text like '%!!p!!%'</multipleTerm>
 					<multipleOperator>or</multipleOperator>
 				</query>
-				<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+				<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where !!multiple_term!! order by index_serie, tnvol, index_sew]]></main>
 					<multipleTerm>notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_small_text like '%!!p!!%'</multipleTerm>
 					<multipleOperator>and</multipleOperator>
 				</query>
-				<query for="STARTWITH" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="STARTWITH" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_small_text like '!!p!!%' order by index_serie, tnvol, index_sew]]></main>
 				</query>
-				<query for="ENDWITH" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="ENDWITH" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_small_text like '%!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
-				<query for="EXACT" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="EXACT" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_small_text='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
 				<query for="EQ">
@@ -1135,23 +1148,23 @@
 				</query>
 			</field>
 			<field dataType="text" id="2">
-				<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+				<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where !!multiple_term!! order by index_serie, tnvol, index_sew]]></main>
 					<multipleTerm>notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_text like '%!!p!!%'</multipleTerm>
 					<multipleOperator>or</multipleOperator>
 				</query>
-				<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+				<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where !!multiple_term!! order by index_serie, tnvol, index_sew]]></main>
 					<multipleTerm>notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_text like '%!!p!!%'</multipleTerm>
 					<multipleOperator>and</multipleOperator>
 				</query>
-				<query for="STARTWITH" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="STARTWITH" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_text like '!!p!!%' order by index_serie, tnvol, index_sew]]></main>
 				</query>
-				<query for="ENDWITH" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="ENDWITH" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_text like '%!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
-				<query for="EXACT" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="EXACT" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_text='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
 				<query for="EQ">
@@ -1168,16 +1181,16 @@
 				<query for="EQ">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_integer='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
-				<query for="LT" notAllowedFor="list,query_list,marclist">
+				<query for="LT" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_integer<'!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
-				<query for="GT" notAllowedFor="list,query_list,marclist">
+				<query for="GT" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_integer>'!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
-				<query for="LTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="LTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_integer<='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
-				<query for="GTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_integer>='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
 				<query for="ISEMPTY">
@@ -1191,16 +1204,16 @@
 				<query for="EQ">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and round(notices_custom_float,LENGTH(SUBSTRING_INDEX('!!p!!','.',-1)))='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
-				<query for="LT" notAllowedFor="list,query_list,marclist">
+				<query for="LT" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and round(notices_custom_float,LENGTH(SUBSTRING_INDEX('!!p!!','.',-1)))<'!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
-				<query for="GT" notAllowedFor="list,query_list,marclist">
+				<query for="GT" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and round(notices_custom_float,LENGTH(SUBSTRING_INDEX('!!p!!','.',-1)))>'!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
-				<query for="LTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="LTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and round(notices_custom_float,LENGTH(SUBSTRING_INDEX('!!p!!','.',-1)))<='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
-				<query for="GTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and round(notices_custom_float,LENGTH(SUBSTRING_INDEX('!!p!!','.',-1)))>='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
 				<query for="ISEMPTY">
@@ -1214,16 +1227,16 @@
 				<query for="EQ">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_date='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
-				<query for="LT" notAllowedFor="list,query_list,marclist">
+				<query for="LT" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_date<'!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
-				<query for="GT" notAllowedFor="list,query_list,marclist">
+				<query for="GT" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_date>'!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
-				<query for="LTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="LTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_date<='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
-				<query for="GTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_date>='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
 				<query for="ISEMPTY">
@@ -1236,23 +1249,23 @@
 		</fieldType>
 		<fieldType type="expl" prefix="e">
 			<field dataType="small_text" id="1">
-				<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+				<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND (!!multiple_term!!) AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 					<multipleTerm>expl_custom_small_text like '%!!p!!%'</multipleTerm>
 					<multipleOperator>or</multipleOperator>
 				</query>
-				<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+				<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND (!!multiple_term!!) AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 					<multipleTerm>expl_custom_small_text like '%!!p!!%'</multipleTerm>
 					<multipleOperator>and</multipleOperator>
 				</query>
-				<query for="STARTWITH" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="STARTWITH" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_small_text like '!!p!!%' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
-				<query for="ENDWITH" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="ENDWITH" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_small_text like '%!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
-				<query for="EXACT" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="EXACT" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_small_text = '!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
 				<query for="EQ">
@@ -1266,23 +1279,23 @@
 				</query>
 			</field>
 			<field dataType="text" id="2">
-				<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+				<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND (!!multiple_term!!) AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 					<multipleTerm>expl_custom_text like '%!!p!!%'</multipleTerm>
 					<multipleOperator>or</multipleOperator>
 				</query>
-				<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+				<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND (!!multiple_term!!) AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 					<multipleTerm>expl_custom_text like '%!!p!!%'</multipleTerm>
 					<multipleOperator>and</multipleOperator>
 				</query>
-				<query for="STARTWITH" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="STARTWITH" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_text like '!!p!!%' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
-				<query for="ENDWITH" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="ENDWITH" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_text like '%!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
-				<query for="EXACT" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="EXACT" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_text = '!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
 				<query for="EQ">
@@ -1299,16 +1312,16 @@
 				<query for="EQ">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_integer = '!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
-				<query for="LT" notAllowedFor="list,query_list,marclist">
+				<query for="LT" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_integer < '!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
-				<query for="GT" notAllowedFor="list,query_list,marclist">
+				<query for="GT" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_integer > '!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
-				<query for="LTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="LTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_integer <= '!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
-				<query for="GTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_integer >= '!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
 				<query for="ISEMPTY">
@@ -1322,16 +1335,16 @@
 				<query for="EQ">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_float = '!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
-				<query for="LT" notAllowedFor="list,query_list,marclist">
+				<query for="LT" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_float < '!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
-				<query for="GT" notAllowedFor="list,query_list,marclist">
+				<query for="GT" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_float > '!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
-				<query for="LTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="LTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_float <= '!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
-				<query for="GTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_float >= '!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
 				<query for="ISEMPTY">
@@ -1345,16 +1358,16 @@
 				<query for="EQ">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_date = '!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
-				<query for="LT" notAllowedFor="list,query_list,marclist">
+				<query for="LT" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_date < '!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
-				<query for="GT" notAllowedFor="list,query_list,marclist">
+				<query for="GT" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_date > '!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
-				<query for="LTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="LTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_date <= '!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
-				<query for="GTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT ifnull(notices_m.notice_id,notices_s.notice_id) as notice_id FROM ((((exemplaires JOIN expl_custom_values ON expl_custom_champ=!!field!! AND expl_custom_date >= '!!p!!' AND expl_custom_origine=expl_id) LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id) GROUP BY notice_id order by expl_cb, notices_m.index_serie, notices_m.tnvol, notices_m.index_sew, notices_s.index_serie, notices_s.tnvol, notices_s.index_sew]]></main>
 				</query>
 				<query for="ISEMPTY">
@@ -1371,6 +1384,7 @@
 		<field type="external_sources" title="msg:connecteurs_source_label" id="2" delnotallowed="yes" separator="Autres"/>	
 		<field type="serials_list" title="msg:external_serials" id="3"/>
 		<field type="remote_serials_list" title="msg:remote_external_serials" id="4"/>
+		<field type="facette" title="msg:search_facette" id="5" opacVisibility="no"/>
 	</specialFields>
 	
 	<operators>
@@ -1381,11 +1395,11 @@
 		<operator name="STARTWITH">msg:commence_par_query</operator>
 		<operator name="ENDWITH">msg:finit_par_query</operator>
 		<operator name="EXACT">msg:exactement_comme_query</operator>
-		<operator name="EQ">=</operator>
-		<operator name="GT">&gt;</operator>
-		<operator name="LT">&lt;</operator>
-		<operator name="GTEQ">&gt;=</operator>
-		<operator name="LTEQ">&lt;=</operator>
+		<operator name="EQ">msg:eq_query</operator>
+		<operator name="GT">msg:gt_query</operator>
+		<operator name="LT">msg:lt_query</operator>
+		<operator name="GTEQ">msg:gteq_query</operator>
+		<operator name="LTEQ">msg:lteq_query</operator>
 		<operator name="ISEMPTY" emptyAllowed="yes">msg:est_vide_query</operator>
 		<operator name="ISNOTEMPTY" emptyAllowed="yes">msg:pas_vide_query</operator>
 	</operators>

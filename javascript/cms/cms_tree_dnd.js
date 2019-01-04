@@ -1,9 +1,9 @@
-//cette méthode est en réalité une réécriture de la méthode checkAcceptance de l'objet dijit.tree.dndSource
-//détermine si l'item est déplaçable
+//cette mï¿½thode est en rï¿½alitï¿½ une rï¿½ï¿½criture de la mï¿½thode checkAcceptance de l'objet dijit.tree.dndSource
+//dï¿½termine si l'item est dï¿½plaï¿½able
 function cms_check_if_draggeable_item_tree(source,node){
 	var item = source.tree.selectedItem;
 	var type = item.type[0];
-	//on peut déplacer une rubrique ou un article! 
+	//on peut dï¿½placer une rubrique ou un article! 
 	switch(type){
 		case 'root_section' :
 		case 'section' :
@@ -17,8 +17,8 @@ function cms_check_if_draggeable_item_tree(source,node){
 	}	
 }
 
-//cette méthode est en réalité une réécriture de la méthode checkItemAcceptance de l'objet dijit.tree.dndSource
-//détermine si c'est déposable en l'endroit
+//cette mï¿½thode est en rï¿½alitï¿½ une rï¿½ï¿½criture de la mï¿½thode checkItemAcceptance de l'objet dijit.tree.dndSource
+//dï¿½termine si c'est dï¿½posable en l'endroit
 function cms_check_if_item_tree_can_drop_here(target,source,position){
 	var target_item = dijit.getEnclosingWidget(target).item;
 	var current_item = dijit.getEnclosingWidget(target).tree.selectedItem;
@@ -159,26 +159,58 @@ function cms_dnd_tree_update(num_parent,children,callback){
 	update.request('./ajax.php?module=cms&categ=update_section',true,'&num_parent='+num_parent+'&new_children='+children,true,callback);
 }
 
+function cms_compare_forms(){
+	if(!document.getElementById('content_infos').querySelector('form') || !document.getElementById('content_infos').querySelector('form').getAttribute('id')) return false;
+	var currentForm = pmbForm.toJson(document.getElementById('content_infos').querySelector('form').getAttribute('id'));
+	if(currentForm != cms_serialized_form){
+		return true;
+	}
+	return false;
+}
+
+function cms_register_form(){
+	if(document.getElementById('content_infos').querySelector('form') && document.getElementById('content_infos').querySelector('form').getAttribute('id')){
+		cms_serialized_form = pmbForm.toJson(document.getElementById('content_infos').querySelector('form').getAttribute('id'));	
+	}else{
+		cms_serialized_form = '';
+	}
+}
+
 function cms_load_content_infos(item,node,evt){
 	var content = dijit.byId('content_infos');
 	var change = false;
 	var add_section_button = document.getElementById('add_section_button');
 	var add_article_button = document.getElementById('add_article_button');
 	if(typeof(tinyMCE)!= 'undefined') {
-		if (tinyMCE.getInstanceById('cms_editorial_form_resume')) {
-			tinyMCE.execCommand('mceToggleEditor',true,'cms_editorial_form_resume');
-			tinyMCE.execCommand('mceRemoveControl',true,'cms_editorial_form_resume');
+		if (tinyMCE_getInstance('cms_editorial_form_resume')) {
+			tinyMCE_execCommand('mceToggleEditor',true,'cms_editorial_form_resume');
+			tinyMCE_execCommand('mceRemoveControl',true,'cms_editorial_form_resume');
 		}
-		if (tinyMCE.getInstanceById('cms_editorial_form_contenu')) {	
-			tinyMCE.execCommand('mceToggleEditor',true,'cms_editorial_form_contenu');
-			tinyMCE.execCommand('mceRemoveControl',true,'cms_editorial_form_contenu');
+		if (tinyMCE_getInstance('cms_editorial_form_contenu')) {	
+			tinyMCE_execCommand('mceToggleEditor',true,'cms_editorial_form_contenu');
+			tinyMCE_execCommand('mceRemoveControl',true,'cms_editorial_form_contenu');
 		}
 	}
 	if(item.id != "root"){
+		if(typeof cms_current_editorial_content != 'undefined' && cms_current_editorial_content != '' && cms_compare_forms()){
+			if(!confirm(pmbDojo.messages.getMessage("cms_tree","confirm"))){
+				return false;
+			}
+		}
+		content.onDownloadEnd = function(){
+			if(dijit.byId('el9Child')){
+				dijit.byId('el9Child').onDownloadEnd = function(){
+					cms_register_form();
+				}	
+			}else{
+				cms_register_form();
+			}
+		}
 		switch(item.type[0]){
 			case "section" :
 			case "root_section" :
 				change =true;
+				cms_current_editorial_content = item.id[0];
 				content.set('href','./ajax.php?module=cms&categ=get_infos&type=section&id='+item.id[0]);
 				add_section_button.href = "./cms.php?categ=section&sub=edit&id=new&num_parent="+item.id[0];
 				add_article_button.href = "./cms.php?categ=article&sub=edit&id=new&num_parent="+item.id[0];
@@ -186,6 +218,7 @@ function cms_load_content_infos(item,node,evt){
 				break;
 			case "article" :
 				change =true;
+				cms_current_editorial_content = item.id[0];
 				content.set('href','./ajax.php?module=cms&categ=get_infos&type=article&id='+item.id[0].replace("article_",""));
 				var parent_id = dijit.byId('section_tree').selectedNode.getParent().item.id[0].replace("articles_","");
 				add_section_button.href = "./cms.php?categ=section&sub=edit&id=new&num_parent="+parent_id;
@@ -194,6 +227,7 @@ function cms_load_content_infos(item,node,evt){
 				break;
 			case "articles" :
 				change = true;
+				cms_current_editorial_content = '';
 				content.set('href','./ajax.php?module=cms&categ=get_infos&type=list_articles&id='+item.id[0].replace("articles_",""));
 				add_section_button.href = "./cms.php?categ=section&sub=edit&id=new&num_parent="+item.id[0].replace("articles_","");
 				add_article_button.href = "./cms.php?categ=article&sub=edit&id=new&num_parent="+item.id[0].replace("articles_","");
@@ -201,6 +235,7 @@ function cms_load_content_infos(item,node,evt){
 				break;
 			default :
 				change =false;
+				cms_current_editorial_content = '';
 				//do nothing
 				break;
 		}
@@ -267,8 +302,11 @@ function get_label_class(item,opened){
 
 function get_label(item){
 	var label = this.model.getLabel(item);
+	var class_html = "<span><img src='./images/spacer.gif' class='"+item.class_html+"' title=\'"+item.state_label+"\' style='width:7px; height:7px; vertical-align:middle; margin-left:-3px;' /></span>";
 	if(item.icon){
-		label = "<img src='"+item.icon[0]+"' alt='"+label+"' title='"+label+"'/>&nbsp;"+label;
+		label = "<img src='"+item.icon[0]+"' alt='"+label+"' title='"+label+"'/>&nbsp;"+class_html+label;
+	} else {
+		label = class_html+label;
 	}
 	return label;
 }

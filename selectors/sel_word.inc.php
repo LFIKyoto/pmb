@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sel_word.inc.php,v 1.4 2015-04-03 11:16:20 jpermanne Exp $letter $mot
+// $Id: sel_word.inc.php,v 1.6 2017-10-18 12:42:50 ngantier Exp $letter $mot
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");		
 
@@ -40,9 +40,9 @@ default :
 	<!--
 	function set_parent(id_value,libelle_value)
 	{
-		window.opener.document.forms['$caller'].elements['$p1'].value = id_value;
-		window.opener.document.forms['$caller'].elements['$p2'].value = reverse_html_entities(libelle_value);
-		window.close();
+		set_parent_value('".$caller."', '".$p1."', id_value);
+		set_parent_value('".$caller."', '".$p2."', reverse_html_entities(libelle_value));
+		closeCurrentEnv();
 	}
 	-->
 	</script>
@@ -89,7 +89,7 @@ default :
 		// affichage d'un sommaire par lettres
 		$affichage_lettres="<div class='row' style='margin-left:10px;'>";
 		if (count($alphabet_num)) {
-			if ($letter=='My') $affichage_lettres.="<font size='+1'><strong><u>#</u></strong></font> ";
+			if ($letter=='My') $affichage_lettres.="<strong><u>#</u></strong> ";
 				else $affichage_lettres.="<a href='$baseurl&letter=My'>#</a> ";
 		}
 		foreach($alphabet as $char) {
@@ -97,7 +97,7 @@ default :
 			if(sizeof($present) && strcasecmp($letter, $char))
 				$affichage_lettres.="<a href='$baseurl&letter=$char'>$char</a> ";
 			else if(!strcasecmp($letter, $char))
-				$affichage_lettres.="<font size='+1'><strong><u>$char</u></strong></font> ";
+				$affichage_lettres.="<strong><u>$char</u></strong> ";
 			else $affichage_lettres.="<span class='gris'>".$char."</span> ";
 		}
 		$affichage_lettres.="</div>";

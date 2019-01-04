@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions.class.php,v 1.39 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: suggestions.class.php,v 1.44 2017-07-10 13:01:34 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,46 +10,43 @@ require_once($class_path.'/z3950_notice.class.php');
 
 class suggestions{
 	
-	
-	var $id_suggestion = 0;						//Identifiant de suggestion	
-	var $titre  = '';							//Titre ouvrage
-	var $editeur = '';							//Editeur ou diffuseur
-	var $auteur = '';							//Auteur ouvrage
-	var $code = '';								//ISBN, ISSN, ...				
-	var $prix = '0.00';							//Prix indicatif
-	var $nb = 1;								//Quantité à commander
-	var $commentaires = '';						//Commentaires sur la suggestion
-	var $commentaires_gestion = '';				//Commentaires de gestion sur la suggestion
-	var $date_creation = '0000-00-00';			
-	var $date_decision = '0000-00-00';			//Date de la décision
-	var $statut = '1';							//Statut de la suggestion 
-	var $num_produit = 0;						//Identifiant du type de produit 
-	var $num_entite = 0;						//Identifiant de l'entité sur laquelle est affectée la suggestion
-	var $num_rubrique = 0;						//Identifiant de la rubrique budgetaire d'affectation
-	var $num_fournisseur = 0;					//Identifiant du fournisseur associé
-	var $num_notice = 0;						//Identifiant de notice si cataloguée			
-	var $index_suggestion = '';					//Champ de recherche fulltext
-	var $url_suggestion = '';					//URL
-	var $num_categ = '1';						//Categorie associee a la suggestion
-	var $sugg_location = 0;					//localisation
-	var $date_publi='0000-00-00';			//date de publication
-	var $sugg_src=0;						//source de la suggestion
-	var $sugg_explnum=0;						//explnum attaché
-	var $sugg_noti_unimarc='';				//notice unimarc
+	public $id_suggestion = 0;						//Identifiant de suggestion	
+	public $titre  = '';							//Titre ouvrage
+	public $editeur = '';							//Editeur ou diffuseur
+	public $auteur = '';							//Auteur ouvrage
+	public $code = '';								//ISBN, ISSN, ...				
+	public $prix = '0.00';							//Prix indicatif
+	public $nb = 1;								//Quantité à commander
+	public $commentaires = '';						//Commentaires sur la suggestion
+	public $commentaires_gestion = '';				//Commentaires de gestion sur la suggestion
+	public $date_creation = '0000-00-00';			
+	public $date_decision = '0000-00-00';			//Date de la décision
+	public $statut = '1';							//Statut de la suggestion 
+	public $num_produit = 0;						//Identifiant du type de produit 
+	public $num_entite = 0;						//Identifiant de l'entité sur laquelle est affectée la suggestion
+	public $num_rubrique = 0;						//Identifiant de la rubrique budgetaire d'affectation
+	public $num_fournisseur = 0;					//Identifiant du fournisseur associé
+	public $num_notice = 0;						//Identifiant de notice si cataloguée			
+	public $index_suggestion = '';					//Champ de recherche fulltext
+	public $url_suggestion = '';					//URL
+	public $num_categ = '1';						//Categorie associee a la suggestion
+	public $sugg_location = 0;					//localisation
+	public $date_publi='0000-00-00';			//date de publication
+	public $sugg_src=0;						//source de la suggestion
+	public $sugg_explnum=0;						//explnum attaché
+	public $sugg_noti_unimarc='';				//notice unimarc
 	
 	//Constructeur.	 
-	function suggestions($id_suggestion= 0) {
-		
-		if ($id_suggestion) {
-			$this->id_suggestion = $id_suggestion;
+	public function __construct($id_suggestion=0) {
+		$this->id_suggestion = $id_suggestion+0;
+		if ($this->id_suggestion) {
 			$this->load();	
 		}
-
-	}	
+	}
 	
 	
 	// charge une suggestion à partir de la base.
-	function load(){
+	public function load(){
 	
 		global $dbh;
 		
@@ -84,7 +81,7 @@ class suggestions{
 
 	
 	// enregistre une suggestion en base.
-	function save($explnum_doc=""){
+	public function save($explnum_doc=""){
 		
 		global $dbh;
 		
@@ -98,7 +95,7 @@ class suggestions{
 			$q.= "commentaires_gestion = '".addslashes($this->commentaires_gestion)."', date_creation = '".$this->date_creation."', date_decision = '".$this->date_decision."', statut = '".$this->statut."', ";
 			$q.= "num_produit = '".$this->num_produit."', num_entite = '".$this->num_entite."', num_rubrique = '".$this->num_rubrique."', ";
 			$q.= "num_fournisseur = '".$this->num_fournisseur."', num_notice = '".$this->num_notice."', "; 
-			$q.= "index_suggestion = ' ".strip_empty_words($this->titre)." ".strip_empty_words($this->editeur)." ".strip_empty_words($this->auteur)." ".$this->code." ".strip_empty_words($this->commentaires)." ', ";
+			$q.= "index_suggestion = ' ".strip_empty_words($this->titre)." ".strip_empty_words($this->editeur)." ".strip_empty_words($this->auteur)." ".$this->code." ".strip_empty_words($this->commentaires)." ".strip_empty_words($this->commentaires_gestion)." ', ";
 			$q.= "url_suggestion = '".addslashes($this->url_suggestion)."', "; 
 			$q.= "num_categ = '".$this->num_categ."', ";
 			$q.= "sugg_location = '".$this->sugg_location."', ";
@@ -113,7 +110,7 @@ class suggestions{
 			$q.= "commentaires_gestion = '".addslashes($this->commentaires_gestion)."', date_creation = '".$this->date_creation."', date_decision = '".$this->date_decision."', statut = '".$this->statut."', ";
 			$q.= "num_produit = '".$this->num_produit."', num_entite = '".$this->num_entite."', num_rubrique = '".$this->num_rubrique."', ";
 			$q.= "num_fournisseur = '".$this->num_fournisseur."', num_notice = '".$this->num_notice."', "; 
-			$q.= "index_suggestion = ' ".addslashes(strip_empty_words($this->titre)." ".strip_empty_words($this->editeur)." ".strip_empty_words($this->auteur)." ".$this->code." ".strip_empty_words($this->commentaires))." ', ";
+			$q.= "index_suggestion = ' ".addslashes(strip_empty_words($this->titre)." ".strip_empty_words($this->editeur)." ".strip_empty_words($this->auteur)." ".$this->code." ".strip_empty_words($this->commentaires)." ".strip_empty_words($this->commentaires_gestion))." ', ";
 			$q.= "url_suggestion = '".addslashes($this->url_suggestion)."', ";
 			$q.= "num_categ = '".$this->num_categ."', ";
 			$q.= "sugg_location = '".$this->sugg_location."', ";
@@ -135,7 +132,7 @@ class suggestions{
 
 
 	//Vérifie si une suggestion existe déjà en base
-	static function exists($origine, $titre, $auteur, $editeur, $isbn) {
+	public static function exists($origine, $titre, $auteur, $editeur, $isbn) {
 
 		global $dbh;
 		
@@ -148,7 +145,7 @@ class suggestions{
 
 
 	//supprime une suggestion de la base
-	function delete($id_suggestion= 0) {
+	public function delete($id_suggestion= 0) {
 		
 		global $dbh;
 
@@ -164,7 +161,7 @@ class suggestions{
 
 
 	//Compte le nb de suggestion par statut pour une bibliothèque
-	static function getNbSuggestions($id_bibli=0, $statut='-1', $num_categ='-1', $mask, $aq=0, $location=0, $user_input='',$source=0, $user_id=array(), $user_statut=array()) {
+	public static function getNbSuggestions($id_bibli=0, $statut='-1', $num_categ='-1', $mask, $aq=0, $location=0, $user_input='',$source=0, $user_id=array(), $user_statut=array(), $date_inf='', $date_sup='') {
 		
 		global $dbh;
 		
@@ -195,10 +192,24 @@ class suggestions{
 			$filtre4 = "sugg_location = '".$location."' ";
 		}
 		
+		if (!trim($date_inf) && !trim($date_sup)) {
+			$filtre5 = '1';
+		} else {
+			if (trim($date_inf) && trim($date_sup)) {
+				$filtre5 = "(date_creation BETWEEN '".$date_inf."' AND '".$date_sup."')";
+			} elseif (trim($date_inf)) {
+				$filtre5 = "date_creation >= '".$date_inf."'";
+			} else {
+				$filtre5 = "date_creation <= '".$date_sup."'";
+			}
+		}
+		
 		$filtre_empr='';
 		$tab_empr=array();
 		$filtre_user='';
 		$tab_user=array();
+		$filtre_visitor='';
+		$tab_visitor=array();
 		if (is_array($user_id) && count($user_id) && is_array($user_statut) && count($user_statut)) {
 			foreach ($user_id as $k=>$id) {
 				if ($user_statut[$k] == "0") {
@@ -206,6 +217,9 @@ class suggestions{
 				}
 				if ($user_statut[$k] == "1") {
 					$tab_empr[] = $id;
+				}
+				if ($user_statut[$k] == "2") {
+					$tab_visitor[] = $id;
 				}
 			}
 		}
@@ -215,21 +229,43 @@ class suggestions{
 		if (is_array($tab_user) && count($tab_user)) {		
 			$filtre_user = "suggestions_origine.origine in ('".implode("','",$tab_user)."') and type_origine='0' ";
 		}
-		if ($filtre_empr!="" || $filtre_user!="") {
+		if (is_array($tab_visitor) && count($tab_visitor)) {		
+			$filtre_visitor = "suggestions_origine.origine in ('".implode("','",$tab_visitor)."') and type_origine='2' ";
+		}
+		if ($filtre_empr!="" || $filtre_user!="" || $filtre_visitor!="") {
 			$table_origine = ", suggestions_origine ";
 			$join_origine = "  id_suggestion=num_suggestion  ";
-			if ($filtre_empr && $filtre_user) {
-				$clause_origine = " and ( (".$filtre_empr.") or (".$filtre_user.") ) and ";
-			} elseif($filtre_empr) {
-				$clause_origine = " and (".$filtre_empr.") and ";
-			} elseif ($filtre_user){
-				$clause_origine = " and (".$filtre_user.") and ";
+			
+			$deja_filtre = false;
+			$clause_origine = " and (";
+			if ($filtre_empr) {
+				$clause_origine.=" (".$filtre_empr.") ";
+				$deja_filtre = true;
 			}
+			if ($filtre_user) {
+				if ($deja_filtre) {
+					$clause_origine.=" or ";
+				}
+				$clause_origine.=" (".$filtre_user.") ";
+				$deja_filtre = true;
+			}
+			if ($filtre_visitor) {
+				if ($deja_filtre) {
+					$clause_origine.=" or ";
+				}
+				$clause_origine.=" (".$filtre_visitor.") ";
+				$deja_filtre = true;
+			}
+			$clause_origine.= " ) and ";
+		} else {
+			$table_origine = "";
+			$join_origine = "";
+			$clause_origine = "";
 		}
 		
 		if (!$aq) {
 			$q = "select count(1) from suggestions $table_origine";
-			$q.= "where $join_origine $clause_origine ".$filtre1." and ".$filtre2." and ".$filtre3." and ".$filtre4 ." and ".$filtre_src;
+			$q.= "where $join_origine $clause_origine ".$filtre1." and ".$filtre2." and ".$filtre3." and ".$filtre4 ." and ".$filtre5 ." and ".$filtre_src;
 		} else {
 			
 			$isbn = '';
@@ -256,7 +292,7 @@ class suggestions{
 			if (count($t_codes)) {
 				
 				$q = "select count(1) from suggestions $table_origine";
-				$q.= "where $join_origine $clause_origine (".$filtre1." and ".$filtre2." and ".$filtre3." and ".$filtre4." and ".$filtre_src;
+				$q.= "where $join_origine $clause_origine (".$filtre1." and ".$filtre2." and ".$filtre3." and ".$filtre4." and ".$filtre5 ." and ".$filtre_src;
 				$q.= ") "; 
 				$q.= "and ('0' ";
 				foreach ($t_codes as $v) {
@@ -269,7 +305,7 @@ class suggestions{
 				$members = $aq->get_query_members("suggestions","concat(titre,' ',editeur,' ',auteur,' ',commentaires)","index_suggestion", "id_suggestion");
 								
 				$q = $q = "select count(1) from suggestions $table_origine ";
-				$q.= "where $join_origine $clause_origine (".$filtre1." and ".$filtre2." and ".$filtre3." and ".$filtre4." and ".$filtre_src;
+				$q.= "where $join_origine $clause_origine (".$filtre1." and ".$filtre2." and ".$filtre3." and ".$filtre4." and ".$filtre5 ." and ".$filtre_src;
 				$q.= ") ";  
 				$q.= "and (".$members["where"]." )";
 			}
@@ -281,7 +317,7 @@ class suggestions{
 	
 	
 	//Retourne une requete pour liste des suggestions par statut pour une bibliothèque
-	static function listSuggestions($id_bibli=0, $statut='-1', $num_categ='-1', $mask, $debut=0, $nb_per_page=0, $aq=0, $order='',$location=0, $user_input='',$source=0, $user_id=0, $user_statut='-1') {
+	public static function listSuggestions($id_bibli=0, $statut='-1', $num_categ='-1', $mask, $debut=0, $nb_per_page=0, $aq=0, $order='',$location=0, $user_input='',$source=0, $user_id=0, $user_statut='-1', $date_inf='', $date_sup='') {
 		
 		if($source) 
 			$filtre_src = " sugg_source = '".$source."' ";
@@ -309,12 +345,26 @@ class suggestions{
 			$filtre4 = '1';
 		} else {
 			$filtre4 = "sugg_location = '".$location."' ";
-		}		
+		}	
+
+		if (!trim($date_inf) && !trim($date_sup)) {
+			$filtre5 = '1';
+		} else {
+			if (trim($date_inf) && trim($date_sup)) {
+				$filtre5 = "(date_creation BETWEEN '".$date_inf."' AND '".$date_sup."')";
+			} elseif (trim($date_inf)) {
+				$filtre5 = "date_creation >= '".$date_inf."'";
+			} else {
+				$filtre5 = "date_creation <= '".$date_sup."'";
+			}
+		}
 		
 		$filtre_empr='';
 		$tab_empr=array();
 		$filtre_user='';
 		$tab_user=array();
+		$filtre_visitor='';
+		$tab_visitor=array();
 		if (is_array($user_id) && count($user_id) && is_array($user_statut) && count($user_statut)) {
 			foreach ($user_id as $k=>$id) {
 				if ($user_statut[$k] == "0") {
@@ -322,6 +372,9 @@ class suggestions{
 				}
 				if ($user_statut[$k] == "1") {
 					$tab_empr[] = $id;
+				}
+				if ($user_statut[$k] == "2") {
+					$tab_visitor[] = $id;
 				}
 			}
 		}
@@ -331,22 +384,44 @@ class suggestions{
 		if (is_array($tab_user) && count($tab_user)) {
 			$filtre_user = "suggestions_origine.origine in ('".implode("','",$tab_user)."') and type_origine='0' ";
 		}
-		if ($filtre_empr!="" || $filtre_user!="") {
+		if (is_array($tab_visitor) && count($tab_visitor)) {
+			$filtre_visitor = "suggestions_origine.origine in ('".implode("','",$tab_visitor)."') and type_origine='2' ";
+		}
+		if ($filtre_empr!="" || $filtre_user!="" || $filtre_visitor!="") {
 			$table_origine = ", suggestions_origine ";
 			$join_origine = "  id_suggestion=num_suggestion  ";
-			if ($filtre_empr && $filtre_user) {
-				$clause_origine = " and ( (".$filtre_empr.") or (".$filtre_user.") ) and ";
-			} elseif($filtre_empr) {
-				$clause_origine = " and (".$filtre_empr.") and ";
-			} elseif ($filtre_user){
-				$clause_origine = " and (".$filtre_user.") and ";
+				
+			$deja_filtre = false;
+			$clause_origine = " and (";
+			if ($filtre_empr) {
+				$clause_origine.=" (".$filtre_empr.") ";
+				$deja_filtre = true;
 			}
+			if ($filtre_user) {
+				if ($deja_filtre) {
+					$clause_origine.=" or ";
+				}
+				$clause_origine.=" (".$filtre_user.") ";
+				$deja_filtre = true;
+			}
+			if ($filtre_visitor) {
+				if ($deja_filtre) {
+					$clause_origine.=" or ";
+				}
+				$clause_origine.=" (".$filtre_visitor.") ";
+				$deja_filtre = true;
+			}
+			$clause_origine.= " ) and ";
+		} else {
+			$table_origine = "";
+			$join_origine = "";
+			$clause_origine = "";
 		}
 		
 		if(!$aq) {
 			
 			$q = "select * from suggestions $table_origine";
-			$q.= "where $join_origine $clause_origine ".$filtre1." and ".$filtre2." and ".$filtre3." and ".$filtre4 ." and ".$filtre_src;
+			$q.= "where $join_origine $clause_origine ".$filtre1." and ".$filtre2." and ".$filtre3." and ".$filtre4 ." and ".$filtre5 ." and ".$filtre_src;
 			if(!$order) $q.="order by statut, date_creation desc ";
 				else $q.= "order by".$order." ";
 			
@@ -376,7 +451,7 @@ class suggestions{
 			if (count($t_codes)) {
 
 				$q = "select * from suggestions $table_origine";
-				$q.= "where $join_origine $clause_origine (".$filtre1." and ".$filtre2." and ".$filtre3." and ".$filtre4." and ".$filtre_src;
+				$q.= "where $join_origine $clause_origine (".$filtre1." and ".$filtre2." and ".$filtre3." and ".$filtre4." and ".$filtre5 ." and ".$filtre_src;
 				$q.= ") "; 
 				$q.= "and ('0' ";
 				foreach ($t_codes as $v) {
@@ -391,7 +466,7 @@ class suggestions{
 				$members=$aq->get_query_members("suggestions","concat(titre,' ',editeur,' ',auteur,' ',commentaires)","index_suggestion","id_suggestion");
 				
 				$q = $q = "select *, ".$members["select"]." as pert from suggestions $table_origine ";
-				$q.= "where $join_origine $clause_origine (".$filtre1." and ".$filtre2." and ".$filtre3." and ".$filtre4." and ".$filtre_src;
+				$q.= "where $join_origine $clause_origine (".$filtre1." and ".$filtre2." and ".$filtre3." and ".$filtre4." and ".$filtre5 ." and ".$filtre_src;
 				$q.= ") ";  
 				$q.= "and (".$members["where"]." ";
 				foreach ($t_codes as $v) {
@@ -414,7 +489,7 @@ class suggestions{
 	
 	//Retourne  une requete pour liste des suggestions par origine 
 	//type_origine: 0=utilisateur, 1=lecteur, 2=visiteur
-	static function listSuggestionsByOrigine($id_origine, $type_origine='1') { 
+	public static function listSuggestionsByOrigine($id_origine, $type_origine='1') { 
 		
 		$q = "select * from suggestions_origine, suggestions where origine = '".$id_origine."' ";
 		if ($type_origine != '-1') $q.= "and type_origine = '".$type_origine."' ";
@@ -424,7 +499,7 @@ class suggestions{
 
 
 	//Retourne un tableau des origines pour une suggestion
-	function getOrigines($id_suggestion=0) {
+	public function getOrigines($id_suggestion=0) {
 		
 		global $dbh;
 		$tab_orig=array();
@@ -433,14 +508,14 @@ class suggestions{
 		$r = pmb_mysql_query($q, $dbh);
 			
 		for($i=0;$i<pmb_mysql_num_rows($r);$i++) {
-			$tab_orig[] = pmb_mysql_fetch_array($r,MYSQL_ASSOC); 
+			$tab_orig[] = pmb_mysql_fetch_array($r,PMB_MYSQL_ASSOC); 
 		}
 		return $tab_orig;
 	}
 	
 	
 	//optimization de la table suggestions
-	function optimize() {
+	public function optimize() {
 		
 		global $dbh;
 		
@@ -450,7 +525,7 @@ class suggestions{
 	}
 	
 	//Récupération du docnum associé
-	function get_explnum($champ=''){
+	public function get_explnum($champ=''){
 		global $dbh;
 		
 		$req = "select * from explnum_doc join explnum_doc_sugg on num_explnum_doc=id_explnum_doc where num_suggestion='".$this->id_suggestion."'";
@@ -478,7 +553,7 @@ class suggestions{
 	/*
 	 * On catalogue la notice
 	 */
-	function catalog_notice(){
+	public function catalog_notice(){
 		global $dbh;
 		
 		if($this->sugg_noti_unimarc && !$this->num_notice){

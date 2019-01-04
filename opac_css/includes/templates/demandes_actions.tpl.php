@@ -2,9 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes_actions.tpl.php,v 1.7 2015-04-16 09:02:33 ngantier Exp $
+// $Id: demandes_actions.tpl.php,v 1.12 2018-01-25 10:13:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $form_liste_action;
+global $form_modif_action;
+global $form_consult_action;
+global $form_see_docnum;
+global $form_communication;
 
 $form_liste_action ="
 <script src='./includes/javascript/demandes.js' type='text/javascript'></script>
@@ -13,11 +19,11 @@ $form_liste_action ="
 
 var base_path = '.';
 var imgOpened = new Image();
-imgOpened.src = base_path+'/images/minus.gif';
+imgOpened.src = '".get_url_icon("minus.gif")."';
 var imgClosed = new Image();
-imgClosed.src = base_path+'/images/plus.gif';
+imgClosed.src = '".get_url_icon("plus.gif")."';
 var imgPatience =new Image();
-imgPatience.src = base_path+'/images/patience.gif';
+imgPatience.src = '".get_url_icon("patience.gif")."';
 var expandedDb = '';
 
 function expand_note(el, id_action , unexpand) {
@@ -186,7 +192,7 @@ $form_modif_action = "
 			<label class='etiquette'>".$msg['demandes_action_sujet']."</label>
 		</div>
 		<div class='row'>
-			<input type='texte' class='saisie-50em' name='sujet' id='sujet' value='!!sujet!!' />
+			<input type='text' class='saisie-50em' name='sujet' id='sujet' value='!!sujet!!' />
 		</div>
 		<div class='row'>
 			<label class='etiquette'>".$msg['demandes_action_detail']."</label>
@@ -205,13 +211,13 @@ $form_modif_action = "
 		</div>
 		<div class='row'>
 			<div class='colonne3'>
-				<input type='hidden' id='date_debut' name='date_debut' value='!!date_debut!!' />
-				<input type='button' class='bouton' id='date_debut_btn' name='date_debut_btn' value='!!date_debut_btn!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=modif_action&date_caller=!!date_debut!!&param1=date_debut&param2=date_debut_btn&auto_submit=NO&date_anterieure=YES', 'date_debut', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\"/>
+			<input type='text' style='width: 10em;' name='date_debut' id='date_debut' 
+					data-dojo-type='dijit/form/DateTextBox' required='false' value='!!date_debut!!' />
 			</div>
 			<div class='colonne3'>
-				<input type='hidden' id='date_fin' name='date_fin' value='!!date_fin!!' />
-				<input type='button' class='bouton' id='date_fin_btn' name='date_fin_btn' value='!!date_fin_btn!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=modif_action&date_caller=!!date_fin!!&param1=date_fin&param2=date_fin_btn&auto_submit=NO&date_anterieure=YES', 'date_fin', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\"/>
-			</div>
+				<input type='text' style='width: 10em;' name='date_fin' id='date_fin' 
+					data-dojo-type='dijit/form/DateTextBox' required='false' value='!!date_fin!!' />
+				</div>
 			<div class='colonne3'>&nbsp;</div>
 		</div>
 		<div class='row'></div>	
@@ -245,8 +251,14 @@ $form_modif_action = "
 			alert(\"$msg[demandes_action_create_ko]\");
 			return false;
 	    } 
-	     
-	    if(form.date_debut.value>form.date_fin.value){
+	     	 
+		var deb = dijit.byId('date_debut').get('value');
+		var end = dijit.byId('date_fin').get('value');		   
+		
+ 		var date_debut = dojo.date.stamp.toISOString(deb, {selector: 'date'});
+ 		var date_fin = dojo.date.stamp.toISOString(end, {selector: 'date'});
+ 		
+	    if(date_debut > date_fin){
 	    	alert(\"$msg[demandes_date_ko]\");
 	    	return false;
 	    }
@@ -322,55 +334,6 @@ $form_consult_action = "
 		</div>
 	</div>
 	<div class='row'><br /></div>
-</form>
-";
-
-$form_add_docnum = "
-<h1>".$msg['demandes_gestion']."</h1>
-<h2>!!path!!</h2>
-<form class='form-$current_module' ENCTYPE='multipart/form-data' name='explnum' method='post' action='./demandes.php?categ=action'>
-<h3>!!form_title!!</h3>
-<input type='hidden' id='idaction' name='idaction' value='!!idaction!!'/>
-<input type='hidden' id='iddocnum' name='iddocnum' value='!!iddocnum!!'/>
-<input type='hidden' id='act' name='act'/>
-<div class='form-contenu' >
-	<div class='row'>
-		<label class='etiquette' for='f_nom'>".$msg['explnum_nom']."</label>
-	</div>
-	<div class='row'>
-		<input type='text' id='f_nom' name='f_nom' class='saisie-80em'  value='!!nom!!' />
-	</div>
-	<div class='row'>
-		<label class='etiquette' for='f_fichier'>".$msg['explnum_fichier']."</label>
-	</div>
-	<div class='row'>
-		<input type='file' id='f_fichier' name='f_fichier' class='saisie-80em' size='65' />
-	</div>
-	<div class='row'>
-		<label class='etiquette' for='f_url'>".$msg['demandes_url_docnum']."</label>
-	</div>
-	<div class='row'>
-		<input type='text' id='f_url' name='f_url' class='saisie-80em' size='65' value='!!url_doc!!'/>
-	</div>
-	<div class='row'>
-		<input type='checkbox' name='ck_prive' id='ck_prive' value='1' !!ck_prive!! />
-		<label for='ck_prive' class='etiquette'>".$msg['demandes_note_privacy']."</label>
-	</div>
-	<div class='row'>
-		<input type='checkbox' name='ck_rapport' id='ck_rapport' value='1' !!ck_rapport!!/>
-		<label for='ck_rapport' class='etiquette'>".$msg['demandes_docnum_rapport']."</label>
-	</div>
-</div>
-<div class='row'>
-	<div class='left'>
-		<input type='button' class='bouton' value='$msg[76]' onClick=\"!!cancel_action!!\" />
-		<input type='submit' class='bouton' value='$msg[77]' onClick='this.form.act.value=\"save_docnum\" ; ' />
-	</div>
-	<div class='right'>
-		!!suppr_btn!!
-	</div>
-</div>
-<div class='row'></div>
 </form>
 ";
 

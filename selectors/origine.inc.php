@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: origine.inc.php,v 1.13 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: origine.inc.php,v 1.18 2017-11-21 13:38:21 dgoron Exp $
 
 /*
  * caller	= nom du formulaire appelant
@@ -13,6 +13,13 @@
 */
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($param3)) $param3 = '';
+if(!isset($param4)) $param4 = '';
+if(!isset($param5)) $param5 = '';
+if(!isset($param6)) $param6 = '';
+if(!isset($callback)) $callback = '';
+if(!isset($empr_loca)) $empr_loca = '';
 
 // la variable $caller, passée par l'URL, contient le nom du form appelant
 $base_url = "./select.php?what=origine&caller=$caller&sub=$sub&param1=$param1&param2=$param2&param3=$param3&param4=$param4&param5=$param5&param6=$param6&callback=$callback&filtre=$filtre";
@@ -42,6 +49,7 @@ switch ($sub) {
 		// affichage du header
 		$sel_header = str_replace('!!is_current_empr!!', "class='sel_navbar_current'", $sel_header);
 		$sel_header = str_replace('!!is_current_user!!', '', $sel_header);
+		$sel_header = str_replace('!!is_current_visitor!!', '', $sel_header);
 		print $sel_header;
 
 		$sel_search_form = str_replace("!!deb_rech!!", stripslashes($f_user_input), $sel_search_form);
@@ -55,6 +63,7 @@ switch ($sub) {
 		// affichage du header
 		$sel_header = str_replace('!!is_current_user!!', "class='sel_navbar_current'", $sel_header);
 		$sel_header = str_replace('!!is_current_empr!!', '', $sel_header);
+		$sel_header = str_replace('!!is_current_visitor!!', '', $sel_header);
 		print $sel_header;
 		
 		// affichage des membres de la page	
@@ -64,11 +73,28 @@ switch ($sub) {
 		print $jscript;
 		show_user_results($dbh, $user_input, $nbr_lignes, $page);
 	break;
+
+	case 'visitor' :
+		// affichage du header
+		$sel_header = str_replace('!!is_current_visitor!!', "class='sel_navbar_current'", $sel_header);
+		$sel_header = str_replace('!!is_current_empr!!', '', $sel_header);
+		$sel_header = str_replace('!!is_current_user!!', '', $sel_header);
+		print $sel_header;
+		
+		// affichage des membres de la page	
+		$sel_search_form = str_replace("!!deb_rech!!", stripslashes($f_user_input), $sel_search_form);
+		$sel_search_form = str_replace("!!sel_loc!!","", $sel_search_form);
+		print $sel_search_form;
+		print $jscript;
+		show_visitor_results($dbh, $user_input, $nbr_lignes, $page);
+	break;
+	
 	default :
 		if($filtre == 'ONLY_EMPR'){
 			// affichage du header
 			$sel_header = str_replace('!!is_current_empr!!', "class='sel_navbar_current'", $sel_header);
 			$sel_header = str_replace('!!is_current_user!!', '', $sel_header);
+			$sel_header = str_replace('!!is_current_visitor!!', '', $sel_header);
 			print $sel_header;
 			
 			// Localisation de l'emprunteur
@@ -93,6 +119,7 @@ switch ($sub) {
 			// affichage du header
 			$sel_header = str_replace('!!is_current_user!!', "class='sel_navbar_current'", $sel_header);
 			$sel_header = str_replace('!!is_current_empr!!', '', $sel_header);
+			$sel_header = str_replace('!!is_current_visitor!!', '', $sel_header);
 			print $sel_header;
 			
 			// affichage des membres de la page	
@@ -108,7 +135,7 @@ switch ($sub) {
 
 
 function show_empr_results($dbh, $user_input, $nbr_lignes=0, $page=0) {
-
+	global $msg;
 	global $nb_per_page;
 	global $base_url;
 	global $caller;
@@ -171,17 +198,17 @@ function show_empr_results($dbh, $user_input, $nbr_lignes=0, $page=0) {
 		$precedente = $page-1;
 
 		// affichage du lien précédent si nécéssaire
-		print '<hr /><div align=center>';
+		print '<hr /><div class="center">';
 		if($user_input == '%') $user_input = "*";
 		if($precedente > 0)
-		print "<a href='$base_url&page=$precedente&nbr_lignes=$nbr_lignes&user_input=$user_input&empr_loca=$empr_loca'><img src='./images/left.gif' border='0' title='$msg[48]' alt='[$msg[48]]' hspace='3' align='middle' /></a>";
+		print "<a href='$base_url&page=$precedente&nbr_lignes=$nbr_lignes&user_input=$user_input&empr_loca=$empr_loca'><img src='".get_url_icon('left.gif')."' border='0' title='$msg[48]' alt='[$msg[48]]' hspace='3' class='align_middle' /></a>";
 		for($i = 1; $i <= $nbepages; $i++) {
 			if($i==$page)
 				print "<b>$i/$nbepages</b>";
 			}
 
 		if($suivante<=$nbepages)
-			print "<a href='$base_url&page=$suivante&nbr_lignes=$nbr_lignes&user_input=$user_input&empr_loca=$empr_loca'><img src='./images/right.gif' border='0' title='$msg[49]' alt='[$msg[49]]' hspace='3' align='middle' /></a>";
+			print "<a href='$base_url&page=$suivante&nbr_lignes=$nbr_lignes&user_input=$user_input&empr_loca=$empr_loca'><img src='".get_url_icon('right.gif')."' border='0' title='$msg[49]' alt='[$msg[49]]' hspace='3' class='align_middle' /></a>";
 		}
 		print '</div>';
 }
@@ -245,18 +272,82 @@ function show_user_results($dbh, $user_input, $nbr_lignes=0, $page=0) {
 		$precedente = $page-1;
 
 		// affichage du lien précédent si nécéssaire
-		print '<hr /><div align=center>';
+		print '<hr /><div class="center">';
 		if($precedente > 0)
-		print "<a href='$base_url&page=$precedente&nbr_lignes=$nbr_lignes&user_input=$user_input'><img src='./images/left.gif' border='0' title='$msg[48]' alt='[$msg[48]]' hspace='3' align='middle' /></a>";
+		print "<a href='$base_url&page=$precedente&nbr_lignes=$nbr_lignes&user_input=$user_input'><img src='".get_url_icon('left.gif')."' border='0' title='$msg[48]' alt='[$msg[48]]' hspace='3' class='align_middle' /></a>";
 		for($i = 1; $i <= $nbepages; $i++) {
 			if($i==$page)
 				print "<b>$i/$nbepages</b>";
 			}
 
 		if($suivante<=$nbepages)
-			print "<a href='$base_url&page=$suivante&nbr_lignes=$nbr_lignes&user_input=$user_input'><img src='./images/right.gif' border='0' title='$msg[49]' alt='[$msg[49]]' hspace='3' align='middle' /></a>";
+			print "<a href='$base_url&page=$suivante&nbr_lignes=$nbr_lignes&user_input=$user_input'><img src='".get_url_icon('right.gif')."' border='0' title='$msg[49]' alt='[$msg[49]]' hspace='3' class='align_middle' /></a>";
 		}
 		print '</div>';
+}
+
+function show_visitor_results($dbh, $user_input, $nbr_lignes=0, $page=0) {
+
+	global $nb_per_page;
+	global $base_url;
+	global $caller;
+	global $charset;
+	global $tab_poids;
+
+
+	$user_input = str_replace("*", "%", $user_input) ;
+	$where = "origine like '%".$user_input."%'";
+	// on récupére le nombre de lignes qui vont bien
+	$requete = "SELECT COUNT(1) FROM suggestions_origine WHERE origine REGEXP '^[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$' ";
+	if($user_input) {
+		$requete .= "AND $where ";
+	}
+
+	$res = pmb_mysql_query($requete, $dbh);
+	$nbr_lignes = @pmb_mysql_result($res, 0, 0);
+
+	if(!$page) $page=1;
+	$debut =($page-1)*$nb_per_page;
+
+	if($nbr_lignes) {
+		// on lance la vraie requête
+
+		if(!$user_input) {
+			$requete = "SELECT DISTINCT origine FROM suggestions_origine WHERE origine REGEXP '^[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$' ORDER BY 1 LIMIT $debut,$nb_per_page ";
+		} else {
+			$requete = "SELECT DISTINCT origine FROM suggestions_origine WHERE origine REGEXP '^[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$' AND $where ";
+			$requete .= "ORDER BY 1 LIMIT $debut,$nb_per_page ";
+		}
+
+		$res = @pmb_mysql_query($requete, $dbh);
+		while(($row_user=pmb_mysql_fetch_object($res))) {
+			$user_entry = $row_user->origine;
+			print pmb_bidi("
+					<a href='#' onclick=\"set_parent('$caller', '".addslashes($user_entry)."', '".htmlentities(addslashes($user_entry),ENT_QUOTES, $charset)."', '2', '".$tab_poids[2]."' )\">
+					$user_entry</a>");
+			print "<br />";
+		}
+		pmb_mysql_free_result($res);
+
+		// constitution des liens
+
+		$nbepages = ceil($nbr_lignes/$nb_per_page);
+		$suivante = $page+1;
+		$precedente = $page-1;
+
+		// affichage du lien précédent si nécéssaire
+		print '<hr /><div class="center">';
+		if($precedente > 0)
+			print "<a href='$base_url&page=$precedente&nbr_lignes=$nbr_lignes&user_input=$user_input'><img src='".get_url_icon('left.gif')."' border='0' title='$msg[48]' alt='[$msg[48]]' hspace='3' class='align_middle' /></a>";
+		for($i = 1; $i <= $nbepages; $i++) {
+			if($i==$page)
+				print "<b>$i/$nbepages</b>";
+		}
+
+		if($suivante<=$nbepages)
+			print "<a href='$base_url&page=$suivante&nbr_lignes=$nbr_lignes&user_input=$user_input'><img src='".get_url_icon('right.gif')."' border='0' title='$msg[49]' alt='[$msg[49]]' hspace='3' class='align_middle' /></a>";
+	}
+	print '</div>';
 }
 
 

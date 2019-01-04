@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: tree.inc.php,v 1.5 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: tree.inc.php,v 1.7 2017-11-07 15:28:53 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -20,63 +20,62 @@ function gen_div($categ_parent,$level,$prefix_name, $is_last, $last_before, $js)
    	$f=0;
    	while ($res=pmb_mysql_fetch_object($resultat)) {
    		if (!$res->dossier) {
-   			$docs[ID][$f]=$res->id;
-   			$docs[LIBELLE][$f]=$res->libelle;
+   			$docs['ID'][$f]=$res->id;
+   			$docs['LIBELLE'][$f]=$res->libelle;
    			$f++;
-   			} else {
-		   		$folders[ID][$d]=$res->id;
-   				$folders[LIBELLE][$d]=$res->libelle;
-   				$d++;
-   				}
+   		} else {
+		  	$folders['ID'][$d]=$res->id;
+   			$folders['LIBELLE'][$d]=$res->libelle;
+   			$d++;
+   		}
    	}
    	
-   	if (!isset($folders[ID])) $folders[ID]=array();
+   	if (!isset($folders['ID'])) $folders['ID']=array();
    	
-   	for ($i=0; $i<count($folders[ID]); $i++) {
+   	for ($i=0; $i<count($folders['ID']); $i++) {
    		echo "<div id=\"".$prefix_name.".".$i."\">";
    		$t_l=explode(",",$last_before);
    		for ($j=0; $j<$level-1; $j++) {
    			if (!$t_l[$j]) $img_vert="$base_path/images/tree/ftv2vertline.gif"; else $img_vert="$base_path/images/tree/ftv2blank.gif";
-   			echo "<img src=\"$img_vert\" border=0 align=\"center\">";
+   			echo "<img src=\"$img_vert\" border=0 class='center'>";
    		}
-   		if (($i==count($folders[ID])-1)&&(count($docs)==0)) $img_node="$base_path/images/tree/ftv2plastnode.gif"; else $img_node="$base_path/images/tree/ftv2pnode.gif";
-   		if (($i==count($folders[ID])-1)&&(count($docs)==0)) $last=1; else $last=0; 
-   		echo "<img src=\"".$img_node."\" border=0 align=center onClick=\"expand('".$prefix_name.".".$i."',$last)\" id=\"node-".$prefix_name.".".$i."\">";
-   		echo "<img src=\"$base_path/images/tree/ftv2folderclosed.gif\" border=0 align=center id=\"folder-".$prefix_name.".".$i."\">";
-   		$nb_notices=$cnt[$folders[ID][$i]];
-   		$link=str_replace("!!id!!",$folders[ID][$i],$js);
-   		if ($nb_notices) echo "<a href=\"\" onClick=\"$link\">".$folders[LIBELLE][$i]." ($nb_notices)</a>"; else echo $folders[LIBELLE][$i];
+   		if (($i==count($folders['ID'])-1)&&(count($docs)==0)) $img_node="$base_path/images/tree/ftv2plastnode.gif"; else $img_node="$base_path/images/tree/ftv2pnode.gif";
+   		if (($i==count($folders['ID'])-1)&&(count($docs)==0)) $last=1; else $last=0; 
+   		echo "<img src=\"".$img_node."\" border=0 class='center' onClick=\"expand('".$prefix_name.".".$i."',$last)\" id=\"node-".$prefix_name.".".$i."\">";
+   		echo "<img src=\"$base_path/images/tree/ftv2folderclosed.gif\" border=0 class='center' id=\"folder-".$prefix_name.".".$i."\">";
+   		$nb_notices=$cnt[$folders['ID'][$i]];
+   		$link=str_replace("!!id!!",$folders['ID'][$i],$js);
+   		if ($nb_notices) echo "<a href=\"\" onClick=\"$link\">".$folders['LIBELLE'][$i]." ($nb_notices)</a>"; else echo $folders['LIBELLE'][$i];
    		flush();
    		echo "<div id=\"".$prefix_name.".".$i."-contains"."\" style=\"display:none\">";
    		$last_before_=$last_before;
    		if ($last_before_!="") $last_before_.=",";
 	    	$last_before_.=$last;
-   		gen_div($folders[ID][$i],$level+1,$prefix_name.".".$i,$last,$last_before_,$js);
+   		gen_div($folders['ID'][$i],$level+1,$prefix_name.".".$i,$last,$last_before_,$js);
    		
    		echo "</div>\n";
    		echo "</div>\n";
    	}
    	
-   	for ($i=0; $i<count($docs[ID]); $i++) {
-   		$link=str_replace("!!id!!",$docs[ID][$i],$js);
+   	for ($i=0; $i<count($docs['ID']); $i++) {
+   		$link=str_replace("!!id!!",$docs['ID'][$i],$js);
    		echo "<div id=\"doc-".$prefix_name.".".$i."\">";
    		$t_l=explode(",",$last_before);
    		for ($j=0; $j<$level-1; $j++) {
    			if (!$t_l[$j]) $img_vert="$base_path/images/tree/ftv2vertline.gif"; else $img_vert="$base_path/images/tree/ftv2blank.gif";
-   			echo "<img src=\"$img_vert\" border=0 align=\"center\">";
+   			echo "<img src=\"$img_vert\" border=0 class='center'>";
    		}
-   		if ($i==count($docs[ID])-1) $img_node="$base_path/images/tree/ftv2lastnode.gif"; else $img_node="$base_path/images/tree/ftv2node.gif";
-   		echo "<img src=\"".$img_node."\" border=0 align=center>";
-   		echo "<img src=\"$base_path/images/tree/ftv2doc.gif\" border=0 align=center>";
-   		$nb_notices=$cnt[$docs[ID][$i]];
-   		if ($nb_notices!=0) echo "<a href=\"\" onClick=\"$link\">".$docs[LIBELLE][$i]." ($nb_notices)</a>"; else echo $docs[LIBELLE][$i];
+   		if ($i==count($docs['ID'])-1) $img_node="$base_path/images/tree/ftv2lastnode.gif"; else $img_node="$base_path/images/tree/ftv2node.gif";
+   		echo "<img src=\"".$img_node."\" border=0 class='center'>";
+   		echo "<img src=\"$base_path/images/tree/ftv2doc.gif\" border=0 class='center'>";
+   		$nb_notices=$cnt[$docs['ID'][$i]];
+   		if ($nb_notices!=0) echo "<a href=\"\" onClick=\"$link\">".$docs['LIBELLE'][$i]." ($nb_notices)</a>"; else echo $docs['LIBELLE'][$i];
    		echo "</div>\n";
    		flush();
    	}
 }
 
-function tree($js)
-{
+function tree($js) {
 	global $base_path;
 	global $cnt;
 	echo "<script>
@@ -100,14 +99,13 @@ function tree($js)
      }
 	}
 	</script>
-	<div id=\"1\"><img src=\"$base_path/images/tree/ftv2folderopen.gif\" border=0 align=\"center\">Catégories";
+	<div id=\"1\"><img src=\"$base_path/images/tree/ftv2folderopen.gif\" border=0 class='center'>Catégories";
 
 	$categ_id=0;
 	$level=1;
 	$prefix_name="1";
 	
-	for ($i=1; $i<=4; $i++)
-	{
+	for ($i=1; $i<=4; $i++) {
 		$requete="select count(notice_id), categ$i from notices group by categ$i";
 		$resultat=pmb_mysql_query($requete);
 		while (list($n,$c)=pmb_mysql_fetch_row($resultat)) {

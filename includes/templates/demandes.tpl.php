@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes.tpl.php,v 1.22.2.1 2015-09-11 12:50:41 dgoron Exp $
+// $Id: demandes.tpl.php,v 1.31 2017-11-23 16:07:58 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -18,7 +18,7 @@ $demandes_menu = "
 		<li><a href='./demandes.php?categ=list&idetat=4&iduser=".SESSuserid."'>".$msg['demandes_menu_fini']."</a></li>
 		<li><a href='./demandes.php?categ=list&idetat=5&iduser=".SESSuserid."'>".$msg['demandes_menu_abandon']."</a></li>
 		<li><a href='./demandes.php?categ=list&idetat=6&iduser=".SESSuserid."'>".$msg['demandes_menu_archive']."</a></li>
-		<li><a href='./demandes.php?categ=list&iduser=-1'>".$msg[demandes_menu_not_assigned]."</a></li>				
+		<li><a href='./demandes.php?categ=list&iduser=-1'>".$msg['demandes_menu_not_assigned']."</a></li>				
 	</ul>	
 	<h3 onclick='menuHide(this,event)'>".$msg['demandes_menu_action']."</h3>
 	<ul>
@@ -30,8 +30,10 @@ $demandes_menu = "
 	<ul>
 		<li><a href='./demandes.php?categ=faq&sub=question'>".$msg['demandes_menu_faq']."</a></li>
 
-	</ul>
-	<div id='div_alert' class='erreur'>$aff_alerte</div>
+	</ul>";
+$plugins = plugins::get_instance();	
+$demandes_menu.= $plugins->get_menu("demandes")."	
+	<div id='div_alert' class='erreur'></div>
 </div>
 ";
 
@@ -59,13 +61,13 @@ $form_filtre_demande = "
 <h1>".$msg['demandes_gestion']." : ".$msg['demandes_search_form']." !!etat_demandes!!</h1>
 <form class='form-".$current_module."' id='search' name='search' method='post' action=\"./demandes.php?categ=list\">
 	<h3>".$msg['demandes_search_filtre_form']."</h3>
-	<input type='hidden' name='act' id='act' />
+	<input type='hidden' name='act' />
 	<div class='form-contenu'>
 		<div class='row'>
 			<label class='etiquette'>".$msg['demandes_titre']."</label>
 		</div>
 		<div class='row'>
-			<input type='texte' class='saisie-30em' name='user_input' id='user_input' value='!!user_input!!'/>
+			<input type='text' class='saisie-30em' name='user_input' id='user_input' value='!!user_input!!'/>
 		</div>
 		<div class='row'>
 			<div class='colonne3'>
@@ -82,7 +84,7 @@ $form_filtre_demande = "
 			<div class='colonne3'>
 				<input type='hidden' id='idempr' name='idempr' value='!!idempr!!' />
 				<input type='text' id='empr_txt' name='empr_txt' class='saisie-20emr' value='!!empr_txt!!'/>
-				<input type='button' class='bouton_small' value='...' onclick=\"openPopUp('./select.php?what=origine&caller=search&param1=idempr&param2=empr_txt&deb_rech='+".pmb_escape()."(this.form.empr_txt.value)+'&filtre=ONLY_EMPR&callback=filtrer_user".($pmb_lecteurs_localises ? "&empr_loca='+this.form.dmde_loc.value": "'").", 'select_user', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes')\" />
+				<input type='button' class='bouton_small' value='...' onclick=\"openPopUp('./select.php?what=origine&caller=search&param1=idempr&param2=empr_txt&deb_rech='+".pmb_escape()."(this.form.empr_txt.value)+'&filtre=ONLY_EMPR&callback=filtrer_user".($pmb_lecteurs_localises ? "&empr_loca='+this.form.dmde_loc.value": "'").", 'selector')\" />
 				<input type='button' class='bouton_small' value='X' onclick=\"document.getElementById('idempr').value=0;document.getElementById('empr_txt').value='';\" />
 			</div>
 			<div class='colonne3'>
@@ -182,7 +184,7 @@ $form_liste_demande ="
 <form class='form-".$current_module."' id='liste' name='liste' method='post' action=\"./demandes.php?categ=list\">
 	<input type='hidden' name='act' id='act' />
 	<input type='hidden' name='state' id='state' />
-	<h3>".$msg['demandes_liste']."</h3>
+	<h3>".$msg['demandes_liste']." !!count_dmde!!</h3>
 	<div class='form-contenu'>
 		<table>
 			<tbody>
@@ -266,14 +268,14 @@ $form_modif_demande = "
 				!!select_etat!!
 			</div>
 			<div class='colonne2'>
-				<input type='texte' class='saisie-10em' name='progression' id='progression' value='!!progression!!' />
+				<input type='text' class='saisie-10em' name='progression' id='progression' value='!!progression!!' />
 			</div>
 		</div>	
 		<div class='row'>
 			<label class='etiquette'>".$msg['demandes_titre']."</label>
 		</div>
 		<div class='row'>
-			<input class='saisie-50em' type='texte' id='titre' name='titre' value='!!titre!!' />
+			<input class='saisie-50em' type='text' id='titre' name='titre' value='!!titre!!' />
 		</div>
 		<div class='row'>
 			<label class='etiquette'>".$msg['demandes_sujet']."</label>
@@ -299,11 +301,11 @@ $form_modif_demande = "
 			</div>
 			<div class='colonne3'>
 				<input type='hidden' id='date_prevue' name='date_prevue' value='!!date_prevue!!' />
-				<input type='button' class='bouton' id='date_prevue_btn' name='date_prevue_btn' value='!!date_prevue_btn!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=modif_dmde&date_caller=!!date_prevue!!&param1=date_prevue&param2=date_prevue_btn&auto_submit=NO&date_anterieure=YES', 'date_prevue', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\"/>
+				<input type='button' class='bouton' id='date_prevue_btn' name='date_prevue_btn' value='!!date_prevue_btn!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=modif_dmde&date_caller=!!date_prevue!!&param1=date_prevue&param2=date_prevue_btn&auto_submit=NO&date_anterieure=YES', 'calendar')\"/>
 			</div>
 			<div class='colonne3'>
 				<input type='hidden' id='date_fin' name='date_fin' value='!!date_fin!!' />
-				<input type='button' class='bouton' id='date_fin_btn' name='date_fin_btn' value='!!date_fin_btn!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=modif_dmde&date_caller=!!date_fin!!&param1=date_fin&param2=date_fin_btn&auto_submit=NO&date_anterieure=YES', 'date_fin', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\"/>
+				<input type='button' class='bouton' id='date_fin_btn' name='date_fin_btn' value='!!date_fin_btn!!' onClick=\"openPopUp('./select.php?what=calendrier&caller=modif_dmde&date_caller=!!date_fin!!&param1=date_fin&param2=date_fin_btn&auto_submit=NO&date_anterieure=YES', 'calendar')\"/>
 			</div>
 		</div>
 		<div class='row'>
@@ -319,14 +321,15 @@ $form_modif_demande = "
 			<div class='colonne3'>
 				<input type='hidden' id='idempr' name='idempr' value='!!idempr!!' />
 				<input type='text' id='empr_txt' name='empr_txt' disabled class='saisie-20emr' value='!!empr_txt!!'/>
-				<input type='button' class='bouton_small' value='...' onclick=\"openPopUp('./select.php?what=origine&caller=modif_dmde&param1=idempr&param2=empr_txt&deb_rech='+".pmb_escape()."(this.form.empr_txt.value)+'&filtre=ONLY_EMPR', 'select_user', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes')\" />
+				<input type='button' class='bouton_small' value='...' onclick=\"openPopUp('./select.php?what=origine&caller=modif_dmde&param1=idempr&param2=empr_txt&deb_rech='+".pmb_escape()."(this.form.empr_txt.value)+'&filtre=ONLY_EMPR', 'selector')\" />
 				<input type='button' class='bouton_small' value='X' onclick=\"this.form.idempr.value='0';this.form.empr_txt.value='';\"/>	
 			</div>
 			<div class='colonne3'>
 				!!select_user!!
 			</div>
 			<div class='colonne3'>&nbsp;</div>
-		</div>	
+		</div>
+		!!form_linked_record!!
 		<div class='row'></div>
 		!!champs_perso!!
 		<div class='row'></div>
@@ -437,7 +440,7 @@ $form_consult_dmde = "
 		
 		<div class='row'>
 			<div class='colonne3'>
-				&nbsp;
+				!!form_linked_record!!
 			</div>	
 			<div class='colonne3'>
 				&nbsp;			
@@ -630,4 +633,17 @@ $reponse_finale = "
 		<div class='row'></div>
 	</form>	
 ";
+
+$form_linked_record = "
+		<div class='row'>
+			<label class='etiquette'>".$msg['demandes_linked_record']."</label>
+		</div>
+		<input id='linked_record_label' class='saisie-80emr' type='text' autexclude='0' autfield='linked_record_id' completion='notice' value='!!linked_record!!' name='linked_record_label' autocomplete='off'>
+		<input class='bouton' type='button' onclick='openPopUp(\"./select.php?what=notice&caller=modif_dmde&param1=linked_record_id&param2=linked_record_label&no_display=0\", \"selector_notice\")' value='...'>
+		<input class='bouton' type='button' onclick='this.form.linked_record_label.value=\"\"; this.form.linked_record_id.value=\"0\";' value='X'>
+		<input id='linked_record_id' type='hidden' value='!!linked_record_id!!' name='linked_record_id'>";
+
+$form_consult_linked_record = "
+				<label class='etiquette'>".$msg['demandes_linked_record']." : </label>
+				<a href='!!linked_record_link!!' title='!!linked_record!!'>!!linked_record!!</a>";
 ?>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: irts_bretagne.inc.php,v 1.4.4.1 2015-11-19 10:29:02 jpermanne Exp $
+// $Id: irts_bretagne.inc.php,v 1.5 2015-11-19 10:29:25 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 

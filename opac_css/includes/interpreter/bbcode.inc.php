@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bbcode.inc.php,v 1.2.2.1 2015-09-22 10:38:03 jpermanne Exp $
+// $Id: bbcode.inc.php,v 1.4 2017-10-18 12:31:50 ngantier Exp $
 
 require_once ($include_path . "/misc.inc.php");
 	
@@ -80,7 +80,7 @@ function do_bbcode($text){
 	$pattern[] = '#\[red\](.*?)\[/red\]#ms';
 	$pattern[] = '#\[li\](.*?)\[/li\]#ms';
 	
-	$replace[] = '<font color=\'#FF0000\'>$1</font>';
+	$replace[] = '<span style="color:#FF0000">$1</span>';
 	$replace[] = '<li style=\'list-style-type:disc;\'>$1</li>';
 
 	$text = preg_replace($pattern, $replace, $text);

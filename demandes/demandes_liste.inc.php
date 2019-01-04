@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes_liste.inc.php,v 1.8 2015-04-03 11:16:18 jpermanne Exp $
+// $Id: demandes_liste.inc.php,v 1.9 2017-01-31 15:41:41 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($iddemande)) $iddemande = 0;
+if(!isset($act)) $act = '';
 
 require_once($class_path."/demandes.class.php");
 

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_tpl.class.php,v 1.5.4.1 2015-09-10 07:58:28 jpermanne Exp $
+// $Id: notice_tpl.class.php,v 1.15 2018-12-20 11:00:19 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,23 +15,23 @@ class notice_tpl {
 	// ---------------------------------------------------------------
 	//		propriétés de la classe
 	// ---------------------------------------------------------------	
-	var $id;		// MySQL id in table 'notice_tpl'
-	var $name;		// nom du template
-	var $comment;	// description du template
-	var $code ; // Code du template
+	public $id;		// MySQL id in table 'notice_tpl'
+	public $name;		// nom du template
+	public $comment;	// description du template
+	public $code ; // Code du template
 	
 	// ---------------------------------------------------------------
 	//		constructeur
 	// ---------------------------------------------------------------
-	function notice_tpl($id=0) {			
-		$this->id = $id;
+	public function __construct($id=0) {			
+		$this->id = intval($id);
 		$this->getData();
 	}
 	
 	// ---------------------------------------------------------------
 	//		getData() : récupération infos 
 	// ---------------------------------------------------------------
-	function getData() {
+	public function getData() {
 		global $dbh,$msg;
 
 		$this->name = '';			
@@ -50,7 +50,7 @@ class notice_tpl {
 				$this->location_label[$r->idlocation]=$r->location_libelle;
 			}
 		}	
-		$source = new marc_list("doctype");
+		$source = marc_list_collection::get_instance("doctype");
 		$source_tab = $source->table;
 		$type_doc[0]="";
 		$this->type_doc_label[0]=$msg["tous_types_docs"];
@@ -97,10 +97,11 @@ class notice_tpl {
 	// ---------------------------------------------------------------
 	//		show_list : affichage de la liste des éléments
 	// ---------------------------------------------------------------	
-	function show_list($link="./edit.php") {	
+	public function show_list($link="./edit.php") {	
 		global $dbh, $charset,$msg;
 		global $notice_tpl_liste, $notice_tpl_liste_ligne;
 		
+		$tableau = '';
 		$requete = "SELECT * FROM notice_tpl ORDER BY notpl_name ";
 		$result = @pmb_mysql_query($requete, $dbh);
 		if(pmb_mysql_num_rows($result)) {
@@ -134,13 +135,43 @@ class notice_tpl {
 		return $liste;
 	}	
 	
+	// ----------------------------------------------------------------------------------
+	//		get_is_truncated_form : affichage du formulaire avec les localisations ou non
+	// ----------------------------------------------------------------------------------
+	public function get_is_truncated_form() {
+		
+		$is_truncated_form = true;
+		
+		if($this->id) {
+			//En modif, on vérifie si un template dans une loc
+			if (count($this->code)>1) {
+				foreach ($this->code as $id_location =>$tab_typenotice) {
+					//on passe la loc "0" (toutes les locs)
+					if (!$id_location) {
+						continue;
+					}
+					foreach($tab_typenotice as $typenotice =>$tab_typedoc) {
+						foreach($tab_typedoc as  $typedoc=>$code) {
+							if ($code) {
+								$is_truncated_form = false;
+								return $is_truncated_form;
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		return $is_truncated_form;
+	}
+	
 	// ---------------------------------------------------------------
 	//		show_form : affichage du formulaire de saisie
 	// ---------------------------------------------------------------
-	function show_form($link="./edit.php") {
+	public function show_form($link="./edit.php") {
 	
 		global $msg;
-		global $notice_tpl_form, $notice_tpl_form_code;
+		global $notice_tpl_form, $notice_tpl_show_loc_btn;
 		global $charset;
 
 		$form=$notice_tpl_form;		
@@ -148,7 +179,7 @@ class notice_tpl {
 		
 		if($this->id) {
 			$libelle = $msg["notice_tpl_modifier"];			
-			$button_delete = "<input type='button' class='bouton' value='".$msg[63]."' onClick=\"confirm_delete();\">";
+			$button_delete = "<input type='button' class='bouton' value='".$msg['63']."' onClick=\"confirm_delete();\">";
 			$action_delete = $link."?categ=tpl&sub=notice&action=delete&id=!!id!!";
 			$button_duplicate = "<input type='button' class='bouton' value='".$msg["edit_tpl_duplicate_button"]."' onClick=\"document.location='./edit.php?categ=tpl&sub=notice&action=duplicate&id=".$this->id."';\" />";
 			if($this->show_opac) $show_opac=" checked='checked' "; else $show_opac="";			
@@ -157,50 +188,104 @@ class notice_tpl {
 			$button_delete = "";
 			$button_duplicate = "";
 			$action_delete= "";
+			$show_opac="";
 		}
-		foreach($this->code as $id_location =>$tab_typenotice) {	
-			$form_typenotice_all='';
-	
-			foreach($tab_typenotice as $typenotice =>$tab_typedoc) {								
-				$form_code_typedoc='';
-				foreach($tab_typedoc as  $typedoc=>$code) {	
-					$form_code_temp = str_replace("!!loc!!", $id_location, $notice_tpl_form_code);
-					$form_code_temp = str_replace("!!typenotice!!",	$typenotice, $form_code_temp);
-					$form_code_temp = str_replace("!!typedoc!!", $typedoc, $form_code_temp);
-					$form_code_temp = str_replace("!!code!!", htmlentities($code,ENT_QUOTES, $charset), $form_code_temp);					
-					$form_code_typedoc.= gen_plus("plus_typedoc".$id_location."_".$typenotice."_".$typedoc,$this->type_doc_label["$typedoc"],$form_code_temp);
-					if ($code != "") {
-						$form_code_typedoc.= "<script type='text/javascript'>
-							document.getElementById('plus_typedoc".$id_location."_".$typenotice."_".$typedoc."Child').setAttribute('style','margin-bottom:6px; display:block;width:94%');
-							if (document.getElementById('plus_typedoc".$id_location."_".$typenotice."_".$typedoc."Child').parentNode) {
-								document.getElementById('plus_typedoc".$id_location."_".$typenotice."_".$typedoc."Child').parentNode.setAttribute('style','margin-bottom:6px; display:block;width:94%');
-							}
-						</script>";
-					}				
-				}		
-				$form_typenotice_all.= gen_plus("plus_typenotice".$id_location."_".$typenotice."_",$this->type_notice["$typenotice"],$form_code_typedoc);					
-			}	
-			$form_code.=gen_plus("plus_location".$id_location,$this->location_label[$id_location],$form_typenotice_all);
+		
+		//on n'affiche les localisations que si un template existe dans une des locs
+		$is_truncated_form = $this->get_is_truncated_form();
+		$form_code = '';
+		if ($is_truncated_form) {
+			$form_typenotice_all = $this->get_form_typenotice_all(0, $this->code[0]);
+			$form_code.=gen_plus("plus_location0",$this->location_label[0],$form_typenotice_all);
+		} else {
+			foreach($this->code as $id_location =>$tab_typenotice) {
+				$form_typenotice_all = $this->get_form_typenotice_all($id_location, $tab_typenotice);
+				$form_code.=gen_plus("plus_location".$id_location,$this->location_label[$id_location],$form_typenotice_all);
+			}
 		}
+
 		$form = str_replace("!!libelle!!",	$libelle, $form);
 		$form = str_replace("!!name!!",		htmlentities($this->name,ENT_QUOTES, $charset), $form);
 		$form = str_replace("!!comment!!",	htmlentities($this->comment,ENT_QUOTES, $charset), $form);
 		$form = str_replace("!!id_test!!",	htmlentities($this->id_test,ENT_QUOTES, $charset), $form);
 		$form = str_replace("!!show_opac!!",$show_opac, $form);
-		$form = str_replace("!!code_part!!", $form_code, $form);		
+		$form = str_replace("!!code_part!!", $form_code, $form);
+		if ($is_truncated_form) {
+			$form = str_replace("!!show_loc!!", $notice_tpl_show_loc_btn, $form);
+		} else {
+			$form = str_replace("!!show_loc!!", "", $form);
+		}
 	
 		$form = str_replace("!!action!!",	$action, $form);
 		$form = str_replace("!!duplicate!!", $button_duplicate, $form);		
 		$form = str_replace("!!delete!!",	$button_delete,	$form);
 		$form = str_replace("!!action_delete!!",$action_delete,	$form);
-		$form = str_replace("!!id!!",		$this->id, $form);			
+		$form = str_replace("!!id!!",		$this->id, $form);
+
 		return $form;
+	}
+	
+	// ---------------------------------------------------------------------
+	//		get_form_typenotice_all : récupère l'affichage des localisations
+	// ---------------------------------------------------------------------
+	public function get_form_typenotice_all_loc() {
+		
+		$form_typenotice_all_loc = '';
+		
+		foreach($this->code as $id_location =>$tab_typenotice) {
+			if (!$id_location) {
+				continue;
+			}
+			$line = $this->get_form_typenotice_all($id_location, $tab_typenotice);
+			$form_typenotice_all_loc.=gen_plus("plus_location".$id_location,$this->location_label[$id_location],$line);
+		}
+		
+		return $form_typenotice_all_loc;
+	}
+	
+	// ----------------------------------------------------------------------
+	//		get_form_typenotice_all : récupère l'affichage d'une localisation
+	// ----------------------------------------------------------------------
+	public function get_form_typenotice_all($id_location, $tab_typenotice) {
+		global $charset;
+		global $notice_tpl_form_code;
+		
+		$form_typenotice_all='';
+		
+		foreach($tab_typenotice as $typenotice =>$tab_typedoc) {
+			$form_code_typedoc='';
+			foreach($tab_typedoc as  $typedoc=>$code) {
+				$form_code_temp = str_replace("!!loc!!", $id_location, $notice_tpl_form_code);
+				$form_code_temp = str_replace("!!typenotice!!",	$typenotice, $form_code_temp);
+				$form_code_temp = str_replace("!!typedoc!!", $typedoc, $form_code_temp);
+				$form_code_temp = str_replace("!!code!!", htmlentities($code,ENT_QUOTES, $charset), $form_code_temp);
+				$form_code_typedoc.= gen_plus("plus_typedoc".$id_location."_".$typenotice."_".$typedoc,$this->type_doc_label["$typedoc"],$form_code_temp);
+				if ($code != "") {
+					$form_code_typedoc.= "<script type='text/javascript'>
+							document.getElementById('plus_typedoc".$id_location."_".$typenotice."_".$typedoc."Child').setAttribute('style','margin-bottom:6px; display:block;width:94%');
+							document.getElementById('plus_typedoc".$id_location."_".$typenotice."_".$typedoc."Img').src = imgOpened.src;
+							if (document.getElementById('plus_typedoc".$id_location."_".$typenotice."_".$typedoc."Child').parentNode) {
+								document.getElementById('plus_typedoc".$id_location."_".$typenotice."_".$typedoc."Child').parentNode.setAttribute('style','margin-bottom:6px; display:block;width:94%');
+								if (document.getElementById('plus_typenotice".$id_location."_".$typenotice."_Img')) {
+									document.getElementById('plus_typenotice".$id_location."_".$typenotice."_Img').src = imgOpened.src;
+								}
+								if (document.getElementById('plus_location".$id_location."Img')) {
+									document.getElementById('plus_location".$id_location."Img').src = imgOpened.src;
+								}
+							}
+						</script>";
+				}
+			}
+			$form_typenotice_all.= gen_plus("plus_typenotice".$id_location."_".$typenotice."_",$this->type_notice["$typenotice"],$form_code_typedoc);
+		}
+		
+		return $form_typenotice_all;
 	}
 	
 	// ---------------------------------------------------------------
 	//		delete() : suppression 
 	// ---------------------------------------------------------------
-	function delete() {
+	public function delete() {
 		global $dbh;
 		global $msg;
 		
@@ -220,7 +305,7 @@ class notice_tpl {
 	// ---------------------------------------------------------------
 	//		update($value) : mise à jour 
 	// ---------------------------------------------------------------
-	function update($value) {
+	public function update($value) {
 	
 		global $dbh;
 		global $msg;
@@ -286,7 +371,7 @@ class notice_tpl {
 		return true;
 	}
 		
-	function update_from_form() {
+	public function update_from_form() {
 		global $name, $code_list, $comment,$id_test,$show_opac;
 		
 		$value['name']=stripslashes($name);
@@ -305,7 +390,7 @@ class notice_tpl {
 		$this->update($value); 		
 	}
 	
-	static function gen_tpl_select($select_name="notice_tpl", $selected_id=0) {		
+	static public function gen_tpl_select($select_name="notice_tpl", $selected_id=0) {		
 		global $msg;
 		
 		$requete = "SELECT notpl_id, concat(notpl_name,'. ',notpl_comment) as nom  FROM notice_tpl ORDER BY notpl_name ";
@@ -313,19 +398,19 @@ class notice_tpl {
 		return gen_liste ($requete, "notpl_id", "nom", $select_name, $onchange, $selected_id, 0, $msg["notice_tpl_list_default"], 0,$msg["notice_tpl_list_default"], 0) ;
 	}
 		
-	function show_eval($notice_id=0) {
+	public function show_eval($notice_id=0) {
 		global $notice_tpl_eval;
 		global $deflt2docs_location;
 		
 		if(!$notice_id)$notice_id=$this->id_test;
-		$notice_tpl_gen=new notice_tpl_gen($this->id); 
+		$notice_tpl_gen = notice_tpl_gen::get_instance($this->id); 
 		$tpl= $notice_tpl_gen->build_notice($notice_id,$deflt2docs_location); 
 		$form = str_replace("!!tpl!!",	$tpl, $notice_tpl_eval);		
 		
 		return $form;
 	}	
 	
-	function show_import_form($link="./edit.php") {
+	public function show_import_form($link="./edit.php") {
 		global $msg;
 		global $notice_tpl_form_import;
 		global $charset;
@@ -338,7 +423,7 @@ class notice_tpl {
 		return $form;
 	}
 	
-	function do_import(){
+	public function do_import(){
 		global $dbh, $msg, $charset;
 
 		$erreur=0;
@@ -422,7 +507,7 @@ class notice_tpl {
 		if(!$erreur){
 			
 			//valeurs à connaitre
-			$doctype = new marc_list('doctype');
+			$doctype = marc_list_collection::get_instance('doctype');
 			$locations = array();
 			$res=pmb_mysql_query("SELECT idlocation, location_libelle FROM docs_location ORDER BY 1");
 			while($row=pmb_mysql_fetch_object($res)){
@@ -450,7 +535,7 @@ class notice_tpl {
 				$requete.=$value["field"]."='".addslashes($value["value"])."'";
 			}
 			pmb_mysql_query($requete);
-			$id_tpl = mysql_insert_id();
+			$id_tpl = pmb_mysql_insert_id();
 			if ($id_tpl) {
 				
 				//Ajouts dans notice_tpl_code
@@ -542,6 +627,31 @@ class notice_tpl {
 		if ($userfile_name) {
 			unlink('./temp/'.$userfile_moved);
 		}	
+	}
+	
+	/**
+	 * Retourne tous les répertoires de templates de notices
+	 * @param string $selected
+	 * @return string
+	 */
+	public static function get_directories_options($selected = '') {
+		global $msg,$opac_notices_format_django_directory;
+	
+		if (!$selected) {
+			$selected = $opac_notices_format_django_directory;
+		}
+		if (!$selected) {
+			$selected = 'common';
+		}
+		$dirs = array_filter(glob('./opac_css/includes/templates/record/*'), 'is_dir');
+		$tpl = "";
+		foreach($dirs as $dir){
+			if(basename($dir) != "CVS"){
+				$tpl.= "<option ".(basename($dir) == basename($selected) ? "selected='selected'" : "")." value='".basename($dir)."'>
+				".(basename($dir) == "common" ? basename($dir)." (".$msg['proc_options_default_value'].")" : basename($dir))."</option>";
+			}
+		}
+		return $tpl;
 	}
 
 } // fin class 

@@ -1,12 +1,18 @@
 -- +-------------------------------------------------+
 -- © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 -- +-------------------------------------------------+
--- $Id: readme.txt,v 1.2 2012-12-12 10:29:54 ngantier Exp $
+-- $Id: readme.txt,v 1.4 2016-03-30 09:04:51 mbertin Exp $
 
+------------------------------------------------------------------------------------------------------------------
 
 Description des fichiers
 bibli.sql : structure de la base de données uniquement, pas de données
-				
+		*************************************
+		Méthode de céation de ce fichier :
+				créer le contenu du fichier bibli.sql : mysqldump -u bibli -pbibli -d --quote-names=FALSE --skip-add-drop-table bibli > bibli.sql
+				penser à conserver la ligne de commentaire originale du fichier bibli.sql afin de conserver la version CVS du fichier
+		*************************************
+
 minimum.sql : utilisateur admin/admin, paramètres de l'application
 
 feed_essential.sql : ce dont vous avez besoin pour utiliser l'application en mode quick-start :
@@ -20,9 +26,9 @@ data_test.sql : une petite sélection de données de notices, lecteurs, afin de po
 	Doit charger le thésaurus UNESCO_FR unesco_fr.sql
 	
 Thésaurus : 3 thésaurus vous sont proposés :
-	unesco_fr.sql : thésaurus hiérarchisé de l'UNESCO, assez important et bien fait.
+	unesco.sql : thésaurus hiérarchisé de l'UNESCO, assez important et bien fait.
 	agneaux.sql : plus petit, plus simple mais bien fait aussi.
-	environnement : un thésaurus possible pour un fonds documetaire axé Environnement.
+	environnement : un thésaurus possible pour un fonds documentaire axé Environnement.
 	
 Indexations internes : 4 indexations sont proposées :
 	indexint_100.sql : 100 cases du savoir ou marguerite des couleurs, indexation décimale 
@@ -84,10 +90,12 @@ L'équipe des développeurs.
 
 \_/-\_/-\_/-\_/-\_/-\_/-\_/-\            minimum.sql
 # Contenu de la table abts_periodicites
+# Contenu de la table bannette_tpl
 # Contenu de la table categories
 # Contenu de la table classements
+# Contenu de la table cms_editorial_types
 # Contenu de la table empr_statut
-# Contenu de la table infopages
+# Contenu de la table explnum_statut
 # Contenu de la table lenders
 # Contenu de la table lignes_actes_statuts
 # Contenu de la table noeuds
@@ -98,6 +106,7 @@ L'équipe des développeurs.
 # Contenu de la table pclassement
 # Contenu de la table sauv_sauvegardes
 # Contenu de la table sauv_tables
+# Contenu de la table serialcirc_tpl
 # Contenu de la table suggestions_categ
 # Contenu de la table thesaurus
 # Contenu de la table users
@@ -126,6 +135,7 @@ L'équipe des développeurs.
 # Contenu de la table expl_custom
 # Contenu de la table expl_custom_lists
 # Contenu de la table facettes
+# Contenu de la table infopages
 # Contenu de la table notice_tpl
 # Contenu de la table notice_tplcode
 # Contenu de la table procs
@@ -141,7 +151,10 @@ L'équipe des développeurs.
 # Contenu de la table statopac_vues_col
 
 \_/-\_/-\_/-\_/-\_/-\_/-\_/-\            bibliportail.sql
-# Contenu nécéssaire à la demo du portail
+# Base complète avec un portail pagéo de démo
+
+\_/-\_/-\_/-\_/-\_/-\_/-\_/-\            biblizen.sql
+# Base complète avec un portail zen de démo
 
 \_/-\_/-\_/-\_/-\_/-\_/-\_/-\            data_test.sql
 # Contenu de la table analysis
@@ -157,9 +170,9 @@ L'équipe des développeurs.
 # Contenu de la table connectors_categ_sources
 # Contenu de la table connectors_sources
 # Contenu de la table empr
-# Contenu de la table entrepot_source_2
-# Contenu de la table entrepot_source_4
-# Contenu de la table entrepot_source_5
+# Création et contenu de la table entrepot_source_2
+# Création et contenu de la table entrepot_source_4
+# Création et contenu de la table entrepot_source_5
 # Contenu de la table equations
 # Contenu de la table exemplaires
 # Contenu de la table explnum

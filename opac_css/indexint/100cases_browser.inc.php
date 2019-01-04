@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: 100cases_browser.inc.php,v 1.14 2015-04-03 11:16:27 jpermanne Exp $
+// $Id: 100cases_browser.inc.php,v 1.15 2017-11-07 15:51:41 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -20,7 +20,7 @@ else
 cellule.style.background = \"url(\"+imagefond+\") repeat bottom left\";
 }
 </script>
-\n<table border=\"2\" cellpadding=\"1\" cellspacing=\"1\">";
+\n<table style='border:2px' cellpadding=\"1\" cellspacing=\"1\">";
 
 $i=0;
 $j=0;
@@ -40,7 +40,7 @@ while ($i < 10) {
 	while ($j < 10) {
     		if ($j==0 or $j==1 or $j==7 or $j==8) $color="#ffffff";
     			else $color="#000000";
-		$hundred_cases_table .= "\n\t<td style=\"filter:blendTrans(Duration=0.7);background:url(images/dewey".$j."cell.gif) repeat bottom left;\" onmouseover=\"switchOver(this,'images/dewey".$j.".gif')\" onmouseout=\"switchOver(this,'images/dewey".$j."cell.gif')\"><a style=\"color:$color;font-size:smaller;\" href='index.php?lvl=indexint_see&id=!!id".$j.$i."0!!&main=1'>!!".$j.$i."0!!<br /><div align=right>".$j.$i."0</div></a></td>";
+		$hundred_cases_table .= "\n\t<td style=\"filter:blendTrans(Duration=0.7);background:url(images/dewey".$j."cell.gif) repeat bottom left;\" onmouseover=\"switchOver(this,'images/dewey".$j.".gif')\" onmouseout=\"switchOver(this,'images/dewey".$j."cell.gif')\"><a style=\"color:$color;font-size:smaller;\" href='index.php?lvl=indexint_see&id=!!id".$j.$i."0!!&main=1'>!!".$j.$i."0!!<br /><div class='align_right'>".$j.$i."0</div></a></td>";
 		$j++;
 		}
 	$i++;

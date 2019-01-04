@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <xsl:stylesheet version = '1.0'
      xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>
-    
 <!-- http://en.wikipedia.org/wiki/RIS_(file_format)#Type_of_reference -->
 
 <xsl:output method="text" encoding="iso-8859-1"/>
@@ -123,7 +122,7 @@
 <xsl:template name="editeur">
 		<xsl:if test="f[@c='210']/s[@c='c']">	
 			<xsl:text>PB  - </xsl:text>
-			<xsl:value-of select="normalize-space(f[@c='210']/s[@c='a'])"/>			
+			<xsl:value-of select="normalize-space(f[@c='210']/s[@c='c'])"/>			
 			<xsl:text>&#010;</xsl:text>
 		</xsl:if>
 </xsl:template>

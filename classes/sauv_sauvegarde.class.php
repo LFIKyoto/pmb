@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sauv_sauvegarde.class.php,v 1.8 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: sauv_sauvegarde.class.php,v 1.11 2017-11-07 15:20:00 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,24 +11,24 @@ include ($include_path."/templates/sauvegardes_form.tpl.php");
 class sauv_sauvegarde {
 
 	//Données
-	var $sauv_sauvegarde_id; //Identifiant
-	var $sauv_sauvegarde_nom; //Nom de la sauvegarde
-	var $sauv_sauvegarde_file_prefix; //Péfixe du fichier de sauvegarde
-	var $sauv_sauvegarde_tables; //Groupes de tables
-	var $sauv_sauvegarde_lieux; //Lieux de sauvegarde
-	var $sauv_sauvegarde_users; //Utilisateurs autorisés
-	var $sauv_sauvegarde_compress; //Compression
-	var $sauv_sauvegarde_compress_method; //Méthode de compression
-	var $sauv_sauvegarde_zip_command; //Commande compression
-	var $sauv_sauvegarde_unzip_command; //Commande de décompression
-	var $sauv_sauvegarde_zip_ext; //Extension du fichier zippé
-	var $sauv_sauvegarde_crypt; //Cryptage
-	var $sauv_sauvegarde_key1; //Clé de cryptage 1
-	var $sauv_sauvegarde_key2; //Clé de cryptage 2
-	var $sauv_sauvegarde_erase_keys; //Ecraser les clés
-	var $act; //Action
+	public $sauv_sauvegarde_id; //Identifiant
+	public $sauv_sauvegarde_nom; //Nom de la sauvegarde
+	public $sauv_sauvegarde_file_prefix; //Péfixe du fichier de sauvegarde
+	public $sauv_sauvegarde_tables; //Groupes de tables
+	public $sauv_sauvegarde_lieux; //Lieux de sauvegarde
+	public $sauv_sauvegarde_users; //Utilisateurs autorisés
+	public $sauv_sauvegarde_compress; //Compression
+	public $sauv_sauvegarde_compress_method; //Méthode de compression
+	public $sauv_sauvegarde_zip_command; //Commande compression
+	public $sauv_sauvegarde_unzip_command; //Commande de décompression
+	public $sauv_sauvegarde_zip_ext; //Extension du fichier zippé
+	public $sauv_sauvegarde_crypt; //Cryptage
+	public $sauv_sauvegarde_key1; //Clé de cryptage 1
+	public $sauv_sauvegarde_key2; //Clé de cryptage 2
+	public $sauv_sauvegarde_erase_keys; //Ecraser les clés
+	public $act; //Action
 
-	function sauv_sauvegarde() {
+	public function __construct() {
 		global $sauv_sauvegarde_id; //Identifiant
 		global $sauv_sauvegarde_nom; //Nom de la sauvegarde
 		global $sauv_sauvegarde_file_prefix; //Péfixe du fichier de sauvegarde
@@ -66,7 +66,7 @@ class sauv_sauvegarde {
 		$this-> act = $act;
 	}
 	
-	function verifName() {
+	public function verifName() {
 		global $msg;
 		
 		$requete="select sauv_sauvegarde_id from sauv_sauvegardes where sauv_sauvegarde_nom='".$this->sauv_sauvegarde_nom."'";
@@ -77,9 +77,10 @@ class sauv_sauvegarde {
 		}
 	}
 	
-	function verifGeneral() {
+	public function verifGeneral() {
 		global $msg;
 		
+		$msg_= "";
 		if (!is_array($this->sauv_sauvegarde_tables)) {
 			$msg_=$msg["sauv_sauvegardes_valid_form_error_one_group"];
 		} else {
@@ -94,7 +95,7 @@ class sauv_sauvegarde {
 		
 	}
 	
-	function makeUpdateQuery()
+	public function makeUpdateQuery()
 	{
 		$r_tables=@implode(",",$this->sauv_sauvegarde_tables);
 		$r_lieux=@implode(",",$this->sauv_sauvegarde_lieux);
@@ -127,7 +128,7 @@ class sauv_sauvegarde {
 	
 	//Traitement de l'action reçue du formulaire (à appeller juste après l'instanciation de la classe)
 	//Renvoie le formulaire à afficher
-	function proceed() {
+	public function proceed() {
 		
 		global $first;
 		
@@ -168,7 +169,7 @@ class sauv_sauvegarde {
 		return $this -> showForm();
 	}
 
-	function showSelectList($values,$table,$id_field,$name_field,$select_name) {
+	public function showSelectList($values,$table,$id_field,$name_field,$select_name) {
 		$select="<select name=\"".$select_name."[]\" multiple>\n";
 		$tValues=explode(",",$values);
 		$requete="select $id_field,$name_field from $table";
@@ -187,14 +188,14 @@ class sauv_sauvegarde {
 	
 
 	//Préaparation du formulaire pour affichage
-	function showForm() {
+	public function showForm() {
 		global $form;
 		global $first;
 		global $msg;
 		
 		//Si première connexion
 		if (!$first) {
-			$form = "<center><h3>".$msg["sauv_sauvegardes_sel_or_add"]."</h3></center>";
+			$form = "<h3>".$msg["sauv_sauvegardes_sel_or_add"]."</h3>";
 		} else {
 			//Si identifiant non vide
 			if ($this -> sauv_sauvegarde_id) {
@@ -203,14 +204,23 @@ class sauv_sauvegarde {
 				$resultat = pmb_mysql_query($requete);
 				if (pmb_mysql_num_rows($resultat) != 0)
 					$r = pmb_mysql_fetch_object($resultat);
-				//$form = "<center><b>".$r -> sauv_sauvegarde_nom."</b></center>".$form;
 				$form = str_replace("!!quel_proc!!", $r -> sauv_sauvegarde_nom, $form);
 				$form = str_replace("!!delete!!", "<input type=\"submit\" value=\"".$msg["sauv_supprimer"]."\" onClick=\"if (confirm('".$msg["sauv_sauvegardes_confirm_delete"]."')) { this.form.act.value='delete'; return true; } else { return false; }\" class=\"bouton\">", $form);
 			} else {
 				//Sinon : Nouvelle fiche
-				//$form = "<center><b>".$msg["sauv_sauvegardes_new"]."</b></center>".$form;
 				$form = str_replace("!!quel_proc!!", $msg["sauv_sauvegardes_new"], $form);
 				$form = str_replace("!!delete!!", "", $form);
+				$r = new stdClass();
+				$r->sauv_sauvegarde_nom = '';
+				$r->sauv_sauvegarde_file_prefix = '';
+				$r->sauv_sauvegarde_tables = '';
+				$r->sauv_sauvegarde_lieux = '';
+				$r->sauv_sauvegarde_users = '';
+				$r->sauv_sauvegarde_compress = '';
+				$r->sauv_sauvegarde_compress_command = '';
+				$r->sauv_sauvegarde_crypt = '';
+				$r->sauv_sauvegarde_key1 = '';
+				$r->sauv_sauvegarde_key2 = '';
 			}
 			$form = str_replace("!!sauv_sauvegarde_id!!", $this -> sauv_sauvegarde_id, $form);
 			$form = str_replace("!!sauv_sauvegarde_nom!!", $r -> sauv_sauvegarde_nom, $form);
@@ -235,6 +245,7 @@ class sauv_sauvegarde {
 			$values=array("internal","external");
 			$libs=array($msg["sauv_sauvegardes_compr_bz2"],$msg["sauv_sauvegardes_compr_externe"]);
 			if ($r->sauv_sauvegarde_compress_command=="") {
+				$compress_command=array('', '', '', '');
 				$compression_method="internal";
 			} else {
 				$compress_command=explode(":",$r->sauv_sauvegarde_compress_command);
@@ -265,19 +276,18 @@ class sauv_sauvegarde {
 
 	//Affichage de la liste des lieux existants dans la base
 	//linkToForm : true = rend la liste interactive avec le formulaire
-	function showTree($linkToForm = true) {
+	public function showTree($linkToForm = true) {
 		global $dbh;
 		global $msg;
 		
-		//$tree.= "<center><b>".$msg["sauv_sauvegardes_tree_title"]."</b></center>\n";
-		$tree.= "<form><table class='nobrd'>\n";
-		$tree.= "<th class='brd' <center>".$msg["sauv_sauvegardes_tree_title"]."</center></th>\n";
+		$tree = "<form><table class='nobrd'>\n";
+		$tree.= "<th class='brd' ".$msg["sauv_sauvegardes_tree_title"]."</th>\n";
 		//Récupération de la liste
 		$requete = "select sauv_sauvegarde_id, sauv_sauvegarde_nom from sauv_sauvegardes order by sauv_sauvegarde_nom";
 		$resultat = pmb_mysql_query($requete, $dbh) or die(pmb_mysql_error());
 		while ($res = pmb_mysql_fetch_object($resultat)) {
 			$tree.= "<tr><td class='nobrd'>";
-			$tree.= "<img src=\"images/file.png\" border=0 align=center>&nbsp;";
+			$tree.= "<img src=\"images/file.png\" border=0 class='center'>&nbsp;";
 			if ($linkToForm == true) {
 				$tree.= "<a href=\"admin.php?categ=sauvegarde&sub=gestsauv&act=show&sauv_sauvegarde_id=".$res -> sauv_sauvegarde_id."&first=1\">";
 			}
@@ -290,13 +300,12 @@ class sauv_sauvegarde {
 		$tree.= "</table>";
 		//Nouveau lieu
 		if ($linkToForm) {
-			//$tree.= "<center><a href=\"admin.php?categ=sauvegarde&sub=gestsauv&act=show&sauv_sauvegarde_id=&first=1\">".$msg["sauv_sauvegardes_add_set"]."</a></center>";
 			$tree.="
-				<div class='center'><center>
+				<div class='center'>
 				<input type=\"button\" value=\"".$msg["sauv_sauvegardes_add_set"]."\" 
 					class=\"bouton\" 
 					onClick=\"document.location='./admin.php?categ=sauvegarde&sub=gestsauv&act=show&sauv_sauvegarde_id=&first=1';\" />
-				</center></div></form>";
+				</div></form>";
 			
 		}
 		return $tree;

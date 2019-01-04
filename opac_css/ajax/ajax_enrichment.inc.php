@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_enrichment.inc.php,v 1.5 2015-04-03 11:16:27 jpermanne Exp $
+// $Id: ajax_enrichment.inc.php,v 1.6 2017-02-07 12:00:23 dgoron Exp $
 
 require_once($class_path."/enrichment.class.php");
 require_once($class_path."/parametres_perso.class.php");
@@ -38,10 +38,10 @@ if(!$id){
 }
 
 //On renvoie du JSON dans le charset de PMB...
-if(!$debug){
-header("Content-Type:application/json; charset=$charset");
-$return = charset_pmb_normalize($return);
-print json_encode($return);
+if(!isset($debug) || !$debug){
+	header("Content-Type:application/json; charset=$charset");
+	$return = charset_pmb_normalize($return);
+	print json_encode($return);
 }
 
 //function json_pmb_encode($mixed,$lvl=0){

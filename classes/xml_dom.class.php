@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: xml_dom.class.php,v 1.2 2012-10-26 06:51:43 dbellamy Exp $
+// $Id: xml_dom.class.php,v 1.4 2018-05-31 08:48:15 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -28,8 +28,8 @@ if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
  * @author Florent TETART
  */
 class xml_dom {
-	var $xml;				/*!< XML d'origine */
-	var $charset;			/*!< Charset courant (iso-8859-1 ou utf-8) */
+	public $xml;				/*!< XML d'origine */
+	public $charset;			/*!< Charset courant (iso-8859-1 ou utf-8) */
 	/**
 	 * \brief Arbre des noeuds du document
 	 * 
@@ -44,19 +44,19 @@ class xml_dom {
 	 )
 	 \endverbatim
 	 */
-	var $tree; 
-	var $error=false; 		/*!< Signalement d'erreur : true : erreur lors du parse, false : pas d'erreur */
-	var $error_message=""; 	/*!< Message d'erreur correspondant à l'erreur de parse */
-	var $depth=0;			/*!< \protected */
-	var $last_elt=array();	/*!< \protected */
-	var $n_elt=array();		/*!< \protected */
-	var $cur_elt=array();	/*!< \protected */
-	var $last_char=false;	/*!< \protected */
+	public $tree; 
+	public $error=false; 		/*!< Signalement d'erreur : true : erreur lors du parse, false : pas d'erreur */
+	public $error_message=""; 	/*!< Message d'erreur correspondant à l'erreur de parse */
+	public $depth=0;			/*!< \protected */
+	public $last_elt=array();	/*!< \protected */
+	public $n_elt=array();		/*!< \protected */
+	public $cur_elt=array();	/*!< \protected */
+	public $last_char=false;	/*!< \protected */
 	
 	/**
 	 * \protected
 	 */
-	function close_node() {
+	public function close_node() {
 		$this->last_elt[$this->depth-1]["CHILDS"][]=$this->cur_elt;
 		$this->last_char=false;
 		$this->cur_elt=$this->last_elt[$this->depth-1];
@@ -66,7 +66,7 @@ class xml_dom {
 	/**
 	 * \protected
 	 */
-	function startElement($parser,$name,$attribs) {
+	public function startElement($parser,$name,$attribs) {
 		if ($this->last_char) $this->close_node();
 		$this->last_elt[$this->depth]=$this->cur_elt;
 		$this->cur_elt=array('NAME'=>$name,'ATTRIBS'=>$attribs,'TYPE'=>1);
@@ -77,7 +77,7 @@ class xml_dom {
 	/**
 	 * \protected
 	 */
-	function endElement($parser,$name) {
+	public function endElement($parser,$name) {
 		if ($this->last_char) $this->close_node();
 		$this->close_node();
 	}
@@ -85,7 +85,7 @@ class xml_dom {
 	/**
 	 * \protected
 	 */
-	function charElement($parser,$char) {
+	public function charElement($parser,$char) {
 		if ($this->last_char) $this->close_node();
 		$this->last_char=true;
 		$this->last_elt[$this->depth]=$this->cur_elt;
@@ -100,7 +100,7 @@ class xml_dom {
 	 * @param string $xml XML a manipuler
 	 * @param string $charset Charset du document XML
 	 */
-	function xml_dom($xml,$charset="iso-8859-1") {
+	public function __construct($xml,$charset="iso-8859-1") {
 		$this->charset=$charset;
 		$this->cur_elt=array("NAME"=>"document","TYPE"=>"0");
 		
@@ -148,7 +148,7 @@ class xml_dom {
 	 Les attributs ne peuvent être cités que sur le noeud final.
 	 \endverbatim
 	 */
-	function get_node($path,$node="") {
+	public function get_node($path,$node="") {
 		if ($node=="") $node=&$this->tree;
 		$paths=explode("/",$path);
 		for ($i=0; $i<count($paths); $i++) {
@@ -170,14 +170,16 @@ class xml_dom {
 			}
 			$nc=0;
 			$found=false;
-			for ($j=0; $j<count($node["CHILDS"]); $j++) {
-				if (($node["CHILDS"][$j]["TYPE"]==1)&&($node["CHILDS"][$j]["NAME"]==$name)) {
-					//C'est celui là !!
-					if ($nc==$n) {
-						$node=&$node["CHILDS"][$j];
-						$found=true;
-						break;
-					} else $nc++;
+			if(isset($node["CHILDS"])) {
+				for ($j=0; $j<count($node["CHILDS"]); $j++) {
+					if (($node["CHILDS"][$j]["TYPE"]==1)&&($node["CHILDS"][$j]["NAME"]==$name)) {
+						//C'est celui là !!
+						if ($nc==$n) {
+							$node=&$node["CHILDS"][$j];
+							$found=true;
+							break;
+						} else $nc++;
+					}
 				}
 			}
 			if (!$found) return false;
@@ -210,7 +212,7 @@ class xml_dom {
 	 a/b/id@c	Tous les noeuds éléments c fils de a/b. L'attribut est ignoré
 	 \endverbatim
 	 */
-	function get_nodes($path,$node="") {
+	public function get_nodes($path,$node="") {
 		$n=0;
 		$nodes="";
 		while ($nod=$this->get_node($path."[$n]",$node)) {
@@ -230,32 +232,36 @@ class xml_dom {
 	 * @param bool $force_entities true : les données sont renvoyées avec les entités xml, false : les données sont renvoyées sans entités
 	 * @return string données sérialisées du noeud élément
 	 */
-	function get_datas($node,$force_entities=false) {
+	public function get_datas($node,$force_entities=false) {
 		$char="";
 		if ($node["TYPE"]!=1) return false;
 		//Recherche des fils et vérification qu'il n'y a que du texte !
 		$flag_text=true;
-		for ($i=0; $i<count($node["CHILDS"]); $i++) {
-			if ($node["CHILDS"][$i]["TYPE"]!=2) $flag_text=false;
+		if(isset($node["CHILDS"])) {
+			for ($i=0; $i<count($node["CHILDS"]); $i++) {
+				if ($node["CHILDS"][$i]["TYPE"]!=2) $flag_text=false;
+			}
 		}
 		if ((!$flag_text)&&(!$force_entities)) {
 			$force_entities=true;
 		}
-		for ($i=0; $i<count($node["CHILDS"]); $i++) {
-			if ($node["CHILDS"][$i]["TYPE"]==2)
-				if ($force_entities) 
-					$char.=htmlspecialchars($node["CHILDS"][$i]["DATA"],ENT_NOQUOTES,$this->charset);
-				else $char.=$node["CHILDS"][$i]["DATA"];
-			else {
-				$char.="<".$node["CHILDS"][$i]["NAME"];
-				if (count($node["CHILDS"][$i]["ATTRIBS"])) {
-					foreach ($node["CHILDS"][$i]["ATTRIBS"] as $key=>$val) {
-						$char.=" ".$key."=\"".htmlspecialchars($val,ENT_NOQUOTES,$this->charset)."\"";
+		if(isset($node["CHILDS"])) {
+			for ($i=0; $i<count($node["CHILDS"]); $i++) {
+				if ($node["CHILDS"][$i]["TYPE"]==2)
+					if ($force_entities) 
+						$char.=htmlspecialchars($node["CHILDS"][$i]["DATA"],ENT_NOQUOTES,$this->charset);
+					else $char.=$node["CHILDS"][$i]["DATA"];
+				else {
+					$char.="<".$node["CHILDS"][$i]["NAME"];
+					if (count($node["CHILDS"][$i]["ATTRIBS"])) {
+						foreach ($node["CHILDS"][$i]["ATTRIBS"] as $key=>$val) {
+							$char.=" ".$key."=\"".htmlspecialchars($val,ENT_NOQUOTES,$this->charset)."\"";
+						}
 					}
+					$char.=">";
+					$char.=$this->get_datas($node["CHILDS"][$i],$force_entities);
+					$char.="</".$node["CHILDS"][$i]["NAME"].">";
 				}
-				$char.=">";
-				$char.=$this->get_datas($node["CHILDS"][$i],$force_entities);
-				$char.="</".$node["CHILDS"][$i]["NAME"].">";
 			}
 		}
 		return $char;
@@ -268,14 +274,18 @@ class xml_dom {
 	 * @param noeud $node Noeud élément duquel on veut les attributs
 	 * @return mixed Tableau des attributs Nom => Valeur ou false si ce n'est pas un noeud de type 1
 	 */
-	function get_attributes($node) {
+	public function get_attributes($node) {
 		if ($node["TYPE"]!=1) return false;
 		return $node["ATTRIBS"];
 	}
 	
-	function get_attribute($node, $name) {
+	public function get_attribute($node, $name) {
 		if ($node["TYPE"]!=1) return false;
-		return $node["ATTRIBS"][$name];
+		if(isset($node["ATTRIBS"][$name])) {
+			return $node["ATTRIBS"][$name];
+		} else {
+			return '';
+		}
 	}
 	
 	/**
@@ -305,7 +315,8 @@ class xml_dom {
 	 a/b/id@c[3]	Renvoie : "2"
 	 \endverbatim
 	 */
-	function get_value($path,$node="") {
+	public function get_value($path,$node="") {
+		$value = '';
 		$elt=$this->get_node($path,$node);
 		if ($elt) {
 			$paths=explode("/",$path);
@@ -364,13 +375,14 @@ class xml_dom {
 	 a/b/id@c	Renvoie : [0]=>"0",[1]=>"1",[2]=>"2"
 	 \endverbatim
 	 */
-	function get_values($path,$node="") {
+	public function get_values($path,$node="") {
+		$values = array();
 		$n=0;
 		while ($elt=$this->get_node($path."[$n]",$node)) {
 			$elts[$n]=$elt;
 			$n++;
 		}
-		if (count($elts)) {
+		if (isset($elts) && count($elts)) {
 			for ($i=0; $i<count($elts); $i++) {
 				$elt=$elts[$i];
 				$paths=explode("/",$path);

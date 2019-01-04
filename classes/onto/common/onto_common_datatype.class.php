@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_datatype.class.php,v 1.15 2014-08-08 13:29:24 apetithomme Exp $
+// $Id: onto_common_datatype.class.php,v 1.21 2018-09-11 11:33:09 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -49,6 +49,8 @@ abstract class onto_common_datatype {
 	 */
 	protected $datatype_ui_class_name;
 	
+	protected $formated_value;
+	
 	/**
 	 * 
 	 *
@@ -74,7 +76,14 @@ abstract class onto_common_datatype {
 	}
 	
 	public function get_formated_value() {
-		return $this->value;
+	    if (isset($this->formated_value)) {
+	        return $this->formated_value;
+	    }
+	    $this->formated_value = $this->value;
+		if (is_array($this->value)) {
+			$this->formated_value = reset($this->value);
+		}
+		return $this->formated_value;
 	}
 	
 	public function get_raw_value() {
@@ -103,7 +112,7 @@ abstract class onto_common_datatype {
 	}
 		
 	public function offsetget_value_property($offset) {
-		return $this->value_properties[$offset];
+		return isset($this->value_properties[$offset]) ? $this->value_properties[$offset] : null;
 	}
 	
 	/**
@@ -139,22 +148,22 @@ abstract class onto_common_datatype {
 	public static function get_values_from_form($instance_name, $property, $uri_item) {
 		$datatypes = array();
 		$var_name = $instance_name."_".$property->pmb_name;
-		
-		global $$var_name;
-		if ($$var_name && count($$var_name)) {
-			foreach ($$var_name as $order => $data) {
+		global ${$var_name};
+		if (${$var_name} && count(${$var_name})) {
+			
+			foreach (${$var_name} as $order => $data) {
 				$data=stripslashes_array($data);
-				if ($data["value"]) {
+				if (!empty($data["value"])) {
 					$data_properties = array();
-					if ($data["lang"]) {
+					if (!empty($data["lang"])) {
 						$data_properties["lang"] = $data["lang"];
 					}
-					if ($data["type"] == "http://www.w3.org/2000/01/rdf-schema#Literal") {
+					if (!empty($data["type"]) && ($data["type"] == "http://www.w3.org/2000/01/rdf-schema#Literal")) {
 						$data_properties["type"] = "literal";
 					} else {
 						$data_properties["type"] = "uri";
 					}
-					if ($data["display_label"]) {
+					if (!empty($data["display_label"])) {
 						$data_properties["display_label"] = $data["display_label"];
 					}
 					$class_name = get_called_class();

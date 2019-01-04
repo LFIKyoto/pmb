@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: move_empr.js,v 1.5.6.1 2015-10-15 07:53:24 jpermanne Exp $
+// $Id: move_empr.js,v 1.6 2015-10-15 07:52:32 jpermanne Exp $
 
 down=false;
 down_parent=false;

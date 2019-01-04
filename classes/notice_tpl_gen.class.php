@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_tpl_gen.class.php,v 1.8 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: notice_tpl_gen.class.php,v 1.15 2018-10-10 12:15:10 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,23 +14,25 @@ class notice_tpl_gen {
 	// ---------------------------------------------------------------
 	//		propriétés de la classe
 	// ---------------------------------------------------------------	
-	var $id;		// MySQL id in table 'notice_tpl'
-	var $name;		// nom du template
-	var $comment;	// description du template
-	var $code ; 	// Code du template
+	public $id;		// MySQL id in table 'notice_tpl'
+	public $name;		// nom du template
+	public $comment;	// description du template
+	public $code ; 	// Code du template
+	
+	protected static $instances;
 	
 	// ---------------------------------------------------------------
 	//		constructeur
 	// ---------------------------------------------------------------
-	function notice_tpl_gen($id=0) {			
-		$this->id = $id;
+	public function __construct($id=0) {			
+		$this->id = $id+0;
 		$this->getData();
 	}
 	
 	// ---------------------------------------------------------------
 	//		getData() : récupération infos 
 	// ---------------------------------------------------------------
-	function getData() {
+	public function getData() {
 		global $dbh;
 
 		$this->name = '';			
@@ -58,11 +60,11 @@ class notice_tpl_gen {
 		}
 	}
 	
-	function build_notice($id_notice,$location=0,$in_relation=false){
+	public function build_notice($id_notice,$location=0,$in_relation=false, $id_bannette = 0){
 		global $dbh,$parser_environnement;
-		
+
 		$parser_environnement['id_template'] = $this->id;
-		$parser=new parse_format('notice_tpl.inc.php',$in_relation);			
+		$parser=parse_format::get_instance('notice_tpl.inc.php', $in_relation);			
 		
 		$requete = "SELECT typdoc, niveau_biblio FROM notices WHERE notice_id='".$id_notice."' LIMIT 1 ";
 		$result = @pmb_mysql_query($requete, $dbh);
@@ -74,41 +76,70 @@ class notice_tpl_gen {
 		} else return "";
 		
 		// Recherche du code à appliquer (du particulier au général)
-		if($this->code[$location][$niveau_biblio][$typdoc]) {
+		if(isset($this->code[$location][$niveau_biblio][$typdoc])) {
 			$code=$this->code[$location][$niveau_biblio][$typdoc];
-		} elseif ($this->code[$location][$niveau_biblio][0]) {
+		} elseif (isset($this->code[$location][$niveau_biblio][0])) {
 			$code=$this->code[$location][$niveau_biblio][0];
-			
-		} elseif ($this->code[0][$niveau_biblio][$typdoc]) {
+		} elseif (isset($this->code[0][$niveau_biblio][$typdoc])) {
 			$code=$this->code[0][$niveau_biblio][$typdoc];
-		} elseif ($this->code[0][$niveau_biblio][0]) {
+		} elseif (isset($this->code[0][$niveau_biblio][0])) {
 			$code=$this->code[0][$niveau_biblio][0];
-			
-		} elseif ($this->code[0][0][$typdoc]) {
+		} elseif (isset($this->code[0][0][$typdoc])) {
 			$code=$this->code[0][0][$typdoc];
-		} elseif ($this->code[0][0][0]) {
+		} elseif (isset($this->code[0][0][0])) {
 			$code=$this->code[0][0][0];
 		} else return "";
 		
 		$temp = pmb_mysql_fetch_object($result);							
 		$parser->cmd = $code;
 		$parser_environnement['id_notice']=$id_notice;
+		$parser_environnement['id_bannette']=$id_bannette;
 		
 		return $parser->exec_cmd();		
 	}
 	
-	static function gen_tpl_select($select_name="notice_tpl", $selected_id=0, $onchange="",$no_affempty=0,$no_aff_defaut=0) {		
+	public function get_print_css_style() {
+		$css_style = "
+			<style type='text/css'>
+				.tpl_vignette {
+					width: auto !important;
+				    max-width: 140px;
+				    max-height: 200px;
+				    -moz-box-shadow: 1px 1px 5px #666666;
+				    -webkit-box-shadow: 1px 1px 5px #666666;
+				    box-shadow: 1px 1px 5px #666666;
+				}
+			</style>
+				";
+		return $css_style;
+	}
+	
+	static public function gen_tpl_select($select_name="notice_tpl", $selected_id=0, $onchange="",$no_affempty=0,$no_aff_defaut=0, $specific_noselected_message='') {		
 		global $msg,$dbh;
 		// 
 		$requete = "SELECT notpl_id, if(notpl_comment!='',concat(notpl_name,'. ',notpl_comment),notpl_name) as nom FROM notice_tpl ORDER BY notpl_name ";
 		$result = pmb_mysql_query($requete, $dbh);
-		if(!pmb_mysql_num_rows($result) && !$no_affempty) return '';	
-		if(!$no_aff_defaut)
-			return gen_liste ($requete, "notpl_id", "nom", $select_name, $onchange, $selected_id, 0, $msg["notice_tpl_list_default"], 0,$msg["notice_tpl_list_default"], 0) ;
-		else
+		if (!pmb_mysql_num_rows($result) && !$no_affempty) {
+			return '';	
+		}
+		if(!$no_aff_defaut) {
+			$msg_defaut = $msg["notice_tpl_list_default"];
+			if (trim($specific_noselected_message)) {
+				$msg_defaut = $specific_noselected_message;
+			}
+			return gen_liste ($requete, "notpl_id", "nom", $select_name, $onchange, $selected_id, 0, $msg_defaut, 0, $msg_defaut, 0) ;
+		} else {
 			return gen_liste ($requete, "notpl_id", "nom", $select_name, $onchange, $selected_id, 0, '', 0,'', 0) ;
-				
+		}
 		
+	}
+	
+	public static function get_instance($id=0) {
+		$id += 0;
+		if(!isset(static::$instances[$id])) {
+			static::$instances[$id] = new notice_tpl_gen($id);
+		}
+		return static::$instances[$id];
 	}
 } // fin class 
 

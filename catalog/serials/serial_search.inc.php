@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serial_search.inc.php,v 1.28 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: serial_search.inc.php,v 1.33 2017-10-19 14:21:11 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($page)) $page = 0;
 
 require_once("$include_path/templates/catalog.tpl.php");
 require_once("$include_path/isbn.inc.php");
@@ -47,7 +49,7 @@ if ($gestion_acces_active==1 && $gestion_acces_user_notice==1) {
 // résultat de recherche pour gestion des périodiques
 echo str_replace('!!page_title!!', $msg[4000].$msg[1003].$msg["recherche"], $serial_header);
 
-$base_url = "./catalog.php?categ=serials&sub=search&user_query=".rawurlencode(stripslashes($user_query));
+$base_url = "./catalog.php?categ=serials&sub=search&user_query=".rawurlencode(stripslashes($user_query)).(isset($filter_abo_actif) && $filter_abo_actif?"&filter_abo_actif=1":"");
 
 print $serial_access_form;
 
@@ -76,6 +78,9 @@ if ($issn_query) {
 	}
 }
 $where.="niveau_biblio='s' AND niveau_hierar='1'";
+if (isset($filter_abo_actif) && $filter_abo_actif) {
+	$where.= " and notice_id IN (select DISTINCT(num_notice) from abts_abts  where date_fin >= CURDATE())";
+}
 
 $requete_count = "select count(distinct notice_id) from notices $acces_j where $where ";
 $count_query = pmb_mysql_query($requete_count, $dbh); 
@@ -120,13 +125,13 @@ if (!$nbr_lignes) {
 		$link_bulletin = './catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=!!id!!';
 		$link_explnum = "./catalog.php?categ=serials&sub=analysis&action=explnum_form&bul_id=!!bul_id!!&analysis_id=!!analysis_id!!&explnum_id=!!explnum_id!!";
 		// function serial_display ($id, $level='1', $action_serial='', $action_analysis='', $action_bulletin='', $lien_suppr_cart="", $lien_explnum="", $bouton_explnum=1,$print=0,$show_explnum=1, $show_statut=0) 
-		$serial = new serial_display($perio->notice_id, 6, $link_serial, $link_analysis, $link_bulletin, "", $link_explnum, 0, 0, 1, 1 ,true,0,$recherche_ajax_mode);
+		$serial = new serial_display($perio->notice_id, 6, $link_serial, $link_analysis, $link_bulletin, "", $link_explnum, 0, 0, 1, 1 ,true,0,$recherche_ajax_mode, '', false, 1, 0, 1);
 		print pmb_bidi($serial->result);
 	}
 	print '</div>';
 
 	// affichage de la pagination
-	print "<div class='row'><div align='center'>";
+	print "<div class='row'><div class='center'>";
 	$nav_bar = aff_pagination ($base_url, $nbr_lignes, $nb_per_page_a_search, $page, 10, false, true) ;
 	print $nav_bar;
 	print '</div></div>';

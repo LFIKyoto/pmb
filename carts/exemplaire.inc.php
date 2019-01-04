@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: exemplaire.inc.php,v 1.14 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: exemplaire.inc.php,v 1.15 2016-09-06 15:36:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -51,14 +51,6 @@ if($item) {
 			print "<script type='text/javascript'>window.close();</script>"; 
 			break;
 		case 'new_cart':
-			$select_cart="
-			<select name='cart_type'>
-				<option value='NOTI'>$msg[caddie_de_NOTI]</option>
-				<option value='EXPL'selected >$msg[caddie_de_EXPL]</option>
-				<option value='BULL'>$msg[caddie_de_BULL]</option>
-			</select>";
-		 	$c_form=str_replace('!!cart_type_select!!', $select_cart, $cart_form);
-			print $c_form;
 			break;
 		case 'del_cart':
 		case 'valid_new_cart':		
@@ -69,5 +61,5 @@ if($item) {
 		}
 	} else {
 		print "<h1>".$msg["fonct_no_accessible"]."</h1>";
-		}
+	}
 

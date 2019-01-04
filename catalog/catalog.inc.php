@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: catalog.inc.php,v 1.40 2015-01-14 11:31:08 dgoron Exp $
+// $Id: catalog.inc.php,v 1.45 2018-09-05 15:27:30 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -36,12 +36,16 @@ require_once("$include_path/explnum.inc.php") ;
 require_once("$include_path/expl_info.inc.php") ;
 require_once("$include_path/bull_info.inc.php") ;
 require_once("$include_path/resa_func.inc.php") ;
+require_once($base_path."/catalog/expl/prix_expl.inc.php");
 if ($pmb_prefill_cote) {
-	require_once("./catalog/expl/$pmb_prefill_cote"); 
+	require_once("./catalog/expl/$pmb_prefill_cote");
 } else {
 	require_once("./catalog/expl/custom_no_cote.inc.php");
 }
-if($pmb_javascript_office_editor) print $pmb_javascript_office_editor;
+if($pmb_javascript_office_editor){
+	print $pmb_javascript_office_editor;
+	print "<script type='text/javascript' src='".$base_path."/javascript/tinyMCE_interface.js'></script>";
+}
 
 switch($categ) {
 	case 'update':
@@ -55,7 +59,7 @@ switch($categ) {
 		break;
 	case 'expl_update':
 		include('./catalog/expl/expl_update.inc.php');
-		break;	
+		break;
 	case 'expl_create':
 		include('./catalog/expl/expl_create.inc.php');
 		break;
@@ -73,10 +77,10 @@ switch($categ) {
 		break;
 	case 'del_expl':
 		include('./catalog/expl/del_expl.inc.php');
-		break;	
+		break;
 	case 'dupl_expl':
 		include('./catalog/expl/dupl_expl.inc.php');
-		break;	
+		break;
 	case 'search':
 		include('./catalog/notices/search/main.inc.php');
 		break;
@@ -100,25 +104,25 @@ switch($categ) {
 		break;
 	case 'search_perso':
 		include('./catalog/search_perso/main.inc.php');
-		break;		
+		break;
 	case 'remplace':
 		include('./catalog/notices/notice_replace.inc.php');
 		break;
 	case 'duplicate':
-		print "<h1>$msg[catal_duplicate_notice]</h1>"; 
+		print "<h1>$msg[catal_duplicate_notice]</h1>";
 		// routine de copie
 		$notice = new notice($id);
 		$notice->id=0 ;
 		$notice->code="" ;
-		$notice->duplicate_from_id = $id ; 
+		$notice->duplicate_from_id = $id ;
 		print pmb_bidi($notice->show_form()) ;
 		break;
 	case 'explnum_create':
-		include('./catalog/explnum/explnum_create.inc.php'); 
+		include('./catalog/explnum/explnum_create.inc.php');
 		break;
 	case 'explnum_update':
 		include('./catalog/explnum/explnum_update.inc.php');
-		break;	
+		break;
 	case 'edit_explnum':
 		include('./catalog/explnum/edit_explnum.inc.php');
 		break;
@@ -127,11 +131,11 @@ switch($categ) {
 		break;
 	case 'del_explnum':
 		include('./catalog/explnum/del_explnum.inc.php');
-		break;	
+		break;
 	case 'sug' :
 		//Création de suggestion
 		include("./catalog/suggestions/make_sug.inc.php");
-		break;	
+		break;
 	case 'avis':
 		include("./catalog/notices/avis.inc.php");
 		break;
@@ -143,6 +147,19 @@ switch($categ) {
 		break;
 	case 'harvest':
 		include("./catalog/harvest/harvest.inc.php");
+		break;
+	case 'plugin' :
+		$plugins = plugins::get_instance();
+		$file = $plugins->proceed("catalog",$plugin,$sub);
+		if($file){
+			include $file;
+		}
+		break;
+	case 'contribution_area':
+		include("./catalog/contribution_area/main.inc.php");
+		break;
+	case 'rdf_conversion':
+		include("./catalog/notices/rdf_conversion.inc.php");
 		break;
 	default:
 		include('./catalog/notices/search/main.inc.php');

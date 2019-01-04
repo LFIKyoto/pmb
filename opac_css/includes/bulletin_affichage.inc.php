@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bulletin_affichage.inc.php,v 1.21.2.1 2015-09-24 15:48:15 dgoron Exp $
+// $Id: bulletin_affichage.inc.php,v 1.24 2018-08-24 08:44:59 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -17,7 +17,7 @@ function bulletin_affichage_reduit($id, $no_link=0) {
 	$obj = pmb_mysql_fetch_object($res3) ;
 	$notice3 = new notice($obj->bulletin_notice);
 
-	$res_print = "<h3><img src=./images/icon_per.gif>" ;
+	$res_print = "<h3><img src='".get_url_icon('icon_per.gif')."' alt=''>" ;
 	if ($no_link) $res_print .= $notice3->tit1 ;
 		else $res_print .= $notice3->print_resume(1,$css) ;
 	$res_print .= ". <b>".$obj->bulletin_numero."</b></h3>\n";
@@ -59,14 +59,14 @@ function bulletin_affichage($id,$type=""){
 		$req = "select explnum_id from explnum where explnum_bulletin = ".$obj["bulletin_id"];
 		$resultat = pmb_mysql_query($req, $dbh) or die ($req." ".pmb_mysql_error());
 		$nb_ex = pmb_mysql_num_rows($resultat);
-		$res_print = "<h3><img src=./images/icon_per.gif> ".$notice3->print_resume(1,$css)."."." <b>".$obj["bulletin_numero"]."</b>".($nb_ex ? "&nbsp;<a href='#docnum'>".($nb_ex > 1 ? "<img src='".get_url_icon("globe_rouge.png")."' />" : "<img src='".get_url_icon("globe_orange.png")."' />")."</a>" : "")."</h3>\n";
+		$res_print = "<h3><img src='".get_url_icon('icon_per.gif')."' alt=''> ".$notice3->print_resume(1,$css)."."." <b>".$obj["bulletin_numero"]."</b>".($nb_ex ? "&nbsp;<a href='#docnum'>".($nb_ex > 1 ? "<img src='".get_url_icon("globe_rouge.png")."' />" : "<img src='".get_url_icon("globe_orange.png")."' />")."</a>" : "")."</h3>\n";
 		$num_notice=$obj['num_notice'];
 		if ($obj['bulletin_titre']) {
 			$res_print .=  htmlentities($obj['bulletin_titre'],ENT_QUOTES, $charset)."<br />";
 		} 
 		if ($obj['mention_date']) $res_print .= $msg['bull_mention_date']." &nbsp;".$obj['mention_date']."\n"; 
 		if ($obj['date_date']) $res_print .= "<br />".$msg['bull_date_date']." &nbsp;".$obj['aff_date_date']." \n";     
-		if($type != "visionneuse" && $nb_ex) $res_print .= "<br /><a href='#docnum'>".($nb_ex > 1 ? "<img src='".get_url_icon("globe_rouge.png")."' />" : "<img src='".get_url_icon("globe_orange.png")."' />")."</a>";
+		if($type != "visionneuse" && $nb_ex) $res_print .= "<br /><a href='#docnum'>".($nb_ex > 1 ? "<img src='".get_url_icon("globe_rouge.png")."' alt=''/>" : "<img src='".get_url_icon("globe_orange.png")."' alt=''/>")."</a>";
 		if ($obj['bulletin_cb']) {
 			$res_print .= "<br />".$msg["code_start"]." ".htmlentities($obj['bulletin_cb'],ENT_QUOTES, $charset)."\n";
 			$code_cb_bulletin = $obj['bulletin_cb'];

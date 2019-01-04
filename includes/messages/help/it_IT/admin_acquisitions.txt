@@ -1,4 +1,4 @@
-<h1>Acquisizioni</h1>
+<h2>Acquisizioni</h2>
 </p><p>
 <b>Coordinate</b> scheda di identit&agrave; della biblioteca.
 </p><p>

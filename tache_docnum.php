@@ -3,7 +3,7 @@
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // | creator : PMB Services                                                   |
 // +-------------------------------------------------+
-// $Id: tache_docnum.php,v 1.5 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: tache_docnum.php,v 1.7 2018-02-26 17:01:59 apetithomme Exp $
 
 // définition du minimum nécéssaire 
 $base_path     = ".";                            
@@ -49,7 +49,7 @@ if (($ligne->tache_docnum_data)||($ligne->tache_docnum_path)) {
 		$name = " name='$name' ";
 	} else $type="type='$ligne->tache_docnum_mimetype'" ;
 	if ($_mimetypes_bymimetype_[$ligne->tache_docnum_mimetype]["embeded"]=="yes") {
-		print "<html><body><EMBED src=\"./doc_num_data.php?explnum_id=$explnum_id\" $type $name controls='console' ></EMBED></body></html>" ;
+		print "<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" /></head><body><EMBED src=\"./doc_num_data.php?explnum_id=$explnum_id\" $type $name controls='console' ></EMBED></body></html>" ;
 		exit ;
 	}
 	
@@ -59,7 +59,7 @@ if (($ligne->tache_docnum_data)||($ligne->tache_docnum_path)) {
 	}
 	elseif ($ligne->tache_docnum_extfichier)
 		$nomfichier="pmb".$ligne->id_tache_docnum.".".$ligne->tache_docnum_extfichier;
-	if ($nomfichier) header("Content-Disposition: inline; filename=".$nomfichier);
+	if ($nomfichier) header('Content-Disposition: inline; filename="'.$nomfichier.'"');
 	
 	header("Content-Type: ".$ligne->tache_docnum_mimetype);
 	print $ligne->tache_docnum_data;

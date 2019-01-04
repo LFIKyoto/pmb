@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: impr_etiquette.inc.php,v 1.1.2.3 2015-10-22 14:36:36 jpermanne Exp $
+// $Id: impr_etiquette.inc.php,v 1.3 2017-06-23 08:53:15 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -59,7 +59,7 @@ function aff_choix_quoi_impr_cote($action = "", $action_redo="", $action_cancel 
 
 	//Lecture des formats de planches d'étiquettes
 	$label_fmt_sel = "";
-	$label_fmt_sel .= "<label class='etiquette'>" . htmlentities($msg[label_format], ENT_QUOTES, $charset) . "</label>&nbsp;";
+	$label_fmt_sel .= "<label class='etiquette'>" . htmlentities($msg['label_format'], ENT_QUOTES, $charset) . "</label>&nbsp;";
 	$label_fmt_sel .= "<select id='label_id' name='label_id' onchange=\"this.form.setAttribute('action', '".$action_redo."');this.form.submit(); \">";
 
 	//Formats disponibles

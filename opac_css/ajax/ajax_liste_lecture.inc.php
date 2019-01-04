@@ -2,29 +2,45 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_liste_lecture.inc.php,v 1.7 2015-04-03 11:16:27 jpermanne Exp $
+// $Id: ajax_liste_lecture.inc.php,v 1.14 2017-10-18 09:16:50 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+require_once($class_path."/liste_lecture.class.php");
 require_once($include_path."/mail.inc.php");
 
 switch($quoifaire){
-	
 	case 'show_form':
 		show_form($id);	
-	break;
-	
+		break;
 	case 'send_demande':
 		send_demande($id);
-	break;
-	
+		break;
 	case 'show_refus_form':
 		show_refus_form();
 		break;
-	
 	case 'delete_empr':
-		delete_empr($id,$empr);
-	break;
+		$liste_lecture = new liste_lecture($id, 'fetch_empr');
+		$liste_lecture->delete_empr_in_list($id_empr_to_deleted);
+		print $liste_lecture->get_display_empr();
+		break;
+	case 'add_empr':
+		$liste_lecture = new liste_lecture($id, 'fetch_empr');
+		$liste_lecture->add_empr_in_list($id_empr_to_added);
+		print $liste_lecture->get_display_empr(); 
+		break;
+	case 'add_notice':
+		$liste_lecture = new liste_lecture($id);
+		$added = $liste_lecture->add_notice($id_notice);
+		if($added) {
+			print '1';
+		} else {
+			print '0';
+		}
+		break;
+	case 'unicite_nom_liste':
+		unicite_nom_liste($nom_liste, $id_liste);
+		break;
 }
 
 /**
@@ -38,7 +54,7 @@ function show_form($id){
 	$idempr = pmb_mysql_result($res,0,0);
 	
 	$display .= "<div class='row'>
-					<font style='color:red'><label class='etiquette'>".htmlentities($msg[list_lecture_mail_inscription],ENT_QUOTES,$charset)."</label></font>
+					<span style='color:red;'><label class='etiquette'>".htmlentities($msg[list_lecture_mail_inscription],ENT_QUOTES,$charset)."</label></span>
 				</div>
 				<div class='row'>
 					<label class='etiquette' >".htmlentities($msg[list_lecture_demande_inscription],ENT_QUOTES,$charset)."</label>
@@ -100,53 +116,20 @@ function send_demande($id_liste){
 	mailpmb($diffuseur->nom,$diffuseur->empr_mail,$objet,stripslashes($corps),$empr_prenom." ".$empr_nom,$empr_mail);
 }
 
-/*
- * Fonction qui supprime un inscrit à une liste confidentielle
- */
-function delete_empr($id_liste,$id_empr){
-	global $dbh, $msg, $opac_url_base, $opac_connexion_phrase, $empr_nom, $empr_prenom,$empr_mail;
-	
-	//envoi du mail de désinscription
-	$req = "select empr_login, empr_mail, concat(empr_prenom,' ',empr_nom) as nom, nom_liste 
-	from abo_liste_lecture abo, opac_liste_lecture, empr 
-	where abo.num_empr=id_empr and id_liste=num_liste
-	and num_liste='".$id_liste."' and abo.num_empr='".$id_empr."'";
-	$res = pmb_mysql_query($req,$dbh);
-	$inscrit = pmb_mysql_fetch_object($res);
-	
-	$objet = sprintf($msg['list_lecture_objet_unsubscribe_mail'],$inscrit->nom_liste);
-	$date = time();
-	$login = $inscrit->empr_login;
-	$code=md5($opac_connexion_phrase.$login.$date);
-	$corps = sprintf($msg['list_lecture_intro_mail'],$inscrit->nom,$inscrit->nom_liste).", <br />".sprintf($msg['list_lecture_unsubscribe_mail'],$empr_prenom." ".$empr_nom,$inscrit->nom_liste);
-	if($com) $corps .= sprintf("<br />".$msg['list_lecture_corps_com_mail'],$empr_prenom." ".$empr_nom,"<br />".$com."<br />");
-	$corps .= "<br /><br /><a href='".$opac_url_base."empr.php?code=$code&emprlogin=$login&date_conex=$date&tab=lecture&lvl=private_list&sub=my_list' >".$msg['redirection_mail_link']."</a>";
-	
-	mailpmb($inscrit->nom,$inscrit->empr_mail,$objet,stripslashes($corps),$empr_prenom." ".$empr_nom,$empr_mail);
-	
-	//désinscripiton
-	$requete = "delete from abo_liste_lecture where num_liste='".$id_liste."' and num_empr='".$id_empr."'"; 
-	pmb_mysql_query($requete,$dbh);
-	
-	//réaffichage de la liste
-	$req = "select id_empr, trim(concat(empr_prenom,' ',empr_nom)) as nom, confidential 
-	from empr e, abo_liste_lecture abo, opac_liste_lecture oll 
-	where abo.num_empr=e.id_empr and oll.id_liste=abo.num_liste 
-	and etat=2 and num_liste='".$id_liste."'
-	order by nom";
+function unicite_nom_liste($nom_liste, $id_liste){
+	global $dbh;
+
+	$req = "select id_empr from empr where empr_login='".$_SESSION['user_code']."'";
 	$res=pmb_mysql_query($req,$dbh);
-	if(!pmb_mysql_num_rows($res)){
-		$display = $msg[list_lecture_no_user_inscrit];
-		print $display;
-		return;
+	$idempr = pmb_mysql_result($res,0,0);
+
+	if (!$id_liste) {
+		$id_liste = 0;
 	}
-	$display="";
-	while(($empr=pmb_mysql_fetch_object($res))){
-		if($empr->confidential) $display .= "<img border=0 align='top' src='".$opac_url_base."images/cross.png'  onclick=\"delete_from_liste('".$id_liste."','".$empr->id_empr."');\">";
-		$display .= $empr->nom."<br />";
-	}
-	
-	print $display;
-	
+	$req = "select * from opac_liste_lecture where num_empr='".$idempr."' and nom_liste='".addslashes($nom_liste)."' and id_liste<>".$id_liste;
+	$res = pmb_mysql_query($req,$dbh);
+
+	print pmb_mysql_num_rows($res);
+
 }
 ?>

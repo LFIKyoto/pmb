@@ -2,14 +2,21 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: collections_state.inc.php,v 1.9 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: collections_state.inc.php,v 1.13 2018-07-25 11:52:25 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+require_once($class_path.'/caddie.class.php');
+require_once($class_path.'/encoding_normalize.class.php');
+
 function ajax_calculate_collections_state() {
-	global $msg,$id_location,$id_serial;
+	global $msg,$id_location,$id_serial, $bulletins;
 	
-	$rqt="select bulletin_id,bulletin_numero,mention_date from bulletins where bulletin_notice=$id_serial order by date_date";
+	if($bulletins != '') {
+		$rqt="select bulletin_id,bulletin_numero,mention_date from bulletins where bulletin_id IN (".$bulletins.") order by date_date";
+	} else {
+		$rqt="select bulletin_id,bulletin_numero,mention_date from bulletins where bulletin_notice=$id_serial order by date_date";
+	}
 	
 	$execute_query=pmb_mysql_query($rqt);
 	$compt=pmb_mysql_num_rows($execute_query);
@@ -42,7 +49,7 @@ function ajax_calculate_collections_state() {
 			if ($debut === "") $debut=count($t)-1;
 			//comptage des bulletins avec des exemplaires associés
 			$i++;
-		}	
+		}
 	}
 	//si tous les bulletins ont des exemplaires associés, on prend l'intégralité de la liste
 	if ($i==$compt) {
@@ -103,15 +110,117 @@ function ajax_modify_collections_state() {
 	return;
 }
 
-switch ($fname) {
-	case "calculate_collections_state":
-		ajax_calculate_collections_state();
-		break;
-	case "modify_collections_state":
-		ajax_modify_collections_state();
+function ajax_add_expl_to_carts() {
+	global $id_caddie_bull, $id_caddie_expl, $cb_expl;
+	
+	$id_caddie_bull += 0;
+	$id_caddie_expl += 0;
+	
+	if (!$cb_expl || !$id_caddie_bull || !$id_caddie_expl) {
+		return 0;
+	}
+	if(!caddie::is_reachable($id_caddie_bull) || !caddie::is_reachable($id_caddie_expl)) {
+		return 0;
+	}
+	$query = 'select expl_id from exemplaires where expl_cb = "'.$cb_expl.'"';
+	$result = pmb_mysql_query($query);
+	if (pmb_mysql_num_rows($result)) {
+		$expl_id = pmb_mysql_result($result, 0, 0);
+		$caddie_bull = new caddie($id_caddie_bull);
+		$return = $caddie_bull->add_item($expl_id, 'EXPL');
+		if ($return != CADDIE_ITEM_OK) {
+			return 0;
+		}
+		$caddie_expl = new caddie($id_caddie_expl);
+		$return = $caddie_expl->add_item($expl_id, 'EXPL');
+		if ($return != CADDIE_ITEM_OK) {
+			return 0;
+		}
+		return 1;
+	}
+	return 0;
+}
+
+function ajax_get_data_expl_list() {
+	global $id_caddie_expl, $id_caddie_bull, $id_location;
+	
+	$id_caddie_bull += 0;
+	$id_caddie_expl += 0;
+	$id_location += 0;
+	
+	$data = array(
+		'caddie_bull' => array(),
+		'caddie_expl' => array(),
+		'nb_expl' => 0,
+		'expl_list' => array(),
+		'bulletins' => array(),
+		'cote' => ''
+	);
+	if ($id_caddie_expl && $id_caddie_bull) {
+		if(caddie::is_reachable($id_caddie_bull) && caddie::is_reachable($id_caddie_expl)) {
+			$data['caddie_bull'] = caddie::get_data_from_id($id_caddie_bull);
+			$data['caddie_expl'] = caddie::get_data_from_id($id_caddie_expl);
+			$query = 'select count(object_id) from caddie_content join exemplaires on expl_id = object_id and expl_bulletin <> 0 ';
+			if($id_location) {
+				$query .= 'and expl_location = '.$id_location.' ';
+			}
+			$query .= 'left join bulletins on expl_bulletin = bulletin_id
+					where caddie_id = '.$id_caddie_expl.' and flag is null and expl_bulletin in (select object_id from caddie_content where caddie_id = '.$id_caddie_bull.' and flag is null)';
+			$result = pmb_mysql_query($query);
+			$data['nb_expl'] = pmb_mysql_result($result, 0, 0);
+			if($data['nb_expl']) {
+				$query = 'select object_id, expl_notice, expl_bulletin, expl_cote from caddie_content join exemplaires on expl_id = object_id and expl_bulletin <> 0 ';
+				if($id_location) {
+					$query .= 'and expl_location = '.$id_location.' ';
+				}
+				$query .= 'left join bulletins on expl_bulletin = bulletin_id 
+						where caddie_id = '.$id_caddie_expl.' and flag is null and expl_bulletin in (select object_id from caddie_content where caddie_id = '.$id_caddie_bull.' and flag is null)
+						order by date_date limit 100';
+				$result = pmb_mysql_query($query);
+				if (pmb_mysql_num_rows($result)) {
+					while ($row = pmb_mysql_fetch_object($result)) {
+						if($row->expl_bulletin) {
+							$expl = new mono_display_expl(0, $row->object_id, 0, './catalog.php?categ=serials&sub=bulletinage&action=expl_form&bul_id='.$row->expl_bulletin.'&expl_id='.$row->object_id);
+						} else {
+							$expl = new mono_display_expl(0, $row->object_id, 0, './catalog.php?categ=edit_expl&id='.$row->expl_notice.'&expl_id='.$row->object_id);
+						}
+						$data['expl_list'][] = $expl->isbd;
+						$data['bulletins'][] = $row->expl_bulletin;
+						if (!$data['cote']) {
+							$data['cote'] = $row->expl_cote;
+						}
+					}
+					$data['bulletins'] = array_unique($data['bulletins']);
+				}
+			}
+		}
+	}
+	return $data;
+}
+
+switch($action) {
+	case 'list':
+		require_once($class_path.'/list/lists_controller.class.php');
+		lists_controller::proceed_ajax($object_type);
 		break;
 	default:
-		ajax_http_send_error("404 Not Found","Invalid command : ".$fname);
+		switch ($fname) {
+			case "calculate_collections_state":
+				ajax_calculate_collections_state();
+				break;
+			case "modify_collections_state":
+				ajax_modify_collections_state();
+				break;
+			case "add_expl":
+				print ajax_add_expl_to_carts();
+				break;
+			case "get_data_expl_list":
+				print json_encode(encoding_normalize::utf8_normalize(ajax_get_data_expl_list()));
+				break;
+			default:
+				ajax_http_send_error("404 Not Found","Invalid command : ".$fname);
+				break;
+		}
 		break;
 }
 

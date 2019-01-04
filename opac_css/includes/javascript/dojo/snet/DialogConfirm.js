@@ -3,7 +3,7 @@ define([
 	'dojo/_base/declare',
 	'dojo/dom-construct',
 	'dojo/_base/Deferred',
-	'dijit/Dialog',
+	'apps/pmb/PMBDialog',
 	'dijit/form/Button',
 	'dijit/form/CheckBox'
 ], function(lang, declare, construct, Deferred, Dialog, Button, CheckBox) {

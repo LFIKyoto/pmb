@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_records_bannette.class.php,v 1.2 2014-12-05 09:57:16 arenou Exp $
+// $Id: cms_module_common_datasource_records_bannette.class.php,v 1.3 2016-05-17 09:07:15 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -48,7 +48,9 @@ class cms_module_common_datasource_records_bannette extends cms_module_common_da
 				}
 			}
 			$records = $this->filter_datas("notices",$records);
-			$records = array_slice($records, 0, $this->parameters['nb_max_elements']);
+			if($this->parameters['nb_max_elements'] > 0){
+				$records = array_slice($records, 0, $this->parameters['nb_max_elements']);
+			}
 			$return = array(
 					'title'=> 'Liste de Notices',
 					'records' => $records

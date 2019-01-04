@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: amazon.class.php,v 1.28.2.1 2015-09-15 14:32:56 apetithomme Exp $
+// $Id: amazon.class.php,v 1.35 2018-07-16 08:57:11 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,51 +12,34 @@ require_once($class_path."/nusoap/nusoap.php");
 
 class amazon extends connector {
 	//Variables internes pour la progression de la récupération des notices
-	var $del_old;				//Supression ou non des notices dejà existantes
 	
-	var $profile;				//Profil Amazon
-	var $match;					//Tableau des critères UNIMARC / AMAZON
-	var $current_site;			//Site courant du profile (n°)
-	var $searchindexes;			//Liste des indexes de recherche possibles pour le site
-	var $current_searchindex;	//Numéro de l'index de recherche de la classe
-	var $match_index;			//Type de recherche (power ou simple)
-	var $types;					//Types de documents pour la conversino des notices
+	public $profile;				//Profil Amazon
+	public $match;					//Tableau des critères UNIMARC / AMAZON
+	public $current_site;			//Site courant du profile (n°)
+	public $searchindexes;			//Liste des indexes de recherche possibles pour le site
+	public $current_searchindex;	//Numéro de l'index de recherche de la classe
+	public $match_index;			//Type de recherche (power ou simple)
+	public $types;					//Types de documents pour la conversino des notices
 	
-	//Résultat de la synchro
-	var $error;					//Y-a-t-il eu une erreur	
-	var $error_message;			//Si oui, message correspondant
+	public $last_query_datetime="";//Timestamp de la dernière requête dans l'instance en cours
 	
-	var $last_query_datetime="";//Timestamp de la dernière requête dans l'instance en cours
-	
-    function amazon($connector_path="") {
-    	parent::connector($connector_path);
+    public function __construct($connector_path="") {
+        parent::__construct($connector_path);
+        if(!file_exists($connector_path."/profil.xml")) return;
     	$xml=file_get_contents($connector_path."/profil.xml");
  		$this->profile=_parser_text_no_function_($xml,"AWSCONFIG");
     }
     
-    function get_id() {
+    public function get_id() {
     	return "amazon";
     }
     
     //Est-ce un entrepot ?
-	function is_repository() {
+	public function is_repository() {
 		return 2;
 	}
     
-    function unserialize_source_params($source_id) {
-    	$params=$this->get_source_params($source_id);
-		if ($params["PARAMETERS"]) {
-			$vars=unserialize($params["PARAMETERS"]);
-			$params["PARAMETERS"]=$vars;
-		}
-		return $params;
-    }
-    
-    function get_libelle($message) {
-    	if (substr($message,0,4)=="msg:") return $this->msg[substr($message,4)]; else return $message;
-    }
-    
-    function source_get_property_form($source_id) {
+    public function source_get_property_form($source_id) {
     	global $charset;
     	
     	$params=$this->get_source_params($source_id);
@@ -64,8 +47,8 @@ class amazon extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		$sites=$this->profile["SITES"][0]["SITE"];
@@ -136,7 +119,7 @@ class amazon extends connector {
 		return $form;
     }
     
-    function make_serialized_source_properties($source_id) {
+    public function make_serialized_source_properties($source_id) {
     	global $url,$response_group,$search_index,$max_return,$review_height,$review_width;
     	$t["url"]=stripslashes($url);
     	$t["response_group"]=$response_group;
@@ -147,17 +130,8 @@ class amazon extends connector {
 		$this->sources[$source_id]["PARAMETERS"]=serialize($t);
 	}
 	
-	//Récupération  des proriétés globales par défaut du connecteur (timeout, retry, repository, parameters)
-	function fetch_default_global_values() {
-		$this->timeout=5;
-		$this->repository=2;
-		$this->retry=3;
-		$this->ttl=1800;
-		$this->parameters="";
-	}
-	
 	 //Formulaire des propriétés générales
-	function get_property_form() {
+	public function get_property_form() {
 		global $charset;
 		$this->fetch_global_properties();
 		//Affichage du formulaire en fonction de $this->parameters
@@ -186,7 +160,7 @@ class amazon extends connector {
 		return $r;
 	}
     
-    function make_serialized_properties() {
+    public function make_serialized_properties() {
     	global $accesskey, $secretkey, $associatetag;
 		//Mise en forme des paramètres à partir de variables globales (mettre le résultat dans $this->parameters)
 		$keys = array();
@@ -197,7 +171,7 @@ class amazon extends connector {
 		$this->parameters = serialize($keys);
 	}
 	
-	function rec_record($record,$source_id,$search_id) {
+	public function rec_record($record,$source_id,$search_id) {
 		global $charset,$base_path,$url,$search_index;
 
 		$date_import=date("Y-m-d H:i:s",time());
@@ -208,14 +182,11 @@ class amazon extends connector {
 		if ($ref) {
 			//Si conservation des anciennes notices, on regarde si elle existe
 			if (!$this->del_old) {
-				$requete="select count(*) from entrepot_source_".$source_id." where ref='".addslashes($ref)."' and search_id='".addslashes($search_id)."'";
-				$rref=pmb_mysql_query($requete);
-				if ($rref) $ref_exists=pmb_mysql_result($rref,0,0);
+				$ref_exists = $this->has_ref($source_id, $ref, $search_id);
 			}
 			//Si pas de conservation des anciennes notices, on supprime
 			if ($this->del_old) {
-				$requete="delete from entrepot_source_".$source_id." where ref='".addslashes($ref)."' and search_id='".addslashes($search_id)."'";
-				pmb_mysql_query($requete);
+				$this->delete_from_entrepot($source_id, $ref, $search_id);
 				$this->delete_from_external_count($source_id, $ref);
 			}
 			//Si pas de conservation ou reférence inexistante
@@ -230,15 +201,10 @@ class amazon extends connector {
 				if (!$n_header["dt"]) $n_header["dt"]="a";
 				
 				//Récupération d'un ID
-				$requete="insert into external_count (recid, source_id) values('".addslashes($this->get_id()." ".$source_id." ".$ref)."', ".$source_id.")";
-				$rid=pmb_mysql_query($requete);
-				if ($rid) $recid=pmb_mysql_insert_id();
+				$recid = $this->insert_into_external_count($source_id, $ref);
 				
 				foreach($n_header as $hc=>$code) {
-					$requete="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid,search_id) values(
-					'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".$date_import."',
-					'".$hc."','',-1,0,'".addslashes($code)."','',$recid,'".addslashes($search_id)."')";
-					pmb_mysql_query($requete);
+					$this->insert_header_into_entrepot($source_id, $ref, $date_import, $hc, $code, $recid, $search_id);
 				}
 				$field_order=0;
 				foreach ($record as $field=>$val) {
@@ -247,37 +213,22 @@ class amazon extends connector {
 							foreach ($val[$i] as $sfield=>$vals) {
 								for ($j=0; $j<count($vals); $j++) {
 									//if ($charset!="utf-8")  $vals[$j]=utf8_decode($vals[$j]);
-									$requete="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid,search_id) values(
-									'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".$date_import."',
-									'".addslashes($field)."','".addslashes($sfield)."',".$field_order.",".$j.",'".addslashes($vals[$j])."',
-									' ".addslashes(strip_empty_words($vals[$j]))." ',$recid,'".addslashes($search_id)."')";
-									pmb_mysql_query($requete);
+									$this->insert_content_into_entrepot($source_id, $ref, $date_import, $field, $sfield, $field_order, $j, $vals[$j], $recid, $search_id);
 								}
 							}
 						} else {
 							//if ($charset!="utf-8")  $vals[$i]=utf8_decode($vals[$i]);
-							$requete="insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid) values(
-							'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".$date_import."',
-							'".addslashes($field)."','',".$field_order.",0,'".addslashes($val[$i])."',
-							' ".addslashes(strip_empty_words($val[$i]))." ',$recid,'".addslashes($search_id)."')";
-							pmb_mysql_query($requete);
+							$this->insert_content_into_entrepot($source_id, $ref, $date_import, $field, '', $field_order, 0, $val[$i], $recid, $search_id);
 						}
 						$field_order++;
 					}
 				}
+				$this->rec_isbd_record($source_id, $ref, $recid);
 			}
 		}
 	}
-		
-	function cancel_maj($source_id) {
-		return false;
-	}
 	
-	function break_maj($source_id) {
-		return false;
-	}
-	
-	function parse_profile() {
+	public function parse_profile() {
 		global $url,$search_index;
 		$matches=$this->profile["MATCHES"][0]["MATCH"];
 		for ($j=0; $j<count($matches); $j++) {
@@ -311,7 +262,7 @@ class amazon extends connector {
 		}
 	}
 	
-	function parse_query($query,$first_call=false) {
+	public function parse_query($query,$first_call=false) {
 		global $url,$search_index;
 		
 		//Si c'est le premier appel du parser, on indique le type de recherche
@@ -387,7 +338,7 @@ class amazon extends connector {
 		//return $r;
 	}
 	
-	function make_power_query($query) {
+	public function make_power_query($query) {
 		$r="";
 		for ($i=0; $i<count($query)-1; $i++) {
 			if (($query[$i]["INTER"])&&($i>0)) {
@@ -410,7 +361,7 @@ class amazon extends connector {
 		return array(0=>array("PARAM"=>array("Power"=>$r)));
 	}
 	
-	function make_simple_search($query) {
+	public function make_simple_search($query) {
 		$r=array();
 		for ($i=0; $i<count($query)-1; $i++) {
 			$q=array();
@@ -450,7 +401,7 @@ class amazon extends connector {
 		return $r;
 	}
 	
-	function store_asins($result,$inter,$first=false,&$n) {
+	public function store_asins($result,$inter,$first=false,&$n) {
 		//Lecture et stockage des Items
 		$asins=array();
 		$items=$this->soap2array($result["Items"],"Item");
@@ -487,7 +438,7 @@ class amazon extends connector {
 		}
 	}
 	
-	function make_search($source_id,$q,$client) {
+	public function make_search($source_id,$q,$client) {
 		global $url,$search_index,$max_return;
 		
 		$this->fetch_global_properties();
@@ -545,7 +496,7 @@ class amazon extends connector {
 		}
 	}
 	
-	function soap2array($t,$element) {
+	public function soap2array($t,$element) {
 		$n=0;
 		$r=array();
 		if (is_array($t[$element])) {
@@ -563,7 +514,7 @@ class amazon extends connector {
 		return $r;
 	}
 	
-	function amazon_2_uni($item) {
+	public function amazon_2_uni($item) {
 		global $charset;
 
 		$nt=$item["ItemAttributes"];
@@ -789,7 +740,7 @@ class amazon extends connector {
 	}
 	
 	//Fonction de recherche
-	function search($source_id,$query,$search_id) {
+	public function search($source_id,$query,$search_id) {
 		global $charset;
 		global $pmb_curl_proxy;		
 		$this->error=false;
@@ -802,8 +753,8 @@ class amazon extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		
@@ -889,11 +840,7 @@ class amazon extends connector {
 		}
 	}
 	
-	function maj_entrepot($source_id,$callback_progress="",$recover=false,$recover_env="") {
-		return 0;
-	}
-	
-	function make_soap_headers($action){
+	public function make_soap_headers($action){
 		
 		$keys = unserialize($this->parameters);
 		$time = gmdate("Y-m-d\TH:i:s\Z");
@@ -907,17 +854,17 @@ class amazon extends connector {
 		return $header_arr;
 	}
 	
-	function enrichment_is_allow(){
+	public function enrichment_is_allow(){
 		return true;
 	}
 	
-	function getEnrichmentHeader(){
+	public function getEnrichmentHeader(){
 		$header= array();
 		//$header[]= "<!-- Script d'enrichissement pour Amazon-->";
 		return $header;
 	}
 	
-	function getTypeOfEnrichment($source_id){
+	public function getTypeOfEnrichment($source_id){
 		$type['type'] = array(
 			"resume",
 			"similarities",
@@ -931,7 +878,7 @@ class amazon extends connector {
 		return $type;
 	}
 	
-	function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array(),$page=1){
+	public function getEnrichment($notice_id,$source_id,$type="",$enrich_params=array(),$page=1){
 		$enrichment= array();
 		//on renvoi ce qui est demandé... si on demande rien, on renvoi tout..
 		$info = $this->getNoticeInfos($notice_id,$source_id);
@@ -958,7 +905,7 @@ class amazon extends connector {
 		return $enrichment;
 	}
 	
-	function getNoticeInfos($notice_id,$source_id){
+	public function getNoticeInfos($notice_id,$source_id){
 		global $search_index,$url;
 		
 		$error=false;
@@ -971,8 +918,8 @@ class amazon extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 			
@@ -1113,7 +1060,7 @@ class amazon extends connector {
 		return $infos;
 	}	
 	
-	function initAWS($source_id){
+	public function initAWS($source_id){
 		global $search_index,$url;
 		global $pmb_curl_proxy;
 		
@@ -1124,8 +1071,8 @@ class amazon extends connector {
 			//Affichage du formulaire avec $params["PARAMETERS"]
 			$vars=unserialize($params["PARAMETERS"]);
 			foreach ($vars as $key=>$val) {
-				global $$key;
-				$$key=$val;
+				global ${$key};
+				${$key}=$val;
 			}	
 		}
 		
@@ -1152,7 +1099,7 @@ class amazon extends connector {
 		return $client;
 	}
 	
-	static function objectToArrayAndCharset($object){
+	static public function objectToArrayAndCharset($object){
 		global $charset;
 		
 		$out = array();
@@ -1179,7 +1126,7 @@ class amazon extends connector {
 		return $out;
 	}
 	
-	function sleep_needed(){
+	public function sleep_needed(){
 		//Amazon ne veut pas plus d'une requête par seconde
 		if(trim($this->last_query_datetime)){
 			if((time()-$this->last_query_datetime)<1){
@@ -1189,5 +1136,94 @@ class amazon extends connector {
 		$this->last_query_datetime=time();
 		return;
 	}
+	
+	public function get_images_by_code($id, $IdType = 'EAN', $locale = 'fr'){
+	    
+	    $keys = unserialize($this->parameters);
+	    $accesskey = $keys['accesskey'];
+	    $secretkey = $keys['secretkey'];
+	    $associatetag = $keys['associatetag'];
+	    
+	    if (strlen($id)==12) {
+	        // code UPC -> EAN
+	        $id = '0' . $id;
+	    }
+	    $request = array (
+	        'Condition' => 'All',
+	        'Operation' => 'ItemLookup',
+	        'ResponseGroup' => 'Images',
+	        'SearchIndex' => 'All',
+	        'IdType' => $IdType,
+	        'ItemId' => $id,
+	    );
+	    
+	    $signedRequest = $this->aws_signed_request($locale, $request, $accesskey, $secretkey, $associatetag);
+	    
+	    $this->sleep_needed();
+	    
+	    $curl = curl_init($signedRequest);
+	    curl_setopt($curl, CURLOPT_HEADER, false);
+	    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+	    $response = curl_exec($curl);
+	    curl_close($curl);
+	    if ($response === FALSE) {
+	        return array();
+	    } else {
+	        $xml = json_decode(json_encode(simplexml_load_string($response, "SimpleXMLElement", LIBXML_NOCDATA)),TRUE);
+	        // printr ($xml);
+	        if ($xml === FALSE) {
+	            return array();
+	        } else {
+	            if (isset($xml['Items']['Request']['Errors'])) {
+	                return array(
+	                    'Error' => $xml['Items']['Request']['Errors']['Error'],
+	                );
+	            } else {
+	                return array(
+	                    'ASIN' => $xml['Items']['Item']['ASIN'],
+	                    'SmallImage' => $xml['Items']['Item']['SmallImage']['URL'],
+	                    'MediumImage' => $xml['Items']['Item']['MediumImage']['URL'],
+	                    'LargeImage' => $xml['Items']['Item']['LargeImage']['URL'],
+	                    'AllData' => $xml['Items'],
+	                );
+	            }
+	        }
+	    }
+	}
+	
+	public function aws_signed_request($region, $params, $public_key, $private_key, $associate_tag=NULL){
+	    
+	    $method = 'GET';
+	    $host = 'webservices.amazon.'.$region;
+	    $uri = '/onca/xml';
+	    
+	    $params['Service'] = 'AWSECommerceService';
+	    $params['AWSAccessKeyId'] = $public_key;
+	    // GMT timestamp
+	    $params['Timestamp'] = gmdate('Y-m-d\TH:i:s\Z');
+	    if ($associate_tag !== NULL) {
+	        $params['AssociateTag'] = $associate_tag;
+	    }
+	    $params['SignatureMethod'] = 'HmacSHA256';
+	    $params['SignatureVersion'] = '2';
+	    
+	    ksort($params);
+	    
+	    $canonicalized_query = array();
+	    foreach ($params as $param=>$value) {
+	        $param = str_replace('%7E', '~', rawurlencode($param));
+	        $value = str_replace('%7E', '~', rawurlencode($value));
+	        $canonicalized_query[] = $param . '=' . $value;
+	    }
+	    $canonicalized_query = implode('&', $canonicalized_query);
+	    $string_to_sign = $method."\n".$host."\n".$uri."\n".$canonicalized_query;
+	    
+	    // HMAC with SHA256 and base64-encoding
+	    $signature = base64_encode(hash_hmac('sha256', $string_to_sign, $private_key, TRUE));
+	    $signature = str_replace('%7E', '~', rawurlencode($signature));
+	    
+	    return 'https://' . $host . $uri . '?'.$canonicalized_query . '&Signature=' . $signature;
+	}
+	
 }
 ?>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: faq.class.php,v 1.4 2015-04-03 11:16:18 jpermanne Exp $
+// $Id: faq.class.php,v 1.13 2018-08-24 08:44:59 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -28,18 +28,18 @@ class faq {
 		$this->page = ($page*1);
 		if($this->page>=1) $this->page-=1;
 		$this->nb_questions_by_page = ($nb_questions_by_page ? $nb_questions_by_page : $opac_search_results_per_page);
-		$this->themes = array_filter(($filters['themes'] ? $filters['themes'] : array()));
-		$this->types = array_filter(($filters['types'] ? $filters['types'] : array()));
-		$this->descriptors = array_filter(($filters['descriptors'] ? $filters['descriptors'] : array()));
-		$this->years = array_filter(($filters['years'] ? $filters['years'] : array()),function($var){return ($var!=="");});
-		$this->user_query = trim($filters['user_query']);
+		$this->themes = array_filter((isset($filters['themes']) && $filters['themes'] ? $filters['themes'] : array()));
+		$this->types = array_filter((isset($filters['types']) && $filters['types'] ? $filters['types'] : array()));
+		$this->descriptors = array_filter((isset($filters['descriptors']) && $filters['descriptors'] ? $filters['descriptors'] : array()));
+		$this->years = array_filter((isset($filters['years']) && $filters['years'] ? $filters['years'] : array()),function($var){return ($var!=="");});
+		$this->user_query = (isset($filters['user_query']) ? trim($filters['user_query']) : '');
 		
 		$this->fetch_datas();
 	}
 	
 	protected function fetch_datas(){
 		global $dbh;
-		$query = "select id_faq_question from faq_questions !!join!!!!where!! order by faq_question_question_date desc, faq_question_answer_date desc";
+		$query = "select id_faq_question from faq_questions !!join!!!!where!! order by faq_question_question_date desc, faq_question_answer_date desc, faq_question_question asc";
 		$join = $where= array();
 		$where[] = ($_SESSION["id_empr_session"] ? "faq_question_statut in (2,3)" : "faq_question_statut = 2");
 		if(count($this->themes)){
@@ -116,15 +116,15 @@ class faq {
 	
 	protected function get_navigator(){
 		if(count($this->questions_ids)){
-			$nbpages = ceil(count($this->questions_ids)/$this->nb_questions_by_page);
 			$url_page = "javascript:document.faq_filters.faq_page.value=!!page!!;document.faq_filters.submit()";
+			$nb_per_page_custom_url = "javascript:document.faq_filters.nb_per_page_custom.value=!!nb_per_page_custom!!";
 			$action = "javascript:document.faq_filters.faq_page.value=document.form.page.value;document.faq_filters.submit()";
 			return "
 			<div id='navbar'>
 				<hr />
-				<center>
-					".printnavbar($this->page+1, $nbpages, $url_page,$action)."
-				</center>
+				<div style='text-align:center'>
+				".printnavbar($this->page+1, count($this->questions_ids), $this->nb_questions_by_page, $url_page, $nb_per_page_custom_url, $action)."
+				</div>		
 			</div>";
 		}
 	}
@@ -192,7 +192,7 @@ class faq {
 				$filter_actives.="
 						<tr>
 							<td>".htmlentities($msg['faq_filter_themes'].": ".$themes->getLabel($theme),ENT_QUOTES,$charset)."</td>
-							<td><a href=\"".$link."\"><img src='./images/cross.png'/></a></td>
+							<td><a href=\"".$link."\"><img src='".get_url_icon('cross.png')."' alt='".$msg['disable_this_filter']."'/></a></td>
 						</tr>";				
 			}
 		}else{
@@ -210,7 +210,7 @@ class faq {
 				$filter_actives.="
 						<tr>
 							<td>".htmlentities($msg['faq_filter_types'].": ".$types->getLabel($type),ENT_QUOTES,$charset)."</td>
-							<td><a href=\"".$link."\"><img src='./images/cross.png'/></a></td>
+							<td><a href=\"".$link."\"><img src='".get_url_icon('cross.png')."' alt='".$msg['disable_this_filter']."'/></a></td>
 						</tr>";
 			}
 		}else{
@@ -227,7 +227,7 @@ class faq {
 				$filter_actives.="
 						<tr>
 							<td>".htmlentities($msg['faq_filter_descriptors'].": ".$this->filters['descriptors'][$descriptor]['label'],ENT_QUOTES,$charset)."</td>
-							<td><a href=\"".$link."\"><img src='./images/cross.png'/></a></td>
+							<td><a href=\"".$link."\"><img src='".get_url_icon('cross.png')."' alt='".$msg['disable_this_filter']."'/></a></td>
 						</tr>";
 			}
 		}else{
@@ -243,7 +243,7 @@ class faq {
 				$filter_actives.="
 						<tr>
 							<td>".htmlentities($msg['faq_filter_years'].": ".$this->filters['years'][$year]['label'],ENT_QUOTES,$charset)."</td>
-							<td><a href=\"".$link."\"><img src='./images/cross.png'/></a></td>
+							<td><a href=\"".$link."\"><img src='".get_url_icon('cross.png')."' alt='".$msg['disable_this_filter']."'/></a></td>
 						</tr>";
 			}
 		}else{
@@ -309,12 +309,14 @@ class faq {
 	
 	public function get_facettes_filter(){
 		global $msg,$charset;
+		global $nb_per_page_custom;
 		$this->init_filters_infos();
 		
 		$facettes_filter = "
 		<div class='faq_filters' id='facette'>
 			<form action='./index.php?lvl=faq' method='post' id='faq_filters' name='faq_filters'>
-				<input type='hidden' name='faq_page' value='".htmlentities(($this->page+1),ENT_QUOTES,$charset)."'/>";
+				<input type='hidden' name='faq_page' value='".htmlentities(($this->page+1),ENT_QUOTES,$charset)."'/>
+				<input type='hidden' name='nb_per_page_custom' value='".$nb_per_page_custom."'/>";
 		$facettes_filter.= $this->get_search_filter();
 		$facettes_filter.= $this->get_actives_facettes();
 		$facettes_filter.= $this->get_allowed_facettes();

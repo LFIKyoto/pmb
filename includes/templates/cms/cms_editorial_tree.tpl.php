@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_editorial_tree.tpl.php,v 1.6.2.3 2015-10-09 08:12:12 jpermanne Exp $
+// $Id: cms_editorial_tree.tpl.php,v 1.18 2018-03-12 15:19:04 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 global $base_path;
 		
 $cms_editorial_tree_layout= "
+		<script type='text/javascript' src='./javascript/misc.js'></script>
 		<script type='text/javascript' src='./javascript/cms/cms_tree_dnd.js'></script>
 		<script type='text/javascript'>
 			dojo.require('dijit.layout.ContentPane');
@@ -17,29 +18,40 @@ $cms_editorial_tree_layout= "
     		dojo.require('dijit.tree.dndSource');  	
     		dojo.require('dojox.layout.ContentPane');	
 		</script>
-		<div class='colonne3'>
-			<div id='editorial_tree_container' style='min-height:600px' href='./ajax.php?module=cms&categ=get_tree' dojoType='dojox.layout.ContentPane'></div>
-		</div>	
-		<div class='colonne-suite'>
-			<div id='content_infos' dojoType='dojox.layout.ContentPane'></div>
+		<div data-dojo-type='dijit/layout/BorderContainer' data-dojo-props='gutters:true' style='min-height:400px;height:auto' id='treeBorderContainer'>
+			<div data-dojo-type='dojox/layout/ContentPane' data-dojo-props='splitter:true, region:\"left\"' style='width:40%;' id='editorial_tree_container' href='./ajax.php?module=cms&categ=get_tree'></div>
+			<div data-dojo-type='dojox/layout/ContentPane' data-dojo-props='region:\"center\"' style='height:auto;' id='content_infos'></div>
+            <script type='text/javascript'>
+                require(['dojo/dom', 'dijit/registry', 'dojo/ready'], function(dom, registry, ready) {
+                    ready(function(){
+                        var mh= Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+                        registry.byId('treeBorderContainer').resize({h:(mh-dom.byId('treeBorderContainer').offsetTop)});
+                    });
+                });
+            </script>
 		</div>";
 
 $cms_editorial_tree_content ="
-		<div id='cms_menu_editorial_tree'>
-			<span class='liLike'>
+		<div id='cms_menu_editorial_tree' class='uk-flex-auto uk-flex uk-flex-row ss-nav-cms'>
+			<span class='ss-nav-cms-item' class='liLike'>
 				<img class='dijitTreeExpando dijitTreeExpandoClosed' onClick='dijit.byId(\"section_tree\").expandAll();' role='presentation' data-dojo-attach-point='expandoNode' alt='' src='".$base_path."/images/expand_all.gif'>
 			</span>
-			<span class='liLike'>
+			<span class='ss-nav-cms-item' class='liLike'>
 				<img class='dijitTreeExpando dijitTreeExpandoOpened' onClick='dijit.byId(\"section_tree\").collapseAll();' role='presentation' data-dojo-attach-point='expandoNode' alt='' src='".$base_path."/images/collapse_all.gif'>
 			</span>
-			<span id='add_buttons' class='liLike'>
-				&nbsp;<a id='add_section_button' href='$base_path/cms.php?categ=section&sub=edit&id=new'>".$msg['cms_editorial_form_new_section_from_section']."</a>
-				&nbsp;<a id='add_article_button' href='$base_path/cms.php?categ=article&sub=edit&id=new'>".$msg['cms_editorial_form_new_article_from_section']."</a>
+			<span class='ss-nav-cms-item' id='add_buttons' class='liLike'>
+				&nbsp;<a class='uk-button uk-button-default uk-button-small ui-button-Xsmall wyr-custom wyr-input' id='add_section_button' href='".$base_path."/cms.php?categ=section&sub=edit&id=new'>".$msg['cms_editorial_form_new_section_from_section']."</a>
+				&nbsp;<a class='uk-button uk-button-default uk-button-small ui-button-Xsmall wyr-custom wyr-input' id='add_article_button' href='".$base_path."/cms.php?categ=article&sub=edit&id=new'>".$msg['cms_editorial_form_new_article_from_section']."</a>
 			</span>
-			<span id='add_buttons_clear cache' class='cache liLike'>
-				!!cms_editorial_clean_cache_button!!
-			</span>
-			<div class='clear'></div>
+			<div id='cms_menu_editorial_tree_clear_cache_buttons'>
+				<span class='ss-nav-cms-item' id='add_buttons_clear cache' class='cache liLike'>
+					!!cms_editorial_clean_cache_button!!
+				</span>
+				<span class='ss-nav-cms-item' id='add_buttons_clear cache_img' class='cache liLike'>
+					!!cms_editorial_clean_cache_img!!
+				</span>
+			</div>
+			<div class='ss-nav-cms-item' class='clear'></div>
 		</div>
 		<div id='section_tree'>
 			<script type='text/javascript'>

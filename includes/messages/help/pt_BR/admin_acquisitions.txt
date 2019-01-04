@@ -1,4 +1,4 @@
-<h1>Aquisições</h1>
+<h2>Aquisições</h2>
 </p><p>
 <b>Nome</b> e <b>endereço</b> da biblioteca.
 </p><p>

@@ -12,14 +12,16 @@ define([
 	'dojo/on',
 	'dojo/aspect',
 	'dijit/registry',
-	'dijit/Dialog',
+	'apps/pmb/PMBDialog',
 	'snet/DialogConfirm',
 	'dijit/ProgressBar',
-	'snet/fileUploader/ProgressBar'
-], function(lang, declare, Deferred, array, xhr, dom, domConstruct, domClass, query, has, on, aspect, registry, Dialog, DialogConfirm, ProgressBar, UploadProgressBar) {
+	'snet/fileUploader/ProgressBar',
+	'dojo/dom-attr',
+	'dojo/topic',
+], function(lang, declare, Deferred, array, xhr, dom, domConstruct, domClass, query, has, on, aspect, registry, Dialog, DialogConfirm, ProgressBar, UploadProgressBar, domAttr, topic) {
 
 	return declare(null, {
-
+		abstractBrowseButton:null,
 		maxKBytes: 3000, // in kbytes limited by php.ini directive upload_max_filesize
 		maxNumFiles: 10, // limited by php.ini directive max_file_uploads
 		bytesOverall: 0,
@@ -36,6 +38,9 @@ define([
 		dropTarget: null,
 		rememberConfirmDelete: false, // do not ask user again to confirm deleting
 		callback: false,
+		idDropTarget :'',
+		windowDragOver: on(window, 'dragover', function(evt) {evt.preventDefault();}),
+		windowDrop: on(window, 'drop', function(evt) {evt.preventDefault();}),
 		
 		/**
 		 * Instantiates the fileUploader.
@@ -53,9 +58,14 @@ define([
 			else {
 				this.append_div = props.append_div;
 				props.dropTarget = dom.byId(props.dropTarget);
+			
 				lang.mixin(this, props);
-				this.maxKBytes *= 1048;    // e.g. * (1024 + 24)
+				this.maxKBytes *= 1024;    // e.g. * (1024 + 24)
 
+				this.idDropTarget = domAttr.get(this.dropTarget, 'id');
+				
+				this.abstractBrowseButton = domConstruct.create('input', {type:'file', multiple:'true', style:{display:'none'}}, this.dropTarget);
+				
 				// add drag and drop events
 				on(window, 'dragover', function(evt) {
 					evt.preventDefault();	// necessary for dnd to work
@@ -69,15 +79,17 @@ define([
 				on(this.dropTarget, 'dragleave', function() {
 					domClass.remove(this, 'targetActive');
 				});
+				on(this.dropTarget, 'mouseenter', function() {
+					domClass.add(this, 'targetActive');
+				});
 				on(this.dropTarget, 'mouseout', function() {
 					domClass.remove(this, 'targetActive');
 				});
-				on(this.dropTarget, 'drop', lang.hitch(this, function(evt) {
-					var files = evt.dataTransfer.files;
-					this.reset();
-					this.addFiles(files);
-					domClass.remove(this.dropTarget, 'targetActive');
-				}));
+				on(this.dropTarget, 'drop', lang.hitch(this, this.onDropCallback));
+				
+				on(this.dropTarget, 'click', lang.hitch(this,this.abstractCallback));
+				
+				on(this.abstractBrowseButton, 'change', lang.hitch(this, this.browseChangeButton));
 			}
 		},
 
@@ -155,7 +167,7 @@ define([
 			// display inside dialog pane
 			if (!this.displayTarget) {
 				container = new Dialog({
-					id: 'snetUploader',
+					id: this.idDropTarget+'snetUploader',
 					title: 'Transfert sur le serveur',
 					content: strTemplate,
 					duration: 500,
@@ -170,11 +182,10 @@ define([
 			// display inside target element
 			else {
 				container = domConstruct.create('div', {
-					id: 'snetUploader',
+					id: this.idDropTarget+'snetUploader',
 					innerHTML: strTemplate
 				}, this.displayTarget)
 			}
-
 			// create progress bar for overall progress
 			div = domConstruct.create('div', null, 'pbwBarOverall');
 			barOverall = new ProgressBar({
@@ -259,8 +270,8 @@ define([
 		 * @return {dojo/_base/Deferred}
 		 */
 		confirmFileSize: function(fileName) {
-			var dialog = registry.byId('dialogFileSize') || new DialogConfirm({
-				id: 'dialogFileSize',
+			var dialog = registry.byId(this.idDropTarget+'dialogFileSize') || new DialogConfirm({
+				id: this.idDropTarget+'dialogFileSize',
 				title: 'Confirm',
 				content: '<p>Maximum file size is limited to ' + this.formatSize(this.maxKBytes) + '.</p>' +
 				'<p>Press \'OK\' to skip file ' + fileName + '<br/>or press \'Cancel\' to cancel uploading.</p>'
@@ -275,7 +286,7 @@ define([
 		 * @return {dojo/_base/Deferred}
 		 */
 		confirmFileSizeSingle: function(fileName) {
-			var dialog = registry.byId('dialogFileSizeSingle') || new DialogConfirm({
+			var dialog = registry.byId(this.idDropTarget+'dialogFileSizeSingle') || new DialogConfirm({
 				id: 'dialogFileSizeSingle',
 				title: 'Confirm',
 				content: 'Maximum file size is limited to ' + this.formatSize(this.maxKBytes) + '. Uploading file ' +
@@ -293,7 +304,7 @@ define([
 		 * @return {dojo/_base/Deferred}
 		 */
 		confirmNumFileLimit: function(limit) {
-			var dialog = registry.byId('dialogNumFileLimit') || new DialogConfirm({
+			var dialog = registry.byId(this.idDropTarget+'dialogNumFileLimit') || new DialogConfirm({
 				id: 'dialogNumFileLimit',
 				title: 'Confirm',
 				content: '<p>Maximum number of files to upload is limited to ' + limit + '.</p>' +
@@ -309,8 +320,8 @@ define([
 		 * @return {dojo/_base/Deferred}
 		 */
 		confirmDelete: function(fileName) {
-			var dialog = registry.byId('dialogDelete') || new DialogConfirm({
-				id: 'dialogDelete',
+			var dialog = registry.byId(this.idDropTarget+'dialogDelete') || new DialogConfirm({
+				id: this.idDropTarget+'dialogDelete',
 				title: 'Delete',
 				content: '<p>Do you want to delete the uploaded file ' + fileName + ' on the remote server?</p>' +
 				'<p>Press \'OK\' to delete<br/>or press \'Cancel\' to cancel.</p>',
@@ -324,8 +335,8 @@ define([
 		 * @return {dojo/_base/Deferred}
 		 */
 		confirmHasFeatures: function() {
-			var dialog = registry.byId('dialogHasFeatures') || new DialogConfirm({
-				id: 'dialogHasFeatures',
+			var dialog = registry.byId(this.idDropTarget+'dialogHasFeatures') || new DialogConfirm({
+				id: this.idDropTarget+'dialogHasFeatures',
 				title: 'Wrong browser',
 				hasCancelButton: false,
 				hasSkipCheckBox: false,
@@ -401,7 +412,12 @@ define([
 						//window.setTimeout(function() {
 						bar.complete();
 						dfd.resolve();
-						if(this.append_div){
+						/**
+						 * TODO test sur le callback 
+						 */
+						if(this.requestCallback){
+							this.requestCallback(JSON.parse(req.responseText));
+						}else if(this.append_div){
 							dojo.place(req.responseText,this.append_div);
 						}
 						//}, 500);
@@ -537,8 +553,8 @@ define([
 			var dfd = null;
 
 			if (!this.hasBlobSliceSupport(file)) {
-				var dialog = registry.byId('dialogHasBlobSliceSupport') || new DialogConfirm({
-					id: 'dialogHasBlobSliceSupport',
+				var dialog = registry.byId(this.idDropTarget+'dialogHasBlobSliceSupport') || new DialogConfirm({
+					id: this.idDropTarget+'dialogHasBlobSliceSupport',
 					title: 'Wrong browser',
 					hasCancelButton: false,
 					hasSkipCheckBox: false,
@@ -648,7 +664,27 @@ define([
 		hasBlobSliceSupport: function(file) {
 			// file.slice is not supported by FF3.6 and is prefixed in FF5 now
 			return ('slice' in file || 'mozSlice' in file);
+		},
+		changeUrl: function(newUrl){
+			this.url = newUrl;
+		},
+		onDropCallback: function(evt) {
+			var files = evt.dataTransfer.files;
+			this.reset();
+			this.addFiles(files);
+			domClass.remove(this.dropTarget, 'targetActive');
+		},
+		abstractCallback: function(){
+			this.abstractBrowseButton.click();
+		},
+		
+		browseChangeButton: function(evt){
+			customEvt = {
+							dataTransfer:{
+								files:evt.target.files
+					    	}
+						}; 
+			this.onDropCallback(customEvt);
 		}
-
 	});
 });

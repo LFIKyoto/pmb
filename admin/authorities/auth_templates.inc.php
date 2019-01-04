@@ -2,11 +2,10 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: auth_templates.inc.php,v 1.1 2015-05-18 07:45:15 vtouchard Exp $
+// $Id: auth_templates.inc.php,v 1.2 2016-05-12 16:31:43 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 require_once($class_path."/auth_templates.class.php");
-require_once($include_path."/templates/auth_templates.tpl.php");
 
 switch ($action){
 	case 'save':		

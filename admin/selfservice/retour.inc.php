@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: retour.inc.php,v 1.4 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: retour.inc.php,v 1.5 2018-04-12 15:10:46 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // gestion du paramétrage de la borne de prêt
 
-function show_param($action='') {
+function show_param_retour($action='') {
 	global $msg,$charset,$pmb_transferts_actif;
 	global $selfservice_loc_autre_todo,$selfservice_resa_ici_todo,$selfservice_resa_loc_todo;
 	global $selfservice_loc_autre_todo_msg,$selfservice_resa_ici_todo_msg,$selfservice_resa_loc_todo_msg;
@@ -123,7 +123,7 @@ function show_param($action='') {
 	";
 }
 
-function memo_param() {
+function memo_param_retour() {
 	global $loc_autre_todo,$resa_ici_todo,$resa_loc_todo;
 	global $retour_retard_msg,$retour_blocage_msg,$retour_amende_msg;
 	global $loc_autre_todo_msg,$resa_ici_todo_msg,$resa_loc_todo_msg;
@@ -170,10 +170,10 @@ function memo_param() {
 
 switch($action) {
 	case 'update':
-		if($form_actif) memo_param();
-		show_param($action);
+		if($form_actif) memo_param_retour();
+		show_param_retour($action);
 	break;
 	default:
-		show_param();
+		show_param_retour();
 		break;
 }

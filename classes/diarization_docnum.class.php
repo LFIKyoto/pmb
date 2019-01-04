@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: diarization_docnum.class.php,v 1.2 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: diarization_docnum.class.php,v 1.3 2017-08-10 09:19:18 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -62,7 +62,7 @@ class diarization_docnum {
 				if ($this->explnum->infos_docnum['userfile_name']) {
 					$nom_temp = session_id().microtime(true).".".$this->explnum->infos_docnum['userfile_name'];
 				} else {
-					$nom_temp = session_id().microtime(true).".".$this->explnum->explnum_ext;
+					$nom_temp = session_id().microtime(true).".".$this->explnum->explnum_extfichier;
 				}
 				
 				$this->file = $base_path."/temp/".$nom_temp;

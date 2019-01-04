@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_searchsections.class.php,v 1.4 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: cms_module_common_datasource_searchsections.class.php,v 1.5 2016-09-21 13:09:44 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -48,12 +48,12 @@ class cms_module_common_datasource_searchsections extends cms_module_common_data
 				$select ="(";
 				$where ="("; 
 				foreach ($tab_word_query as $i=>$word_query) {
-					$select .= "(concat(section_title,' ',section_resume,' ',section_contenu) like '%$word_query%')+";
+					$select .= "(concat(section_title,' ',section_resume,' ',section_contenu) like '%".addslashes($word_query)."%')+";
 					if ($i > 0) $operator = " or ";
 					else $operator = "";
-					$where .= $operator." concat(section_title,' ',section_resume,' ',section_contenu) like '%".$word_query."%'";
+					$where .= $operator." concat(section_title,' ',section_resume,' ',section_contenu) like '%".addslashes($word_query)."%'";
 				}
-				$select .= "(trim(section_title) like '".$selector->get_value()."%')*0.2";
+				$select .= "(trim(section_title) like '".addslashes($selector->get_value())."%')*0.2";
 				$select .= ") as pert";
 				$where .= ")";
 				$query = "select distinct id_section,".$select." from cms_sections where ".$where;

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: connecteurs_out_sets.class.php,v 1.12 2015-06-19 14:03:50 apetithomme Exp $
+// $Id: connecteurs_out_sets.class.php,v 1.18 2018-02-09 10:43:18 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -97,14 +97,16 @@ $connector_out_set_types_classes = array(
 );
 
 class connector_out_set {
-	var $id=0;
-	var $caption="";
-	var $type=0;
-	var $config=array();
-	var $cache=NULL;
-	var $error="";
+	public $id=0;
+	public $caption="";
+	public $type=0;
+	public $config=array();
+	public $cache=NULL;
+	public $error="";
+	
+	protected static $already_included_sets = array();
 
-	function connector_out_set($id, $nocache=false) {
+	public function __construct($id, $nocache=false) {
 		//nocache permet de ne pas instancier le cache, si une classe fille veut le faire d'elle même
 		global $dbh;
 		$id+=0;
@@ -119,14 +121,14 @@ class connector_out_set {
 			$this->cache = new connector_out_setcache($id);
 	}
 
-	static function caption_exists($caption) {
+	public static function caption_exists($caption) {
 		global $dbh;
 		$sql = "SELECT connector_out_set_id FROM connectors_out_sets WHERE connector_out_set_caption = '".addslashes($caption)."'";
 		$res = pmb_mysql_query($sql, $dbh);
 		return pmb_mysql_num_rows($res) > 0 ? pmb_mysql_result($res, 0, 0) : 0;
 	}
 
-	static function add_new() {
+	public static function add_new() {
 		global $dbh;
 		$sql = "INSERT INTO connectors_out_sets () VALUES ()";
 		$res = pmb_mysql_query($sql, $dbh);
@@ -135,7 +137,7 @@ class connector_out_set {
 		return new connector_out_set($new_set_id);
 	}
 	
-	function commit_to_db() {
+	public function commit_to_db() {
 		global $dbh;
 		//on oublie pas que includes/global_vars.inc.php s'amuse à tout addslasher tout seul donc on le fait pas ici
 		$this->type+=0;
@@ -145,62 +147,69 @@ class connector_out_set {
 		pmb_mysql_query($sql, $dbh);
 	}
 	
-	function delete() {
+	public function delete() {
 		global $dbh;
 		//Deletons le set
 		$sql = "DELETE FROM connectors_out_sets WHERE connector_out_set_id = ".$this->id;
 		pmb_mysql_query($sql, $dbh);
 	}
 	
-	function get_config_form(&$out_of_form_result) {
+	public function get_config_form(&$out_of_form_result) {
 		//$out_of_form_result: résultat à renvoyer qui devra être placé à l'extérieur du formulaire. Exemple: un autre formulaire.
 		//rien
 		return "";
 	}
 	
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		//rien
 		return;
 	}
 	
-	function get_third_column_info() {
+	public function get_third_column_info() {
 		//rien
 		return "";
 	}
 	
-	function update_if_expired() {
+	public function update_if_expired() {
 		if ($this->cache->is_cache_expired())
 			$this->update_cache();
 	}
 	
-	function update_cache() {
+	public function update_cache() {
 		//rien
 		return "";
 	}
 	
-	function clear_cache($also_clear_date=false) {
+	public function clear_cache($also_clear_date=false) {
 		$this->cache->clear($also_clear_date);
 	}
 	
-	function get_values($first=false, $count=false) {
+	public function get_values($first=false, $count=false) {
 		return $this->cache->get_values($first, $count);
 	}
 	
-	function get_value_count() {
+	public function get_value_count() {
 		return $this->cache->get_value_count();
 	}
 	
+	public static function set_already_included_sets($already_included_sets = array()) {
+		static::$already_included_sets = $already_included_sets;
+	}
+	
+	public static function get_already_included_sets() {
+		return static::$already_included_sets;
+	}
 }
 
 //Set correspondant à des paniers de notices.
 class connector_out_set_noticecaddie extends connector_out_set {
 	
-	function connector_out_set_noticecaddie($id) {
-		parent::connector_out_set($id, true);
+	public function __construct($id) {
+		parent::__construct($id, true);
 		$this->cache = new connector_out_setcache_notice($id);
 	}
 	
-	function get_config_form(&$out_of_form_result) {
+	public function get_config_form(&$out_of_form_result) {
 		global $dbh, $msg, $charset;
 		$config_form="";
 		
@@ -231,7 +240,7 @@ class connector_out_set_noticecaddie extends connector_out_set {
 		return $config_form;
 	}
 	
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		global $set_included_caddies, $set_includefullbase;
 		if (!is_array($set_included_caddies))
 			$set_included_caddies=array($set_included_caddies);
@@ -242,7 +251,7 @@ class connector_out_set_noticecaddie extends connector_out_set {
 		return;
 	}
 	
-	function get_third_column_info() {
+	public function get_third_column_info() {
 		global $msg;
 		if (isset($this->config["include_full_base"]) && $this->config["include_full_base"])
 			return sprintf($msg["admin_connecteurs_set_noticecaddie_includedcount_fullbase"], $this->cache->get_value_count());
@@ -250,7 +259,7 @@ class connector_out_set_noticecaddie extends connector_out_set {
 			return sprintf($msg["admin_connecteurs_set_noticecaddie_includedcount"], count($this->config["included_caddies"]), $this->cache->get_value_count());
 	}
 	
-	function update_cache() {
+	public function update_cache() {
 		global $dbh;
 		
 		//Valeurs par défault
@@ -271,7 +280,7 @@ class connector_out_set_noticecaddie extends connector_out_set {
 		$this->cache->updatedb_from_sqlselect($sql);
 	}
 	
-	static function get_notice_setlist($notice_id) {
+	public static function get_notice_setlist($notice_id) {
 		global $dbh;
 		$sql = "SELECT connectors_out_setcache_setnum FROM connectors_out_setcache_values LEFT JOIN connectors_out_setcaches ON (connectors_out_setcache_id =connectors_out_setcache_values_cachenum) WHERE connectors_out_setcache_values_value = ".$notice_id;
 		$res = pmb_mysql_query($sql, $dbh);
@@ -281,16 +290,16 @@ class connector_out_set_noticecaddie extends connector_out_set {
 		return $results;
 	}
 	
-	function get_values($first=false, $count=false, $datefrom=false, $dateuntil=false) {
-		return $this->cache->get_values($first, $count, $datefrom, $dateuntil);
+	public function get_values($first=false, $count=false, $datefrom=false, $dateuntil=false, $use_items_update_date=false) {
+		return $this->cache->get_values($first, $count, $datefrom, $dateuntil, $use_items_update_date);
 	}
 	
-	function get_value_count($datefrom=false, $dateuntil=false) {
-		return $this->cache->get_value_count($datefrom, $dateuntil);
+	public function get_value_count($datefrom=false, $dateuntil=false, $use_items_update_date=false) {
+		return $this->cache->get_value_count($datefrom, $dateuntil, $use_items_update_date);
 	}
 	
 	//Fonction qui renvoie la date de modification la plus vieille (pour l'oai)
-	function get_earliest_updatedate() {
+	public function get_earliest_updatedate() {
 		global $dbh;
 		return $this->cache->get_earliest_updatedate();
 	}
@@ -299,12 +308,12 @@ class connector_out_set_noticecaddie extends connector_out_set {
 //Set correspondant à des paniers d'exemplaires.
 class connector_out_set_noticemulticritere extends connector_out_set {
 
-	function connector_out_set_noticemulticritere($id) {
-		parent::connector_out_set($id, true);
+	public function __construct($id) {
+		parent::__construct($id, true);
 		$this->cache = new connector_out_setcache_notice($id);
 	}
 	
-	function get_config_form(&$out_of_form_result) {
+	public function get_config_form(&$out_of_form_result) {
 		global $dbh, $msg, $charset;
 		$config_form="";
 
@@ -353,7 +362,7 @@ class connector_out_set_noticemulticritere extends connector_out_set {
 		return $config_form;
 	}
 	
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		global $search_updateaction;
 		//Si on ne change rien, on ne change rien
 		if (!$search_updateaction || $search_updateaction == 'none')
@@ -369,13 +378,13 @@ class connector_out_set_noticemulticritere extends connector_out_set {
 		return;
 	}
 	
-	function get_third_column_info() {
+	public function get_third_column_info() {
 		global $msg;
 		global $msg;
 		return sprintf($msg["admin_connecteurs_set_multicritere_includedcount"], $this->cache->get_value_count());
 	}
 	
-	function update_cache() {
+	public function update_cache() {
 		global $dbh;
 		
 		if (!isset($this->config["search"]))
@@ -398,13 +407,14 @@ class connector_out_set_noticemulticritere extends connector_out_set {
 		$values = $es_search_cache->get_results(0, $es_search_cache->get_result_count(false),'',false);
 		$this->cache->values = $values;
 		$this->cache->commit_values_into_db();
+		$this->cache->values = array();
 		
 		//on marque le set comme en cours de rafraichissement
 		$query = "update connectors_out_sets set being_refreshed = 0 where connector_out_set_id = ".$this->id;
 		pmb_mysql_query($query,$dbh);
 	}
 	
-	static function get_notice_setlist($notice_id) {
+	public static function get_notice_setlist($notice_id) {
 		global $dbh;
 		$sql = "SELECT connectors_out_setcache_setnum FROM connectors_out_setcache_values LEFT JOIN connectors_out_setcaches ON (connectors_out_setcache_id = connectors_out_setcache_values_cachenum) WHERE connectors_out_setcache_values_value = ".$notice_id;
 		$res = pmb_mysql_query($sql, $dbh);
@@ -414,22 +424,22 @@ class connector_out_set_noticemulticritere extends connector_out_set {
 		return $results;
 	}
 	
-	function get_values($first=false, $count=false, $datefrom=false, $dateuntil=false) {
-		return $this->cache->get_values($first, $count, $datefrom, $dateuntil);
+	public function get_values($first=false, $count=false, $datefrom=false, $dateuntil=false, $use_items_update_date=false) {
+		return $this->cache->get_values($first, $count, $datefrom, $dateuntil, $use_items_update_date);
 	}
 	
-	function get_value_count($datefrom=false, $dateuntil=false) {
-		return $this->cache->get_value_count($datefrom, $dateuntil);
+	public function get_value_count($datefrom=false, $dateuntil=false, $use_items_update_date=false) {
+		return $this->cache->get_value_count($datefrom, $dateuntil, $use_items_update_date);
 	}
 	
 	//Fonction qui renvoie la date de modification la plus vieille (pour l'oai)
-	function get_earliest_updatedate() {
+	public function get_earliest_updatedate() {
 		global $dbh;
 		return $this->cache->get_earliest_updatedate();
 	}
 	
 	//copié et adapté de equation.class.php
-	function make_hidden_search_form($serialized_search) {
+	public function make_hidden_search_form($serialized_search) {
 	    global $search;
 	    global $charset;
 	    global $page;
@@ -442,21 +452,21 @@ class connector_out_set_noticemulticritere extends connector_out_set {
 	    
 	    for ($i=0; $i<count($search); $i++) {
 	    	$inter="inter_".$i."_".$search[$i];
-	    	global $$inter;
+	    	global ${$inter};
 	    	$op="op_".$i."_".$search[$i];
-	    	global $$op;
+	    	global ${$op};
 	    	$field_="field_".$i."_".$search[$i];
-	    	global $$field_;
-	    	$field=$$field_;
+	    	global ${$field_};
+	    	$field=${$field_};
 	    	//Récupération des variables auxiliaires
 	    	$fieldvar_="fieldvar_".$i."_".$search[$i];
-	    	global $$fieldvar_;
-	    	$fieldvar=$$fieldvar_;
+	    	global ${$fieldvar_};
+	    	$fieldvar=${$fieldvar_};
 	    	if (!is_array($fieldvar)) $fieldvar=array();
 	
 	    	$r.="<input type='hidden' name='search[]' value='".htmlentities($search[$i],ENT_QUOTES,$charset)."'/>";
-	    	$r.="<input type='hidden' name='".$inter."' value='".htmlentities($$inter,ENT_QUOTES,$charset)."'/>";
-	    	$r.="<input type='hidden' name='".$op."' value='".htmlentities($$op,ENT_QUOTES,$charset)."'/>";
+	    	$r.="<input type='hidden' name='".$inter."' value='".htmlentities(${$inter},ENT_QUOTES,$charset)."'/>";
+	    	$r.="<input type='hidden' name='".$op."' value='".htmlentities(${$op},ENT_QUOTES,$charset)."'/>";
 	    	for ($j=0; $j<count($field); $j++) {
 	    		$r.="<input type='hidden' name='".$field_."[]' value='".htmlentities($field[$j],ENT_QUOTES,$charset)."'/>";
 	    	}
@@ -475,7 +485,7 @@ class connector_out_set_noticemulticritere extends connector_out_set {
 
 //Set correspondant à des paniers d'exemplaires.
 class connector_out_set_explcaddie extends connector_out_set {
-	function get_config_form(&$out_of_form_result) {
+	public function get_config_form(&$out_of_form_result) {
 		global $dbh, $msg, $charset;
 		$config_form="";
 		
@@ -506,7 +516,7 @@ class connector_out_set_explcaddie extends connector_out_set {
 		return $config_form;
 	}
 	
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		global $set_included_caddies, $set_includefullbase;
 		if (!is_array($set_included_caddies))
 			$set_included_caddies=array($set_included_caddies);
@@ -517,7 +527,7 @@ class connector_out_set_explcaddie extends connector_out_set {
 		return;
 	}
 	
-	function get_third_column_info() {
+	public function get_third_column_info() {
 		global $msg;
 		if (isset($this->config["include_full_base"]) && $this->config["include_full_base"])
 			return sprintf($msg["admin_connecteurs_set_explcaddie_includedcount_fullbase"], $this->cache->get_value_count());
@@ -525,7 +535,7 @@ class connector_out_set_explcaddie extends connector_out_set {
 			return sprintf($msg["admin_connecteurs_set_explcaddie_includedcount"], count($this->config["included_caddies"]), $this->cache->get_value_count());
 	}
 	
-	function update_cache() {
+	public function update_cache() {
 		global $dbh;
 		
 		//Valeurs par défault
@@ -549,7 +559,7 @@ class connector_out_set_explcaddie extends connector_out_set {
 
 //Set correspondant à des paniers d'emprunteurs.
 class connector_out_set_emprcaddie extends connector_out_set {
-	function get_config_form(&$out_of_form_result) {
+	public function get_config_form(&$out_of_form_result) {
 		global $dbh, $msg, $charset;
 		$config_form="";
 		
@@ -574,7 +584,7 @@ class connector_out_set_emprcaddie extends connector_out_set {
 		return $config_form;
 	}
 	
-	function update_config_from_form() {
+	public function update_config_from_form() {
 		global $set_included_caddies;
 		if (!is_array($set_included_caddies))
 			$set_included_caddies=array($set_included_caddies);
@@ -584,12 +594,12 @@ class connector_out_set_emprcaddie extends connector_out_set {
 		return;
 	}
 	
-	function get_third_column_info() {
+	public function get_third_column_info() {
 		global $msg;
 		return sprintf($msg["admin_connecteurs_set_emprcaddie_includedcount"], count($this->config["included_caddies"]), $this->cache->get_value_count());
 	}
 	
-	function update_cache() {
+	public function update_cache() {
 		global $dbh;
 		
 		array_walk($this->config["included_caddies"], create_function('&$a', '$a+=0;'));//Soyons sûr de ne stocker que des entiers dans le tableau.
@@ -613,9 +623,9 @@ function new_connector_out_set_typed($id, $type=0) {
 }
 
 class connector_out_sets {
-	var $sets=array();
+	public $sets=array();
 	
-	function connector_out_sets() {
+	public function __construct() {
 		global $dbh;
 
 		$sql = "SELECT connector_out_set_id, connector_out_set_type FROM connectors_out_sets ORDER BY connector_out_set_type";
@@ -626,7 +636,7 @@ class connector_out_sets {
 		}
 	}
 	
-	static function get_typed_set_count($type) {
+	public static function get_typed_set_count($type) {
 		global $dbh;
 		$sql = "SELECT COUNT(1) FROM connectors_out_sets WHERE connector_out_set_type = ".($type+0);
 		$result = pmb_mysql_result(pmb_mysql_query($sql, $dbh), 0, 0);
@@ -639,11 +649,11 @@ class connector_out_sets {
 * */
 
 class connector_out_setcateg {
-	var $id=0;
-	var $name="";
-	var $sets=array();
+	public $id=0;
+	public $name="";
+	public $sets=array();
 	
-	function connector_out_setcateg($id) {
+	public function __construct($id) {
 		$this->id = $id+0;
 		
 		//Main information
@@ -660,14 +670,14 @@ class connector_out_setcateg {
 		}
 	}
 	
-	static function name_exists($name) {
+	public static function name_exists($name) {
 		global $dbh;
 		$sql = "SELECT connectors_out_setcateg_id FROM connectors_out_setcategs WHERE connectors_out_setcateg_name = '".addslashes($name)."'";
 		$res = pmb_mysql_query($sql, $dbh);
 		return pmb_mysql_num_rows($res) > 0 ? pmb_mysql_result($res, 0, 0) : 0;
 	}
 	
-	static function add_new() {
+	public static function add_new() {
 		global $dbh;
 		$sql = "INSERT INTO connectors_out_setcategs () VALUES ()";
 		$res = pmb_mysql_query($sql, $dbh);
@@ -675,7 +685,7 @@ class connector_out_setcateg {
 		return new connector_out_setcateg($new_setcateg_id);
 	}
 	
-	function commit_to_db() {
+	public function commit_to_db() {
 		global $dbh;
 		//on oublie pas que includes/global_vars.inc.php s'amuse à tout addslasher tout seul donc on le fait pas ici
 		$sql = "UPDATE connectors_out_setcategs SET connectors_out_setcateg_name = '".$this->name."' WHERE connectors_out_setcateg_id = ".$this->id."";
@@ -699,7 +709,7 @@ class connector_out_setcateg {
 		}
 	}
 	
-	function delete() {
+	public function delete() {
 		global $dbh;
 		//Deletons l'user
 		$sql = "DELETE FROM connectors_out_setcategs WHERE connectors_out_setcateg_id = ".$this->id;
@@ -712,9 +722,9 @@ class connector_out_setcateg {
 }
 
 class connector_out_setcategs {
-	var $categs=array();
+	public $categs=array();
 	
-	function connector_out_setcategs() {
+	public function __construct() {
 		global $dbh;
 		$sql = "SELECT connectors_out_setcateg_id FROM connectors_out_setcategs";
 		$res = pmb_mysql_query($sql, $dbh);
@@ -730,14 +740,14 @@ class connector_out_setcategs {
 * */
 
 class connector_out_setcache {
-	var $id=0;
-	var $set_id=0;
-	var $last_updated_date='';
-	var $life_lifeduration=0;
-	var $life_lifeduration_unit='';
-	var $values=array();
+	public $id=0;
+	public $set_id=0;
+	public $last_updated_date='';
+	public $life_lifeduration=0;
+	public $life_lifeduration_unit='';
+	public $values=array();
 	
-	function connector_out_setcache($set_id) {
+	public function __construct($set_id) {
 		global $dbh;
 		$set_id+=0;
 		//Main information
@@ -751,7 +761,7 @@ class connector_out_setcache {
 		$this->life_lifeduration_unit = $row["connectors_out_setcache_lifeduration_unit"];
 	}
 	
-	static function add($set_id) {
+	public static function add($set_id) {
 		global $dbh;
 		$sql = "INSERT INTO connectors_out_setcaches (connectors_out_setcache_setnum) VALUES (".$set_id.")";
 		$res = pmb_mysql_query($sql, $dbh);
@@ -759,7 +769,7 @@ class connector_out_setcache {
 		return new connector_out_setcache($set_id);
 	}
 	
-	function delete() {
+	public function delete() {
 		global $dbh;
 		//Deletons le cache
 		$sql = "DELETE FROM connectors_out_setcaches WHERE connectors_out_setcache_id = ".$this->id;
@@ -770,7 +780,7 @@ class connector_out_setcache {
 		pmb_mysql_query($sql, $dbh);
 	}
 	
-	function clear($also_clear_date=false) {
+	public function clear($also_clear_date=false) {
 		global $dbh;
 		//Vidons le cache
 		$sql = "DELETE FROM connectors_out_setcache_values WHERE connectors_out_setcache_values_cachenum = ".$this->id;
@@ -782,7 +792,7 @@ class connector_out_setcache {
 		}
 	}
 	
-	function get_values($first=false, $count=false) {
+	public function get_values($first=false, $count=false) {
 		if ($this->values) {
 			return $this->values;
 		}
@@ -803,19 +813,22 @@ class connector_out_setcache {
 		return $this->values;
 	}
 	
-	function get_value_count() {
+	public function get_value_count() {
 		global $dbh;
 		$sql = "SELECT count(1) FROM connectors_out_setcache_values WHERE connectors_out_setcache_values_cachenum = ".$this->id;
+		if (count(connector_out_set::get_already_included_sets())) {
+			$sql.= " and connectors_out_setcache_values_value not in (select connectors_out_setcache_values_value from connectors_out_setcache_values where connectors_out_setcache_values_cachenum in (".implode(",", connector_out_set::get_already_included_sets())."))";
+		}
 		return pmb_mysql_result(pmb_mysql_query($sql, $dbh), 0, 0);
 	}
 	
-	function commit_to_db($also_commit_values=false) {
+	public function commit_to_db($also_commit_values=false) {
 		global $dbh;
 		$sql = "UPDATE connectors_out_setcaches SET connectors_out_setcache_lifeduration = ".$this->life_lifeduration.", connectors_out_setcache_lastupdatedate = '".$this->last_updated_date."', connectors_out_setcache_lifeduration_unit = '".$this->life_lifeduration_unit."' WHERE connectors_out_setcache_id = ".$this->id;
 		pmb_mysql_query($sql, $dbh);
 	}
 	
-	function commit_values_into_db() {
+	public function commit_values_into_db() {
 		global $dbh;
 		
 		//On stocke l'état actuel dans une table temporaire
@@ -848,7 +861,7 @@ class connector_out_setcache {
 		pmb_mysql_query($sql, $dbh);
 	}
 	
-	function updatedb_from_sqlselect($sql_select) {
+	public function updatedb_from_sqlselect($sql_select) {
 		global $dbh;
 		
 		//on marque le set comme en cours de rafraississement
@@ -874,7 +887,7 @@ class connector_out_setcache {
 		$this->values = array();
 	}
 	
-	function get_config_form() {
+	public function get_config_form() {
 		global $msg, $charset;
 		$this->life_lifeduration+=0;
 		$config_form = '';
@@ -893,13 +906,13 @@ class connector_out_setcache {
 		return $config_form;
 	}
 	
-	function update_from_form() {
+	public function update_from_form() {
 		global $setcache_duration_unit, $setcache_duration_value;
 		$this->life_lifeduration = $setcache_duration_value+0;
 		$this->life_lifeduration_unit = $setcache_duration_unit;
 	}
 	
-	function is_cache_expired() {
+	public function is_cache_expired() {
 		global $dbh;
 		
 		$config_mysql_timemapping = array(
@@ -915,7 +928,7 @@ class connector_out_setcache {
 		return $expired;
 	}
 	
-	function cache_duration_in_seconds() {
+	public function cache_duration_in_seconds() {
 		global $dbh;
 		
 		$config_mysql_timemapping = array(
@@ -950,11 +963,10 @@ class connector_out_setcache {
 			pmb_mysql_query($query, $dbh);
 		}
 	}
-	
 }
 
 class connector_out_setcache_notice extends connector_out_setcache {	
-	function get_values($first=false, $count=false, $datefrom=false, $dateuntil=false) {
+	public function get_values($first=false, $count=false, $datefrom=false, $dateuntil=false, $use_items_update_date=false) {
 		if ($this->values) {
 			return $this->values;
 		}
@@ -967,13 +979,26 @@ class connector_out_setcache_notice extends connector_out_setcache {
 			$limit = "";
 
 		if ($datefrom or $dateuntil) {
-			$where_clauses = array();
-			if ($datefrom)
-				$where_clauses[] .= "notices.update_date > FROM_UNIXTIME(".$datefrom.")";
-			if ($dateuntil)
-				$where_clauses[] .= "notices.update_date < FROM_UNIXTIME(".$dateuntil.')';
-			$where_clause = implode(" AND ", $where_clauses);
-			$sql = "SELECT connectors_out_setcache_values_value FROM connectors_out_setcache_values LEFT JOIN notices ON (notices.notice_id = connectors_out_setcache_values_value) WHERE ".$where_clause.($where_clause ? ' AND ' : '')." connectors_out_setcache_values_cachenum = ".$this->id." ".$limit;
+			$where_clauses0 = array();
+			$where_clauses1 = array();
+			if ($datefrom){
+				$where_clauses0[] .= "notices.update_date > FROM_UNIXTIME(".$datefrom.")";
+				$where_clauses1[] .= "exemplaires.update_date > FROM_UNIXTIME(".$datefrom.")";
+			}
+			if ($dateuntil){
+				$where_clauses0[] .= "notices.update_date < FROM_UNIXTIME(".$dateuntil.')';
+				$where_clauses1[] .= "exemplaires.update_date < FROM_UNIXTIME(".$dateuntil.')';
+			}
+			$where_clause0 = implode(" AND ", $where_clauses0);
+			$where_clause1 = implode(" AND ", $where_clauses1);
+			$sql0 = "SELECT connectors_out_setcache_values_value FROM connectors_out_setcache_values LEFT JOIN notices ON (notices.notice_id = connectors_out_setcache_values_value) WHERE ".$where_clause0.($where_clause0 ? ' AND ' : '')." connectors_out_setcache_values_cachenum = ".$this->id;
+			$sql1 = "SELECT connectors_out_setcache_values_value FROM connectors_out_setcache_values LEFT JOIN notices ON (notices.notice_id = connectors_out_setcache_values_value) LEFT JOIN exemplaires ON expl_notice = notices.notice_id WHERE ".$where_clause1.($where_clause1 ? ' AND ' : '')." connectors_out_setcache_values_cachenum = ".$this->id;
+			if (!$use_items_update_date) {
+				$sql = $sql0;
+			} else {
+				$sql = $sql0." UNION ".$sql1;
+			}
+			$sql .= " ".$limit;
 		}
 		else
 			$sql = "SELECT connectors_out_setcache_values_value FROM connectors_out_setcache_values WHERE connectors_out_setcache_values_cachenum = ".$this->id." ".$limit;
@@ -986,24 +1011,42 @@ class connector_out_setcache_notice extends connector_out_setcache {
 		return $this->values;
 	}
 	
-	function get_value_count($datefrom=false, $dateuntil=false) {
+	public function get_value_count($datefrom=false, $dateuntil=false, $use_items_update_date=false) {
 		global $dbh;
 		
 		$where_clause = "";
 		if ($datefrom or $dateuntil) {
-			$where_clauses = array();
-			if ($datefrom)
-				$where_clauses[] .= "notices.update_date > FROM_UNIXTIME(".$datefrom.")";
-			if ($dateuntil)
-				$where_clauses[] .= "notices.update_date < FROM_UNIXTIME(".$dateuntil.')';
-			$where_clause = implode(" AND ", $where_clauses);
+			$where_clauses0 = array();
+			$where_clauses1 = array();
+			if ($datefrom){
+				$where_clauses0[] .= "notices.update_date > FROM_UNIXTIME(".$datefrom.")";
+				$where_clauses1[] .= "exemplaires.update_date > FROM_UNIXTIME(".$datefrom.")";
+			}
+			if ($dateuntil){
+				$where_clauses0[] .= "notices.update_date < FROM_UNIXTIME(".$dateuntil.')';
+				$where_clauses1[] .= "exemplaires.update_date < FROM_UNIXTIME(".$dateuntil.')';
+			}
+			$where_clause0 = implode(" AND ", $where_clauses0);
+			$where_clause1 = implode(" AND ", $where_clauses1);
+		} else {
+			$where_clause0 = "";
+			$where_clause1 = "";
 		}
-		$sql = "SELECT count(1) FROM connectors_out_setcache_values LEFT JOIN notices ON (notices.notice_id = connectors_out_setcache_values_value) WHERE ".$where_clause.($where_clause ? ' AND ' : '')." connectors_out_setcache_values_cachenum = ".$this->id;
+		$sql0 = "SELECT count(1) FROM connectors_out_setcache_values LEFT JOIN notices ON (notices.notice_id = connectors_out_setcache_values_value) WHERE ".$where_clause0.($where_clause0 ? ' AND ' : '')." connectors_out_setcache_values_cachenum = ".$this->id;
+		$sql1 = "SELECT count(1) FROM connectors_out_setcache_values LEFT JOIN notices ON (notices.notice_id = connectors_out_setcache_values_value) LEFT JOIN exemplaires ON expl_notice = notices.notice_id WHERE ".$where_clause1.($where_clause1 ? ' AND ' : '')." connectors_out_setcache_values_cachenum = ".$this->id;
+		if (!$use_items_update_date) {
+			$sql = $sql0;
+		} else {
+			$sql = $sql0." UNION ".$sql1;
+		}
+		if (count(connector_out_set::get_already_included_sets())) {
+			$sql.= " and connectors_out_setcache_values_value not in (select connectors_out_setcache_values_value from connectors_out_setcache_values where connectors_out_setcache_values_cachenum in (".implode(",", connector_out_set::get_already_included_sets())."))";
+		}
 		return pmb_mysql_result(pmb_mysql_query($sql, $dbh), 0, 0);
 	}
 	
 	//Fonction qui renvoie la date de modification la plus vieille (pour l'oai)
-	function get_earliest_updatedate() {
+	public function get_earliest_updatedate() {
 		global $dbh;
 		$sql = "SELECT UNIX_TIMESTAMP(MIN(update_date)) FROM connectors_out_setcache_values LEFT JOIN notices ON (notices.notice_id = connectors_out_setcache_values_value) WHERE connectors_out_setcache_values_cachenum = ".$this->id;
 		$result = pmb_mysql_result(pmb_mysql_query($sql, $dbh), 0, 0);

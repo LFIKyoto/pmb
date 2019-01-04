@@ -1,4 +1,4 @@
-<h1>Acquisitions</h1>
+<h2>Acquisitions</h2>
 </p><p>
 <b>Coordonn&eacute;es</b> fiche d'identit&eacute; de l'&eacute;tablissement.
 </p><p>

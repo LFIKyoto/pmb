@@ -2,65 +2,49 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: avis.tpl.php,v 1.6.4.3 2015-12-01 19:53:47 Alexandre Exp $
+// $Id: avis.tpl.php,v 1.16 2017-10-19 14:42:59 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
-/* A supprimer ? Seul avis_tpl_form1 semble utilisé en administration - Alexandre 10/2015 */
+if(!isset($id)) $id = 0;
 
-/* $avis_tpl_header = "<div id='titre-popup'>".$msg["notice_title_avis"]."</div>";
+global $avis_tpl_menu;
+global $avis_tpl_form1;
 
-$avis_tpl_form = "
+global $pmb_avis_note_display_mode;
+global $pmb_javascript_office_editor;
 
-	<script type='text/javascript' src='./includes/javascript/bbcode.js'></script>
-
-	<center>".$msg["avis_explications"]."</center><br />
-	<form id='add_avis' name='add_avis' method='post' action='avis.php?todo=save'>
-				<div class='row'><label>".$msg["avis_appreciation"]."</label>
-					<span class='echelle_avis'>
-					$msg[avis_note_1]
-					<input type='radio' name='note' id='note_1' value='1' />
-					<input type='radio' name='note' id='note_2' value='2' />
-					<input type='radio' name='note' id='note_3' value='3' checked />
-					<input type='radio' name='note' id='note_4' value='4' />
-					<input type='radio' name='note' id='note_5' value='5' />
-					$msg[avis_note_5]
-					</span>
-				</div>
-		       <input type='hidden' name='noticeid' value='".$noticeid."'>
-		       <input type='hidden' name='login' value='".$login."'>
-
-				<div class='row'><label>".$msg["avis_sujet"]."</label><br />
-					<input type='text' name='sujet' size='50'/>
-					</div>
-				<div style='padding-top: 4px;'>
-					<input value=' B ' name='B' onclick=\"insert_text('commentaire','[b]','[/b]')\" type='button' class='bouton'>
-					<input value=' I ' name='I' onclick=\"insert_text('commentaire','[i]','[/i]')\" type='button' class='bouton'>
-					<input value=' U ' name='U' onclick=\"insert_text('commentaire','[u]','[/u]')\" type='button' class='bouton'>
-					<input value='http://' name='Url' onclick=\"insert_text('commentaire','[url]','[/url]')\" type='button' class='bouton'>
-					<input value='Img' name='Img' onclick=\"insert_text('commentaire','[img]','[/img]')\" type='button' class='bouton'>
-					<input value='Code' name='Code' onclick=\"insert_text('commentaire','[code]','[/code]')\" type='button' class='bouton'>
-					<input value='Quote' name='Quote' onclick=\"insert_text('commentaire','[quote]','[/quote]')\" type='button' class='bouton'>
-				</div>
-				<div class='row'><label>".$msg["avis_avis"]."</label><br />
-					<textarea id='commentaire' name='commentaire' cols='50' rows='4'></textarea>
-					</div>
-
-		      <div class='row'>
-		        <input type='submit' class='bouton' name='Submit' value='".$msg['avis_bt_envoyer']."'>
-		        <input type='button' class='bouton' value='".$msg['avis_bt_retour']."' onclick='javascript:document.location.href=\"avis.php?todo=liste&noticeid=".$noticeid."\"; return false;'>
-		      </div>
-		</form>";
-
-$avis_tpl_post_add=	"
-	<div align='center'><br /><br />".$msg["avis_msg_validation"]."
-	<br /><br /><a href='#' onclick='window.close()'>".$msg["avis_fermer"]."</a>";
-
-$avis_tpl_post_add_pb="<div align='center'><br /><br />".$msg["avis_msg_pb"]; */
+$avis_tpl_menu = "
+<h1>".$msg['titre_avis']." <span>> <!--!!sous_menu_choisi!! --></span></h1>
+<div class='hmenu'>
+	<span".ongletSelect("categ=avis&sub=records").">
+		<a title='".$msg['avis_menu_records']."' href='./catalog.php?categ=avis&sub=records'>
+		".$msg['avis_menu_records']."
+		</a>
+	</span>";
+if(defined('SESSrights') && SESSrights & CMS_AUTH) {
+	$avis_tpl_menu .= "
+	<span".ongletSelect("categ=avis&sub=articles").">
+		<a title='".$msg['avis_menu_articles']."' href='./catalog.php?categ=avis&sub=articles'>
+		".$msg['avis_menu_articles']."
+		</a>
+	</span>";
+}
+if(defined('SESSrights') && SESSrights & CMS_AUTH) {
+	$avis_tpl_menu .= "
+	<span".ongletSelect("categ=avis&sub=sections").">
+		<a title='".$msg['avis_menu_sections']."' href='./catalog.php?categ=avis&sub=sections'>
+		".$msg['avis_menu_sections']."
+		</a>
+	</span>";
+}
+$avis_tpl_menu .= "</div>
+";
 
 if ($pmb_javascript_office_editor) {
 $avis_tpl_form1_script="
 	$pmb_javascript_office_editor
+	<script type='text/javascript' src='./javascript/tinyMCE_interface.js'></script>
 	<script type='text/javascript' src='./javascript/bbcode.js'></script>
 	<script type='text/javascript'>
 	<!--
@@ -71,7 +55,7 @@ $avis_tpl_form1_script="
 			}else{
 				div_add_avis.style.display  = 'block';
 				if (typeof(tinyMCE) != 'undefined') {
-					if (!tinyMCE.getInstanceById('edit_commentaire_!!notice_id!!') ) tinyMCE.execCommand('mceAddControl', false, 'edit_commentaire_!!notice_id!!');
+					if (!tinyMCE_getInstance('edit_commentaire_!!notice_id!!') ) tinyMCE_execCommand('mceAddControl', false, 'edit_commentaire_!!notice_id!!');
 				}
 			}
 		}
@@ -190,7 +174,7 @@ if ($pmb_javascript_office_editor) {
 			</div>
 			<div class='row'>
 				<input type='button' class='bouton_small'  onclick='this.form.avis_quoifaire.value=\"ajouter\"; this.form.submit()'  value='".$msg["avis_save"]."'>
-				<input type='button' class='bouton_small' name='mceToggleEditor' onclick=\"if (typeof(tinyMCE) != 'undefined') tinyMCE.execCommand('mceToggleEditor',false,'edit_commentaire_!!notice_id!!'); return false;\"  value='Edition'>
+				<input type='button' class='bouton_small' name='mceToggleEditor' onclick=\"if (typeof(tinyMCE) != 'undefined') tinyMCE_execCommand('mceToggleEditor',false,'edit_commentaire_!!notice_id!!'); return false;\"  value='Edition'>
 				<input type='button' class='bouton_small' name='exit_avis_$id' id='exit_avis_$id' value='".$msg["avis_exit"]."' onclick=\"document.getElementById('add_avis_!!notice_id!!').style.display  = 'none';\" />
 			</div>
 		</div>

@@ -40,7 +40,7 @@ class Container {
   	var $emptyPar = false;
   	/**#@-*/
 	   	
-  	function Container(&$rtf) {	    
+  	function __construct(&$rtf) {	    
 	    $this->rtf = &$rtf;	
 	}
     

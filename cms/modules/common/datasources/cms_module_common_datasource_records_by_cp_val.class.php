@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_records_by_cp_val.class.php,v 1.2 2013-09-05 07:15:15 apetithomme Exp $
+// $Id: cms_module_common_datasource_records_by_cp_val.class.php,v 1.3 2018-04-24 15:46:30 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-class cms_module_common_datasource_records_by_cp_val extends cms_module_common_datasource_list{
+class cms_module_common_datasource_records_by_cp_val extends cms_module_common_datasource_records_list{
 	
 	public function __construct($id=0){
 		parent::__construct($id);
@@ -44,14 +44,35 @@ class cms_module_common_datasource_records_by_cp_val extends cms_module_common_d
 					break;
 				}
 			}
- 			$records = $notices = array();
+			$values = $selector->get_value();
+ 			$searcher = new search(false);
+ 			$current_search = $searcher->serialize_search();
+ 			$searcher->destroy_global_env();
+			global $search;
+			$search =array();
+			$search[] = "d_".$values['cp'];
+			$op = "op_0_d_".$values['cp'];
+			$field = "field_0_d_".$values['cp'];
+			global ${$op},${$field};
+			${$op} = "EQ";
+			${$field} = $values['cp_val'];
+			$table = $searcher->make_search();
+			$query = "select notice_id from ".$table;
+			$result = pmb_mysql_query($query);
+			$records = array();
+			if(pmb_mysql_num_rows($result)){
+				while($row = pmb_mysql_fetch_object($result)){
+					$records[] = $row->notice_id*1;	
+				}
+			}
+			$query = "DROP TEMPORARY TABLE ".$table;
+			pmb_mysql_query($query);
+			$searcher->unserialize_search($current_search);
 			$records = $this->filter_datas("notices",$records);
-			$records = array_slice($records, 0, $this->parameters['nb_max_elements']);
-			$return = array(
-				'title'=> 'Liste de Notices',
-				'records' => $records
-			);
-			
+			$return = $this->sort_records($records);
+			if($this->parameters['nb_max_elements'] > 0){
+				$return['records'] = array_slice($return['records'], 0, $this->parameters['nb_max_elements']);
+			}
 			return $return;
 		}
 		return false;

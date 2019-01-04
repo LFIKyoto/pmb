@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_store_arc2.class.php,v 1.13 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: onto_store_arc2.class.php,v 1.19 2018-08-30 08:16:47 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 
 require_once($class_path."/onto/onto_store.class.php");
-
+require_once($class_path."/rdf/arc2/ARC2.php");
 
 /**
  * class onto_store_arc2
@@ -84,17 +84,29 @@ class onto_store_arc2 extends onto_store {
 	 */
 	public function load($onto_filepath){
 		global $dbh,$thesaurus_ontology_filemtime;
-	
+
+		//evolution pour la possibilité d'avoir plusieurs fichier rdf
+		if (!is_numeric($thesaurus_ontology_filemtime)) {
+			$tab_file_rdf =  unserialize($thesaurus_ontology_filemtime);
+			if (!isset($tab_file_rdf[$this->store->getName()])) {
+				$tab_file_rdf[$this->store->getName()] = 0;
+			}
+		} else {
+			$tab_file_rdf[$this->store->getName()] = $thesaurus_ontology_filemtime;
+		}	
+				
 		//on charge l'ontologie seulement si la date de modification du fichier est > à la date de dernière lecture
-		if(filemtime($onto_filepath)>$thesaurus_ontology_filemtime){
+		if(filemtime($onto_filepath) != $tab_file_rdf[$this->store->getName()]){
 			// le load ne fait qu'ajouter les nouveaux triplets sans supprimer les anciens, donc on purge avant...
 			$this->store->reset();
 			
 			//LOAD n'accepte qu'un chemin absolu
 			$res=$this->query('LOAD <file://'.realpath($onto_filepath).'>');
-	
+			
+			$tab_file_rdf[$this->store->getName()] = filemtime($onto_filepath);			
+			
 			if($res){
-				$query='UPDATE parametres SET valeur_param="'.filemtime($onto_filepath).'" WHERE type_param="pmb" AND sstype_param="ontology_filemtime"';
+				$query='UPDATE parametres SET valeur_param="'.addslashes(serialize($tab_file_rdf)).'" WHERE type_param="thesaurus" AND sstype_param="ontology_filemtime"';
 				pmb_mysql_query($query,$dbh);
 				return true;
 			}else{
@@ -117,7 +129,6 @@ class onto_store_arc2 extends onto_store {
 	public function query($query,$prefix=array()){
 	
 		$query=$this->format_namespaces($prefix).$this->utf8_normalize($query);
-		
 		$result=array();
 		$tabResult=array();
 	
@@ -138,7 +149,7 @@ class onto_store_arc2 extends onto_store {
 				return false;
 			}else{
 				//on transforme le résultat et on l'insère dans la variable $this->result
-				if(sizeof($result["result"]["rows"])){
+				if(isset($result["result"]["rows"]) && sizeof($result["result"]["rows"])){
 					foreach($result["result"]["rows"] as $keyLine=>$valueLine) {
 						//on construit l'objet
 						$stdClass=new stdClass();
@@ -158,5 +169,37 @@ class onto_store_arc2 extends onto_store {
 
 		return false;
 	} // end of member function query
+
 	
+	public function import($filepath){
+		$res=$this->query('LOAD <file://'.realpath($filepath).'>');
+		if($res){
+			return true;
+		}else{
+			var_dump($this->get_errors());
+		}
+	}
+	
+	public function reset(){
+		$this->store->reset();
+	}
+	
+	public function get_RDF($print = false){
+		$config = array(
+			'ns' => $this->namespaces
+		);
+		$ser = ARC2::getRDFXMLSerializer($config);
+		$result = $this->store->query($this->format_namespaces()."SELECT ?s ?p ?o WHERE { ?s ?p ?o }");
+ 		$rdf = $ser->getSerializedTriples($result["result"]["rows"]);
+ 		if($print){
+ 			header("Content-type: ".$ser->content_header);
+ 			print $rdf;
+ 		}else{
+ 			return $rdf;
+ 		}
+	}
+	
+	public function drop(){
+		$this->store->drop();
+	}
 } // end of onto_store_arc2

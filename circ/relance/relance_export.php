@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: relance_export.php,v 1.5 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: relance_export.php,v 1.6 2017-11-23 09:02:32 ngantier Exp $
 
 //Affichage des recouvrements pour un lecteur, format Excel HTML
 
@@ -23,11 +23,7 @@ require_once($class_path."/mono_display.class.php");
 require_once($class_path."/serial_display.class.php");
 require_once($class_path."/amende.class.php");
 
-$export_relance_tpl="
-<html>
-<head>
-	<meta http-equiv=Content-Type content='text/html; charset=".$charset."' />
-</head>
+$export_relance_tpl="<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" /></head>
 <body>
 	<table>
 		<tr>

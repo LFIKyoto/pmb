@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.11 2009-05-16 11:12:04 dbellamy Exp $
+// $Id: main.inc.php,v 1.15 2017-10-18 14:55:50 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -13,7 +13,7 @@ require_once("$class_path/thesaurus.class.php");
 
 
 //recuperation du thesaurus session 
-if(!$id_thes) {
+if(!isset($id_thes) || !$id_thes) {
 	$id_thes = thesaurus::getSessionThesaurusId();
 }
 
@@ -24,7 +24,7 @@ $search_form_term = "
 		<div class='row'>
 			<div class='colonne'>
 				<!-- sel_thesaurus -->		
-				<input type='text' class='saisie-50em' name='search_term' value='".htmlentities(stripslashes($search_term),ENT_QUOTES,$charset)."'>
+				<input type='text' class='saisie-50em' name='search_term' value='".(isset($search_term) ? htmlentities(stripslashes($search_term),ENT_QUOTES,$charset) : '')."'>
 			</div>
 		</div>
 		<div class='row'>
@@ -40,39 +40,19 @@ $search_form_term = "
 	</form>
 	<script type='text/javascript'>
 		document.forms['term_search_form'].elements['search_term'].focus();
-		function aide_regex()
-			{
-				var fenetreAide;
-				var prop = 'scrollbars=yes, resizable=yes';
-				fenetreAide = openPopUp('./help.php?whatis=regex', 'regex_howto', 500, 400, -2, -2, prop);
-			}
 		</script>
 	<br />
 	";
 	
 	
 //affichage du selectionneur de thesaurus et du lien vers les thésaurus
-$liste_thesaurus = thesaurus::getThesaurusList();
-$sel_thesaurus = '';
 $lien_thesaurus = '';
 
 if ($thesaurus_mode_pmb != 0) {	 //la liste des thesaurus n'est pas affichée en mode monothesaurus
-	$sel_thesaurus = "<select class='saisie-30em' id='id_thes' name='id_thes' ";
-	$sel_thesaurus.= "onchange = \"document.location = './circ.php?categ=resa&mode=5&id_empr=$id_empr&groupID=$groupID&unq=$unq&id_thes='+document.getElementById('id_thes').value; \">" ;
-	foreach($liste_thesaurus as $id_thesaurus=>$libelle_thesaurus) {
-		$sel_thesaurus.= "<option value='".$id_thesaurus."' "; ;
-		if ($id_thesaurus == $id_thes) $sel_thesaurus.= " selected";
-		$sel_thesaurus.= ">".htmlentities($libelle_thesaurus,ENT_QUOTES,$charset)."</option>";
-	}
-	$sel_thesaurus.= "<option value=-1 ";
-	if ($id_thes == -1) $sel_thesaurus.= "selected ";
-	$sel_thesaurus.= ">".htmlentities($msg['thes_all'],ENT_QUOTES,$charset)."</option>";
-	$sel_thesaurus.= "</select>&nbsp;";
-
-	$lien_thesaurus = "<a href='./autorites.php?categ=categories&sub=thes'>".$msg[thes_lien]."</a>";
+	$lien_thesaurus = "<a href='./autorites.php?categ=categories&sub=thes'>".$msg['thes_lien']."</a>";
 
 }	
-$search_form_term=str_replace("<!-- sel_thesaurus -->",$sel_thesaurus,$search_form_term);
+$search_form_term=str_replace("<!-- sel_thesaurus -->",thesaurus::getSelector($id_thes, './circ.php?categ=resa&mode=5&id_empr='.$id_empr.'&groupID='.$groupID.'&unq='.$unq),$search_form_term);
 $search_form_term=str_replace("<!-- lien_thesaurus -->",$lien_thesaurus,$search_form_term);
 
 
@@ -90,5 +70,5 @@ echo $search_form_term;
 echo "
 <a name='search_frame'/>
 <div class='row'>
-	<iframe name='term_search' src='".$base_path."/circ/resa/terms/term_browse.php?id_empr=$id_empr&groupID=$groupID&mode=1&unq=$unq&search_term=".rawurlencode(stripslashes($search_term))."&id_thes=".$id_thes."' width=100% height=600>
+	<iframe name='term_search' src='".$base_path."/circ/resa/terms/term_browse.php?id_empr=$id_empr&groupID=$groupID&mode=1&unq=$unq&search_term=".(isset($search_term) ? rawurlencode(stripslashes($search_term)) : '')."&id_thes=".$id_thes."' width=100% height=600>
 </div>";

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_integer.inc.php,v 1.5 2015-06-23 11:31:29 jpermanne Exp $
+// $Id: ajax_integer.inc.php,v 1.7 2017-11-21 12:01:00 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -48,7 +48,7 @@ if ($ret[0]) {
 	<br /><div class='erreur'></div>
 	<div class='row'>
 		<div class='colonne10'>
-			<img src='./images/tick.gif' align='left'>
+			<img src='".get_url_icon('tick.gif')."' class='align_left'>
 		</div>
 		<div class='colonne80'>
 			<strong>".(isset($notice_id) ? $msg["notice_connecteur_remplaced_ok"] : $msg["z3950_integr_not_ok"])."</strong>
@@ -77,7 +77,7 @@ if ($ret[0]) {
 	<br /><div class='erreur'>$msg[540]</div>
 	<div class='row'>
 		<div class='colonne10'>
-			<img src='./images/tick.gif' align='left'>
+			<img src='".get_url_icon('tick.gif')."' class='align_left'>
 		</div>
 		<div class='colonne80'>
 			<strong>".($msg["z3950_integr_not_existait"])."</strong><br /><br />

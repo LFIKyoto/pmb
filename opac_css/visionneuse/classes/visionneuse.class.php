@@ -2,21 +2,22 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: visionneuse.class.php,v 1.15 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: visionneuse.class.php,v 1.20 2017-07-21 13:05:58 vtouchard Exp $
 
 require_once($visionneuse_path."/api/params.interface.php");
 require_once($visionneuse_path."/classes/docNum.class.php");
 require_once($visionneuse_path."/includes/templates/visionneuse.tpl.php");
 require_once($visionneuse_path."/classes/messages.class.php");
+require_once($class_path."/explnum_licence/explnum_licence.class.php");
 
 class visionneuse {
-	var $visionneuse_path = "";
-	var $classParam;				//classe de paramétrage de la visionneuse
-	var $docToRender;				
-	var $mimetypeClass;
-	var $message;					//messages localisés
+	public $visionneuse_path = "";
+	public $classParam;				//classe de paramétrage de la visionneuse
+	public $docToRender;				
+	public $mimetypeClass;
+	public $message;					//messages localisés
 
-    function visionneuse($driver,$visionneuse_path,$lvl="visionneuse",$lang="fr_FR",$tab_params=array()){
+	public function __construct($driver,$visionneuse_path,$lvl="visionneuse",$lang="fr_FR",$tab_params=array()){
 
     	$this->visionneuse_path = $visionneuse_path;
 	  	//on instancie la bonne classe
@@ -38,7 +39,7 @@ class visionneuse {
     	}
     }
     
-    function display(){
+    public function display(){
 		global $visionneuse;
 		global $charset,$opac_url_base;
 
@@ -61,13 +62,16 @@ class visionneuse {
 			$docNum = new docNum($this->classParam->getCurrentDoc(),$this->classParam);
 			$this->do_stat_opac($docNum->id);
  			if($this->classParam->is_downloadable($docNum->id)) {
- 				$link= "<div id='visio_current_download'><a href='!!expnum_download!!' target='_blank'>!!expnum_download_lib!!</a></div>";
- 				$url_download_explnum =$this->classParam->getDocumentUrl($docNum->id);
+ 				$link= "<span id='visio_current_download'><a href='!!expnum_download!!' target='_blank'>!!expnum_download_lib!!</a></span>";
+  				$url_download_explnum =$this->classParam->getDocumentUrl($docNum->id);
  				$link = str_replace("!!expnum_download!!",$url_download_explnum,$link);
  				$link = str_replace("!!expnum_download_lib!!",htmlentities($this->message->table['download_doc'],ENT_QUOTES,$charset),$link);
  			}else{
- 				$link ="";
+ 				$link = "";
  			}
+ 			
+ 			
+ 			$visionneuse = str_replace("!!explnum_licence_picto!!",explnum_licence::get_explnum_licence_picto($docNum->id),$visionneuse);
  			$visionneuse = str_replace("!!download!!",$link,$visionneuse);
 			$docToDisplay = $docNum->fetchDisplay();
 			foreach($docToDisplay as $key => $value){
@@ -94,7 +98,7 @@ class visionneuse {
 				$visionneuse = str_replace("!!next_style!!","block-inline;",$visionneuse);					
 			}
 			$visionneuse = str_replace("!!max_pos!!",$this->classParam->getNbDocs()-1,$visionneuse);		
-			$visionneuse = str_replace("!!current_position!!",($this->classParam->current+1)." / ".$this->classParam->getNbDocs(),$visionneuse);
+			$visionneuse = str_replace("!!current_position!!", "<input id='go_page' style='width:20%' type='text' value='".($this->classParam->current+1)."' name='go_page' onKeyPress='if (event.keyCode == 13) visionneuseNav(\"custom\");'/> / ".$this->classParam->getNbDocs(),$visionneuse);
 		
 			//on localise les messages
 			$visionneuse = str_replace("!!close!!",$this->message->table['close'],$visionneuse);
@@ -108,17 +112,18 @@ class visionneuse {
     	}
     }		
     
-    function renderDoc(){
+    public function renderDoc(){
      	$docNum = new docNum($this->classParam->getCurrentDoc(),$this->classParam);
+     	$docNum->setMessage($this->message);
     	$docNum->render();
     }
 
-    function exec($method){
+    public function exec($method){
      	$docNum = new docNum($this->classParam->getCurrentDoc(),$this->classParam);
     	$docNum->exec($method);
     }
     
-    function do_stat_opac($id_explnum){
+    public function do_stat_opac($id_explnum){
     	global $pmb_logs_activate;
     	if($pmb_logs_activate){
     		global $infos_explnum,$log;
@@ -129,26 +134,16 @@ class visionneuse {
 				LEFT JOIN upload_repertoire rep ON ex_n.explnum_repertoire= rep.repertoire_id
 				where explnum_id='".$id_explnum."'";
 			$res_explnum=pmb_mysql_query($rqt_explnum);
-			while(($explnum = pmb_mysql_fetch_array($res_explnum,MYSQL_ASSOC))){
+			while(($explnum = pmb_mysql_fetch_array($res_explnum,PMB_MYSQL_ASSOC))){
 				$infos_explnum[]=$explnum;
 			}
 			
-			$rqt= " select empr_prof,empr_cp, empr_ville as ville, empr_year, empr_sexe, empr_login,  empr_date_adhesion, empr_date_expiration, count(pret_idexpl) as nbprets, count(resa.id_resa) as nbresa, code.libelle as codestat, es.statut_libelle as statut, categ.libelle as categ, gr.libelle_groupe as groupe,dl.location_libelle as location 
-					from empr e
-					left join empr_codestat code on code.idcode=e.empr_codestat
-					left join empr_statut es on e.empr_statut=es.idstatut
-					left join empr_categ categ on categ.id_categ_empr=e.empr_categ
-					left join empr_groupe eg on eg.empr_id=e.id_empr
-					left join groupe gr on eg.groupe_id=gr.id_groupe
-					left join docs_location dl on e.empr_location=dl.idlocation
-					left join resa on e.id_empr=resa_idempr
-					left join pret on e.id_empr=pret_idempr
-					where e.empr_login='".addslashes($_SESSION['user_code'])."'
-					group by resa_idempr, pret_idempr";	
-			$res=pmb_mysql_query($rqt);
-			if($res){
-				$empr_carac = pmb_mysql_fetch_array($res);
-				$log->add_log('empr',$empr_carac);
+			if($_SESSION['user_code']) {
+				$res=pmb_mysql_query($log->get_empr_query());
+				if($res){
+					$empr_carac = pmb_mysql_fetch_array($res);
+					$log->add_log('empr',$empr_carac);
+				}
 			}
 		
 			$log->add_log('num_session',session_id());
@@ -172,14 +167,13 @@ class visionneuse {
 			if($id_notice_droit){
 				$req_restriction_abo = "SELECT explnum_visible_opac, explnum_visible_opac_abon FROM notices,notice_statut WHERE notice_id='".$id_notice_droit."' AND statut=id_notice_statut ";
 				$result=pmb_mysql_query($req_restriction_abo);
-				$expl_num=pmb_mysql_fetch_array($result,MYSQL_ASSOC);
+				$expl_num=pmb_mysql_fetch_array($result,PMB_MYSQL_ASSOC);
 				$infos_restriction_abo = array();
 				foreach ($expl_num as $key=>$value) {
 					$infos_restriction_abo[$key] = $value;
 				}
 				$log->add_log('restriction_abo',$infos_restriction_abo);
 			}
-
 			$log->save();
     	}
     }

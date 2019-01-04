@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sauvegarde_list.tpl.php,v 1.10 2014-10-31 19:38:55 Alexandre Exp $
+// $Id: sauvegarde_list.tpl.php,v 1.11 2017-10-19 07:59:09 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -11,7 +11,7 @@ $form='<h1>'.$msg["sauv_list_titre"].'</h1>
 <input type="hidden" name="act" value="" />
 
 <!--
-<center>'.$msg["sauv_list_dates_list"].'<br />!!date_saving!!<br /><input type="submit" value="'.$msg["sauv_list_filtrer"].'" class="bouton" onClick="this.form.act.value=\'\';" /></center>
+<span class="center">'.$msg["sauv_list_dates_list"].'<br />!!date_saving!!<br /><input type="submit" value="'.$msg["sauv_list_filtrer"].'" class="bouton" onClick="this.form.act.value=\'\';" /></span>
 -->
 <table class="nobrd"><tr>
 <td class="nobrd"  width="30%">'.$msg["sauv_list_dates_list"].'&nbsp;&nbsp;

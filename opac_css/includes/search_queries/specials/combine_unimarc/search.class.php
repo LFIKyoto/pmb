@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.class.php,v 1.7 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: search.class.php,v 1.9 2017-07-12 15:15:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,13 +11,13 @@ require_once($include_path."/rec_history.inc.php");
 //Classe de gestion de la recherche spécial "combine"
 
 class combine_search_unimarc {
-	var $id;
-	var $n_ligne;
-	var $params;
-	var $search;
+	public $id;
+	public $n_ligne;
+	public $params;
+	public $search;
 
 	//Constructeur
-    function combine_search_unimarc($id,$n_ligne,$params,&$search) {
+    public function __construct($id,$n_ligne,$params,&$search) {
     	$this->id=$id;
     	$this->n_ligne=$n_ligne;
     	$this->params=$params;
@@ -25,7 +25,7 @@ class combine_search_unimarc {
     }
     
     //fonction de récupération des opérateurs disponibles pour ce champ spécial (renvoie un tableau d'opérateurs)
-    function get_op() {
+    public function get_op() {
     	$operators = array();
     	if ($_SESSION["nb_queries"]!=0) {
     		$operators["EQ"]="=";
@@ -34,13 +34,13 @@ class combine_search_unimarc {
     }
     
     //fonction de récupération de l'affichage de la saisie du critère
-    function get_input_box() {
+    public function get_input_box() {
     	global $msg,$charset;
     	
     	//Récupération de la valeur de saisie
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
     	    	
     	if ($_SESSION["nb_queries"]!=0) {
     		$r1.="<option value='-1' alt=\"".$msg["default_search_histo"]."\" title=\"".$msg["default_search_histo"]."\"";
@@ -77,16 +77,16 @@ class combine_search_unimarc {
     }
     
     //fonction de conversion de la saisie en quelque chose de compatible avec l'environnement
-    function transform_input() {
+    public function transform_input() {
     }
     
     //fonction de création de la requête (retourne une table temporaire)
-    function make_search() {
+    public function make_search() {
     	
     	//Récupération de la valeur de saisie
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
     	
     	if (!$this->is_empty($valeur)) {
     		
@@ -199,26 +199,26 @@ class combine_search_unimarc {
 				}
 				//opérateur
     			$op="op_0_".$search[0];
-    			global $$op;
-    			$$op=$op_;
+    			global ${$op};
+    			${$op}=$op_;
     		    			
     			//contenu de la recherche
     			$field="field_0_".$search[0];
     			$field_=array();
     			$field_[0]=$valeur_champ;
-    			global $$field;
-    			$$field=$field_;
+    			global ${$field};
+    			${$field}=$field_;
     	    	    	    	
     	    	//opérateur inter-champ
     			$inter="inter_0_".$search[0];
-    			global $$inter;
-    			$$inter="";
+    			global ${$inter};
+    			${$inter}="";
     			    		
     			//variables auxiliaires
     			$fieldvar_="fieldvar_0_".$search[0];
-    			global $$fieldvar_;
-    			$$fieldvar_="";
-    			$fieldvar=$$fieldvar_;	
+    			global ${$fieldvar_};
+    			${$fieldvar_}="";
+    			$fieldvar=${$fieldvar_};	
 								
 	       		$es=new search("search_simple_fields_unimarc");	
 	       	break;	
@@ -241,26 +241,26 @@ class combine_search_unimarc {
 				
 				//opérateur
     			$op="op_0_".$search[0];
-    			global $$op;
-    			$$op=$op_;
+    			global ${$op};
+    			${$op}=$op_;
     		    			
     			//contenu de la recherche
     			$field="field_0_".$search[0];
     			$field_=array();
     			$field_[0]=$valeur_champ;
-    			global $$field;
-    			$$field=$field_;
+    			global ${$field};
+    			${$field}=$field_;
     	    	
     	    	//opérateur inter-champ
     			$inter="inter_0_".$search[0];
-    			global $$inter;
-    			$$inter="";
+    			global ${$inter};
+    			${$inter}="";
     			    		
     			//variables auxiliaires
     			$fieldvar_="fieldvar_0_".$search[0];
-    			global $$fieldvar_;
-    			$$fieldvar_="";
-    			$fieldvar=$$fieldvar_;
+    			global ${$fieldvar_};
+    			${$fieldvar_}="";
+    			$fieldvar=${$fieldvar_};
     							
 				$es=new search("search_simple_fields_unimarc");	
 			break;
@@ -307,27 +307,27 @@ class combine_search_unimarc {
 					
 				//opérateur
     			$op="op_0_".$search[0];
-    			global $$op;
-    			$$op=$op_;
+    			global ${$op};
+    			${$op}=$op_;
     		    			
     			//contenu de la recherche
     			$field="field_0_".$search[0];
     			$field_=array();
     			$field_[0]=$valeur_champ;
-    			global $$field;
-    			$$field=$field_;
+    			global ${$field};
+    			${$field}=$field_;
     	    	
     	    	//opérateur inter-champ
     			$inter="inter_0_".$search[0];
-    			global $$inter;
-    			$$inter="";
+    			global ${$inter};
+    			${$inter}="";
     			    		
     			//variables auxiliaires
     			$fieldvar_="fieldvar_0_".$search[0];
-    			global $$fieldvar_;
+    			global ${$fieldvar_};
     			//fieldvar attention pour la section
-    			$$fieldvar_="";
-    			$fieldvar=$$fieldvar_;
+    			${$fieldvar_}="";
+    			$fieldvar=${$fieldvar_};
     			
 				$es=new search("search_simple_fields_unimarc");
 			break;
@@ -344,7 +344,7 @@ class combine_search_unimarc {
     }
     
     //fonction de traduction littérale de la requête effectuée (renvoie un tableau des termes saisis)
-    function make_human_query() {
+    public function make_human_query() {
     	global $msg;
     	global $include_path;
     	
@@ -352,8 +352,8 @@ class combine_search_unimarc {
     			
     	//Récupération de la valeur de saisie 
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
     	
     	if (!$this->is_empty($valeur)) {
     		$litteral[0]= get_human_query_level_two($valeur[0]);
@@ -361,11 +361,11 @@ class combine_search_unimarc {
 		return $litteral;    
     }
     
-    function make_unimarc_query() {
+    public function make_unimarc_query() {
     	//Récupération de la valeur de saisie
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
     	
     	if (!$this->is_empty($valeur)) {
     		
@@ -436,26 +436,26 @@ class combine_search_unimarc {
 				}
 				//opérateur
     			$op="op_0_".$search[0];
-    			global $$op;
-    			$$op=$op_;
+    			global ${$op};
+    			${$op}=$op_;
     		    			
     			//contenu de la recherche
     			$field="field_0_".$search[0];
     			$field_=array();
     			$field_[0]=$valeur_champ;
-    			global $$field;
-    			$$field=$field_;
+    			global ${$field};
+    			${$field}=$field_;
     	    	    	    	
     	    	//opérateur inter-champ
     			$inter="inter_0_".$search[0];
-    			global $$inter;
-    			$$inter="";
+    			global ${$inter};
+    			${$inter}="";
     			    		
     			//variables auxiliaires
     			$fieldvar_="fieldvar_0_".$search[0];
-    			global $$fieldvar_;
-    			$$fieldvar_="";
-    			$fieldvar=$$fieldvar_;	
+    			global ${$fieldvar_};
+    			${$fieldvar_}="";
+    			$fieldvar=${$fieldvar_};	
 								
 	       		$es=new search("search_simple_fields_unimarc");	
 	       	break;	
@@ -472,26 +472,26 @@ class combine_search_unimarc {
 				
 				//opérateur
     			$op="op_0_".$search[0];
-    			global $$op;
-    			$$op=$op_;
+    			global ${$op};
+    			${$op}=$op_;
     		    			
     			//contenu de la recherche
     			$field="field_0_".$search[0];
     			$field_=array();
     			$field_[0]=$valeur_champ;
-    			global $$field;
-    			$$field=$field_;
+    			global ${$field};
+    			${$field}=$field_;
     	    	
     	    	//opérateur inter-champ
     			$inter="inter_0_".$search[0];
-    			global $$inter;
-    			$$inter="";
+    			global ${$inter};
+    			${$inter}="";
     			    		
     			//variables auxiliaires
     			$fieldvar_="fieldvar_0_".$search[0];
-    			global $$fieldvar_;
-    			$$fieldvar_="";
-    			$fieldvar=$$fieldvar_;
+    			global ${$fieldvar_};
+    			${$fieldvar_}="";
+    			$fieldvar=${$fieldvar_};
     							
 				$es=new search("search_simple_fields_unimarc");	
 			break;
@@ -520,27 +520,27 @@ class combine_search_unimarc {
 				
 				//opérateur
     			$op="op_0_".$search[0];
-    			global $$op;
-    			$$op=$op_;
+    			global ${$op};
+    			${$op}=$op_;
     		    			
     			//contenu de la recherche
     			$field="field_0_".$search[0];
     			$field_=array();
     			$field_[0]=$valeur_champ;
-    			global $$field;
-    			$$field=$field_;
+    			global ${$field};
+    			${$field}=$field_;
     	    	
     	    	//opérateur inter-champ
     			$inter="inter_0_".$search[0];
-    			global $$inter;
-    			$$inter="";
+    			global ${$inter};
+    			${$inter}="";
     			    		
     			//variables auxiliaires
     			$fieldvar_="fieldvar_0_".$search[0];
-    			global $$fieldvar_;
+    			global ${$fieldvar_};
     			//fieldvar attention pour la section
-    			$$fieldvar_="";
-    			$fieldvar=$$fieldvar_;
+    			${$fieldvar_}="";
+    			$fieldvar=${$fieldvar_};
     			
 				$es=new search("search_simple_fields_unimarc");
 			break;
@@ -557,7 +557,7 @@ class combine_search_unimarc {
     }
     
     //fonction de découpage d'une chaine trop longue
-    function cutlongwords($valeur) {
+    public function cutlongwords($valeur) {
     	if (strlen($valeur)>=50) {
     		$pos=strrpos(substr($valeur,0,50)," ");
     		if ($pos) {
@@ -568,7 +568,7 @@ class combine_search_unimarc {
     }
     
 	//fonction de vérification du champ saisi ou sélectionné
-    function is_empty($valeur) {
+    public function is_empty($valeur) {
     	if (count($valeur)) {
     		if ($valeur[0]=="-1") return true;
     			else return ($valeur[0] === false);

@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.13 2012-04-30 14:04:19 dbellamy Exp $
+// $Id: main.inc.php,v 1.14 2017-02-01 15:19:03 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($quota)) $quota = '';
+if(!isset($elements)) $elements = '';
 
 require_once($class_path."/quotas.class.php");
 

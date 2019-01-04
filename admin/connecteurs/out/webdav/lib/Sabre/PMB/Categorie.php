@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: Categorie.php,v 1.8 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: Categorie.php,v 1.10 2016-01-26 15:36:15 dgoron Exp $
 namespace Sabre\PMB;
 
 class Categorie extends Collection {
@@ -44,12 +44,7 @@ class Categorie extends Collection {
 	}
 
 	function getName() {
-		global $charset;
-		if($charset != "utf-8"){
-			return utf8_encode($this->categ->libelle." (C".$this->categ->id.")");
-		}else{
-			return $this->categ->libelle." (C".$this->categ->id.")";
-		}
+		return $this->format_name($this->categ->libelle." (C".$this->categ->id.")");
 	}
 	
 	function need_to_display($categ_id){
@@ -60,8 +55,8 @@ class Categorie extends Collection {
 				return false;
 			}
 			if($this->config['only_with_notices']){
-				if($this->restricted_notices != ""){
-					$clause = " and notice_id in (".$this->restricted_notices.")";
+				if($this->restricted_objects != ""){
+					$clause = " and notice_id in (".$this->restricted_objects.")";
 				}else $clause = "";
 				//notices ou notices de bulletins...
 				$query = "select sum(nb) from (select count(1) as nb from notices_categories join noeuds on id_noeud = notices_categories.num_noeud join notices on notice_id = notcateg_notice join explnum on explnum_notice = notice_id and explnum_notice != 0 where explnum_mimetype != 'URL' and path like (select concat(path,'%') from noeuds where id_noeud = ".$categ_id.")".$clause." union select count(1) as nb from notices_categories join noeuds on id_noeud = notices_categories.num_noeud join notices on notice_id = notcateg_notice and niveau_biblio = 'b ' join bulletins on num_notice = notice_id join explnum on explnum_bulletin = bulletin_id and explnum_notice=0 where explnum_mimetype != 'URL' and path like (select concat(path,'%') from noeuds where id_noeud = ".$categ_id.")".$clause.") as uni ";

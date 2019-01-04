@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: func_rameau_categ_integral.inc.php,v 1.14 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: func_rameau_categ_integral.inc.php,v 1.15 2016-09-07 08:35:37 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -115,7 +115,7 @@ function traite_categories_from_form() {
 		if ($res_a) {
 			$categid_a = $res_a;
 		} else {
-			$categid_a = create_categ($id_rech_theme, $libelle_final, strip_empty_words($libelle_final));
+			$categid_a = create_categ_z3950($id_rech_theme, $libelle_final, strip_empty_words($libelle_final));
 		}
 		// récup des sous-categ en cascade sous $a
 		$categ_parent =  $categid_a ;
@@ -124,7 +124,7 @@ function traite_categories_from_form() {
 			if ($res_x) {
 				$categ_parent = $res_x;
 			} else {
-				$categ_parent = create_categ($categ_parent, trim($info_606_x[$a][$x]), strip_empty_words($info_606_x[$a][$x]));
+				$categ_parent = create_categ_z3950($categ_parent, trim($info_606_x[$a][$x]), strip_empty_words($info_606_x[$a][$x]));
 			}
 		} // fin récup des $x en cascade sous l'id de la catégorie 606$a
 		
@@ -141,7 +141,7 @@ function traite_categories_from_form() {
 			if ($res_y) {
 				$categ_parent = $res_y;		
 			} else {
-				$categ_parent = create_categ($categ_parent, trim($info_606_y[$a][$y]), strip_empty_words($info_606_y[$a][$y]));
+				$categ_parent = create_categ_z3950($categ_parent, trim($info_606_y[$a][$y]), strip_empty_words($info_606_y[$a][$y]));
 			}
 		} // fin récup des $y en cascade sous l'id de la catégorie principale thème géo
 		
@@ -158,7 +158,7 @@ function traite_categories_from_form() {
 			if ($res_z) {
 				$categ_parent = $res_z;
 			} else {
-				$categ_parent = create_categ($categ_parent, trim($info_606_z[$a][$z]), strip_empty_words($info_606_z[$a][$z]));
+				$categ_parent = create_categ_z3950($categ_parent, trim($info_606_z[$a][$z]), strip_empty_words($info_606_z[$a][$z]));
 			}
 		} // fin récup des $z en cascade sous l'id de la catégorie principale thème chrono
 		
@@ -171,7 +171,7 @@ return $categ_retour ;
 }
 
 
-function create_categ($num_parent, $libelle, $index) {
+function create_categ_z3950($num_parent, $libelle, $index) {
 	
 	global $thes;
 	$n = new noeuds();

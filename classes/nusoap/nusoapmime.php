@@ -1,6 +1,6 @@
 <?php
 /*
-$Id: nusoapmime.php,v 1.2 2013-04-11 08:14:12 mbertin Exp $
+$Id: nusoapmime.php,v 1.3 2017-04-19 12:37:02 dgoron Exp $
 
 NuSOAP - Web Services Toolkit for PHP
 
@@ -42,7 +42,7 @@ require_once('Mail/mimePart.php');
 *
 * @author   Scott Nichol <snichol@sourceforge.net>
 * @author	Thanks to Guillaume and Henning Reich for posting great attachment code to the mail list
-* @version  $Id: nusoapmime.php,v 1.2 2013-04-11 08:14:12 mbertin Exp $
+* @version  $Id: nusoapmime.php,v 1.3 2017-04-19 12:37:02 dgoron Exp $
 * @access   public
 */
 class soapclientmime extends soapclient {
@@ -51,18 +51,18 @@ class soapclientmime extends soapclient {
 	 * data, filename, contenttype, cid
 	 * @access private
 	 */
-	var $requestAttachments = array();
+	public $requestAttachments = array();
 	/**
 	 * @var array Each array element in the return is an associative array with keys
 	 * data, filename, contenttype, cid
 	 * @access private
 	 */
-	var $responseAttachments;
+	public $responseAttachments;
 	/**
 	 * @var string
 	 * @access private
 	 */
-	var $mimeContentType;
+	public $mimeContentType;
 	
 	/**
 	* adds a MIME attachment to the current request.
@@ -262,7 +262,7 @@ class soapclientmime extends soapclient {
 *
 * @author   Scott Nichol <snichol@sourceforge.net>
 * @author	Thanks to Guillaume and Henning Reich for posting great attachment code to the mail list
-* @version  $Id: nusoapmime.php,v 1.2 2013-04-11 08:14:12 mbertin Exp $
+* @version  $Id: nusoapmime.php,v 1.3 2017-04-19 12:37:02 dgoron Exp $
 * @access   public
 */
 class nusoapservermime extends soap_server {
@@ -271,18 +271,18 @@ class nusoapservermime extends soap_server {
 	 * data, filename, contenttype, cid
 	 * @access private
 	 */
-	var $requestAttachments = array();
+	public $requestAttachments = array();
 	/**
 	 * @var array Each array element in the return is an associative array with keys
 	 * data, filename, contenttype, cid
 	 * @access private
 	 */
-	var $responseAttachments;
+	public $responseAttachments;
 	/**
 	 * @var string
 	 * @access private
 	 */
-	var $mimeContentType;
+	public $mimeContentType;
 	
 	/**
 	* adds a MIME attachment to the current response.

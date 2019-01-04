@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: recouvr_reader_excel.php,v 1.7 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: recouvr_reader_excel.php,v 1.9 2018-01-21 17:18:45 Alexandre Exp $
 
 //Affichage des recouvrements pour un lecteur, format Excel HTML
 
@@ -23,9 +23,7 @@ require_once($class_path."/serial_display.class.php");
 
 $empr=new emprunteur($id_empr,'', FALSE, 0);
 
-print "<html><head>" .
-'<meta http-equiv=Content-Type content="text/html; charset='.$charset.'" />'.
-"</head><body>";
+print "<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" /></head><body>";
 print "<table>";
 print pmb_bidi("<tr><td>".$empr->prenom." ".$empr->nom."</td></tr>
 <tr><td>".$empr->adr1."</td></tr>
@@ -47,7 +45,7 @@ while ($r=pmb_mysql_fetch_object($resultat)) {
 	if ($r->id_expl) {
 		if ($r->expl_notice) {
 			$notice=new mono_display($r->expl_notice);
-			$libelle=$notice->header;
+			$libelle=strip_tags($notice->header);
 		} else if ($r->expl_bulletin) {
 			$bulletin=new bulletinage_display($r->expl_bulletin);
 			$libelle=$bulletin->display;

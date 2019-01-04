@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cashdesk_list.class.php,v 1.6 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: cashdesk_list.class.php,v 1.12 2018-12-19 13:59:19 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,7 +10,7 @@ require_once($include_path."/templates/cashdesk/cashdesk.tpl.php");
 require_once($class_path."/cashdesk/cashdesk.class.php");
 
 class cashdesk_list {	
-	var $cashdesk_list=array(); // liste des caisses
+	public $cashdesk_list=array(); // liste des caisses
 	
 	public function __construct(){
 		$this->fetch_data();		
@@ -35,6 +35,8 @@ class cashdesk_list {
 		global $msg;
 		global $cashdesk_list_form, $charset;
 		
+		$form = "";
+		$parity = 0;
 		foreach ($this->cashdesk_list as $index =>$cashdesk){
 			if ($parity++ % 2)	$pair_impair = "even"; else $pair_impair = "odd";			
 			$form.= "
@@ -50,7 +52,7 @@ class cashdesk_list {
 	public function get_form_summarize(){
 		global $msg;
 		global $cashdesk_list_form_summarize, $charset;
-		global $cashdesk_filter,$start_date, $stop_date,$field_start_date,$field_stop_date;
+		global $cashdesk_filter,$start_date, $stop_date;
 		
 		if(!count($this->cashdesk_list))return "";
 		if(!$cashdesk_filter)$cashdesk_filter=array();
@@ -84,12 +86,12 @@ class cashdesk_list {
 				<tr class='$pair_impair' onmouseout=\"this.className='$pair_impair'\" onmouseover=\"this.className='surbrillance'\" style='cursor: pointer'>
 					<td onmousedown=\"document.location='./admin.php?categ=finance&sub=cashdesk&action=edit&id=".$cashdesk['id']."'\" >".htmlentities($cashdesk['name'],ENT_QUOTES, $charset)."</td>
 					<td onmousedown=\"document.location='./admin.php?categ=finance&sub=transactype&action=edit&id=".$transactions['id']."'\" >".htmlentities($transactions['name'],ENT_QUOTES, $charset)."</td>
-					<td>".htmlentities($transactions['unit_price'],ENT_QUOTES, $charset)."</td>
-					<td>".htmlentities($transactions['montant'],ENT_QUOTES, $charset)."</td>
-					<td>".htmlentities($transactions['realisee_no'],ENT_QUOTES, $charset)."</td>			
-					<td>".htmlentities($transactions['realisee'],ENT_QUOTES, $charset)."</td>			
-					<td>".htmlentities($transactions['encaissement_no'],ENT_QUOTES, $charset)."</td>			
-					<td>".htmlentities($transactions['encaissement'],ENT_QUOTES, $charset)."</td>
+					<td>".htmlentities($this->format_price($transactions['unit_price']),ENT_QUOTES, $charset)."</td>
+					<td>".htmlentities($this->format_price($transactions['montant']),ENT_QUOTES, $charset)."</td>
+					<td>".htmlentities($this->format_price($transactions['realisee_no']),ENT_QUOTES, $charset)."</td>			
+					<td>".htmlentities($this->format_price($transactions['realisee']),ENT_QUOTES, $charset)."</td>			
+					<td>".htmlentities($this->format_price($transactions['encaissement_no']),ENT_QUOTES, $charset)."</td>			
+					<td>".htmlentities($this->format_price($transactions['encaissement']),ENT_QUOTES, $charset)."</td>
 				</tr>
 				";
 				$tt_realisee_no+=$transactions['realisee_no'];
@@ -103,14 +105,12 @@ class cashdesk_list {
 		$formall=str_replace('!!cashdesk_list!!', $form, $cashdesk_list_form_summarize);		
 		$formall=str_replace('!!cashdesk_filter!!', $cashdesk_filter_form, $formall);			
 		$formall=str_replace('!!start_date!!', $start_date, $formall);				
-		$formall=str_replace('!!field_start_date!!', $field_start_date, $formall);				
 		$formall=str_replace('!!stop_date!!', $stop_date, $formall);	
-		$formall=str_replace('!!field_stop_date!!', $field_stop_date, $formall);	
 			
-		$formall=str_replace('!!realisee_no!!',$tt_realisee_no , $formall);
-		$formall=str_replace('!!realisee!!',$tt_realisee , $formall);
-		$formall=str_replace('!!encaissement_no!!',$tt_encaissement_no , $formall);
-		$formall=str_replace('!!encaissement!!',$tt_encaissement , $formall);	
+		$formall=str_replace('!!realisee_no!!',$this->format_price($tt_realisee_no) , $formall);
+		$formall=str_replace('!!realisee!!',$this->format_price($tt_realisee) , $formall);
+		$formall=str_replace('!!encaissement_no!!',$this->format_price($tt_encaissement_no) , $formall);
+		$formall=str_replace('!!encaissement!!',$this->format_price($tt_encaissement) , $formall);	
 		
 		$formall=str_replace('!!transaction_filter!!', $transaction_filter_form, $formall);		
 		
@@ -143,12 +143,12 @@ class cashdesk_list {
 				<tr >
 					<td>".htmlentities($cashdesk['name'],ENT_QUOTES, $charset)."</td>
 					<td>".htmlentities($transactions['name'],ENT_QUOTES, $charset)."</td>
-					<td>".htmlentities($transactions['unit_price'],ENT_QUOTES, $charset)."</td>
-					<td>".htmlentities($transactions['montant'],ENT_QUOTES, $charset)."</td>
-					<td>".htmlentities($transactions['realisee_no'],ENT_QUOTES, $charset)."</td>
-					<td>".htmlentities($transactions['realisee'],ENT_QUOTES, $charset)."</td>
-					<td>".htmlentities($transactions['encaissement_no'],ENT_QUOTES, $charset)."</td>
-					<td>".htmlentities($transactions['encaissement'],ENT_QUOTES, $charset)."</td>
+					<td>".htmlentities($this->format_price($transactions['unit_price']),ENT_QUOTES, $charset)."</td>
+					<td>".htmlentities($this->format_price($transactions['montant']),ENT_QUOTES, $charset)."</td>
+					<td>".htmlentities($this->format_price($transactions['realisee_no']),ENT_QUOTES, $charset)."</td>
+					<td>".htmlentities($this->format_price($transactions['realisee']),ENT_QUOTES, $charset)."</td>
+					<td>".htmlentities($this->format_price($transactions['encaissement_no']),ENT_QUOTES, $charset)."</td>
+					<td>".htmlentities($this->format_price($transactions['encaissement']),ENT_QUOTES, $charset)."</td>
 				</tr>
 				";
 				$tt_realisee_no+=$transactions['realisee_no'];
@@ -160,15 +160,15 @@ class cashdesk_list {
 			}
 		}		
 		$formall=str_replace('!!cashdesk_list!!', $form, $cashdesk_list_form_summarize_table);
-		$formall=str_replace('!!realisee_no!!',$tt_realisee_no , $formall);
-		$formall=str_replace('!!realisee!!',$tt_realisee , $formall);
-		$formall=str_replace('!!encaissement_no!!',$tt_encaissement_no , $formall);
-		$formall=str_replace('!!encaissement!!',$tt_encaissement , $formall);
+		$formall=str_replace('!!realisee_no!!',$this->format_price($tt_realisee_no) , $formall);
+		$formall=str_replace('!!realisee!!',$this->format_price($tt_realisee) , $formall);
+		$formall=str_replace('!!encaissement_no!!',$this->format_price($tt_encaissement_no) , $formall);
+		$formall=str_replace('!!encaissement!!',$this->format_price($tt_encaissement) , $formall);
 		return $formall;
 	}
 	
 	public function get_excel_summarize(){
-		global $msg;
+		global $msg, $class_path;
 		global $charset,$fichier_temp_nom,$titre_page;
 		global $cashdesk_filter,$start_date, $stop_date;
 		
@@ -176,9 +176,8 @@ class cashdesk_list {
 		if(!$cashdesk_filter)$cashdesk_filter=array();
 		if(!$cashdesk_filter[0])$cashdesk_filter=array();		
 		
-		$fname = tempnam("./temp", "$fichier_temp_nom.xls");
-		$workbook = new writeexcel_workbook($fname);
-		$worksheet = &$workbook->addworksheet();
+		require_once ($class_path."/spreadsheet.class.php");
+		$worksheet = new spreadsheet();
 		$worksheet->write(0,0,$titre_page);		
 		$i=2;
 		$j=2;
@@ -204,21 +203,25 @@ class cashdesk_list {
 				$j=2;
 				$worksheet->write($i,$j++,$cashdesk['name']);
 				$worksheet->write($i,$j++,$transactions['name']);
-				$worksheet->write($i,$j++,$transactions['unit_price']);
-				$worksheet->write($i,$j++,$transactions['montant']);
-				$worksheet->write($i,$j++,$transactions['realisee_no']);
-				$worksheet->write($i,$j++,$transactions['realisee']);
-				$worksheet->write($i,$j++,$transactions['encaissement_no']);
-				$worksheet->write($i,$j++,$transactions['encaissement']);
+				$worksheet->write($i,$j++,$this->format_price($transactions['unit_price']));
+				$worksheet->write($i,$j++,$this->format_price($transactions['montant']));
+				$worksheet->write($i,$j++,$this->format_price($transactions['realisee_no']));
+				$worksheet->write($i,$j++,$this->format_price($transactions['realisee']));
+				$worksheet->write($i,$j++,$this->format_price($transactions['encaissement_no']));
+				$worksheet->write($i,$j++,$this->format_price($transactions['encaissement']));
 				$i++;
 			}
 		}	
-		$workbook->close();
-		$fh=fopen($fname, "rb");
-		fpassthru($fh);
-		unlink($fname);
+		$worksheet->download('caisse.xls');
 	}
+	
+	public function format_price($price) {
+		global $pmb_fine_precision;
 		
+		if (!$pmb_fine_precision) $pmb_fine_precision=2;
+		return 	number_format($price + 0, $pmb_fine_precision, '.', ' ');
+	}
+	
 	public function proceed(){
 		global $action;
 		

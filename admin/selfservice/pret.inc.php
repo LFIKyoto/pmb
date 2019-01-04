@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pret.inc.php,v 1.3 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: pret.inc.php,v 1.4 2018-04-12 15:10:46 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // gestion du paramétrage de la borne de prêt
 
-function show_param($action='') {
+function show_param_pret($action='') {
 	global $msg,$charset,$pmb_transferts_actif;
 	global $selfservice_pret_carte_invalide_msg;
 	global $selfservice_pret_pret_interdit_msg;
@@ -122,7 +122,7 @@ function show_param($action='') {
 	";
 }
 
-function memo_param() {
+function memo_param_pret() {
 	global $selfservice_pret_carte_invalide_msg, $pret_carte_invalide_msg;
 	global $selfservice_pret_pret_interdit_msg, $pret_pret_interdit_msg;
 	global $selfservice_pret_deja_prete_msg, $pret_deja_prete_msg;
@@ -178,10 +178,10 @@ function memo_param() {
 
 switch($action) {
 	case 'update':
-		if($form_actif) memo_param();
-		show_param($action);
+		if($form_actif) memo_param_pret();
+		show_param_pret($action);
 	break;
 	default:
-		show_param();
+		show_param_pret();
 		break;
 }

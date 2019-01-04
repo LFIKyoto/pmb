@@ -2,14 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: config.inc.php,v 1.208.2.18 2015-12-11 15:09:24 touraine37 Exp $
+// $Id: config.inc.php,v 1.232 2018-10-26 08:28:38 touraine37 Exp $
 
 // fichier de configuration générale
 
-$pmb_version = "</b>4.2.6</b>";
-$pmb_version_brut = "4.2.6";
-$pmb_version_database_as_it_should_be = "v5.19";
-$pmb_subversion_database_as_it_shouldbe = "16";
+$pmb_version = "</b>7.0.DEV</b>";
+$pmb_version_brut = "7.0.DEV";
+$pmb_version_database_as_it_should_be = "v5.31";
+$pmb_subversion_database_as_it_shouldbe = "0";
 
 $pmb_version_web = "http://www.sigb.net/config.inc.php" ;
 
@@ -48,28 +48,35 @@ $loglevel = 'off';
 $logfile = './journal.log';
 
 // flags pour la gestion des droits utilisateurs
-define('CIRCULATION_AUTH'		,    1);
-define('CATALOGAGE_AUTH'		,    2);
-define('AUTORITES_AUTH'			,    4);
-define('ADMINISTRATION_AUTH'	,    8);
-define('EDIT_AUTH'				,   16);
-define('SAUV_AUTH'				,   32);
-define('DSI_AUTH'				,   64);
-define('PREF_AUTH'				,  128);
-define('ACQUISITION_AUTH'		,  256);
-define('RESTRICTCIRC_AUTH'		,  512);
-define('RESTRICTCATAL_AUTH'		, 1024);
-define('THESAURUS_AUTH'			, 2048);
-define('TRANSFERTS_AUTH'		, 4096);
-define('EXTENSIONS_AUTH'		, 8192);
-define('DEMANDES_AUTH'			, 16384);
-define('FICHES_AUTH'			, 32768);
-define('CMS_AUTH'				, 65536);
-define('EDIT_FORCING_AUTH'		,131072);
+define('CIRCULATION_AUTH'			,    1);
+define('CATALOGAGE_AUTH'			,    2);
+define('AUTORITES_AUTH'				,    4);
+define('ADMINISTRATION_AUTH'		,    8);
+define('EDIT_AUTH'					,   16);
+define('SAUV_AUTH'					,   32);
+define('DSI_AUTH'					,   64);
+define('PREF_AUTH'					,  128);
+define('ACQUISITION_AUTH'			,  256);
+define('RESTRICTCIRC_AUTH'			,  512);
+define('RESTRICTCATAL_AUTH'			, 1024);
+define('THESAURUS_AUTH'				, 2048);
+define('TRANSFERTS_AUTH'			, 4096);
+define('EXTENSIONS_AUTH'			, 8192);
+define('DEMANDES_AUTH'				, 16384);
+define('FICHES_AUTH'				, 32768);
+define('CMS_AUTH'					, 65536);
+define('EDIT_FORCING_AUTH'			,131072);
+define('CATAL_MODIF_CB_EXPL_AUTH'	,262144);
+define('ACQUISITION_ACCOUNT_INVOICE_AUTH',524288);
+define('CMS_BUILD_AUTH'				, 1048576);
+define('SEMANTIC_AUTH'				, 2097152);
+define('CONCEPTS_AUTH'				, 4194304);
+define('FRBR_AUTH'					, 8388608);
+define('MODELLING_AUTH'				, 16777216);
 
-// durée des sessions
-define('SESSION_REACTIVATE', 7200); // refresh max = 120 minutes
-define('SESSION_MAXTIME', 86400);	// durée de vie maximum d'une session = 24h
+$CACHE_ENGINE = 'apcu';//Type de moteur de cache php utilisé
+$CACHE_MAXTIME = 86400;//Duree de mise en cache
+$KEY_CACHE_FILE_XML = 'key_cache_file_xml';//Prefix pour la cle des variables en cache pour les fichiers XML
 
 // définition des périodicités de pério
 define('ABT_PERIODICITE_JOUR'		,    1);
@@ -93,6 +100,8 @@ define('AUDIT_ACTION'	,    15);
 define('AUDIT_NOTE',16);
 define('AUDIT_EDITORIAL_ARTICLE',20);
 define('AUDIT_EDITORIAL_SECTION',21);
+define('AUDIT_EXPLNUM',22);
+define('AUDIT_CONCEPT', 23);
 
 /* la langue est fixée sur la valeur par défaut pour l'instant */
 $lang= $default_lang;
@@ -103,7 +112,7 @@ $backup_dir = "backups";
 
 // est stockée en base mais par défaut, si vide ...
 if (!isset($pmb_opac_url)) $pmb_opac_url = "./opac_css/";
-
+	
 /* Nbre d'enregistrements affichés par page */
 /* autorités */                  /* each was 10 */
 $nb_per_page_author = 20 ;

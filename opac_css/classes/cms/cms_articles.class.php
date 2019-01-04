@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_articles.class.php,v 1.3 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: cms_articles.class.php,v 1.5 2016-09-21 09:22:57 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -29,7 +29,7 @@ class cms_articles {
 	
 	protected function _recursive_fetch_data($num_parent=0){
 		if($num_parent != 0){
-			$rqt = "select id_article from cms_articles where num_section='".$num_parent."'";
+			$rqt = "select id_article from cms_articles where num_section='".($num_parent*1)."'";
 			$res = pmb_mysql_query($rqt);
 			if(pmb_mysql_num_rows($res)){
 				while($row = pmb_mysql_fetch_object($res)){
@@ -38,7 +38,7 @@ class cms_articles {
 			}
 		}
 		if($this->recursive){
-			$rqt = "select id_section from cms_sections where section_num_parent = '".$num_parent."'";
+			$rqt = "select id_section from cms_sections where section_num_parent = '".($num_parent*1)."'";
 			$res = pmb_mysql_query($rqt);
 			if(pmb_mysql_num_rows($res)){
 				while($row = pmb_mysql_fetch_object($res)){
@@ -73,7 +73,7 @@ class cms_articles {
 		
 		$list = str_replace("!!cms_articles_list_title!!", sprintf($msg['cms_articles_list_title'],$this->get_section_title()),$cms_articles_list);
 		if($this->get_nb_articles()){
-			$rqt = "select *from cms_articles where id_article in (".implode(",",$this->list).")";
+			$rqt = "select * from cms_articles where id_article in ('".implode("','",$this->list)."')";
 			$res = pmb_mysql_query($rqt);
 			$items="";
 			if(pmb_mysql_num_rows($res)){

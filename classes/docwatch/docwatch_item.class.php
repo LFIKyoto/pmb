@@ -2,12 +2,14 @@
 // +-------------------------------------------------+
 // Â© 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_item.class.php,v 1.30.4.3 2015-10-09 13:49:22 dgoron Exp $
+// $Id: docwatch_item.class.php,v 1.52 2018-10-01 13:57:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/notice.class.php");
+require_once($class_path."/notice_doublon.class.php");
 require_once($class_path."/docwatch/docwatch_watch.class.php");
+require_once($class_path."/editor.class.php");
 
 /**
  * class docwatch_item
@@ -185,8 +187,7 @@ class docwatch_item{
 		$this->id = $id;
 	}
 	
-	public function get_title()
-	{
+	public function get_title(){
 		return $this->title;
 	}
 	
@@ -349,7 +350,7 @@ class docwatch_item{
 	
 	public function get_descriptors_isbd() {
 		return $this->descriptors_isbd;
-	}  
+	}
 	
 	public function get_tags_isbd() {
 	  	return $this->tags_isbd;
@@ -358,23 +359,40 @@ class docwatch_item{
 	public function create_notice() {		
 		global $dbh;
 		global $pmb_keyword_sep;
+		global $class_path,$gestion_acces_active,$gestion_acces_user_notice,$gestion_acces_empr_notice;
+		global $pmb_notice_controle_doublons;
+		
 		if(docwatch_watch::check_watch_rights($this->num_watch)){
 			/** Récupération des paramètres défini dans la veille pour la création de notice à partir de ses items **/
-			$query = "select watch_record_default_type, watch_record_default_status from docwatch_watches where id_watch =".$this->num_watch;
+			$query = "select watch_record_default_type, watch_record_default_status, watch_record_default_index_lang, watch_record_default_lang, watch_record_default_is_new from docwatch_watches where id_watch =".$this->num_watch;
 			$result = pmb_mysql_query($query, $dbh);
 			if (pmb_mysql_num_rows($result)) {
 				$row = pmb_mysql_fetch_object($result);
 				$record_type = $row->watch_record_default_type;
 				$record_status = $row->watch_record_default_status;
+				$index_lang = $row->watch_record_default_index_lang;
+				$create_lang = $row->watch_record_default_lang;
+				$is_new = $row->watch_record_default_is_new;
 			}else{
 				return array();
 			}
+			//Editeur = Source
+			$data = array('name' => $this->source['title']);
+			$editeur_id = editeur::check_if_exists($data);
+			if(!$editeur_id) {
+				$editeur = new editeur();
+				$editeur->update($data);
+				$editeur_id = $editeur->id;
+			}
+			// Mots clés
 			$tab_tag= array();
 			foreach ($this->tags as $tag){
 				$tab_tag[]=$tag["label"];
 			}
 			$fields="
 				tit1='".addslashes($this->title)."',
+				ed1_id='".addslashes($editeur_id)."',
+				n_contenu='".addslashes($this->content)."',
 				n_resume='".addslashes($this->summary)."',
 				lien='".addslashes($this->url)."',
 				thumbnail_url='".addslashes($this->logo_url)."',
@@ -382,17 +400,29 @@ class docwatch_item{
 				year='".addslashes(format_date($this->publication_date))."',
 				typdoc='".addslashes($record_type)."',
 				statut='".addslashes($record_status)."',
-				index_l='".addslashes(implode($pmb_keyword_sep,$tab_tag))."'
+				index_l='".addslashes(implode($pmb_keyword_sep,$tab_tag))."',
+				indexation_lang='".addslashes($index_lang)."',
+				notice_is_new='".addslashes($is_new)."',";
+			if ($is_new) {
+				$fields .= "notice_date_is_new=sysdate(),";
+			}
+			$fields .= "
+				create_date=sysdate(),
+				update_date=sysdate()
 			";
 			$req="INSERT INTO notices SET $fields ";
-			
 			
 			pmb_mysql_query($req, $dbh);
 			$num_notice=pmb_mysql_insert_id();
 			if(!$num_notice) return array();
 			
-			foreach ($this->descriptors as $num_categ => $label){
-				$query = "insert into notices_categories set notcateg_notice = '".$num_notice."', num_noeud='".$num_categ."'";
+			foreach ($this->descriptors as $categ){
+				$query = "insert into notices_categories set notcateg_notice = '".$num_notice."', num_noeud='".$categ["id"]."'";
+				pmb_mysql_query($query, $dbh);
+			}
+			
+			if ($create_lang){
+				$query = "insert into notices_langues set num_notice=".$num_notice.", code_langue='".addslashes($create_lang)."';";
 				pmb_mysql_query($query, $dbh);
 			}
 			
@@ -401,17 +431,39 @@ class docwatch_item{
 			
 			$this->set_num_notice($num_notice);
 			
-			// permet de charger la bonne langue, mot vide...
-			$info=notice::indexation_prepare($num_notice);
-			// Mise a jour des index de la notice
-			notice::majNotices($num_notice);
-			// Mise a jour de la table notices_global_index
-			notice::majNoticesGlobalIndex($num_notice);
-			// Mise a jour de la table notices_mots_global_index
-			notice::majNoticesMotsGlobalIndex($num_notice);
-			// restaure l'environnement de langue
-			notice::indexation_restaure($info);
-			return array('id'=>$num_notice, 'title'=> $this->title,'link'=>"./catalog.php?categ=isbd&id=".$num_notice);
+			// Mise à jour de tous les index de la notice
+			notice::majNoticesTotal($num_notice);
+			
+			//Calcul de la signature
+			$is_doublon = 0;
+			
+			if ($pmb_notice_controle_doublons != 0) {
+				$sign= new notice_doublon();
+				$val= $sign->gen_signature($num_notice);
+				pmb_mysql_query("update notices set signature='$val' where notice_id=".$num_notice, $dbh);
+				$result=pmb_mysql_query("select notice_id from notices where signature='$val' and notice_id != '$num_notice' ", $dbh);
+				if ($dbls=pmb_mysql_num_rows($result)) {
+					$is_doublon = 1;
+				}
+			}
+			
+			//droits d'acces
+			if ($gestion_acces_active==1) {
+				require_once("$class_path/acces.class.php");
+				$ac= new acces();
+				
+				if ($gestion_acces_user_notice==1) {
+					$dom_1 = $ac->setDomain(1);
+					$dom_1->applyRessourceRights($num_notice);
+				}
+				//pour l'opac
+				if ($gestion_acces_empr_notice==1) {
+					$dom_2 = $ac->setDomain(2);
+					$dom_2->applyRessourceRights($num_notice);
+				}
+			}
+			
+			return array('id'=>$num_notice, 'title'=> $this->title,'link'=>"./catalog.php?categ=isbd&id=".$num_notice,'is_doublon'=>$is_doublon);
 		}
 	}
 
@@ -425,7 +477,7 @@ class docwatch_item{
 				$row = pmb_mysql_fetch_object($result);
 				$section_type = $row->watch_section_default_content_type;
 				$section_status = $row->watch_section_default_publication_status;
-				$section_parent = $row->watch_section_default_parent;
+				$section_num_parent = $row->watch_section_default_parent;
 			}else{
 				return array();
 			}
@@ -435,10 +487,12 @@ class docwatch_item{
 			$section->resume = $this->summary;
 			$section->start_date = $this->publication_date;
 			$section->publication_state = $section_status; 
-			$section->descriptors = $this->descriptors;
+			$section->set_descriptors($this->descriptors);
 			$section->num_parent = $section_num_parent;
 			$section->num_type = $section_type;
-			
+			if ($this->url) {
+				$section->resume.= "<br /><a href='".$this->url."'>".$this->url."</a>";
+			}
 			$section->save();	
 			if(!$section->id) return array();
 		
@@ -446,6 +500,15 @@ class docwatch_item{
 			pmb_mysql_query($query, $dbh);
 			
 			$this->set_num_section($section->id);
+			
+			if ($this->logo_url) {
+				if ($logo_url_content = $this->get_logo_content_from_outside($this->logo_url)) {
+					$section->logo->id = $section->id;
+					if($section->logo->save_from_content($logo_url_content)){
+						$section->save();
+					}
+				}
+			}
 			
 			return array('id'=>$section->id, 'title'=> $this->title,'link'=>"./cms.php?categ=section&sub=edit&id=".$section->id);
 		}
@@ -475,9 +538,10 @@ class docwatch_item{
 			$article->contenu = $this->content;
 			$article->start_date = $this->publication_date;
 			$article->publication_state = $article_status;
-			$article->descriptors = $this->descriptors;
-			//$article->logo->id ?
-			
+			$article->set_descriptors($this->descriptors);
+			if ($this->url) {
+				$article->resume.= "<br /><a href='".$this->url."'>".$this->url."</a>";
+			}
 			$article->save();	
 			if(!$article->id) return array();
 			
@@ -486,8 +550,152 @@ class docwatch_item{
 		
 			$this->set_num_article($article->id);
 			
+			if ($this->logo_url) {
+				if ($logo_url_content = $this->get_logo_content_from_outside($this->logo_url)) {
+					$article->logo->id = $article->id;
+					if($article->logo->save_from_content($logo_url_content)){
+						$article->save();
+					}
+				}
+			}
+			
 			return array('id'=>$article->id, 'title'=> $this->title,'link'=>"./cms.php?categ=article&sub=edit&id=".$article->id);		
 		}
+	}
+	
+	public function get_logo_content_from_outside($url_image){
+		
+		global $pmb_vignette_x ;
+		global $pmb_vignette_y ;
+		global $base_path;
+		global $pmb_curl_available;
+	
+		if (!$pmb_vignette_x) $pmb_vignette_x=100 ;
+		if (!$pmb_vignette_y) $pmb_vignette_y=100 ;
+		$src_image='';
+	
+		//Il s'agit d'une url, on copie le fichier en local
+		$nom_temp = session_id().microtime();
+		$nom_temp = str_replace(' ','_',$nom_temp);
+		$nom_temp = str_replace('.','_',$nom_temp);
+		$fichier_tmp = $base_path."/temp/".$nom_temp;
+		if ($pmb_curl_available) {
+			$aCurl = new Curl();
+			$aCurl->save_file_name=$fichier_tmp;
+			$aCurl->get($url_image);
+		} else {
+			$handle = fopen($url_image, "rb");
+			$filecontent = stream_get_contents($handle);
+			fclose($handle);
+			$fd = fopen($fichier_tmp,"w");
+			fwrite($fd,$filecontent);
+			fclose($fd);
+		}
+		$source_file = realpath($fichier_tmp);
+	
+		$error = true;
+		if(extension_loaded('imagick')) {
+			mysql_set_wait_timeout(3600);
+			$error=false;
+			try {
+				$img = new Imagick();
+				$img->readImage($source_file);
+				if(($img->getImageWidth() > $pmb_vignette_x) || ($img->getImageHeight() > $pmb_vignette_y)){// Si l'image est trop grande on la réduit
+					$img->thumbnailimage($pmb_vignette_x,$pmb_vignette_y,true);
+				}
+				$img->setImageFormat( "png" );
+				$img->setCompression(Imagick::COMPRESSION_LZW);
+				$img->setCompressionQuality(90);
+				$contenu_vignette = $img->getImageBlob();
+			} catch(Exception $ex) {
+				$error=true;
+			}
+			if($fichier_tmp && file_exists($fichier_tmp)){
+				unlink($fichier_tmp);
+			}
+		}
+		if ($error) {
+			$size =@getimagesize($url_image);
+			/*   ".gif"=>"1",
+			 ".jpg"=>"2",
+			".jpeg"=>"2",
+			".png"=>"3",
+			".swf"=>"4",
+			".psd"=>"5",
+			".bmp"=>"6");
+			*/
+			switch ($size[2]) {
+				case 1:
+					$src_img = imagecreatefromgif($url_image);
+					break;
+				case 2:
+					$src_img = imagecreatefromjpeg($url_image);
+					break;
+				case 3:
+					$src_img = imagecreatefrompng($url_image);
+					break;
+				case 6:
+					$src_img = imagecreatefromwbmp($url_image);
+					break;
+				default:
+					break;
+			}
+			$erreur_vignette = 0 ;
+			if ($src_img) {
+				$rs=$pmb_vignette_x/$pmb_vignette_y;
+				$taillex=imagesx($src_img);
+				$tailley=imagesy($src_img);
+				if (!$taillex || !$tailley) return "" ;
+				if (($taillex>$pmb_vignette_x)||($tailley>$pmb_vignette_y)) {
+					$r=$taillex/$tailley;
+					if (($r<1)&&($rs<1)) {
+						//Si x plus petit que y et taille finale portrait
+						//Si le format final est plus large en proportion
+						if ($rs>$r) {
+							$new_h=$pmb_vignette_y;
+							$new_w=$new_h*$r;
+						} else {
+							$new_w=$pmb_vignette_x;
+							$new_h=$new_w/$r;
+						}
+					} else if (($r<1)&&($rs>=1)){
+						//Si x plus petit que y et taille finale paysage
+						$new_h=$pmb_vignette_y;
+						$new_w=$new_h*$r;
+					} else if (($r>1)&&($rs<1)) {
+						//Si x plus grand que y et taille finale portrait
+						$new_w=$pmb_vignette_x;
+						$new_h=$new_w/$r;
+					} else {
+						//Si x plus grand que y et taille finale paysage
+						if ($rs<$r) {
+							$new_w=$pmb_vignette_x;
+							$new_h=$new_w/$r;
+						} else {
+							$new_h=$pmb_vignette_y;
+							$new_w=$new_h*$r;
+						}
+					}
+				} else {
+					$new_h = $tailley ;
+					$new_w = $taillex ;
+				}
+				$dst_img=imagecreatetruecolor($pmb_vignette_x,$pmb_vignette_y);
+				ImageSaveAlpha($dst_img, true);
+				ImageAlphaBlending($dst_img, false);
+				imagefilledrectangle($dst_img,0,0,$pmb_vignette_x,$pmb_vignette_y,imagecolorallocatealpha($dst_img, 0, 0, 0, 127));
+				imagecopyresized($dst_img,$src_img,round(($pmb_vignette_x-$new_w)/2),round(($pmb_vignette_y-$new_h)/2),0,0,$new_w,$new_h,ImageSX($src_img),ImageSY($src_img));
+				imagepng($dst_img, $base_path."/temp/".SESSid);
+				$fp = fopen($base_path."/temp/".SESSid , "r" ) ;
+				$contenu_vignette = fread ($fp, filesize($base_path."/temp/".SESSid));
+				if (!$fp || $contenu_vignette=="") $erreur_vignette++ ;
+				fclose ($fp) ;
+				unlink($base_path."/temp/".SESSid);
+			} else {
+				$contenu_vignette = '' ;
+			}
+		}
+		return $contenu_vignette ;
 	}
 	
 	/**
@@ -497,7 +705,7 @@ class docwatch_item{
 	 * @access public
 	 */
 	public function fetch_datas(){
-		global $dbh, $lang;
+		global $dbh, $lang, $msg;
 		
 		$this->title = "";
 		$this->added_date = "0000-00-00 00:00:00";
@@ -579,6 +787,10 @@ class docwatch_item{
 							"title" => $row->datasource_title
 						);
 					}
+				} else {
+					$this->source = array(
+							"title" => $msg['dsi_docwatch_datasource_deleted']
+					);
 				}
 				$query = "select watch_title,watch_last_date, watch_desc, watch_logo_url from docwatch_watches where id_watch ='".$this->num_watch."'";
 				$result = pmb_mysql_query($query, $dbh);
@@ -638,12 +850,24 @@ class docwatch_item{
 					item_num_section = '".$this->num_section."',
 					item_num_notice = '".$this->num_notice."',
 					item_num_datasource = '".$this->source_id."',
-					item_num_watch = '".$this->num_watch."'";
+					item_num_watch = '".$this->num_watch."',
+					item_index_sew = ' ".addslashes($this->get_index_sew())." ',
+					item_index_wew = '".addslashes($this->get_index_wew())."'";
 			$query.=$clause;
 			if(!pmb_mysql_query($query, $dbh)){
 				return false;
 			}else{
 				if(!$this->id) $this->id = pmb_mysql_insert_id();
+				$query = "delete from docwatch_items_descriptors where num_item = '".$this->id."' ";
+				if(!pmb_mysql_query($query, $dbh)){
+				    return false;
+				}
+				if(is_array($this->descriptors) && count($this->descriptors)) {
+				    foreach($this->descriptors as $descriptor_info){
+				        $query = "insert into docwatch_items_descriptors set num_noeud='".$descriptor_info['id']."', num_item = '".$this->id."' ";
+				        pmb_mysql_query($query, $dbh);
+				    }
+				}
 				return true;
 			}
 		}
@@ -715,6 +939,14 @@ class docwatch_item{
 			$this->fetch_datas();
 			return true;
 		}
+	}
+	
+	public function get_index_wew() {
+		return ' '.strip_tags($this->title).' '.strip_tags($this->content).' ';
+	}
+	
+	public function get_index_sew() {
+		return strip_empty_words($this->get_index_wew());
 	}
 	
 	public function mark_as_deleted(){
@@ -893,12 +1125,12 @@ class docwatch_item{
 		if (pmb_mysql_num_rows($result)) {
 			while($row=pmb_mysql_fetch_object($result)){				
 				$tags[]=array(
-					'id' => $row->num_tag,
+					'id' => $row->id_tag,
 					'label'=>$row->tag_title
 				);				
 			}
 		}
-		return $tags;	
+		return $tags;
 	}
 } // end of docwatch_item
 

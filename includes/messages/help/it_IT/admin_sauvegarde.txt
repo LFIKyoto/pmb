@@ -1,4 +1,4 @@
-<h1>Salvataggi</h1>
+<h2>Salvataggi</h2>
 </p><p>
 <b>Destinazioni di salvataggio</b> luoghi di destinazione sul hard disk o percorsi di salvataggio mediante ftp.
 </p><p>

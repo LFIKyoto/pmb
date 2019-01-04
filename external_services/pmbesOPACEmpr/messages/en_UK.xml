@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: en_UK.xml,v 1.3 2015-06-22 14:50:54 pmbs Exp $ -->
+$Id: en_UK.xml,v 1.4 2016-09-20 15:17:15 dgoron Exp $ -->
 
 <!DOCTYPE XMLlist SYSTEM "../../../includes/XMLlist.dtd" >
 <XMLlist>
@@ -456,5 +456,38 @@ get_author_information_and_notices
 <entry code="get_author_information_and_notices_output_description">See the output of the combined functions</entry>
 <entry code="get_author_information_and_notices_author_id"></entry>
 <entry code="get_author_information_and_notices_information"></entry>
-<entry code="get_author_information_and_notices_notice_ids"></entry>		
+<entry code="get_author_information_and_notices_notice_ids"></entry>
+
+<!--
+listFacets
+-->
+  <entry code="listFacets_description">Récupérer les facettes issues d'une recherche</entry>
+  <entry code="listFacets_input_description"></entry>
+  <entry code="listFacets_output_description"></entry>
+  <entry code="listFacets_searchId">l'id renvoyé par la fonction de recherche</entry>
+  <entry code="listFacets_inputs_description_fields">Un tableau de facettes à calculer</entry>
+  <entry code="listFacets_inputs_description_field_code_champ">Code champ</entry>
+  <entry code="listFacets_inputs_description_field_code_ss_champ">Code sous champ</entry>
+  <entry code="listFacets_inputs_description_filters">Un tableau de filtres (affinage : facettes déjà sélectionnées)</entry>
+  <entry code="listFacets_inputs_description_filter_code_champ">Code champ</entry>
+  <entry code="listFacets_inputs_description_filter_code_ss_champ">Code sous champ</entry>
+  <entry code="listFacets_inputs_description_filter_value">Valeur</entry>
+  <entry code="listFacets_results">Liste des facettes calculées</entry>
+  <entry code="listFacets_results_code_champ">Code champ</entry>
+  <entry code="listFacets_results_code_ss_champ">Code sous champ</entry>
+  <entry code="listFacets_results_count">Nombre de notices associées</entry>
+
+<!--
+listRecordsFromFacets
+-->
+  <entry code="listRecordsFromFacets_description">Récupérer les notices issues d'une ou plusieurs facettes</entry>
+  <entry code="listRecordsFromFacets_input_description"></entry>
+  <entry code="listRecordsFromFacets_output_description"></entry>
+  <entry code="listRecordsFromFacets_searchId">l'id renvoyé par la fonction de recherche</entry>
+  <entry code="listRecordsFromFacets_inputs_description_filters">Un tableau de filtres (affinage : facettes déjà sélectionnées)</entry>
+  <entry code="listRecordsFromFacets_inputs_description_filter_code_champ">Code champ</entry>
+  <entry code="listRecordsFromFacets_inputs_description_filter_code_ss_champ">Code sous champ</entry>
+  <entry code="listRecordsFromFacets_inputs_description_filter_value">Valeur</entry>
+  <entry code="listRecordsFromFacets_results">Liste des notices</entry>
+  <entry code="listRecordsFromFacets_outputs_description_noticeId">Identifiant de la notice</entry>
 </XMLlist>

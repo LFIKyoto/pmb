@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: subcollection.class.php,v 1.12.4.1 2015-09-28 15:23:44 apetithomme Exp $
+// $Id: subcollection.class.php,v 1.25 2018-10-16 09:50:56 dgoron Exp $
 
 // définition de la classe de gestion des 'sous-collections'
 
@@ -19,115 +19,76 @@ class subcollection {
 
 	// note : '//' signifie appartenant à la table concernée
 	//        '////' signifie deviné avec des requêtes sur d'autres tables
-	var $id;                  // MySQL id in table 'collections'
-	var $name;                // collection name
-	var $parent;              // MySQL id of parent collection
-	var $parent_libelle;     //// name of parent collection
-	var $parent_isbd;        //// name of parent collection, isbd form
-	var $publisher;          //// MySQL id of publisher
-	var $publisher_libelle;  //// name of parent publisher
-	var $publisher_isbd;     //// isbd form of publisher
-	var $display;            //// usable form for displaying	( _collection_. _name_ (_editeur_) )
-	var $isbd_entry;         //// ISBD form ( _collection_. _name_ )
-	var $issn;                // ISSN of sub collection
-	var $comment;
-
+	public $id;                  // MySQL id in table 'collections'
+	public $name;                // collection name
+	public $parent;              // MySQL id of parent collection
+	public $parent_libelle;     //// name of parent collection
+	public $parent_isbd;        //// name of parent collection, isbd form
+	public $publisher;          //// MySQL id of publisher
+	public $publisher_libelle;  //// name of parent publisher
+	public $publisher_isbd;     //// isbd form of publisher
+	public $display;            //// usable form for displaying	( _collection_. _name_ (_editeur_) )
+	public $isbd_entry;         //// ISBD form ( _collection_. _name_ )
+	public $issn;                // ISSN of sub collection
+	public $comment;
+	public $num_statut = 1;
+	protected $p_perso;	
 
 	// ---------------------------------------------------------------
 	//  subcollection($id) : constructeur
 	// ---------------------------------------------------------------
 
-	function subcollection($id=0) {
-		// on regarde si on a une subcollection-objet ou un id de subcollection
-		if (is_object($id)) {
-			$this->get_primaldatafrom($id);
-		} else {
-			$this->id = $id;
-			$this->get_primaldata();
-		}
-		$this->get_otherdata();
+	public function __construct($id=0) {
+		$this->id = $id+0;
+		$this->getData();
 	}
 
-
-
 	// ---------------------------------------------------------------
-	//  get_primaldata() : récupération infos subcollection à partir de l'id
+	//		getData() : récupération infos sous collection
 	// ---------------------------------------------------------------
-
-	function get_primaldata() {
-		global $dbh;
-		$requete = "SELECT * FROM sub_collections WHERE sub_coll_id='".addslashes($this->id)."' ";
-		$result = pmb_mysql_query($requete, $dbh);
-		if(pmb_mysql_num_rows($result)) {
-			$obj = pmb_mysql_fetch_object($result);
-			pmb_mysql_free_result($result);
-			$this->get_primaldatafrom($obj);
-		} else {
-			// pas de sous-collection avec cette clé
-			$this->id                 = 0;
-			$this->name               = '';
-			$this->parent             = '';
-			$this->parent_libelle     = '';
-			$this->parent_isbd        = '';
-			$this->publisher          = '';
-			$this->publisher_libelle  = '';
-			$this->publisher_isbd     = '';
-			$this->display            = '';
-			$this->issn               = '';
-			$this->isbd_entry         = '';
-			$this->comment         	  = '';
+	public function getData() {
+		$this->name               = '';
+		$this->parent             = '';
+		$this->parent_libelle     = '';
+		$this->parent_isbd        = '';
+		$this->publisher          = '';
+		$this->publisher_libelle  = '';
+		$this->publisher_isbd     = '';
+		$this->display            = '';
+		$this->issn               = '';
+		$this->isbd_entry         = '';
+		$this->comment         	  = '';
+		$this->num_statut = 1;
+		if($this->id) {
+			$requete = "SELECT * FROM sub_collections WHERE sub_coll_id='".$this->id."' ";
+			$result = pmb_mysql_query($requete);
+			if(pmb_mysql_num_rows($result)) {
+				$row = pmb_mysql_fetch_object($result);
+				$this->id = $row->sub_coll_id;
+				$this->name = $row->sub_coll_name;
+				$this->parent = $row->sub_coll_parent;
+				$this->issn = $row->sub_coll_issn;
+				$this->comment = $row->subcollection_comment;
+				$this->num_statut = $this->get_authority()->get_num_statut();
+				if ($this->parent) {
+					$parentcoll = authorities_collection::get_authority('collection', $this->parent);
+					$this->parent_libelle = $parentcoll->name;
+					$this->parent_isbd = $parentcoll->get_isbd();
+					$this->publisher = $parentcoll->parent;
+					$this->publisher_libelle = $parentcoll->publisher_libelle;
+					$this->publisher_isbd = $parentcoll->publisher_isbd;
+				}
+				$this->display = $this->parent_libelle.'.&nbsp;'.$this->name.'&nbsp;('.$this->publisher_libelle.')';
+				$this->isbd_entry = $this->issn ? $this->parent_libelle.'.&nbsp;'.$this->name.', ISSN '.$this->issn : $this->parent_libelle.'.&nbsp;'.$this->name ;
+			}
 		}
-	}
-
-
-
-	// ---------------------------------------------------------------
-	//  get_primaldatafrom($obj) : récupération infos collection à partir d'un collection-objet
-	// ---------------------------------------------------------------
-
-	function get_primaldatafrom($obj)
-	{
-		$this->id = $obj->sub_coll_id;
-		$this->name = $obj->sub_coll_name;
-		$this->parent = $obj->sub_coll_parent;
-		$this->issn = $obj->sub_coll_issn;
-		$this->comment = $obj->subcollection_comment;
-	}
-
-
-
-	// ---------------------------------------------------------------
-	//  get_otherdata() : calcul des données n'appartenant pas à la table
-	// ---------------------------------------------------------------
-
-	function get_otherdata()
-	{
-		if ($this->parent) {
-			$parentcoll = authorities_collection::get_authority('collection', $this->parent);
-			$this->parent_libelle = $parentcoll->name;
-			$this->parent_isbd = $parentcoll->isbd_entry;
-			$this->publisher = $parentcoll->parent;
-			$this->publisher_libelle = $parentcoll->publisher_libelle;
-			$this->publisher_isbd = $parentcoll->publisher_isbd;
-		}
-		else
-		{
-			$this->parent_libelle = "";
-			$this->parent_isbd = "";
-			$this->publisher = "";
-			$this->publisher_libelle = "";
-			$this->publisher_isbd = "";
-		}
-		$this->display = $this->parent_libelle.'.&nbsp;'.$this->name.'&nbsp;('.$this->publisher_libelle.')';
-		$this->isbd_entry = $this->issn ? $this->parent_libelle.'.&nbsp;'.$this->name.', ISSN '.$this->issn : $this->parent_libelle.'.&nbsp;'.$this->name ;
 	}
 
 	// ---------------------------------------------------------------
 	//  print_resume($level) : affichage d'informations sur la sous-collection
 	// ---------------------------------------------------------------
 
-	function print_resume($level = 2,$css='')
-	{
+	public function print_resume($level = 2,$css=''){
 		global $css;
 		if(!$this->id)
 			return;
@@ -173,6 +134,60 @@ class subcollection {
 		return $print;
 	}
 
+	public function get_db_id() {
+		return $this->id;
+	}
+	
+	public function get_isbd() {
+		return $this->isbd_entry;
+	}
+	
+	public function get_permalink() {
+		global $liens_opac;
+		return str_replace('!!id!!', $this->id, $liens_opac['lien_rech_subcollection']);
+	}
+	
+	public function get_comment() {
+		return $this->comment;
+	}
+
+	public function get_header() {
+		return $this->display;
+	}
+	
+	public function format_datas($antiloop = false){
+		$parent_datas = array();
+		if(!$antiloop) {
+			if($this->parent) {
+				$parent = new collection($this->parent);
+				$parent_datas = $parent->format_datas(true);
+			}
+		}
+		$formatted_data = array(
+				'name' => $this->name,
+				'issn' => $this->issn,
+				'parent' => $parent_datas,
+				'web' => $this->subcollection_web,
+				'comment' => $this->comment
+		);
+		$formatted_data = array_merge($this->get_authority()->format_datas(), $formatted_data);
+		return $formatted_data;
+	}
+	
+	public function get_web(){
+		return $this->subcollection_web;
+	}
+	
+	public function get_p_perso() {
+		if(!isset($this->p_perso)) {
+			$this->p_perso = $this->get_authority()->get_p_perso();
+		}
+		return $this->p_perso;
+	}
+	
+	public function get_authority() {
+		return authorities_collection::get_authority('authority', 0, ['num_object' => $this->id, 'type_object' => AUT_TABLE_SUB_COLLECTIONS]);
+	}
 } # fin de définition de la classe subcollection
 
 } # fin de délaration

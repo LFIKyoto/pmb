@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dsi_auto.php,v 1.9 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: dsi_auto.php,v 1.10 2017-07-12 15:15:00 tsamson Exp $
 
 // définition du minimum nécéssaire 
 $base_path=".";                            
@@ -41,20 +41,20 @@ if (!$dsi_auto) die("DSI Auto pas activée sur base $database (user=$user) Versio
 		$field_deb = substr($field,0,6);
 		switch ($field_deb) {
 			case "deflt_" :
-				global $$field;
-				$$field=$field_values[$i];
+				global ${$field};
+				${$field}=$field_values[$i];
 				break;
 			case "deflt2" :
-				global $$field;
-				$$field=$field_values[$i];
+				global ${$field};
+				${$field}=$field_values[$i];
 				break;
 			case "param_" :
-				global $$field;
-				$$field=$field_values[$i];
+				global ${$field};
+				${$field}=$field_values[$i];
 				break ;
 			case "value_" :
-				global $$field;
-				$$field=$field_values[$i];
+				global ${$field};
+				${$field}=$field_values[$i];
 				break ;
 			default :
 				break ;

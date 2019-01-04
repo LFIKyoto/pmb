@@ -2,13 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.17 2015-04-03 11:16:27 jpermanne Exp $
+// $Id: main.inc.php,v 1.25 2018-10-11 12:28:15 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($class_path."/search.class.php");
 require_once($class_path."/mono_display_expl.class.php");
 require_once($class_path."/acces.class.php");
+
+if(!isset($page)) $page = '';
 
 $sc=new search(true,"search_fields_expl");
 
@@ -22,7 +24,6 @@ $sc->link_bulletin = './catalog.php?categ=serials&sub=bulletinage&action=view&bu
 $sc->link_explnum_serial = "./catalog.php?categ=serials&sub=explnum_form&serial_id=!!serial_id!!&explnum_id=!!explnum_id!!";
 $sc->link_explnum_analysis = "./catalog.php?categ=serials&sub=analysis&action=explnum_form&bul_id=!!bul_id!!&analysis_id=!!analysis_id!!&explnum_id=!!explnum_id!!";
 $sc->link_explnum_bulletin = "./catalog.php?categ=serials&sub=bulletinage&action=explnum_form&bul_id=!!bul_id!!&explnum_id=!!explnum_id!!";
-
 switch ($sub) {
 	case "launch":
 		if ((string)$page=="") {
@@ -48,6 +49,7 @@ switch ($sub) {
 			$_SESSION["session_history"][$_SESSION["CURRENT"]]["EXPL"]["PAGE"]=$page+1;
 			$_SESSION["session_history"][$_SESSION["CURRENT"]]["EXPL"]["HUMAN_QUERY"]=$sc->make_human_query();
 			$_SESSION["session_history"][$_SESSION["CURRENT"]]["EXPL"]["SEARCH_TYPE"]="expl";
+			$_SESSION["session_history"][$_SESSION["CURRENT"]]["EXPL"]['TEXT_LIST_QUERY']='';
 			$_SESSION["session_history"][$_SESSION["CURRENT"]]["EXPL"]["TEXT_QUERY"]="";
 		}
 	break;
@@ -116,7 +118,7 @@ function print_results($sc,$table,$url,$url_to_search_form,$hidden_form=true,$se
     else $nb_results=0;
 
     $requete="select $table.* from ".$table.", exemplaires where exemplaires.expl_id=$table.expl_id";     
-	if ( $nb_results > $sc->nb_per_page ) {
+	if ( $nb_results > $nb_per_page_search ) {
 		$requete .= " limit ".$start_page.", ".$nb_per_page_search;
 	}
 
@@ -141,7 +143,7 @@ function print_results($sc,$table,$url,$url_to_search_form,$hidden_form=true,$se
 			//Affichage des liens paniers et impression
 			$current=$_SESSION["CURRENT"];
 			if ($current!==false) {
-				print "&nbsp;<a href='#' onClick=\"openPopUp('./print_cart.php?current_print=$current&action=print_prepare','print',600,700,-2,-2,'scrollbars=yes,menubar=0,resizable=yes'); return false;\"><img src='./images/basket_small_20x20.gif' border='0' align='center' alt=\"".$msg["histo_add_to_cart"]."\" title=\"".$msg["histo_add_to_cart"]."\"></a>&nbsp;";
+				print "&nbsp;<a href='#' onClick=\"openPopUp('./print_cart.php?current_print=$current&action=print_prepare&object_type=EXPL','print'); return false;\"><img src='".get_url_icon('basket_small_20x20.gif')."' style='border:0px' class='center' alt=\"".$msg["histo_add_to_cart"]."\" title=\"".$msg["histo_add_to_cart"]."\"></a>&nbsp;";
 //				if ($nb_results<=$pmb_nb_max_tri) print $affich_tris_result_liste;
 			}
 		}
@@ -180,7 +182,7 @@ function print_results($sc,$table,$url,$url_to_search_form,$hidden_form=true,$se
 	    	}else{
 	    		$nt = new mono_display_expl('',$r->expl_id, 6, $sc->link, $option_show_expl, $sc->link_expl, '', $sc->link_explnum,1, 0, 1, !$option_show_notice_fille, "", 1);
 	    	}	
-	    	echo "<div class='row'>".$nt->result.$aff."</div>";
+	    	echo "<div class='row'>".$nt->result."</div>";
 	    }
 	}
     
@@ -191,12 +193,13 @@ function print_results($sc,$table,$url,$url_to_search_form,$hidden_form=true,$se
    	 	if (!$page) $page_en_cours=0 ;
 		else $page_en_cours=$page ;
 	
+		$nav_bar = '';
    	 	// affichage du lien précédant si nécessaire
    	 	if ($page>0) {
    	 		$nav_bar .= "<a href='#' onClick='document.search_form.page.value-=1; ";
    	 		if (!$hidden_form) $nav_bar .= "document.search_form.launch_search.value=1; ";
    	 		$nav_bar .= "document.search_form.submit(); return false;'>";
-    		$nav_bar .= "<img src='./images/left.gif' border='0'  title='".$msg[48]."' alt='[".$msg[48]."]' hspace='3' align='middle'/>";
+    		$nav_bar .= "<img src='".get_url_icon('left.gif')."' style='border:0px; margin:3px 3px'  title='".$msg[48]."' alt='[".$msg[48]."]' class='align_middle'/>";
     		$nav_bar .= "</a>";
     	}
         
@@ -218,10 +221,10 @@ function print_results($sc,$table,$url,$url_to_search_form,$hidden_form=true,$se
     		$nav_bar .= "<a href='#' onClick=\"if ((isNaN(document.search_form.page.value))||(document.search_form.page.value=='')) document.search_form.page.value=1; else document.search_form.page.value=parseInt(document.search_form.page.value)+parseInt(1); ";
     		if (!$hidden_form) $nav_bar .= "document.search_form.launch_search.value=1; ";
     		$nav_bar .= "document.search_form.submit(); return false;\">";
-    		$nav_bar .= "<img src='./images/right.gif' border='0' title='".$msg[49]."' alt='[".$msg[49]."]' hspace='3' align='middle'>";
+    		$nav_bar .= "<img src='".get_url_icon('right.gif')."' style='border:0px; margin:3px 3px' title='".$msg[49]."' alt='[".$msg[49]."]' class='align_middle'>";
     		$nav_bar .= "</a>";
         } else 	$nav_bar .= "";
-		$nav_bar = "<div align='center'>$nav_bar</div>";
+		$nav_bar = "<div class='center'>$nav_bar</div>";
    	 	echo $nav_bar ;
   	 	
     }  	

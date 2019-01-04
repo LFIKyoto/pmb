@@ -4,18 +4,18 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: func_bretagne.inc.php,v 1.8.4.1 2015-09-02 09:32:05 mbertin Exp $
+// $Id: func_bretagne.inc.php,v 1.11 2017-07-12 15:15:00 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 function z_recup_noticeunimarc_suite($notice) {
-	global $base_path;
+	global $base_path, $class_path;
 	require_once($base_path."/admin/import/func_bretagne.inc.php");
 	recup_noticeunimarc_suite($notice);
 } // fin recup_noticeunimarc_suite = fin récupération des variables propres à la bretagne
 	
 function z_import_new_notice_suite() {
-	global $base_path;
+	global $base_path, $class_path;
 	require_once($base_path."/admin/import/func_bretagne.inc.php");
 	import_new_notice_suite();
 } // fin import_new_notice_suite
@@ -58,9 +58,9 @@ global $max_categ ;
 $categories = array () ;
 for ($i=0; $i< $max_categ ; $i++) {
 	$var_categ = "f_categ_id$i" ;
-	global $$var_categ ;
-	if ($$var_categ) 
-		$categories[] = array('categ_id' => $$var_categ );
+	global ${$var_categ} ;
+	if (${$var_categ}) 
+		$categories[] = array('categ_id' => ${$var_categ} );
 	}
 return $categories ;
 }

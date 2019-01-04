@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_metadatas_datasource_metadatas_section.class.php,v 1.2 2015-06-08 09:12:09 arenou Exp $
+// $Id: cms_module_metadatas_datasource_metadatas_section.class.php,v 1.3 2018-08-23 15:09:39 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -27,6 +27,7 @@ class cms_module_metadatas_datasource_metadatas_section extends cms_module_metad
 	 * Récupération des données de la source...
 	 */
 	public function get_datas(){
+	    global $base_path;
 		//on commence par récupérer l'identifiant retourné par le sélecteur...
 		$selector = $this->get_selected_selector();
 		if($selector){
@@ -46,8 +47,14 @@ class cms_module_metadatas_datasource_metadatas_section extends cms_module_metad
 					if (is_array($metadatas["metadatas"])) {
 						foreach ($metadatas["metadatas"] as $key=>$value) {
 							try {
-								$group_metadatas[$i]["metadatas"][$key] = H2o::parseString($value)->render($datas);
+							    $template_path = $base_path.'/temp/'.LOCATION.'_datasource_metadatas_article_'.$this->id;
+							    if(!file_exists($template_path) || (md5($value) != md5_file($template_path))){
+							        file_put_contents($template_path, $value);
+							    }
+							    $H2o = H2o_collection::get_instance($template_path);
+							    $group_metadatas[$i]["metadatas"][$key] = $H2o->render($datas);
 							}catch(Exception $e){
+							    
 							}
 						}
 					}

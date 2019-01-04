@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: types_produits.inc.php,v 1.15 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: types_produits.inc.php,v 1.16 2017-04-19 12:37:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -56,7 +56,7 @@ function show_list_type() {
 			$aff.="</tr>";
 	}
 	$aff.="</table>
-		<input class='bouton' type='button' value=' ".$msg[acquisition_ajout_type]." ' onClick=\"document.location='./admin.php?categ=acquisition&sub=type&action=add'\" />";
+		<input class='bouton' type='button' value=' ".$msg['acquisition_ajout_type']." ' onClick=\"document.location='./admin.php?categ=acquisition&sub=type&action=add'\" />";
 	print $aff;
 }
 
@@ -72,14 +72,14 @@ function show_type_form($id=0) {
 	
 	if(!$id) {
 		
-		$type_form = str_replace('!!form_title!!', htmlentities($msg[acquisition_ajout_type],ENT_QUOTES,$charset), $type_form);
+		$type_form = str_replace('!!form_title!!', htmlentities($msg['acquisition_ajout_type'],ENT_QUOTES,$charset), $type_form);
 		$type_form = str_replace('!!libelle!!', '', $type_form);
 		$type_form = str_replace('!!cp_compta!!', '', $type_form);
 
 	} else {
 		
 		$type = new types_produits($id);
-		$type_form = str_replace('!!form_title!!', htmlentities($msg[acquisition_modif_type],ENT_QUOTES,$charset), $type_form);
+		$type_form = str_replace('!!form_title!!', htmlentities($msg['acquisition_modif_type'],ENT_QUOTES,$charset), $type_form);
 		$type_form = str_replace('!!libelle!!', htmlentities($type->libelle,ENT_QUOTES,$charset), $type_form);
 		$type_form = str_replace('!!cp_compta!!', $type->num_cp_compta, $type_form);
 		
@@ -124,7 +124,7 @@ $type_form = "
 	</div>
 
 	<div class='row'>
-		<label class='etiquette' for='cp_compta'>".htmlentities($msg[acquisition_num_cp_compta],ENT_QUOTES,$charset)."</label>
+		<label class='etiquette' for='cp_compta'>".htmlentities($msg['acquisition_num_cp_compta'],ENT_QUOTES,$charset)."</label>
 	</div>
 	<div class='row'>
 		<input type='text' id='cp_compta' name='cp_compta' value=\"!!cp_compta!!\" class='saisie-20em' />
@@ -134,7 +134,7 @@ $type_form = "
 if ($acquisition_gestion_tva) {
 $type_form.="	
 	<div class='row'>
-		<label class='etiquette'>".htmlentities($msg[acquisition_num_tva_achat],ENT_QUOTES,$charset)."</label>
+		<label class='etiquette'>".htmlentities($msg['acquisition_num_tva_achat'],ENT_QUOTES,$charset)."</label>
 	</div>
 	<div class='row'>
 		!!tva_achat!!
@@ -166,7 +166,7 @@ $type_form.= "
 
 ";
 
-$ptab = "<input class='bouton' type='button' value=' ".$msg[supprimer]." ' onClick=\"javascript:confirmation_delete('!!id!!', '!!libelle_suppr!!')\" />";
+$ptab = "<input class='bouton' type='button' value=' ".$msg['supprimer']." ' onClick=\"javascript:confirmation_delete('!!id!!', '!!libelle_suppr!!')\" />";
 
 ?>
 
@@ -243,9 +243,9 @@ switch($action) {
 				types_produits::delete($id);
 				show_list_type();
 			} else {
-				$msg_suppr_err = $msg[acquisition_type_used] ;
-				if ($total1) $msg_suppr_err .= "<br />- ".$msg[acquisition_type_used_off] ;
-				if ($total2) $msg_suppr_err .= "<br />- ".$msg[acquisition_type_used_sug] ;
+				$msg_suppr_err = $msg['acquisition_type_used'] ;
+				if ($total1) $msg_suppr_err .= "<br />- ".$msg['acquisition_type_used_off'] ;
+				if ($total2) $msg_suppr_err .= "<br />- ".$msg['acquisition_type_used_sug'] ;
 				error_message($msg[321], $msg_suppr_err, 1, 'admin.php?categ=acquisition&sub=type');
 			}
 		} else {

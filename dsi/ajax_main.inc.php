@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_main.inc.php,v 1.4 2015-02-16 15:59:21 dgoron Exp $
+// $Id: ajax_main.inc.php,v 1.8 2018-12-27 14:36:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -10,7 +10,15 @@ if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 switch($categ){	
 	case 'bannettes':
-		include('./dsi/bannettes/main.inc.php');
+		switch($action) {
+			case "list":
+				require_once($class_path.'/list/lists_controller.class.php');
+				lists_controller::proceed_ajax($object_type, 'bannettes');
+				break;
+			default:
+				include('./dsi/bannettes/main.inc.php');
+				break;
+		}
 		break;		
 	break;
 	case 'dashboard' :
@@ -18,6 +26,21 @@ switch($categ){
 		break;
 	case 'docwatch' :
 		include("./dsi/docwatch/ajax_main.inc.php");
+		break;
+	case 'empr':
+		switch($action) {
+			case "list":
+				require_once($class_path.'/list/lists_controller.class.php');
+				lists_controller::proceed_ajax($object_type, 'readers');
+				break;
+		}
+		break;
+	case 'plugin' :
+		$plugins = plugins::get_instance();
+		$file = $plugins->proceed_ajax("dsi",$plugin,$sub);
+		if($file){
+			include $file;
+		}
 		break;
 	default:
 	//tbd

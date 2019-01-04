@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.1 2011-07-29 12:32:15 dgoron Exp $ -->
+$Id: manifest.xml,v 1.2 2018-02-20 10:10:49 dbellamy Exp $ -->
 <manifest>
 	<name>pmbesDSI</name>
 	<description>msg:DSI_functions_description</description>
@@ -12,7 +12,7 @@ $Id: manifest.xml,v 1.1 2011-07-29 12:32:15 dgoron Exp $ -->
 		<requirement group="pmbesTypes"/>
 	</requirements>
 	<types>
-		<type name="bannette_auto" imported="true" imported_from="pmbesTypes"/>
+		<type name="bannette" imported="true" imported_from="pmbesTypes"/>
 	</types>
 	<methods>
 		<method name="listBannettesAuto" rights="" version="1.0" comment="msg:listBannettesAuto_description" language_independant="true">
@@ -23,7 +23,7 @@ $Id: manifest.xml,v 1.1 2011-07-29 12:32:15 dgoron Exp $ -->
 			</inputs>
 			<outputs>
 				<description>msg:listBannettesAuto_output_description</description>
-				<result name="result" type="scalar" dataType="bannette" description="msg:listBannettesAuto_result"/>
+				<result name="result" type="array" dataType="bannette" description="msg:listBannettesAuto_result"/>
 			</outputs>
 		</method>
 		<method name="diffuseBannettesFullAuto" rights="" version="1.0" comment="msg:diffuseBannettesFullAuto_description" language_independant="true">

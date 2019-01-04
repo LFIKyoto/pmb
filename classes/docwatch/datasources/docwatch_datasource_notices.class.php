@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_datasource_notices.class.php,v 1.4 2015-03-06 16:27:11 vtouchard Exp $
+// $Id: docwatch_datasource_notices.class.php,v 1.9 2018-04-19 11:58:55 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -50,24 +50,22 @@ class docwatch_datasource_notices extends docwatch_datasource{
 			foreach($items as $item) {
 				$notice = new notice($item);
 				$record = array();
+				$logo_url = '';
+				$record['type'] = 'notice';
 				$record["num_notice"] = $notice->id;
 				$record["title"] = $notice->tit1;
-				$record["summary"] = $notice->n_resume;
-				$record["content"] = $notice->n_resume;
-				$record["url"] = $pmb_opac_url."index.php?lvl=notice_display&id=".$notice->id;
-				if ($notice->code || $notice->thumbnail_url) {
-					if ($opac_show_book_pics=='1' && ($opac_book_pics_url || $notice->thumbnail_url)) {
-						$code_chiffre = pmb_preg_replace('/-|\.| /', '', $notice->code);
-						$url_image = $opac_book_pics_url ;
-						$url_image = $pmb_opac_url."getimage.php?url_image=".urlencode($url_image)."&amp;noticecode=!!noticecode!!&amp;vigurl=".urlencode($notice->thumbnail_url) ;
-						if ($notice->thumbnail_url) {
-							$logo_url=$notice->thumbnail_url;
-						} else {
-							$logo_url = str_replace("!!noticecode!!", $code_chiffre, $url_image) ;
-						}
-					} else{
-						$logo_url = "";
+				if ($this->parameters['docwatch_datasource_notices_noticetpl_as_summary']) {
+					if(!isset($tpl)){
+						$tpl = new notice_tpl_gen($this->parameters['docwatch_datasource_notices_noticetpl_as_summary']);
 					}
+					$record["summary"] = $tpl->build_notice($notice->id);
+				} else {
+					$record["summary"] = $notice->n_resume;
+				}
+				$record["content"] = $notice->n_contenu;
+				$record["url"] = $pmb_opac_url."index.php?lvl=notice_display&id=".$notice->id;
+				if (($notice->code || $notice->thumbnail_url) && ($opac_show_book_pics=='1' && ($opac_book_pics_url || $notice->thumbnail_url))) {
+					$logo_url=getimage_url($notice->code, $notice->thumbnail_url);
 				}
 				$record["logo_url"] = $logo_url;
 				$record["publication_date"] = $notice->date_parution;
@@ -88,6 +86,32 @@ class docwatch_datasource_notices extends docwatch_datasource{
 		return array(
 			"docwatch_selector_notices_caddie" => $msg['dsi_docwatch_selector_notices_caddie']
 		);
+	}
+	
+	public function get_form_content(){
+		global $msg, $charset;
+		
+		if (!isset($this->parameters['docwatch_datasource_notices_noticetpl_as_summary'])) {
+			$this->parameters['docwatch_datasource_notices_noticetpl_as_summary'] = 0;
+		}
+		
+		$form = parent::get_form_content();
+		$form .= "<div class='row'>&nbsp;</div>
+ 		<div class='row'>
+ 			<label>".htmlentities($msg['dsi_docwatch_datasource_notices_noticetpl_as_summary'],ENT_QUOTES,$charset)."</label>
+ 		</div>
+ 		<div class='row'>
+ 			".notice_tpl_gen::gen_tpl_select("docwatch_datasource_notices_noticetpl_as_summary",$this->parameters['docwatch_datasource_notices_noticetpl_as_summary'], "", 0, 0, $msg['1003'])."
+ 		</div>
+		";
+		return $form;
+	}
+	
+	public function set_from_form() {
+		global $docwatch_datasource_notices_noticetpl_as_summary;
+	
+		$this->parameters['docwatch_datasource_notices_noticetpl_as_summary'] = $docwatch_datasource_notices_noticetpl_as_summary;
+		parent::set_from_form();
 	}
 
 

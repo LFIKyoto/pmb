@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.class.php,v 1.6 2015-04-03 13:57:45 dgoron Exp $
+// $Id: search.class.php,v 1.8 2017-07-12 15:15:02 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,13 +13,13 @@ require_once($class_path.'/connecteurs.class.php');
 
 
 class remote_serials_list{
-	var $id;
-	var $n_ligne;
-	var $params;
-	var $search;
+	public $id;
+	public $n_ligne;
+	public $params;
+	public $search;
 
 	//Constructeur
-    function remote_serials_list($id,$n_ligne,$params,&$search) {
+    public function __construct($id,$n_ligne,$params,&$search) {
     	$this->id=$id;
     	$this->n_ligne=$n_ligne;
     	$this->params=$params;
@@ -27,14 +27,14 @@ class remote_serials_list{
     }
     
     //fonction de récupération des opérateurs disponibles pour ce champ spécial (renvoie un tableau d'opérateurs)
-    function get_op() {
+    public function get_op() {
     	$operators = array();
     	$operators["EQ"]="=";
     	return $operators;
     }
     
     //fonction de récupération de l'affichage de la saisie du critère
-    function get_input_box() {
+    public function get_input_box() {
     	global $msg;
     	global $charset;
     	global $get_input_box_id;
@@ -44,8 +44,8 @@ class remote_serials_list{
     	
     	//Récupération de la valeur de saisie
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
 
     	$r.="
    			<script type='text/javascript'>
@@ -188,7 +188,7 @@ class remote_serials_list{
     	return $r;
     }
 
-    function get_ajax_params(){
+    public function get_ajax_params(){
     	global $selected_sources;
     	global $field_form;
     	global $charset;
@@ -276,21 +276,21 @@ class remote_serials_list{
     }
     
     //fonction de conversion de la saisie en quelque chose de compatible avec l'environnement
-    function transform_input() {
+    public function transform_input() {
     }
     
     //fonction de création de la requête (retourne une table temporaire)
-    function make_search() {
+    public function make_search() {
     	global $search;
     	global $source;
     	global $base_path;
     	//Récupération de la valeur de saisie
     	$serial_="field_".$this->n_ligne."_s_".$this->id;
     	$issues_="fieldvar_".$this->n_ligne."_s_".$this->id;
-    	global $$serial_;
-    	global $$issues_;
-    	$serial=$$serial_;
-    	$issues = $$issues_;
+    	global ${$serial_};
+    	global ${$issues_};
+    	$serial=${$serial_};
+    	$issues = ${$issues_};
 		
     	if(!$this->is_empty($serial)){
     		$source_id=0;
@@ -348,22 +348,22 @@ class remote_serials_list{
     }
 
     
-    function make_unimarc_query() {
+    public function make_unimarc_query() {
 		return array();
     }
     	    
     //fonction de traduction littérale de la requête effectuée (renvoie un tableau des termes saisis)
-    function make_human_query() {
+    public function make_human_query() {
 		global $search;
     	global $source;
     	global $base_path,$charset;    	    	
     	//Récupération de la valeur de saisie
     	$serial_="field_".$this->n_ligne."_s_".$this->id;
     	$issues_="fieldvar_".$this->n_ligne."_s_".$this->id;
-    	global $$serial_;
-    	global $$issues_;
-    	$serial=$$serial_;
-    	$issues = $$issues_;
+    	global ${$serial_};
+    	global ${$issues_};
+    	$serial=${$serial_};
+    	$issues = ${$issues_};
 
     	if(!$this->is_empty($serial)){
     		$source_id=0;
@@ -418,11 +418,11 @@ class remote_serials_list{
     }
     
     //fonction de vérification du champ saisi ou sélectionné
-    function is_empty($valeur) {
+    public function is_empty($valeur) {
     	if($valeur[0]!= ""){
     		$issues_="fieldvar_".$this->n_ligne."_s_".$this->id;
-    		global $$issues_;
-    		$issues = $$issues_;
+    		global ${$issues_};
+    		$issues = ${$issues_};
     		if(count($issues[0])>0){
     			return false;
     		}
@@ -431,7 +431,7 @@ class remote_serials_list{
     }
     
      //fonction de découpage d'une chaine trop longue
-    function cutlongwords($valeur,$size=50) {
+    public function cutlongwords($valeur,$size=50) {
     	if (strlen($valeur)>=$size) {
     		$pos=strrpos(substr($valeur,0,$size)," ");
     		if ($pos) {

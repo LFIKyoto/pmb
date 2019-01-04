@@ -1,9 +1,10 @@
 <?php
+// +-------------------------------------------------+
+// © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// +-------------------------------------------------+
+// $Id: cms_module_opacitem_view_opacitem.class.php,v 1.6 2017-11-14 13:50:24 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
-
-
-
 
 class cms_module_opacitem_view_opacitem extends cms_module_common_view{
 	protected $cadre_parent;
@@ -21,10 +22,12 @@ class cms_module_opacitem_view_opacitem extends cms_module_common_view{
 		global $dbh;
 		global $charset;
 		
-		foreach($datas['globals'] as $globalName=>$globalValue){
-			global ${$globalName};
-			$savGlobals[$globalName]=${$globalName};
-			${$globalName}=$globalValue['value'];
+		if(is_array($datas['globals'])) {
+			foreach($datas['globals'] as $globalName=>$globalValue){
+				global ${$globalName};
+				$savGlobals[$globalName]=${$globalName};
+				${$globalName}=$globalValue['value'];
+			}
 		}
 		
 		//utiles dans le contexte
@@ -38,7 +41,7 @@ class cms_module_opacitem_view_opacitem extends cms_module_common_view{
 		global $a2z_perio,$a2z_tpl;
 		global $a2z_tpl_ajax;
 		global $abt_actif;
-		global $avis_tpl_form1_script;
+		global $avis_tpl_form_script;
 		global $filtre_select;
 		global $location;
 		global $surloc;
@@ -97,6 +100,13 @@ class cms_module_opacitem_view_opacitem extends cms_module_common_view{
 		global $show_sel_form;
 		global $liste_criteres_tri;
 		//cms_module_opacitem_item_rssflux
+		//cms_module_opacitem_item_contact_form
+		global $opac_contact_form;
+		global $contact_form_form_tpl;
+		global $contact_form_recipients_tpl;
+		//cms_module_opacitem_item_collstate_bulletins_display
+		global $pmb_collstate_advanced;
+		global $id, $serial_id, $bulletin_id;
 		
 		$return='';
 		switch ($datas['opacitem']){
@@ -122,9 +132,6 @@ class cms_module_opacitem_view_opacitem extends cms_module_common_view{
 				$return=ob_get_contents();
 				ob_clean();
 				break;
-
-			
-			
 			case 'cms_module_opacitem_item_bannettes_abo':
 				require_once($base_path."/includes/bannette_func.inc.php");
 				$affiche_bannette_tpl="
@@ -132,7 +139,7 @@ class cms_module_opacitem_view_opacitem extends cms_module_common_view{
 				!!diffusion!!
 				</div>
 				";
-				$aff = pmb_bidi(affiche_bannette ("", $opac_bannette_nb_liste, $opac_bannette_notices_format, $opac_bannette_notices_depliables, "./empr.php?lvl=bannette&id_bannette=!!id_bannette!!", $liens_opac ,$date_diff,"bannettes_private-container_2", "" , "")) ;
+				$aff = pmb_bidi(affiche_bannette ("", $opac_bannette_nb_liste, "./empr.php?lvl=bannette&id_bannette=!!id_bannette!!","bannettes_private-container_2", "")) ;
 				if($aff){	
 					$bannettes= "<div id='bannettes_subscribed'>\n";
 					$bannettes.= "<h3><span>".$msg['accueil_bannette_privee']."</span></h3>";
@@ -154,7 +161,7 @@ class cms_module_opacitem_view_opacitem extends cms_module_common_view{
 				!!diffusion!!
 				</div>
 				";
-				$aff = pmb_bidi(affiche_bannette ("", $opac_bannette_nb_liste, $opac_bannette_notices_format, $opac_bannette_notices_depliables, "./index.php?lvl=bannette_see&id_bannette=!!id_bannette!!", $liens_opac ,$date_diff,"bannettes-public-container_2", "" , "",true)) ;
+				$aff = pmb_bidi(affiche_bannette ("", $opac_bannette_nb_liste, "./index.php?lvl=bannette_see&id_bannette=!!id_bannette!!","bannettes-public-container_2", "",true)) ;
 				if($aff){
 					$bannettes= "<div id='bannettes_public'>\n";
 					$bannettes.= "<h3><span>".$msg['accueil_bannette_public']."</span></h3>";
@@ -169,9 +176,6 @@ class cms_module_opacitem_view_opacitem extends cms_module_common_view{
 					$return= $bannettes;
 				}
 				break;
-				
-				
-				
 			case 'cms_module_opacitem_item_section':
 				ob_start();
 				if ($opac_sur_location_activate==1){
@@ -217,10 +221,28 @@ class cms_module_opacitem_view_opacitem extends cms_module_common_view{
 				$return=ob_get_contents();
 				ob_clean();
 				break;
+			case 'cms_module_opacitem_item_contact_form':
+				if($opac_contact_form) {
+					require_once ($class_path.'/contact_form/contact_form.class.php');
+					$contact_form = new contact_form();
+					$return=$contact_form->get_form();
+				} else {
+					$return='';
+				}
+				break;
+			case 'cms_module_opacitem_item_collstate_bulletins_display':
+				if($pmb_collstate_advanced) {
+					require_once($class_path."/collstate.class.php");
+					$collstate = new collstate($id*1, $serial_id*1, $bulletin_id*1);
+					$return=$collstate->get_collstate_bulletins_display();
+				}
+				break;
 		}
 		
-		foreach($savGlobals as $globalName=>$globalValue){
-			${$globalName}=$globalValue;
+		if(is_array($savGlobals)) {
+			foreach($savGlobals as $globalName=>$globalValue){
+				${$globalName}=$globalValue;
+			}	
 		}
 		
 		if($return){

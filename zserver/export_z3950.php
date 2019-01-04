@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export_z3950.php,v 1.7 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: export_z3950.php,v 1.8 2017-08-02 08:49:00 tsamson Exp $
 
 $base_path="../..";
 include($base_path."/includes/db_param.inc.php");
@@ -15,8 +15,13 @@ function make_error($nerr,$err_message) {
 	exit();
 }
 
-if (!@pmb_mysql_connect(SQL_SERVER,USER_NAME,USER_PASS)) make_error(1,"Could'nt connect to database server"); 
-if (!@pmb_mysql_select_db(DATA_BASE)) make_error(2,"Database unknown");
+$mysql_connect = @pmb_mysql_connect(SQL_SERVER,USER_NAME,USER_PASS);
+if (!$mysql_connect) {
+	make_error(1,"Could'nt connect to database server");
+}
+if (!@pmb_mysql_select_db(DATA_BASE, $mysql_connect)) {
+	make_error(2,"Database unknown");
+}
 
 //Commande envoyée
 $command=$_GET["command"];

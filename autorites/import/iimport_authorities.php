@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: iimport_authorities.php,v 1.8 2015-04-18 13:01:51 dgoron Exp $
+// $Id: iimport_authorities.php,v 1.10 2017-12-14 18:11:21 apetithomme Exp $
 
 // définition du minimum necessaire
 $base_path="../..";
@@ -18,6 +18,10 @@ require_once($class_path."/notice_authority_serie.class.php");
 if (file_exists($base_path."/autorites/import/classes/".$pmb_import_modele_authorities.".class.php")) {
 	require_once($base_path."/autorites/import/classes/".$pmb_import_modele_authorities.".class.php");
 }
+require_once($class_path.'/onto/skos/onto_skos_controler.class.php');
+require_once($class_path.'/onto/onto_handler.class.php');
+require_once($class_path.'/onto/onto_param.class.php');
+require_once($class_path.'/vedette/vedette_composee.class.php');
 
 switch($action){
 	// chargement du fichier
@@ -42,13 +46,17 @@ switch($action){
 			$form = str_replace("!!force_update!!",$force_update,$form);
 			$form = str_replace("!!reload!!","",$form);
 			$form = str_replace("!!authorities_type!!",$authorities_type,$form);
+			$form = str_replace("!!category_or_concept!!",$category_or_concept,$form);
 			$form = str_replace("!!type_link!!",serialize($type_link),$form);
 			$form = str_replace("!!id_thesaurus!!",$id_thesaurus,$form);
+			$form = str_replace("!!scheme_uri!!",$scheme_uri,$form);
+			$form = str_replace("!!encodage_fic_source!!",$encodage_fic_source,$form);
 			print $form;
 		}
 		break;
 	// lecture du fichier et insertion en base... 
 	case "load" :
+		$nb_notices_import = array();
 		loadfile_in_base();
 		$type_link = unserialize(stripslashes($type_link));
 		if(!is_array($type_link)) $type_link = array();
@@ -57,6 +65,7 @@ switch($action){
 			$form = str_replace("!!file_submit!!",$file_submit,$authorities_import_afterupload_form);
 			$form = str_replace("!!total!!","",$form);
 			$form = str_replace("!!nb_notices!!",0,$form);
+			$form = str_replace("!!nb_notices_import!!",serialize($nb_notices_import),$form);
 			$form = str_replace("!!nb_notices_rejetees!!",0,$form);
 			//on vide la table des messages d'erreurs avant de commencer l'import
 			$sql = "DELETE FROM error_log WHERE error_origin LIKE 'iimport_authorities".addslashes(SESSid).".php' ";
@@ -70,8 +79,11 @@ switch($action){
 		$form = str_replace("!!create_link_spec!!",$create_link_spec,$form);
 		$form = str_replace("!!force_update!!",$force_update,$form);
 		$form = str_replace("!!authorities_type!!",$authorities_type,$form);
+		$form = str_replace("!!category_or_concept!!",$category_or_concept,$form);
 		$form = str_replace("!!type_link!!",serialize($type_link),$form);
 		$form = str_replace("!!id_thesaurus!!",$id_thesaurus,$form);
+		$form = str_replace("!!scheme_uri!!",$scheme_uri,$form);
+		$form = str_replace("!!encodage_fic_source!!",$encodage_fic_source,$form);
 		print $form;
 		break;
 	// formulaire de base
@@ -85,7 +97,7 @@ switch($action){
 		//on compte les notices qui restent...
 		$query = "select count(id_import) from import_marc where origine = '".addslashes(SESSid)."'";	
 		$result = pmb_mysql_query($query);
-		if(pmb_mysql_nums_rows($result)){
+		if(pmb_mysql_num_rows($result)){
 			$nb_notices_remanning = pmb_mysql_result($result,0,0);
 			if(!$total){
 				$total= $nb_notices_remanning;
@@ -118,7 +130,9 @@ switch($action){
 	            $idnotice_import=$notobj->id_import ;
 	            $nb_notices++;
 	            //on la traite comme une notice d'autorités...
-	            $notice_authority = new notice_authority($notobj->notice);
+	            $notice_authority = new notice_authority($notobj->notice, "UNI", (!empty($encodage_fic_source) ? $encodage_fic_source : 'utf-8'));
+	            $notice_authority->set_concept_or_category((!empty($category_or_concept) ? $category_or_concept : 'category'));
+	            $notice_authority->get_type();
 	            if($notice_authority->error){
 	            	//en cas d'erreur à la lecture d'un format unimarc A, on a peut être un format unimarc B et une notice de collection
 	            	$notice_authority = new notice_authority_serie($notobj->notice,"UNI","iso-8859-1",$type_link['subcollection']);
@@ -133,6 +147,9 @@ switch($action){
 	            if(!$notice_authority->error && ($authorities_type == 'all' || $notice_authority->type == $authorities_type)){ 
 	            	//on y va...
 	            	$authority_import = new $pmb_import_modele_authorities($notice_authority,$create_link,$create_link_spec,$force_update,$id_thesaurus,$type_link['rejected'],$type_link['associated']);
+	            	/* @var $authority_import authority_import */
+	            	$authority_import->set_scheme_uri($scheme_uri);
+	            	
 	            	//on récupère les infos classiques...
 	            	$authority_import->get_informations();
 	            	//on donne la possibilité d'agir sur les données avant l'import...
@@ -144,17 +161,17 @@ switch($action){
 	            		// et on donne la possibilité d'un traitement post-import
 	            		$authority_import->import_callback();
 	            		
-	            		if(isset($nb_notices_import) && is_array($nb_notices_import) && $nb_notices_import[$authority_import->notice->type]){
+	            		if(isset($nb_notices_import) && is_array($nb_notices_import) && isset($nb_notices_import[$authority_import->notice->type])){
 	            			$nb_notices_import[$authority_import->notice->type]++;
 	            		}else{
 	            			$nb_notices_import[$authority_import->notice->type]=1;
 	            		}
 	            		
 	            	}elseif(!$notice_authority->error){
-		            	$sql_log = pmb_mysql_query("insert into error_log (error_origin, error_text) values ('iimport_authorities".addslashes(SESSid).".php', '".addslashes($msg[import_authorite_bad_type].($notice_authority->type != "" ? $msg["import_authorities_type_".$notice_authority->type] : $msg["52"]))."') ") ;
+		            	$sql_log = pmb_mysql_query("insert into error_log (error_origin, error_text) values ('iimport_authorities".addslashes(SESSid).".php', '".addslashes($msg['import_authorite_bad_type'].($notice_authority->type != "" ? $msg["import_authorities_type_".$notice_authority->type] : $msg["52"]))."') ") ;
 		            }
 	            }elseif(!$notice_authority->error){
-	            	$sql_log = pmb_mysql_query("insert into error_log (error_origin, error_text) values ('iimport_authorities".addslashes(SESSid).".php', '".addslashes($msg[import_authorite_bad_type].($notice_authority->type != "" ? $msg["import_authorities_type_".$notice_authority->type] : $msg["52"]))."') ") ;
+	            	$sql_log = pmb_mysql_query("insert into error_log (error_origin, error_text) values ('iimport_authorities".addslashes(SESSid).".php', '".addslashes($msg['import_authorite_bad_type'].($notice_authority->type != "" ? $msg["import_authorities_type_".$notice_authority->type] : $msg["52"]))."') ") ;
 	            }
 				// la notice à été traitée, on la supprime de la table d'import...
 				$query = "delete from import_marc where id_import = ".$idnotice_import;
@@ -169,12 +186,15 @@ switch($action){
 			$form = str_replace("!!create_link_spec!!",$create_link_spec,$form);
 			$form = str_replace("!!force_update!!",$force_update,$form);
 			$form = str_replace("!!authorities_type!!",$authorities_type,$form);
+			$form = str_replace("!!category_or_concept!!",$category_or_concept,$form);
 			$form = str_replace("!!total!!",$total,$form);
 			$form = str_replace("!!nb_notices!!",$nb_notices,$form);
 			$form = str_replace("!!nb_notices_import!!",serialize($nb_notices_import),$form);
 			$form = str_replace("!!nb_notices_rejetees!!",$nb_notices_rejetees,$form);
 			$form = str_replace("!!type_link!!",serialize($type_link),$form);
 			$form = str_replace("!!id_thesaurus!!",$id_thesaurus,$form);
+			$form = str_replace("!!scheme_uri!!",$scheme_uri,$form);
+			$form = str_replace("!!encodage_fic_source!!",$encodage_fic_source,$form);
 			print $form;
 			printf($msg['nb_authorities_already_imported'],$nb_notices,$total); 
 		}else{
@@ -206,9 +226,9 @@ switch($action){
                     $gen_liste_log.="<td>".htmlentities(pmb_mysql_result($resultat_liste,$i_log,"nb_error"),ENT_QUOTES,$charset)."</td>" ;
                     $gen_liste_log.="</tr>" ;
                     $i_log++;
-                   }
-                }
-            $gen_liste_str.="</table>\n" ;
+				}
+				$gen_liste_log.="</table>\n" ;
+			}
             print $gen_liste_log;
 			//on supprime les tables d'import...
 			pmb_mysql_query("drop table authorities_import");
@@ -225,12 +245,33 @@ switch($action){
 		
 		$sel_thesaurus = "<select id='id_thesaurus' name='id_thesaurus'> ";
 		foreach($liste_thesaurus as $id_thesaurus=>$libelle_thesaurus) {
-			$sel_thesaurus.= "<option value='".$id_thesaurus."' "; ;
-			if ($id_thesaurus == $id_thes) $sel_thesaurus.= " selected";
-			$sel_thesaurus.= ">".htmlentities($libelle_thesaurus,ENT_QUOTES, $charset)."</option>";
+			$sel_thesaurus.= "<option value='".$id_thesaurus."' ";
+			if (isset($id_thes) && $id_thesaurus == $id_thes) $sel_thesaurus.= " selected";
+			$sel_thesaurus.= ">".htmlentities($libelle_thesaurus, ENT_QUOTES, $charset)."</option>";
 		}
 		$sel_thesaurus.= "</select>";	
-		$form = str_replace("!!thesaurus!!",$sel_thesaurus,$authorites_import_form_content);
+		$form = str_replace("!!thesaurus!!", $sel_thesaurus, $authorites_import_form_content);
+		
+		$sel_schemes = '';
+		if ($thesaurus_concepts_active) {
+			$params = new onto_param();
+			$onto_skos_controler = new onto_skos_controler(new onto_handler('', skos_onto::get_store(), array(), skos_datastore::get_store(), array(), array(), 'http://www.w3.org/2004/02/skos/core#prefLabel'), $params);
+			$schemes_list = $onto_skos_controler->get_scheme_list();
+			if ($schemes_list['nb_total_elements']) {
+				$sel_schemes = "<select id='scheme_uri' name='scheme_uri'> ";
+				$sel_schemes .= "<option value=''>".$msg['import_authorities_scheme_undefine']."</option>";
+				foreach ($schemes_list['elements'] as $scheme_uri => $scheme) {
+					if(isset($scheme[$lang]) && $scheme[$lang] != ''){
+						$scheme_label = $scheme[$lang];
+					}else{
+						$scheme_label = $scheme['default'];
+					}
+					$sel_schemes.= "<option value='".$scheme_uri."'>".htmlentities($scheme_label, ENT_QUOTES, $charset)."</option>";
+				}
+				$sel_schemes.= "</select>";
+			}
+		}
+		$form = str_replace("!!schemes!!", $sel_schemes, $form);
 
 		print $form;
 		break;
@@ -293,6 +334,7 @@ function loadfile_in_base(){
 				/* the read car is the end of a notice */
 				$str_lu = $str_lu.$car_lu;
 				$j++;
+				
 				$sql = "INSERT INTO import_marc (notice,origine) VALUES('".addslashes($str_lu)."','".addslashes(SESSid)."')";
 				$sql_result = pmb_mysql_query($sql) 
 					or die ("Couldn't insert record!");

@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: notice_tpl_manifest.xml,v 1.2.2.4 2015-11-04 09:26:46 jpermanne Exp $ -->
+$Id: notice_tpl_manifest.xml,v 1.20 2018-12-27 15:17:07 dgoron Exp $ -->
 <manifest>
 	<name>notice_tpl</name>
 	<description>msg:Notice_tpl_functions_description</description>
@@ -57,7 +57,7 @@ $Id: notice_tpl_manifest.xml,v 1.2.2.4 2015-11-04 09:26:46 jpermanne Exp $ -->
 				<description>msg:authors_by_type_dir_output_description</description>
 			</outputs>
 		</method>
-		<method name="#authors_by_type_with_tpl(param0,param1,param2,param3,param4,param5,param6,param7,param8);" rights="" version="1.0" comment="msg:parents_authors_by_type_with_tpl_description" language_independant="true">
+		<method name="#authors_by_type_with_tpl(param0,param1,param2,param3,param4,param5,param6,#{param7};,param8);" rights="" version="1.0" comment="msg:parents_authors_by_type_with_tpl_description" language_independant="true">
 			<inputs>
 				<description>msg:authors_by_type_with_tpl_input_description</description>
 			</inputs>
@@ -193,6 +193,14 @@ $Id: notice_tpl_manifest.xml,v 1.2.2.4 2015-11-04 09:26:46 jpermanne Exp $ -->
 				<description>msg:expl_with_tpl_output_description</description>
 			</outputs>
 		</method>
+		<method name="#expl_num_number(param0);" rights="" version="1.0" comment="msg:expl_num_number_description" language_independant="true">
+			<inputs>
+				<description>msg:expl_num_number_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:expl_num_number_output_description</description>
+			</outputs>
+		</method>
 		<method name="#expl_num(param0);" rights="" version="1.0" comment="msg:expl_num_description" language_independant="true">
 			<inputs>
 				<description>msg:expl_num_input_description</description>
@@ -201,7 +209,7 @@ $Id: notice_tpl_manifest.xml,v 1.2.2.4 2015-11-04 09:26:46 jpermanne Exp $ -->
 				<description>msg:expl_num_output_description</description>
 			</outputs>
 		</method>
-		<method name="#expl_num_vign_reduit(param0,param1,param2,param3,param4);" rights="" version="1.0" comment="msg:expl_num_vign_reduit_description" language_independant="true">
+		<method name="#expl_num_vign_reduit(param0,param1,param2,param3,param4,param5);" rights="" version="1.0" comment="msg:expl_num_vign_reduit_description" language_independant="true">
 			<inputs>
 				<description>msg:expl_num_vign_reduit_input_description</description>
 			</inputs>
@@ -209,12 +217,28 @@ $Id: notice_tpl_manifest.xml,v 1.2.2.4 2015-11-04 09:26:46 jpermanne Exp $ -->
 				<description>msg:expl_num_vign_reduit_output_description</description>
 			</outputs>
 		</method>
-		<method name="#expl_num_with_tpl(param0,param1,param2,param3,param4,param5);" rights="" version="1.0" comment="msg:expl_num_with_tpl_description" language_independant="true">
+		<method name="#expl_num_with_tpl(param0,param1,param2,param3,param4,param5,param6);" rights="" version="1.0" comment="msg:expl_num_with_tpl_description" language_independant="true">
 			<inputs>
 				<description>msg:expl_num_with_tpl_input_description</description>
 			</inputs>
 			<outputs>
 				<description>msg:expl_num_with_tpl_output_description</description>
+			</outputs>
+		</method>
+		<method name="#format_date();" rights="" version="1.0" comment="msg:format_date_description" language_independant="true">
+			<inputs>
+				<description>msg:format_date_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:format_date_output_description</description>
+			</outputs>
+		</method>
+		<method name="#month_in_letters();" rights="" version="1.0" comment="msg:month_in_letters_description" language_independant="true">
+			<inputs>
+				<description>msg:month_in_letters_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:month_in_letters_output_description</description>
 			</outputs>
 		</method>
 		<method name="#iconcart();" rights="" version="1.0" comment="msg:iconcart_description" language_independant="true">
@@ -521,6 +545,14 @@ $Id: notice_tpl_manifest.xml,v 1.2.2.4 2015-11-04 09:26:46 jpermanne Exp $ -->
 				<description>msg:statut_output_description</description>
 			</outputs>
 		</method>
+		<method name="#subcollection_with_tpl(param0);" rights="" version="1.0" comment="msg:subcollection_with_tpl_description" language_independant="true">
+			<inputs>
+				<description>msg:subcollection_with_tpl_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:subcollection_with_tpl_output_description</description>
+			</outputs>
+		</method>
 		<method name="#title();" rights="" version="1.0" comment="msg:title_description" language_independant="true">
 			<inputs>
 				<description>msg:title_input_description</description>
@@ -553,12 +585,36 @@ $Id: notice_tpl_manifest.xml,v 1.2.2.4 2015-11-04 09:26:46 jpermanne Exp $ -->
 				<description>msg:url_output_description</description>
 			</outputs>
 		</method>
+		<method name="#vignette();" rights="" version="1.0" comment="msg:vignette_description" language_independant="true">
+			<inputs>
+				<description>msg:vignette_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:vignette_output_description</description>
+			</outputs>
+		</method>
 		<method name="#year_publication();" rights="" version="1.0" comment="msg:year_publication_description" language_independant="true">
 			<inputs>
 				<description>msg:year_publication_input_description</description>
 			</inputs>
 			<outputs>
 				<description>msg:year_publication_output_description</description>
+			</outputs>
+		</method>
+		<method name="#keywords(param0);" rights="" version="1.0" comment="msg:keywords_description" language_independant="true">
+			<inputs>
+				<description>msg:keywords_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:keywords_output_description</description>
+			</outputs>
+		</method>
+		<method name="#creator(param0);" rights="" version="1.0" comment="msg:creator_description" language_independant="true">
+			<inputs>
+				<description>msg:creator_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:creator_output_description</description>
 			</outputs>
 		</method>
 		
@@ -573,7 +629,7 @@ $Id: notice_tpl_manifest.xml,v 1.2.2.4 2015-11-04 09:26:46 jpermanne Exp $ -->
 				<description>msg:bull_for_art_expl_num_output_description</description>
 			</outputs>
 		</method>
-		<method name="#bull_for_art_expl_num_vign_reduit(param0,param1,param2,param3,param4);" rights="" version="1.0" comment="msg:bull_for_art_expl_num_vign_reduit_description" language_independant="true">
+		<method name="#bull_for_art_expl_num_vign_reduit(param0,param1,param2,param3,param4,param5);" rights="" version="1.0" comment="msg:bull_for_art_expl_num_vign_reduit_description" language_independant="true">
 			<inputs>
 				<description>msg:bull_for_art_expl_num_vign_reduit_input_description</description>
 			</inputs>
@@ -581,7 +637,7 @@ $Id: notice_tpl_manifest.xml,v 1.2.2.4 2015-11-04 09:26:46 jpermanne Exp $ -->
 				<description>msg:bull_for_art_expl_num_vign_reduit_output_description</description>
 			</outputs>
 		</method>
-		<method name="#bull_for_art_expl_num_with_tpl(param0,param1,param2,param3,param4,param5);" rights="" version="1.0" comment="msg:bull_for_art_expl_num_with_tpl_description" language_independant="true">
+		<method name="#bull_for_art_expl_num_with_tpl(param0,param1,param2,param3,param4,param5,param6);" rights="" version="1.0" comment="msg:bull_for_art_expl_num_with_tpl_description" language_independant="true">
 			<inputs>
 				<description>msg:bull_for_art_expl_num_with_tpl_input_description</description>
 			</inputs>
@@ -597,7 +653,7 @@ $Id: notice_tpl_manifest.xml,v 1.2.2.4 2015-11-04 09:26:46 jpermanne Exp $ -->
 				<description>msg:collstate_output_description</description>
 			</outputs>
 		</method>
-		<method name="#date_bulletin();" rights="" version="1.0" comment="msg:date_bulletin_description" language_independant="true">
+		<method name="#date_bulletin(param0);" rights="" version="1.0" comment="msg:date_bulletin_description" language_independant="true">
 			<inputs>
 				<description>msg:date_bulletin_input_description</description>
 			</inputs>
@@ -765,6 +821,14 @@ $Id: notice_tpl_manifest.xml,v 1.2.2.4 2015-11-04 09:26:46 jpermanne Exp $ -->
 				<description>msg:not_empty_output_description</description>
 			</outputs>
 		</method>
+		<method name="#if_empty(a,b);" rights="" version="1.0" comment="msg:if_empty_description" language_independant="true">
+			<inputs>
+				<description>msg:if_empty_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:if_empty_output_description</description>
+			</outputs>
+		</method>
 		<method name="#if(condition,a,b);" rights="" version="1.0" comment="msg:if_description" language_independant="true">
 			<inputs>
 				<description>msg:if_input_description</description>
@@ -857,6 +921,22 @@ $Id: notice_tpl_manifest.xml,v 1.2.2.4 2015-11-04 09:26:46 jpermanne Exp $ -->
 				<description>msg:header_link_output_description</description>
 			</outputs>
 		</method>
+		<method name="#htmlentities(param0);" rights="" version="1.0" comment="msg:htmlentities_description" language_independant="true">
+			<inputs>
+				<description>msg:htmlentities_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:htmlentities_output_description</description>
+			</outputs>
+		</method>
+		<method name="#initiale(param0,param1,param2);" rights="" version="1.0" comment="msg:initiale_description" language_independant="true">
+			<inputs>
+				<description>msg:initiale_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:initiale_output_description</description>
+			</outputs>
+		</method>
 		<method name="#lastchr(param0);" rights="" version="1.0" comment="msg:lastchr_description" language_independant="true">
 			<inputs>
 				<description>msg:lastchr_input_description</description>
@@ -928,7 +1008,41 @@ $Id: notice_tpl_manifest.xml,v 1.2.2.4 2015-11-04 09:26:46 jpermanne Exp $ -->
 			<outputs>
 				<description>msg:ucfirst_output_description</description>
 			</outputs>
-		</method>			
-		</methods>
+		</method>
+		<method name="#set_variable(param0);" rights="" version="1.0" comment="msg:set_variable_description" language_independant="true">
+			<inputs>
+				<description>msg:set_variable_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:set_variable_output_description</description>
+			</outputs>
+		</method>
+		<method name="#get_variable(param0);" rights="" version="1.0" comment="msg:get_variable_description" language_independant="true">
+			<inputs>
+				<description>msg:get_variable_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:get_variable_output_description</description>
+			</outputs>
+		</method>
+		<method name="#strip_tags(param0);" rights="" version="1.0" comment="msg:strip_tags_description" language_independant="true">
+			<inputs>
+				<description>msg:strip_tags_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:strip_tags_output_description</description>
+			</outputs>
+		</method>
+	</methods>
+	<methods comment="msg:classdsi">
+		<method name="#bannette_id();" rights="" version="1.0" comment="msg:bannette_id_description" language_independant="true">
+			<inputs>
+				<description>msg:bannette_id_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:bannette_id_output_description</description>
+			</outputs>
+		</method>
+	</methods>
 		
 </manifest>

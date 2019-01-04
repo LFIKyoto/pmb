@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: stat_query.class.php,v 1.6 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: stat_query.class.php,v 1.8 2017-07-10 13:55:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,17 +11,17 @@ require_once("$include_path/templates/stat_opac.tpl.php");
 
 class stat_query {
 	
-	var $id_query;
-	var $action;
-	var $id_vue_liee;
+	public $id_query;
+	public $action;
+	public $id_vue_liee;
 	
-	function stat_query($id,$action,$idvue=0){
-		$this->id_query=$id;
+	public function __construct($id,$action,$idvue=0){
+		$this->id_query=$id+0;
 		$this->action=$action;
-		$this->id_vue_liee = $idvue;
+		$this->id_vue_liee = $idvue+0;
 	}
 	
-	function proceed(){
+	public function proceed(){
 		
 		global $dbh; 
 		global $msg, $id;
@@ -39,13 +39,13 @@ class stat_query {
 			case 'update_request':
 				//Ajout/Modification d'une requete
 				if(!$this->id_vue_liee){
-					$this->id_vue_liee = $this->get_vue_associee($this->id_query);
+					$this->id_vue_liee = static::get_vue_associee($this->id_query);
 				}
 				print $this->do_form_request($this->id_query,$this->id_vue_liee);
 				break;
 			case 'save_request':
 				if(!$this->id_vue_liee){
-					$this->id_vue_liee = $this->get_vue_associee($this->id_query);
+					$this->id_vue_liee = static::get_vue_associee($this->id_query);
 				}
 				$this->save_request($this->id_query,$this->id_vue_liee);
 				break;
@@ -72,7 +72,7 @@ class stat_query {
 	}
 		
 	//Supprime une requete
-	function delete_request($id_req){
+	public function delete_request($id_req){
 		if($id_req){
 			$req="DELETE FROM statopac_request where idproc='".$id_req."'";
 			$resultat=pmb_mysql_query($req);
@@ -81,7 +81,7 @@ class stat_query {
 	
 	
 	//Affiche le formulaire de saisie d'une requete
-	function do_form_request($request_id='',$vue_id=''){
+	public function do_form_request($request_id='',$vue_id=''){
 		global $stat_view_request_form, $msg, $charset;
 		
 		if(!$request_id){
@@ -140,7 +140,7 @@ class stat_query {
 	
 
 	//Insere ou enregistre une requete
-	function save_request($request_id='', $vue_id=''){
+	public function save_request($request_id='', $vue_id=''){
 		global $f_request_name, $f_request_code, $f_request_comment, $msg;
 		
 		$chaine = strpos($f_request_code,'VUE()');
@@ -158,7 +158,7 @@ class stat_query {
 	}
 	
 	//Formulaire d'execution
-	function run_form($id, $dbh) {
+	public function run_form($id, $dbh) {
 		global $msg;
 		global $charset;
 		global $force_exec;
@@ -170,8 +170,8 @@ class stat_query {
 	}
 	
 	
-	function get_vue_associee($id_req){
-		
+	public static function get_vue_associee($id_req){
+		$id_req += 0;
 		$rqt="select num_vue from statopac_request where idproc='".addslashes($id_req)."'";
 		$res = pmb_mysql_query($rqt);
 		

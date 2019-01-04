@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frais.inc.php,v 1.18 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: frais.inc.php,v 1.22 2018-03-07 09:55:20 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -21,7 +21,7 @@ function show_list_frais() {
 	print "<table>
 	<tr>
 		<th>".htmlentities($msg[103], ENT_QUOTES, $charset)."</th>
-		<th>".htmlentities($msg[acquisition_frais_montant], ENT_QUOTES, $charset)."</th>
+		<th>".htmlentities($msg['acquisition_frais_montant'], ENT_QUOTES, $charset)."</th>
 	</tr>";
 
 	$res = frais::listFrais();
@@ -41,7 +41,7 @@ function show_list_frais() {
 			print "</tr>";
 	}
 	print "</table>
-		<input class='bouton' type='button' value=' ".$msg[acquisition_ajout_frais]." ' onClick=\"document.location='./admin.php?categ=acquisition&sub=frais&action=add'\" />";
+		<input class='bouton' type='button' value=' ".$msg['acquisition_ajout_frais']." ' onClick=\"document.location='./admin.php?categ=acquisition&sub=frais&action=add'\" />";
 
 }
 
@@ -58,7 +58,7 @@ function show_frais_form($id=0) {
 	
 	if(!$id) {
 		
-		$frais_form = str_replace('!!form_title!!', htmlentities($msg[acquisition_ajout_frais],ENT_QUOTES,$charset), $frais_form);
+		$frais_form = str_replace('!!form_title!!', htmlentities($msg['acquisition_ajout_frais'],ENT_QUOTES,$charset), $frais_form);
 		$frais_form = str_replace('!!libelle!!', '', $frais_form);
 		$frais_form = str_replace('!!condition!!', '', $frais_form);
 		$frais_form = str_replace('!!montant!!', '', $frais_form);
@@ -67,7 +67,7 @@ function show_frais_form($id=0) {
 	} else {
 		
 		$frais = new frais($id);
-		$frais_form = str_replace('!!form_title!!', htmlentities($msg[acquisition_modif_frais],ENT_QUOTES,$charset), $frais_form);
+		$frais_form = str_replace('!!form_title!!', htmlentities($msg['acquisition_modif_frais'],ENT_QUOTES,$charset), $frais_form);
 		$frais_form = str_replace('!!libelle!!', htmlentities($frais->libelle,ENT_QUOTES,$charset), $frais_form);
 		$frais_form = str_replace('!!condition!!', htmlentities($frais->condition_frais,ENT_QUOTES,$charset), $frais_form);
 		$frais_form = str_replace('!!montant!!', $frais->montant, $frais_form);
@@ -114,14 +114,14 @@ $frais_form = "
 	</div>
 
 	<div class='row'>
-		<label class='etiquette' for='condition'>".htmlentities($msg[acquisition_frais_cond],ENT_QUOTES,$charset)."</label>
+		<label class='etiquette' for='condition'>".htmlentities($msg['acquisition_frais_cond'],ENT_QUOTES,$charset)."</label>
 	</div>
 	<div class='row'>
 		<textarea id='condition' name='condition' class='saisie-80em' cols='62' rows='6' wrap='virtual'>!!condition!!</textarea>
 	</div>
 
 	<div class='row'>
-		<label class='etiquette' for='montant'>".htmlentities($msg[acquisition_frais_montant],ENT_QUOTES,$charset)."</label>
+		<label class='etiquette' for='montant'>".htmlentities($msg['acquisition_frais_montant'],ENT_QUOTES,$charset)."</label>
 	</div>
 	<div class='row'>
 		<input type=text id='montant' name='montant' value=\"!!montant!!\" class='saisie-10em' />
@@ -129,7 +129,7 @@ $frais_form = "
 	</div>
 
 	<div class='row'>
-		<label class='etiquette' for='cp_compta'>".htmlentities($msg[acquisition_num_cp_compta],ENT_QUOTES,$charset)."</label>
+		<label class='etiquette' for='cp_compta'>".htmlentities($msg['acquisition_num_cp_compta'],ENT_QUOTES,$charset)."</label>
 	</div>
 	<div class='row'>
 		<input type='text' id='cp_compta' name='cp_compta' value=\"!!cp_compta!!\" class='saisie-20em' />
@@ -139,7 +139,7 @@ $frais_form = "
 if ($acquisition_gestion_tva) {
 $frais_form.="	
 	<div class='row'>
-		<label class='etiquette'>".htmlentities($msg[acquisition_num_tva_achat],ENT_QUOTES,$charset)."</label>
+		<label class='etiquette'>".htmlentities($msg['acquisition_num_tva_achat'],ENT_QUOTES,$charset)."</label>
 	</div>
 	<div class='row'>
 		!!tva_achat!!
@@ -171,7 +171,7 @@ $frais_form.= "
 
 ";
 
-$ptab = "<input class='bouton' type='button' value=' ".$msg[supprimer]." ' onClick=\"javascript:confirmation_delete('!!id!!', '!!libelle_suppr!!')\" />";
+$ptab = "<input class='bouton' type='button' value=' ".$msg['supprimer']." ' onClick=\"javascript:confirmation_delete('!!id!!', '!!libelle_suppr!!')\" />";
 
 ?>
 
@@ -217,8 +217,8 @@ switch($action) {
 		
 		//Vérification du format du montant
 		$montant = str_replace(',','.',$montant);
-		if (!is_numeric($montant) || $montant < 0.00 || $montant >999999.99 ) {
-			error_form_message($libelle.$msg["acquisition_frais_error"]);
+		if (!is_numeric($montant) || $montant >9999999999.99 ) {
+			error_form_message($libelle." ".$msg["acquisition_frais_error"]);
 			break;
 		}
 		
@@ -227,7 +227,7 @@ switch($action) {
 		$frais->condition_frais = $condition;
 		$frais->montant = $montant;
 		$frais->num_cp_compta = $cp_compta;
-		$frais->num_tva_achat = $tva_achat;	
+		$frais->num_tva_achat = (isset($tva_achat) ? $tva_achat : '');	
 		$frais->save();
 		show_list_frais();
 
@@ -240,8 +240,8 @@ switch($action) {
 			if ($total1==0) {
 				frais::delete($id);
 			} else {
-				$msg_suppr_err = $msg[acquisition_frais_used] ;
-				if ($total1) $msg_suppr_err .= "<br />- ".$msg[acquisition_frais_used_fou] ;
+				$msg_suppr_err = $msg['acquisition_frais_used'] ;
+				if ($total1) $msg_suppr_err .= "<br />- ".$msg['acquisition_frais_used_fou'] ;
 				error_message($msg[321], $msg_suppr_err, 1, 'admin.php?categ=acquisition&sub=frais');
 			}
 		} else {

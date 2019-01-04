@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_pret.class.php,v 1.37 2015-06-26 13:15:14 dgoron Exp $
+// $Id: ajax_pret.class.php,v 1.42 2018-06-29 15:15:08 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -17,6 +17,8 @@ require_once($include_path."/parser.inc.php");
 require_once("$base_path/circ/pret_func.inc.php");
 require_once($include_path."/expl_info.inc.php");
 require_once($class_path."/pret_parametres_perso.class.php");
+require_once($class_path.'/event/events/event_loan.class.php');
+require_once($class_path."/ajax_retour_class.php");
 
 /*
  Pour effectuer un pret:
@@ -62,26 +64,26 @@ confirm_pret($id_empr, $id_expl);
 
 
 class do_pret {
-	var $id_empr;	
-	var $empr_cb;
-	var $id_expl;
-	var $cb_expl;
-	var $msg_finance_pret_force_pret;
-	var $msg_293;
-	var $msg_652;
-	var $msg_294;
-	var $tdoc_libelle;
-	var $libelle;
-	var $error_message;
-	var $forcage;
-	var $status;
-	var $trap_order=array();
-	var $trap_func=array();
-	var $expl_notice;
-	var $expl_bulletin=0;
+	public $id_empr;	
+	public $empr_cb;
+	public $id_expl;
+	public $cb_expl;
+	public $msg_finance_pret_force_pret;
+	public $msg_293;
+	public $msg_652;
+	public $msg_294;
+	public $tdoc_libelle;
+	public $libelle;
+	public $error_message;
+	public $forcage;
+	public $status;
+	public $trap_order=array();
+	public $trap_func=array();
+	public $expl_notice;
+	public $expl_bulletin=0;
 
 	// constructeur
-	function do_pret() {
+	public function __construct() {
 		global $include_path;
 		global $msg;
 		$this->id_empr = '';
@@ -97,7 +99,7 @@ class do_pret {
 		$this->parse_xml_traps($include_path."/trap/trap_pret.xml");
 	}
 
-	function parse_xml_traps($filename) {
+	public function parse_xml_traps($filename) {
 		
 		$fp=fopen($filename,"r") or die("Can't find XML file");
 		$xml=fread($fp,filesize($filename));
@@ -121,8 +123,7 @@ class do_pret {
 		return 0;
 	}
 	
-	function check_pieges($empr_cb, $id_empr,$cb_expl, $id_expl,$forcage,$short_loan=0)
-	{
+	public function check_pieges($empr_cb, $id_empr,$cb_expl, $id_expl,$forcage,$short_loan=0) {
 		$this->id_empr = $id_empr;
 		$this->empr_cb = $empr_cb;	
 		$this->id_expl = $id_expl;
@@ -167,8 +168,8 @@ class do_pret {
 		$buf_xml = array2xml($array);				
 		return $buf_xml;
 	}
-	function mode1_check_pieges($empr_cb, $id_empr,$cb_expl, $id_expl,$forcage)
-	{
+	
+	public function mode1_check_pieges($empr_cb, $id_empr,$cb_expl, $id_expl,$forcage) {
 		$this->id_empr = $id_empr;
 		$this->empr_cb = $empr_cb;	
 		$this->id_expl = $id_expl;
@@ -216,7 +217,8 @@ class do_pret {
 		//$buf_xml = array2xml($array);				
 		return $return_val;
 	}
-	function mode1_get_info_expl( $cb_expl) {
+	
+	public function mode1_get_info_expl( $cb_expl) {
 		global $msg;
 		global $dbh;
 		$this->cb_expl = $cb_expl;
@@ -263,7 +265,7 @@ class do_pret {
 		return $return_val;
 	}
 
-	function check_emprunteur_exist( $id_empr,$empr_cb){
+	public function check_emprunteur_exist( $id_empr,$empr_cb){
 		global $msg;
 		global $dbh;
 		if ($empr_cb || $id_empr) {
@@ -285,7 +287,7 @@ class do_pret {
 		return -1;
 	}
 	
-	function check_document_exist($id_expl, $cb_expl) {
+	public function check_document_exist($id_expl, $cb_expl) {
 		global $msg;
 		global $dbh;
 		if ($cb_expl || $id_expl) {
@@ -322,7 +324,7 @@ class do_pret {
 		return -1;
 	}
 
-	function get_info_expl( $cb_expl) {
+	public function get_info_expl( $cb_expl) {
 		global $msg;
 		global $dbh;
 		if ($cb_expl ) {
@@ -360,7 +362,7 @@ class do_pret {
 		return $buf_xml;
 	}
 
-	function check_emprunteur_adhesion_false($id_empr) {
+	public function check_emprunteur_adhesion_false($id_empr) {
 		global $msg;
 		global $pmb_pret_adhesion_depassee;
 		$empr_temp = new emprunteur($id_empr, '', FALSE, 0);
@@ -374,7 +376,7 @@ class do_pret {
 		return -1;
 	}
 	
-	function check_document_has_note($id_expl) {
+	public function check_document_has_note($id_expl) {
 		global $msg;
 		global $dbh;
 		$query = "select expl_note, expl_comment from exemplaires where expl_id=$id_expl";
@@ -400,7 +402,7 @@ class do_pret {
 		return 0;
 	}
 
-	function check_document_has_todo($id_expl) {
+	public function check_document_has_todo($id_expl) {
 		global $msg;
 		global $dbh,$deflt_docs_location;
 		$query = "select expl_retloc from exemplaires where expl_id=$id_expl and expl_retloc='".$deflt_docs_location."' ";
@@ -413,7 +415,7 @@ class do_pret {
 		return 0;
 	}	
 	
-	function check_document_pretable($id_expl) {
+	public function check_document_pretable($id_expl) {
 		global $msg;
 		global $dbh;
 		$query = "select e.expl_cb as cb, e.expl_id as id, s.pret_flag as pretable, e.expl_notice as notice, e.expl_bulletin as bulletin, e.expl_note as note, expl_comment, s.statut_libelle as statut";
@@ -441,7 +443,7 @@ class do_pret {
 		return 0;
 	}	
 	
-	function check_document_already_loaned($id_empr, $id_expl) {
+	public function check_document_already_loaned($id_empr, $id_expl) {
 		global $msg;
 		global $dbh;
 		$query = "select pret_idempr from pret where pret_idexpl=$id_expl limit 1";
@@ -459,9 +461,11 @@ class do_pret {
 		return 0;
 	}		
 
-	function check_document_already_borrowed($id_empr, $id_expl) {
+	public function check_document_already_borrowed($id_empr, $id_expl) {
 		global $msg;
 		global $dbh;
+		global $pmb_pret_already_borrowed;
+				
 		$query = "select pret_idempr from pret where pret_idexpl=$id_expl limit 1";
 		$result = pmb_mysql_query($query, $dbh);
 		if (@ pmb_mysql_num_rows($result)) {
@@ -469,15 +473,22 @@ class do_pret {
 			$empr = pmb_mysql_result($result, '0', 'pret_idempr');
 			// l'emprunteur n'est l'emprunteur actuel
 			if ($empr != $id_empr) {
-				$this->error_message=$msg[387];
-				return -1;
+				if (!$pmb_pret_already_borrowed) {
+					$this->error_message=$msg[387];
+					return -1;
+				} else {
+					// effectuer le retour
+					$retour = new retour();
+					$status = $retour->do_retour($this->cb_expl);
+					return 0;
+				}	
 			}
 		}
 		$this->error_message="";
 		return 0;
 	}		
 	
-	function check_document_is_trusted($id_empr, $id_expl) {
+	public function check_document_is_trusted($id_empr, $id_expl) {
 		global $msg;
 		global $dbh;
 		global $empr_archivage_prets, $pmb_loan_trust_management;
@@ -519,7 +530,7 @@ class do_pret {
 		return 0;
 	}		
 	
-	function check_document_has_resa_false($id_empr, $id_expl) {
+	public function check_document_has_resa_false($id_empr, $id_expl) {
 		global $msg;
 		global $dbh;
 		global $pmb_resa_planning;
@@ -580,7 +591,7 @@ class do_pret {
 		return 0;
 	}
 		
-	function check_quotas($id_empr, $id_expl) {
+	public function check_quotas($id_empr, $id_expl) {
 		global $msg;
 		global $pmb_quotas_avances, $pmb_short_loan_management;	
 		if ($pmb_quotas_avances) {
@@ -607,7 +618,7 @@ class do_pret {
 		return 0;
 	}
 	
-	function already_loaned_arch($id_empr, $id_expl) {
+	public function already_loaned_arch($id_empr, $id_expl) {
 		global $dbh;
 		global $msg;
 		
@@ -621,7 +632,7 @@ class do_pret {
 		return 0;
 	}
 	
-	function del_pret($id_expl) {
+	public function del_pret($id_expl) {
 		// le lien MySQL
 		global $dbh;
 		global $msg;
@@ -630,6 +641,14 @@ class do_pret {
 		$result = pmb_mysql_query($query, $dbh);
 		$stat_id = pmb_mysql_fetch_object($result);
 		if($stat_id->pret_temp ) {
+			/**
+			 * Publication d'un évenement à l'annulation du prêt (avant suppression dans pret_archive)
+			 */
+			$evt_handler = events_handler::get_instance();
+			$event = new event_loan("loan", "cancel_loan");
+			$event->set_id_loan($stat_id->pret_arc_id);
+			$evt_handler->send($event);
+			
 			$result = pmb_mysql_query("delete from pret_archive where arc_id='" . $stat_id->pret_arc_id . "' ", $dbh);
 			audit::delete_audit (AUDIT_PRET, $stat_id->pret_arc_id) ;
 		
@@ -647,7 +666,7 @@ class do_pret {
 		return $buf_xml;
 	}
 	
-	function add_pret($id_empr, $id_expl, $cb_expl) {
+	public function add_pret($id_empr, $id_expl, $cb_expl) {
 		// le lien MySQL
 		global $dbh;
 		global $msg;
@@ -663,11 +682,10 @@ class do_pret {
 		
 		$query = "delete from resa_ranger ";
 		$query .= "where resa_cb='".$cb_expl."'";
-		$result = @ pmb_mysql_query($query, $dbh) or die("can't delete cb_doc in resa_ranger : ".$query);	
-	
+		$result = @ pmb_mysql_query($query, $dbh) or die("can't delete cb_doc in resa_ranger : ".$query);
 	}
 	
-	function resa_pret_gestion($id_empr, $id_expl,$stat_id=0) {
+	public function resa_pret_gestion($id_empr, $id_expl,$stat_id=0) {
 		global $msg;
 		global $dbh;
 		global $pmb_resa_planning;
@@ -700,7 +718,7 @@ class do_pret {
 		}
 	}	
 	
-	function del_resa($id_empr, $id_notice, $id_bulletin, $cb_encours_de_pret) {	
+	public function del_resa($id_empr, $id_notice, $id_bulletin, $cb_encours_de_pret) {	
 		global $dbh;
 		$this->error_message.="del_resa ";
 		if (!$id_empr || (!$id_notice && !$id_bulletin))
@@ -744,7 +762,7 @@ class do_pret {
 		return TRUE;
 	}
 	
-	function confirm_pret($id_empr, $id_expl, $short_loan=0) {
+	public function confirm_pret($id_empr, $id_expl, $short_loan=0) {
 		// le lien MySQL
 		global $dbh, $msg;
 		global $pmb_quotas_avances, $pmb_utiliser_calendrier;
@@ -891,9 +909,6 @@ class do_pret {
 					break;
 				case 2 :
 					//Gestion avancée
-					//Initialisation Quotas
-					global $_parsed_quotas_;
-					$_parsed_quotas_ = false;
 					$qt_tarif = new quota("COST_LEND_QUOTA", "$include_path/quotas/own/$lang/finances.xml");
 					$struct["READER"] = $id_empr;
 					$struct["EXPL"] = $id_expl;
@@ -909,10 +924,20 @@ class do_pret {
 				}
 			}
 		}
+		
 		$this->resa_pret_gestion($id_empr, $id_expl, $stat_id);	
+		
+		/**
+		 * Publication d'un évenement à l'enregistrement du prêt en base (pièges passés et prêt validé (quotas etc..) )
+		 */
+		$evt_handler = events_handler::get_instance();
+		$event = new event_loan("loan", "add_loan");
+		$event->set_id_loan($stat_id);
+		$event->set_id_empr($id_empr);
+		$evt_handler->send($event);
+		
 		$array[0]['statut']=1;
-		$buf_xml = array2xml($array);				
-		return $buf_xml;
+		return array2xml($array);				
 	}
 
 // Fin class		

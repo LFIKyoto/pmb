@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: acquisition.inc.php,v 1.14.4.1 2015-08-13 08:05:16 jpermanne Exp $
+// $Id: acquisition.inc.php,v 1.22 2017-01-26 15:36:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -24,8 +24,9 @@ while ($row=pmb_mysql_fetch_object($list_bib)) {
 }		
 
 //si on arrive par print_acquisition.php, pas d'entêtes
+if(!isset($acquisition_no_html)) $acquisition_no_html = 0;
 if (!$acquisition_no_html) {
-	echo window_title($database_window_title.$msg[acquisition_menu].$msg[1003].$msg[1001]);
+	echo window_title($database_window_title.$msg['acquisition_menu'].$msg[1003].$msg[1001]);
 }
 
 switch($categ) {
@@ -63,6 +64,9 @@ switch($categ) {
 			case 'export':
 				include_once('./acquisition/suggestions/suggestions_export.inc.php');
 			break;
+			case 'export_tableau':
+				include_once('./acquisition/suggestions/suggestions_export_tableau.inc.php');
+			break;
 			case 'empr_sug':
 				include_once('./acquisition/suggestions/suggestions_empr.inc.php');
 			break;
@@ -72,6 +76,30 @@ switch($categ) {
 		}		
 	break;
 
+	case 'rent':	
+		switch($sub) {
+			case 'requests':
+				include_once('./acquisition/rent/requests.inc.php');
+				break;
+			case 'accounts':
+				include_once('./acquisition/rent/accounts.inc.php');
+				break;
+			case 'invoices':
+				include_once('./acquisition/rent/invoices.inc.php');
+				break;
+			default:
+				include_once('./acquisition/rent/accounts.inc.php');
+				break;
+		}
+		break;
+	case 'plugin' :
+		$plugins = plugins::get_instance();
+		$file = $plugins->proceed("acquisition",$plugin,$sub);
+		if($file){
+			include $file;
+		}
+		break;
+	
 	default:
 		if (!$nb_bib && !$acquisition_sugg_to_cde) {
 			include_once('./acquisition/suggestions/suggestions.inc.php');

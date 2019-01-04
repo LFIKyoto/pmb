@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: external_services_esusers.class.php,v 1.3 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: external_services_esusers.class.php,v 1.4 2017-05-19 10:06:11 dgoron Exp $
 
 //Gestion des utilisateurs et des groupes externes des services externes
 
@@ -46,13 +46,13 @@ define("ES_USER_UNKNOWN_USERID",1);
 define("ES_GROUP_UNKNOWN_USERID",2);
 
 class es_esuser extends es_base {
-	var $esuser_id;
-	var $esuser_username;
-	var $esuser_fullname;
-	var $esuser_password;
-	var $esuser_group;
+	public $esuser_id;
+	public $esuser_username;
+	public $esuser_fullname;
+	public $esuser_password;
+	public $esuser_group;
 
-	function es_esuser($userid) {
+	public function __construct($userid) {
 		global $dbh;
 		$userid+=0; //Conversion en int
 		$sql = 'SELECT * from es_esusers WHERE esuser_id = '.$userid;
@@ -70,14 +70,14 @@ class es_esuser extends es_base {
 		}
 	}
 	
-	static function username_exists($username) {
+	public static function username_exists($username) {
 		global $dbh;
 		$sql = "SELECT esuser_id FROM es_esusers WHERE esuser_username = '".addslashes($username)."'";
 		$res = pmb_mysql_query($sql, $dbh);
 		return pmb_mysql_num_rows($res) > 0 ? pmb_mysql_result($res, 0, 0) : 0;
 	}
 	
-	static function add_new() {
+	public static function add_new() {
 		global $dbh;
 		$sql = "INSERT INTO es_esusers () VALUES ()";
 		$res = pmb_mysql_query($sql, $dbh);
@@ -85,7 +85,7 @@ class es_esuser extends es_base {
 		return new es_esuser($new_esuser_id);
 	}
 	
-	static function create_from_credentials($user_name, $password) {
+	public static function create_from_credentials($user_name, $password) {
 		global $dbh;
 		$sql = "SELECT esuser_id FROM es_esusers WHERE esuser_username = '".addslashes($user_name)."' AND esuser_password = '".addslashes($password)."'";
 		$res = pmb_mysql_query($sql, $dbh);
@@ -95,14 +95,14 @@ class es_esuser extends es_base {
 		return new es_esuser($id);
 	}
 	
-	function commit_to_db() {
+	public function commit_to_db() {
 		global $dbh;
 		//on oublie pas que includes/global_vars.inc.php s'amuse à tout addslasher tout seul donc on le fait pas ici
 		$sql = "UPDATE es_esusers SET esuser_username = '".$this->esuser_username."', esuser_password = '".$this->esuser_password."', esuser_fullname = '".$this->esuser_fullname."', esuser_groupnum = ".$this->esuser_group." WHERE esuser_id = ".$this->esuser_id."";
 		pmb_mysql_query($sql, $dbh);
 	}
 	
-	function delete() {
+	public function delete() {
 		global $dbh;
 		//Deletons l'user
 		$sql = "DELETE FROM es_esusers WHERE esuser_id = ".$this->esuser_id;
@@ -116,9 +116,9 @@ class es_esuser extends es_base {
 }
 
 class es_esusers extends es_base {
-	var $users=array();//Array of es_esuser
+	public $users=array();//Array of es_esuser
 	
-	function es_esusers() {
+	public function __construct() {
 		global $dbh;
 		$sql = 'SELECT esuser_id from es_esusers';
 		$res = pmb_mysql_query($sql, $dbh);
@@ -130,17 +130,17 @@ class es_esusers extends es_base {
 }
 
 class es_esgroup extends es_base {
-	var $esgroup_id;
-	var $esgroup_name;
-	var $esgroup_fullname;
-	var $esgroup_pmbuserid;
-	var $esgroup_pmbuser_username;
-	var $esgroup_pmbuser_lastname;
-	var $esgroup_pmbuser_firstname;
-	var $esgroup_esusers=array();
-	var $esgroup_emprgroups=array();
+	public $esgroup_id;
+	public $esgroup_name;
+	public $esgroup_fullname;
+	public $esgroup_pmbuserid;
+	public $esgroup_pmbuser_username;
+	public $esgroup_pmbuser_lastname;
+	public $esgroup_pmbuser_firstname;
+	public $esgroup_esusers=array();
+	public $esgroup_emprgroups=array();
 	
-	function es_esgroup ($group_id){
+	public function __construct($group_id){
 		global $dbh;
 		$group_id+=0; //Conversion en int
 		$sql = 'SELECT esgroup_id, esgroup_name, esgroup_fullname, esgroup_pmbusernum, users.username, users.nom, users.prenom FROM es_esgroups LEFT JOIN users ON (users.userid = es_esgroups.esgroup_pmbusernum) WHERE esgroup_id = '.$group_id;
@@ -177,21 +177,21 @@ class es_esgroup extends es_base {
 		}
 	}
 	
-	static function name_exists($name) {
+	public static function name_exists($name) {
 		global $dbh;
 		$sql = "SELECT esgroup_id FROM es_esgroups WHERE esgroup_name = '".addslashes($name)."'";
 		$res = pmb_mysql_query($sql, $dbh);
 		return pmb_mysql_num_rows($res) > 0 ? pmb_mysql_result($res, 0, 0) : 0;
 	}
 	
-	static function id_exists($id) {
+	public static function id_exists($id) {
 		global $dbh;
 		$sql = "SELECT esgroup_id FROM es_esgroups WHERE esgroup_id = ".($id+0)."";
 		$res = pmb_mysql_query($sql, $dbh);
 		return pmb_mysql_num_rows($res) > 0 ? pmb_mysql_result($res, 0, 0) : 0;		
 	}
 	
-	static function add_new() {
+	public static function add_new() {
 		global $dbh;
 		$sql = "INSERT INTO es_esgroups () VALUES ()";
 		$res = pmb_mysql_query($sql, $dbh);
@@ -210,24 +210,32 @@ class es_esgroup extends es_base {
 		pmb_mysql_query($sql, $dbh);
 		
 		//Remplissage du groupe (es_users)
-		$sql = "INSERT INTO es_esgroup_esusers (esgroupuser_groupnum ,esgroupuser_usertype ,esgroupuser_usernum) VALUES ";
-		$values=array();
-		foreach ($this->esgroup_esusers as $aesuser_id) {
-			if (!$aesuser_id) continue;
-			$values[] = '('.$this->esgroup_id.', 1, '.$aesuser_id.')';
+		if(count($this->esgroup_esusers)) {
+			$sql = "INSERT INTO es_esgroup_esusers (esgroupuser_groupnum ,esgroupuser_usertype ,esgroupuser_usernum) VALUES ";
+			$values=array();
+			foreach ($this->esgroup_esusers as $aesuser_id) {
+				if (!$aesuser_id) continue;
+				$values[] = '('.$this->esgroup_id.', 1, '.$aesuser_id.')';
+			}
+			if(count($values)) {
+				$sql .= implode(",", $values);
+				pmb_mysql_query($sql, $dbh);
+			}
 		}
-		$sql .= implode(",", $values);
-		pmb_mysql_query($sql, $dbh);
-
+		
 		//Remplissage du groupe (groupes de lecteurs)
-		$sql = "INSERT INTO es_esgroup_esusers (esgroupuser_groupnum ,esgroupuser_usertype ,esgroupuser_usernum) VALUES ";
-		$values=array();
-		foreach ($this->esgroup_emprgroups as $aemprgroup_id) {
-			if (!$aemprgroup_id) continue;
-			$values[] = '('.$this->esgroup_id.', 2, '.$aemprgroup_id.')';
+		if(count($this->esgroup_emprgroups)) {
+			$sql = "INSERT INTO es_esgroup_esusers (esgroupuser_groupnum ,esgroupuser_usertype ,esgroupuser_usernum) VALUES ";
+			$values=array();
+			foreach ($this->esgroup_emprgroups as $aemprgroup_id) {
+				if (!$aemprgroup_id) continue;
+				$values[] = '('.$this->esgroup_id.', 2, '.$aemprgroup_id.')';
+			}
+			if(count($values)) {
+				$sql .= implode(",", $values);
+				pmb_mysql_query($sql, $dbh);
+			}
 		}
-		$sql .= implode(",", $values);
-		pmb_mysql_query($sql, $dbh);
 	}
 	
 	function delete() {
@@ -243,9 +251,9 @@ class es_esgroup extends es_base {
 }
 
 class es_esgroups extends es_base {
-	var $groups=array();//Array of es_group
+	public $groups=array();//Array of es_group
 	
-	function es_esgroups() {
+	function __construct() {
 		global $dbh;
 		$sql = 'SELECT esgroup_id from es_esgroups WHERE esgroup_id <> -1';
 		$res = pmb_mysql_query($sql, $dbh);

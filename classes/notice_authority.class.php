@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_authority.class.php,v 1.7 2013-11-28 09:30:09 mbertin Exp $
+// $Id: notice_authority.class.php,v 1.10 2017-12-22 13:31:51 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,27 +12,31 @@ require_once($class_path."/titre_uniforme.class.php");
 require_once($class_path."/category.class.php");
 require_once($class_path."/notice_authority_generic.class.php");
 require_once($class_path."/origins.class.php");
+require_once($class_path.'/skos/skos_concept.class.php');
 
 
 /*
  * Classe pour les autorité classiques...
  */
 class notice_authority extends iso2709_authorities implements notice_authority_generic{
-	var $type;
-	var $common_data;
-	var $specifics_data;
-	var $rejected_forms;
-	var $associated_forms;
-	var $parallel_forms;
-	var $use_rejected;
-	var $use_associated;
-	var $use_parallel;
+	public $type;
+	public $common_data;
+	public $specifics_data;
+	public $rejected_forms;
+	public $associated_forms;
+	public $parallel_forms;
+	public $use_rejected;
+	public $use_associated;
+	public $use_parallel;
+	protected $concept_or_category;
+	
+	static protected $scheme_bnf_labels = array();
 	
 	public function __construct($data="",$type="UNI",$file_charset="iso-8859-1"){
 		if($file_charset == "utf-8"){
 			$this->is_utf8 = true;
 		}
-		parent::iso2709($data,$type);
+		parent::__construct($data,$type);
 		if($this->error){
 			$this->try_autocorrect();
 		}
@@ -65,13 +69,13 @@ class notice_authority extends iso2709_authorities implements notice_authority_g
 			case "c" :	
 			// matière nom commun
 			case "j" :
-				$this->type = "category";
+			// forme, genre ou caractéristiques physiques	
+			case "l" :	
+				$this->type = $this->get_concept_or_category();
 				break;
 			/*certaines autorités ne sont pas traitables par PMB*/
 			// rubrique de classement
 			case "g" :
-			// forme, genre ou caractéristiques physiques	
-			case "l" :	
 			// lieu d'édition
 			case "k" :
 			// auteur / titre
@@ -114,7 +118,7 @@ class notice_authority extends iso2709_authorities implements notice_authority_g
 	public function get_common_informations(){
 		$this->common_data = array();
 		$this->common_data['authority_number'] = $this->format_authority_number($this->fields['001'][0]['value']);
-		$this->common_data['lang'] = $this->fields[101][0]['a'][0];
+		$this->common_data['lang'] = (isset($this->fields[101][0]['a'][0]) ? $this->fields[101][0]['a'][0] : '');
 		$this->common_data['source']=array(
 			'country' => $this->fields[801][0]['a'][0],
 			'origin' => $this->fields[801][0]['b'][0],
@@ -146,15 +150,27 @@ class notice_authority extends iso2709_authorities implements notice_authority_g
 				break;
 			case "j" :	
 			// matière nom commun
-				$this->specifics_data = category::get_informations_from_unimarc($this->fields,false,"250");
+				if ($this->get_concept_or_category() == 'category') {
+					$this->specifics_data = category::get_informations_from_unimarc($this->fields,false,"250");
+				} else {
+					$this->specifics_data = skos_concept::get_informations_from_unimarc($this->fields,false,"250");
+				}
 				break;
 			// nom de territoire ou nom géographique	
 			case "c" :
-				$this->specifics_data = category::get_informations_from_unimarc($this->fields,false,"215");
+				if ($this->get_concept_or_category() == 'category') {
+					$this->specifics_data = category::get_informations_from_unimarc($this->fields,false,"215");
+				} else {
+					$this->specifics_data = skos_concept::get_informations_from_unimarc($this->fields,false,"215");
+				}
 				break;
 			// forme, genre ou caractéristiques physiques	
 			case "l" :
-				$this->specifics_data = category::get_informations_from_unimarc($this->fields,false,"280");
+				if ($this->get_concept_or_category() == 'category') {
+					$this->specifics_data = category::get_informations_from_unimarc($this->fields,false,"280");
+				} else {
+					$this->specifics_data = skos_concept::get_informations_from_unimarc($this->fields,false,"280");
+				}
 				break;		
 			// rubrique de classement
 			case "g" :
@@ -195,7 +211,7 @@ class notice_authority extends iso2709_authorities implements notice_authority_g
 						$infos = array();
 						$infos = auteur::get_informations_from_unimarc($field[$i],$zone,70);
 						$infos['link_code'] = $field[$i]['5'][0];
-						$infos['comment'] = $field[$i]['0'][0];
+						$infos['comment'] = (isset($field[$i]['0'][0]) ? $field[$i]['0'][0] : '');
 						$data[] = $infos;
 					}
 					break;
@@ -209,7 +225,7 @@ class notice_authority extends iso2709_authorities implements notice_authority_g
 						$infos = array();
 						$infos = auteur::get_informations_from_unimarc($field[$i],$zone,71);
 						$infos['link_code'] = $field[$i]['5'][0];
-						$infos['comment'] = $field[$i]['0'][0];
+						$infos['comment'] = (isset($field[$i]['0'][0]) ? $field[$i]['0'][0] : '');
 						$data[] = $infos;
 					}
 					break;
@@ -218,7 +234,7 @@ class notice_authority extends iso2709_authorities implements notice_authority_g
 					for($i=0 ; $i<count($field) ; $i++){
 						$infos = titre_uniforme::get_informations_from_unimarc($field[$i],$zone);
 						$infos['link_code'] = $field[$i]['5'][0];
-						$infos['comment'] = $field[$i]['0'][0];
+						$infos['comment'] = (isset($field[$i]['0'][0]) ? $field[$i]['0'][0] : '');
 						$data[] = $infos;
 					}
 					break;
@@ -236,11 +252,19 @@ class notice_authority extends iso2709_authorities implements notice_authority_g
 				case $zone."80" :	
 				// Forme associée - Matière nom commun
 				case $zone."50" :
+					if ($this->type == 'concept') {
+						// si on est sur un concept, on gère les liens avec les autres concepts à part 
+						break;
+					}
 					for($i=0 ; $i<count($field) ; $i++){
-						$infos = category::get_informations_from_unimarc($field[$i],true);
-						$infos['link_code'] = $field[$i]['5'][0];
-						if($this->type!= "category" || ($this->type== "category" && $infos['link_code']!="z")){
-							$infos['comment'] = $field[$i]['0'][0];
+						if ($this->get_concept_or_category() == 'category') {
+							$infos = category::get_informations_from_unimarc($field[$i],true);
+						} else {
+							$infos = skos_concept::get_informations_from_unimarc($field[$i],true);
+						}
+						$infos['link_code'] = (isset($field[$i]['5'][0]) ? $field[$i]['5'][0] : '');
+						if($this->type != $this->get_concept_or_category() || ($this->type == $this->get_concept_or_category() && $infos['link_code']!="z")){
+							$infos['comment'] = (isset($field[$i]['0'][0]) ? $field[$i]['0'][0] : '');
 						}
 						$data[] = $infos;
 					}
@@ -268,6 +292,9 @@ class notice_authority extends iso2709_authorities implements notice_authority_g
 				break;
 			case "category" :
 				$id = category::check_if_exists($data,$id_thesaurus,0,$this->common_data['lang']);
+				break;
+			case "concept" :
+				$id = skos_concept::check_if_exists($data,$id_thesaurus,$this->common_data['lang']);
 				break;
 			default :
 				$id=0;
@@ -326,5 +353,108 @@ class notice_authority extends iso2709_authorities implements notice_authority_g
 		if ($this->check_guide_infos()) {
 			$this->read_fields();
 		}
+	}
+	
+	public function set_type($type) {
+		$this->type = $type;
+		return $this;
+	}
+	
+	public function set_concept_or_category($concept_or_category) {
+		$this->concept_or_category = $concept_or_category;
+		return $this;
+	}
+	
+	public function get_concept_or_category() {
+		if (empty($this->concept_or_category)) {
+			$this->concept_or_category = 'category';
+		}
+		return $this->concept_or_category;
+	}
+	
+	public function get_scheme_uri() {
+		$scheme_uri = '';
+		switch($this->guide_infos['et']){
+			// nom de personne
+			case "a" :
+				break;
+			// nom de collectivité
+			case "b" :
+				break;
+			// famille
+			case "e" :
+				break;
+			// marque
+			case "d" :
+				break;
+			// titre uniforme
+			case "f" :
+				break;
+			// matière nom commun
+			case "j" :
+				$scheme_uri = 'http://data.bnf.fr/vocabulary/scheme/r166';
+				break;
+			// nom de territoire ou nom géographique
+			case "c" :
+				$scheme_uri = 'http://data.bnf.fr/vocabulary/scheme/r167';
+				break;
+			// forme, genre ou caractéristiques physiques
+			case "l" :
+				break;
+			// rubrique de classement
+			case "g" :
+			/*certaines autorités ne sont pas traitables par PMB*/
+			// lieu d'édition
+			case "k" :
+			// auteur / titre
+			case "h" :
+			// auteur / rubrique de classement
+			case "i" :
+			default :
+				break;
+		}
+		if(!$scheme_uri) {
+			return '';
+		}
+		$label = $this->get_scheme_bnf_label($scheme_uri);
+		if (!$label) {
+			return '';
+		}
+		$this->create_schema($scheme_uri, $label);
+		return $scheme_uri;
+	}
+	
+	public function get_scheme_bnf_label($scheme_uri) {
+		if (!isset(self::$scheme_bnf_labels[$scheme_uri])) {
+			self::$scheme_bnf_labels[$scheme_uri] = '';
+			$storebnf = ARC2::getRemoteStore(array(
+					'remote_store_endpoint' => 'http://data.bnf.fr/sparql'
+			));
+			$result = $storebnf->query('PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+				SELECT ?label
+				WHERE {
+					<'.$scheme_uri.'> rdfs:label ?label
+				}', 'row');
+			if(!empty($result)) {
+				self::$scheme_bnf_labels[$scheme_uri] = $result['label'];
+			}	
+		}
+		return self::$scheme_bnf_labels[$scheme_uri];
+	}
+	
+	protected function create_schema($uri, $label) {
+		$scheme_id = onto_common_uri::get_id($uri);
+		if(!$scheme_id) {
+			$query = 'insert into <pmb> {
+					<'.$uri.'> rdf:type skos:ConceptScheme ;
+							skos:prefLabel "'.addslashes($label).'" ;
+							pmb:showInTop owl:Nothing
+				}';
+			skos_datastore::query($query);
+			$onto_index = onto_index::get_instance('skos');
+			$onto_index->maj(0, $uri);
+			$scheme_id = onto_common_uri::set_new_uri($uri);
+		}
+		return $scheme_id;
 	}
 }

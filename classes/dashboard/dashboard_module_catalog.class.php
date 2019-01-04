@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dashboard_module_catalog.class.php,v 1.8 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: dashboard_module_catalog.class.php,v 1.12 2018-12-20 11:00:19 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -22,7 +22,8 @@ class dashboard_module_catalog extends dashboard_module {
 	
 	public function get_quick_params_form(){
 		global $msg;
-		if(SESSrights & PREF_AUTH) {
+		$html= "";
+		if(defined('SESSrights') && SESSrights & PREF_AUTH) {
 			$html= "
 			<div class='catalog'>
 			<form name='quick_params_catalog' action='' method='post' onsubmit='return false;'>
@@ -109,7 +110,7 @@ class dashboard_module_catalog extends dashboard_module {
 	public function get_records_recevoir(){
 		$return = array();
 		global $memo_abts_pointage_calc_alert;
-		if(!count($memo_abts_pointage_calc_alert)){	
+		if(!is_array($memo_abts_pointage_calc_alert) || (!count($memo_abts_pointage_calc_alert))){	
 			$memo_abts_pointage_calc_alert=abts_pointage::get_dashboard_info();			
 		}
 		$return[0]["total"]=$memo_abts_pointage_calc_alert["a_recevoir"];
@@ -155,7 +156,7 @@ class dashboard_module_catalog extends dashboard_module {
 				case "deflt_docs_location":
 				case "deflt_docs_section":
 				case "deflt_docs_type":
-					global $$key;
+					global ${$key};
 					$update[] = $key."='".$value."'";
 					break;
 			}

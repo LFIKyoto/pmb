@@ -2,13 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: acquisition.php,v 1.7 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: acquisition.php,v 1.8 2016-02-11 15:48:17 dgoron Exp $
 
 
 // définition du minimum nécéssaire 
 $base_path=".";                            
 $base_auth = "ACQUISITION_AUTH";  
-$base_title = "\$msg[acquisition_menu_title]";    
+$base_title = "\$msg[acquisition_menu_title]";
+$base_use_dojo = 1;
 require_once ("$base_path/includes/init.inc.php");  
 
 // modules propres à acquisition.php ou à ses sous-modules

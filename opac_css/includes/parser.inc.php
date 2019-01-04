@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: parser.inc.php,v 1.16 2013-11-07 09:24:38 dgoron Exp $
+// $Id: parser.inc.php,v 1.21 2018-11-29 07:59:47 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -17,9 +17,10 @@ if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 // Lecture récursive de la structure et stockage des paramètres
 
 function _recursive_(&$indice, $niveau, &$param, &$tag_count, &$vals) {
-	if ($indice > count($vals))
+	$nb_vals = count($vals);
+	if ($indice > $nb_vals)
 		exit;
-	while ($indice < count($vals)) {
+	while ($indice < $nb_vals) {
 		list ($key, $val) = each($vals);
 		$indice ++;
 		if (!isset($tag_count[$val["tag"]]))
@@ -29,8 +30,7 @@ function _recursive_(&$indice, $niveau, &$param, &$tag_count, &$vals) {
 		}
 		if (isset($val["attributes"])) {
 			$attributs = $val["attributes"];
-			for ($k = 0; $k < count($attributs); $k ++) {
-				list ($key_att, $val_att) = each($attributs);
+			foreach ($attributs as $key_att=>$val_att) {
 				$param[$val["tag"]][$tag_count[$val["tag"]]][$key_att] = $val_att;
 			}
 		}
@@ -43,7 +43,11 @@ function _recursive_(&$indice, $niveau, &$param, &$tag_count, &$vals) {
 				break;
 		}
 		if ($val["type"] == "complete") {
-			$param[$val["tag"]][$tag_count[$val["tag"]]]["value"] = $val["value"];
+			if(isset($val["value"])) {
+				$param[$val["tag"]][$tag_count[$val["tag"]]]["value"] = $val["value"];
+			} else {
+				$param[$val["tag"]][$tag_count[$val["tag"]]]["value"] = '';
+			}
 		}
 	}
 }
@@ -144,8 +148,9 @@ function _parser_text_($xml, $fonction, $rootelement) {
 	}
 }
 
-function _parser_text_no_function_($xml, $rootelement="") {
+function _parser_text_no_function_($xml, $rootelement="", $full_path = '') {
 	global $charset;
+	global $class_path;
 	$vals = array();
 	$index = array();
 	if ($xml) {
@@ -175,6 +180,33 @@ function _parser_text_no_function_($xml, $rootelement="") {
 				}
 				$param_var = $param[$rootelement][0];
 			} else $param_var = $param;
+			
+			//Paramétrage de substitution par l'interface
+			if($full_path) {
+				$path = substr($full_path, 0, strrpos($full_path, '/'));
+				$filename = substr($full_path, strrpos($full_path, '/')+1);
+				switch ($rootelement) {
+					case 'CATALOG':
+						require_once($class_path.'/misc/files/misc_file_catalog.class.php');
+						$misc_file_catalog = new misc_file_catalog($path, $filename);
+						if(isset($param_var['ACTION'])) {
+							$param_var['ACTION'] = $misc_file_catalog->apply_substitution($param_var['ACTION']);
+						} elseif(isset($param_var['ITEM'])) {
+							$param_var['ITEM'] = $misc_file_catalog->apply_substitution($param_var['ITEM']);
+						}
+						break;
+					case 'INDEXATION':
+						require_once($class_path.'/misc/files/misc_file_indexation.class.php');
+						$misc_file_indexation = new misc_file_indexation($path, $filename);
+						$param_var['FIELD'] = $misc_file_indexation->apply_substitution($param_var['FIELD']);
+						break;
+					case 'SORT':
+						require_once($class_path.'/misc/files/misc_file_sort.class.php');
+						$misc_file_sort = new misc_file_sort($path, $filename);
+						$param_var['FIELD'] = $misc_file_sort->apply_substitution($param_var['FIELD']);
+						break;
+				}
+			}
 			return $param_var;
 		}
 	}

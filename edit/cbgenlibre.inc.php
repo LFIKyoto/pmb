@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cbgenlibre.inc.php,v 1.19 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: cbgenlibre.inc.php,v 1.21 2017-12-06 08:49:39 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($sel_type)) $sel_type = '';
 
 // récupération des valeurs par défaut:
 if ($pmb_param_etiq_codes_barres) $mep_etiq_cb=unserialize($pmb_param_etiq_codes_barres);
@@ -27,23 +29,23 @@ if($action =="memo") {
 	$mep_etiq_cb[$sel_type]=array();
 	$mep_etiq_cb[$sel_type]['type_cb_name']=stripslashes($type_cb_name);
 	$mep_etiq_cb[$sel_type]['type_cb_libelle']=stripslashes($type_cb_libelle);
-	$mep_etiq_cb[$sel_type][bibli_name]=stripslashes($bibli_name);
-	$mep_etiq_cb[$sel_type][nbr_cb]=$nbr_cb;
-	$mep_etiq_cb[$sel_type][ORIENTATION]=$ORIENTATION;
-	$mep_etiq_cb[$sel_type][CBG_NBR_X_CELLS]=$CBG_NBR_X_CELLS;
-	$mep_etiq_cb[$sel_type][CBG_NBR_Y_CELLS]=$CBG_NBR_Y_CELLS;
-	$mep_etiq_cb[$sel_type][CBG_LEFT_MARGIN]=$CBG_LEFT_MARGIN;
-	$mep_etiq_cb[$sel_type][CBG_RIGHT_MARGIN]=$CBG_RIGHT_MARGIN;
-	$mep_etiq_cb[$sel_type][CBG_TOP_MARGIN]=$CBG_TOP_MARGIN;
-	$mep_etiq_cb[$sel_type][CBG_BOTTOM_MARGIN]=$CBG_BOTTOM_MARGIN;
-	$mep_etiq_cb[$sel_type][CBG_INNER_LEFT_MARGIN]=$CBG_INNER_LEFT_MARGIN;
-	$mep_etiq_cb[$sel_type][CBG_INNER_RIGHT_MARGIN]=$CBG_INNER_RIGHT_MARGIN;
-	$mep_etiq_cb[$sel_type][CBG_INNER_TOP_MARGIN]=$CBG_INNER_TOP_MARGIN;
-	$mep_etiq_cb[$sel_type][CBG_INNER_BOTTOM_MARGIN]=$CBG_INNER_BOTTOM_MARGIN;
-	$mep_etiq_cb[$sel_type][CBG_TEXT_HEIGHT]=$CBG_TEXT_HEIGHT;
-	$mep_etiq_cb[$sel_type][CBG_TEXT_FONT_SIZE]=$CBG_TEXT_FONT_SIZE;
-	$mep_etiq_cb[$sel_type][CBG_CB_TEXT_SIZE]=$CBG_CB_TEXT_SIZE;
-	$mep_etiq_cb[$sel_type][CBG_CB_RES]=$CBG_CB_RES;	
+	$mep_etiq_cb[$sel_type]['bibli_name']=stripslashes($bibli_name);
+	$mep_etiq_cb[$sel_type]['nbr_cb']=$nbr_cb;
+	$mep_etiq_cb[$sel_type]['ORIENTATION']=$ORIENTATION;
+	$mep_etiq_cb[$sel_type]['CBG_NBR_X_CELLS']=$CBG_NBR_X_CELLS;
+	$mep_etiq_cb[$sel_type]['CBG_NBR_Y_CELLS']=$CBG_NBR_Y_CELLS;
+	$mep_etiq_cb[$sel_type]['CBG_LEFT_MARGIN']=$CBG_LEFT_MARGIN;
+	$mep_etiq_cb[$sel_type]['CBG_RIGHT_MARGIN']=$CBG_RIGHT_MARGIN;
+	$mep_etiq_cb[$sel_type]['CBG_TOP_MARGIN']=$CBG_TOP_MARGIN;
+	$mep_etiq_cb[$sel_type]['CBG_BOTTOM_MARGIN']=$CBG_BOTTOM_MARGIN;
+	$mep_etiq_cb[$sel_type]['CBG_INNER_LEFT_MARGIN']=$CBG_INNER_LEFT_MARGIN;
+	$mep_etiq_cb[$sel_type]['CBG_INNER_RIGHT_MARGIN']=$CBG_INNER_RIGHT_MARGIN;
+	$mep_etiq_cb[$sel_type]['CBG_INNER_TOP_MARGIN']=$CBG_INNER_TOP_MARGIN;
+	$mep_etiq_cb[$sel_type]['CBG_INNER_BOTTOM_MARGIN']=$CBG_INNER_BOTTOM_MARGIN;
+	$mep_etiq_cb[$sel_type]['CBG_TEXT_HEIGHT']=$CBG_TEXT_HEIGHT;
+	$mep_etiq_cb[$sel_type]['CBG_TEXT_FONT_SIZE']=$CBG_TEXT_FONT_SIZE;
+	$mep_etiq_cb[$sel_type]['CBG_CB_TEXT_SIZE']=$CBG_CB_TEXT_SIZE;
+	$mep_etiq_cb[$sel_type]['CBG_CB_RES']=$CBG_CB_RES;	
 	
 	// update param dans pmb_param_etiq_codes_barres
 	$pmb_param_etiq_codes_barres=	serialize($mep_etiq_cb);
@@ -57,23 +59,23 @@ if(!is_array($mep_etiq_cb['default']) || $sel_type=="new") {
 	$mep_etiq_cb[$sel_type]=array();
 	if( $sel_type!="new")$mep_etiq_cb[$sel_type]['type_cb_name']=$msg['edit_cbgen_name_default'];
 	if( $sel_type!="new")$mep_etiq_cb[$sel_type]['type_cb_libelle']="default"; 
-	if (!$mep_etiq_cb[$sel_type][bibli_name]                  ) $mep_etiq_cb[$sel_type][bibli_name]=stripslashes($biblio_name);
-	if (!$mep_etiq_cb[$sel_type][nbr_cb]                      ) $mep_etiq_cb[$sel_type][nbr_cb]=50;
-	if (!$mep_etiq_cb[$sel_type][ORIENTATION]                 ) $mep_etiq_cb[$sel_type][ORIENTATION]='P';
-	if (!$mep_etiq_cb[$sel_type][CBG_NBR_X_CELLS]             ) $mep_etiq_cb[$sel_type][CBG_NBR_X_CELLS]='4';
-	if (!$mep_etiq_cb[$sel_type][CBG_NBR_Y_CELLS]             ) $mep_etiq_cb[$sel_type][CBG_NBR_Y_CELLS]='19';
-	if (!$mep_etiq_cb[$sel_type][CBG_LEFT_MARGIN]             ) $mep_etiq_cb[$sel_type][CBG_LEFT_MARGIN]='6';
-	if (!$mep_etiq_cb[$sel_type][CBG_RIGHT_MARGIN]            ) $mep_etiq_cb[$sel_type][CBG_RIGHT_MARGIN]='6';
-	if (!$mep_etiq_cb[$sel_type][CBG_TOP_MARGIN]              ) $mep_etiq_cb[$sel_type][CBG_TOP_MARGIN]='13';
-	if (!$mep_etiq_cb[$sel_type][CBG_BOTTOM_MARGIN]           ) $mep_etiq_cb[$sel_type][CBG_BOTTOM_MARGIN]='13';
-	if (!$mep_etiq_cb[$sel_type][CBG_INNER_LEFT_MARGIN]       ) $mep_etiq_cb[$sel_type][CBG_INNER_LEFT_MARGIN]='4';
-	if (!$mep_etiq_cb[$sel_type][CBG_INNER_RIGHT_MARGIN]      ) $mep_etiq_cb[$sel_type][CBG_INNER_RIGHT_MARGIN]='4';
-	if (!$mep_etiq_cb[$sel_type][CBG_INNER_TOP_MARGIN]        ) $mep_etiq_cb[$sel_type][CBG_INNER_TOP_MARGIN]='1';
-	if (!$mep_etiq_cb[$sel_type][CBG_INNER_BOTTOM_MARGIN]     ) $mep_etiq_cb[$sel_type][CBG_INNER_BOTTOM_MARGIN]='1';
-	if (!$mep_etiq_cb[$sel_type][CBG_TEXT_HEIGHT]             ) $mep_etiq_cb[$sel_type][CBG_TEXT_HEIGHT]='2';
-	if (!$mep_etiq_cb[$sel_type][CBG_TEXT_FONT_SIZE]          ) $mep_etiq_cb[$sel_type][CBG_TEXT_FONT_SIZE]='6';
-	if (!$mep_etiq_cb[$sel_type][CBG_CB_TEXT_SIZE]            ) $mep_etiq_cb[$sel_type][CBG_CB_TEXT_SIZE]='3';
-	if (!$mep_etiq_cb[$sel_type][CBG_CB_RES]                  ) $mep_etiq_cb[$sel_type][CBG_CB_RES]='1';
+	if (empty($mep_etiq_cb[$sel_type]['bibli_name'])                  ) $mep_etiq_cb[$sel_type]['bibli_name']=stripslashes($biblio_name);
+	if (empty($mep_etiq_cb[$sel_type]['nbr_cb'])                      ) $mep_etiq_cb[$sel_type]['nbr_cb']=50;
+	if (empty($mep_etiq_cb[$sel_type]['ORIENTATION'])                 ) $mep_etiq_cb[$sel_type]['ORIENTATION']='P';
+	if (empty($mep_etiq_cb[$sel_type]['CBG_NBR_X_CELLS'])             ) $mep_etiq_cb[$sel_type]['CBG_NBR_X_CELLS']='4';
+	if (empty($mep_etiq_cb[$sel_type]['CBG_NBR_Y_CELLS'])             ) $mep_etiq_cb[$sel_type]['CBG_NBR_Y_CELLS']='19';
+	if (empty($mep_etiq_cb[$sel_type]['CBG_LEFT_MARGIN'])             ) $mep_etiq_cb[$sel_type]['CBG_LEFT_MARGIN']='6';
+	if (empty($mep_etiq_cb[$sel_type]['CBG_RIGHT_MARGIN'])            ) $mep_etiq_cb[$sel_type]['CBG_RIGHT_MARGIN']='6';
+	if (empty($mep_etiq_cb[$sel_type]['CBG_TOP_MARGIN'])              ) $mep_etiq_cb[$sel_type]['CBG_TOP_MARGIN']='13';
+	if (empty($mep_etiq_cb[$sel_type]['CBG_BOTTOM_MARGIN'])           ) $mep_etiq_cb[$sel_type]['CBG_BOTTOM_MARGIN']='13';
+	if (empty($mep_etiq_cb[$sel_type]['CBG_INNER_LEFT_MARGIN'])       ) $mep_etiq_cb[$sel_type]['CBG_INNER_LEFT_MARGIN']='4';
+	if (empty($mep_etiq_cb[$sel_type]['CBG_INNER_RIGHT_MARGIN'])      ) $mep_etiq_cb[$sel_type]['CBG_INNER_RIGHT_MARGIN']='4';
+	if (empty($mep_etiq_cb[$sel_type]['CBG_INNER_TOP_MARGIN'])        ) $mep_etiq_cb[$sel_type]['CBG_INNER_TOP_MARGIN']='1';
+	if (empty($mep_etiq_cb[$sel_type]['CBG_INNER_BOTTOM_MARGIN'])     ) $mep_etiq_cb[$sel_type]['CBG_INNER_BOTTOM_MARGIN']='1';
+	if (empty($mep_etiq_cb[$sel_type]['CBG_TEXT_HEIGHT'])             ) $mep_etiq_cb[$sel_type]['CBG_TEXT_HEIGHT']='2';
+	if (empty($mep_etiq_cb[$sel_type]['CBG_TEXT_FONT_SIZE'])          ) $mep_etiq_cb[$sel_type]['CBG_TEXT_FONT_SIZE']='6';
+	if (empty($mep_etiq_cb[$sel_type]['CBG_CB_TEXT_SIZE'])            ) $mep_etiq_cb[$sel_type]['CBG_CB_TEXT_SIZE']='3';
+	if (empty($mep_etiq_cb[$sel_type]['CBG_CB_RES'])                  ) $mep_etiq_cb[$sel_type]['CBG_CB_RES']='1';
 	if($sel_type!="new") {
 		$pmb_param_etiq_codes_barres=	serialize($mep_etiq_cb);
 		$req="UPDATE parametres set valeur_param='".addslashes($pmb_param_etiq_codes_barres)."' where type_param='pmb' and sstype_param='param_etiq_codes_barres' limit 1";
@@ -81,8 +83,13 @@ if(!is_array($mep_etiq_cb['default']) || $sel_type=="new") {
 		pmb_mysql_query($req);	
 	}	
 }
-if ($mep_etiq_cb[$sel_type][ORIENTATION]=='P') $selected_mep_orientation_P="selected";
-		else $selected_mep_orientation_L="selected";
+if ($mep_etiq_cb[$sel_type]['ORIENTATION']=='P') {
+	$selected_mep_orientation_P="selected";
+	$selected_mep_orientation_L="";
+} else {
+	$selected_mep_orientation_P="";
+	$selected_mep_orientation_L="selected";
+}
 		
 if( $sel_type == 'default' )	$selected= " selected='selected' "; else $selected='';
 $sel_type_tpl="
@@ -90,8 +97,8 @@ $sel_type_tpl="
 	  <option value='default' $selected>".$msg['edit_cbgen_name_default']."</option>";	  
 	  foreach($mep_etiq_cb as $type) {
 	  	if(is_array($type)) {	  
-		  	if( $type['type_cb_libelle'] == $sel_type  )	$selected= " selected='selected' "; else $selected='';
-		  	if( $type['type_cb_libelle'] && $type['type_cb_libelle']!='default' ) $sel_type_tpl.="<option value='".htmlentities($type['type_cb_libelle'],ENT_QUOTES,$charset)."' $selected>".htmlentities($type['type_cb_name'],ENT_QUOTES,$charset)."</option>	";
+		  	if(isset($type['type_cb_libelle']) && $type['type_cb_libelle'] == $sel_type  )	$selected= " selected='selected' "; else $selected='';
+		  	if(isset($type['type_cb_libelle']) && $type['type_cb_libelle'] && $type['type_cb_libelle']!='default' ) $sel_type_tpl.="<option value='".htmlentities($type['type_cb_libelle'],ENT_QUOTES,$charset)."' $selected>".htmlentities($type['type_cb_name'],ENT_QUOTES,$charset)."</option>	";
 	  	}
 	  }
 if( $sel_type == 'new' )	$selected= " selected='selected' "; else $selected='';	  	  
@@ -100,8 +107,16 @@ $sel_type_tpl.="
 </select>
 ";
 	  
-if( $sel_type != 'default' )$button_memorise="<input class='bouton' type='button' value='".$msg['edit_cbgen_save']."' onClick=\"submit_memorise();\"/>";
-if( $sel_type != 'default' && $sel_type != 'new' )$button_delete="<input class='bouton' type='button' value='".$msg['edit_cbgen_delete']."' onClick=\"confirm_delete();\"/>";
+if( $sel_type != 'default' ) {
+	$button_memorise="<input class='bouton' type='button' value='".$msg['edit_cbgen_save']."' onClick=\"submit_memorise();\"/>";
+} else {
+	$button_memorise="";
+}
+if( $sel_type != 'default' && $sel_type != 'new' ) {
+	$button_delete="<input class='bouton' type='button' value='".$msg['edit_cbgen_delete']."' onClick=\"confirm_delete();\"/>";
+} else {
+	$button_delete="";
+}
 
 // $cbgen_query : form de demande d'info pour génération
 $cbgen_query = "
@@ -194,7 +209,7 @@ $cbgen_query = "
 
 	<div class='row'>
 		<blockquote><label class='etiquette' for='nbr_cb'>$msg[802]</label><br />
-		<input class='saisie-20em' type='text' name='nbr_cb' id='nbr_cb' value=\"".$mep_etiq_cb[$sel_type][nbr_cb]."\" /></blockquote>
+		<input class='saisie-20em' type='text' name='nbr_cb' id='nbr_cb' value=\"".$mep_etiq_cb[$sel_type]['nbr_cb']."\" /></blockquote>
 	</div>
 
 	<div class='row'>
@@ -216,9 +231,9 @@ $cbgen_query = "
 <hr />
 <!-- Ajout du changement possible de format de page -->
 <label class='etiquette'>$msg[edit_cbgen_type_cb_label] </label>
-<input class='saisie-20em' id='type_cb_name' type='text' class='text' name='type_cb_name' value=\"".htmlentities($mep_etiq_cb[$sel_type]['type_cb_name'],ENT_QUOTES,$charset)."\" />
+<input class='saisie-20em' id='type_cb_name' type='text' class='text' name='type_cb_name' value=\"".(isset($mep_etiq_cb[$sel_type]['type_cb_name']) ? htmlentities($mep_etiq_cb[$sel_type]['type_cb_name'],ENT_QUOTES,$charset) : '')."\" />
 <label class='etiquette'>$msg[edit_cbgen_type_cb_libelle] </label> 
-<input class='saisie-20em' id='type_cb_libelle' type='text' class='text' name='type_cb_libelle' value=\"".htmlentities($mep_etiq_cb[$sel_type]['type_cb_libelle'],ENT_QUOTES,$charset)."\" />
+<input class='saisie-20em' id='type_cb_libelle' type='text' class='text' name='type_cb_libelle' value=\"".(isset($mep_etiq_cb[$sel_type]['type_cb_libelle']) ? htmlentities($mep_etiq_cb[$sel_type]['type_cb_libelle'],ENT_QUOTES,$charset) : '')."\" />
 <br /><br />
 <label class='etiquette'>$msg[edit_cbgen_mep_orientation] </label>
 <select name='ORIENTATION' size='1'>
@@ -226,32 +241,32 @@ $cbgen_query = "
   <option value='L' $selected_mep_orientation_L>$msg[edit_cbgen_mep_paysage]</option>
 </select><br />
 <label class='etiquette'>$msg[edit_cbgen_mep_nbr_x_cells]</label><br />
-<input class='saisie-20em' id='CBG_NBR_X_CELLS' type='text' class='text' name='CBG_NBR_X_CELLS' value=\"".$mep_etiq_cb[$sel_type][CBG_NBR_X_CELLS]."\"/><br />
+<input class='saisie-20em' id='CBG_NBR_X_CELLS' type='text' class='text' name='CBG_NBR_X_CELLS' value=\"".$mep_etiq_cb[$sel_type]['CBG_NBR_X_CELLS']."\"/><br />
 
 <label class='etiquette'>$msg[edit_cbgen_mep_nbr_y_cells]</label><br />
-<input class='saisie-20em' id='CBG_NBR_Y_CELLS' type='text' class='text' name='CBG_NBR_Y_CELLS' value=\"".$mep_etiq_cb[$sel_type][CBG_NBR_Y_CELLS]."\" /><br />
+<input class='saisie-20em' id='CBG_NBR_Y_CELLS' type='text' class='text' name='CBG_NBR_Y_CELLS' value=\"".$mep_etiq_cb[$sel_type]['CBG_NBR_Y_CELLS']."\" /><br />
 
 <label class='etiquette'>$msg[edit_cbgen_mep_margin]</label><br />
-<input class='saisie-20em' id='CBG_LEFT_MARGIN' type='text' class='text' name='CBG_LEFT_MARGIN' value=\"".$mep_etiq_cb[$sel_type][CBG_LEFT_MARGIN]."\" /> $msg[edit_cbgen_mep_left]<br />
-<input class='saisie-20em' id='CBG_RIGHT_MARGIN' type='text' class='text' name='CBG_RIGHT_MARGIN' value=\"".$mep_etiq_cb[$sel_type][CBG_RIGHT_MARGIN]."\" /> $msg[edit_cbgen_mep_right]<br />
-<input class='saisie-20em' id='CBG_TOP_MARGIN' type='text' class='text' name='CBG_TOP_MARGIN' value=\"".$mep_etiq_cb[$sel_type][CBG_TOP_MARGIN]."\" /> $msg[edit_cbgen_mep_top]<br />
-<input class='saisie-20em' id='CBG_BOTTOM_MARGIN' type='text' class='text' name='CBG_BOTTOM_MARGIN' value=\"".$mep_etiq_cb[$sel_type][CBG_BOTTOM_MARGIN]."\" /> $msg[edit_cbgen_mep_bottom]<br />
+<input class='saisie-20em' id='CBG_LEFT_MARGIN' type='text' class='text' name='CBG_LEFT_MARGIN' value=\"".$mep_etiq_cb[$sel_type]['CBG_LEFT_MARGIN']."\" /> $msg[edit_cbgen_mep_left]<br />
+<input class='saisie-20em' id='CBG_RIGHT_MARGIN' type='text' class='text' name='CBG_RIGHT_MARGIN' value=\"".$mep_etiq_cb[$sel_type]['CBG_RIGHT_MARGIN']."\" /> $msg[edit_cbgen_mep_right]<br />
+<input class='saisie-20em' id='CBG_TOP_MARGIN' type='text' class='text' name='CBG_TOP_MARGIN' value=\"".$mep_etiq_cb[$sel_type]['CBG_TOP_MARGIN']."\" /> $msg[edit_cbgen_mep_top]<br />
+<input class='saisie-20em' id='CBG_BOTTOM_MARGIN' type='text' class='text' name='CBG_BOTTOM_MARGIN' value=\"".$mep_etiq_cb[$sel_type]['CBG_BOTTOM_MARGIN']."\" /> $msg[edit_cbgen_mep_bottom]<br />
 
 <label class='etiquette'>$msg[edit_cbgen_mep_inner_margin]</label><br />
-<input class='saisie-20em' id='CBG_INNER_LEFT_MARGIN' type='text' class='text' name='CBG_INNER_LEFT_MARGIN' value=\"".$mep_etiq_cb[$sel_type][CBG_INNER_LEFT_MARGIN]."\" /> $msg[edit_cbgen_mep_left]<br />
-<input class='saisie-20em' id='CBG_INNER_RIGHT_MARGIN' type='text' class='text' name='CBG_INNER_RIGHT_MARGIN' value=\"".$mep_etiq_cb[$sel_type][CBG_INNER_RIGHT_MARGIN]."\" /> $msg[edit_cbgen_mep_right]<br />
-<input class='saisie-20em' id='CBG_INNER_TOP_MARGIN' type='text' class='text' name='CBG_INNER_TOP_MARGIN' value=\"".$mep_etiq_cb[$sel_type][CBG_INNER_TOP_MARGIN]."\" /> $msg[edit_cbgen_mep_top]<br />
-<input class='saisie-20em' id='CBG_INNER_BOTTOM_MARGIN' type='text' class='text' name='CBG_INNER_BOTTOM_MARGIN' value=\"".$mep_etiq_cb[$sel_type][CBG_INNER_BOTTOM_MARGIN]."\" /> $msg[edit_cbgen_mep_bottom]<br />
+<input class='saisie-20em' id='CBG_INNER_LEFT_MARGIN' type='text' class='text' name='CBG_INNER_LEFT_MARGIN' value=\"".$mep_etiq_cb[$sel_type]['CBG_INNER_LEFT_MARGIN']."\" /> $msg[edit_cbgen_mep_left]<br />
+<input class='saisie-20em' id='CBG_INNER_RIGHT_MARGIN' type='text' class='text' name='CBG_INNER_RIGHT_MARGIN' value=\"".$mep_etiq_cb[$sel_type]['CBG_INNER_RIGHT_MARGIN']."\" /> $msg[edit_cbgen_mep_right]<br />
+<input class='saisie-20em' id='CBG_INNER_TOP_MARGIN' type='text' class='text' name='CBG_INNER_TOP_MARGIN' value=\"".$mep_etiq_cb[$sel_type]['CBG_INNER_TOP_MARGIN']."\" /> $msg[edit_cbgen_mep_top]<br />
+<input class='saisie-20em' id='CBG_INNER_BOTTOM_MARGIN' type='text' class='text' name='CBG_INNER_BOTTOM_MARGIN' value=\"".$mep_etiq_cb[$sel_type]['CBG_INNER_BOTTOM_MARGIN']."\" /> $msg[edit_cbgen_mep_bottom]<br />
 
 <label class='etiquette'>$msg[edit_cbgen_mep_text_height]</label><br />
-<input class='saisie-20em' id='CBG_TEXT_HEIGHT' type='text' class='text' name='CBG_TEXT_HEIGHT' value=\"".$mep_etiq_cb[$sel_type][CBG_TEXT_HEIGHT]."\" /><br />
+<input class='saisie-20em' id='CBG_TEXT_HEIGHT' type='text' class='text' name='CBG_TEXT_HEIGHT' value=\"".$mep_etiq_cb[$sel_type]['CBG_TEXT_HEIGHT']."\" /><br />
 <label class='etiquette'>$msg[edit_cbgen_mep_text_font_size]</label><br />
-<input class='saisie-20em' id='CBG_TEXT_FONT_SIZE' type='text' class='text' name='CBG_TEXT_FONT_SIZE' value=\"".$mep_etiq_cb[$sel_type][CBG_TEXT_FONT_SIZE]."\" /><br />
+<input class='saisie-20em' id='CBG_TEXT_FONT_SIZE' type='text' class='text' name='CBG_TEXT_FONT_SIZE' value=\"".$mep_etiq_cb[$sel_type]['CBG_TEXT_FONT_SIZE']."\" /><br />
 <label class='etiquette'>$msg[edit_cbgen_mep_text_size]</label><br />
-<input class='saisie-20em' id='CBG_CB_TEXT_SIZE' type='text' class='text' name='CBG_CB_TEXT_SIZE' value=\"".$mep_etiq_cb[$sel_type][CBG_CB_TEXT_SIZE]."\" /><br />
+<input class='saisie-20em' id='CBG_CB_TEXT_SIZE' type='text' class='text' name='CBG_CB_TEXT_SIZE' value=\"".$mep_etiq_cb[$sel_type]['CBG_CB_TEXT_SIZE']."\" /><br />
 <label class='etiquette'>$msg[edit_cbgen_mep_cb_res]</label><br />
 $msg[edit_cbgen_mep_cb_res_details]<br />
-<input class='saisie-20em' id='CBG_CB_RES' type='text' class='text' name='CBG_CB_RES' value=\"".$mep_etiq_cb[$sel_type][CBG_CB_RES]."\" /><br />
+<input class='saisie-20em' id='CBG_CB_RES' type='text' class='text' name='CBG_CB_RES' value=\"".$mep_etiq_cb[$sel_type]['CBG_CB_RES']."\" /><br />
 $msg[edit_cbgen_mep_cb_res_note]<br />
 
 </div>

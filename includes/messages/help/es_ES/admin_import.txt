@@ -1,4 +1,4 @@
-<h1>Administraci&oacute;n de las importaciones</h1>
+<h2>Administraci&oacute;n de las importaciones</h2>
 <p>Este m&oacute;dulo permite administrar las importaciones de datos asociados a documentos o ejemplares.</p>
 <p>El procedimiento se realiza en diferentes tiempos : 
 <ul>

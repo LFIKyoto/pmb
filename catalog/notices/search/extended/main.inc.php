@@ -2,11 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.14 2015-04-01 12:23:48 vtouchard Exp $
+// $Id: main.inc.php,v 1.18 2017-07-12 10:25:38 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($class_path."/search.class.php");
+require_once($class_path."/search_perso.class.php");
 
 $sc=new search(true);
 
@@ -30,7 +31,7 @@ switch ($sub) {
 			$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["GET"]["sub"]="";
 			$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["POST"]["sub"]="";
 			$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["HUMAN_QUERY"]=$sc->make_human_query();
-			$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["HUMAN_TITLE"]=$msg["search_extended"];
+			$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["HUMAN_TITLE"]= "[".$msg["130"]."] ".$msg["search_extended"];
 			$_POST["page"]=0;
 			$page=0;
 		}
@@ -42,6 +43,7 @@ switch ($sub) {
 			$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]["PAGE"]=$page+1;
 			$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]["HUMAN_QUERY"]=$sc->make_human_query();
 			$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]["SEARCH_TYPE"]="extended";
+			$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_LIST_QUERY']='';
 			$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]["TEXT_QUERY"]="";
 		}
 		if($pmb_map_activate){
@@ -50,7 +52,9 @@ switch ($sub) {
 		break;
 	default:
 		print $sc->show_form("./catalog.php?categ=search&mode=6","./catalog.php?categ=search&mode=6&sub=launch");
+		if ($pmb_extended_search_dnd_interface){
+			$search_perso= new search_perso();
+			print '<div id="search_perso" style="display:none">'.$search_perso->get_forms_list().'</div>';
+		}	
 		break;		
 }
-
-?>

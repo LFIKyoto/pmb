@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_build.js,v 1.37 2015-06-07 17:23:41 Alexandre Exp $
+// $Id: cms_build.js,v 1.42 2016-12-27 16:26:28 dgoron Exp $
 
 var cms_build_obj_list_id=new Array();
 var cms_build_obj_list_type=new Array();
@@ -184,10 +184,12 @@ function cms_desel_all_obj(){
 }
 
 function cms_show_obj(id){
-	cms_desel_all_obj();
 	var obj=parent.frames['opac_frame'].document.getElementById(id);
 
-	if(obj){
+	if(obj.classList.contains("cms_drag")){
+		obj.classList.remove("cms_drag");
+	} else {
+		cms_desel_all_obj();
 		obj.classList.add("cms_drag");
 		obj.style.visibility="visible";
 		obj.style.display="block";
@@ -290,7 +292,9 @@ function cms_drop_activate_obj(id,actif) {
 
 function cms_drag_activate(actif,cms_dragable_type,cms_receptable_type) {
 
-	if(netscape.security.PrivilegeManager)netscape.security.PrivilegeManager.enablePrivilege('UniversalBrowserRead');
+	if(typeof netscape !== 'undefined') {
+		if(netscape.security.PrivilegeManager)netscape.security.PrivilegeManager.enablePrivilege('UniversalBrowserRead');
+	}
 	cms_memo_opacdrop =new Array();
 
 	var opac=parent.frames['opac_frame'];
@@ -471,7 +475,7 @@ function cms_drag_record() {
 
 function get_cadres_list(){
 	var opac=parent.frames['opac_frame'];
-	var cadre_list=new Array();
+	cadre_list=new Array();
 	var nb_cadre=0;
 	for(var i=0;i<cms_zone_list.length;i++){
 		var zone_name=cms_zone_list[i]; // bandeau ...
@@ -524,7 +528,6 @@ function cms_build_load_cadres_in_page_list(){
 
 	var url = './ajax.php?module=cms&categ=module&action=cadres_list_in_page';
 	var opac=parent.frames['opac_frame'];
-	cadre_list=get_cadres_list();
 	for(var i=0;i<cadre_list.length;i++){
 
 		if(opac.document.getElementById(cadre_list[i])){
@@ -540,7 +543,6 @@ function cms_build_load_cadres_not_in_page_list(){
 
 	var url = './ajax.php?module=cms&categ=module&action=cadres_list_not_in_page';
 	var opac=parent.frames['opac_frame'];
-	cadre_list=get_cadres_list();
 	for(var i=0;i<cadre_list.length;i++){
 		if(opac.document.getElementById(cadre_list[i])){
 			url+='&in_page[]='+cadre_list[i];
@@ -555,7 +557,6 @@ function cms_build_load_cadres_not_in_cms_list(){
 
 	var url = './ajax.php?module=cms&categ=module&action=cadres_list_not_in_cms';
 	var opac=parent.frames['opac_frame'];
-	cadre_list=get_cadres_list();
 	for(var i=0;i<cadre_list.length;i++){
 		if(opac.document.getElementById(cadre_list[i])){
 			url+='&in_page[]='+cadre_list[i];
@@ -564,11 +565,20 @@ function cms_build_load_cadres_not_in_cms_list(){
 	http.request(url);
 	return http.get_text();
 }
+
 function cms_build_save_cadre_classement(id_cadre,classement){
 	var http=new http_request();
 	var url = './ajax.php?module=cms&categ=module&action=cadre_save_classement';
 	url+='&id_cadre='+id_cadre;
 	url+='&classement='+classement;
+	http.request(url);
+	return http.get_text();
+}
+
+function cms_build_unchain_cadre(id_cadre){
+	var http=new http_request();
+	var url = './ajax.php?module=cms&categ=module&action=unchain_cadre';
+	url+='&id_cadre='+id_cadre;
 	http.request(url);
 	return http.get_text();
 }
@@ -581,6 +591,7 @@ function cms_build_save_page_classement(id_page,classement){
 	http.request(url);
 	return http.get_text();
 }
+
 function cms_build_init(){
 
 }

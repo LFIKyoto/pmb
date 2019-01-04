@@ -2,13 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rec_history.inc.php,v 1.37.2.1 2015-12-11 11:14:34 jpermanne Exp $
+// $Id: rec_history.inc.php,v 1.54 2018-10-31 11:23:01 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 global $base_path,$include_path,$class_path,$msg;
 require_once($base_path."/classes/search.class.php");
 require_once($base_path."/classes/authperso.class.php");
+require_once($base_path."/classes/search_universes/search_universes_history.class.php");
 
 //Enregistrement de l'historique en fonction du type de recherche
 function rec_history() {
@@ -58,12 +59,13 @@ function rec_history() {
 	       	$_SESSION["l_typdoc".$n]=$l_typdoc;
 	       	$_SESSION["level1".$n]=$_SESSION["level1"];
 	       	
-	       	$authpersos=new authpersos();
+	       	$authpersos=authpersos::get_instance();
 	       	$authpersos->rec_history($n);
 	       	if ($opac_search_other_function) search_other_function_rec_history($n);
 	       	
 			break;
 		case "extended_search":
+		case "extended_search_authorities":
 			global $es;
 			$_SESSION["nb_queries"]=$_SESSION["nb_queries"]+1;
 			$n=$_SESSION["nb_queries"];
@@ -73,24 +75,38 @@ function rec_history() {
 			for ($i=0; $i<count($search); $i++) {
 				$_SESSION["search_".$i."_".$n]=$search[$i];
 				$inter="inter_".$i."_".$search[$i];
-				global $$inter;
-				$_SESSION["inter_".$i."_".$search[$i]."_".$n]=$$inter;
+				global ${$inter};
+				$_SESSION["inter_".$i."_".$search[$i]."_".$n]=${$inter};
 				$op="op_".$i."_".$search[$i];
-				global $$op;
-				$_SESSION["op_".$i."_".$search[$i]."_".$n]=$$op;
+				global ${$op};
+				$_SESSION["op_".$i."_".$search[$i]."_".$n]=${$op};
 				$field_="field_".$i."_".$search[$i];
-    			global $$field_;
-    			$field=$$field_;
+    			global ${$field_};
+    			$field=${$field_};
     			$_SESSION["n_fields_".$i."_".$search[$i]."_".$n]=count($field);
     			for ($j=0; $j<count($field); $j++) {
     				$_SESSION["field_".$i."_".$search[$i]."_".$j."_".$n]=$field[$j];
     			}
+    			
+    			$field1_="field_".$i."_".$search[$i]."_1";
+    			global ${$field1_};
+    			$field1=${$field1_};
+    			$_SESSION["n_fields_".$i."_".$search[$i]."_".$n."_1"]=count($field1);
+    			if(is_array($field1)) {
+    				for ($j=0; $j<count($field1); $j++) {
+    					$_SESSION["field_".$i."_".$search[$i]."_".$j."_".$n."_1"]=$field1[$j];
+    				}
+    			}
+    			
 				$fieldvar_="fieldvar_".$i."_".$search[$i];
-    			global $$fieldvar_;
-    			$fieldvar=$$fieldvar_;
+    			global ${$fieldvar_};
+    			$fieldvar=${$fieldvar_};
     			$_SESSION["fieldvar_".$i."_".$search[$i]."_".$n]=$fieldvar;
 			}
 			$_SESSION["search_type".$n]=$search_type;
+			break;
+		case "search_universes":
+		    search_universes_history::rec_history();
 			break;
 		case "term_search":
 			global $search_term;
@@ -101,9 +117,17 @@ function rec_history() {
 			$_SESSION["search_type".$n]=$search_type;
 			$_SESSION["search_term".$n]=stripslashes($search_term);
 			$_SESSION["term_click".$n]=stripslashes($term_click);
-			$_SESSION["page_search".$n]=$page_search;
+			$_SESSION["page_search".$n]=$page_search;    
 			$_SESSION["l_typdoc".$n]=$l_typdoc;
-			break;	
+			break;
+		case "tags_search":
+			global $user_query;
+			
+			$_SESSION["nb_queries"]=$_SESSION["nb_queries"]+1;
+			$n=$_SESSION["nb_queries"];
+			$_SESSION["user_query".$n]=$user_query;
+			$_SESSION["search_type".$n]="simple_search";
+			break;
 	}
 }
 
@@ -133,7 +157,7 @@ function get_history($n) {
 				$look_CONCEPT;
 	       	global $typdoc,$l_typdoc;
 	       	
-			$user_query=$_SESSION["user_query".$n];
+	       	$user_query=$_SESSION["user_query".$n];
 			$map_emprises_query=$_SESSION["map_emprises_query".$n];
 			$typdoc=$_SESSION["typdoc".$n];
 			$look_TITLE=$_SESSION["look_TITLE".$n];
@@ -153,34 +177,48 @@ function get_history($n) {
 	       	$l_typdoc=$_SESSION["l_typdoc".$n];
 	       	$_SESSION["level1"]=$_SESSION["level1".$n];
 	       	
-	       	$authpersos=new authpersos();
+	       	$authpersos=authpersos::get_instance();
 	       	$authpersos->get_history($n);
 	       	
 	       	if ($opac_search_other_function) search_other_function_get_history($n);
 	       	
-			break;
+	       	break;
+		case "extended_search_authorities":
+		    if(is_object($es) && get_class($es) != "search_authorities"){
+    		    $es = new search_authorities("search_fields_authorities");
+    		}
 		case "extended_search":
 			global $search;
 			for ($i=0; $i<$_SESSION["nb_search".$n]; $i++) {
 				$search[$i]=$_SESSION["search_".$i."_".$n];
 				$inter="inter_".$i."_".$search[$i];
-				global $$inter;
-				$$inter=$_SESSION["inter_".$i."_".$search[$i]."_".$n];
+				global ${$inter};
+				${$inter}=$_SESSION["inter_".$i."_".$search[$i]."_".$n];
 				$op="op_".$i."_".$search[$i];
-				global $$op;
-				$$op=$_SESSION["op_".$i."_".$search[$i]."_".$n];
+				global ${$op};
+				${$op}=$_SESSION["op_".$i."_".$search[$i]."_".$n];
     			$n_fields=$_SESSION["n_fields_".$i."_".$search[$i]."_".$n];
     			$field=array();
     			for ($j=0; $j<$n_fields; $j++) {
     				$field[$j]=$_SESSION["field_".$i."_".$search[$i]."_".$j."_".$n];
     			}
     			$field_="field_".$i."_".$search[$i];
-    			global $$field_;
-    			$$field_=$field;
+    			global ${$field_};
+    			${$field_}=$field;
+    			
+    			$n_fields1=$_SESSION["n_fields_".$i."_".$search[$i]."_".$n."_1"];
+    			$field1=array();
+    			for ($j=0; $j<$n_fields1; $j++) {
+    				$field1[$j]=$_SESSION["field_".$i."_".$search[$i]."_".$j."_".$n."_1"];
+    			}
+    			$field1_="field_".$i."_".$search[$i]."_1";
+    			global ${$field1_};
+    			${$field1_}=$field1;
+    			
     			$fieldvar=$_SESSION["fieldvar_".$i."_".$search[$i]."_".$n];
     			$fieldvar_="fieldvar_".$i."_".$search[$i];
-    			global $$fieldvar_;
-    			$$fieldvar_=$fieldvar;
+    			global ${$fieldvar_};
+    			${$fieldvar_}=$fieldvar;
 			}
 			break;
 		case "term_search":
@@ -192,6 +230,10 @@ function get_history($n) {
 			$term_click=$_SESSION["term_click".$n];
 			$page_search=$_SESSION["page_search".$n];
 			break;
+		case "search_universes" :
+		    search_universes_history::get_history($n);
+		    break;
+		    
 	}
 	$_SESSION["search_type"]=$search_type;
 }
@@ -199,12 +241,14 @@ function get_history($n) {
 function get_human_query($n) {
 	global $msg;
 	global $opac_search_other_function, $opac_indexation_docnum_allfields;
-	global $include_path;
+	global $include_path, $charset;
 	
 	if ($opac_search_other_function) require_once($include_path."/".$opac_search_other_function);
 	
+	$r = '';
 	switch ($_SESSION["search_type".$n]) {
 		case "simple_search":
+			$r1 = '';
 			if ($_SESSION["look_TITLE".$n]) $r1.=$msg["titles"]." ";
 			if ($_SESSION["look_AUTHOR".$n]) $r1.=$msg["authors"]." ";
 			if ($_SESSION["look_PUBLISHER".$n]) $r1.=$msg["publishers"]." ";
@@ -215,11 +259,11 @@ function get_human_query($n) {
 			if ($_SESSION["look_INDEXINT".$n]) $r1.=$msg["indexint"]." ";
 			if ($_SESSION["look_KEYWORDS".$n]) $r1.=$msg["keywords"]." ";
 			if ($_SESSION["look_ABSTRACT".$n]) $r1.=$msg["abstract"]." ";
-			if ($_SESSION["look_ALL".$n]) $r1.=$msg["tous"]." ".($opac_indexation_docnum_allfields ? "[".$msg[docnum_search_with]."] " : '');
+			if ($_SESSION["look_ALL".$n]) $r1.=$msg["tous"]." ".($opac_indexation_docnum_allfields ? "[".$msg['docnum_search_with']."] " : '');
 			if ($_SESSION["look_DOCNUM".$n]) $r1.=$msg["docnum"]." ";
 			if ($_SESSION["look_CONTENT".$n]) $r1.=" ";
 			if ($_SESSION["look_CONCEPT".$n]) $r1.=$msg["skos_concept"]." ";
-	       	$authpersos=new authpersos();
+	       	$authpersos=authpersos::get_instance();
 	        $r1.=$authpersos->get_human_query($n);
 	       	
 			if ($_SESSION["typdoc".$n]) {
@@ -230,7 +274,7 @@ function get_human_query($n) {
 				$r3=search_other_function_human_query($n);
 				if ($r3) $r2.=", ".$r3;
 			}
-			$r=sprintf($msg["simple_search_history"],stripslashes($_SESSION["user_query".$n]),$r1,$r2);
+			$r=sprintf($msg["simple_search_history"],htmlentities(stripslashes($_SESSION["user_query".$n]),ENT_QUOTES,$charset),$r1,$r2);
 			
 			if($_SESSION["map_emprises_query".$n]){
 				$r.=$msg["map_history_emprises"]. implode(" ", $_SESSION["map_emprises_query".$n]);
@@ -238,7 +282,8 @@ function get_human_query($n) {
 				
 			break;
 		case "extended_search":
-			$r=sprintf($msg["extended_search_history"],stripslashes($_SESSION["human_query".$n]));
+		case "extended_search_authorities":		    
+			$r=sprintf($msg["extended_search_history"],(isset($_SESSION["human_query".$n]) ? stripslashes($_SESSION["human_query".$n]) : ''));
 			break;
 		case "term_search":
 			if ($_SESSION["search_term".$n]=="") $r1="(tous les termes)"; else $r1=stripslashes($_SESSION["search_term".$n]);
@@ -246,7 +291,11 @@ function get_human_query($n) {
 			break;
 		case "module":
 			$r=sprintf($msg["navigation_search_libelle"],stripslashes($_SESSION["human_query".$n]));
-		break;
+			break;
+		case "search_universes":
+		    //$r=sprintf($msg["search_universe_history"],stripslashes($_SESSION["search_universes".$n]["universe_query"]), search_universe::get_label_from_id($_SESSION["search_universes".$n]["universe_id"]));
+		    $r=search_universes_history::get_human_query($n);
+			break;
 	}
 	return $r;
 }
@@ -254,7 +303,7 @@ function get_human_query($n) {
 function get_human_query_level_two($n) {
 	global $msg;
 	global $opac_search_other_function, $opac_indexation_docnum_allfields;
-	global $include_path;
+	global $include_path, $charset;
 	
 	if ($opac_search_other_function) require_once($include_path."/".$opac_search_other_function);
 	
@@ -268,7 +317,7 @@ function get_human_query_level_two($n) {
 				$r1=$msg["title_search"]." ";
 			break;
 			case 'all':
-				$r1=$msg["global_search"]." ".($opac_indexation_docnum_allfields ? "[".$msg[docnum_search_with]."] " : '');
+				$r1=$msg["global_search"]." ".($opac_indexation_docnum_allfields ? "[".$msg['docnum_search_with']."] " : '');
 			break;
 			case 'keyword':
 				$r1=$msg["keyword_search"]." ";
@@ -355,16 +404,16 @@ function get_human_query_level_two($n) {
 				$valeur_champ = $ourAuth->info['isbd'];
 				break;
 		}
-		if ($_SESSION["typdoc".$n]) {
+		if (isset($_SESSION["typdoc".$n]) && $_SESSION["typdoc".$n]) {
 			$doctype = new marc_list('doctype');
-			$r2 .= sprintf($msg["simple_search_history_doc_type"],$doctype->table[$_SESSION["typdoc".$n]]);
-		} else $r2 .= $msg["simple_search_history_all_doc_types"];
+			$r2 = sprintf($msg["simple_search_history_doc_type"],$doctype->table[$_SESSION["typdoc".$n]]);
+		} else $r2 = $msg["simple_search_history_all_doc_types"];
 		if ($opac_search_other_function) {
 			$r3=search_other_function_human_query($n);
 			if ($r3) $r2.=", ".$r3;
 		}
-		$r=sprintf($msg["simple_search_history"],(!$valeur_champ?stripslashes($_SESSION["user_query".$n]):$valeur_champ),$r1,$r2);
-		if($_SESSION["map_emprises_query".$n]){
+		$r=sprintf($msg["simple_search_history"],(!$valeur_champ? (isset($_SESSION["user_query".$n]) ? htmlentities(stripslashes($_SESSION["user_query".$n]),ENT_QUOTES,$charset) : ''):$valeur_champ),$r1,$r2);
+		if(isset($_SESSION["map_emprises_query".$n]) && $_SESSION["map_emprises_query".$n]){
 			$r.=$msg["map_history_emprises"]. implode(" ", $_SESSION["map_emprises_query".$n]);
 		}
 	} else {
@@ -378,6 +427,8 @@ function rec_last_history() {
 	global $msg;
 	global $opac_search_other_function;
 	global $facette_test;
+	global $affiliate_page, $catalog_page;
+	
 	if ($page=="") $page_=1; else $page_=$page;
 	
 	if ($facette_test) $search_type=$_SESSION["search_type".$_SESSION["last_query"]]; else $search_type=$_SESSION["search_type"];
@@ -387,7 +438,6 @@ function rec_last_history() {
 	switch ($search_type) {
 		case "simple_search":
 			global $user_query,$mode,$count,$typdoc,$clause,$clause_bull,$clause_bull_num_notice,$tri,$pert,$page,$l_typdoc, $join,$id_thes;
-			global $affiliate_page, $catalog_page;
 			if (!$facette_test) {
 				$_SESSION["lq_user_query"]=$user_query;
 				$_SESSION["lq_mode"]=$mode;
@@ -404,7 +454,7 @@ function rec_last_history() {
 				$_SESSION["lq_l_typdoc"]=$l_typdoc;
 				$_SESSION["lq_join"]=$join;
 				$_SESSION["lq_id_thes"]=$id_thes;
-				$_SESSION["lq_level1"]=$_SESSION["level1"];
+				$_SESSION["lq_level1"]=(isset($_SESSION["level1"]) ? $_SESSION["level1"] : '');
 				unset($_SESSION["lq_facette"]);
 				
 				if ($opac_search_other_function) search_other_function_rec_history($_SESSION["last_query"]);
@@ -469,13 +519,14 @@ function rec_last_history() {
 	}
 	//Si on est en navigation par facette
 	if ($facette_test) {
-		$_SESSION["lq_facette"]=$_SESSION["facette"];
+		$_SESSION["lq_facette"]=(isset($_SESSION["facette"]) ? $_SESSION["facette"] : '');
 		//La recherche étendue pour les facettes
 		$_SESSION["lq_facette_search"]["lq_page"]=$page_;
 		$_SESSION["lq_facette_search"]["lq_affiliate_page"]=$affiliate_page;
 		$_SESSION["lq_facette_search"]["lq_catalog_page"]=$catalog_page;
 		$_SESSION["lq_facette_search"]["lq_mode"]="extended";
-		$_SESSION["lq_facette_search"]["lq_search"]=search::serialize_search();
+		$my_search = new search();
+		$_SESSION["lq_facette_search"]["lq_search"]=$my_search->serialize_search();
 		$_SESSION["lq_facette_search"]["lq_notice_view"]=$_SESSION["notice_view".$_SESSION["last_query"]];
 	}
 }
@@ -507,6 +558,13 @@ function get_last_history() {
 				$ajout_section.='&lcote='.$_SESSION["last_module_search"]["search_lcote"];
 				$ajout_section.='&nc='.$_SESSION["last_module_search"]["search_nc"];
 				$ajout_section.='&ssub='.$_SESSION["last_module_search"]["search_ssub"];
+			}
+		}elseif ($_SESSION['last_module_search']['search_mod']=='categ_see') {
+			if ($_SESSION['last_module_search']['search_nb_level_enfants']) {
+				$ajout_section.='&nb_level_enfants='.$_SESSION["last_module_search"]["search_nb_level_enfants"];
+			}
+			if ($_SESSION['last_module_search']['search_nb_level_parents']) {
+				$ajout_section.='&nb_level_parents='.$_SESSION["last_module_search"]["search_nb_level_parents"];
 			}
 		}
 		header("Location: ./index.php?lvl=".$_SESSION['last_module_search']['search_mod'].$ajout_section."&id=".$_SESSION['last_module_search']['search_id']);
@@ -545,26 +603,26 @@ function get_last_history() {
 			 
 			//operateur
 			$op="op_0_".$search[0];
-			global $$op;
-			$$op=$op_;
+			global ${$op};
+			${$op}=$op_;
 				
 			//contenu de la recherche
 			$field="field_0_".$search[0];
 			$field_=array();
 			$field_[0]=$_SESSION['last_query'];
-			global $$field;
-			$$field=$field_;
+			global ${$field};
+			${$field}=$field_;
 				
 			//opérateur inter-champ
 			$inter="inter_0_".$search[0];
-			global $$inter;
-			$$inter="";
+			global ${$inter};
+			${$inter}="";
 				
 			//variables auxiliaires
 			$fieldvar_="fieldvar_0_".$search[0];
-			global $$fieldvar_;
-			$$fieldvar_="";
-			$fieldvar=$$fieldvar_;
+			global ${$fieldvar_};
+			${$fieldvar_}="";
+			$fieldvar=${$fieldvar_};
 			
 			break;
 		case "extended_search":
@@ -583,7 +641,8 @@ function get_last_history() {
 		$affiliate_page=$_SESSION["lq_facette_search"]["lq_affiliate_page"];
 		$catalog_page=$_SESSION["lq_facette_search"]["lq_catalog_page"];
 		$mode=$_SESSION["lq_facette_search"]["lq_mode"];
-		search::unserialize_search($_SESSION["lq_facette_search"]["lq_search"]);
+		$my_search = new search();
+		$my_search->unserialize_search($_SESSION["lq_facette_search"]["lq_search"]);
 		$_SESSION["notice_view".$_SESSION["last_query"]]=$_SESSION["lq_facette_search"]["lq_notice_view"];
 	}
 }
@@ -595,7 +654,8 @@ function get_last_history() {
 function rec_last_authorities(){
 	global $lvl,$id,$page,$from;
 	global $location,$plettreaut,$dcote,$lcote,$nc,$ssub;
-
+	global $nb_level_enfants, $nb_level_parents;
+	
 	$_SESSION["last_module_search"]["search_mod"]="$lvl";
 	$_SESSION["last_module_search"]["search_id"]=$id;
 	$_SESSION["last_module_search"]["search_page"]=$page;
@@ -609,6 +669,11 @@ function rec_last_authorities(){
 		$_SESSION["last_module_search"]["search_nc"]=$nc;
 		$_SESSION["last_module_search"]["search_ssub"]=$ssub;
 	}
+	
+	if ($lvl=='categ_see') {
+		$_SESSION["last_module_search"]["search_nb_level_enfants"]=$nb_level_enfants;
+		$_SESSION["last_module_search"]["search_nb_level_parents"]=$nb_level_parents;
+	}
 
 	if($from == "search"){
 		$_SESSION["last_module_search"]['need_new_search'] = false;
@@ -621,5 +686,28 @@ function rec_last_authorities(){
 		$_SESSION["notice_view".$n]["search_id"]=$id;
 		$_SESSION["notice_view".$n]["search_page"]=$page;
 	}
+}
+
+function get_history_row($n) {
+    global $opac_autolevel2;
+    $html = "";
+    
+    switch($_SESSION["search_type".$n]) {
+        case 'search_universes' :            
+            $html = search_universes_history::get_history_row($n);
+            break;
+        default :
+            $html =  "
+                    <li class='search_history_li'>
+                        <input type=checkbox name='cases_suppr[]' data-search-id='" . $n . "' value='" . $n . "'><span class='etiq_champ'>#" . $n . "</span> ";
+            if ($opac_autolevel2==2) {
+                $html .= "<a href=\"javascript:document.forms['search_" . $n . "'].submit();\">" .get_human_query($n)."</a>";
+            } else {
+                $html .= "<a href=\"./index.php?lvl=search_result&get_query=".$n."\">".get_human_query($n)."</a>";
+            }
+            $html .="</li>";
+            break;
+    }
+    return $html;
 }
 ?>

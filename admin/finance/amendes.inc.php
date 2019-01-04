@@ -2,12 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: amendes.inc.php,v 1.5 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: amendes.inc.php,v 1.6 2017-02-20 19:04:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-//Gestion des amendes
+if(!isset($quota)) $quota = '';
+if(!isset($elements)) $elements = '';
 
+//Gestion des amendes
 require_once("$include_path/templates/finance.tpl.php");
 require_once($class_path."/quotas.class.php");
 

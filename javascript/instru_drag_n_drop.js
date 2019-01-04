@@ -12,10 +12,10 @@ function instru_instru(dragged,target){
 	if(dragged.getAttribute('musicstand') == target.getAttribute('musicstand')){
 		var parent = target.parentNode;
 		parent.insertBefore(dragged, target);
-		update_order(parent);
+		instru_update_order(parent);
 	}
 }
-function update_order(node){
+function instru_update_order(node){
 	var instru = node.querySelectorAll('[dragtype="instru"]');
 	for(var i=0 ; i<instru.length ; i++){
 		var instance_widget = dijit.registry.byId(instru[i].getAttribute('id'));

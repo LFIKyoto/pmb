@@ -1,4 +1,9 @@
 <?php
+// +-------------------------------------------------+
+// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// +-------------------------------------------------+
+// $Id: mrps.inc.php,v 1.9 2016-10-26 12:29:49 mbertin Exp $
+
 function search_other_function_filters() {
 	global $cnl_bibli;
 	global $charset;

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: external_services.class.php,v 1.13 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: external_services.class.php,v 1.19 2018-05-31 08:48:15 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -62,21 +62,21 @@ define("ES_CATALOG_CANNOT_READ_CATALOG_FILE",4);
 
 //Classe de base avec gestion des erreurs
 class es_base {
-	var $error=false;
-	var $error_message="";
-	var $description="";
+	public $error=false;
+	public $error_message="";
+	public $description="";
 	
-	function set_error($error_code,$error_message) {
+	public function set_error($error_code,$error_message) {
 		$this->error=$error_code;
 		$this->error_message=$error_message;
 	}
 	
-	function copy_error($object) {
+	public function copy_error($object) {
 		$this->error=$object->error;
 		$this->error_message=$object->error_message;
 	}
 	
-	function clear_error() {
+	public function clear_error() {
 		$this->error=false;
 		$this->error_message="";
 	}
@@ -84,48 +84,52 @@ class es_base {
 
 //Paramètre d'une fonction
 class es_parameter extends es_base {
-	var $name="";
-	var $type="scalar";
-	var $datatype="string";
-	var $nodename="PARAM";
-	var $optional=false;
+	public $name="";
+	public $type="scalar";
+	public $datatype="string";
+	public $nodename="PARAM";
+	public $optional=false;
 	
 	//Pour les paramètres structure : un tableau de type es_parametre;
-	var $struct=array();
+	public $struct=array();
 	
 	//Constructeur
-	function es_parameter($param="") {
+	public function __construct($param="") {
 		if (is_array($param)) {
 			$this->name=$param["NAME"];
-			$this->datatype=$param["DATATYPE"];
-			$this->optional=$param["OPTIONAL"];
+			if(isset($param["DATATYPE"])) $this->datatype=$param["DATATYPE"];
+			if(isset($param["OPTIONAL"])) $this->optional=$param["OPTIONAL"];
 			//Selon le type (param ou result), ça change
 			$classname = get_class($this);
 			switch($param["TYPE"]) {
 				case "scalar":
 					break;
 				case "array":
-					for ($i=0; $i<count($param[$this->nodename]); $i++) {
-						$parametre=$param[$this->nodename][$i];
-						$p=new $classname($parametre);
-						if (!$p->error) 
-							$this->struct[]=$p; 
-						else {
-							$this->copy_error($p);
-							return;
-						} 
+					if(isset($param[$this->nodename])) {
+						for ($i=0; $i<count($param[$this->nodename]); $i++) {
+							$parametre=$param[$this->nodename][$i];
+							$p=new $classname($parametre);
+							if (!$p->error) 
+								$this->struct[]=$p; 
+							else {
+								$this->copy_error($p);
+								return;
+							} 
+						}
 					}
 					break;
 				case "structure":
-					for ($i=0; $i<count($param[$this->nodename]); $i++) {
-						$parametre=$param[$this->nodename][$i];
-						$p=new $classname($parametre);
-						if (!$p->error) 
-							$this->struct[]=$p; 
-						else {
-							$this->copy_error($p);
-							return;
-						} 
+					if(isset($param[$this->nodename])) {
+						for ($i=0; $i<count($param[$this->nodename]); $i++) {
+							$parametre=$param[$this->nodename][$i];
+							$p=new $classname($parametre);
+							if (!$p->error) 
+								$this->struct[]=$p; 
+							else {
+								$this->copy_error($p);
+								return;
+							} 
+						}
 					}
 					break;
 				default:
@@ -139,24 +143,24 @@ class es_parameter extends es_base {
 
 //Résultat d'une fonction
 class es_result extends es_parameter {
-	var $nodename="RESULT";
+	public $nodename="RESULT";
 }
 
 //Composant d'un type
 class es_part extends es_parameter {
-	var $nodename="PART";
+	public $nodename="PART";
 }
 
 //Un type
 class es_type extends es_base {
-	var $name='';
-	var $description='';
-	var $imported=false;
-	var $imported_from = "";
-	var $struct=array();
-	var $type="structure";
+	public $name='';
+	public $description='';
+	public $imported=false;
+	public $imported_from = "";
+	public $struct=array();
+	public $type="structure";
 	
-	function es_type($type) {
+	public function __construct($type) {
 		if (isset($type["IMPORTED"]) && $type["IMPORTED"]) {
 			$this->name = $type["NAME"];
 			$this->imported = true;
@@ -177,12 +181,12 @@ class es_type extends es_base {
 
 //Référence d'une methode dans une autre méthode
 class es_requirement extends es_base {
-	var $group="";
-	var $name="";
-	var $version="";
+	public $group="";
+	public $name="";
+	public $version="";
 
 	//Constructeur
-	function es_requirement($param="") {
+	public function __construct($param="") {
 		if (is_array($param)) {
 			$this->group=$param["GROUP"];
 			$this->name=$param["NAME"];
@@ -190,19 +194,18 @@ class es_requirement extends es_base {
 		}
 	}
 	
-    public function __toString()
-    {
+    public function __toString() {
         return $this->group.'_'.$this->name;
     }
 }
 
 //Requirement d'une methode
 class es_pmb_requirement extends es_base {
-	var $start_path="";
-	var $file="";
+	public $start_path="";
+	public $file="";
 
 	//Constructeur
-	function es_pmb_requirement($param="") {
+	public function __construct($param="") {
 		if (is_array($param)) {
 			$this->start_path=$param["START_PATH"];
 			$this->file=$param["FILE"];
@@ -210,8 +213,7 @@ class es_pmb_requirement extends es_base {
 	}
 	
 	//Permet de pouvoir comparer deux instances, dans un array_unique par exemple
-    public function __toString()
-    {
+    public function __toString() {
         return $this->start_path.'___'.$this->file;
     }
 
@@ -219,29 +221,29 @@ class es_pmb_requirement extends es_base {
 
 //Méthode
 class es_method extends es_base {
-	var $group;
-	var $name;
+	public $group;
+	public $name;
 	//Tableau de es_params
-	var $inputs=array();
+	public $inputs=array();
 	//Tableau de es_results
-	var $outputs=array();
+	public $outputs=array();
 	//Descriptions
-	var $description;
-	var $input_description="";
-	var $output_description="";
+	public $description="";
+	public $input_description="";
+	public $output_description="";
 	//Droits pour cette méthode
-	var $rights=0;
+	public $rights=0;
 	//Numéro de version de cette méthode
-	var $version=0;
+	public $version=0;
 	//méthodes nécessaires pour executer cette méthode
-	var $requirements=array();
-	var $recurvised_requirement_list=array();
+	public $requirements=array();
+	public $recurvised_requirement_list=array();
 	//require_once nécessaires pour executer cette méthode
-	var $pmb_file_requirements=array();
+	public $pmb_file_requirements=array();
 	//Défini si la méthode a besoin des messages localisés
-	var $language_independant=false;
+	public $language_independant=false;
 	
-	function es_method($method="",$group="") {
+	public function __construct($method="",$group="") {
 		if (is_array($method)) {
 			if (!$group) {
 				$this->set_error(ES_METHOD_NO_GROUP_DEFINED,"No group defined");
@@ -250,9 +252,11 @@ class es_method extends es_base {
 			//Analyse du tableau
 			$this->group=$group;
 			$this->name=$method["NAME"];
-			$this->description=$method["COMMENT"];
+			if(isset($method["COMMENT"])) {
+				$this->description=$method["COMMENT"];
+			}
 			$this->version=$method["VERSION"];
-			if ($method["RIGHTS"]) {
+			if (isset($method["RIGHTS"]) && $method["RIGHTS"]) {
 				$rights=explode("|",$method["RIGHTS"]);
 				for ($i=0; $i<count($rights); $i++) {
 					$this->rights|=constant($rights[$i]);
@@ -261,27 +265,35 @@ class es_method extends es_base {
 			if (isset($method["LANGUAGE_INDEPENDANT"]) && $method["LANGUAGE_INDEPENDANT"] == 'true')
 				$this->language_independant = true;
 			//Lecture des inputs
-			$this->input_description=$method["INPUTS"][0]["DESCRIPTION"][0]["value"];
-			for ($i=0; $i<count($method["INPUTS"][0]["PARAM"]); $i++) {
-				$parameter=$method["INPUTS"][0]["PARAM"][$i];
-				$p=new es_parameter($parameter);
-				if (!$p->error) 
-					$this->inputs[]=$p;
-				else {
-					$this->copy_error($p);
-					return;
+			if(isset($method["INPUTS"][0]["DESCRIPTION"][0]["value"])) {
+				$this->input_description=$method["INPUTS"][0]["DESCRIPTION"][0]["value"];
+			}
+			if(isset($method["INPUTS"][0]["PARAM"])) {
+				for ($i=0; $i<count($method["INPUTS"][0]["PARAM"]); $i++) {
+					$parameter=$method["INPUTS"][0]["PARAM"][$i];
+					$p=new es_parameter($parameter);
+					if (!$p->error) 
+						$this->inputs[]=$p;
+					else {
+						$this->copy_error($p);
+						return;
+					}
 				}
 			}
 			//Lecture des outputs
-			$this->output_description=$method["OUTPUTS"][0]["DESCRIPTION"][0]["value"];
-			for ($i=0; $i<count($method["OUTPUTS"][0]["RESULT"]); $i++) {
-				$result=$method["OUTPUTS"][0]["RESULT"][$i];
-				$r=new es_result($result);
-				if (!$r->error)
-					$this->outputs[]=$r;
-				else {
-					$this->copy_error($r);
-					return;
+			if(isset($method["OUTPUTS"][0]["DESCRIPTION"][0]["value"])) {
+				$this->output_description=$method["OUTPUTS"][0]["DESCRIPTION"][0]["value"];
+			}
+			if(isset($method["OUTPUTS"][0]["RESULT"])) {
+				for ($i=0; $i<count($method["OUTPUTS"][0]["RESULT"]); $i++) {
+					$result=$method["OUTPUTS"][0]["RESULT"][$i];
+					$r=new es_result($result);
+					if (!$r->error)
+						$this->outputs[]=$r;
+					else {
+						$this->copy_error($r);
+						return;
+					}
 				}
 			}
 			
@@ -320,19 +332,22 @@ class es_method extends es_base {
 
 //Classe représentant un groupe de fonctions
 class es_group extends es_base {
-	var $name;
+	public $name;
 	//Tableau de es_type
-	var $types=array();
+	public $types=array();
 	//Tableau de es_methods
-	var $methods=array();
+	public $methods=array();
 	//Identifiant unique du groupe
-	var $id="";
+	public $id="";
 	//Description
-	var $description="";
+	public $description="";
 	//Tableau des messages du groupe
-	var $msg=array();
+	public $msg=array();
 	
-	function es_group($group_name,$id) {
+	private static $_parsed_methods;
+	private static $instances;
+	
+	public function __construct($group_name,$id) {
 		global $base_path,$lang;
 		//Lecture des propriétés du fichier manifest
 		$xml=@file_get_contents($base_path."/external_services/$group_name/manifest.xml");
@@ -344,10 +359,15 @@ class es_group extends es_base {
 		$this->name=$group_name;
 		$this->id=$id;
 		
-		//Parse du fichier
-		$methods=_parser_text_no_function_($xml,"MANIFEST");
+		if(!isset(static::$_parsed_methods[$group_name])) {
+			//Parse du fichier
+			static::$_parsed_methods[$group_name] = _parser_text_no_function_($xml,"MANIFEST");
+		}
+		$methods = static::$_parsed_methods[$group_name];
 		
-		$this->description=$methods["DESCRIPTION"][0]["value"];
+		if(isset($methods["DESCRIPTION"][0]["value"])) {
+			$this->description=$methods["DESCRIPTION"][0]["value"];
+		}
 		
 		//Pour chaque type, on instancie sa représentation
 		if (isset($methods["TYPES"][0]["TYPE"])) {
@@ -363,14 +383,16 @@ class es_group extends es_base {
 		}
 		
 		//Pour chaque méthode, on instancie sa représentation
-		for ($i=0; $i<count($methods["METHODS"][0]["METHOD"]); $i++) {
-			$method=$methods["METHODS"][0]["METHOD"][$i];
-			$m=new es_method($method,$this->name);
-			if (!$m->error) 
-				$this->methods[$m->name]=$m;
-			else {
-				$this->copy_error($m);
-				return;
+		if(isset($methods["METHODS"][0]["METHOD"])) {
+			for ($i=0; $i<count($methods["METHODS"][0]["METHOD"]); $i++) {
+				$method=$methods["METHODS"][0]["METHOD"][$i];
+				$m=new es_method($method,$this->name);
+				if (!$m->error) 
+					$this->methods[$m->name]=$m;
+				else {
+					$this->copy_error($m);
+					return;
+				}
 			}
 		}
 		
@@ -382,34 +404,44 @@ class es_group extends es_base {
 			$this->msg=$msg_list->table;
 		}
 	}
+	
+	public static function get_instance($group_name,$id) {
+		if(!isset(static::$instances[$group_name][$id])) {
+			static::$instances[$group_name][$id] = new es_group($group_name, $id);
+		}
+		return static::$instances[$group_name][$id];
+	}
 }
 
 //Classe de lecture du catalogue
 class es_catalog extends es_base {
 	
-	var $groups; //Tableau de groupes
+	public $groups; //Tableau de groupes
 	
-	var $recursive_depth;
+	public $recursive_depth;
 	
-	function es_catalog() {
+	private static $_parsed_catalog;
+	private static $instance;
+	
+	public function __construct() {
 		global $base_path;
-		if (file_exists($base_path."/external_services/catalog_subst.xml")) 
-			$catalog_file=$base_path."/external_services/catalog_subst.xml";
-		else
-			$catalog_file=$base_path."/external_services/catalog.xml";
-			
-		$xml=@file_get_contents($catalog_file);
-		
-		if (!$xml) {
-			$this->set_error(ES_CATALOG_CANNOT_READ_CATALOG_FILE,"Fichier catalog introuvable");
-			return;
+		if(!isset(static::$_parsed_catalog)) {
+			if (file_exists($base_path."/external_services/catalog_subst.xml")) {
+				$catalog_file=$base_path."/external_services/catalog_subst.xml";
+			} else {
+				$catalog_file=$base_path."/external_services/catalog.xml";
+				$xml=@file_get_contents($catalog_file);
+				if (!$xml) {
+					$this->set_error(ES_CATALOG_CANNOT_READ_CATALOG_FILE,"Fichier catalog introuvable");
+					return;
+				}
+				static::$_parsed_catalog = _parser_text_no_function_($xml,"CATALOG");
+			}
 		}
 		
-		$catalog=_parser_text_no_function_($xml,"CATALOG");
-		
 		//Dépouillement du résultat
-		for ($i=0; $i<count($catalog["ITEM"]);$i++) {
-			$g=new es_group($catalog["ITEM"][$i]["NAME"],$catalog["ITEM"][$i]["ID"]);
+		for ($i=0; $i<count(static::$_parsed_catalog["ITEM"]);$i++) {
+			$g=es_group::get_instance(static::$_parsed_catalog["ITEM"][$i]["NAME"],static::$_parsed_catalog["ITEM"][$i]["ID"]);
 			if (!$g->error)
 				$this->groups[$g->name]=$g;
 			else {
@@ -426,7 +458,7 @@ class es_catalog extends es_base {
 		$this->fix_imported_pmb_requirements();
 	}
 	
-	function fix_imported_pmb_requirement(&$amethod) {
+	public function fix_imported_pmb_requirement(&$amethod) {
 		if ($this->recursive_depth > 5) //Faut pas pousser mémé dans les orties: évitons une recursion infinie.
 			return;
 		$this->recursive_depth++;
@@ -444,7 +476,7 @@ class es_catalog extends es_base {
 		$this->recursive_depth--;
 	}
 	
-	function fix_imported_pmb_requirements() {
+	public function fix_imported_pmb_requirements() {
 		foreach ($this->groups as &$agroup) {
 			foreach ($agroup->methods as &$amethod) {
 				$this->fix_imported_pmb_requirement($amethod);
@@ -452,7 +484,7 @@ class es_catalog extends es_base {
 		}
 	}
 	
-	function create_requirements_list(&$amethod) {
+	public function create_requirements_list(&$amethod) {
 		if ($this->recursive_depth > 5) //Faut pas pousser mémé dans les orties: évitons une recursion infinie.
 			return;
 		$this->recursive_depth++;
@@ -470,12 +502,19 @@ class es_catalog extends es_base {
 		$this->recursive_depth--;
 	}
 	
-	function create_requirements_lists() {
+	public function create_requirements_lists() {
 		foreach ($this->groups as &$agroup) {
 			foreach ($agroup->methods as &$amethod) {
 				$this->create_requirements_list($amethod);
 			}
 		}
+	}
+	
+	public static function get_instance() {
+		if(!isset(static::$instance)) {
+			static::$instance = new es_catalog();
+		}
+		return static::$instance;
 	}
 
 }
@@ -484,8 +523,10 @@ class external_services_api_class {
 	protected  $proxy_parent=NULL;
 	protected $msg=array();
 	protected $es = NULL;
+	public $error=false;		//Y-a-t-il eu une erreur
+	public $error_message="";	//Message correspondant à l'erreur
 	
-	function external_services_api_class($external_services, $group_name, &$proxy_parent) {
+	public function __construct($external_services, $group_name, &$proxy_parent) {
 		$this->proxy_parent = &$proxy_parent;
 		$this->es=$external_services;
 		$this->msg=$this->es->msg($group_name);
@@ -494,7 +535,7 @@ class external_services_api_class {
 	//Filtrage du tableau des Id de notices pour la visibilité des notices
 	//si for=exemplaire -> on filtre les notices pour la visibilté des exemplaires
 	//si for=docnum -> on filtre les notices pour la visibilté des documents numériques
-	function filter_tabl_notices($tabl_notices,$for="notices"){
+	public function filter_tabl_notices($tabl_notices,$for="notices"){
 		if($for == "exemplaire"){
 			$mask=8;
 			$filter=" ((expl_visible_opac=1 and expl_visible_opac_abon=0)".($this->proxy_parent->idEmpr?" or (expl_visible_opac_abon=1 and expl_visible_opac=1)":"").")";
@@ -540,7 +581,7 @@ class external_services_api_class {
 	//Pour les droits sur les bulletins c'est la notice de périodique qui les définis
 	//si for=exemplaire -> on filtre les bulletins pour la visibilté des exemplaires
 	//si for=docnum -> on filtre les bulletins pour la visibilté des documents numériques
-	function filter_tabl_bulletins($tabl_bulletins,$for="notices"){
+	public function filter_tabl_bulletins($tabl_bulletins,$for="notices"){
 		
 		$requete="SELECT DISTINCT bulletin_notice FROM bulletins WHERE bulletin_id IN (".implode(",",$tabl_bulletins).")";
 		$res=pmb_mysql_query($requete);
@@ -574,7 +615,7 @@ class external_services_api_class {
 	}
 	
 	//Permet de savoir si un exemplaire est visible ou non
-	function expl_visible_opac($expl_id){
+	public function expl_visible_opac($expl_id){
 		$visible=true;
 		if($this->proxy_parent->isOPAC){
 			global $opac_sur_location_activate;
@@ -594,7 +635,7 @@ class external_services_api_class {
 	}
 	
 	//Filtrage sur les documents numériques
-	function filter_tabl_explnum(){
+	public function filter_tabl_explnum(){
 		global $gestion_acces_active, $gestion_acces_empr_docnum;
 
 		$filter = "";
@@ -617,12 +658,12 @@ class external_services_api_class {
 
 //Classe qui implémente les fonctions externes
 class external_services extends es_base {
-	var $msg=array();
-	var $catalog;
-	var $proxy;	//Classe regroupant toutes les fonctions
+	public $msg=array();
+	public $catalog;
+	public $proxy;	//Classe regroupant toutes les fonctions
 	
 	//Constructeur
-	function external_services($allow_caching=false) {
+	public function __construct($allow_caching=false) {
 		if ($allow_caching) {
 			$es_cache = new external_services_cache('es_cache_blob', 86400);
 			
@@ -640,7 +681,7 @@ class external_services extends es_base {
 
 		if (!$this->catalog) {
 			//Parse des bibliothèques disponibles
-			$this->catalog=new es_catalog();
+			$this->catalog=es_catalog::get_instance();
 			if ($this->catalog->error) {
 				$this->copy_error($this->catalog);
 				return;
@@ -656,7 +697,7 @@ class external_services extends es_base {
 
 	}
 	
-	function compute_situation_catalog_identity() {
+	public function compute_situation_catalog_identity() {
 		global $base_path;
 		if (file_exists($base_path."/external_services/catalog_subst.xml")) 
 			$catalog_file=$base_path."/external_services/catalog_subst.xml";
@@ -680,33 +721,35 @@ class external_services extends es_base {
 		return $identity;
 	}
 	
-	function get_proxy($user, $restrict_use_to_function_list=array()) {
+	public function get_proxy($user, $restrict_use_to_function_list=array()) {
 		if ($this->proxy) return $this->proxy;
 		$proxy_desc=array();
 		$rights=new external_services_rights($this);
+		$proxy_func = '';
+		$proxy_require = '';
 		$proxy="
 class es_proxy extends es_base {
-	var \$es;
-	var \$user".($user?"=$user":"").";
-	var \$isOPAC=false;
-	var \$idEmpr=0;
-	var \$description=\"\";
-	var \$error_callback_function=NULL;
-	var \$input_charset='utf-8';
+	public \$es;
+	public \$user".($user?"=$user":"").";
+	public \$isOPAC=false;
+	public \$idEmpr=0;
+	public \$description=\"\";
+	public \$error_callback_function=NULL;
+	public \$input_charset='utf-8';
 ";
 		
 		$proxy_method_requires = "";
 		
 		$proxy_err_calback_set = "
 		
-	function set_error_callback(\$callback_function) {
+	public function set_error_callback(\$callback_function) {
 		\$this->error_callback_function = \$callback_function;
 	}
 		";
 		
 		$proxy_init="
 
-	function init() {";
+	public function init() {";
 		
 		//Si on nous soumet une liste de fonctions, il ne faut pas oublier les éventuelles dépendances de celles-ci.
 		if ($restrict_use_to_function_list) {
@@ -776,7 +819,7 @@ class es_proxy extends es_base {
 				
 				//Variable pour la classe du groupe
 				$proxy.="
-	var \$".$group_name.";";
+	public \$".$group_name.";";
 				
 				//Require pour le groupe
 				$proxy_require.="require_once(\$base_path.\"/external_services/".$group_name."/".$group_name.".class.php\");
@@ -817,7 +860,7 @@ class es_proxy extends es_base {
 		
 		//Restauration de l'environnement global
 		foreach ($GLOBALS as $var_name=>$value) {
-			global $$var_name;
+			global ${$var_name};
 		}
 		
 		//Enregistrons le nom des variables qui existent déjà avant l'eval
@@ -840,13 +883,13 @@ class es_proxy extends es_base {
 		$function_variable_names = array("function_variable_names" => 0, "before_eval_vars" => 0, "created" => 0);
 		$created = array_diff_key(get_defined_vars(), $GLOBALS, $function_variable_names, $before_eval_vars);
 		foreach ($created as $created_name => $on_sen_fiche)
-			global $$created_name;
+			global ${$created_name};
 		extract($created);
 
 		return $this->proxy;
 	}
 	
-	function get_group_list() {
+	public function get_group_list() {
 		$r=array();
 		foreach ($this->catalog->groups as $group_name=>$group) {
 			$t=array();
@@ -865,36 +908,36 @@ class es_proxy extends es_base {
 		return $r;
 	}
 	
-	function group_exists($group) {
+	public function group_exists($group) {
 		if (is_object($this->catalog->groups[$group])) return true; else return false;
 	}
 	
-	function method_exists($group,$method) {
+	public function method_exists($group,$method) {
 		if ($this->group_exists($group)) {
 			if (is_object($this->catalog->groups[$group]->methods[$method])) return true;
 		}
 		return false;
 	}
 	
-	function save_persistent($group_name,$uniqueid,$message) {
+	public function save_persistent($group_name,$uniqueid,$message) {
 		//Sauvegarde de manière persistente 
 		$requete="insert into external_persist (group_name,uniqueid,message) values('".addslashes($group_name)."','".addslashes($uniqueid)."','".addslashes($message)."')";
 		$r=pmb_mysql_query($requete);
 		if ($r) return true; else return false;
 	}
 	
-	function msg($group_name) {
+	public function msg($group_name) {
 		return $this->catalog->groups[$group_name]->msg;
 	}
 	
-	function get_text($text,$group_name) {
+	public function get_text($text,$group_name) {
 		if (substr($text,0,4)=="msg:") {
 			$lmsg=$this->msg($group_name);
-			return $lmsg[substr($text,4)];
+			return (isset($lmsg[substr($text,4)]) ? $lmsg[substr($text,4)] : '');
 		} else return $text;
 	}
 	
-	function operation_need_messages($operation) {
+	public function operation_need_messages($operation) {
 		foreach ($this->catalog->groups as &$agroup) {
 			foreach ($agroup->methods as &$amethod) {
 				if ($operation == $agroup->name."_".$amethod->name) {

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sort.tpl.php,v 1.11 2011-03-15 08:29:56 arenou Exp $
+// $Id: sort.tpl.php,v 1.18 2017-11-30 14:33:09 dgoron Exp $
 
 // les templates pour l'écran d'affichage de la liste des tris
 $show_tris_form="<body class='catalog'><div id='contenu-frame'>
@@ -18,11 +18,11 @@ $show_tris_form="<body class='catalog'><div id='contenu-frame'>
 				}
 			}
 		</script>
-		<table width='100%'><tr><td align='left'>&nbsp;</td><td><div class='right'><a href='#' onClick=\"parent.document.getElementById('history').style.display='none'; return false;\"><img src='images/close.gif' border='0' align='center'></a></div></td></tr></table>
+		<table style='width:100%'><tr><td class='align_left'>&nbsp;</td><td><div class='right'><a href='#' onClick=\"parent.document.getElementById('history').style.display='none'; return false;\"><img src='".get_url_icon('close.gif')."' border='0' class='center'></a></div></td></tr></table>
 		<form name='sort_form' method='post' action='sort.php'>
-		   <table width='100%' height='100%'>
+		   <table style='width:100%; height:100%'>
 				<tr>
-					<td colspan=2 valign='top'>
+					<td colspan=2 style='vertical-align:top'>
 					<table>
 						<th colspan=3>" . $msg['tris_dispos'] . "</th>
 						!!liste_tris!!
@@ -30,10 +30,10 @@ $show_tris_form="<body class='catalog'><div id='contenu-frame'>
 					</td>
 				</tr>
 				<tr>
-					<td width='10%'>
+					<td style='width:10%'>
 						&nbsp;
 					</td>
-					<td valign='top'><SPAN class='right'>
+					<td style='vertical-align:top'><SPAN class='right'>
 						<input type='button' class='bouton' name='".$msg['tri_inactif']."' value='".$msg['tri_inactif']."' onClick=\"!!callback!!\">
 						<input type='button' class='bouton' name='".$msg['definir_tri']."' value='".$msg['definir_tri']."' onClick=\"agitTri('modif','');\">
 					</SPAN></td>
@@ -49,29 +49,29 @@ $show_tris_form="<body class='catalog'><div id='contenu-frame'>
 
 $ligne_tableau_tris = "
 						<tr class='!!pair_impair!!' onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='!!pair_impair!!'\" style='cursor: pointer'>
-							<td width='90%' alt='".$msg['appliq_tri']."' title='".$msg['appliq_tri']."' onClick='parent.document.getElementById(\"history\").style.display=\"none\";parent.location.href=\"./recall.php?current=" . $_SESSION["CURRENT"] . "&t=NOTI&tri=!!id_tri!!\"; return false;'>
+							<td style='width:90%' alt='".$msg['appliq_tri']."' title='".$msg['appliq_tri']."' onClick='parent.document.getElementById(\"history\").style.display=\"none\";parent.location.href=\"./recall.php?current=" . (isset($_SESSION["CURRENT"]) ? $_SESSION["CURRENT"] : '') . "&t=NOTI&tri=!!id_tri!!\"; return false;'>
 									!!nom_tri!!
 							</td>
-							<td width='5%'>
+							<td style='width:5%'>
 									<a href='#' onClick='agitTri(\"modif\",!!id_tri!!);'>
-									<img src='images/b_edit.png' alt='" . $msg['modif_tri'] . "' title='" . $msg['modif_tri'] . "' border=0></a>
+									<img src='".get_url_icon('b_edit.png')."' alt='" . $msg['modif_tri'] . "' title='" . $msg['modif_tri'] . "' border=0></a>
 							</td>
-							<td width='5%'>
-									<a href='#' onClick='suppr(!!id_tri!!);'><img src='images/cross.png' alt='" . $msg['suppr_tri'] . "' title='" . $msg['suppr_tri'] . "'></a>
+							<td style='width:5%'>
+									<a href='#' onClick='suppr(!!id_tri!!);'><img src='".get_url_icon('cross.png')."' alt='" . $msg['suppr_tri'] . "' title='" . $msg['suppr_tri'] . "'></a>
 							</td>
 						</tr>
 ";
 $ligne_tableau_tris_etagere = "
 						<tr class='!!pair_impair!!' onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='!!pair_impair!!'\" style='cursor: pointer'>
-							<td width='90%' alt='".$msg['appliq_tri']."' title='".$msg['appliq_tri']."' onClick=\"parent.document.getElementById('history').style.display='none';parent.window.getSort('!!id_tri!!','!!descname_tri!!'); return false;\">
+							<td style='width:90%' alt='".$msg['appliq_tri']."' title='".$msg['appliq_tri']."' onClick=\"parent.document.getElementById('history').style.display='none';parent.window.getSort('!!id_tri!!','!!descname_tri!!'); return false;\">
 									!!nom_tri!!
 							</td>
-							<td width='5%'>
+							<td style='width:5%'>
 									<a href='#' onClick='agitTri(\"modif\",!!id_tri!!);'>
-									<img src='images/b_edit.png' alt='" . $msg['modif_tri'] . "' title='" . $msg['modif_tri'] . "' border=0></a>
+									<img src='".get_url_icon('b_edit.png')."' alt='" . $msg['modif_tri'] . "' title='" . $msg['modif_tri'] . "' border=0></a>
 							</td>
-							<td width='5%'>
-									<a href='#' onClick='suppr(!!id_tri!!);'><img src='images/cross.png' alt='" . $msg['suppr_tri'] . "' title='" . $msg['suppr_tri'] . "'></a>
+							<td style='width:5%'>
+									<a href='#' onClick='suppr(!!id_tri!!);'><img src='".get_url_icon('cross.png')."' alt='" . $msg['suppr_tri'] . "' title='" . $msg['suppr_tri'] . "'></a>
 							</td>
 						</tr>
 ";
@@ -243,34 +243,34 @@ $show_sel_form="
 				}
 			}
 		</script>
-	<table width='100%'><tr><td align='left'><h3>".$msg['definir_tri']."</h3></td><td align='right'><a href='#' onClick=\"parent.document.getElementById('history').src='./sort.php?action=0';parent.document.getElementById('history').style.display='none'; return false;\"><img src='images/close.gif' border='0' align='center'></a></td></tr></table>
+	<table style='width:100%'><tr><td class='align_left'><h3>".$msg['definir_tri']."</h3></td><td class='align_right'><a href='#' onClick=\"parent.document.getElementById('history').src='./sort.php?action=0';parent.document.getElementById('history').style.display='none'; return false;\"><img src='".get_url_icon('close.gif')."' border='0' class='center'></a></td></tr></table>
 		<form name='sort_form' method='post' action='sort.php'>
-		   <table width='100%' height='100%'>
+		   <table style='width:100%; height:100%'>
 				<tr>
 					<td colspan=3>".$msg['nom_tri']."&nbsp;&nbsp;<input type='text' name='nom_tri' value='!!nom_tri!!'><input type=hidden name='id_tri' value='!!id_tri!!'>
 					</td>
 				</tr>
 				<tr>
-					<td width='40%'>
+					<td style='width:40%'>
 					".$msg['criteres_tri_dispos']."
 					</td>
-					<td width='20%'>
+					<td style='width:20%'>
 					&nbsp;
 					</td>
-					<td width='40%'>
+					<td style='width:40%'>
 					".$msg['criteres_tri_retenus']."
 					</td>
 				</tr>
 				<tr>
-					<td width='40%' height='100%' valign='top'>
+					<td style='vertical-align:top; width:40%; height:100%'>
 						<select name='liste_critere' multiple='yes' style='width:100%;height:400px' onDblClick='left_to_right()'>
 							!!liste_criteres!!
 						</seclect>
 					</td>
-					<td width='20%' style='text-align:center'>
+					<td style='text-align:center; width:20%'>
 					<table style='height:100%'><tr><td style='text-align:center'><input type='button' value='&gt;&gt;' onClick='left_to_right()'></td></tr><tr><td style='text-align:center'><input type='button' value='&lt;&lt;' onClick='right_to_left()''></td></tr></table>.
 					</td>
-					<td width='40%' height='100%' valign='top' style='text-align:center'>
+					<td style='vertical-align:top' style='text-align:center; width:40%; height:100%'>
 						<select name='liste_sel[]' multiple='yes' style='width:100%;height:400px' onDblClick='right_to_left()'>
 							!!liste_selectionnes!!
 						</select>
@@ -279,7 +279,7 @@ $show_sel_form="
 				<tr>
 					<td>&nbsp;</td>
 					<td colspan=2><span class='right'>
-					<input type='image' src='images/arrow_up.png' alt='".$msg['monter']."' title='".$msg['monter']."' value='".$msg['monter']."' onClick='move_up(); return false;'>&nbsp;<input type='image' src='images/arrow_down.png' alt='".$msg['descendre']."' title='".$msg['descendre']."' value='".$msg['descendre']."' onClick='move_down(); return false;'>&nbsp;&nbsp;<input type='image' alt='".$msg['tri_croissant']."' title='".$msg['tri_croissant']."' value='".$msg['tri_croissant']."' src='images/fleche_diago_haut.png' onClick=\"change_order('c'); return false;\">&nbsp;<input type='image' alt='".$msg['tri_decroissant']."' title='".$msg['tri_decroissant']."' value='".$msg['tri_decroissant']."' src='images/fleche_diago_bas.png' onClick=\"change_order('d'); return false;\">
+					<input type='image' src='".get_url_icon('arrow_up.png')."' alt='".$msg['monter']."' title='".$msg['monter']."' value='".$msg['monter']."' onClick='move_up(); return false;'>&nbsp;<input type='image' src='".get_url_icon('arrow_down.png')."' alt='".$msg['descendre']."' title='".$msg['descendre']."' value='".$msg['descendre']."' onClick='move_down(); return false;'>&nbsp;&nbsp;<input type='image' alt='".$msg['tri_croissant']."' title='".$msg['tri_croissant']."' value='".$msg['tri_croissant']."' src='".get_url_icon('fleche_diago_haut.png')."' onClick=\"change_order('c'); return false;\">&nbsp;<input type='image' alt='".$msg['tri_decroissant']."' title='".$msg['tri_decroissant']."' value='".$msg['tri_decroissant']."' src='images/fleche_diago_bas.png' onClick=\"change_order('d'); return false;\">
 						&nbsp;<input name='ordre' type='button' class='bouton' num_text='0 - 9' onClick=\"swap_type_tri(this.getAttribute('num_text'));\" value='A - Z/0 - 9'>
 					</span></td>
 				</tr>

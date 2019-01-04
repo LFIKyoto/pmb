@@ -66,7 +66,7 @@ class Cell extends Container {
 	 * @param int $row Row number
 	 * @param int $column Column number
 	 */
-	function Cell(&$table, $row, $column) {	  
+	function __construct(&$table, $row, $column) {	  
 	  	$this->table = &$table;
 		$this->rtf = &$table->rtf;	  
 		$this->row = $row;

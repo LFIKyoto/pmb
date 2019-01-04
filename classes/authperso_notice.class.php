@@ -2,31 +2,26 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authperso_notice.class.php,v 1.11.2.1 2015-12-07 15:28:15 vtouchard Exp $
+// $Id: authperso_notice.class.php,v 1.32 2018-03-19 14:26:17 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once("$class_path/authperso.class.php");
 
 class authperso_notice {
-	var $id=0; // id de la notice
-	var $onglets_info=array();
-	var $auth_info=array();
-	var $onglets_auth_list=array();	
+	public $id=0; // id de la notice
+	public $onglets_info=array();
+	public $auth_info=array();
+	public $onglets_auth_list=array();
+	private static $authpersos=array();
 	
-	function authperso_notice($id=0) {
+	public function __construct($id=0) {
 		$this->id=$id+0; // id de la notice
 		$this->fetch_data();
 	}
 	
-	function fetch_data() {		
-		global $dbh;
-		
-		$this->onglets_info=array();
+	public function fetch_data() {		
 		$this->onglets_auth_list=array();
-		$authpersos = new authpersos();
-		// infos des autorités existantes
-		$this->onglets_info=$authpersos->get_onglet_list();
 		
 		if(!$this->id) return;
 		
@@ -34,28 +29,26 @@ class authperso_notice {
 		$req="select * from authperso, notices_authperso,authperso_authorities where id_authperso=authperso_authority_authperso_num and notice_authperso_authority_num=id_authperso_authority and notice_authperso_notice_num=".$this->id."
 		order by notice_authperso_order";
 		
-		$res = pmb_mysql_query($req,$dbh);
+		$res = pmb_mysql_query($req);
 		while(($r=pmb_mysql_fetch_object($res))) {			
 			// get isbd ...
 			$this->auth_info[$r->notice_authperso_authority_num]['onglet_num']=$r->authperso_notice_onglet_num;
 			$this->auth_info[$r->notice_authperso_authority_num]['authperso_name']=$r->authperso_name;
 			$this->auth_info[$r->notice_authperso_authority_num]['infos_global']=$r->authperso_infos_global;
 			$this->auth_info[$r->notice_authperso_authority_num]['index_infos_global']=$r->authperso_index_infos_global;
-			$authperso = new authperso($r->id_authperso);
-			$isbd=$authperso->get_isbd($r->notice_authperso_authority_num);
+			$isbd = authperso::get_isbd($r->notice_authperso_authority_num);
 			$this->onglets_auth_list[$r->authperso_notice_onglet_num][$r->id_authperso][$r->notice_authperso_authority_num]['id']=$r->notice_authperso_authority_num;
 			$this->onglets_auth_list[$r->authperso_notice_onglet_num][$r->id_authperso][$r->notice_authperso_authority_num]['isbd']=$isbd;
 			$this->onglets_auth_list[$r->authperso_notice_onglet_num][$r->id_authperso][$r->notice_authperso_authority_num]['authperso_name']=$r->authperso_name;		
+			$authperso = $this->get_authperso_class($r->id_authperso);
 			$info_fields=$authperso->get_info_fields($r->notice_authperso_authority_num);
 			$this->auth_info[$r->notice_authperso_authority_num]['isbd']=$isbd;
-			$this->auth_info[$r->notice_authperso_authority_num]['info_fields']=$info_fields;
-		//printr($info_fields);
+			$this->auth_info[$r->notice_authperso_authority_num]['info_fields']=$info_fields;		
 		}
-				
 	}
 	
-	function get_notice_display(){
-		global $pmb_url_base;
+	public function get_notice_display(){
+		global $base_path;
 		
 		$aff="";
 		foreach($this->onglets_auth_list as $onglet_num => $onglet){
@@ -67,8 +60,8 @@ class authperso_notice {
 						$aff.="<br><b>".$authperso_name."</b>&nbsp;: ";
 						$new=1;
 					}	
-					if(!$new)	$aff.=", ";			
-					$aff.= '<a href="'.$pmb_url_base.'autorites.php?categ=authperso&sub=authperso_form&id_authperso='.$authperso_num.'&id='.$auth['id'].'">'.$auth['isbd'].'</a>';	
+					if(!$new)	$aff.=", ";
+					$aff.= '<a href="'.$base_path.'/autorites.php?categ=see&sub=authperso&id='.$auth['id'].'">'.$auth['isbd'].'</a>';	
 					$new=0;
 				}
 			}
@@ -76,7 +69,7 @@ class authperso_notice {
 		return $aff;
 	}
 	
-	function get_notice_display_list(){
+	public function get_notice_display_list(){
 		$aff_list=array();
 		foreach($this->onglets_auth_list as $onglet_num => $onglet){
 			$authperso_name="";
@@ -93,27 +86,29 @@ class authperso_notice {
 		return $aff_list;
 	}
 	
-	function get_index_fields(){
-		
+	public function get_index_fields(){
 		$index_fields=array();
 		foreach($this->auth_info as $auth){
 			foreach($auth['info_fields'] as $field){
-			//	printr($field);
+				if(!isset($index_fields[$field['code_champ']]['ss_champ'][0][0])) {
+					$index_fields[$field['code_champ']]['ss_champ'][0][0] = $auth['isbd'];
+				}
 				if($field['search'] ){
 					$index_fields[$field['code_champ']]['pond']=$field['pond'];
-					if($field['all_format_values'])
-					$index_fields[$field['code_champ']]['ss_champ'][][$field['code_ss_champ']].=$field['all_format_values'];
+					if($field['all_format_values']) {
+						$index_fields[$field['code_champ']]['ss_champ'][][$field['code_ss_champ']] = $field['all_format_values'];
+					}
 				}
 			}
 		}
 		return $index_fields;		
 	}
 	
-	function get_index_fields_to_delete(){		
+	public function get_index_fields_to_delete(){		
 		return authpersos::get_all_index_fields();
 	}
 	
-	function get_form(){
+	public function get_form(){
 		global $msg,$charset,$base_path;
 		
 		$onglet_all_tpl=" 				
@@ -145,7 +140,7 @@ class authperso_notice {
 	        authperso.setAttribute('order',suffixe);
 	        authperso.setAttribute('highlight','authperso_highlight');
 	        authperso.setAttribute('downlight','authperso_downlight');
-	        authperso.setAttribute('dragicon','./images/icone_drag_notice.png');
+	        authperso.setAttribute('dragicon','".get_url_icon('icone_drag_notice.png')."');
 	        authperso.setAttribute('handler','handle_'+ authperso_id +'_'  +suffixe);
 	        authperso.setAttribute('recepttype','authperso'+authperso_id);
 	        authperso.setAttribute('recept','yes');
@@ -182,7 +177,7 @@ class authperso_notice {
 	        f_authperso_span_handle.style.paddingRight='7px';        
 	        
 	        var f_authperso_drag_img = document.createElement('img');
-	        f_authperso_drag_img.setAttribute('src','./images/sort.png');
+	        f_authperso_drag_img.setAttribute('src','".get_url_icon('sort.png')."');
 	        f_authperso_drag_img.style.width='12px';
 	        f_authperso_drag_img.style.verticalAlign='middle';
 	        
@@ -211,16 +206,26 @@ class authperso_notice {
 		$authperso_notice_onglet_tpl="
 		<div id='elonglet!!ongletnum!!Parent' class='parent'>
 			<h3>
-				<img src='./images/plus.gif' class='img_plus' name='imEx' id='elonglet!!ongletnum!!Img' onClick=\"expandBase('elonglet!!ongletnum!!', true); return false;\" title='".$msg["notice_champs_gestion"]."' border='0' /> 
+				<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='elonglet!!ongletnum!!Img' onClick=\"expandBase('elonglet!!ongletnum!!', true); return false;\" title='".$msg["notice_champs_gestion"]."' style='border:0px' /> 
 				!!onglet_name!!
 			</h3>
 		</div>			
-		<div id='elonglet!!ongletnum!!Child' class='child' etirable='yes' title='".htmlentities($msg[notice_champs_gestion],ENT_QUOTES, $charset)."'>
+		<div id='elonglet!!ongletnum!!Child' class='child' etirable='yes' title='!!onglet_name_title!!'>
 			!!authperso_list!!
 		</div>
 		<hr class='spacer' />
 		";
-		
+		$authperso_notice_onglet_empty="
+		<div id='elonglet!!ongletnum!!Parent' class='parent'>
+			<h3>
+				<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='elonglet!!ongletnum!!Img' onClick=\"expandBase('elonglet!!ongletnum!!', true); return false;\" title='".$msg["notice_champs_gestion"]."' style='border:0px' />
+				!!onglet_name!!
+			</h3>
+		</div>
+		<div id='elonglet!!ongletnum!!Child' class='child' etirable='yes' title='!!onglet_name_title!!'>
+		</div>
+		<hr class='spacer' />
+		";		
 		$authperso_notice_elt_tpl= "
 		<script>
 			allow_drag['authperso!!authperso_id!!']=new Array();
@@ -273,7 +278,7 @@ class authperso_notice {
     				<input type='hidden' name='max_authperso_!!authperso_id!!'  id='max_authperso_!!authperso_id!!' value=\"!!max_authperso!!\" />
 				
 					<input type='hidden' name='tab_authperso_order_!!authperso_id!!' id='tab_authperso_order_!!authperso_id!!' value='!!tab_authperso_order!!' />       
-					<input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=authperso&authperso_id=!!authperso_id!!&caller=notice&p1=f_authperso_id_!!authperso_id!!_&p2=f_authperso_!!authperso_id!!_&p3=!!authperso_id!!&max_field=max_authperso_!!authperso_id!!&dyn=3&parent=0&deb_rech=', 'select_authperso', 700, 500, -2, -2, '$select_authperso_prop')\" />
+					<input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=authperso&authperso_id=!!authperso_id!!&caller=notice&p1=f_authperso_id_!!authperso_id!!_&p2=f_authperso_!!authperso_id!!_&p3=!!authperso_id!!&max_field=max_authperso_!!authperso_id!!&dyn=5&parent=0&deb_rech=', 'selector')\" />
 				    <input type='button' class='bouton' value='+' onClick=\"add_authperso('!!authperso_id!!');\"/>
 					
 				   !!authlist!!
@@ -283,16 +288,20 @@ class authperso_notice {
 		
 		$authperso_notice_elt_tpl_num="									
 				  	<div id='drag_authperso_!!authperso_id!!_!!iauthperso!!'  class='row' dragtype='authperso!!authperso_id!!' draggable='yes' recept='yes' recepttype='authperso!!authperso_id!!' handler='handle_!!authperso_id!!_!!iauthperso!!'		
-						dragicon=\"".$base_path."/images/icone_drag_notice.png\" dragtext='!!authperso_libelle!!' downlight=\"authperso_downlight\" highlight=\"authperso_highlight\"			
+						dragicon=\"".get_url_icon('icone_drag_notice.png')."\" dragtext='!!authperso_libelle!!' downlight=\"authperso_downlight\" highlight=\"authperso_highlight\"			
 						order='!!iauthperso!!' style='' >
-				 		<span id=\"handle_!!authperso_id!!_!!iauthperso!!\" style=\"float:left; padding-right : 7px\"><img src=\"".$base_path."/images/sort.png\" style='width:12px; vertical-align:middle' /></span>
+				 		<span id=\"handle_!!authperso_id!!_!!iauthperso!!\" style=\"float:left; padding-right : 7px\"><img src=\"".get_url_icon('sort.png')."\" style='width:12px; vertical-align:middle' /></span>
 					
-				        <input type='text' class='saisie-80emr' id='f_authperso_!!authperso_id!!_!!iauthperso!!' name='f_authperso_!!authperso_id!!_!!iauthperso!!' completion='authperso_!!authperso_id!!' value=\"!!authperso_libelle!!\" completion=\"authpersoories_mul\" autfield=\"f_authperso_id_!!authperso_id!!_!!iauthperso!!\" />
+				        <input type='text' class='saisie-80emr' id='f_authperso_!!authperso_id!!_!!iauthperso!!' name='f_authperso_!!authperso_id!!_!!iauthperso!!' data-form-name='f_authperso_!!authperso_id!!_' completion='authperso_!!authperso_id!!' value=\"!!authperso_libelle!!\" autfield=\"f_authperso_id_!!authperso_id!!_!!iauthperso!!\" />
 				        <input type='button' class='bouton' value='$msg[raz]' onclick=\"this.form.f_authperso_!!authperso_id!!_!!iauthperso!!.value=''; this.form.f_authperso_id_!!authperso_id!!_!!iauthperso!!.value='0'; \" />
-				       	<input type='hidden' name='f_authperso_id_!!authperso_id!!_!!iauthperso!!' id='f_authperso_id_!!authperso_id!!_!!iauthperso!!' value='!!auth_id!!' />       
+				       	<input type='hidden' name='f_authperso_id_!!authperso_id!!_!!iauthperso!!' data-form-name='f_authperso_id_!!authperso_id!!_' id='f_authperso_id_!!authperso_id!!_!!iauthperso!!' value='!!auth_id!!' />       
 					</div>	
 		";				
+		$onglet_used=array();
 		
+		// infos des autorités existantes
+		$authpersos = authpersos::get_instance();
+		$this->onglets_info=$authpersos->get_onglet_list();
 		foreach($this->onglets_info as $onglet_num => $onglet){	
 			$onglet_contens="";
 			foreach($onglet as $elt){
@@ -302,7 +311,7 @@ class authperso_notice {
 				$iauthperso=0;
 				$auth_list_tpl="";
 				$tab_authperso_order=array();
-				if(!count($this->onglets_auth_list[$onglet_num][$elt['id']])){
+				if(!isset($this->onglets_auth_list[$onglet_num][$elt['id']]) || !count($this->onglets_auth_list[$onglet_num][$elt['id']])){
 					// pas d'autorité					
 					$auth_list_tpl=$authperso_notice_elt_tpl_num;	
 					$auth_list_tpl=str_replace('!!authperso_libelle!!',"", $auth_list_tpl);		
@@ -335,25 +344,39 @@ class authperso_notice {
 			}
 			$onglet_tpl=$authperso_notice_onglet_tpl;
 			$onglet_tpl=str_replace('!!authperso_list!!',$onglet_contens, $onglet_tpl);
+			if(!$elt['onglet_name']) $elt['onglet_name']=$msg['authperso_multi_search_title'];
 			$onglet_tpl=str_replace('!!onglet_name!!',$elt['onglet_name'], $onglet_tpl);
+			$onglet_tpl=str_replace('!!onglet_name_title!!',htmlentities($elt['onglet_name'],ENT_QUOTES, $charset), $onglet_tpl);
 			$onglet_tpl=str_replace('!!ongletnum!!',$onglet_num, $onglet_tpl);
+			$onglet_used[]=$onglet_num;
 			$onglet_all_tpl.=$onglet_tpl;
 			
+		}
+		if (count($onglet_used)) {
+			$req = 'SELECT * FROM notice_onglet where id_onglet not in(' . implode(',', $onglet_used) . ') order by onglet_name';
+		} else {
+			$req = 'SELECT * FROM notice_onglet order by onglet_name';
+		}		
+		$resultat = pmb_mysql_query($req);
+		if (pmb_mysql_num_rows($resultat)) {
+			while($r_onglet = pmb_mysql_fetch_object($resultat)) {
+				$onglet_tpl = $authperso_notice_onglet_empty;
+				$onglet_tpl = str_replace('!!onglet_name!!', $r_onglet->onglet_name, $onglet_tpl);
+				$onglet_tpl = str_replace('!!onglet_name_title!!',htmlentities($r_onglet->onglet_name, ENT_QUOTES, $charset), $onglet_tpl);
+				$onglet_tpl = str_replace('!!ongletnum!!', $r_onglet->id_onglet, $onglet_tpl);
+				$onglet_all_tpl.= $onglet_tpl;
+			}
 		}
 		return $onglet_all_tpl;
 	}
 	
-	function delete(){
-		global $dbh;
-		
+	public function delete(){
 		$req="delete from notices_authperso where notice_authperso_notice_num=".$this->id;
-		pmb_mysql_query($req, $dbh);			
+		pmb_mysql_query($req);			
 	}
 	
-	function save_form(){
-		global $dbh;
-		
-		$authpersos = new authpersos();
+	public function save_form(){
+		$authpersos = authpersos::get_instance();
 		$infos=$authpersos->get_data();
 		if(!count($infos)) return;
 		$this->delete();
@@ -361,13 +384,13 @@ class authperso_notice {
 		foreach ($infos as $authperso){
 			$authperso_id=$authperso['id'];
 			$max_authperso="max_authperso_".$authperso_id;
-			global $$max_authperso;
-			$max_authperso=$$max_authperso;			
+			global ${$max_authperso};
+			$max_authperso=${$max_authperso};			
 			$order=0;	
-			
+			$final_ordre=array();
 			$tab_authperso_order="tab_authperso_order_".$authperso_id;
-			global $$tab_authperso_order;
-			$tab_authperso_order=$$tab_authperso_order;
+			global ${$tab_authperso_order};
+			$tab_authperso_order=${$tab_authperso_order};
 			// value="authperso_1_2,authperso_1_0,authperso_1_1" ....
 			$tab_order=explode(',',$tab_authperso_order);			
 			foreach($tab_order as $string_order){
@@ -380,11 +403,11 @@ class authperso_notice {
 				foreach($final_ordre as $old_order){
 					
 					$auth_id="f_authperso_id_".$authperso_id."_".$old_order;
-					global $$auth_id;
-					$auth_id=$$auth_id;					
+					global ${$auth_id};
+					$auth_id=${$auth_id};					
 					if($auth_id){
 						$req="insert into notices_authperso set notice_authperso_notice_num=".$this->id.", notice_authperso_authority_num= $auth_id, notice_authperso_order=".$order;
-						$result = pmb_mysql_query($req, $dbh);
+						$result = pmb_mysql_query($req);
 						$order++;
 					}
 				}
@@ -392,12 +415,12 @@ class authperso_notice {
 				$order=0;
 				for($i=0;$i<$max_authperso; $i++ ){					
 					$auth_id="f_authperso_id_".$authperso_id."_".$i;
-					global $$auth_id;			
-					$auth_id=$$auth_id;
+					global ${$auth_id};			
+					$auth_id=${$auth_id};
 					
 					if($auth_id){					
 						$req="insert into notices_authperso set notice_authperso_notice_num=".$this->id.", notice_authperso_authority_num= $auth_id, notice_authperso_order=".$order;
-						$result = pmb_mysql_query($req, $dbh);	
+						$result = pmb_mysql_query($req);	
 						$order++;
 					}
 				}
@@ -407,13 +430,20 @@ class authperso_notice {
 		}
 	}
 	
-	function get_fields_search(){
+	public function get_fields_search(){
 		$mots="";
 		foreach($this->auth_info as  $auth){
 			if($mots)$mots.=" ";
 			$mots.=$auth["infos_global"];
 		}
 		return $mots;
+	}
+	
+	private function get_authperso_class($id_type_authperso){
+		if(!isset(self::$authpersos[$id_type_authperso])){
+			self::$authpersos[$id_type_authperso] = new authperso($id_type_authperso);
+		}
+		return self::$authpersos[$id_type_authperso];
 	}
 } // authperso_notice class end
 	

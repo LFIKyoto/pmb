@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bretagne.inc.php,v 1.8 2015-04-03 11:16:16 jpermanne Exp $
+// $Id: bretagne.inc.php,v 1.9 2018-06-14 12:59:43 dgoron Exp $
 
 function search_other_function_filters() {
 	global $bretagne_section,$charset;
@@ -54,7 +54,11 @@ function search_other_function_human_query($n) {
 	global $bretagne_section;
 	$r="";
 	$bretagne_section=$_SESSION["bretagne_section".$n];
-	$section=implode(",",$bretagne_section);
+	if(is_array($bretagne_section)) {
+		$section=implode(",",$bretagne_section);
+	} else {
+		$section='';
+	}
 	if ($section) {
 		$requete="select notices_custom_list_value,notices_custom_list_lib from notices_custom_lists where notices_custom_champ=6 and notices_custom_list_value in ($section)";
 		$resultat=pmb_mysql_query($requete);

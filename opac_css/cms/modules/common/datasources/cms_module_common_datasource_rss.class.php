@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_rss.class.php,v 1.12 2015-05-15 10:43:57 dbellamy Exp $
+// $Id: cms_module_common_datasource_rss.class.php,v 1.14 2018-05-26 09:31:48 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -59,13 +59,14 @@ class cms_module_common_datasource_rss extends cms_module_common_datasource{
 			</div>";
 		return $form;
 	}
-
+	
 	/*
 	 * Récupération des données de la source...
 	 */
 	public function get_datas(){
 		//on commence par récupérer l'identifiant retourné par le sélecteur...
 		if($this->parameters['selector'] != ""){
+			$informations = '';
 			for($i=0 ; $i<count($this->selectors) ; $i++){
 				if($this->selectors[$i]['name'] == $this->parameters['selector']){
 					$selector = new $this->parameters['selector']($this->selectors[$i]['id']);
@@ -108,6 +109,7 @@ class cms_module_common_datasource_rss extends cms_module_common_datasource{
 						'link',
 						'guid',
 						'date',
+						'pubDate',
 						'creator',
 						'subject',
 						'format',
@@ -162,6 +164,11 @@ class cms_module_common_datasource_rss extends cms_module_common_datasource{
 		$informations = array();
 		foreach($elements as $element){
 			$items = $node->getElementsByTagName($element);
+			switch ($element) {
+				case "pubDate" :
+					$element = "date";
+					break;
+			}
 			if($items->length == 1 || $first_only){
 				$informations[$element] = $this->charset_normalize($items->item(0)->nodeValue,"utf-8");
 			}else{
@@ -183,7 +190,11 @@ class cms_module_common_datasource_rss extends cms_module_common_datasource{
 					$element = "date";
 				break;
 				case "author" :
- 					$element = "creator";
+					if($first_only) {
+						$element = "generator";
+					} else {
+						$element = "creator";
+					}
 					break;
 				case "content" :
 					$element = "description";
@@ -219,6 +230,10 @@ class cms_module_common_datasource_rss extends cms_module_common_datasource{
 			array(
 				'var' => "title",
 				'desc' => $this->msg['cms_module_common_datasource_rss_title_desc']
+			),
+			array(
+				'var' => "subtitle",
+				'desc' => $this->msg['cms_module_common_datasource_rss_subtitle_desc']
 			),
 			array(
 				'var' => "description",

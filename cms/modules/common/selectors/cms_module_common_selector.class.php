@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector.class.php,v 1.17 2015-04-03 11:16:18 jpermanne Exp $
+// $Id: cms_module_common_selector.class.php,v 1.22 2017-10-10 08:29:37 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -26,7 +26,7 @@ class cms_module_common_selector extends cms_module_root{
 		global $dbh;
 		if($this->id){
 			//on commence par aller chercher ses infos
-			$query = " select id_cadre_content, cadre_content_hash, cadre_content_num_cadre, cadre_content_data from cms_cadre_content where id_cadre_content = ".$this->id;
+			$query = " select id_cadre_content, cadre_content_hash, cadre_content_num_cadre, cadre_content_data from cms_cadre_content where id_cadre_content = '".$this->id."'";
 			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				$row = pmb_mysql_fetch_object($result);
@@ -36,7 +36,7 @@ class cms_module_common_selector extends cms_module_root{
 				$this->unserialize($row->cadre_content_data);
 			}
 			//on va chercher les infos des sous-sélecteurs...
-			$query = "select id_cadre_content, cadre_content_object from cms_cadre_content where cadre_content_type='selector' and cadre_content_num_cadre_content = ".$this->id;
+			$query = "select id_cadre_content, cadre_content_object from cms_cadre_content where cadre_content_type='selector' and cadre_content_num_cadre_content = '".$this->id."'";
 			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				while($row=pmb_mysql_fetch_object($result)){
@@ -62,12 +62,13 @@ class cms_module_common_selector extends cms_module_root{
 						<label for='sub_selector_choice'>".$this->format_text($this->msg['cms_module_common_selector_sub_choice_label'])."</label>
 					</div>
 					<div class='colonne-suite'>
-						<input type='hidden' name='".$this->get_form_value_name("sub_selector_choice_last_value")."' id='".$this->get_form_value_name("sub_selector_choice_last_value")."' value='".($this->parameters['sub_selector'] ? $this->parameters['sub_selector'] : "" )."' />
+						<input type='hidden' name='".$this->get_form_value_name("sub_selector_choice_last_value")."' id='".$this->get_form_value_name("sub_selector_choice_last_value")."' value='".(isset($this->parameters['sub_selector']) && $this->parameters['sub_selector'] ? $this->parameters['sub_selector'] : "" )."' />
 						<select name='".$this->get_form_value_name("sub_selector_choice")."' id='".$this->get_form_value_name("sub_selector_choice")."' onchange='load_".$this->get_hash()."_sub_selector_form(this.value)'>
 							<option value=''>".$this->format_text($this->msg['cms_module_common_selector_sub_choice'])."</option>";
+				$tab_sub_selector_js = '';
 				foreach($sub_selectors as $sub_selector){
 					$form.= "								
-							<option  value='".$sub_selector."' ".($sub_selector == $this->parameters['sub_selector'] ? "selected='selected'":"").">".$this->format_text($this->msg[$sub_selector])."</option>";
+							<option  value='".$sub_selector."' ".(isset($this->parameters['sub_selector']) && $sub_selector == $this->parameters['sub_selector'] ? "selected='selected'":"").">".$this->format_text($this->msg[$sub_selector])."</option>";
 					
 						$tab_sub_selector_js.="tab_sub_selector_js['$sub_selector']='".$this->get_sub_selector_id($sub_selector)."';";
 				}
@@ -103,7 +104,7 @@ class cms_module_common_selector extends cms_module_root{
 				</div>
 				<div id='".$this->get_hash()."_sub_selector_form' dojotype='dojox.layout.ContentPane'></div>
 				";
-				if($this->parameters['sub_selector'])
+				if(isset($this->parameters['sub_selector']) && $this->parameters['sub_selector'])
 				$form.="
 					<script type='text/javacsript'>					
 						cms_module_load_elem_form('".$this->parameters['sub_selector']."',".$this->get_sub_selector_id($this->parameters['sub_selector']).",'".$this->get_hash()."_sub_selector_form');
@@ -157,9 +158,9 @@ class cms_module_common_selector extends cms_module_root{
 			cadre_content_hash = '".$this->hash."',
 			cadre_content_type = 'selector',
 			cadre_content_object = '".$this->class_name."',".
-			($this->cadre_parent ? "cadre_content_num_cadre = ".$this->cadre_parent."," : "")."		 
+			($this->cadre_parent ? "cadre_content_num_cadre = '".$this->cadre_parent."'," : "")."		 
 			cadre_content_data = '".addslashes($this->serialize())."'".
-			($this->num_cadre_content ? ",cadre_content_num_cadre_content = ".$this->num_cadre_content : "")."			 
+			($this->num_cadre_content ? ",cadre_content_num_cadre_content = '".$this->num_cadre_content."'" : "")."			 
 		".$clause;
 		$result = pmb_mysql_query($query,$dbh);
 		if($result){
@@ -181,7 +182,7 @@ class cms_module_common_selector extends cms_module_root{
 			//création du sélecteur ratée, on supprime le hash de la table...
 			$this->delete_hash();
 			return false;
-		}				
+		}
 	}
 
 	public function set_parent($id){
@@ -196,7 +197,7 @@ class cms_module_common_selector extends cms_module_root{
 		global $dbh;
 		if($this->id){
 			//on commence par supprimer les sous-selecteurs
-			$query = "select id_cadre_content, cadre_content_object from cms_cadre_content where cadre_content_num_cadre_content = ".$this->id;
+			$query = "select id_cadre_content, cadre_content_object from cms_cadre_content where cadre_content_num_cadre_content = '".$this->id."'";
 			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				while($row = pmb_mysql_fetch_object($result)){
@@ -209,7 +210,7 @@ class cms_module_common_selector extends cms_module_root{
 				}
 			}
 			//plus de sous-sélecteurs, éliminons-nous !
-			$query = "delete from cms_cadre_content where id_cadre_content = ".$this->id;
+			$query = "delete from cms_cadre_content where id_cadre_content = '".$this->id."'";
 			$result = pmb_mysql_query($query,$dbh);
 			if($result){
 				$this->delete_hash();
@@ -236,6 +237,20 @@ class cms_module_common_selector extends cms_module_root{
 	}
 	
 	protected function get_selected_sub_selector(){
-		return new $this->parameters['sub_selector']($this->get_sub_selector_id($this->parameters['sub_selector']));
+		if (isset($this->parameters['sub_selector'])) {
+			return new $this->parameters['sub_selector']($this->get_sub_selector_id($this->parameters['sub_selector']));
+		}
+		return null;
+	}
+	
+	/**
+	 * Permet de remonter des éléments à exclure du résultat
+	 */
+	public function get_excluded_elements() {
+		$selected_sub_selector = $this->get_selected_sub_selector();
+		if ($selected_sub_selector) {
+			return $selected_sub_selector->get_excluded_elements();
+		}
+		return array();
 	}
 }

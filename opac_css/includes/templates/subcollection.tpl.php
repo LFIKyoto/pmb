@@ -25,6 +25,9 @@ if ( ! defined( 'SUBCOLLECTION_TMPL' ) ) {
 // !!publisher!! nom de l'éditeur parent
 // !!collection!! nom de la collection parente
 
+global $subcollection_level2_display;
+global $subcollection_level2_no_issn_info;
+
 // level 2 : affichage général
 $subcollection_level2_display = "
 <div class=subcollectionlevel2>

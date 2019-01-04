@@ -2,7 +2,7 @@
 // +--------------------------------------------------------------------------+
 // | PMB est sous licence GPL, la réutilisation du code est cadrée            |
 // +--------------------------------------------------------------------------+
-// $Id: print_dsi.php,v 1.4.10.1 2015-08-13 13:19:23 jpermanne Exp $
+// $Id: print_dsi.php,v 1.6 2017-11-13 10:24:05 dgoron Exp $
 
 //Impression DSI
 
@@ -46,6 +46,5 @@ if (!$id_bannette) die( "<script>self.close();</script>" );
 header ("Content-Type: text/html; charset=$charset");
 
 $bannette = new bannette($id_bannette) ;
-$bannette->construit_diff() ;
-print pmb_bidi($bannette->texte_export) ;
+print pmb_bidi($bannette->get_display_export());
 

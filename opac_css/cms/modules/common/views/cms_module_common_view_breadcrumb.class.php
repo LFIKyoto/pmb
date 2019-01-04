@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_breadcrumb.class.php,v 1.4 2015-06-08 09:12:09 arenou Exp $
+// $Id: cms_module_common_view_breadcrumb.class.php,v 1.7 2017-07-20 12:58:49 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -47,12 +47,17 @@ class cms_module_common_view_breadcrumb extends cms_module_common_view_django{
 		$render_datas['home'] = array(
 			'title' => $this->msg['home'],
 			'link' => $opac_url_base
-		);
-		foreach($datas as $section){
-			$cms_section = cms_provider::get_instance("section",$section);
-			$infos= $cms_section->format_datas(false,false);
-			$infos['link'] = $this->get_constructed_link("section",$section);
-			$render_datas['sections'][]=$infos;
+		);	
+		if($datas['article']){
+			$render_datas['article'] = $datas['article'];
+		}
+		if(count($datas['sections'])) { 
+			foreach($datas['sections'] as $section){
+				$cms_section = cms_provider::get_instance("section",$section);
+				$infos= $cms_section->format_datas(false,false);
+				$infos['link'] = $this->get_constructed_link("section",$section);
+				$render_datas['sections'][]=$infos;
+			}
 		}
 		//on rappelle le tout...
 		return parent::render($render_datas);
@@ -85,6 +90,12 @@ class cms_module_common_view_breadcrumb extends cms_module_common_view_django{
 			'desc'=> $this->msg['cms_module_common_view_section_link_desc']
 		);
 		$format[]=$sections;
+		$article = array(
+			'var' => "article",
+			'desc' => $this->msg['cms_module_common_view_article_desc'],
+			'children' => $this->prefix_var_tree(cms_article::get_format_data_structure(),"article")
+		);
+		$format[]=$article;
 		$format = array_merge($format,parent::get_format_data_structure());
 		return $format;
 	}

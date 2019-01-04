@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+****************************************************************************************
+© 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+****************************************************************************************
+$Id: en_US.xml,v 1.12 2016-06-13 16:55:56 mbertin Exp $ -->
 <pmbquotas>
 	<elements>
 
@@ -84,7 +89,7 @@
 			</quotas>
 		</type>
 		
-		<type name="PROLONG_NMBR_QUOTA" id="64" max="no" min="no" forcelend="yes" commentForcelend="de la prolongation" comment="Quotas de nombre de prolongation" short_comment="nombre de prolongation">
+		<type name="PROLONG_NMBR_QUOTA" id="64" max="no" min="no" forcelend="yes" commentForcelend="de la prolongation" comment="Quotas de nombre de prolongations" short_comment="nombre de prolongations">
 			<quotas>
 				<on>READER_CATEG</on>
 				<on>DOCTYPE</on>

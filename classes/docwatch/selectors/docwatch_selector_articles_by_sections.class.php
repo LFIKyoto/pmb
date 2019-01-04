@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_selector_articles_by_sections.class.php,v 1.2 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: docwatch_selector_articles_by_sections.class.php,v 1.3 2015-12-16 11:50:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -53,24 +53,29 @@ class docwatch_selector_articles_by_sections extends docwatch_selector {
 		$this->parameters['sections'] = $docwatch_selector_articles_by_sections_select;
 	}
 	
+	protected function _recurse_parent_select($parent=0,$lvl=0){
+		global $charset;
+		$opts = "";
+		$rqt = "select id_section, section_title from cms_sections where section_num_parent = '".$parent."'";
+		$res = pmb_mysql_query($rqt);
+		if(pmb_mysql_num_rows($res)){
+			while($row = pmb_mysql_fetch_object($res)){
+				$opts.="
+				<option value='".$row->id_section."' ".(in_array($row->id_section,$this->parameters['sections']) ? "selected='selected'" : "").">".str_repeat("&nbsp;&nbsp;",$lvl).htmlentities($row->section_title,ENT_QUOTES,$charset)."</option>";
+				$opts.=$this->_recurse_parent_select($row->id_section,$lvl+1);
+			}
+		}
+		return $opts;
+	}
 	
 	protected function gen_select(){
-		global $msg,$charset;
-	
 		if(!$this->id){
 			$this->parameters = array();
 			$this->parameters['sections'] = array();
 		}
-		$query= "select id_section, section_title from cms_sections";// where section_publication_state = 1";
-		$result = pmb_mysql_query($query);
 		$select = "
 				<select name='docwatch_selector_articles_by_sections_select[]' multiple='yes'>";
-		if(pmb_mysql_num_rows($result)){
-			while($row = pmb_mysql_fetch_object($result)){
-				$select.="
-					<option value='".$row->id_section."' ".(in_array($row->id_section,$this->parameters['sections']) ? "selected='selected'" : "").">".htmlentities($row->section_title,ENT_QUOTES,$charset)."</option>";
-			}
-		}
+		$select.= $this->_recurse_parent_select();
 		$select.= "
 				</select>";
 		return $select;

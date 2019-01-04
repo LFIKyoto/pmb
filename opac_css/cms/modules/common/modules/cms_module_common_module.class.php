@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_module.class.php,v 1.44 2015-04-03 11:16:27 jpermanne Exp $
+// $Id: cms_module_common_module.class.php,v 1.64 2018-09-25 13:55:47 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -22,9 +22,12 @@ class cms_module_common_module extends cms_module_root{
 	protected $managed_datas;
 	public $fixed = false;
 	protected $extension_datas = array();
+	public $memo_url = "";
 	protected $modcache = "get_post_view";
 	protected $selected_datasource = "";
 	protected $selected_view = "";
+	public $css_class = "";
+	public $classement = "";
 	
 	public function __construct($id=0){
 		$this->id = $id+0;
@@ -85,8 +88,11 @@ class cms_module_common_module extends cms_module_root{
 		$informations['informations']['managed'] = ($manifest->getElementsByTagName("managed") && $manifest->getElementsByTagName("managed")->item(0)->nodeValue == "true" ? true : false);
 		
 		//fournisseur de liens?
-		$informations['informations']['extension_form'] = ($manifest->getElementsByTagName("extension_form") && $manifest->getElementsByTagName("extension_form")->item(0)->nodeValue == "true" ? true : false);
-		
+		if(isset($manifest->getElementsByTagName("extension_form")->item(0)->nodeValue)) {
+			$informations['informations']['extension_form'] = ($manifest->getElementsByTagName("extension_form")->item(0)->nodeValue == "true" ? true : false);
+		} else {
+			$informations['informations']['extension_form'] = '';
+		}
 		
 		@ini_set("zend.ze1_compatibility_mode", "0");
 		//on récupère la listes des éléments utilisés par le module...
@@ -101,7 +107,7 @@ class cms_module_common_module extends cms_module_root{
 		if($this->id){
 			$this->classement_list=array();
 			//on va cherches les infos du cadres...
-			$query = "select * from cms_cadres where id_cadre = ".$this->id;
+			$query = "select * from cms_cadres where id_cadre = '".$this->id."'";
 			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				$row = pmb_mysql_fetch_object($result);
@@ -109,14 +115,15 @@ class cms_module_common_module extends cms_module_root{
 				$this->hash = $row->cadre_hash;
 				$this->name = $row->cadre_name;
 				$this->fixed = $row->cadre_fixed;
-				$this->styles = unserialize($row->styles);
+				$this->styles = unserialize($row->cadre_styles);
 				$this->dom_parent = $row->cadre_dom_parent;
 				$this->dom_after = $row->cadre_dom_after;
 				$this->memo_url = $row->cadre_memo_url;
 				$this->cadre_url = $row->cadre_url;				
 				$this->classement = $row->cadre_classement;	
 				$this->modcache = $row->cadre_modcache;
-				$query = "select id_cadre_content,cadre_content_object,cadre_content_type from cms_cadre_content where cadre_content_num_cadre = ".$this->id;
+				$this->css_class = $row->cadre_css_class;
+				$query = "select id_cadre_content,cadre_content_object,cadre_content_type from cms_cadre_content where cadre_content_num_cadre = '".$this->id."' and cadre_content_num_cadre_content=0";
 				$result = pmb_mysql_query($query,$dbh);
 				if($result && pmb_mysql_num_rows($result)){
 					while ($ligne=pmb_mysql_fetch_object($result)) {
@@ -168,7 +175,15 @@ class cms_module_common_module extends cms_module_root{
 			$elements_used[$type] = array();
 			if($elements->length>0){
 				for($i=0 ; $i<$elements->length ; $i++){
-					if($elements->item($i)->nodeValue != ""){
+					// On regarde si l'élément est conditionné sur un paramètre
+					if ($elements->item($i)->getAttribute('conditionParam')) {
+						global ${$elements->item($i)->getAttribute('conditionParam')};
+						if (!${$elements->item($i)->getAttribute('conditionParam')}) {
+							// Le paramètre n'est pas vérifié, on s'arrête là
+							continue;
+						}
+					}
+					if(($elements->item($i)->nodeValue != "")) {
 						$elements_used[$type][] = $elements->item($i)->nodeValue;
 					}
 				}
@@ -181,6 +196,7 @@ class cms_module_common_module extends cms_module_root{
 		if(!in_array("cms_module_common_condition_global_var",$elements_used['condition'])) $elements_used['condition'][] = "cms_module_common_condition_global_var";
 		if(!in_array("cms_module_common_condition_global_var_value",$elements_used['condition'])) $elements_used['condition'][] = "cms_module_common_condition_global_var_value";
 		if(!in_array("cms_module_common_condition_view",$elements_used['condition'])) $elements_used['condition'][] = "cms_module_common_condition_view";
+		if(!in_array("cms_module_common_condition_lang",$elements_used['condition'])) $elements_used['condition'][] = "cms_module_common_condition_lang";
 		
 		@ini_set("zend.ze1_compatibility_mode", "1");
 		return $elements_used;
@@ -208,7 +224,7 @@ class cms_module_common_module extends cms_module_root{
 					<option value=''>".$this->format_text($this->msg['cms_module_datasource_choice'])."</option>";
 			foreach($this->elements_used['datasource'] as $datasource){
 				$form.= "
-					<option value='".$datasource."'".($datasource == $this->datasource['name'] ? " selected='selected'" : "").">".$this->format_text($this->msg[$datasource])."</option>";
+					<option value='".$datasource."'".(isset($this->datasource['name']) && $datasource == $this->datasource['name'] ? " selected='selected'" : "").">".$this->format_text($this->msg[$datasource])."</option>";
 			}
 			$form.="
 				</select>
@@ -238,7 +254,7 @@ class cms_module_common_module extends cms_module_root{
 						<option value=''>".$this->format_text($this->msg['cms_module_view_choice'])."</option>";
 			foreach($this->elements_used['view'] as $view){
 				$form.= "
-						<option value='".$view."'".($view == $this->view['name'] ? " selected='selected'" : "").">".$this->format_text($this->msg[$view])."</option>";
+						<option value='".$view."'".(isset($this->view['name']) && $view == $this->view['name'] ? " selected='selected'" : "").">".$this->format_text($this->msg[$view])."</option>";
 			}
 			$form.="
 					</select>
@@ -281,7 +297,7 @@ class cms_module_common_module extends cms_module_root{
 			}		
 		</script>
 		<form name='".$this->class_name."_form' id='".$this->class_name."_form' method='POST' action='".$action."' style='width:800px'>
-			<h3>".$this->format_text(($this->id ? sprintf($this->msg['cms_module_common_module_alter_cadre'],$this->informations['name']." : ".$this->name) : $this->msg['cms_module_common_module_new_cadre']." - ". $this->informations['name'] ))."</h3>
+			<h3>".$this->format_text(($this->id ? sprintf($this->msg['cms_module_common_module_alter_cadre'],$this->informations['name']." : ".$this->class_name."_".$this->id) : $this->msg['cms_module_common_module_new_cadre']." - ". $this->informations['name'] ))."</h3>
 			<div class='form-contenu'>
 				<div class='row'>
 					<div class='colonne3'>
@@ -296,7 +312,7 @@ class cms_module_common_module extends cms_module_root{
 						<label for='cms_module_common_module_fixed'>".$this->msg['cms_module_common_module_fixed']."</label>
 					</div>
 					<div class='colonne-suite'>
-						<input type='checkbox' name='cms_module_common_module_fixed' value='1' ".($this->fixed? "checked='checked'":"")."/>
+						<input type='checkbox' id='cms_module_common_module_fixed' name='cms_module_common_module_fixed' value='1' ".($this->fixed && count($this->conditions) == 0 ? "checked='checked'":"").(count($this->conditions)? "disabled":"")."/>
 					</div>
 				</div>
 				<div class='row'>		
@@ -322,6 +338,14 @@ class cms_module_common_module extends cms_module_root{
 						</select>
 					</div>
 				</div>
+				<div class='row'>		
+					<div class='colonne3'>
+						<label for='cms_module_common_module_css_class'>".$this->msg['cms_module_common_module_css_class']."</label>
+					</div>
+					<div class='colonne-suite'>
+						<input type='text' name='cms_module_common_module_css_class' value='".addslashes($this->format_text($this->css_class))."'/>
+					</div>
+				</div>
 				<div class='row'></div>
 				<hr/>";
 		
@@ -330,8 +354,8 @@ class cms_module_common_module extends cms_module_root{
 				<hr/>
 				<div class='row'>";
 		$form.= $this->get_datasources_list_form();
-		if($this->datasource['id'] || count($this->elements_used['datasource'])==1){
-			if($this->datasource['id']){
+		if((isset($this->datasource['id']) && $this->datasource['id']) || count($this->elements_used['datasource'])==1){
+			if(isset($this->datasource['id']) && $this->datasource['id']){
 				$datasource_name = $this->datasource['name'];
 				$datasource_id = $this->datasource['id'];
 			}else if(count($this->elements_used['datasource'])==1){
@@ -348,7 +372,7 @@ class cms_module_common_module extends cms_module_root{
 				</div>
 			</div>";
 		$form.=$this->get_filters_form();
-		if($this->filter['id']){
+		if(isset($this->filter['id']) && $this->filter['id']){
 			$form.="
 			<script type='text/javascript'>
 				cms_module_load_elem_form('".$this->filter['name']."','".$this->filter['id']."','filter_form');
@@ -358,8 +382,8 @@ class cms_module_common_module extends cms_module_root{
 			<hr/>
 			<div class='row'>";
 		$form.= $this->get_views_list_form();
-		if($this->view['id'] || count($this->elements_used['view'])==1 ){
-			if($this->view['id']){
+		if((isset($this->view['id']) && $this->view['id']) || count($this->elements_used['view'])==1 ){
+			if(isset($this->view['id']) && $this->view['id']){
 				$view_name = $this->view['name'];
 				$view_id = $this->view['id'];
 			}else if(count($this->elements_used['view'])==1){
@@ -417,16 +441,16 @@ class cms_module_common_module extends cms_module_root{
 						if(typeof(".$callback.") == 'function'){
 							".$callback."(data);
 						}else{
-							alert('".$this->addslashes($this->msg['cms_module_common_module_saved'])."');
+							alert('".addslashes($this->msg['cms_module_common_module_saved'])."');
 						}";	
 			}else{
 				$form.="
-						alert('".$this->addslashes($this->msg['cms_module_common_module_saved'])."');";
+						alert('".addslashes($this->msg['cms_module_common_module_saved'])."');";
 			}
 			$form.="
 					},
 					error: function(error) {
-						alert('".$this->addslashes($this->msg['cms_module_common_module_save_error'])."');
+						alert('".addslashes($this->msg['cms_module_common_module_save_error'])."');
 					}
 				});
 			}
@@ -441,16 +465,16 @@ class cms_module_common_module extends cms_module_root{
 						if(typeof(".$delete_callback.") == 'function'){
 							".$delete_callback."(data);
 						}else{
-							alert('".$this->addslashes($this->msg['cms_module_common_module_deleted'])."');
+							alert('".addslashes($this->msg['cms_module_common_module_deleted'])."');
 						}";	
 			}else{
 				$form.="
-						alert('".$this->addslashes($this->msg['cms_module_common_module_deleted'])."');";
+						alert('".addslashes($this->msg['cms_module_common_module_deleted'])."');";
 			}
 			$form.="
 					},
 					error: function(error) {
-						alert('".$this->addslashes($this->msg['cms_module_common_module_delete_error'])."');
+						alert('".addslashes($this->msg['cms_module_common_module_delete_error'])."');
 					}
 				});		
 			}
@@ -489,6 +513,22 @@ class cms_module_common_module extends cms_module_root{
 		$str_to_hash = "";
 		$hash = "";
 		$str_to_hash_more="";
+// AR - 25/09/2018 : On revient en arrière, le calcul des conditions pour la génération du cache est trop gourmande en .		
+// 		//$obj = cms_modules_parser::get_module_class_by_id($id*1);
+// 		$query = 'select id_cadre_content, cadre_content_object from cms_cadre_content where cadre_content_type ="condition" and cadre_content_num_cadre = '.$id;
+// 		$result = pmb_mysql_query($query);
+// 		$visible = true;
+// 		if(pmb_mysql_num_rows($result)){
+// 		    while($row = pmb_mysql_fetch_object($result)){
+// 		        $condition = cms_modules_parser::get_module_class_content($row->cadre_content_object, $row->id_cadre_content);
+// 		        $visible = $condition->check_condition();
+// 		        if(!$visible){
+// 		            break;
+// 		        }
+// 		    }
+// 		}
+//      $str_to_hash_more =  "visible=".($visible);
+// AR - fin 25/09/2018
 		if($tmp=$_SERVER["REQUEST_URI"]){
 			if(preg_match("#/([^/]*?\.php)#i",$tmp,$matches)){
 				if($tmp2=trim($matches[1])){
@@ -501,7 +541,7 @@ class cms_module_common_module extends cms_module_root{
 		}
 		
 		if($id){
-			$query = "select cadre_modcache from cms_cadres where id_cadre = ".$id;
+			$query = "select cadre_modcache from cms_cadres where id_cadre = '".($id*1)."'";
 			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				$mode = pmb_mysql_result($result,0,0);
@@ -514,7 +554,7 @@ class cms_module_common_module extends cms_module_root{
 					$str_to_hash = "";
 					break;
 				case "get_post_view" :
-					$str_to_hash = $obj_name."_".serialize($_GET)."_".serialize($_POST)."_".$_SESSION['opac_view'];
+					$str_to_hash = $obj_name."_".serialize($_GET)."_".serialize($_POST)."_".(isset($_SESSION['opac_view']) ? $_SESSION['opac_view'] : '');
 					break;
 				case "view" :
 					$str_to_hash = $obj_name."_".$_SESSION['opac_view'];
@@ -558,6 +598,7 @@ class cms_module_common_module extends cms_module_root{
 		global $cms_module_common_module_fixed;
 		global $cms_module_common_module_memo_url;		
 		global $cms_module_common_module_modcache;	
+		global $cms_module_common_module_css_class;
 		
 		$this->name = strip_tags(stripslashes($cms_module_common_module_name));
 		//on calcule un hash...
@@ -565,6 +606,8 @@ class cms_module_common_module extends cms_module_root{
 		//on enregistre le cadre...
 		if($cms_module_common_module_memo_url){
 			$cadre_url = " cadre_url = '".$this->build_cadre_url()."', ";
+		} else {
+			$cadre_url = "";
 		}
 		if($this->id){
 			$query = "update cms_cadres set ";
@@ -580,8 +623,9 @@ class cms_module_common_module extends cms_module_root{
 			cadre_fixed = ".($cms_module_common_module_fixed ? "1" : "0")." ,	
 			$cadre_url		
 			cadre_memo_url = ".($cms_module_common_module_memo_url ? "1" : "0").",
-			cadre_modcache ='".addslashes($cms_module_common_module_modcache)."'		
-			".$clause;
+			cadre_modcache ='".addslashes($cms_module_common_module_modcache)."',
+			cadre_css_class = '".addslashes($cms_module_common_module_css_class)."'"	
+			.$clause;
 		
 		$result = pmb_mysql_query($query,$dbh);
 		if($result){
@@ -593,9 +637,9 @@ class cms_module_common_module extends cms_module_root{
 			$result = $this->save_conditions();
 			if($result){
 				//source de donnée
-				if($datasource_choice == $this->datasource['name']){
+				if (!empty($this->datasource['name']) && ($datasource_choice == $this->datasource['name'])) {
 					$datasource_id = $this->datasource['id'];
-				}else{
+				} else {
 					$datasource_id = 0;
 				}
 				$datasource = new $datasource_choice($datasource_id);
@@ -607,7 +651,7 @@ class cms_module_common_module extends cms_module_root{
 						'name' => $datasource_choice
 					);
 					//le filtre
-					if($filter_choice == $this->filter['name']){
+					if(isset($this->filter['name']) && $filter_choice == $this->filter['name']){
 						$filter_id = $this->filter['id'];
 					}else{
 						$filter_id = 0;
@@ -626,11 +670,20 @@ class cms_module_common_module extends cms_module_root{
 							//	sauvegarde du filtre ratée, on supprime le cadre...
 							$this->delete();
 						}
+					}else{
+						if(!isset($this->filter['id'])) $this->filter['id'] = 0;
+						if($this->filter['id']){
+							$query = "delete from cms_cadre_content
+								where id_cadre_content = '".($this->filter['id']*1)."'
+								and cadre_content_type='filter'
+								and cadre_content_num_cadre='".$this->id."'";
+							pmb_mysql_query($query);
+						}
 					}
 					//vue
-					if($view_choice == $this->view['name']){
+					if (!empty($this->view['name']) && ($view_choice == $this->view['name'])) {
 						$view_id = $this->view['id'];
-					}else{
+					} else {
 						$view_id = 0;
 					}
 					$view = new $view_choice($view_id);
@@ -716,14 +769,16 @@ class cms_module_common_module extends cms_module_root{
 						dojo.xhrPost({
 							url : './ajax.php?module=cms&categ=module&elem='+condition+'&action=get_form&id=0',
 							postData : 'cms_build_info=".rawurlencode(serialize($this->cms_build_env))."&cms_module_class=".rawurlencode($this->class_name)."',
-							handelAs : 'text/html',
+							handleAs : 'text',
 							load : function(data){
 								var condition_form= new dojox.layout.ContentPane({
 									content : data
 								},form_content);
 								dojo.place(form_content,'cms_module_common_module_conditions_form');
 							}
-						});		
+						});								
+						document.getElementById('cms_module_common_module_fixed').checked = false;
+						document.getElementById('cms_module_common_module_fixed').disabled = true;	
 					}
 				}
 			</script>";
@@ -769,7 +824,7 @@ class cms_module_common_module extends cms_module_root{
 		pmb_mysql_query($query,$dbh);
 		
 		//on élimine tous les éléments associés directement au cadre...
-		$query = "select id_cadre_content, cadre_content_object from cms_cadre_content where cadre_content_num_cadre = ".$this->id." and cadre_content_num_cadre_content = 0";
+		$query = "select id_cadre_content, cadre_content_object from cms_cadre_content where cadre_content_num_cadre = '".$this->id."' and cadre_content_num_cadre_content = 0";
 		$result=pmb_mysql_query($query,$dbh);
 		if(pmb_mysql_num_rows($result)){
 			//pour éviter tout problème, on ne supprime pas directement les élements de la table, on appelle la méthode de suppression de l'objet...
@@ -783,7 +838,7 @@ class cms_module_common_module extends cms_module_root{
 			}
 		}
 		//il ne peut en rester qu'un, et c'est perdu pour celui-ci...
-		$query = "delete from cms_cadres where id_cadre = ".$this->id;
+		$query = "delete from cms_cadres where id_cadre = '".$this->id."'";
 		$result = pmb_mysql_query($query,$dbh);
 		if($result){
 			$this->delete_hash();
@@ -796,7 +851,8 @@ class cms_module_common_module extends cms_module_root{
 	
 	public function check_conditions(){
 		for($i=0 ; $i<count($this->conditions) ; $i++){
-			$condition = new $this->conditions[$i]['name']($this->conditions[$i]['id']);
+// 			$condition = new $this->conditions[$i]['name']($this->conditions[$i]['id']);
+			$condition = cms_modules_parser::get_module_class_content($this->conditions[$i]['name'], $this->conditions[$i]['id']);
 			if(!$condition->check_condition()){
 				return false;
 			}else{
@@ -809,7 +865,7 @@ class cms_module_common_module extends cms_module_root{
 	public function show_cadre(){
  		if($this->get_selected_datasource()){
 			if($this->get_selected_view()){
-				return "<div id='".$this->get_dom_id()."' class='".$this->class_name." cms_module'>".$this->selected_view->render($this->selected_datasource->get_datas())."</div>";
+			    return "<div id='".$this->get_dom_id()."' class='".$this->class_name." cms_module".($this->css_class != '' ? " ".$this->css_class : "")."'>".$this->selected_view->render($this->selected_datasource->get_datasource_data())."</div>";
 			}
  		}
  		return "";
@@ -823,7 +879,7 @@ class cms_module_common_module extends cms_module_root{
 		//on regarde si des conditions peuvent être pré-chargées...
 		for($i=0 ; $i<count($this->elements_used['condition']) ; $i++){
 			//appel statique du test de la conditions 
-			if(call_user_func(array($this->elements_used['condition'][$i],is_loadable_default))){
+			if(call_user_func(array($this->elements_used['condition'][$i],'is_loadable_default'))){
 				//	si c'est positif, on ajoute la condition...
 				$this->conditions[]=array(
 					'id' => 0,
@@ -833,13 +889,13 @@ class cms_module_common_module extends cms_module_root{
 		}
 	}
 
-	public function get_headers(){
+	public function get_headers($datas=array()){
 		$headers=array(
 			'add' => array(),
 			'replace' => array()
 		);
 		if($this->get_selected_datasource()){
-			$datasource_headers = $this->selected_datasource->get_headers();
+			$datasource_headers = $this->selected_datasource->get_headers($datas);
 			if(isset($datasource_headers['add']) || isset($datasource_headers['replace']) ){
 				$headers['add'] = array_merge($headers['add'],$datasource_headers['add']);
 				$headers['replace'] = array_merge($headers['replace'],$datasource_headers['replace']);
@@ -851,7 +907,7 @@ class cms_module_common_module extends cms_module_root{
 			$headers['replace'] = array_unique($headers['replace']);
 		}
 		if($this->get_selected_view()){
-			$view_headers = $this->selected_view->get_headers($this->selected_datasource->get_datas());
+		    $view_headers = $this->selected_view->get_headers($this->selected_datasource->get_datasource_data());
 			if(isset($view_headers['add']) || isset($view_headers['replace']) ){
 				$headers['add'] = array_merge($headers['add'],$view_headers['add']);
 				$headers['replace'] = array_merge($headers['replace'],$view_headers['replace']);
@@ -863,8 +919,9 @@ class cms_module_common_module extends cms_module_root{
 			$headers['replace'] = array_unique($headers['replace']);
 		}
 		for($i=0 ; $i<count($this->conditions) ; $i++){
-			$condition = new $this->conditions[$i]['name']($this->conditions[$i]['id']);
-			$condition_headers = $condition->get_headers();		
+			//$condition = new $this->conditions[$i]['name']($this->conditions[$i]['id']);
+			$condition = cms_modules_parser::get_module_class_content($this->conditions[$i]['name'], $this->conditions[$i]['id']);
+			$condition_headers = $condition->get_headers($datas);		
 			if(isset($condition_headers['add']) || isset($condition_headers['replace']) ){
 				$headers['add'] = array_merge($headers['add'],$condition_headers['add']);
 				$headers['replace'] = array_merge($headers['replace'],$condition_headers['replace']);
@@ -883,7 +940,7 @@ class cms_module_common_module extends cms_module_root{
 		$query = "select managed_module_box from cms_managed_modules where managed_module_name = '".$this->class_name."'";
 		$result = pmb_mysql_query($query,$dbh);
 		if(pmb_mysql_num_rows($result)){
-			$this->managed_datas = unserialize(pmb_mysql_result($result,0,0));
+			$this->managed_datas = @unserialize(pmb_mysql_result($result,0,0));
 		}
 	}
 	
@@ -891,6 +948,7 @@ class cms_module_common_module extends cms_module_root{
 		global $base_path;
 		global $quoi;
 		
+		$form = '';
 		switch($quoi){
 			case "views" :
 			case "datasources" :
@@ -918,7 +976,7 @@ class cms_module_common_module extends cms_module_root{
 				$this->managed_datas[$quoi] = $this->save_manage_form();
 				break;		
 		}
-		$query = "replace into cms_managed_modules set managed_module_name = '".$this->class_name."', managed_module_box = '".$this->addslashes(serialize($this->managed_datas))."'";
+		$query = "replace into cms_managed_modules set managed_module_name = '".$this->class_name."', managed_module_box = '".addslashes(serialize($this->managed_datas))."'";
 		return pmb_mysql_query($query,$dbh);
 	}
 	
@@ -1007,7 +1065,7 @@ class cms_module_common_module extends cms_module_root{
  						<option value=''>".$this->format_text($this->msg['cms_module_common_module_filter_choice'])."</option>";
 	 		foreach($this->elements_used['filter'] as $filter){
  				$form.= "
- 						<option value='".$filter."'".($filter == $this->filter['name'] ? " selected='selected'" : "").">".$this->format_text($this->msg[$filter])."</option>";
+ 						<option value='".$filter."'".(isset($this->filter['name']) && $filter == $this->filter['name'] ? " selected='selected'" : "").">".$this->format_text($this->msg[$filter])."</option>";
 	  		}
  			$form.="
  					</select>
@@ -1029,19 +1087,16 @@ class cms_module_common_module extends cms_module_root{
 	}
 	
 	public function get_exported_datas(){
-		$infos = array(
-			"id" => $this->id,
-			"class" => $this->class_name,
-			"name" => $this->name,
-			"hash" => $this->hash,
-			"fixed"=> $this->fixed,
-			"managed_datas" => $this->managed_datas,
-			"parameters" => $this->parameters
-		);
+		$infos = parent::get_exported_datas();		
+		$infos['name'] = $this->name;
+		$infos['fixed'] = $this->fixed;
+		$infos['css_class'] = $this->css_class;
+		$infos['modcache'] = $this->modcache;
+		$infos['classement'] = $this->classement;	
 		$datasource = new $this->datasource['name']($this->datasource['id']);
-		$infos['datasource'] = $datasource->get_exported_datas();
+		$infos['datasource'] = $datasource->get_exported_datas();		
 		$view = new $this->view['name']($this->view['id']);
-		$infos['view'] = $view->get_exported_datas();
+		$infos['view'] = $view->get_exported_datas();		
 		$infos['conditions'] = array();
 		for($i=0 ; $i<count($this->conditions) ; $i++){
 			$condition = new $this->conditions[$i]['name']($this->conditions[$i]['id']);
@@ -1052,7 +1107,7 @@ class cms_module_common_module extends cms_module_root{
 	
 	public function get_extension_form($type,$type_elem,$num_elem){
 		global $dbh;
-		$query = "select extension_datas_datas from cms_modules_extensions_datas where extension_datas_module = '".$this->class_name."' and extension_datas_type = '".$type."' and extension_datas_type_element = '".$type_elem."' and extension_datas_num_element = '".$num_elem."'";
+		$query = "select extension_datas_datas from cms_modules_extensions_datas where extension_datas_module = '".$this->class_name."' and extension_datas_type = '".$type."' and extension_datas_type_element = '".$type_elem."' and extension_datas_num_element = '".($num_elem*1)."'";
 		$result = pmb_mysql_query($query,$dbh);
 		if(pmb_mysql_num_rows($result)){
 			$this->extension_datas = unserialize(pmb_mysql_result($result,0,0));
@@ -1064,7 +1119,7 @@ class cms_module_common_module extends cms_module_root{
 	protected function save_extension_form($type,$type_elem,$num_elem){
 		global $dbh;
 		//on supprime ceux d'avant...
-		$query = "delete from cms_modules_extensions_datas where extension_datas_module = '".$this->class_name."' and extension_datas_type = '".$type."' and extension_datas_type_element = '".$type_elem."' and extension_datas_num_element = '".$num_elem."'";
+		$query = "delete from cms_modules_extensions_datas where extension_datas_module = '".$this->class_name."' and extension_datas_type = '".$type."' and extension_datas_type_element = '".$type_elem."' and extension_datas_num_element = '".($num_elem*1)."'";
 		pmb_mysql_query($query,$dbh);
 		
 		$query = "insert into cms_modules_extensions_datas set 
@@ -1093,6 +1148,7 @@ class cms_module_common_module extends cms_module_root{
 		if(!$this->selected_datasource){
 			if($this->datasource['id']!= 0){
 				$this->selected_datasource = new $this->datasource['name']($this->datasource['id']);
+				if(!isset($this->filter['id'])) $this->filter['id'] = 0;
 				if($this->filter['id']!= 0){
 					$filter = new $this->filter['name']($this->filter['id']);
 					$this->selected_datasource->set_filter($filter);
@@ -1108,10 +1164,44 @@ class cms_module_common_module extends cms_module_root{
 		if(!$this->selected_view){
 			if($this->view['id'] != 0){
 				$this->selected_view = new $this->view['name']($this->view['id']);
+				$this->selected_view->set_cadre_name($this->name);
 			}else{
 				return false;
 			}
 		}
 		return $this->selected_view;
+	}
+	
+	public function get_human_description(){
+		
+		$datasource = new $this->datasource['name']($this->datasource['id']);	
+		$view = new $this->view['name']($this->view['id']);	
+		
+		$description = "<span class = 'cms_module_common_module_human_description'><strong>".$this->name."</strong> ( ".$this->id." ) (".$this->classement.")</span><br/>";
+		foreach ($this->get_modcache_choices() as $modcache){
+			if($modcache['value'] == $this->modcache){
+				$description .= "<span class = 'cms_module_common_modcache_human_description'><em>- ".$this->format_text($this->msg['cms_module_common_module_modcache'])."</em> : <span class = 'cms_module_common_modcache_name_human_description'>".$modcache['name']."</span></span><br/>";				
+			}
+		}
+		if($this->css_class){
+			$description .= "<span class = 'cms_module_common_css_class_human_description'><em>- ".$this->format_text($this->msg['cms_module_common_module_css_class'])."</em> : <span class = 'cms_module_common_css_class_name_human_description'>".$this->css_class."</span></span><br/>";
+		}	
+		if(count($this->conditions)){
+			$description .="<span class = 'cms_module_common_condition_human_description'><em>- ".$this->format_text($this->msg['cms_manage_module_conditions'])."</em> : ";
+						
+			for($i=0 ; $i<count($this->conditions) ; $i++){
+				$condition = new $this->conditions[$i]['name']($this->conditions[$i]['id']);
+				if($i == 0){
+					$description .= $condition->get_human_description($this->format_text($this->msg[$condition->class_name]));
+				}else{					
+					$description .= "; ".$condition->get_human_description($this->format_text($this->msg[$condition->class_name]));
+				}
+			}
+			
+			$description .=	"</span><br/>"; 
+		}
+		$description .="<span class = 'cms_module_common_datasource_human_description'><em>- ".$this->format_text($this->msg['cms_manage_module_datasources'])."</em> : ".$datasource->get_human_description(isset($this->msg[$datasource->class_name]) ? $this->format_text($this->msg[$datasource->class_name]) : '')."</span><br/>
+						<span class = 'cms_module_common_view_human_description'><em>- ".$this->format_text($this->msg['cms_manage_module_views'])."</em> : ".$view->get_human_description(isset($this->msg[$view->class_name]) ? $this->format_text($this->msg[$view->class_name]) : '')."</span>";		
+		return $description;	
 	}
 }

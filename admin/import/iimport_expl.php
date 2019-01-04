@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: iimport_expl.php,v 1.71 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: iimport_expl.php,v 1.79 2018-11-22 16:18:40 dgoron Exp $
 
 // définition du minimum necessaire
 $base_path="../..";
@@ -33,26 +33,27 @@ require_once ("$class_path/lender.class.php");
 require_once ("$class_path/notice.class.php");
 require_once ("$class_path/titre_uniforme.class.php");
 require_once($class_path."/origin.class.php");
+require_once($class_path."/import/import_entities.class.php");
 require_once("$include_path/parser.inc.php");
 
 require_once("import_func.inc.php");
 
 $name_func="func_import";
 
-if($$name_func){
-	$$name_func.=".php";
+if(isset(${$name_func}) && ${$name_func}){
+	${$name_func}.=".php";
 }
 
 //J'efface la fonction d'import de la session au début de l'import
-if((!$file_submit && $action=="preload" && !$$name_func) || ($action=="beforeupload" && !$$name_func)){
+if(((!isset($file_submit) || !$file_submit) && $action=="preload" && !${$name_func}) || ($action=="beforeupload" && !${$name_func})){
 	$_SESSION["func_import_model"]="";
 }
 
 //Controle que la fonction d'import existe
 $trouve=false;
 $table_list_func_import=array();
-if($$name_func){
-	if($$name_func == $pmb_import_modele){
+if(isset(${$name_func}) && ${$name_func}){
+	if(${$name_func} == $pmb_import_modele){
 		$trouve=true;
 	}else{
 		if(file_exists("func_import_subst.xml")){
@@ -62,7 +63,7 @@ if($$name_func){
         }
        	if(is_array($table_list_func_import["ITEM"]) && count($table_list_func_import["ITEM"])){
        		foreach ( $table_list_func_import["ITEM"] as $value ) {
-       			if($value["FUNCTION"] == $$name_func){
+       			if($value["FUNCTION"] == ${$name_func}){
        				$trouve=true;
        				break;
        			}
@@ -73,7 +74,7 @@ if($$name_func){
 
 $func_import_model="";
 if(!$trouve){
-	if($_SESSION["func_import_model"]){
+	if(isset($_SESSION["func_import_model"]) && $_SESSION["func_import_model"]){
 		$func_import_model=$_SESSION["func_import_model"];
 	}elseif(!$pmb_import_modele) {
 		$func_import_model="func_bdp.inc.php";
@@ -81,7 +82,7 @@ if(!$trouve){
 		$func_import_model=$pmb_import_modele;
 	}
 }else{
-	$func_import_model=$$name_func;
+	$func_import_model=${$name_func};
 	$_SESSION["func_import_model"]=$func_import_model;//Je garde la fonction d'import sélectionnée jusqu'à la fin
 }
 if (file_exists($func_import_model)) {
@@ -94,7 +95,7 @@ if (file_exists($func_import_model)) {
 //Gestion de l'encodage du fichier d'import
 if(isset($encodage_fic_source)){
 	$_SESSION["encodage_fic_source"]=$encodage_fic_source;
-}elseif($_SESSION["encodage_fic_source"]){
+}elseif(isset($_SESSION["encodage_fic_source"])){
 	$encodage_fic_source=$_SESSION["encodage_fic_source"];
 }
 
@@ -102,8 +103,8 @@ print "<div id='contenu-frame'>" ;
 
 $nom_fichier_transfert_ftp = "unimarc".(defined("LOCATION")?"_".constant("LOCATION"):"").".fic";
 
-$tmp_file = $_FILES['userfile']['tmp_name'];
-if (!isset($from_file)) $from_file = $_FILES['userfile']['name'];
+$tmp_file = (isset($_FILES['userfile']['tmp_name']) ? $_FILES['userfile']['tmp_name'] : '');
+if (!isset($from_file)) $from_file = (isset($_FILES['userfile']['name']) ? $_FILES['userfile']['name'] : '');
 $to_file = $base_path.'/temp/'.basename($tmp_file);
 
 if ($sub == "import_expl") {
@@ -137,6 +138,8 @@ switch ($action) {
 	break;
 	case 'afterupload':
 		if (!$statutnot) $statutnot = 1 ;
+		if(!isset($que_faire)) $que_faire = '';
+		if(!isset($isbn_only)) $isbn_only = '';
 		if ($sub == "import_expl") {
 			if ($book_lender_id==0 || $book_lender_id=="") {
 				print $msg[561];
@@ -170,11 +173,14 @@ switch ($action) {
 				print "<INPUT TYPE=\"hidden\" NAME=\"statisdoc_codage\" VALUE=\"$statisdoc_codage\" />\n";
 				print "<INPUT TYPE=\"hidden\" NAME=\"sdoc_codage\" VALUE=\"$sdoc_codage\" />\n";
 				print "<INPUT TYPE=\"hidden\" NAME=\"statutnot\" VALUE=\"$statutnot\" />\n";
+				print "<INPUT TYPE=\"hidden\" NAME=\"notice_is_new\" VALUE=\"$notice_is_new\" />\n";
 				print "<INPUT TYPE=\"hidden\" NAME=\"book_location_id\" VALUE=\"$book_location_id\" />\n";
 				print "<INPUT TYPE=\"hidden\" NAME=\"que_faire\" VALUE=\"$que_faire\" />\n";
 				print "<INPUT TYPE=\"hidden\" NAME=\"link_generate\" VALUE=\"$link_generate\" />\n";
 				print "<input type='hidden' name='authorities_notices' value='".$authorities_notices."' />\n";
 				print "<input type='hidden' name='authorities_default_origin' value='".$authorities_default_origin."' />\n";
+				print "<input type='hidden' name='import_force_notice_is_new' value='".$import_force_notice_is_new."' />\n";
+				print "<input type='hidden' name='notice_replace_links' value='".$notice_replace_links."' />\n";
 				print "</FORM>";
 				print "<SCRIPT>setTimeout(\"document.afterupload.submit()\",2000);</SCRIPT>";
 			}
@@ -198,10 +204,13 @@ switch ($action) {
 				print "<INPUT TYPE=\"hidden\" NAME=\"isbn_dedoublonnage\" VALUE=\"$isbn_dedoublonnage\" />\n";
 				print "<INPUT TYPE=\"hidden\" NAME=\"isbn_only\" VALUE=\"$isbn_only\" />\n";
 				print "<INPUT TYPE=\"hidden\" NAME=\"statutnot\" VALUE=\"$statutnot\" />\n";
+				print "<INPUT TYPE=\"hidden\" NAME=\"notice_is_new\" VALUE=\"$notice_is_new\" />\n";
 				print "<INPUT TYPE=\"hidden\" NAME=\"que_faire\" VALUE=\"$que_faire\" />\n";
 				print "<INPUT TYPE=\"hidden\" NAME=\"link_generate\" VALUE=\"$link_generate\" />\n";
 				print "<input type='hidden' name='authorities_notices' value='".$authorities_notices."' />\n";
 				print "<input type='hidden' name='authorities_default_origin' value='".$authorities_default_origin."' />\n";
+				print "<input type='hidden' name='import_force_notice_is_new' value='".$import_force_notice_is_new."' />\n";
+				print "<input type='hidden' name='notice_replace_links' value='".$notice_replace_links."' />\n";
 				print "</FORM>";
 				print "<SCRIPT>setTimeout(\"document.afterupload.submit()\",2000);</SCRIPT>";
 			}
@@ -245,16 +254,26 @@ switch ($action) {
 	                    		</div>
 	                    	</div>
 	                    	<div class='colonne-suite'>
-                    			<label class='etiquette' for='generer_lien'>".$msg['import_genere_liens']."</label><br />
-                    			<INPUT TYPE='radio' NAME='link_generate' id='link1' VALUE=' 1' CLASS='radio' /><label for='link1'> $msg[40] </label>
-                            	<INPUT TYPE='radio' NAME='link_generate' id='link0' VALUE='0' CLASS='radio' checked='checked' /><label for='link0'> $msg[39] </label>
+	                    		<label class='etiquette' for='generer_lien'>".$msg['import_genere_liens']."</label><br />
+	                    		<INPUT TYPE='radio' NAME='link_generate' id='link1' VALUE=' 1' CLASS='radio' onclick='param_links_display();' /><label for='link1'> $msg[40] </label>
+	                            <INPUT TYPE='radio' NAME='link_generate' id='link0' VALUE='0' CLASS='radio' onclick='param_links_display();' checked='checked' /><label for='link0'> $msg[39] </label>
+	                            <span id='list_param_links' style='display: none;'>
+	                            	<div style='clear: both; margin-left: 50%;'>
+	                            		<label class='etiquette' for='notice_replace_links'>".$msg['notice_replace_links_option_keep_title']."</label>
+	                            		<br /><input type='radio' name='notice_replace_links' value='0' ".($deflt_notice_replace_links==0?"checked='checked'":"")." /> ".$msg['notice_replace_links_option_keep_all']."
+										<br /><input type='radio' name='notice_replace_links' value='1' ".($deflt_notice_replace_links==1?"checked='checked'":"")." /> ".$msg['notice_replace_links_option_keep_replacing']."
+										<br /><input type='radio' name='notice_replace_links' value='2' ".($deflt_notice_replace_links==2?"checked='checked'":"")." /> ".$msg['notice_replace_links_option_keep_replaced']."
+									</div>
+	                            </span>
 	                    	</div>
                     	</div>
                     	<div class='row'>&nbsp;</div>
 	                   	<div class='row'>
 	                   		<div class='colonne2'>
-	                   			&nbsp;<br />
-	                   			&nbsp;
+	                   			<label class='etiquette' for='import_force_notice_is_new'>".$msg['import_force_notice_is_new']."</label>
+	                    		<div>
+	                    			<input type='radio' name='import_force_notice_is_new' id='import_force_notice_is_new' value='0' checked='checked'> ".$msg['39']." <input type='radio' name='import_force_notice_is_new' id='import_force_notice_is_new' value='1'> ".$msg['40']."
+	                    		</div>
 	                   		</div>
 	                   		<div class='colonne-suite'>
 								<label class='etiquette' for='authorities_notices'>".htmlentities($msg['import_with_authorities_notices'],ENT_QUOTES,$charset)."</label><br />
@@ -326,8 +345,17 @@ switch ($action) {
                     <INPUT NAME=\"categ\" TYPE=\"hidden\" value=\"import\" />
                     <INPUT NAME=\"sub\" TYPE=\"hidden\" value=\"import_expl\" />
                     <INPUT NAME=\"action\" TYPE=\"hidden\" value=\"preload\" />
-                    <INPUT NAME=\"".$name_func."\" TYPE=\"hidden\" value=\"".$$name_func."\"/>
-                    </FORM>";
+                    <INPUT NAME=\"".$name_func."\" TYPE=\"hidden\" value=\"".${$name_func}."\"/>
+                    </FORM>
+                    <script type='text/javascript'>
+						function param_links_display(){
+							if(document.getElementById('link1').checked){
+								document.getElementById('list_param_links').style.display='';
+							} else {
+								document.getElementById('list_param_links').style.display='none';
+							}
+						}
+					</script>";
                 break;
 			}
             loadfile_in_table() ;
@@ -348,12 +376,15 @@ switch ($action) {
                 $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"statisdoc_codage\" VALUE=\"$statisdoc_codage\" />\n";
                 $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"sdoc_codage\" VALUE=\"$sdoc_codage\" />\n";
                 $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"statutnot\" VALUE=\"$statutnot\" />\n";
+                $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"notice_is_new\" VALUE=\"$notice_is_new\" />\n";
                 $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"book_location_id\" VALUE=\"$book_location_id\" />\n";
                 $formulaire.="<input type=\"hidden\" name=\"recharge\" value=\"YES\" />";
                 $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"que_faire\" VALUE=\"$que_faire\" />\n";
                 $formulaire.= "<INPUT TYPE=\"hidden\" NAME=\"link_generate\" VALUE=\"$link_generate\" />\n";
                 $formulaire.= "<input type='hidden' name='authorities_notices' value='".$authorities_notices."' />\n";
  				$formulaire.= "<input type='hidden' name='authorities_default_origin' value='".$authorities_default_origin."' />\n";
+ 				$formulaire.= "<input type='hidden' name='import_force_notice_is_new' value='".$import_force_notice_is_new."' />\n";
+ 				$formulaire.= "<input type='hidden' name='notice_replace_links' value='".$notice_replace_links."' />\n";
                 $formulaire.="</form>";
                 printf ($msg[512], $from_file); /* File %s... . End of preload... */
                 
@@ -364,7 +395,7 @@ switch ($action) {
                 $script = "<script>setTimeout(\"document.load.submit()\",2000);</script>";
 			} else {
 				$formulaire="<form class='form-$current_module' name=\"preload\" method=\"post\" action=\"iimport_expl.php\">";
-				$formulaire.= "<INPUT NAME=\"".$name_func."\" TYPE=\"hidden\" value=\"".$$name_func."\"/>";
+				$formulaire.= "<INPUT NAME=\"".$name_func."\" TYPE=\"hidden\" value=\"".${$name_func}."\"/>";
 				$formulaire.="<INPUT NAME=\"categ\" TYPE=\"hidden\" value=\"import\" />";
 				$formulaire.="<INPUT NAME=\"sub\" TYPE=\"hidden\" value=\"import_expl\" />";
 				$formulaire.="<INPUT NAME=\"action\" TYPE=\"hidden\" value=\"preload\" />";
@@ -381,12 +412,15 @@ switch ($action) {
 				$formulaire.="<INPUT TYPE=\"hidden\" NAME=\"statisdoc_codage\" VALUE=\"$statisdoc_codage\" />\n";
 				$formulaire.="<INPUT TYPE=\"hidden\" NAME=\"sdoc_codage\" VALUE=\"$sdoc_codage\" />\n";
 				$formulaire.="<INPUT TYPE=\"hidden\" NAME=\"statutnot\" VALUE=\"$statutnot\" />\n";
+				$formulaire.="<INPUT TYPE=\"hidden\" NAME=\"notice_is_new\" VALUE=\"$notice_is_new\" />\n";
 				$formulaire.="<INPUT TYPE=\"hidden\" NAME=\"book_location_id\" VALUE=\"$book_location_id\" />\n";
 				$formulaire.="<input type=\"hidden\" name=\"noticenumber\" value=\"".($noticenumber+$j)."\" />";
 				$formulaire.="<INPUT TYPE=\"hidden\" NAME=\"que_faire\" VALUE=\"$que_faire\" />\n";
 				$formulaire.= "<INPUT TYPE=\"hidden\" NAME=\"link_generate\" VALUE=\"$link_generate\" />\n";
 				$formulaire.= "<input type='hidden' name='authorities_notices' value='".$authorities_notices."' />\n";
 				$formulaire.= "<input type='hidden' name='authorities_default_origin' value='".$authorities_default_origin."' />\n";
+				$formulaire.= "<input type='hidden' name='import_force_notice_is_new' value='".$import_force_notice_is_new."' />\n";
+				$formulaire.= "<input type='hidden' name='notice_replace_links' value='".$notice_replace_links."' />\n";
 				$formulaire.="</form>";
 				$script = "<script>setTimeout(\"document.preload.submit()\",2000);</script>";
 			}
@@ -430,16 +464,26 @@ switch ($action) {
                     		</div>
                     	</div>
                     	<div class='colonne-suite'>
-                    		<label class='etiquette' for='generer_lien'>".$msg['import_genere_liens']."</label><br />
-                    		<INPUT TYPE='radio' NAME='link_generate' id='link1' VALUE=' 1' CLASS='radio' /><label for='link1'> $msg[40] </label>
-                            <INPUT TYPE='radio' NAME='link_generate' id='link0' VALUE='0' CLASS='radio' checked='checked' /><label for='link0'> $msg[39] </label>
+	                    	<label class='etiquette' for='generer_lien'>".$msg['import_genere_liens']."</label><br />
+	                    	<INPUT TYPE='radio' NAME='link_generate' id='link1' VALUE=' 1' CLASS='radio' onclick='param_links_display();' /><label for='link1'> $msg[40] </label>
+	                        <INPUT TYPE='radio' NAME='link_generate' id='link0' VALUE='0' CLASS='radio' onclick='param_links_display();' checked='checked' /><label for='link0'> $msg[39] </label>
+                            <span id='list_param_links' style='display: none;'>
+                            	<div style='clear: both; margin-left: 50%;'>
+	                            	<label class='etiquette' for='notice_replace_links'>".$msg['notice_replace_links_option_keep_title']."</label>
+                            		<br /><input type='radio' name='notice_replace_links' value='0' ".($deflt_notice_replace_links==0?"checked='checked'":"")." /> ".$msg['notice_replace_links_option_keep_all']."
+									<br /><input type='radio' name='notice_replace_links' value='1' ".($deflt_notice_replace_links==1?"checked='checked'":"")." /> ".$msg['notice_replace_links_option_keep_replacing']."
+									<br /><input type='radio' name='notice_replace_links' value='2' ".($deflt_notice_replace_links==2?"checked='checked'":"")." /> ".$msg['notice_replace_links_option_keep_replaced']."
+								</div>
+                            </span>
                     	</div>
                     </div>
                     <div class='row'>&nbsp;</div>
                    	<div class='row'>
                    		<div class='colonne2'>
-                   			&nbsp;<br />
-                   			&nbsp;
+                   			<label class='etiquette' for='import_force_notice_is_new'>".$msg['import_force_notice_is_new']."</label>
+                    		<div>
+                    			<input type='radio' name='import_force_notice_is_new' id='import_force_notice_is_new' value='0' checked='checked'> ".$msg['39']." <input type='radio' name='import_force_notice_is_new' id='import_force_notice_is_new' value='1'> ".$msg['40']."
+                    		</div>
                    		</div>
                    		<div class='colonne-suite'>
 							<label class='etiquette' for='authorities_notices'>".htmlentities($msg['import_with_authorities_notices'],ENT_QUOTES,$charset)."</label><br />
@@ -465,8 +509,17 @@ switch ($action) {
 		            <INPUT NAME=\"categ\" TYPE=\"hidden\" value=\"import\" />
 		            <INPUT NAME=\"sub\" TYPE=\"hidden\" value=\"import\" />
 		            <INPUT NAME=\"action\" TYPE=\"hidden\" value=\"preload\" />
-		            <INPUT NAME=\"".$name_func."\" TYPE=\"hidden\" value=\"".$$name_func."\"/>
-		            </FORM>";
+		            <INPUT NAME=\"".$name_func."\" TYPE=\"hidden\" value=\"".${$name_func}."\"/>
+		            </FORM>
+                    <script type='text/javascript'>
+						function param_links_display(){
+							if(document.getElementById('link1').checked){
+								document.getElementById('list_param_links').style.display='';
+							} else {
+								document.getElementById('list_param_links').style.display='none';
+							}
+						}
+					</script>";
 		        break;
 		    }
 		    loadfile_in_table() ;
@@ -481,11 +534,14 @@ switch ($action) {
 				$formulaire.="<INPUT TYPE=\"hidden\" NAME=\"isbn_dedoublonnage\" VALUE=\"$isbn_dedoublonnage\" />\n";
 				$formulaire.="<INPUT TYPE=\"hidden\" NAME=\"isbn_only\" VALUE=\"$isbn_only\" />\n";
 				$formulaire.="<INPUT TYPE=\"hidden\" NAME=\"statutnot\" VALUE=\"$statutnot\" />\n";
+				$formulaire.="<INPUT TYPE=\"hidden\" NAME=\"notice_is_new\" VALUE=\"$notice_is_new\" />\n";
 				$formulaire.="<input type=\"hidden\" name=\"recharge\" value=\"YES\" />";
                 $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"que_faire\" VALUE=\"$que_faire\" />\n";
 				$formulaire.="<INPUT TYPE=\"hidden\" NAME=\"link_generate\" VALUE=\"$link_generate\" />\n";
 				$formulaire.= "<input type='hidden' name='authorities_notices' value='".$authorities_notices."' />\n";
 				$formulaire.= "<input type='hidden' name='authorities_default_origin' value='".$authorities_default_origin."' />\n";
+				$formulaire.= "<input type='hidden' name='import_force_notice_is_new' value='".$import_force_notice_is_new."' />\n";
+				$formulaire.= "<input type='hidden' name='notice_replace_links' value='".$notice_replace_links."' />\n";
 				$formulaire.="</form>";
 				printf ($msg[509].$msg[512], $from_file, $from_file); /* File %s... . End of preload... */
 				
@@ -496,7 +552,7 @@ switch ($action) {
 				$script = "<script>setTimeout(\"document.load.submit()\",2000);</script>";
 			} else {
 				$formulaire="<form class='form-$current_module' name=\"preload\" method=\"post\" action=\"iimport_expl.php\">";
-				$formulaire.= "<INPUT NAME=\"".$name_func."\" TYPE=\"hidden\" value=\"".$$name_func."\"/>";
+				$formulaire.= "<INPUT NAME=\"".$name_func."\" TYPE=\"hidden\" value=\"".${$name_func}."\"/>";
 				$formulaire.="<INPUT NAME=\"categ\" TYPE=\"hidden\" value=\"import\" />";
 				$formulaire.="<INPUT NAME=\"sub\" TYPE=\"hidden\" value=\"import\" />";
 				$formulaire.="<INPUT NAME=\"action\" TYPE=\"hidden\" value=\"preload\" />";
@@ -507,11 +563,14 @@ switch ($action) {
 				$formulaire.="<INPUT TYPE=\"hidden\" NAME=\"isbn_dedoublonnage\" VALUE=\"$isbn_dedoublonnage\" />\n";
 				$formulaire.="<INPUT TYPE=\"hidden\" NAME=\"isbn_only\" VALUE=\"$isbn_only\" />\n";
 				$formulaire.="<INPUT TYPE=\"hidden\" NAME=\"statutnot\" VALUE=\"$statutnot\" />\n";
+				$formulaire.="<INPUT TYPE=\"hidden\" NAME=\"notice_is_new\" VALUE=\"$notice_is_new\" />\n";
 				$formulaire.="<input type=\"hidden\" name=\"noticenumber\" value=\"".($noticenumber+$j)."\" />";
 				$formulaire.="<INPUT TYPE=\"hidden\" NAME=\"link_generate\" VALUE=\"$link_generate\" />\n";
                 $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"que_faire\" VALUE=\"$que_faire\" />\n";
 				$formulaire.= "<input type='hidden' name='authorities_notices' value='".$authorities_notices."' />\n";
 				$formulaire.= "<input type='hidden' name='authorities_default_origin' value='".$authorities_default_origin."' />\n";
+				$formulaire.= "<input type='hidden' name='import_force_notice_is_new' value='".$import_force_notice_is_new."' />\n";
+				$formulaire.= "<input type='hidden' name='notice_replace_links' value='".$notice_replace_links."' />\n";
 				$formulaire.="</form>";
 				$script = "<script>setTimeout(\"document.preload.submit()\",2000);</script>";
 			}
@@ -522,7 +581,7 @@ switch ($action) {
     case 'load':
 		if (!$statutnot) $statutnot=1;
 		printf ($msg[509], $from_file);
-		if ($nbtot_notice=="") {
+		if (!isset($nbtot_notice) || $nbtot_notice=="") {
 			$sql = "select count(1) from import_marc where origine='".addslashes(SESSid)."' ";
 			$sql_result = pmb_mysql_query($sql) or die ("Couldn't select count(1) from import table !");
 			$nbtot_notice=pmb_mysql_result($sql_result, 0, 0);
@@ -542,10 +601,11 @@ switch ($action) {
         $sql = "select notice, id_import from import_marc where origine='".addslashes(SESSid)."' ORDER BY id_import limit $pmb_import_limit_record_load ";
         $sql_result_import = pmb_mysql_query($sql) or die ("Couldn't select import table !");
         $n_notice=pmb_mysql_num_rows($sql_result_import);
-        if ($notice_deja_presente=="") {
+        if (!isset($notice_deja_presente) || $notice_deja_presente=="") {
         	$notice_deja_presente=0;
         }
         $inotice=0;
+        $notice_rejetee=0;
         $txt="";
 
 		while (($notobj = pmb_mysql_fetch_object($sql_result_import))) {
@@ -568,11 +628,12 @@ switch ($action) {
                 recup_noticeunimarc_suite($notice) ;
 
                 /* We've got everything, let's have a look if ISBN already exists in notices table */
+                if(!isset($isbn[0])) $isbn[0] = '';
                 if($isbn[0]=="NULL") $isbn[0]="";
                 // si isbn vide, on va tenter de prendre l'EAN stocké en 345$b
-                if ($isbn[0]=="") $isbn[0]=$EAN[0] ;
+                if ($isbn[0]=="") $isbn[0] = (isset($EAN[0]) ? $EAN[0] : '');
                 // si isbn vide, on va tenter de prendre le serial en 011
-                if ($isbn[0]=="") $isbn[0]=$issn_011[0];
+                if ($isbn[0]=="") $isbn[0] = (isset($issn_011[0]) ? $issn_011[0] : '');
                 // si ISBN obligatoire et isbn toujours vide :
                 if ($isbn_mandatory == 1 && $isbn[0]=="") {
                     // on va tenter de prendre l'ISSN stocké en 225$x
@@ -723,6 +784,7 @@ switch ($action) {
                 $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"statisdoc_codage\" VALUE=\"$statisdoc_codage\" />\n";
                 $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"sdoc_codage\" VALUE=\"$sdoc_codage\" />\n";
                 $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"statutnot\" VALUE=\"$statutnot\" />\n";
+                $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"notice_is_new\" VALUE=\"$notice_is_new\" />\n";
                 $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"book_location_id\" VALUE=\"$book_location_id\" />\n";
                 $formulaire.="<input type=\"hidden\" name=\"recharge\" value=\"YES\" />\n";
                 $formulaire.="<input type=\"hidden\" name=\"reste\" value=\"".($reste)."\" />\n";
@@ -734,6 +796,8 @@ switch ($action) {
                 $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"link_generate\" VALUE=\"$link_generate\" />\n";
 				$formulaire.= "<input type='hidden' name='authorities_notices' value='".$authorities_notices."' />\n";
 				$formulaire.= "<input type='hidden' name='authorities_default_origin' value='".$authorities_default_origin."' />\n";
+				$formulaire.= "<input type='hidden' name='import_force_notice_is_new' value='".$import_force_notice_is_new."' />\n";
+				$formulaire.= "<input type='hidden' name='notice_replace_links' value='".$notice_replace_links."' />\n";
 				$formulaire.="</form>";
                    
                  //On enregistre les ids utilisés avant le rechargement
@@ -770,23 +834,43 @@ switch ($action) {
                 printf ($msg[521], $nb_expl_ignores); /* ## exemplaire(s) ignoré(s) */
                 /* ajouter ici SELECT error_origin, error_text, count(*) FROM error_log group by error_origin, error_text */
                 $gen_liste_log="";
-                $resultat_liste=pmb_mysql_query("SELECT error_origin, error_text, count(*) as nb_error FROM error_log where error_origin in ('expl_".addslashes(SESSid).".class','import_expl_".addslashes(SESSid).".inc','iimport_expl_".addslashes(SESSid).".inc','import_".addslashes(SESSid).".inc.php','import_".addslashes(SESSid).".inc','import_func_".addslashes(SESSid).".inc.php') group by error_origin, error_text" );
+                $array_isbn_doublons = array();
+                $datetime_import='';
+                $resultat_liste=pmb_mysql_query("SELECT error_origin, error_text, error_date, count(*) as nb_error FROM error_log where error_origin in ('expl_".addslashes(SESSid).".class','import_expl_".addslashes(SESSid).".inc','iimport_expl_".addslashes(SESSid).".inc','import_".addslashes(SESSid).".inc.php','import_".addslashes(SESSid).".inc','import_func_".addslashes(SESSid).".inc.php') group by error_origin, error_text" );
                 $nb_liste=pmb_mysql_num_rows($resultat_liste);
                 if ($nb_liste>0) {
-                    $gen_liste_log = "<br /><br /><b>".$msg[538]."</b><br /><table border='1'>" ;
+                    $gen_liste_log = "<br /><br /><b>".$msg[538]."</b><br />!!dbls_isbn!!<table border='1'>" ;
                     $gen_liste_log.="<tr><th>".$msg[539]."</th><th>".$msg[540]."</th><th>".$msg[541]."</th></tr>";
                     $i_log=0;
                     while ($i_log<$nb_liste) {
+                    	if (preg_match('`^'.$msg['542'].'(.*)\|\|(.*)\|\|(.*)$`',pmb_mysql_result($resultat_liste,$i_log,"error_text"),$out)) {
+                    		for ($j=1;$j<=3;$j++) {
+                    			if ($tmp_isbn = trim($out[$j])) {
+                    				$tmp_isbn = "'".$tmp_isbn."'";
+                    				if ((!count($array_isbn_doublons))||(!in_array($tmp_isbn,$array_isbn_doublons))) {
+                    					$array_isbn_doublons[] = $tmp_isbn;
+                    				}
+                    			}
+                    		}
+                    	}
                         $gen_liste_log.="<tr>";
                         $gen_liste_log.="<td>".pmb_mysql_result($resultat_liste,$i_log,"error_origin")."</td>" ;
                         $gen_liste_log.="<td><b>".pmb_mysql_result($resultat_liste,$i_log,"error_text")."</b></td>" ;
                         $gen_liste_log.="<td>".pmb_mysql_result($resultat_liste,$i_log,"nb_error")."</td>" ;
                         $gen_liste_log.="</tr>" ;
+                        $datetime_import = pmb_mysql_result($resultat_liste,$i_log,"error_date");
                         $i_log++;
-                       }
                     }
-                $gen_liste_str.="</table>\n" ;
+                }
+                $gen_liste_log.="</table>\n" ;
+                if (count($array_isbn_doublons)) {
+                	$gen_liste_log = str_replace('!!dbls_isbn!!','<div class="hmenu">'.$msg['last_import_isbn_doublons_found'].'<span><a href="javascript:parent.location=\'../../catalog.php?categ=search&mode=8&option_show_notice_fille=&option_show_expl=\';">'.$msg['search_expl'].'</a></span></div>',$gen_liste_log);
+                } else {
+                	$gen_liste_log = str_replace('!!dbls_isbn!!','',$gen_liste_log);
+                }
                 print $gen_liste_log;
+                $_SESSION["last_import_isbn_doublons"] = json_encode(implode(',',$array_isbn_doublons));
+                $_SESSION["last_import_isbn_doublons_datetime"] = $datetime_import;
                 @unlink("$base_path/temp/liste_id".SESSid.".txt");
             }
             print $formulaire;
@@ -804,6 +888,7 @@ switch ($action) {
                 $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"isbn_dedoublonnage\" VALUE=\"$isbn_dedoublonnage\" />\n";
                 $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"isbn_only\" VALUE=\"$isbn_only\" />\n";
                 $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"statutnot\" VALUE=\"$statutnot\" />\n";
+                $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"notice_is_new\" VALUE=\"$notice_is_new\" />\n";
                 $formulaire.="<input type=\"hidden\" name=\"recharge\" value=\"YES\" />\n";
                 $formulaire.="<input type=\"hidden\" name=\"reste\" value=\"".($reste)."\" />\n";
                 $formulaire.="<input type=\"hidden\" name=\"nbtot_notice\" value=\"".($nbtot_notice)."\" />\n";
@@ -813,6 +898,8 @@ switch ($action) {
                 $formulaire.="<INPUT TYPE=\"hidden\" NAME=\"que_faire\" VALUE=\"$que_faire\" />\n";
 				$formulaire.= "<input type='hidden' name='authorities_notices' value='".$authorities_notices."' />\n";
                 $formulaire.= "<input type='hidden' name='authorities_default_origin' value='".$authorities_default_origin."' />\n";
+                $formulaire.= "<input type='hidden' name='import_force_notice_is_new' value='".$import_force_notice_is_new."' />\n";
+                $formulaire.= "<input type='hidden' name='notice_replace_links' value='".$notice_replace_links."' />\n";
 				$formulaire.="</form>";
                 
                 //On enregistre les ids utilisés avant le rechargement
@@ -847,23 +934,43 @@ switch ($action) {
                 }
                 /* ajouter ici SELECT error_origin, error_text, count(*) FROM error_log group by error_origin, error_text */
                 $gen_liste_log="";
-                $resultat_liste=pmb_mysql_query("SELECT error_origin, error_text, count(*) as nb_error FROM error_log where error_origin in ('expl_".addslashes(SESSid).".class','import_expl_".addslashes(SESSid).".inc','iimport_expl_".addslashes(SESSid).".inc','import_".addslashes(SESSid).".inc.php', 'import_".addslashes(SESSid).".inc','import_func_".addslashes(SESSid).".inc.php') group by error_origin, error_text" );
+                $array_isbn_doublons = array();
+                $datetime_import='';
+                $resultat_liste=pmb_mysql_query("SELECT error_origin, error_text, error_date, count(*) as nb_error FROM error_log where error_origin in ('expl_".addslashes(SESSid).".class','import_expl_".addslashes(SESSid).".inc','iimport_expl_".addslashes(SESSid).".inc','import_".addslashes(SESSid).".inc.php', 'import_".addslashes(SESSid).".inc','import_func_".addslashes(SESSid).".inc.php') group by error_origin, error_text" );
                 $nb_liste=pmb_mysql_num_rows($resultat_liste);
                 if ($nb_liste>0) {
-                    $gen_liste_log = "<br /><br /><b>".$msg[538]."</b><br /><table width=\"100%\"  border='1'>" ;
+                    $gen_liste_log = "<br /><br /><b>".$msg[538]."</b><br />!!dbls_isbn!!<table width=\"100%\"  border='1'>" ;
                     $gen_liste_log.="<tr><td>".$msg[539]."</td><td>".$msg[540]."</td><td>".$msg[541]."</td></tr>";
                     $i_log=0;
                     while ($i_log<$nb_liste) {
+                    	if (preg_match('`^'.$msg['542'].'(.*)\|\|(.*)\|\|(.*)$`',pmb_mysql_result($resultat_liste,$i_log,"error_text"),$out)) {
+                    		for ($j=1;$j<=3;$j++) {
+                    			if ($tmp_isbn = trim($out[$j])) {
+                    				$tmp_isbn = "'".$tmp_isbn."'";
+                    				if ((!count($array_isbn_doublons))||(!in_array($tmp_isbn,$array_isbn_doublons))) {
+                    					$array_isbn_doublons[] = $tmp_isbn;
+                    				}
+                    			}
+                    		}
+                    	}
                         $gen_liste_log.="<tr>";
                         $gen_liste_log.="<td>".pmb_mysql_result($resultat_liste,$i_log,"error_origin")."</td>" ;
                         $gen_liste_log.="<td><b>".pmb_mysql_result($resultat_liste,$i_log,"error_text")."</b></td>" ;
                         $gen_liste_log.="<td>".pmb_mysql_result($resultat_liste,$i_log,"nb_error")."</td>" ;
                         $gen_liste_log.="</tr>" ;
+                        $datetime_import = pmb_mysql_result($resultat_liste,$i_log,"error_date");
                         $i_log++;
-                        }
                     }
-                $gen_liste_str.="</table>\n" ;
+                }
+                $gen_liste_log.="</table>\n" ;
+                if (count($array_isbn_doublons)) {
+                	$gen_liste_log = str_replace('!!dbls_isbn!!','<div class="hmenu">'.$msg['last_import_isbn_doublons_found'].'<span><a href="javascript:parent.location=\'../../catalog.php?categ=search&mode=6\';">'.$msg['search_extended'].'</a></span></div>',$gen_liste_log);
+                } else {
+                	$gen_liste_log = str_replace('!!dbls_isbn!!','',$gen_liste_log);
+                }
                 print $gen_liste_log;
+                $_SESSION["last_import_isbn_doublons"] = json_encode(implode(',',$array_isbn_doublons));
+                $_SESSION["last_import_isbn_doublons_datetime"] = $datetime_import;
                 @unlink("$base_path/temp/liste_id".SESSid.".txt");
             }
 
@@ -942,18 +1049,12 @@ switch ($action) {
 	        $code_js.="</script>";
        	}
        	
-       	$selecteur_encodage="<label class=\"etiquette\" for=\"encodage_fic_source\" id=\"text_desc_encodage_fic_source\" name=\"text_desc_encodage_fic_source\">".htmlentities($msg["admin_import_encodage_fic_source"],ENT_QUOTES,$charset)."</label>
-       	<select name=\"encodage_fic_source\" id=\"encodage_fic_source\">
-			<option value=\"\" ".(!$encodage_fic_source ? " selected=\"selected\" ": "").">".htmlentities($msg["admin_import_encodage_fic_source_undefine"],ENT_QUOTES,$charset)."</option>
-			<option value=\"iso5426\" ".(($encodage_fic_source == "iso5426") ? " selected=\"selected\" ": "").">".htmlentities($msg["admin_import_encodage_fic_source_iso5426"],ENT_QUOTES,$charset)."</option>
-			<option value=\"utf8\" ".(($encodage_fic_source == "utf8") ? " selected=\"selected\" ": "").">".htmlentities($msg["admin_import_encodage_fic_source_utf8"],ENT_QUOTES,$charset)."</option>
-			<option value=\"iso8859\" ".(($encodage_fic_source == "iso8859") ? " selected=\"selected\" ": "").">".htmlentities($msg["admin_import_encodage_fic_source_iso8859"],ENT_QUOTES,$charset)."</option>
-		</select></br></br>";
-       	
        	$formulaire.=$selecteur_fic;
        	$formulaire.="<label class=\"etiquette\" for=\"".$name_func."\" id=\"text_desc_func_import\" name=\"text_desc_func_import\">".htmlentities($text_desc_func_import,ENT_QUOTES,$charset)."</label></br>\n";
-       	$formulaire.=$selecteur_encodage;
-        $formulaire.="<INPUT type=\"button\" value=\"".htmlentities($msg["admin_import_notice_telechargement"],ENT_QUOTES,$charset)."\" class=\"bouton\" onclick=\"document.getElementById('action').value ='beforeupload';document.beforeupload.submit();\" />";
+       	$formulaire.="<label class=\"etiquette\" for=\"encodage_fic_source\" id=\"text_desc_encodage_fic_source\" name=\"text_desc_encodage_fic_source\">".htmlentities($msg["admin_import_encodage_fic_source"],ENT_QUOTES,$charset)."</label>";
+       	$formulaire.=import_entities::get_encoding_selector();
+       	$formulaire.="</br></br>";
+       	$formulaire.="<INPUT type=\"button\" value=\"".htmlentities($msg["admin_import_notice_telechargement"],ENT_QUOTES,$charset)."\" class=\"bouton\" onclick=\"document.getElementById('action').value ='beforeupload';document.beforeupload.submit();\" />";
         $formulaire.="<INPUT type=\"button\" value=\"".htmlentities($msg["admin_import_notice_prechargement"],ENT_QUOTES,$charset)."\" class=\"bouton\" onclick=\"document.getElementById('action').value ='preload'; document.beforeupload.submit();\"/>";
         $formulaire.="</form>\n";
         

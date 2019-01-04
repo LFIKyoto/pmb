@@ -122,7 +122,7 @@
 <xsl:template name="editeur">
 		<xsl:if test="f[@c='210']/s[@c='c']">	
 			<xsl:text>PB  - </xsl:text>
-			<xsl:value-of select="normalize-space(f[@c='210']/s[@c='a'])"/>			
+			<xsl:value-of select="normalize-space(f[@c='210']/s[@c='c'])"/>			
 			<xsl:text>&#010;</xsl:text>
 		</xsl:if>
 </xsl:template>

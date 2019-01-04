@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: install_inc.php,v 1.4 2012-12-12 10:29:54 ngantier Exp $
+// $Id: install_inc.php,v 1.5 2016-03-30 09:04:51 mbertin Exp $
 
 // plus rien ici : reprise d'un script d'une autre install
 if(preg_match('/install_inc\.php/', $_SERVER['REQUEST_URI'])) {
@@ -12,7 +12,7 @@ if(preg_match('/install_inc\.php/', $_SERVER['REQUEST_URI'])) {
 $header="
 <html>
 <head>
-	<title>PMB : instalación</title>
+	<title>PMB : instalaci&oacute;n</title>
 	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=$charset\">
 	<style type=\"text/css\">
 	body
@@ -70,6 +70,110 @@ $footer="
 
 </body>
 </html>
+";
+
+$body_iso="
+<div id=\"conteneur\"> 
+  <h3 align=\"left\">Esta p&aacute;gina permite criar&nbsp;a base de dados no seu servidor
+</h3>
+  <h3 align=\"center\"><font color=red>Portuguese set of data may be out of sync with the main version of PMB. 
+  After this installation, you just have to connect normally to PMB, then go to Adminstration &gt; Tools &gt; database update. 
+  Just click on 'Click here to start update.' till it says 'Your database is up to date in version 
+$pmb_version_database_as_it_should_be !'
+	</font></h3>
+  <hr />
+  <form method=\"post\" action=\"install_rep.php\">
+  <h2 align=\"left\">Par&acirc;metros do sistema</h2>
+    <p align=\"left\">Necessitamos das
+informa&ccedil;&otilde;es de liga&ccedil;&atilde;o ao
+servidor como administrador para poder realizar todas&nbsp;as
+opera&ccedil;&otilde;es de cria&ccedil;&atilde;o da
+base de dados : </p>
+    <table width=\"100%\" border=\"0\" cellspacing=\"2\" cellpadding=\"2\">
+      <tr> 
+        <td width=\"200\" class=\"etiquete\">Usu&aacute;rio MySql :</td>
+        <td><input class=\"saisie\" name=\"usermysql\" type=\"text\" id=\"usermysql\" value=\"root\"></td>
+      </tr>
+      <tr> 
+        <td width=\"200\" class=\"etiquete\">Password :</td>
+        <td><input class=\"saisie\" name=\"passwdmysql\" type=\"password\" id=\"passwdmysql\"></td>
+      </tr>
+      <tr> 
+        <td width=\"200\" class=\"etiquete\">Servidor :</td>
+        <td><input class=\"saisie\" name=\"dbhost\" type=\"text\" id=\"dbhost\" value=\"localhost\"></td>
+      </tr>
+      <tr> 
+        <td width=\"200\" class=\"etiquete\"><em>Base de dados:</em></td>
+        <td><input class=\"saisie\" name=\"dbnamedbhost\" type=\"text\" onChange=\"
+        if (this.form.dbnamedbhost.value!='') {
+        	this.form.user.value='';
+        	this.form.passwd.value='';
+        	this.form.dbname.value='';
+        	this.form.user.style.display = 'none';
+        	this.form.passwd.style.display = 'none';
+        	this.form.dbname.style.display = 'none';
+        	document.getElementById('fixeuser').style.display = 'inline';
+        	document.getElementById('fixepasswd').style.display = 'inline';
+        	document.getElementById('fixedbname').style.display = 'inline';
+        	} else {
+        		this.form.user.style.display = 'block';
+        		this.form.passwd.style.display = 'block';
+        		this.form.dbname.style.display = 'block';
+        		document.getElementById('fixeuser').style.display = 'none';
+        		document.getElementById('fixepasswd').style.display = 'none';
+        		document.getElementById('fixedbname').style.display = 'none';
+        		}
+        	
+        \"></td>
+      </tr>
+    </table>
+    <p align=\"left\">Se preencher&nbsp;a base de dados com dados, deve ignorar&nbsp;a linha Par&acirc;metros
+de baixo :&nbsp;as tabelas de PMB ser&atilde;o criadas na base
+de dados que tenha indicado, por exemplo do seu servidor.</p>
+    <hr />
+    <h2 align=\"left\">Par&acirc;metros PMB</h2>
+    <p align=\"left\">Se n&atilde;o
+precisou&nbsp;a base de dados na linha anterior, deve precisar aqui
+o usu&aacute;rio MySQL e a sua password que ser&atilde;o usadas
+por PMB para ligar-se &agrave; base de dados da qual se deve
+p&ocirc;r o nome igualmente. </p>
+    <table width=\"100%\" border=\"0\" cellspacing=\"2\" cellpadding=\"2\">
+      <tr> 
+        <td width=\"200\" class=\"etiquete\">Usu&aacute;rio PMB :</td>
+        <td><input class=\"saisie\" type=\"text\" name=\"user\" value=\"bibli\"><div id=\"fixeuser\" style=\"display:none\"><strong><font color=\"#FF0000\">Fixado&nbsp;pelos par&acirc;metros do sistema</font></strong></div></td>
+      </tr>
+      <tr> 
+        <td width=\"200\" class=\"etiquete\">Password :</td>
+        <td><input class=\"saisie\" name=\"passwd\" type=\"text\" value=\"bibli\"><div id=\"fixepasswd\" style=\"display:none\"><strong><font color=\"#FF0000\">Fixado&nbsp;pelos par&acirc;metros do sistema</font></strong></div></td>
+      </tr>
+      <tr> 
+        <td width=\"200\" class=\"etiquete\">Base de datos PMB :</td>
+        <td><input class=\"saisie\" type=\"text\" name=\"dbname\" value=\"bibli\"><div id=\"fixedbname\" style=\"display:none\"><strong><font color=\"#FF0000\">Fixado&nbsp;pelos par&acirc;metros do sistema</font></strong></div></td>
+      </tr>
+    </table>
+    <p align=\"left\">Aten&ccedil;&atilde;o, se
+existir uma base de dados com o mesmo nome ser&aacute;
+destru&iacute;da, e&nbsp;as tabelas que contenha
+definitivamente perdidas.</p>
+    <hr />
+    <h2 align=\"left\">Carregar dados PMB</h2>
+    <table width=\"100%\" border=\"0\" cellspacing=\"2\" cellpadding=\"2\">
+      <tr> 
+        <td width=\"200\" align=right><div align=\"right\"> 
+            <span><strong><font color=\"#FF0000\">Obrigat&oacute;rio</font></strong></span><input name=structure type=checkbox value='1' checked readonly style=\"display:none\">
+          </div></td>
+        <td align=left> Criar a estrutura da base de dados</td>
+      </tr>
+      <tr> 
+        <td width=\"200\" align=right><div align=\"right\"> 
+            <span><strong><font color=\"#FF0000\">Obrigat&oacute;rio</font></strong></span><input name=minimum type=checkbox value='1' checked readonly style=\"display:none\">
+          </div></td>
+        <td align=left> Introduzir os dados m&iacute;nimo</td>
+      </tr>
+    </table>
+    <br />
+    </div>
+    <hr />
 ";
 
 $body="
@@ -264,8 +368,9 @@ definitivamente perdidas.</p>
              <input type=checkbox name=essential value='1'onClick=\"
         if (this.form.essential.checked) {
         	document.getElementById('options_part').style.display = 'inline';
-        	this.form.data_test_cms.checked = false ;        
-		}else{		
+        	this.form.data_test_cms.checked = false ;
+        	this.form.data_test_zen.checked = false ;
+		}else{
 		}
         \">
           </div></td>
@@ -279,6 +384,7 @@ definitivamente perdidas.</p>
         	this.form.thesaurus[2].checked = true ;
         	this.form.indexint[3].checked = true ;
         	this.form.data_test_cms.checked = false ;
+        	this.form.data_test_zen.checked = false ;
         	document.getElementById('fixeessential').style.display = 'inline';
         	document.getElementById('fixeagneaux').style.display = 'inline';
         	document.getElementById('fixe100cases').style.display = 'inline';
@@ -298,6 +404,7 @@ definitivamente perdidas.</p>
         if (this.form.data_test_cms.checked) {
         	this.form.essential.checked = false ;
         	this.form.data_test.checked = false ;
+        	this.form.data_test_zen.checked = false ;
         	this.form.thesaurus[2].checked = true ;
         	this.form.indexint[3].checked = true ;
         	document.getElementById('options_part').style.display = 'none';
@@ -307,7 +414,25 @@ definitivamente perdidas.</p>
         }
         \">
           </div></td>
-        <td align=left> Ins&eacute;rer les donn&eacute;es du portail de test</td>
+        <td align=left> Ins&eacute;rer les donn&eacute;es du portail Pag&eacute;o</td>
+      </tr>
+      <tr>
+        <td width=\"200\" align=right><div align=\"right\">
+            <input type='checkbox' name='data_test_zen' value='1' onClick=\"
+        if (this.form.data_test_zen.checked) {
+        	this.form.essential.checked = false ;
+        	this.form.data_test.checked = false ;
+        	this.form.data_test_cms.checked = false ;
+        	this.form.thesaurus[2].checked = true ;
+        	this.form.indexint[3].checked = true ;
+        	document.getElementById('options_part').style.display = 'none';
+        	document.getElementById('fixeessential').style.display = 'none';
+        } else {
+        	document.getElementById('options_part').style.display = 'inline';
+        }
+        \">
+          </div></td>
+        <td align=left> Ins&eacute;rer les donn&eacute;es du portail Zen</td>
       </tr>
     </table>
     <br />
@@ -357,5 +482,3 @@ definitivamente perdidas.</p>
     </div>
     <hr />
 ";
-?>
-

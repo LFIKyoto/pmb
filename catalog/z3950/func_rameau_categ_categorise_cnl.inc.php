@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: func_rameau_categ_categorise_cnl.inc.php,v 1.3 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: func_rameau_categ_categorise_cnl.inc.php,v 1.4 2016-09-07 08:35:37 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -20,15 +20,15 @@ $rac = $thes->num_noeud_racine;
 // récupération du 606 : récup en catégories en essayant de classer :
 //	les sujets sous le terme "Recherche par terme" 
 	$id_rech_theme = categories::searchLibelle('Recherche par terme', $thesaurus_defaut, 'fr_FR');
-    if (!$id_rech_theme) $id_rech_theme = create_categ($rac, 'Recherche par terme', strip_empty_words('Recherche par terme', 'fr_FR'));
+    if (!$id_rech_theme) $id_rech_theme = create_categ_z3950($rac, 'Recherche par terme', strip_empty_words('Recherche par terme', 'fr_FR'));
 		
 //	les précisions géographiques sous le terme "Recherche géographique" 
 	$id_rech_geo = categories::searchLibelle('Recherche géographique', $thesaurus_defaut, 'fr_FR');
-    if (!$id_rech_geo) 	$id_rech_geo = create_categ($rac, 'Recherche géographique', strip_empty_words('Recherche géographique', 'fr_FR'));
+    if (!$id_rech_geo) 	$id_rech_geo = create_categ_z3950($rac, 'Recherche géographique', strip_empty_words('Recherche géographique', 'fr_FR'));
 
 //	les précisions de période sous le terme "Recherche chronologique" 
 	$id_rech_chrono = categories::searchLibelle('Recherche chronologique', $thesaurus_defaut, 'fr_FR');
-    if (!$id_rech_chrono) $id_rech_chrono = create_categ($rac, 'Recherche chronologique', strip_empty_words('Recherche chronologique', 'fr_FR'));
+    if (!$id_rech_chrono) $id_rech_chrono = create_categ_z3950($rac, 'Recherche chronologique', strip_empty_words('Recherche chronologique', 'fr_FR'));
 
 // FIN paramétrage 
 
@@ -129,7 +129,7 @@ function traite_categories_from_form() {
 		if ($res_a) {
 			$categid_a = $res_a;
 		} else {
-			$categid_a = create_categ($id_rech_theme, $libelle_final, strip_empty_words($libelle_final));
+			$categid_a = create_categ_z3950($id_rech_theme, $libelle_final, strip_empty_words($libelle_final));
 		}
 		// récup des sous-categ en cascade sous $a
 		$categ_parent =  $categid_a ;
@@ -138,7 +138,7 @@ function traite_categories_from_form() {
 			if ($res_x) {
 				$categ_parent = $res_x;
 			} else {
-				$categ_parent = create_categ($categ_parent, trim($info_606_x[$a][$x]), strip_empty_words($info_606_x[$a][$x]));
+				$categ_parent = create_categ_z3950($categ_parent, trim($info_606_x[$a][$x]), strip_empty_words($info_606_x[$a][$x]));
 			}
 		} // fin récup des $x en cascade sous l'id de la catégorie 606$a
 		
@@ -153,7 +153,7 @@ function traite_categories_from_form() {
 			if ($res_y) {
 				$categ_parent = $res_y;		
 			} else {
-				$categ_parent = create_categ($categ_parent, trim($info_606_y[$a][$y]), strip_empty_words($info_606_y[$a][$y]));
+				$categ_parent = create_categ_z3950($categ_parent, trim($info_606_y[$a][$y]), strip_empty_words($info_606_y[$a][$y]));
 			}
 		} // fin récup des $y en cascade sous l'id de la catégorie principale thème géo
 		
@@ -168,7 +168,7 @@ function traite_categories_from_form() {
 			if ($res_z) {
 				$categ_parent = $res_z;
 			} else {
-				$categ_parent = create_categ($categ_parent, trim($info_606_z[$a][$z]), strip_empty_words($info_606_z[$a][$z]));
+				$categ_parent = create_categ_z3950($categ_parent, trim($info_606_z[$a][$z]), strip_empty_words($info_606_z[$a][$z]));
 			}
 		} // fin récup des $z en cascade sous l'id de la catégorie principale thème chrono
 		
@@ -181,7 +181,7 @@ return $categ_retour ;
 }
 
 
-function create_categ($num_parent, $libelle, $index) {
+function create_categ_z3950($num_parent, $libelle, $index) {
 	
 	global $thes;
 	$n = new noeuds();

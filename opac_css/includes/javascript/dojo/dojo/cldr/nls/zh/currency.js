@@ -1,16 +1,3 @@
-define(
-//begin v1.x content
-{
-	"AUD_displayName": "澳大利亚元",
-	"CAD_displayName": "加拿大元",
-	"CHF_displayName": "瑞士法郎",
-	"CNY_displayName": "人民币",
-	"CNY_symbol": "￥",
-	"EUR_displayName": "欧元",
-	"GBP_displayName": "英镑",
-	"HKD_displayName": "港元",
-	"JPY_displayName": "日元",
-	"USD_displayName": "美元"
-}
-//end v1.x content
-);
+//>>built
+define("dojo/cldr/nls/zh/currency",{HKD_displayName:"\u6e2f\u5143",CHF_displayName:"\u745e\u58eb\u6cd5\u90ce",JPY_symbol:"JP\u00a5",CAD_displayName:"\u52a0\u62ff\u5927\u5143",HKD_symbol:"HK$",CNY_displayName:"\u4eba\u6c11\u5e01",USD_symbol:"US$",AUD_displayName:"\u6fb3\u5927\u5229\u4e9a\u5143",JPY_displayName:"\u65e5\u5143",CAD_symbol:"CA$",USD_displayName:"\u7f8e\u5143",EUR_symbol:"\u20ac",CNY_symbol:"\uffe5",GBP_displayName:"\u82f1\u9551",GBP_symbol:"\u00a3",AUD_symbol:"AU$",EUR_displayName:"\u6b27\u5143"});
+//# sourceMappingURL=currency.js.map

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: alter_v3.inc.php,v 1.126 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: alter_v3.inc.php,v 1.127 2017-07-12 15:15:03 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -713,7 +713,7 @@ switch ($action) {
 			$res_param = pmb_mysql_query($requete_param, $dbh);
 			while ($field_values = pmb_mysql_fetch_row( $res_param )) {
 				$field = "old_".$field_values[1] ;
-				$$field = $field_values[2];
+				${$field} = $field_values[2];
 				}
 			$rqt = "update docs_location set name='".addslashes($old_name)."',adr1='".addslashes($old_adr1)."',adr2='".addslashes($old_adr2)."',cp='".addslashes($old_cp)."',town='".addslashes($old_town)."',state='".addslashes($old_state)."',country='".addslashes($old_country)."',phone='".addslashes($old_phone)."',email='".addslashes($old_email)."',website='".addslashes($old_website)."',logo='".addslashes($old_logo)."',logosmall='".addslashes($old_logosmall)."'"  ;
 			echo traite_rqt($rqt,"UPDATE TABLE docs_location feed addresses, town, phone, etc..."); 

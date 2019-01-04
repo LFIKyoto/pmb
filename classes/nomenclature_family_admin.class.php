@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_family_admin.class.php,v 1.8 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: nomenclature_family_admin.class.php,v 1.10 2017-04-26 10:20:06 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -31,6 +31,7 @@ class nomenclature_family_admin {
 			$this->info['id']= $r->id_family;	
 			$this->info['name']= $r->family_name;
 			$this->info['display']=  "<a href='./admin.php?categ=family&sub=family&action=form&id=".$r->id_family."'>".$r->family_name."</a>";$r->family_name;
+			$this->info['musicstands_display']= "";
 			$j=0;
 			$req="select * from nomenclature_families,nomenclature_musicstands where musicstand_famille_num=id_family and id_family=".$this->id." order by musicstand_order";
 			$res_musicstands=pmb_mysql_query($req,$dbh);
@@ -45,6 +46,7 @@ class nomenclature_family_admin {
 					if($this->info['musicstands_display'])$this->info['musicstands_display'].="<br>";
 					$this->info['musicstands_display'].="<a href='./admin.php?categ=family&sub=family&action=musicstand_form&id=".$this->id."&id_musicstand=".$r_musicstand->id_musicstand."'>".$r_musicstand->musicstand_name."</a>";
 					
+					$this->info['musicstands'][$r_musicstand->id_musicstand]['instruments_display'] = '';
 					$req="select * from nomenclature_instruments where instrument_musicstand_num=". $r_musicstand->id_musicstand." order by instrument_code";	
 					$res_instruments=pmb_mysql_query($req,$dbh);	
 					$count_instrument=0;
@@ -120,7 +122,7 @@ class nomenclature_family_admin {
 	}
 
 	public function save() {
-		global $dbh;
+		global $dbh, $msg;
 		global $name;
 		
 		$notice_onglet+=0;		
@@ -139,6 +141,7 @@ class nomenclature_family_admin {
 			pmb_mysql_query($req, $dbh);				
 		}	
 		$this->fetch_data();
+		print display_notification($msg['account_types_success_saved']);
 	}	
 	
 	public function delete() {

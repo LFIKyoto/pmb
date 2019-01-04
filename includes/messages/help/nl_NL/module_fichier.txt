@@ -1,4 +1,4 @@
-<h1>Module Fiches</h1>
+<h2>Module Fiches</h2>
 <p>Ce module permet de se constituer une base de donn&eacute;es g&eacute;n&eacute;riques (carnet d&rsquo;adresses, ...) &agrave; partir de champs personnalisables que l&apos;on d&eacute;finit.
 Les informations sont stock&eacute;es sous forme de fiche.
 </p>

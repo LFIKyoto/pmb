@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dashboard_module_circ.class.php,v 1.7 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: dashboard_module_circ.class.php,v 1.13 2018-02-13 15:02:30 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -22,7 +22,8 @@ class dashboard_module_circ extends dashboard_module {
 	
 
 	public function get_quick_params_form(){
-		global $msg, $pmb_transferts_actif;
+		global $msg, $pmb_transferts_actif, $pmb_printer_name;
+		$html= "";
 		if(SESSrights & PREF_AUTH) {
 			$html= "
 			<div class='circ'>
@@ -32,6 +33,10 @@ class dashboard_module_circ extends dashboard_module {
 			$html.= $this->get_user_param_form("deflt2docs_location");
 			if($pmb_transferts_actif=="1")$html.= $this->get_user_param_form("deflt_docs_location");
 			$html.= $this->get_user_param_form("deflt_cashdesk");
+			$html.= $this->get_user_param_form("deflt_resas_location");
+			if (substr($pmb_printer_name,0,9) == 'raspberry') {
+				$html.= $this->get_user_param_form("deflt_printer");
+			}
 			$html.="
 					<div class='row'></div>
 				</div>
@@ -51,7 +56,7 @@ class dashboard_module_circ extends dashboard_module {
 					if(deflt2docs_location){
 						for (i=0 ; i<deflt2docs_location.options.length ; i++){
 							if(deflt2docs_location.options[i].selected == true){
-	 							parameters = 'deflt2docs_location='+deflt2docs_location.options[i].value;
+	 							parameters += 'deflt2docs_location='+deflt2docs_location.options[i].value;
 								break;
 							}
 						}
@@ -60,7 +65,7 @@ class dashboard_module_circ extends dashboard_module {
 					if(deflt_docs_location){
 						for (i=0 ; i<deflt_docs_location.options.length ; i++){
 							if(deflt_docs_location.options[i].selected == true){
-	 							parameters = 'deflt_docs_location='+deflt_docs_location.options[i].value;
+	 							parameters += '&deflt_docs_location='+deflt_docs_location.options[i].value;
 								break;
 							}
 						}
@@ -81,7 +86,25 @@ class dashboard_module_circ extends dashboard_module {
 								break;
 							}
 						}
-					}	
+					}
+					var deflt_resas_location = document.forms['quick_params_circ'].form_deflt_resas_location;
+					if(deflt_resas_location){
+						for (i=0 ; i<deflt_resas_location.options.length ; i++){
+							if(deflt_resas_location.options[i].selected == true){
+	 							parameters += '&deflt_resas_location='+deflt_resas_location.options[i].value;
+								break;
+							}
+						}
+					}
+					var deflt_printer = document.forms['quick_params_circ'].form_deflt_printer;
+					if(deflt_printer){
+						for (i=0 ; i<deflt_printer.options.length ; i++){
+							if(deflt_printer.options[i].selected == true){
+	 							parameters += '&deflt_printer='+deflt_printer.options[i].value;
+								break;
+							}
+						}
+					}
 					var req= new http_request();
 					req.request('./ajax.php?module=circ&categ=dashboard&sub=save_quick_params',1,parameters,1,circ_params_saved);
 				}
@@ -107,7 +130,9 @@ class dashboard_module_circ extends dashboard_module {
 				case "deflt_docs_location": 
 				case "param_allloc": 
 				case "deflt_cashdesk":
-					global $$key;
+				case "deflt_resas_location":
+				case "deflt_printer":
+					global ${$key};
 					$update[] = $key."='".$value."'";
 					break;
 			}

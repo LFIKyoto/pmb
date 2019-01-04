@@ -1,4 +1,4 @@
-<h1>Imports' Administration</h1>
+<h2>Imports' Administration</h2>
 <p>Here you can manage volumes or items imports.</p>
 <p>The precedure use the following steps : 
 <ul>

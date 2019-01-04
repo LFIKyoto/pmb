@@ -3,7 +3,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.13 2013-02-20 16:09:28 mbertin Exp $ -->
+$Id: manifest.xml,v 1.18 2018-03-14 17:24:34 dbellamy Exp $ -->
 <manifest>
 	<name>pmbesSearch</name>
 	<description>msg:search_functions_description</description>
@@ -86,7 +86,7 @@ $Id: manifest.xml,v 1.13 2013-02-20 16:09:28 mbertin Exp $ -->
 			</pmb_requirements>
 			<inputs>
 				<description>msg:get_advanced_sfone_inputs_description</description>
-				<param name="field_id" type="scalar" dataType="integer" description="msg:get_advanced_sfone_inputs_description_field_id"/>
+				<param name="field_id" type="scalar" dataType="string" description="msg:get_advanced_sfone_inputs_description_field_id"/>
 				<param name="search_realm" type="scalar" dataType="string" description="msg:get_advanced_sfone_inputs_description_search_realm"/>
 				<param name="lang" type="scalar" dataType="string" description="msg:get_advanced_sfone_inputs_description_lang"/>
 				<param name="fetch_values" type="scalar" dataType="boolean" description="msg:get_advanced_sfone_inputs_description_fetch_values"/>
@@ -105,10 +105,18 @@ $Id: manifest.xml,v 1.13 2013-02-20 16:09:28 mbertin Exp $ -->
 				<param name="search_realm" type="scalar" dataType="string"  description="msg:advancedSearch_inputs_description_search_realm"/>
 				<param name="search" type="array" description="msg:advancedSearch_inputs_description_search">
 					<param name="inter" type="scalar" dataType="string" description="msg:advancedSearch_inputs_description_search_inter"/>
-					<param name="field" type="scalar" dataType="integer" description="msg:advancedSearch_inputs_description_search_field"/>
+					<param name="field" type="scalar" dataType="string" description="msg:advancedSearch_inputs_description_search_field"/>
 					<param name="operator" type="scalar" dataType="string" description="msg:advancedSearch_inputs_description_search_operator"/>
 					<param name="value" type="array">
-						<param name="avalue" type="scalar" dataType="string" description="msg:advancedSearch_inputs_description_search_value"/>
+						<param name="a_value" type="scalar" dataType="string" description="msg:advancedSearch_inputs_description_search_value"/>
+					</param>
+					<param name="fieldvar" type="structure" optional="yes"  >
+						<param name="id_thesaurus" type="array" optional="yes" >
+							<param name="a_id_thesaurus" type="scalar" dataType="string" description="msg:advancedSearch_inputs_description_search_value" />
+						</param>
+						<param name="operator_between_multiple_authorities" type="array" optional="yes" >
+							<param name="a_operator_between_multiple_authorities" type="scalar" dataType="string" description="msg:advancedSearch_inputs_description_search_value" />
+						</param>
 					</param>
 				</param>
 				<param name="pmbUserId" type="scalar" dataType="integer" description="msg:advancedSearch_inputs_description_pmbUserId"/>
@@ -389,6 +397,52 @@ $Id: manifest.xml,v 1.13 2013-02-20 16:09:28 mbertin Exp $ -->
 				</result>
 			</outputs>
 		</method>
-
+		<method name="listFacets" comment="msg:listFacets_description" rights="" version="1.0" language_independant="true">
+			<pmb_requirements>
+				<pmb_requirement start_path="class" file="external_services_searchcache.class.php"/>
+			</pmb_requirements>
+			<inputs>
+				<description>msg:listFacets_inputs_description</description>
+				<param name="searchId" type="scalar" dataType="string" description="msg:listFacets_searchId"/>
+				<param name="fields" type="array" description="msg:listFacets_inputs_description_fields">
+					<param name="code_champ" type="scalar" dataType="integer" description="msg:listFacets_inputs_description_field_code_champ"/>
+					<param name="code_ss_champ" type="scalar" dataType="integer" description="msg:listFacets_inputs_description_field_code_ss_champ"/>
+				</param>
+				<param name="filters" type="array" description="msg:listFacets_inputs_description_filters">
+					<param name="code_champ" type="scalar" dataType="integer" description="msg:listFacets_inputs_description_filter_code_champ"/>
+					<param name="code_ss_champ" type="scalar" dataType="integer" description="msg:listFacets_inputs_description_filter_code_ss_champ"/>
+					<param name="value" type="scalar" dataType="string" description="msg:listFacets_inputs_description_filter_value"/>
+				</param>
+			</inputs>
+			<outputs>                                                                                            
+				<description>msg:listFacets_output_description</description>                        
+				<result type="array" name="results" description="msg:listFacets_results">
+					<result name="code_champ" type="scalar" dataType="integer" description="msg:listFacets_results_code_champ"/>
+					<result name="code_ss_champ" type="scalar" dataType="integer" description="msg:listFacets_results_code_ss_champ"/>
+					<result name="value" type="scalar" dataType="string" description="msg:listFacets_results_value"/>
+					<result name="count" type="scalar" dataType="integer" description="msg:listFacets_results_count"/>
+				</result>                                                                                    
+			</outputs> 
+		</method>
+		<method name="listRecordsFromFacets" comment="msg:listRecordsFromFacets_description" rights="" version="1.0" language_independant="true">
+			<pmb_requirements>
+				<pmb_requirement start_path="class" file="external_services_searchcache.class.php"/>
+			</pmb_requirements>
+			<inputs>
+				<description>msg:listRecordsFromFacets_inputs_description</description>
+				<param name="searchId" type="scalar" dataType="string" description="msg:listRecordsFromFacets_searchId"/>
+				<param name="filters" type="array" description="msg:listRecordsFromFacets_inputs_description_filters">
+					<param name="code_champ" type="scalar" dataType="integer" description="msg:listRecordsFromFacets_inputs_description_filter_code_champ"/>
+					<param name="code_ss_champ" type="scalar" dataType="integer" description="msg:listRecordsFromFacets_inputs_description_filter_code_ss_champ"/>
+					<param name="value" type="scalar" dataType="string" description="msg:listRecordsFromFacets_inputs_description_filter_value"/>
+				</param>
+			</inputs>
+			<outputs>                                                                                            
+				<description>msg:listRecordsFromFacets_output_description</description>                        
+				<result type="array" name="results" description="msg:listRecordsFromFacets_results">
+					<result name="noticeId"  type="scalar" dataType="integer" description="msg:listRecordsFromFacets_outputs_description_noticeId"/>
+				</result>                                                                                       
+			</outputs> 
+		</method>
 	</methods>
 </manifest>

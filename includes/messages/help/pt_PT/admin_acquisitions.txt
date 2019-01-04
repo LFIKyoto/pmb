@@ -1,4 +1,4 @@
-<h1>Aquisi&ccedil;&otilde;es</h1>
+<h2>Aquisi&ccedil;&otilde;es</h2>
 <p><b>Dados</b> ficha de identifica&ccedil;&atilde;o da biblioteca. 
 </p>
 <p><b>Transac&ccedil;&otilde;es contabil&iacute;sticas</b> defini&ccedil;&atilde;o

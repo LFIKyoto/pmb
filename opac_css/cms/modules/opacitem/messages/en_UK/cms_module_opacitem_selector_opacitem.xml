@@ -17,4 +17,6 @@
 	<entry code='cms_module_opacitem_item_dernotices'>Latest records</entry>
 	<entry code='cms_module_opacitem_item_etageres'>Shelves</entry>
 	<entry code='cms_module_opacitem_item_rssflux'>RSS feed</entry>
+	<entry code='cms_module_opacitem_item_contact_form'>Contact form</entry>
+	<entry code="cms_module_opacitem_item_collstate_bulletins_display">Constitution des reliures</entry>
 </XMLlist>

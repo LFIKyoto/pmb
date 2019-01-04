@@ -1,4 +1,4 @@
-<h1>Amministrazione degli esemplari</h1>
+<h2>Amministrazione degli esemplari</h2>
 
 <p>La sezione <b>amministrazione degli esemplari</b> permette di definire i parametri del programma per il prestito e le statistiche sui documenti.
 <ul>

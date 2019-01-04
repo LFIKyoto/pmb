@@ -2,15 +2,20 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: alert_see.inc.php,v 1.4 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: alert_see.inc.php,v 1.7 2018-04-19 13:27:05 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $include_path;
+global $search;
+global $es;
 
 // fonctions de conversion simple2mc
 require_once($include_path."/search_queries/specials/combine/search.class.php");
 
 // Gestion des alertes à partir de la recherche simple
 $mc=combine_search::simple2mc($_SESSION['last_query']);
+global $field_0_s_4;
 $field_0_s_4[]=serialize(array(
 		'serialized_search' => $mc['serialized_search'],
 		'search_type' => $mc['search_type']
@@ -18,13 +23,16 @@ $field_0_s_4[]=serialize(array(
 
 unset($search);
 
+global $search; //On redéclare $search en globale pour la suite
+global $op_0_s_4;
 $op_0_s_4="EQ";
+global $inter_0_s_4;
 $inter_0_s_4="";
 $search[0]="s_4";
 
-if ($_SESSION['opac_view']) {
+if (isset($_SESSION['opac_view']) && $_SESSION['opac_view']) {
 	$query = "select opac_view_query from opac_views where opac_view_id = ".$_SESSION['opac_view'];
-	$result = pmb_mysql_query($query, $dbh);
+	$result = pmb_mysql_query($query);
 
 	if ($result && pmb_mysql_num_rows($result)) {
 		$row = pmb_mysql_fetch_object($result);
@@ -32,11 +40,14 @@ if ($_SESSION['opac_view']) {
 	}
 
 	if ($serialized) {
+		global $field_1_s_4;
 		$field_1_s_4[]=serialize(array(
 				'serialized_search' => $serialized,
 				'search_type' => "search_fields"
 		));
+		global $op_1_s_4;
 		$op_1_s_4="EQ";
+		global $inter_1_s_4;
 		$inter_1_s_4="and";
 		$search[1]="s_4";
 	}

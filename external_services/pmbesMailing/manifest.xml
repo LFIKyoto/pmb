@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.1 2012-07-31 10:12:16 dgoron Exp $ -->
+$Id: manifest.xml,v 1.2 2017-08-18 15:29:02 jpermanne Exp $ -->
 <manifest>
 	<name>pmbesMailing</name>
 	<description>msg:Mailing_functions_description</description>
@@ -24,6 +24,7 @@ $Id: manifest.xml,v 1.1 2012-07-31 10:12:16 dgoron Exp $ -->
 				<description>msg:sendMailingCaddie_input_description</description>
 				<param name="id_caddie_empr" type="scalar" dataType="integer" description="msg:sendMailingCaddie_id_caddie_empr"/>
 				<param name="id_tpl" type="scalar" dataType="integer" description="msg:sendMailingCaddie_id_tpl"/>
+				<param name="email_cc" type="scalar" dataType="string" description="msg:sendMailingCaddie_email_cc"/>
 			</inputs>
 			<outputs>
 				<description>msg:sendMailingCaddie_output_description</description>

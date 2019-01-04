@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_selector_external_sources.class.php,v 1.2 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: docwatch_selector_external_sources.class.php,v 1.3 2017-08-23 07:29:05 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -42,6 +42,9 @@ class docwatch_selector_external_sources extends docwatch_selector {
 	
 	public function get_form(){
 		global $msg,$charset;
+		
+		if(!isset($this->parameters['nb_max_elements'])) $this->parameters['nb_max_elements'] = '';
+				
 		$form ="
 		<div class='row'>
 			<div class='colonne3'>
@@ -72,7 +75,8 @@ class docwatch_selector_external_sources extends docwatch_selector {
 	
 	protected function gen_select(){
 		global $dbh,$charset;
-		if(!$this->parameters['external_sources']){
+		
+		if(!isset($this->parameters['external_sources']) || !$this->parameters['external_sources']){
 			$this->parameters['external_sources']= array();
 		}
 		$query ="select source_id, name from connectors_sources where repository='1' order by name";

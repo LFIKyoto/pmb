@@ -2,37 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export.php,v 1.21 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: export.php,v 1.26 2018-02-13 15:08:42 dgoron Exp $
 
 $base_path=".";
 require_once($base_path."/includes/init.inc.php");
-require_once("./includes/error_report.inc.php") ;
-require_once("./includes/global_vars.inc.php");
-require_once('./includes/opac_config.inc.php');
-	
-// récupération paramètres MySQL et connection á la base
-require_once('./includes/opac_db_param.inc.php');
-require_once('./includes/opac_mysql_connect.inc.php');
-$dbh = connection_mysql();
-// (si la connection est impossible, le script die ici).
 
-require_once("./includes/misc.inc.php");
+//fichiers nécessaires au bon fonctionnement de l'environnement
+require_once($base_path."/includes/common_includes.inc.php");
 
-//Sessions !! Attention, ce doit être impérativement le premier include (à cause des cookies)
-require_once("./includes/session.inc.php");
-require_once('./includes/start.inc.php');
-require_once("./includes/check_session_time.inc.php");
-
-// récupération localisation
-require_once('./includes/localisation.inc.php');
-
-// version actuelle de l'opac
-require_once('./includes/opac_version.inc.php');
-
-// fonctions de gestion de formulaire
-require_once('./includes/javascript/form.inc.php');
 require_once('./includes/templates/common.tpl.php');
-require_once('./includes/divers.inc.php');
 require_once('./includes/notice_categories.inc.php');
 
 // classe de gestion des catégories
@@ -46,40 +24,9 @@ require_once($base_path.'/classes/indexint.class.php');
 // classe d'affichage des tags
 require_once($base_path.'/classes/tags.class.php');
 
-require_once($base_path."/includes/marc_tables/".$pmb_indexation_lang."/empty_words");
-
-//si les vues sont activées (à laisser après le calcul des mots vides)
-if($opac_opac_view_activate){
-	if($opac_view==-1){
-		$_SESSION["opac_view"]="default_opac";
-	}else if($opac_view)	{
-		$_SESSION["opac_view"]=$opac_view*1;
-	}
-	$_SESSION['opac_view_query']=0;
-	if(!$pmb_opac_view_class) $pmb_opac_view_class= "opac_view";
-	require_once($base_path."/classes/".$pmb_opac_view_class.".class.php");
-
-	$opac_view_class= new $pmb_opac_view_class($_SESSION["opac_view"],$_SESSION["id_empr_session"]);
- 	if($opac_view_class->id){
- 		$opac_view_class->set_parameters();
- 		$opac_view_filter_class=$opac_view_class->opac_filters;
- 		$_SESSION["opac_view"]=$opac_view_class->id;
- 		if(!$opac_view_class->opac_view_wo_query) {
- 			$_SESSION['opac_view_query']=1;
- 		}
- 	}else{
- 		$_SESSION["opac_view"]=0;
- 	}
-	$css=$_SESSION["css"]=$opac_default_style;
-
-}
-
 // pour l'affichage correct des notices
-require_once($base_path."/includes/templates/common.tpl.php");
 require_once($base_path."/includes/templates/notice.tpl.php");
 require_once($base_path."/includes/navbar.inc.php");
-require_once($base_path."/includes/notice_authors.inc.php");
-require_once($base_path."/includes/notice_categories.inc.php");
 require_once($base_path."/includes/explnum.inc.php");
 
 require_once('./classes/notice_affichage.class.php');
@@ -94,12 +41,30 @@ require_once("$base_path/admin/convert/start_export.class.php");
 if (file_exists($base_path.'/includes/ext_auth.inc.php')) require_once($base_path.'/includes/ext_auth.inc.php');
 
 
-if($select_item){
+if(isset($select_item) && $select_item){
 	$cart_ = explode(",",$select_item);
 } else $cart_=$_SESSION["cart"];
 
 if (($opac_export_allow=='1') || (($opac_export_allow=='2') && ($_SESSION["user_code"]))) {
-	if (!$opac_export_allow_expl) $keep_expl = 0 ;
+	switch ($opac_export_allow_expl) {
+		case '1' :
+			$keep_expl = 1 ;
+			$keep_explnum = 0 ;
+			break;
+		case '2' :
+			$keep_expl = 0 ;
+			$keep_explnum = 1 ;
+			break;
+		case '3' :
+			$keep_expl = 1 ;
+			$keep_explnum = 1 ;
+			break;
+		case '0' :
+		default :
+			$keep_expl = 0 ;
+			$keep_explnum = 0 ;
+			break;
+	}
 	if ($action=="export") {
 		$exportation="";
 		$nb_fiche=0;
@@ -123,7 +88,7 @@ if (($opac_export_allow=='1') || (($opac_export_allow=='2') && ($_SESSION["user_
 			$res=pmb_mysql_query($sql,$dbh);
 			if ($ligne=pmb_mysql_fetch_array($res)) {
 				$nb_fiche++;
-				$export= new start_export(($id_externe ? $id_externe : $cart_[$z]),$typeexport,$is_externe) ;
+				$export= new start_export(($id_externe ? $id_externe : $cart_[$z]),$typeexport,$is_externe,$keep_expl,$keep_explnum) ;
 				$exportation.=$export->output_notice;			
 			}	
 		}
@@ -138,22 +103,12 @@ if (($opac_export_allow=='1') || (($opac_export_allow=='2') && ($_SESSION["user_
 			if($pmb_logs_activate){
 				global $log, $infos_notice, $infos_expl;
 				
-				$rqt= " select empr_prof,empr_cp, empr_ville as ville, empr_year, empr_sexe,  empr_date_adhesion, empr_date_expiration, count(pret_idexpl) as nbprets, count(resa.id_resa) as nbresa, code.libelle as codestat, es.statut_libelle as statut, categ.libelle as categ, gr.libelle_groupe as groupe,dl.location_libelle as location 
-						from empr e
-						left join empr_codestat code on code.idcode=e.empr_codestat
-						left join empr_statut es on e.empr_statut=es.idstatut
-						left join empr_categ categ on categ.id_categ_empr=e.empr_categ
-						left join empr_groupe eg on eg.empr_id=e.id_empr
-						left join groupe gr on eg.groupe_id=gr.id_groupe
-						left join docs_location dl on e.empr_location=dl.idlocation
-						left join resa on e.id_empr=resa_idempr
-						left join pret on e.id_empr=pret_idempr
-						where e.empr_login='".addslashes($login)."'
-						group by resa_idempr, pret_idempr";
-				$res=pmb_mysql_query($rqt);
-				if($res){
-					$empr_carac = pmb_mysql_fetch_array($res);
-					$log->add_log('empr',$empr_carac);
+				if($_SESSION['user_code']) {
+					$res=pmb_mysql_query($log->get_empr_query());
+					if($res){
+						$empr_carac = pmb_mysql_fetch_array($res);
+						$log->add_log('empr',$empr_carac);
+					}
 				}
 				$log->add_log('num_session',session_id());
 				$log->add_log('expl',$infos_expl);
@@ -162,7 +117,7 @@ if (($opac_export_allow=='1') || (($opac_export_allow=='2') && ($_SESSION["user_
 			}
 			
 		} else {
-				print "<script>alert(\"".$msg[export_aucune_notice]."\"); history.go(-1);</script>";
+				print "<script>alert(\"".$msg['export_aucune_notice']."\"); history.go(-1);</script>";
 		}		
 	}
 }

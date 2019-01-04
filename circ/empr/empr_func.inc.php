@@ -1,8 +1,8 @@
 <?php
 // +-------------------------------------------------+
-// ? 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr_func.inc.php,v 1.76 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: empr_func.inc.php,v 1.97 2018-12-05 07:58:30 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -13,11 +13,12 @@ require_once($class_path."/parametres_perso.class.php");
 if ($ldap_accessible) require_once($include_path."/ldap_param.inc.php");
 require_once("$class_path/opac_view.class.php");
 require_once("$class_path/docs_location.class.php");
+require_once("$include_path/templates/camera.tpl.php");
 
 // affichage de la liste des langues
 function make_empr_lang_combo($lang='') {
 	// retourne le combo des langues avec la langue $lang selectionn?e
-	// n?cessite l'inclusion de XMLlist.class.php (normalement c'est d?j? le cas partout
+	// nécessite l'inclusion de XMLlist.class.php (normalement c'est déjà le cas partout
 	global $include_path;
 	global $msg;
 	global $charset;
@@ -27,6 +28,7 @@ function make_empr_lang_combo($lang='') {
 	$langues = new XMLlist("$include_path/messages/languages.xml");
 	$langues->analyser();
 	$clang = $langues->table;
+	reset($clang);
 	$combo = "<select name='form_empr_lang' id='empr_lang'>";
 	while(list($cle, $value) = each($clang)) {
 		// arabe seulement si on est en utf-8
@@ -128,6 +130,8 @@ function show_empr_form($form_action, $form_cancel, $link, $id, $cb,$duplicate_e
 	global $lang;
 	global $pmb_rfid_activate, $pmb_rfid_serveur_url;
 	global $pmb_opac_view_activate;
+	global $camera_tpl, $empr_pics_folder, $empr_pics_url, $deflt_camera_empr, $photo_tpl;
+	global $base_path;
 	
 	// si $id est fourni, il s'agit d'une modification. on recupere les donnees dans $link
 	if($id) {
@@ -145,11 +149,54 @@ function show_empr_form($form_action, $form_cancel, $link, $id, $cb,$duplicate_e
 		} else {
 			error_message( $msg[53], $msg[54], 0);
 		}
+		if (!$duplicate_empr_from_id) {
+			$empr_form = str_replace('!!empr_create_script_call!!','',$empr_form);
+			$empr_form = str_replace('!!empr_create_script_loader!!','',$empr_form);
+		} else {
+			if (file_exists($base_path.'/javascript/empr_create_script.js')) {
+				$empr_form = str_replace('!!empr_create_script_call!!','empr_create_script();',$empr_form);
+				$empr_form = str_replace('!!empr_create_script_loader!!','<script type="text/javascript" src="javascript/empr_create_script.js"></script>',$empr_form);
+			} else {
+				$empr_form = str_replace('!!empr_create_script_call!!','',$empr_form);
+				$empr_form = str_replace('!!empr_create_script_loader!!','',$empr_form);
+			}
+		}
 	} else {
 		// création
 		$empr = new stdClass();
+		$empr->empr_cb = '';
+		$empr->empr_nom = '';
+		$empr->empr_prenom = '';
+		$empr->empr_adr1 = '';
+		$empr->empr_adr2 = '';
+		$empr->empr_cp = '';
+		$empr->empr_ville = '';
+		$empr->empr_pays = '';
+		$empr->empr_mail = '';
+		$empr->empr_tel1 = '';
+		$empr->empr_sms = '';		
+		$empr->empr_tel2 = '';
+		$empr->empr_prof = '';
+		$empr->empr_year = '';
+		$empr->empr_lang = '';		
+		$empr->empr_login = '';
+		$empr->empr_msg = '';
+		$empr->empr_statut = '';
+		$empr->empr_categ = '';
+		$empr->empr_codestat = '';
+		$empr->empr_sexe = '';
+		$empr->empr_ldap = '';
+		$empr->empr_location = '';
+		
 		$entete=$msg[15];
 		$empr_form = str_replace("!!questionrfid!!",  '' , $empr_form);
+		if (file_exists($base_path.'/javascript/empr_create_script.js')) {
+			$empr_form = str_replace('!!empr_create_script_call!!','empr_create_script();',$empr_form);
+			$empr_form = str_replace('!!empr_create_script_loader!!','<script type="text/javascript" src="javascript/empr_create_script.js"></script>',$empr_form);
+		} else {
+			$empr_form = str_replace('!!empr_create_script_call!!','',$empr_form);
+			$empr_form = str_replace('!!empr_create_script_loader!!','',$empr_form);
+		}
 	}
 	if ($duplicate_empr_from_id) {
 		$empr_form = str_replace("!!id!!",   "", $empr_form);
@@ -159,33 +206,53 @@ function show_empr_form($form_action, $form_cancel, $link, $id, $cb,$duplicate_e
 		 $empr_form = str_replace("!!entete!!", $entete, $empr_form);
 	}
 	$empr_form = str_replace("!!form_action!!",   $form_action, $empr_form);
+
+	if($empr_pics_folder) {
+		if($deflt_camera_empr) {
+			$camera_tpl = str_replace("!!upload_folder!!", $empr_pics_folder, $camera_tpl);			
+			$empr_form = str_replace("!!camera!!", gen_plus('emr_camera', $msg['empr_photo_capture'], $camera_tpl, 0, "init_camera('" . $empr_pics_folder . "', '" . $empr_pics_url . "', 'f_cb', '!!num_carte!!');"), $empr_form);		
+		} else {		
+			$photo_tpl = str_replace("!!upload_folder!!", $empr_pics_folder, $photo_tpl);
+			$empr_form = str_replace("!!camera!!", gen_plus('emr_camera', $msg['empr_photo_capture'], $photo_tpl, 0, "init_camera('" . $empr_pics_folder . "', '" . $empr_pics_url . "', 'f_cb', '!!num_carte!!');"), $empr_form);		
+		}
+	} else {
+		$empr_form = str_replace("!!camera!!", '', $empr_form);		
+	}	
 	
 	if($empr->empr_cb) { //Si il y a un code lecteur
 		if (!$duplicate_empr_from_id) $empr_form = str_replace("!!cb!!",      $empr->empr_cb,      $empr_form);
-			else $empr_form = str_replace("!!cb!!",      $cb,      $empr_form);
+		else $empr_form = str_replace("!!cb!!",      $cb,      $empr_form);
 		
 		$date_adhesion = (!$duplicate_empr_from_id ? $empr->empr_date_adhesion : date('Y-m-d'));
-		$date_clic   = "onClick=\"openPopUp('./select.php?what=calendrier&caller=empr_form&date_caller=".preg_replace('/-/', '', $date_adhesion)."&param1=form_adhesion&param2=form_adhesion_lib&auto_submit=NO&date_anterieure=YES', 'date_adhesion', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\"  ";
 		
-		$adhesion = "
-				<input type='hidden' name='form_adhesion' value='".preg_replace('/-/', '', $date_adhesion)."' />
-				<input class='bouton' type='button' name='form_adhesion_lib' value='".formatdate($date_adhesion)."' ".$date_clic." />";
+		$adhesion = "<input type='text' style='width: 10em;' name='form_adhesion' id='form_adhesion' value='".$date_adhesion."'
+					data-dojo-type='dijit/form/DateTextBox' required='false' />";
+	
 				
 		$empr_form = str_replace("!!adhesion!!", $adhesion, $empr_form);
 
-		$date_clic   = "onClick=\"openPopUp('./select.php?what=calendrier&caller=empr_form&date_caller=".preg_replace('/-/', '', $empr->empr_date_expiration)."&param1=form_expiration&param2=form_expiration_lib&auto_submit=NO&date_anterieure=YES', 'date_adhesion', 205, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\"  ";
+		if ($duplicate_empr_from_id) {
+			/* AJOUTER ICI LE CALCUL EN FONCTION DE LA CATEGORIE */
+			$rqt_empr_categ = "select duree_adhesion from empr_categ where id_categ_empr = ".$empr->empr_categ;
+			$res_empr_categ = pmb_mysql_query($rqt_empr_categ, $dbh);
+			$empr_categ = pmb_mysql_fetch_object($res_empr_categ);
+			//$form_adhesion=preg_replace('/-/', '', $form_adhesion);
+			
+			$rqt_date = "select date_add('".$date_adhesion."', INTERVAL $empr_categ->duree_adhesion DAY) as date_expiration " ;
+			$resultatdate=pmb_mysql_query($rqt_date);
+			$resdate=pmb_mysql_fetch_object($resultatdate);
+			$empr->empr_date_expiration = $resdate->date_expiration;
+		}
 
-		$expiration  = "
-				<input type='hidden' id='form_expiration' name='form_expiration' value='".preg_replace('/-/', '', $empr->empr_date_expiration)."' />
-				<input class='bouton' type='button' id='form_expiration_lib' name='form_expiration_lib' value='".formatdate($empr->empr_date_expiration)."' ".$date_clic." />";
-		
+		$expiration  ="<input type='text' style='width: 10em;' name='form_expiration' id='form_expiration' value='".$empr->empr_date_expiration."'
+					data-dojo-type='dijit/form/DateTextBox' required='false' />";
 		$empr_form = str_replace("!!expiration!!", $expiration, $empr_form);
 
 		// ajout ici des trucs sur la relance adhésion
 		$empr_temp = new emprunteur($id, '', FALSE, 0) ;
 		$aff_relance = "";
 		if ($empr_temp->adhesion_renouv_proche() || $empr_temp->adhesion_depassee()) {
-			if ($empr_temp->adhesion_depassee()) $mess_relance = $msg[empr_date_depassee];
+			if ($empr_temp->adhesion_depassee()) $mess_relance = $msg['empr_date_depassee'];
 				else $mess_relance = $msg[empr_date_renouv_proche];
 
 			$rqt="select duree_adhesion from empr_categ where id_categ_empr='$empr_temp->categ'";
@@ -210,19 +277,18 @@ function show_empr_form($form_action, $form_cancel, $link, $id, $cb,$duplicate_e
 			$nouv_date_fin_formatee = formatdate($nouv_date_fin) ;
 
 			// on conserve la date d'adhésion initiale
-			$action_prolonger = "this.form.form_expiration.value = '$nouv_date_fin';
-				this.form.form_expiration_lib.value = '$nouv_date_fin_formatee';
-				";
+			$action_prolonger = "dijit.byId('form_expiration').set('value','".$nouv_date_fin."');this.form.is_subscription_extended.value = 1;";
 
-			$action_relance_courrier = "openPopUp('./pdf.php?pdfdoc=lettre_relance_adhesion&id_empr=$id', 'lettre', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes'); return(false) ";
+			$action_relance_courrier = "openPopUp('./pdf.php?pdfdoc=lettre_relance_adhesion&id_empr=$id', 'lettre'); return(false) ";
 
 			$aff_relance = "<div class='row'>
 						<span class='erreur'>$mess_relance</span><br />
-						<input class='bouton' type='button' value=\"".$msg[prolonger]."\" onClick=\"$action_prolonger\" />&nbsp;
-						<input class='bouton' type='button' value=\"".$msg[prolong_courrier]."\" onClick=\"$action_relance_courrier\" />";
+						<input type='hidden' id='is_subscription_extended' name='is_subscription_extended' value='0' />
+						<input class='bouton' type='button' value=\"".$msg['prolonger']."\" onClick=\"$action_prolonger\" />&nbsp;
+						<input class='bouton' type='button' value=\"".$msg['prolong_courrier']."\" onClick=\"$action_relance_courrier\" />";
 
 			if ($empr_temp->mail && $biblio_email ) {
-				$action_relance_mail = "if (confirm('".$msg["mail_retard_confirm"]."')) {openPopUp('./mail.php?type_mail=mail_relance_adhesion&id_empr=$id', 'mail', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes, scrollbars=yes'); } return(false) ";
+				$action_relance_mail = "if (confirm('".$msg["mail_retard_confirm"]."')) {openPopUp('./mail.php?type_mail=mail_relance_adhesion&id_empr=$id', 'mail'); } return(false) ";
 				$aff_relance .= "&nbsp;<input class='bouton' type='button' value=\"".$msg['prolong_mail']."\" onClick=\"$action_relance_mail\" />";
 			}
 
@@ -266,10 +332,8 @@ function show_empr_form($form_action, $form_cancel, $link, $id, $cb,$duplicate_e
 	} else { // création de lecteur
 		$empr->empr_date_adhesion = today() ;
 		$empr_form = str_replace('!!cb!!',$cb,$empr_form);
-		$date_clic   = "onClick=\"openPopUp('./select.php?what=calendrier&caller=empr_form&date_caller=".preg_replace('/-/', '', $empr->empr_date_adhesion)."&param1=form_adhesion&param2=form_adhesion_lib&auto_submit=NO&date_anterieure=YES', 'date_adhesion', 250, 260, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\"  ";
-		$adhesion = "$msg[1401]$msg[1901]
-				<input type='hidden' name='form_adhesion' value='".preg_replace('/-/', '', $empr->empr_date_adhesion)."'>
-				<input class='bouton' type='button' name='form_adhesion_lib' value='".formatdate($empr->empr_date_adhesion)."' ".$date_clic." />";
+		$adhesion = "<input type='text' style='width: 10em;' name='form_adhesion' id='form_adhesion' value='".$empr->empr_date_adhesion."'
+					data-dojo-type='dijit/form/DateTextBox' required='false' />";
 		$empr_form = str_replace("!!adhesion!!", $adhesion, $empr_form);
 		$empr_form = str_replace("!!adhesion_proche_depassee!!", "", $empr_form);
 		$empr_form = str_replace("!!expiration!!",   "<input type='hidden' name='form_expiration' value=''>",   $empr_form);
@@ -325,12 +389,26 @@ function show_empr_form($form_action, $form_cancel, $link, $id, $cb,$duplicate_e
 		$empr_form = str_replace('!!empr_login!!', "", $empr_form);
 		$empr_form = str_replace("!!empr_msg!!", "",   $empr_form);
 	}
+	
+	//Si il n'y a pas de statut, categ, codestat on prend celui définit pour l'utilisateur
+	if(!$empr->empr_statut){
+		global $deflt_empr_statut;
+		$empr->empr_statut=$deflt_empr_statut;
+	}
+	if(!$empr->empr_categ){
+		global $deflt_empr_categ;
+		$empr->empr_categ=$deflt_empr_categ;
+	}
+	if(!$empr->empr_codestat){
+		global $deflt_empr_codestat;
+		$empr->empr_codestat=$deflt_empr_codestat;
+	}
 	// on récupère le select catégorie
 	$requete = "SELECT id_categ_empr, libelle, duree_adhesion FROM empr_categ ORDER BY libelle ";
 	$res = pmb_mysql_query($requete, $link);
 	$nbr_lignes = pmb_mysql_num_rows($res);
 	$categ_content='';
-	$empr_grille_categ="<select id='empr_grille_categ' style='display:none;'><option value='0' selected='selected' >".$msg['all_categories_empr']."</value>";
+	$empr_grille_categ="<select id='empr_grille_categ' style='display:none;' onChange=\"get_pos(); expandAll(); if (inedit) move_parse_dom(relative); else initIt();\"><option value='0' selected='selected' >".$msg['all_categories_empr']."</option>";
 	for($i=0; $i < $nbr_lignes; $i++) {
 		$row = pmb_mysql_fetch_row($res);
 		$categ_content.= "<option value='$row[0]'";
@@ -344,7 +422,7 @@ function show_empr_form($form_action, $form_cancel, $link, $id, $cb,$duplicate_e
 	// Ajout des categories et localisations pour edition des grilles
 	$empr_form = str_replace("<!-- empr_grille_categ -->", $empr_grille_categ,  $empr_form);
 	if ($pmb_lecteurs_localises) {
-		$empr_grille_location = docs_location::get_html_select(array(0),array('id'=>0,'msg'=>$msg['all_locations_empr']),array('id'=>'empr_grille_location','class'=>'saisie-20em','style'=>'display:none;'));
+		$empr_grille_location = docs_location::get_html_select(array(0),array('id'=>0,'msg'=>$msg['all_locations_empr']),array('id'=>'empr_grille_location','class'=>'saisie-20em','style'=>'display:none;', 'onChange'=>'get_pos(); expandAll(); if (inedit) move_parse_dom(relative); else initIt();'));
 	} else {
 		$empr_grille_location="<input type='hidden' id='empr_grille_location' value='0' />";
 	}
@@ -363,16 +441,10 @@ function show_empr_form($form_action, $form_cancel, $link, $id, $cb,$duplicate_e
 	$empr_form = str_replace("!!categ!!",      $categ_content,   $empr_form);
 	
 	// on récupère le select statut
-	$requete = "SELECT idstatut, statut_libelle FROM empr_statut ORDER BY statut_libelle ";
-
-	//Si il n'y a pas de statut on prend celui définit pour l'utilisateur
-	if(!$empr->empr_statut){
-		global $deflt_empr_statut;
-		$empr->empr_statut=$deflt_empr_statut;
-	}
-	
+	$requete = "SELECT idstatut, statut_libelle FROM empr_statut ORDER BY statut_libelle ";	
 	$res = pmb_mysql_query($requete, $link);
 	$nbr_lignes = pmb_mysql_num_rows($res);
+	$statut_content = "";
 	for($i=0; $i < $nbr_lignes; $i++) {
 		$row = pmb_mysql_fetch_row($res);
 		$statut_content .= "<option value='$row[0]'";
@@ -387,6 +459,7 @@ function show_empr_form($form_action, $form_cancel, $link, $id, $cb,$duplicate_e
 	$res = pmb_mysql_query($requete, $link);
 	$nbr_lignes = pmb_mysql_num_rows($res);
 
+	$cstat_content = "";
 	for($i=0; $i < $nbr_lignes; $i++) {
 		$row = pmb_mysql_fetch_row($res);
 		$cstat_content .= "<option value='$row[0]'";
@@ -409,15 +482,7 @@ function show_empr_form($form_action, $form_cancel, $link, $id, $cb,$duplicate_e
 	$empr_form = preg_replace("/sexe_select_[0-2]/m", '', $empr_form);
 	$empr_form = str_replace("!!cstat!!",      $cstat_content,   $empr_form);
 
-	// mise à jour du groupe
-	if($id){
-		$requete = "SELECT id_groupe, libelle_groupe, ifnull(empr_id,0) as inscription FROM groupe left join empr_groupe on (id_groupe=groupe_id  and empr_id=".$id.")  ORDER BY libelle_groupe";
-	}else{
-		$requete = "SELECT id_groupe, libelle_groupe, 0 as inscription FROM groupe ORDER BY libelle_groupe";
-	}
-	
-	$groupe_form_aff = gen_liste_multiple ($requete, "id_groupe", "libelle_groupe", "inscription", "id_grp[]", "", $id, 0, $msg[empr_form_aucungroupe], 0,$msg[empr_form_nogroupe], 5) ;
-	$empr_form = str_replace("!!groupe_ajout!!", $groupe_form_aff, $empr_form);
+	$empr_form = str_replace("!!groupe_ajout!!", get_groups_form($id), $empr_form);
 
 	$empr_form = str_replace('!!cancel!!',$form_cancel,$empr_form);
 
@@ -435,17 +500,15 @@ function show_empr_form($form_action, $form_cancel, $link, $id, $cb,$duplicate_e
 	if (!$empr->empr_location) $empr->empr_location=$deflt2docs_location ;
 	if ($pmb_lecteurs_localises) {
 		$loc = "
-		<div class='row' id='g2_r1' etirable='yes' recept='yes' recepttype='circrow' highlight='circrow_highlight' downlight='circrow_downlight' >
-			<div class='colonne4' id='g2_r1_f0' movable='yes' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight' title='".htmlentities($msg['empr_location'],ENT_QUOTES,$charset)."'>
+			<div class='colonne4' id='g2_r1_f0'  movable='yes' title='".htmlentities($msg['empr_location'],ENT_QUOTES,$charset)."'>
 				<div class='row'>
 					<label for='form_empr_location' class='etiquette'>".$msg['empr_location']."</label>
-					</div>
+				</div>
 				<div class='row'>
 					!!localisation!!
-					</div>
 				</div>
-			<div class='row'></div>
-		</div>";
+			</div>
+		";
 	
 		//$loc = str_replace('!!localisation!!', docs_location::gen_combo_box_empr($empr->empr_location, 0), $loc);
 		$loc = str_replace('!!localisation!!', docs_location::get_html_select(array($empr->empr_location),array(),array('id'=>'empr_location_id','name'=>'empr_location_id')), $loc);
@@ -457,27 +520,31 @@ function show_empr_form($form_action, $form_cancel, $link, $id, $cb,$duplicate_e
 	
 	if($pmb_opac_view_activate ){
 		$opac_view_tpl = "
-			<div class='row' id='g4_r1_f0' movable='yes' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight' title='".htmlentities($msg['empr_form_opac_view'],ENT_QUOTES,$charset)."'>				
+			<div class='row' id='g4_r1_f0' movable='yes' title='".htmlentities($msg['empr_form_opac_view'],ENT_QUOTES,$charset)."'>				
 					!!opac_view!!
 			</div>";
 		$opac_view = new opac_view(0,$id);		
 		$opac_view_tpl=str_replace("!!opac_view!!",gen_plus("opac_view",$msg["empr_form_opac_view"],$opac_view->do_sel_list(),0),$opac_view_tpl);
+	} else {
+		$opac_view_tpl = "";
 	}
 	$empr_form = str_replace('<!-- !!opac_view!! -->', $opac_view_tpl, $empr_form);	
 	//Champs persos
 	$p_perso=new parametres_perso("empr");
 	$perso_=$p_perso->show_editable_fields($id);
-	if (count($perso_["FIELDS"])) $perso = "<div class='row'></div>" ;
+	if (isset($perso_["FIELDS"]) && count($perso_["FIELDS"])) $perso = "<div class='row'></div>" ;
 		else $perso="";
 	$class="colonne2";
-	for ($i=0; $i<count($perso_["FIELDS"]); $i++) {
-		$p=$perso_["FIELDS"][$i];
-		$perso.="<div class='$class' id='g6_r0_f".$i."' movable='yes' draggable='yes' dragtype='circcell' recept='yes' recepttype='circcell' highlight='circcell_highlight' downlight='circcell_downlight' title='".htmlentities($p['TITRE'],ENT_QUOTES,$charset)."' >";
-		$perso.="<div class='row'><label for='".$p["NAME"]."' class='etiquette'>".$p["TITRE"]."</label></div>\n";
-		$perso.="<div class='row'>";
-		$perso.=$p["AFF"]."</div>";
-		$perso.="</div>";
-		if ($class=="colonne2") $class="colonne_suite"; else $class="colonne2";
+	if(isset($perso_["FIELDS"])) {
+		for ($i=0; $i<count($perso_["FIELDS"]); $i++) {
+			$p=$perso_["FIELDS"][$i];
+			$perso.="<div class='$class' id='g6_r0_f".$p["ID"]."' movable='yes' title='".htmlentities($p['TITRE'],ENT_QUOTES,$charset)."' >";
+			$perso.="<div class='row'><label for='".$p["NAME"]."' class='etiquette'>".$p["TITRE"]." </label>".$p["COMMENT_DISPLAY"]."</div>\n";
+			$perso.="<div class='row'>";
+			$perso.=$p["AFF"]."</div>";
+			$perso.="</div>";
+			if ($class=="colonne2") $class="colonne_suite"; else $class="colonne2";
+		}
 	}
 	if ($class=="colonne_suite") $perso.="<div class='$class'>&nbsp;</div>";
 	$perso.=$perso_["CHECK_SCRIPTS"];
@@ -487,102 +554,134 @@ function show_empr_form($form_action, $form_cancel, $link, $id, $cb,$duplicate_e
 	print pmb_bidi($empr_form);
 }
 
-
 //creation formulaire surcharge des droits d'accès emprunteurs-notices
 function get_rights_form($empr_id=0) {
 		
 	global $dbh,$msg,$charset;
-	global $gestion_acces_active,$gestion_acces_empr_notice;
+	global $gestion_acces_active, $gestion_acces_empr_notice, $gestion_acces_empr_docnum;
+	global $gestion_acces_empr_contribution_area, $gestion_acces_empr_contribution_scenario;
+	global $gestion_acces_contribution_moderator_empr;
 	global $class_path;
 	
 	$form = '';
 	if (!$empr_id) return $form;
 	
-	if ($gestion_acces_active==1 && $gestion_acces_empr_notice==1 ) {
+	if ($gestion_acces_active==1) {
 		
 		require_once($class_path.'/acces.class.php');
 		$ac = new acces();
-		$dom_2 = $ac->setDomain(2);
 		
-		//Role utilisateur
-		$def_usr_prf=$dom_2->getComment('user_prf_def_lib');
-		$cur_usr_prf=$dom_2->getUserProfile($empr_id);
-
-		//Recuperation des droits generiques du domaine pour avoir les droits utilisateurs globaux
-		$global_rights = $dom_2->getDomainRights(0,0);
+		$acces_list = array(
+				2 => $gestion_acces_empr_notice,
+				3 => $gestion_acces_empr_docnum,
+				4 => $gestion_acces_empr_contribution_area,
+				5 => $gestion_acces_empr_contribution_scenario,
+				6 => $gestion_acces_contribution_moderator_empr
+		);
 		
-		//Recuperation profils ressources
-		$t_r=array();
-		$t_r[0]= $dom_2->getComment('res_prf_def_lib');	//profile ressource par defaut
-		$q_r=$dom_2->loadUsedResourceProfiles();
-		$r_r=pmb_mysql_query($q_r, $dbh);
-		if (pmb_mysql_num_rows($r_r)) {
-			while(($row=pmb_mysql_fetch_object($r_r))) {
-				$t_r[$row->prf_id]= $row->prf_name;
-			}
-		}
-
-		//Recuperation des controles dependants de l'utilisateur
-		$t_ctl=$dom_2->getControls(0);
-
-		//recuperation des droits du domaine pour un utilisateur
-		$t_rights = $dom_2->get_user_rights($empr_id, $cur_usr_prf);
+		foreach ($acces_list as $index => $acces_active) {
+			if ($acces_active == 1) {
+				$dom = $ac->setDomain($index);
+				
+				//Role utilisateur
+				$def_usr_prf=$dom->getComment('user_prf_def_lib');
+				$cur_usr_prf=$dom->getUserProfile($empr_id);
 		
-		$r_form = '';
-		if (($global_rights & 512)) {
-			$r_form = "
-			<label class='etiquette'>".htmlentities($dom_2->getComment('override'), ENT_QUOTES, $charset)."</label>
-			<select id='override_rights[2]' name='override_rights[2]' >
-			<option value='0' selected='selected'>".htmlentities($dom_2->getComment('override_none'), ENT_QUOTES, $charset)."</option>
-			<option value='1'>".htmlentities($dom_2->getComment('override_yes'), ENT_QUOTES, $charset)."</option>
-			<option value='2'>".htmlentities($dom_2->getComment('override_no'), ENT_QUOTES, $charset)."</option>
-			</select>";
-		}
-		$r_form.= "
-		<div class='row'>
-		<div class='row'><!-- rights_tab --></div>
-		</div>";
-		
-		if (count($t_r)) {
-
-			$h_tab = "<div class='dom_div'><table class='dom_tab'><tr>";
-			foreach($t_r as $k=>$v) {
-				$h_tab.= "<th class='dom_col'>".htmlentities($v, ENT_QUOTES, $charset)."</th>";
-			}
-			$h_tab.="</tr><!-- rights_tab --></table></div>";
-
-			$c_tab = '<tr>';
-			foreach($t_r as $k=>$v) {
-
-				$c_tab.= "<td><table style='border:1px solid;'><!-- rows --></table></td>";
-				$t_rows = "";
-					
-				foreach($t_ctl as $k2=>$v2) {
-						
-					$t_rows.="
-					<tr>
-					<td style='width:25px;' ><input type='checkbox' name='chk_rights[2][".$k."][".$k2."]' value='1' ";
-
-					if ($t_rights[$cur_usr_prf][$k] & (pow(2,$k2-1))) {
-						$t_rows.= "checked='checked' ";
+				//Recuperation des droits generiques du domaine pour avoir les droits utilisateurs globaux
+				$global_rights = $dom->getDomainRights(0,0);
+				
+				//Recuperation profils ressources
+				$t_r = array();
+				$t_r[0] = $dom->getComment('res_prf_def_lib');	//profile ressource par defaut
+				$q_r = $dom->loadUsedResourceProfiles();
+				$r_r = pmb_mysql_query($q_r, $dbh);
+				if (pmb_mysql_num_rows($r_r)) {
+					while(($row = pmb_mysql_fetch_object($r_r))) {
+						$t_r[$row->prf_id] = $row->prf_name;
 					}
-					if(($global_rights & 512)==0) $t_rows.="disabled='disabled' ";
-					$t_rows.="/></td>
-					<td>".htmlentities($v2, ENT_QUOTES, $charset)."</td>
-					</tr>";
 				}
-				$c_tab = str_replace('<!-- rows -->', $t_rows, $c_tab);
+		
+				//Recuperation des controles dependants de l'utilisateur
+				$t_ctl=$dom->getControls(0);
+		
+				//recuperation des droits du domaine pour un utilisateur
+				$t_rights = $dom->get_user_rights($empr_id, $cur_usr_prf);
+				
+				$r_form = "
+						<div class='row'>
+							<label class='etiquette'>".htmlentities($dom->getComment('long_name'), ENT_QUOTES, $charset)."</label>
+						</div>";
+
+				if (($global_rights & 512)) {
+					$r_form = "
+					<label class='etiquette'>".htmlentities($dom->getComment('override'), ENT_QUOTES, $charset)."</label>
+					<select id='override_rights[".$index."]' name='override_rights[".$index."]' >
+					<option value='0' selected='selected'>".htmlentities($dom->getComment('override_none'), ENT_QUOTES, $charset)."</option>
+					<option value='1'>".htmlentities($dom->getComment('override_yes'), ENT_QUOTES, $charset)."</option>
+					<option value='2'>".htmlentities($dom->getComment('override_no'), ENT_QUOTES, $charset)."</option>
+					</select>";
+				}
+				$r_form.= "
+				<div class='row'>
+				<div class='row'><!-- rights_tab --></div>
+				</div>";
+				
+				if (count($t_r)) {
+					$h_tab = "<div class='dom_div'><table class='dom_tab'><tr>";
+					foreach($t_r as $k=>$v) {
+						$h_tab.= "<th class='dom_col'>".htmlentities($v, ENT_QUOTES, $charset)."</th>";
+					}
+					$h_tab.="</tr><!-- rights_tab --></table></div>";
+		
+					$c_tab = '<tr>';
+					foreach($t_r as $k=>$v) {
+		
+						$c_tab.= "<td><table style='border:1px solid;'><!-- rows --></table></td>";
+						$t_rows = "";
+							
+						foreach($t_ctl as $k2=>$v2) {
+								
+							$t_rows.="
+							<tr>
+							<td style='width:25px;' ><input type='checkbox' name='chk_rights[".$index."][".$k."][".$k2."]' value='1' ";
+		
+							if ($t_rights[$cur_usr_prf][$k] & (pow(2,$k2-1))) {
+								$t_rows.= "checked='checked' ";
+							}
+							if(($global_rights & 512)==0) $t_rows.="disabled='disabled' ";
+							$t_rows.="/></td>
+							<td>".htmlentities($v2, ENT_QUOTES, $charset)."</td>
+							</tr>";
+						}
+						$c_tab = str_replace('<!-- rows -->', $t_rows, $c_tab);
+					}
+					$c_tab.= "</tr>";
+		
+				}
+				$h_tab = str_replace('<!-- rights_tab -->', $c_tab, $h_tab);;
+				$r_form=str_replace('<!-- rights_tab -->', $h_tab, $r_form);
+					
+				$form.= $r_form;
 			}
-			$c_tab.= "</tr>";
-
 		}
-		$h_tab = str_replace('<!-- rights_tab -->', $c_tab, $h_tab);;
-		$r_form=str_replace('<!-- rights_tab -->', $h_tab, $r_form);
-			
-		$form.= $r_form;
-
 	}
 	return $form;
+}
+
+function get_groups_form($empr_id=0) {
+	global $msg;
+
+	$empr_id += 0;
+	$query = "SELECT id_groupe, libelle_groupe, ifnull(empr_id,0) as inscription FROM groupe join empr_groupe on (id_groupe=groupe_id  and empr_id=".$empr_id.")  ORDER BY libelle_groupe";
+	$result = pmb_mysql_query($query);
+	$groups = array();
+	if(pmb_mysql_num_rows($result)) {
+		while ($row = pmb_mysql_fetch_object($result)) {
+			$groups[] = array('id' => $row->id_groupe, 'name' => $row->libelle_groupe);
+		}
+	}
+	return templates::get_display_elements_completion_field($groups, 'empr_form', 'form_groups', 'group_id', 'groups');
+// 	return gen_liste_multiple ($query, "id_groupe", "libelle_groupe", "inscription", "form_groups[]", "", $empr_id, 0, $msg['empr_form_aucungroupe'], 0,$msg['empr_form_nogroupe'], 5) ;
 }
 
 

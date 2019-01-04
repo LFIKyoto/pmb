@@ -1,4 +1,4 @@
-<h1>Managing Subscriptions</h1>
+<h2>Managing Subscriptions</h2>
 
 <p>Section <b>Managing Subscriptions</b> allows to define application settings for subscriptions.
 <ul>

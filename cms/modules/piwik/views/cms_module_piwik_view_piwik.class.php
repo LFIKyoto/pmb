@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_piwik_view_piwik.class.php,v 1.1 2014-12-19 10:06:33 arenou Exp $
+// $Id: cms_module_piwik_view_piwik.class.php,v 1.2 2016-09-20 10:25:41 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -27,7 +27,7 @@ class cms_module_piwik_view_piwik extends cms_module_common_view{
 		return $form;
 	}
 	
-	public function get_headers($datas){
+	public function get_headers($datas=array()){
 		global $base_path;
 		$headers = parent::get_headers($datas);
 		$args = array(

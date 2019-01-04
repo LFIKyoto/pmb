@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: faq_question.class.php,v 1.2 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: faq_question.class.php,v 1.3 2018-07-25 12:15:55 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($class_path."/faq_types.class.php");
@@ -81,10 +81,10 @@ class faq_question  {
 		global $msg,$charset;
 		$html = "
 		<div class='bg-grey' id='parent_question_".$this->id."' onclick='faq_expand_collaspe(\"".$this->id."\")' title='".htmlentities("voir la réponse")."'>
-			<span class='etiq_champ'>".nl2br(htmlentities($this->question,ENT_QUOTES,$charset))."</span>
+			<span class='etiq_champ'>".nl2br($this->question)."</span>
 		</div>
 		<div class='faq_child' id='child_question_".$this->id."' style='display:none;'>
-			".nl2br(htmlentities($this->answer,ENT_QUOTES,$charset))."
+			".nl2br($this->answer)."
 		</div>";
 		return $html;
 	}

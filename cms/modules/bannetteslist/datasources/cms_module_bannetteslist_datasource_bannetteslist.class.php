@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_bannetteslist_datasource_bannetteslist.class.php,v 1.2 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: cms_module_bannetteslist_datasource_bannetteslist.class.php,v 1.3 2016-09-20 10:25:42 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -42,12 +42,12 @@ class cms_module_bannetteslist_datasource_bannetteslist extends cms_module_commo
 			$return = array();
 			if (count($selector->get_value()) > 0) {
 				foreach ($selector->get_value() as $value) {
-					$return[] = $value;
+					$return[] = $value*1;
 				}
 			}
 			
 			if(count($return)){
-				$query = "select id_bannette, nom_bannette, comment_public from bannettes where id_bannette in (".implode(",",$return).")";
+				$query = "select id_bannette, nom_bannette, comment_public, nb_notices_diff from bannettes where id_bannette in ('".implode("','",$return)."')";
 
 				$result = pmb_mysql_query($query);
 				if(pmb_mysql_num_rows($result)){
@@ -55,7 +55,7 @@ class cms_module_bannetteslist_datasource_bannetteslist extends cms_module_commo
 					while($row=pmb_mysql_fetch_object($result)){
 						$flux_rss = array();
 						$i=0;
-						$query2 = "select num_rss_flux from  rss_flux_content where type_contenant='BAN' and num_contenant=".$row->id_bannette;
+						$query2 = "select * from rss_flux_content, rss_flux where id_rss_flux =num_rss_flux and type_contenant='BAN' and num_contenant='".($row->id_bannette*1)."'";
 						$result2 = pmb_mysql_query($query2);						
 						if (pmb_mysql_num_rows($result2)) {
 							while ($row2 = pmb_mysql_fetch_object($result2)) {
@@ -63,6 +63,7 @@ class cms_module_bannetteslist_datasource_bannetteslist extends cms_module_commo
 								$flux_rss[$i]['name'] = $row2->nom_rss_flux;
 								$flux_rss[$i]['opac_link'] = "./rss.php?id=".$row2->num_rss_flux;
 								$flux_rss[$i]['link'] = $row2->link_rss_flux;
+								$flux_rss[$i]['descr'] = $row2->descr_rss_flux;
 								$flux_rss[$i]['lang'] = $row2->lang_rss_flux;
 								$flux_rss[$i]['copy'] = $row2->copy_rss_flux;
 								$flux_rss[$i]['editor_mail'] = $row2->editor_rss_flux;
@@ -75,13 +76,12 @@ class cms_module_bannetteslist_datasource_bannetteslist extends cms_module_commo
 								$flux_rss[$i]['content'] = $row2->rss_flux_content;
 								$flux_rss[$i]['date_last'] = $row2->rss_flux_last;
 								$flux_rss[$i]['export_court'] = $row2->export_court_flux;
-								$flux_rss[$i]['link'] = $row2->link_rss_flux;
 								$flux_rss[$i]['template '] = $row2->tpl_rss_flux;					
 								
 								$i++;
 							}
 						}
-						$return[] = array("id" => $row->id_bannette, "name" => $row->nom_bannette, "comment" => $row->comment_public, "flux_rss" => $flux_rss);
+						$return[] = array("id" => $row->id_bannette, "name" => $row->nom_bannette, "comment" => $row->comment_public, "record_number" => $row->nb_notices_diff, "flux_rss" => $flux_rss);
 					}
 				}
 			}
@@ -89,5 +89,4 @@ class cms_module_bannetteslist_datasource_bannetteslist extends cms_module_commo
 		}
 		return false;
 	}
-
 }

@@ -2,30 +2,30 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mimetypeClass.class.php,v 1.5 2013-04-11 08:31:40 mbertin Exp $
+// $Id: mimetypeClass.class.php,v 1.7 2017-07-21 08:46:14 vtouchard Exp $
 
 require_once("$visionneuse_path/classes/XMLClass.class.php");
 
 class mimetypeClass extends XMLClass{
-	var $defaultMimetype=array();	//tableau associatif (mimetype => class)  
-	var $repertoire;				//répertoire des classes d'affichages
-	var $currentRep;				//rep courant 
-	var $analyseur;					//parseur
-	var $mimetypeFiles;				//tableau de l'ensemble des manifest   (class => manifest)
-	var $classMimetypes;			//tableau associatif des mimetypes supportés par chaque classe (class => (mimetype1,mimetype2,...))
-	var $mimetypeClasses;			//tableau associatif des classes dispo pour chaque mimetype (mimetype => (class1,class2,...))
-	var $descriptions;				//tableau associatif des descriptions de chaque classe (class => desc)
-	var $screenshoots;				//tableau associatif des screenshoots (class => url) 
+	public $defaultMimetype=array();	//tableau associatif (mimetype => class)  
+	public $repertoire;				//répertoire des classes d'affichages
+	public $currentRep;				//rep courant 
+	public $analyseur;					//parseur
+	public $mimetypeFiles;				//tableau de l'ensemble des manifest   (class => manifest)
+	public $classMimetypes;			//tableau associatif des mimetypes supportés par chaque classe (class => (mimetype1,mimetype2,...))
+	public $mimetypeClasses;			//tableau associatif des classes dispo pour chaque mimetype (mimetype => (class1,class2,...))
+	public $descriptions;				//tableau associatif des descriptions de chaque classe (class => desc)
+	public $screenshoots;				//tableau associatif des screenshoots (class => url) 
 	
 	
-    function mimetypeClass($repertoire){
+    public function __construct($repertoire){
     	$this->repertoire = $repertoire;
     	$this->lireRep($this->repertoire);
     	$this->invertMimetypeTab();
     }
     
 	//Méthodes
-	function debutBalise($parser, $nom, $attributs){
+	public function debutBalise($parser, $nom, $attributs){
 		global $_starttag; $_starttag=true;
 		if($nom == 'MANIFEST' && $attributs['NAME']){
 			$this->currentClass = $attributs['NAME'];
@@ -42,12 +42,12 @@ class mimetypeClass extends XMLClass{
 	}
 	
 	//on fait tout dans la méthode débutBalise....
-	function finBalise($parser, $nom){//besoin de rien
+	public function finBalise($parser, $nom){//besoin de rien
 	}   
-	function texte($parser, $data){//la non plus
+	public function texte($parser, $data){//la non plus
 	}
 	
-	function analyser($file=""){
+	public function analyser($file=""){
  		global $charset;
 		
 		if (!($fp = @fopen($file , "r"))) {
@@ -77,7 +77,7 @@ class mimetypeClass extends XMLClass{
 		xml_parser_free($this->analyseur);
  	}
  
-  	function lireRep($rep){
+  	public function lireRep($rep){
   		
 		$dh = opendir($rep);
 		if (!$dh) return;
@@ -95,10 +95,13 @@ class mimetypeClass extends XMLClass{
 		closedir($dh);
 	}
 
-	function invertMimetypeTab(){
+	public function invertMimetypeTab(){
 		foreach($this->classMimetypes as $class => $mimetypes){
 			foreach($mimetypes as $mimetype){
 				$exist = false;
+				if (!isset($this->mimetypeClasses[$mimetype])) {
+					$this->mimetypeClasses[$mimetype] = array();
+				}
 				for($i=0 ; $i<sizeof($this->mimetypeClasses[$mimetype]);$i++){
 					if($this->mimetypeClasses[$mimetype][0] == $class)
 					$exist = true;

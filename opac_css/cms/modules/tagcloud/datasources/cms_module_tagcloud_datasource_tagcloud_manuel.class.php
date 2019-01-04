@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_tagcloud_datasource_tagcloud_manuel.class.php,v 1.1 2014-06-27 15:13:49 arenou Exp $
+// $Id: cms_module_tagcloud_datasource_tagcloud_manuel.class.php,v 1.2 2017-11-21 13:38:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -54,7 +54,7 @@ class cms_module_tagcloud_datasource_tagcloud_manuel extends cms_module_tagcloud
 						<a href='".$base_path."/cms.php?categ=manage&sub=".str_replace("cms_module_","",$this->module_class_name)."&quoi=datasources&elem=".$this->class_name."&cms_cloud=".$key."&action=get_form'>".$this->format_text($infos['name'])."</a>
 						&nbsp;
 						<a href='".$base_path."/cms.php?categ=manage&sub=".str_replace("cms_module_","",$this->module_class_name)."&quoi=datasources&elem=".$this->class_name."&cms_cloud_delete=".$key."&action=save_form' onclick='return confirm(\"".$this->format_text($this->msg['cms_module_tagcloud_datasource_tagcloud_delete_cloud'])."\")'>
-							<img src='".$base_path."/images/trash.png' alt='".$this->format_text($this->msg['cms_module_root_delete'])."' title='".$this->format_text($this->msg['cms_module_root_delete'])."'/>
+							<img src='".get_url_icon('trash.png')."' alt='".$this->format_text($this->msg['cms_module_root_delete'])."' title='".$this->format_text($this->msg['cms_module_root_delete'])."'/>
 						</a>
 					</p>";
 			}

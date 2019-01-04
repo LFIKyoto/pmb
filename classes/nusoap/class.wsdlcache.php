@@ -7,7 +7,7 @@
 * 
 * @author   Scott Nichol <snichol@computer.org>
 * @author	Ingo Fischer <ingo@apollon.de>
-* @version  $Id: class.wsdlcache.php,v 1.1 2007-10-14 15:00:54 gueluneau Exp $
+* @version  $Id: class.wsdlcache.php,v 1.2 2017-04-19 12:37:02 dgoron Exp $
 * @access public 
 */
 class wsdlcache {
@@ -15,22 +15,22 @@ class wsdlcache {
 	 *	@var resource
 	 *	@access private
 	 */
-	var $fplock;
+	public $fplock;
 	/**
 	 *	@var integer
 	 *	@access private
 	 */
-	var $cache_lifetime;
+	public $cache_lifetime;
 	/**
 	 *	@var string
 	 *	@access private
 	 */
-	var $cache_dir;
+	public $cache_dir;
 	/**
 	 *	@var string
 	 *	@access public
 	 */
-	var $debug_str = '';
+	public $debug_str = '';
 
 	/**
 	* constructor

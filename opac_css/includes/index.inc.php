@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: index.inc.php,v 1.46 2014-03-12 14:41:30 arenou Exp $
+// $Id: index.inc.php,v 1.48 2018-04-18 10:04:48 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // affichage recherche
 require_once ($base_path.'/includes/simple_search.inc.php');
+require_once ($class_path.'/search_view.class.php');
 
 if ($search_type == "simple_search" && $opac_show_infopages_id_top) {
 	// affichage des infopages demandés juste AVANT le formulaire de recherche simple et si !$user_query
@@ -16,9 +17,12 @@ if ($search_type == "simple_search" && $opac_show_infopages_id_top) {
 	}
 
 if ($opac_show_search_title) print "<div id='search_block'><h3><span>".$msg['search_block_title']."</span></h3>";
-$simple_search_content=simple_search_content($user_query, $css);
-$simple_search_content=str_replace("!!surligne!!","",$simple_search_content);
-print pmb_bidi(str_replace('!!user_query!!', $user_query, $simple_search_content));
+search_view::set_search_type($search_type);
+search_view::set_user_query($user_query);
+search_view::set_url_base($base_path.'/index.php?');
+$display_search_tabs_form=search_view::get_display_search_tabs_form($user_query, $css);
+$display_search_tabs_form=str_replace("!!surligne!!","",$display_search_tabs_form);
+print $display_search_tabs_form;
 if ($opac_show_search_title) print "</div>";
 
 if ($search_type == "simple_search") {
@@ -50,7 +54,7 @@ if ($search_type == "simple_search") {
 			!!diffusion!!
 		</div>
 		";
-		$aff = pmb_bidi(affiche_bannette ("", $opac_bannette_nb_liste, $opac_bannette_notices_format, $opac_bannette_notices_depliables, "./empr.php?lvl=bannette&id_bannette=!!id_bannette!!", $liens_opac ,$date_diff,"bannettes_private-container_2", "" , "")) ;		
+		$aff = pmb_bidi(affiche_bannette ("", $opac_bannette_nb_liste, "./empr.php?lvl=bannette&id_bannette=!!id_bannette!!","bannettes_private-container_2", ""));
 		if($aff){
 			$bannettes= "<div id='bannettes_subscribed'>\n";
 			$bannettes.= "<h3><span>".$msg['accueil_bannette_privee']."</span></h3>";
@@ -69,7 +73,7 @@ if ($search_type == "simple_search") {
 		<div class='bannette' id='banette_!!id_bannette!!'>
  			!!diffusion!!
  		</div>";
- 		$aff = pmb_bidi(affiche_bannette ("", $opac_bannette_nb_liste, $opac_bannette_notices_format, $opac_bannette_notices_depliables, "./index.php?lvl=bannette_see&id_bannette=!!id_bannette!!", $liens_opac ,$date_diff,"bannettes-public-container_2", "" , "",true)) ;
+ 		$aff = pmb_bidi(affiche_bannette ("", $opac_bannette_nb_liste, "./index.php?lvl=bannette_see&id_bannette=!!id_bannette!!","bannettes-public-container_2", "",true));
  		if($aff){
  			$bannettes= "<div id='bannettes_public'>\n";
  			$bannettes.= "<h3><span>".$msg['accueil_bannette_public']."</span></h3>";

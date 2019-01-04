@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: global_vars.inc.php,v 1.9 2008-09-23 22:16:29 dbellamy Exp $
+// $Id: global_vars.inc.php,v 1.10 2017-07-12 15:15:01 tsamson Exp $
 
 // fichier de configuration générale
 
@@ -99,8 +99,8 @@ function pt_register() {
 		for ($i = 1; $i < $num_args; $i++) {
 			$parameter = func_get_arg($i);
 			if (isset(${$varname}[$parameter])) {
-		        	global $$parameter;
-				$$parameter = ${$varname}[$parameter];
+		        	global ${$parameter};
+				${$parameter} = ${$varname}[$parameter];
 				}
 			}
 		

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: receptions.tpl.php,v 1.5 2014-08-01 14:55:45 Alexandre Exp $
+// $Id: receptions.tpl.php,v 1.12 2017-11-23 15:48:51 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -36,7 +36,7 @@ $recept_search_form = "
 					<input type='text' id='f_fou0' autfield='f_fou_code0' completion='fournisseur' class='saisie-20emr' value='!!f_fou!!' autocomplete='off' linkfield='id_bibli'/>
 				</span>					
 				<input type='hidden' id='f_fou_code0' name='f_fou_code[0]' value='!!f_fou_code!!' />
-				<input type='button' class='bouton_small' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=fournisseur&caller=recept_search_form&param1=f_fou_code0&param2=f_fou0&id_bibli='+this.form.id_bibli.value+'&deb_rech='+".pmb_escape()."(this.form.f_fou0.value), 'select_fournisseur', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes'); \" />
+				<input type='button' class='bouton_small' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=fournisseur&caller=recept_search_form&param1=f_fou_code0&param2=f_fou0&id_bibli='+this.form.id_bibli.value+'&deb_rech='+".pmb_escape()."(this.form.f_fou0.value), 'selector'); \" />
 				<input type='button' class='bouton_small' value='".$msg['raz']."'  onclick=\"this.form.f_fou_code0.value=''; this.form.f_fou0.value='';  \" />
 				<input type='button' onclick='add_fou();' value='+' class='bouton_small' />
 				<input type='hidden' id='max_fou' value='!!max_fou!!' />
@@ -50,7 +50,7 @@ $recept_search_form = "
 				</span>
 				<input type='hidden' id='f_dem_code0' name='f_dem_code[0]' value='!!f_dem_code!!' />
 				<input type='hidden' id='t_dem0' name='t_dem[0]' value='!!t_dem!!' />
-				<input type='button' class='bouton_small' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=origine&sub=empr&caller=recept_search_form&param1=f_dem_code0&param2=f_dem0&param3=t_dem0&deb_rech='+".pmb_escape()."(this.form.f_dem0.value), 'select_user', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes'); \" />
+				<input type='button' class='bouton_small' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=origine&sub=empr&caller=recept_search_form&param1=f_dem_code0&param2=f_dem0&param3=t_dem0&deb_rech='+".pmb_escape()."(this.form.f_dem0.value), 'selector'); \" />
 				<input type='button' class='bouton_small' value='".$msg['raz']."'  onclick=\"this.form.f_dem_code0.value=''; this.form.f_dem0.value=''; this.form.t_dem0.value=''; \" />				
 				<input type='button' onclick='add_dem();' value='+' class='bouton_small' />
 				<input type='hidden' id='max_dem' value='!!max_dem!!' />
@@ -73,10 +73,8 @@ $recept_search_form = "
 
 		<div class='row'>
 			<div class='colonne3'>
-				<label class='etiquette' for='chk_dev' >".htmlentities($msg['acquisition_ach_dev'], ENT_QUOTES, $charset)."</label>
-				<input type='radio' id='chk_dev' name='chk_dev' !!dev_checked!!'  disabled='disabled' value='1' />
 				<label class='etiquette' for='chk_cde' >".htmlentities($msg['acquisition_ach_cde2'], ENT_QUOTES, $charset)."</label>
-				<input type='radio' id='chk_cde' name='chk_dev' !!cde_checked!!' value='0' />
+				<input type='hidden' id='chk_dev' name='chk_dev' value='0' />
 				<br />
 				<input type='text' class='saisie-30em' id='cde_query' name='cde_query' value='!!cde_query!!' />
 				<br />
@@ -113,7 +111,7 @@ $recept_search_form = "
 //	------------------------------------------------------------------------------
 //	$recept_form : template de liste pour les receptions
 //	------------------------------------------------------------------------------
-$recept_list_form.= "		
+$recept_list_form= "		
 		<hr />
 		<div class='row'>
 			<div class='left'>
@@ -161,7 +159,7 @@ $recept_list_form.= "
 <br />
 ";
 
-$recept_search_form_suite.= "
+$recept_search_form_suite= "
 	</div>
 </form>
 <div id='att' style='z-Index:1000'></div>
@@ -180,14 +178,13 @@ $recept_search_form_suite.= "
 $sel_date_form[0] = "<label class='etiquette'>!!msg!!</label>"; 
 $sel_date_form[1] = "
 <input type='hidden' id='date_inf' name='date_inf' value='!!date_inf!!' />
-<input type='button' name='date_inf_lib' class='bouton_small' value='!!date_inf_lib!!' onclick=\"openPopUp('./select.php?what=calendrier&caller='+this.form.name+'&date_caller=&param1=date_inf&param2=date_inf_lib&auto_submit=NO&date_anterieure=YES', 'date_date_acquisition', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes');\">
+<input type='button' name='date_inf_lib' class='bouton_small' value='!!date_inf_lib!!' onclick=\"openPopUp('./select.php?what=calendrier&caller='+this.form.name+'&date_caller=&param1=date_inf&param2=date_inf_lib&auto_submit=NO&date_anterieure=YES', 'calendar');\">
 <input type='button' class='bouton_small' value='".$msg['raz']."' onclick=\"this.form.elements['date_inf_lib'].value='".$msg['parperso_nodate']."'; this.form.elements['date_inf'].value='';\" >
 ";
 $sel_date_form[2] = "
 <input type='hidden' id='date_sup' name='date_sup' value='!!date_sup!!' />
-<input type='button' name='date_sup_lib' class='bouton_small' value='!!date_sup_lib!!' onclick=\"openPopUp('./select.php?what=calendrier&caller='+this.form.name+'&date_caller=&param1=date_sup&param2=date_sup_lib&auto_submit=NO&date_anterieure=YES', 'date_date_acquisition', 250, 300, -2, -2, 'toolbar=no, dependent=yes, resizable=yes');\">
+<input type='button' name='date_sup_lib' class='bouton_small' value='!!date_sup_lib!!' onclick=\"openPopUp('./select.php?what=calendrier&caller='+this.form.name+'&date_caller=&param1=date_sup&param2=date_sup_lib&auto_submit=NO&date_anterieure=YES', 'calendar');\">
 <input type='button' class='bouton_small' value='".$msg['raz']."' onclick=\"this.form.elements['date_sup_lib'].value='".$msg['parperso_nodate']."'; this.form.elements['date_sup'].value='';\" >
-</label>
 ";
 
 $recept_hrow_form="
@@ -215,10 +212,10 @@ $recept_hrow_form="
 ";
 
 
-$recept_row_form.= "
+$recept_row_form= "
 <tr id='R_!!no!!'>
 	<td width='0px' style='overflow:visible;'>
-		<img onclick=\"javascript:expandRow('D_!!no!!_', true);\"  src='./images/plus.gif' name='D_!!no!!_Img' id='D_!!no!!_Img' class='act_cell_img_plus' />
+		<img onclick=\"javascript:expandRow('D_!!no!!_', true);\"  src='".get_url_icon('plus.gif')."' name='D_!!no!!_Img' id='D_!!no!!_Img' class='act_cell_img_plus' />
 	</td>
 	<td>
 		<input type='text' class='in_cell_ld' id='code[!!no!!]' name='code[]' value='!!code!!' />
@@ -263,8 +260,8 @@ $recept_row_form.= "
 		<table>
 			<tr>
 				<td width='20%' >".htmlentities($msg['acquisition_comment_lg'],ENT_QUOTES,$charset)."
-					<img style='padding-left:5px;cursor:pointer;width:10px;vertical-align:middle;' src='./images/b_edit.png' onclick=\"recept_mod_comment('comment_lg_!!id_lig!!');\" >
-					<img style='padding-left:5px;cursor:pointer;width:10px;vertical-align:middle;' src='./images/cross.png' onclick=\"recept_del_comment('comment_lg_!!id_lig!!');\">
+					<img style='padding-left:5px;cursor:pointer;width:10px;vertical-align:middle;' src='".get_url_icon('b_edit.png')."' onclick=\"recept_mod_comment('comment_lg_!!id_lig!!');\" >
+					<img style='padding-left:5px;cursor:pointer;width:10px;vertical-align:middle;' src='".get_url_icon('cross.png')."' onclick=\"recept_del_comment('comment_lg_!!id_lig!!');\">
 				</td>
 				<td width='30%'>
 					<div id='comment_lg_!!id_lig!!'>!!comment_lg!!</div>
@@ -275,8 +272,8 @@ $recept_row_form.= "
 					</div>
 				</td>
 				<td width='20%'>".htmlentities($msg['acquisition_comment_lo'],ENT_QUOTES,$charset)."
-					<img style='padding-left:5px;cursor:pointer;width:10px;vertical-align:middle;' src='./images/b_edit.png' onclick=\"recept_mod_comment('comment_lo_!!id_lig!!');\" >
-					<img style='padding-left:5px;cursor:pointer;width:10px;vertical-align:middle;' src='./images/cross.png' onclick=\"recept_del_comment('comment_lo_!!id_lig!!');\">
+					<img style='padding-left:5px;cursor:pointer;width:10px;vertical-align:middle;' src='".get_url_icon('b_edit.png')."' onclick=\"recept_mod_comment('comment_lo_!!id_lig!!');\" >
+					<img style='padding-left:5px;cursor:pointer;width:10px;vertical-align:middle;' src='".get_url_icon('cross.png')."' onclick=\"recept_del_comment('comment_lo_!!id_lig!!');\">
 				</td>
 				<td width='30%'>
 					<div id='comment_lo_!!id_lig!!'>!!comment_lo!!</div>
@@ -307,7 +304,7 @@ $sel_fou_form = "
 		<input type='text' id='f_fou!!i!!' autfield='f_fou_code!!i!!' linkfield='id_bibli' completion='fournisseur' class='saisie-20emr' value='!!f_fou!!' autocomplete='off' />
 	</span>					
 	<input type='hidden' id='f_fou_code!!i!!' name='f_fou_code[!!i!!]' value='!!f_fou_code!!' />
-	<input type='button' class='bouton_small' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=fournisseur&caller=recept_search_form&param1=f_fou_code!!i!!&param2=f_fou!!i!!&id_bibli='+this.form.id_bibli.value+'&deb_rech='+".pmb_escape()."(this.form.f_fou!!i!!.value), 'select_user', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes'); \" />
+	<input type='button' class='bouton_small' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=fournisseur&caller=recept_search_form&param1=f_fou_code!!i!!&param2=f_fou!!i!!&id_bibli='+this.form.id_bibli.value+'&deb_rech='+".pmb_escape()."(this.form.f_fou!!i!!.value), 'selector'); \" />
 	<input type='button' class='bouton_small' value='".$msg['raz']."'  onclick=\"this.form.f_fou_code!!i!!.value=''; this.form.f_fou!!i!!.value='';  \" />
 </div>
 ";
@@ -320,7 +317,7 @@ $sel_dem_form="
 	</span>
 	<input type='hidden' id='f_dem_code!!i!!' name='f_dem_code[!!i!!]' value='!!f_dem_code!!' />
 	<input type='hidden' id='t_dem!!i!!' name='t_dem[!!i!!]' value='!!t_dem!!' />
-	<input type='button' class='bouton_small' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=origine&sub=empr&caller=recept_search_form&param1=f_dem_code!!i!!&param2=f_dem!!i!!&param3=t_dem0&deb_rech='+".pmb_escape()."(this.form.f_dem0.value), 'select_user', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes'); \" />
+	<input type='button' class='bouton_small' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=origine&sub=empr&caller=recept_search_form&param1=f_dem_code!!i!!&param2=f_dem!!i!!&param3=t_dem0&deb_rech='+".pmb_escape()."(this.form.f_dem0.value), 'selector'); \" />
 	<input type='button' class='bouton_small' value='".$msg['raz']."'  onclick=\"this.form.f_dem_code!!i!!.value=''; this.form.f_dem!!i!!.value=''; this.form.t_dem!!i!!.value=''; \" />
 </div>
 ";
@@ -331,7 +328,7 @@ $sel_rub_form="
 		<input type='text' id='f_rub!!i!!' autfield='f_rub_code!!i!!' linkfield='id_exer' completion='rubrique' class='saisie-20emr' value='!!f_rub!!' autocomplete='off' callback='after_rub' />
 	</span>
 	<input type='hidden' id='f_rub_code!!i!!' name='f_rub_code[!!i!!]' value='!!f_rub_code!!' />
-	<input type='button' class='bouton_small' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=rubriques&caller=recept_search_form&param1=f_rub_code!!i!!&param2=f_rub!!i!!&param3=t_rub0&deb_rech='+".pmb_escape()."(this.form.f_rub!!i!!.value), 'select_user', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes'); \" />
+	<input type='button' class='bouton_small' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=rubriques&caller=recept_search_form&param1=f_rub_code!!i!!&param2=f_rub!!i!!&param3=t_rub0&deb_rech='+".pmb_escape()."(this.form.f_rub!!i!!.value), 'selector'); \" />
 	<input type='button' class='bouton_small' value='".$msg['raz']."' onclick=\"this.form.f_rub_code!!i!!.value=''; this.form.f_rub!!i!!.value=''; \" />
 </div>
 ";
@@ -342,13 +339,13 @@ $bt_rel ="<input type='button' id='bt_rel' class='bouton' value='".$msg['acquisi
 
 $bt_chk ="<input type='button' id='bt_chk' class='bouton' value='".$msg['acquisition_recept_checkAll']."' onclick=\"checkAll('recept_search_form', 'chk', check); return false;\" />";
 
-$link_not = "<a href='./catalog.php?categ=isbd&id=!!id_prod!!' target='__LINK__' ><img border='0' align='middle' src='./images/notice.gif' alt='".htmlentities($msg['acquisition_recept_view_not'],ENT_QUOTES, $charset)."' title='".htmlentities($msg['acquisition_recept_view_not'],ENT_QUOTES, $charset)."' /></a>";
+$link_not = "<a href='./catalog.php?categ=isbd&id=!!id_prod!!' target='_blank' ><img border='0' class='align_middle' src='".get_url_icon('notice.gif')."' alt='".htmlentities($msg['acquisition_recept_view_not'],ENT_QUOTES, $charset)."' title='".htmlentities($msg['acquisition_recept_view_not'],ENT_QUOTES, $charset)."' /></a>";
 
-$link_bull = "<a href='./catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=!!id_prod!!' target='__LINK__' ><img border='0' align='middle' src='./images/notice.gif' alt='".htmlentities($msg['acquisition_recept_view_bull'],ENT_QUOTES, $charset)."' title='".htmlentities($msg['acquisition_recept_view_bull'],ENT_QUOTES, $charset)."' /></a>";
+$link_bull = "<a href='./catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=!!id_prod!!' target='_blank' ><img border='0' class='align_middle' src='".get_url_icon('notice.gif')."' alt='".htmlentities($msg['acquisition_recept_view_bull'],ENT_QUOTES, $charset)."' title='".htmlentities($msg['acquisition_recept_view_bull'],ENT_QUOTES, $charset)."' /></a>";
 
-$link_art = "<a href='./catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=!!id_bull!!&art_to_show=!!id_prod!!#anchor_!!id_prod!!' target='__LINK__' ><img border='0' align='middle' src='./images/notice.gif' alt='".htmlentities($msg['acquisition_recept_view_art'],ENT_QUOTES, $charset)."' title='".htmlentities($msg['acquisition_recept_view_art'],ENT_QUOTES, $charset)."' /></a>";
+$link_art = "<a href='./catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=!!id_bull!!&art_to_show=!!id_prod!!#anchor_!!id_prod!!' target='_blank' ><img border='0' class='align_middle' src='".get_url_icon('notice.gif')."' alt='".htmlentities($msg['acquisition_recept_view_art'],ENT_QUOTES, $charset)."' title='".htmlentities($msg['acquisition_recept_view_art'],ENT_QUOTES, $charset)."' /></a>";
 
-$link_sug = "<a href='./acquisition.php?categ=sug&action=modif&id_bibli=0&id_sug=!!id_sug!!' target='__LINK__' ><img border='0' align='middle' src='./images/suggestion.png' alt='".htmlentities($msg['acquisition_recept_view_sug'],ENT_QUOTES, $charset)."' title='".htmlentities($msg['acquisition_recept_view_sug'],ENT_QUOTES, $charset)."' /></a>";
+$link_sug = "<a href='./acquisition.php?categ=sug&action=modif&id_bibli=0&id_sug=!!id_sug!!' target='_blank' ><img border='0' class='align_middle' src='".get_url_icon('suggestion.png')."' alt='".htmlentities($msg['acquisition_recept_view_sug'],ENT_QUOTES, $charset)."' title='".htmlentities($msg['acquisition_recept_view_sug'],ENT_QUOTES, $charset)."' /></a>";
 
 $bt_cat = "<input type='button' id='bt_cat' class='bouton_small' value='".$msg['acquisition_recept_cat']."' onclick=\"catalog(this.form);\" />
 			<br /><input type='radio' name='cat_!!no!!' id='cat_not_!!no!!' value='0' checked='checked'/><label class='etiquette' for='cat_not_!!no!!' >".htmlentities($msg['acquisition_type_mono'],ENT_QUOTES, $charset)."</label>
@@ -362,7 +359,7 @@ $recept_cat_error_form = "
 <div class='erreur'>".htmlentities($msg[540],ENT_QUOTES, $charset)."</div>
 <div class='row'>
 	<div class='colonne10'>
-		<img src='./images/error.gif' align='left' />
+		<img src='".get_url_icon('error.gif')."' class='align_left' />
 	</div>
 	<div class='colonne80'>
 		<strong>".htmlentities($msg['gen_signature_erreur_similaire'], ENT_QUOTES,$charset)."</strong>

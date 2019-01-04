@@ -3,7 +3,7 @@
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
 
-// $Id: navigator.inc.php,v 1.39 2015-06-17 13:38:05 jpermanne Exp $
+// $Id: navigator.inc.php,v 1.50 2018-10-31 11:23:01 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -14,10 +14,17 @@ if ($lvl=="etagere_see")
 
 //Création de la recherche équivalente à tous les champs si on est en autolevel
 //Si le niveau 1 est shunté
+if(!isset($autolevel1)) $autolevel1 = '';
+if(!isset($get_last_query)) $get_last_query = '';
+if(!isset($map_emprises_query)) $map_emprises_query = array();
+if(!isset($_SESSION["nb_queries"])) $_SESSION["nb_queries"] = '';
+if(!isset($_SESSION["last_query"])) $_SESSION["last_query"] = '';
+
 if (($opac_autolevel2)&&($autolevel1)&&(!$get_last_query)&&($user_query)) {
 	//On fait la recherche tous les champs
-	$search_all_fields = new searcher_all_fields(stripslashes($user_query),$map_emprises_query);
+	$search_all_fields = searcher_factory::get_searcher('records', 'all_fields', stripslashes($user_query),$map_emprises_query);
 	$nb_result = $search_all_fields->get_nb_results();
+	
 	if ($nb_result) {
 		$count=$nb_result;
 		$l_typdoc= implode(",",$search_all_fields->get_typdocs());	
@@ -29,10 +36,10 @@ if (($opac_autolevel2)&&($autolevel1)&&(!$get_last_query)&&($user_query)) {
 				$form_lvl1 .=search_other_function_post_values(); 
 			}
 			
-			if(count($map_emprise_query)){
+			if(count($map_emprises_query)){
 				foreach($map_emprises_query as $map_emprise_query){
 					$form_lvl1 .= "
-				<input type=\"hidden\" name=\"map_emprises_query[]\" value=\"$map_emprise_query\">";
+					<input type=\"hidden\" name=\"map_emprises_query[]\" value=\"$map_emprise_query\">";
 				}
 			}
 		  	$form_lvl1 .= "
@@ -41,8 +48,10 @@ if (($opac_autolevel2)&&($autolevel1)&&(!$get_last_query)&&($user_query)) {
 		  		<input type=\"hidden\" name=\"count\" value=\"".$nb_result."\">
 		  		<input type=\"hidden\" name=\"user_query\" value=\"".htmlentities(stripslashes($user_query),ENT_QUOTES,$charset)."\">
 		  		<input type=\"hidden\" name=\"l_typdoc\" value=\"".htmlentities($l_typdoc,ENT_QUOTES,$charset)."\">";
-		  	if($opac_indexation_docnum_allfields) 
+		  	if($opac_indexation_docnum_allfields) { 
+		  		if(!isset($join)) $join = '';
 		  		$form_lvl1 .= "<input type=\"hidden\" name=\"join\" value=\"".htmlentities($join,ENT_QUOTES,$charset)."\">";
+		  	}
 		  	$form_lvl1 .= "
 			</form>";
 		unset($_SESSION["level1"]);
@@ -55,71 +64,65 @@ if (($opac_autolevel2)&&($autolevel1)&&(!$get_last_query)&&($user_query)) {
 		$lvl="search_result";
 		unset($autolevel1);
 	}
-}
-elseif($lvl=='more_results' && $search_type=='extended_search' && $mode=='extended' && !$facette_test && $opac_autolevel2){
+}elseif($lvl=='more_results' && $search_type=='extended_search' && $mode=='extended' && !$facette_test && ($opac_autolevel2 || $from_permalink)){
+	//from_permalink va permettre de stocker la recherche en session même si autolevel2 = 0
 	$es->reduct_search();
 	rec_history();
 	$_SESSION["new_last_query"]=$_SESSION["nb_queries"];
+}elseif($lvl=='more_results' && $search_type=='extended_search_authorities' && $mode=='extended_authorities') {
+    if(is_object($es) && get_class($es) != "search_authorities"){
+        $es = new search_authorities("search_fields_authorities");
+    }
+    $es->reduct_search();
+    rec_history();
 }
 
+$navig = "";
 if (($_SESSION["nb_queries"])&&($lvl!="search_result")){
 	//On ne peut pas prendre la dernière recherche car si la dernière chose que l'on a fait c'est la navigation dans une étagère alors on obtient une page blanche
 	//Cette dernière recherche n'est d'ailleurs pas cliquable dans l'historique des recherches (search_history.inc.php)
 	for ($i=$_SESSION["nb_queries"]; $i>=1; $i--) {
 		if ($_SESSION["search_type".$i]!="module") {
-			$navig.="<td class='navig_actions_last_search' ><a href=\"index.php?lvl=search_result&get_query=".$i."\" class='actions_last_search'><span>".$msg["actions_last_search"]."</span></a></td>\n";
-			break;
+		    if($_SESSION["search_type".$i] == "search_universes"){
+		        $navig.="<td class='navig_actions_last_search' ><a href=\"index.php?lvl=search_universe&id=".$_SESSION["search_universes".$i]['universe_id']."&universe_history=".$i.($_SESSION["search_universes".$i]['opac_view'] != 0 ? "&opac_view=".$_SESSION["search_universes".$i]['opac_view'] : "")."\" class='actions_last_search'><span>".$msg["actions_last_search"]."</span></a></td>\n";
+		    }else{
+		        $navig.="<td class='navig_actions_last_search' ><a href=\"index.php?lvl=search_result&get_query=".$i."\" class='actions_last_search'><span>".$msg["actions_last_search"]."</span></a></td>\n";
+		    }
+		    break;
 		}
 	}
 }
 if (($lvl!="more_results")&&($_SESSION["last_query"]!="")) {
-	if ($_SESSION["last_query"]==$_SESSION["nb_queries"]) 
-		$search_name=" ".$msg["actions_last_page_last_search"]; 
-	else {
-		if ($_SESSION["lq_mode"]=="extended")
-			$search_name=" ".$msg["actions_last_page_extended_search"]." ";
-		else
-			$search_name=" ".$msg["actions_last_page_simple_search"]." ";
-		$search_name.=$msg['number'].$_SESSION["last_query"];
-	}
-	$navig.="<td class='navig_actions_last_page' ><a href=\"index.php?lvl=more_results&get_last_query=1\" class='actions_last_page'><span>".sprintf($msg["actions_last_page"],$_SESSION["lq_page"],$msg[$_SESSION["list_name_msg"]],$search_name);
-	$navig.="</span></a></td>\n";
+	$navig.="<td class='navig_actions_last_page' ><a href=\"index.php?lvl=more_results&get_last_query=1\" class='actions_last_page'><span>".$msg["actions_last_page"]."</span></a></td>\n";
 }
 if (($_SESSION["nb_queries"])&&($lvl!="search_history")) 
 	$navig.="<td class='navig_actions_history' ><a href=\"index.php?lvl=search_history\" class='actions_history'><span>".$msg["actions_history"]."</span></a></td>\n";
-if (($lvl!="index")&&($lvl!="")) {
+$class="";
+if ($lvl!="index") {
 	if ($lvl!="section_see") {
-		$item="";
 		if ($opac_show_categ_browser) {
-			$item=$msg["navig_categ"];
 			$class="navig_categ";
 		}
-		if (($opac_show_dernieresnotices)&&(!$item)) {
-			$item=$msg["navig_lastnotices"];
+		if ($opac_show_dernieresnotices) {
 			$class="navig_lastnotices";
 		}
-		if (($opac_show_etageresaccueil)&&(!$item)) {
-			$item=$msg["navig_etageres"];
+		if ($opac_show_etageresaccueil) {
 			$class="navig_etageres";
 		}
-		if (($opac_show_marguerite_browser)&&(!$item)) {
-			$item=$msg["navig_marguerite"];
+		if ($opac_show_marguerite_browser) {
 			$class="navig_marguerite";
 		}
-		if (($opac_show_100cases_browser)&&(!$item)) {
-			$item=$msg["navig_100cases"];
+		if ($opac_show_100cases_browser) {
 			$class="navig_categ";
 		}
-		if (!$item) {
-			$item=$msg[avec_recherches]; 
-			$class="avec_recherches"; 
+		if (!$class) {
+			$class="avec_recherches";
 		}
 		
 	} else {
-		$item=$msg[avec_recherches]; 
 		$class="avec_recherches"; 
 	}
-	$navig.="<td class='navig_actions_first_screen' ><a href=\"./index.php?lvl=index\" class='$class'><span>".sprintf($msg["actions_first_screen"],$item)."</span></a></td>\n";
+	$navig.="<td class='navig_actions_first_screen' ><a href=\"./index.php?lvl=index\" class='$class'><span>".$msg["actions_first_screen"]."</span></a></td>\n";
 	if($opac_navig_empr)  $navig.="<td class='navig_empr_bt_show_compte' ><a href=\"./empr.php\" class='$class'><span>".$msg["empr_bt_show_compte"]."</span></a></td>\n";	
 }
 
@@ -132,8 +135,7 @@ if($opac_show_onglet_help && ((($lvl!="index") && ($lvl!="search_type_asked") &&
 
 if ($navig) {
 	print "<div id='navigator'>\n";
-	print "<strong>".$msg["actions_you_can"]."</strong>\n";
-	print "<table width='100%'>";
+	print "<table style='width:100%'>";
 	print "<tr>";
 	print $navig;
 	print("</tr>");
@@ -143,7 +145,7 @@ if ($navig) {
 	print "<div id='navigator' class='empty'></div>";
 }
 if (((($opac_cart_allow)&&(!$opac_cart_only_for_subscriber))||(($opac_cart_allow)&&($_SESSION["user_code"])))&&($lvl!="show_cart")) 
-	print "<div id='resume_panier'><iframe recept='yes' recepttype='cart' frameborder='0' id='iframe_resume_panier' name='cart_info' allowtransparency='true' src='cart_info.php?' scrolling='no' scrollbar='0'></iframe></div>";
+	print "<div id='resume_panier'><iframe recept='yes' recepttype='cart' frameborder='0' id='iframe_resume_panier' name='cart_info' allowtransparency='true' src='cart_info.php' scrolling='no' scrollbar='0'></iframe></div>";
 else
 	print "<div id='resume_panier' class='empty'></div>";
 ?>

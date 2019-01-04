@@ -2,14 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.6 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: main.inc.php,v 1.11 2017-11-21 12:01:00 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+if(!isset($partial_submit)) $partial_submit = '';
+if(!isset($elem)) $elem = '';
+
 require_once($class_path."/editions_datasource.class.php");
-
 require_once($class_path."/editions_state.class.php");
-
 
 if(!$id)$id = 0;
 //héhé
@@ -50,12 +51,15 @@ function show_state_list(){
 	$result = pmb_mysql_query($query);
 	print "
 		<script type=\"text/javascript\" src=\"".$javascript_path."/tablist.js\"></script>
-		<a href=\"javascript:expandAll()\"><img src='./images/expand_all.gif' border='0' id=\"expandall\"></a>
-		<a href=\"javascript:collapseAll()\"><img src='./images/collapse_all.gif' border='0' id=\"collapseall\"></a>
+		<span class='item-expand'>
+			<a href=\"javascript:expandAll()\"><img src='".get_url_icon('expand_all.gif')."' style='border:0px' id=\"expandall\"></a>
+			<a href=\"javascript:collapseAll()\"><img src='".get_url_icon('collapse_all.gif')."' style='border:0px' id=\"collapseall\"></a>
+		</span>
 		";
 	if(pmb_mysql_num_rows($result)){
 		$class_prec=$msg['proc_clas_aucun'];
 		$buf_tit=$msg['proc_clas_aucun'];
+		$buf_contenu="";
 		$buf_class=0;
 		$parity=1;
 		while ($row = pmb_mysql_fetch_object($result)){

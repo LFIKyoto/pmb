@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: xml_unimarc.class.php,v 1.9 2013-04-17 08:37:34 mbertin Exp $
+// $Id: xml_unimarc.class.php,v 1.11 2018-11-05 14:09:15 mbertin Exp $
 
 //Classe de conversion unimarc/xml ou xml/unimarc
 
@@ -12,35 +12,35 @@ require_once("$base_path/classes/iso2709.class.php");
 
 class xml_unimarc {
 
-	var $n_traitees;		//Nombre de notices traitées
-	var $n_valid;			//Nombre de notices valides
-	var $n_invalid;			//Nombre de notices invalides
+	public $n_traitees;		//Nombre de notices traitées
+	public $n_valid;			//Nombre de notices valides
+	public $n_invalid;			//Nombre de notices invalides
 
-	var $fpw;				//Pointeur du fichier 
-	var $n;					//Notice en cours
-	var $field;				//Champ en cours de traitement
-	var $field_ind;			//Indicateur du champ en cours de traitement
-	var $sub_field_array;	//Tableau des sous champs
-	var $s_field;			//Sous champ en cours de traitement
-	var $new_field;			//Le champ en cours vient-il d'être créé
-	var $new_subfield;		//Le sous champ en cours vient-il d'être créé
-	var $special;			//Champ spécial d'amorçage de la notice
-	var $n_;				//$n_=1 : Le début de traitement des notices à commencé
-	var $field_value;		//Valeur du champ en cours
-	var $notices_;			//Tableau de notices converties du XML
-	var $notices_xml_;		//Tableau de notices XML converties du iso
-	var $error_msg;
-	var $warning_msg;
-	var $current_encoding;
-	var $is_utf8=false;
+	public $fpw;				//Pointeur du fichier 
+	public $n;					//Notice en cours
+	public $field;				//Champ en cours de traitement
+	public $field_ind;			//Indicateur du champ en cours de traitement
+	public $sub_field_array;	//Tableau des sous champs
+	public $s_field;			//Sous champ en cours de traitement
+	public $new_field;			//Le champ en cours vient-il d'être créé
+	public $new_subfield;		//Le sous champ en cours vient-il d'être créé
+	public $special;			//Champ spécial d'amorçage de la notice
+	public $n_;				//$n_=1 : Le début de traitement des notices à commencé
+	public $field_value;		//Valeur du champ en cours
+	public $notices_;			//Tableau de notices converties du XML
+	public $notices_xml_;		//Tableau de notices XML converties du iso
+	public $error_msg;
+	public $warning_msg;
+	public $current_encoding;
+	public $is_utf8=false;
 	
-    function xml_unimarc() {
+    public function __construct() {
     	$this->n_traitees=0;
 		$this->n_valid=0;
 		$this->n_invalid=0;
     }
     
-    function iso2709toXML($fileIn,$fileOut) {
+    public function iso2709toXML($fileIn,$fileOut) {
     	global $charset;
     	$fp = @fopen($fileIn, "r");
     	if (!$fp) return 0;
@@ -119,7 +119,7 @@ class xml_unimarc {
 		return $n_notices;
     }
 
-	function iso2709toXML_notice($contents,$format="unimarc") {
+	public function iso2709toXML_notice($contents,$format="unimarc") {
 		global $output_params,$charset;
 		
 		$n_notices=0;
@@ -169,14 +169,14 @@ class xml_unimarc {
 					$content = substr($n -> inner_data[$i]["content"], 0, strlen($n -> inner_data[$i]["content"]) - 1);
 					$sub_fields = explode(chr(31), $content);
 					if (count($sub_fields) == 1) {
-						$data.=">".htmlspecialchars($this->is_utf8?$sub_fields[0]:$n->ISO_decode($sub_fields[0]),ENT_QUOTES,$charset)."</f>\n";
+						$data.=">".htmlspecialchars($n->ISO_decode($sub_fields[0]),ENT_QUOTES,$charset)."</f>\n";
 					} else {
 						if (strlen($sub_fields[0])>2) {
 							$sub_fields[0]=substr($sub_fields[0],strlen($sub_fields[0])-2);
 						}
 						$data.=" ind=\"".$sub_fields[0]."\">\n";
 						for ($j = 1; $j < count($sub_fields); $j ++) {
-							$data.="      <s c=\"".substr($sub_fields[$j], 0, 1)."\">".htmlspecialchars($this->is_utf8?substr($sub_fields[$j], 1):$n->ISO_decode(substr($sub_fields[$j], 1)),ENT_QUOTES,$charset)."</s>\n";
+							$data.="      <s c=\"".substr($sub_fields[$j], 0, 1)."\">".htmlspecialchars($n->ISO_decode(substr($sub_fields[$j], 1)),ENT_QUOTES,$charset)."</s>\n";
 						}
 						$data.="    </f>\n";
 					}
@@ -197,7 +197,7 @@ class xml_unimarc {
 		return $n_notices;
     }
 
-	function startElement($parser, $name, $attrs) {
+	public function startElement($parser, $name, $attrs) {
 		switch ($name) {
 			case "NOTICE":
 				$this->n=new iso2709_record('',0);
@@ -221,7 +221,7 @@ class xml_unimarc {
 		}
 	}
     
-    function endElement($parser, $name) {
+    public function endElement($parser, $name) {
 		switch ($name) {
 			case "NOTICE":
 				$this->n->update();
@@ -252,7 +252,7 @@ class xml_unimarc {
 		}
 	}
 
-	function characterData($parser,$data) {
+	public function characterData($parser,$data) {
 		//$data=trim($data);
 		if ($data=="") return;
 		
@@ -288,7 +288,7 @@ class xml_unimarc {
 	}
 
 	
-    function XMLtoiso2709($fileIn,$fileOut) {
+    public function XMLtoiso2709($fileIn,$fileOut) {
     	global $charset;
     	$this->fpw=fopen($fileOut,"w+"); 
     	if (!$this->fpw) return 0;
@@ -334,7 +334,7 @@ class xml_unimarc {
 		return $this->n_traitees;
     }
     
-    function endElement_notice($parser, $name) {
+    public function endElement_notice($parser, $name) {
 		switch ($name) {
 			case "NOTICE":
 				$this->n->update();
@@ -365,7 +365,7 @@ class xml_unimarc {
 		}
 	}
     
-    function XMLtoiso2709_notice($notice,$encoding) {
+    public function XMLtoiso2709_notice($notice,$encoding) {
     	global $charset;
  		$this->n_traitees=0;
 		$this->n_valid=0;

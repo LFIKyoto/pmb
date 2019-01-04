@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sync.inc.php,v 1.12 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: sync.inc.php,v 1.13 2017-11-30 10:00:36 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -18,7 +18,7 @@ print "<div style='width:710px'>
 <div class='row' style='text-align:center'><h3>".htmlentities($msg["connecteurs_sync_de"]." ".$conn->sources[$source_id]["NAME"],ENT_QUOTES,$charset)."</h3></div>
 <div class='row' style='border:#000000 1px solid;padding:4px'>
 <div class='row' style='text-align:center'>".htmlentities($msg["pbar_progress"],ENT_QUOTES,$charset)."<span id='percent'>0%</span></div>
-<div class='row' style='text-align:left'><img src='images/jauge.png' width='1%' height='16px' id='progress_bar'/><div class='row'>
+<div class='row' style='text-align:left'><img src='".get_url_icon('jauge.png')."' width='1%' height='16px' id='progress_bar'/><div class='row'>
 <div class='row' style='text-align:center'>".htmlentities($msg["connecteurs_sync_recu"],ENT_QUOTES,$charset)." : <span id='nlu'>&nbsp;</span>/".htmlentities($msg["connecteurs_sync_nbtotal"],ENT_QUOTES,$charset)." : <span id='ntotal'>&nbsp;</span><div class='row'>
 <div class='row' style='text-align:center' id='sync_message'></div>
 <div id='erreurpos'></div>

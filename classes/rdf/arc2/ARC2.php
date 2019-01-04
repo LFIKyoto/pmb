@@ -3,7 +3,7 @@
  * ARC2 core class (static, not instantiated)
  *
  * @author Benjamin Nowack
- * @homepage <http://arc.semsol.org/>
+ * @homepage <https://github.com/semsol/arc2>
  * @package ARC2
  */
 
@@ -181,13 +181,13 @@ class ARC2 {
     foreach ($triples as $t) {
       $skip_t = 0;
       foreach (array('s', 'p', 'o') as $term) {
-        $$term = $t[$term];
+        ${$term} = $t[$term];
         /* template var */
         if (isset($t[$term . '_type']) && ($t[$term . '_type'] == 'var')) {
-          $val = isset($vals[$$term]) ? $vals[$$term] : '';
-          $skip_t = isset($vals[$$term]) ? $skip_t : 1;
+          $val = isset($vals[${$term}]) ? $vals[${$term}] : '';
+          $skip_t = isset($vals[${$term}]) ? $skip_t : 1;
           $type = '';
-          $type = !$type && isset($vals[$$term . ' type']) ? $vals[$$term . ' type'] : $type;
+          $type = !$type && isset($vals[${$term} . ' type']) ? $vals[${$term} . ' type'] : $type;
           $type = !$type && preg_match('/^\_\:/', $val) ? 'bnode' : $type;
           if ($term == 'o') {
             $type = !$type && (preg_match('/\s/s', $val) || !preg_match('/\:/', $val)) ? 'literal' : $type;
@@ -195,7 +195,7 @@ class ARC2 {
           }
           $type = !$type ? 'uri' : $type;
           $t[$term . '_type'] =  $type;
-          $$term = $val;
+          ${$term} = $val;
         }
       }
       if ($skip_t) {
@@ -471,6 +471,10 @@ class ARC2 {
 
   static function getRSS10Serializer($a = '') {
     return ARC2::getSer('RSS10', $a);
+  }
+
+  static function getJSONLDSerializer($a = '') {
+    return ARC2::getSer('JSONLD', $a);
   }
 
   /* sparqlscript */

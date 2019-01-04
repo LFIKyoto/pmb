@@ -2,11 +2,12 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_section.class.php,v 1.24.4.4 2015-11-26 08:38:53 jpermanne Exp $
+// $Id: cms_section.class.php,v 1.42 2018-03-13 16:36:11 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/cms/cms_editorial.class.php");
+require_once($class_path.'/audit.class.php');
 
 class cms_section extends cms_editorial {
 	public $num_parent;		// id du parent
@@ -44,10 +45,6 @@ class cms_section extends cms_editorial {
 		if(strpos($this->end_date,"0000-00-00")!== false){
 			$this->end_date = "";
 		}
-		
-		$this->get_descriptors();
-		$this->get_fields_type();
-		$this->get_documents();
 	}
 	
 	public function save(){
@@ -86,6 +83,7 @@ class cms_section extends cms_editorial {
 		//on commence par tout retirer...
 		$del = "delete from cms_sections_descriptors where num_section = '".$this->id."'";
 		pmb_mysql_query($del,$dbh);
+		$this->get_descriptors();
 		for($i=0 ; $i<count($this->descriptors) ; $i++){
 			$rqt = "insert into cms_sections_descriptors set num_section = '".$this->id."', num_noeud = '".$this->descriptors[$i]."',section_descriptor_order='".$i."'";
 			pmb_mysql_query($rqt,$dbh);
@@ -97,6 +95,9 @@ class cms_section extends cms_editorial {
 		//enfin les éléments du type de contenu
 		$types = new cms_editorial_types("section");
 		$types->save_type_form($this->num_type,$this->id);
+		
+		$this->save_concepts();
+		
 		$this->maj_indexation();
 		
 		$this->save_documents();
@@ -118,7 +119,7 @@ class cms_section extends cms_editorial {
 		if (!$num_parent) $num_parent = $this->num_parent;
 			
 		//on place la nouvelle rubrique à la fin par défaut
-		$query = "SELECT id_section FROM cms_sections WHERE section_num_parent=".addslashes($num_parent);
+		$query = "SELECT id_section FROM cms_sections WHERE section_num_parent=".($num_parent*1);
 		$result = pmb_mysql_query($query,$dbh);
 		if ($result) $order = ",section_order = '".(pmb_mysql_num_rows($result)+1)."' ";
 		else $order = ",section_order = 1";
@@ -138,6 +139,7 @@ class cms_section extends cms_editorial {
 		$id = pmb_mysql_insert_id();
 		
 		//au tour des descripteurs...
+		$this->get_descriptors();
 		for($i=0 ; $i<count($this->descriptors) ; $i++){
 			$rqt = "insert into cms_sections_descriptors set num_section = '".$id."', num_noeud = '".$this->descriptors[$i]."',section_descriptor_order='".$i."'";
 			pmb_mysql_query($rqt,$dbh);
@@ -151,7 +153,7 @@ class cms_section extends cms_editorial {
 		$types->duplicate_type_form($this->num_type,$id,$this->id);
 		$new_section->maj_indexation();
 		
-		$new_section->documents_linked = $this->documents_linked;
+		$new_section->documents_linked = $this->get_documents();
 		$new_section->save_documents();
 		
 		//audit
@@ -181,8 +183,7 @@ class cms_section extends cms_editorial {
 	}
 	
 	public function get_parent_selector(){
-		$opts.=$this->_recurse_parent_select();
-		return $opts;
+		return $this->_recurse_parent_select();
 	}
 	
 	protected function _recurse_parent_select($parent=0,$lvl=0){
@@ -195,7 +196,7 @@ class cms_section extends cms_editorial {
 		}else{
 			$opts = "";
 		}
-		$rqt = "select id_section, section_title from cms_sections where section_num_parent = '".$parent."'";
+		$rqt = "select id_section, section_title from cms_sections where section_num_parent = '".$parent."' order by section_order";
 		$res = pmb_mysql_query($rqt,$dbh);
 		if(pmb_mysql_num_rows($res)){
 			while($row = pmb_mysql_fetch_object($res)){
@@ -217,7 +218,7 @@ class cms_section extends cms_editorial {
 		if(pmb_mysql_num_rows($res)>0){
 			$nb_articles = pmb_mysql_result($res,0,0);
 			if($nb_articles>0){
-				return $msg['cms_section_with_articles'];
+				return $msg['cms_section_with_articles'].' '.$msg['cms_section_delete_approval'];
 			};
 		}
 		//on est encore la donc pas d'articles, on regarde les rubriques filles...
@@ -226,14 +227,16 @@ class cms_section extends cms_editorial {
 		if(pmb_mysql_num_rows($res)){
 			$nb_children = pmb_mysql_result($res,0,0);
 			if($nb_children>0){
-				return $msg['cms_section_has_children'];
+				return $msg['cms_section_has_children'].' '.$msg['cms_section_delete_approval'];
 			}
 		}
 		return true;
 	}
 	
 	public function format_datas($get_children= true,$get_articles = true,$filter = true, $get_parent=false){
+		global $thesaurus_concepts_active;
 		$documents = array();
+		$this->get_documents();
 		foreach($this->documents_linked as $id_doc){
 			$document = new cms_document($id_doc);
 			$documents[] = $document->format_datas();
@@ -247,14 +250,20 @@ class cms_section extends cms_editorial {
 			'publication_state' => $this->publication_state,
 			'start_date' => $this->start_date,
 			'end_date' => $this->end_date,
-			'descriptors' => $this->descriptors,
+			'descriptors' => $this->get_descriptors(),
+			'num_type' => $this->num_type,
+			'fields_type' => $this->get_fields_type(),
 			'type' => $this->type_content,
-			'fields_type' => $this->fields_type,
-			'create_date' => $this->create_date,
+			'create_date' => format_date($this->create_date),
 			'documents' => $documents,
 			'nb_documents' => count($documents),
-			'last_update_date' => format_date($this->last_update_date)
+			'last_update_date' => format_date($this->last_update_date),
+			'permalink' => $this->get_permalink(),
+			'social_media_sharing' => $this->get_social_media_block()
 		);
+		if($thesaurus_concepts_active == 1){
+			$result['concepts'] = $this->index_concept->get_concepts();
+		}
 		if($get_children){
 			$result['children'] = $this->get_children($filter);
 		}
@@ -321,17 +330,40 @@ class cms_section extends cms_editorial {
 		if($get_children){
 			$format[] = array(
 				'var' => 'children',
-				'desc'=> $msg['cms_editorial_desc_children'],
+				'desc' => $msg['cms_editorial_desc_children'],
 				'children' => self::prefix_var_tree(cms_section::get_format_data_structure(false,false),"children[i]")
 			);
 		}
 		if($get_articles){
 			$format[] = array(
 				'var' => 'articles',
-				'desc'=> $msg['cms_editorial_desc_articles'],
+				'desc' => $msg['cms_editorial_desc_articles'],
 				'children' => self::prefix_var_tree(cms_article::get_format_data_structure(),"articles[i]")
 			);			
-		}			
+		}
 		return $format;
+	}
+	
+	public function delete($force_delete=0){
+		global $msg;
+		if($force_delete){			
+			$check_children = "select id_section from cms_sections where section_num_parent ='".$this->id."'";
+			$res = pmb_mysql_query($check_children,$dbh);
+			if(pmb_mysql_num_rows($res)){
+				while($obj = pmb_mysql_fetch_object($res)){
+					$section = new cms_section($obj->id_section);
+					$section->delete(true);	
+				}
+			}
+			$check_article = "select id_article from cms_articles where num_section ='".$this->id."'";
+			$res = pmb_mysql_query($check_article,$dbh);
+			if(pmb_mysql_num_rows($res)>0){
+				while($obj = pmb_mysql_fetch_object($res)){
+					$article = new cms_article($obj->id_article);
+					$article->delete();
+				}
+			}
+		}		
+		return parent::delete($force_delete);
 	}
 }

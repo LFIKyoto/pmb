@@ -11,23 +11,22 @@
  * @package UFPDF
  * @see fpdf.php
  * @see reportpdf.php
- * @version $Id: ufpdf.class.php,v 1.12 2014-12-10 10:56:41 jpermanne Exp $
+ * @version $Id: ufpdf.class.php,v 1.14 2018-12-20 11:00:19 mbertin Exp $
  */
 
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ufpdf.class.php,v 1.12 2014-12-10 10:56:41 jpermanne Exp $
+// $Id: ufpdf.class.php,v 1.14 2018-12-20 11:00:19 mbertin Exp $
 
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-if(!class_exists('UFPDF'))
-{
+if(!class_exists('UFPDF')) {
 define('UFPDF_VERSION','0.1');
-
-define('FPDF_FONTPATH',$class_path.'/font/');
-
+if (! defined('FPDF_FONTPATH')) {
+	define('FPDF_FONTPATH',$class_path.'/font/');
+}
 if (file_exists('fpdf.php')) include_once 'fpdf.php';
 else if (file_exists('ufpdf/fpdf.php')) include_once 'ufpdf/fpdf.php';
 
@@ -39,11 +38,11 @@ else if (file_exists('ufpdf/fpdf.php')) include_once 'ufpdf/fpdf.php';
  */
 class UFPDF extends FPDF
 {
-	var $embed_fonts;
-	var $arabicforms = array();
-	var $arabiclettersbefore = array();
-	var $arabiclettersafter = array();
-	var $arabicneutral = array();
+	public $embed_fonts;
+	public $arabicforms = array();
+	public $arabiclettersbefore = array();
+	public $arabiclettersafter = array();
+	public $arabicneutral = array();
 	
 	//Standard fonts
 
@@ -52,10 +51,10 @@ class UFPDF extends FPDF
 *                               Public methods                                 *
 *                                                                              *
 *******************************************************************************/
-function UFPDF($orientation='P',$unit='mm',$format='A4')
+public function __construct($orientation='P',$unit='mm',$format='A4')
 {
 	$this->embed_fonts = true;
-  FPDF::FPDF($orientation, $unit, $format);
+  parent::__construct($orientation, $unit, $format);
   // création des arrays pour traitement de l'arabe
   // hamza 0621
   $this->arabicforms[chr(0xD8).chr(0xA1)] = array('isolated' => chr(0xEF).chr(0xBA).chr(0x80),
@@ -252,11 +251,11 @@ function UFPDF($orientation='P',$unit='mm',$format='A4')
   
    
 }
-function gethtmlentitiesdecode() {
+public function gethtmlentitiesdecode() {
   	global $charset;
 	
 	$trans=get_html_translation_table(HTML_ENTITIES,ENT_COMPAT | ENT_HTML401,$charset);
-	$this->htmlentitiesdecode = "";
+	$this->htmlentitiesdecode = array();
 	foreach($trans as $k => $v)
 	{
           $this->htmlentitiesdecode[$v] = $k;
@@ -264,12 +263,12 @@ function gethtmlentitiesdecode() {
 	$this->htmlentitiesdecode["&nbsp;"] = " ";
 	$this->htmlentitiesdecode["&shy;"] = "-";
 }
-function SetEmbedFonts($embed)
+public function SetEmbedFonts($embed)
 {
 	$this->embed_fonts = $embed;
 }
 
-function GetStringWidth($s)
+public function GetStringWidth($s)
 {
   //Get width of a string in the current font
   $s = (string)$s;
@@ -295,7 +294,7 @@ function GetStringWidth($s)
   return $w*$this->FontSize/1000;
 }
 
-function AddFont($family,$style='',$file='')
+public function AddFont($family,$style='',$file='')
 {
   //Add a TrueType or Type1 font
   $family=strtolower($family);
@@ -324,7 +323,7 @@ function AddFont($family,$style='',$file='')
   }
 }
 
-function Text($x,$y,$txt)
+public function Text($x,$y,$txt)
 {
   //Output a string
   $txt = strtr($txt, $this->htmlentitiesdecode);
@@ -339,13 +338,13 @@ function Text($x,$y,$txt)
   $this->_out($s);
 }
 
-function AcceptPageBreak()
+public function AcceptPageBreak()
 {
   //Accept automatic page break or not
   return $this->AutoPageBreak;
 }
 
-function Cell($w,$h=0,$txt='',$border=0,$ln=0,$align='',$fill=0,$link='')
+public function Cell($w,$h=0,$txt='',$border=0,$ln=0,$align='',$fill=0,$link='')
 {
   //Output a cell
   $txt = strtr($txt, $this->htmlentitiesdecode);
@@ -428,7 +427,7 @@ function Cell($w,$h=0,$txt='',$border=0,$ln=0,$align='',$fill=0,$link='')
     $this->x+=$w;
 }
 
-function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=0) {
+public function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=0) {
 			global $charset;
 			//Output text with automatic or explicit line breaks
 			$cw = &$this->CurrentFont['cw'];
@@ -542,7 +541,7 @@ function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=0) {
 			$this->x=$this->lMargin;
 		}
 
-function Write($h, $txt, $link='') {
+public function Write($h, $txt, $link='') {
 
 			//Output text in flowing mode
 			$cw = &$this->CurrentFont['cw'];
@@ -635,7 +634,7 @@ function Write($h, $txt, $link='') {
 		}
 
 
-function AliasNbPages($alias='{nb}')
+public function AliasNbPages($alias='{nb}')
 {
 	//Define an alias for total number of pages
 	$this->AliasNbPages=$this->utf8_to_utf16be($alias,false);
@@ -648,7 +647,7 @@ function AliasNbPages($alias='{nb}')
 *                                                                              *
 *******************************************************************************/
 
-function _puttruetypeunicode($font) {
+public function _puttruetypeunicode($font) {
   //Type0 Font
   $this->_newobj();
   $this->_out('<</Type /Font');
@@ -710,7 +709,7 @@ function _puttruetypeunicode($font) {
   $this->_out('endobj');
 }
 
-function _dounderline($x,$y,$txt)
+public function _dounderline($x,$y,$txt)
 {
   //Underline text
   $up=$this->CurrentFont['up'];
@@ -719,7 +718,7 @@ function _dounderline($x,$y,$txt)
   return sprintf('%.2f %.2f %.2f %.2f re f',$x*$this->k,($this->h-($y-$up/1000*$this->FontSize))*$this->k,$w*$this->k,-$ut/1000*$this->FontSizePt);
 }
 
-function _textstring($s)
+public function _textstring($s)
 {
  	
   //Convert to UTF-16BE
@@ -728,7 +727,7 @@ function _textstring($s)
   return '('. strtr($s, array(')' => '\\)', '(' => '\\(', '\\' => '\\\\')) .')';
 }
 
-function _escapetext($s)
+public function _escapetext($s)
 {
 
 $newstring = '';
@@ -909,7 +908,7 @@ $toreverse = '';
   return '('. strtr($s, array(')' => '\\)', '(' => '\\(', '\\' => '\\\\')) .')';
 }
 
-function _putinfo()
+public function _putinfo()
 {
 	$this->_out('/Producer '.$this->_textstring('UFPDF '. UFPDF_VERSION));
 	if(!empty($this->title))
@@ -925,7 +924,7 @@ function _putinfo()
 	$this->_out('/CreationDate '.$this->_textstring('D:'.date('YmdHis')));
 }
 
-function _putpages()
+public function _putpages()
 {
 	$nb=$this->page;
 	if(!empty($this->AliasNbPages))
@@ -1000,7 +999,7 @@ function _putpages()
 
 // UTF-8 to UTF-16BE conversion.
 // Correctly handles all illegal UTF-8 sequences.
-function utf8_to_utf16be(&$txt, $bom = true) {
+public function utf8_to_utf16be(&$txt, $bom = true) {
 	if (!$this->embed_fonts) return $txt;
   $l = strlen($txt);
   $txt .= " ";
@@ -1103,7 +1102,7 @@ function utf8_to_utf16be(&$txt, $bom = true) {
 
 // UTF-8 to codepoint array conversion.
 // Correctly handles all illegal UTF-8 sequences.
-function utf8_to_codepoints(&$txt) {
+public function utf8_to_codepoints(&$txt) {
   $l = strlen($txt);
   $txt .= " ";
   $out = array();
@@ -1193,7 +1192,7 @@ function utf8_to_codepoints(&$txt) {
   return $out;
 }
 
-function NbLines($w,$txt) {
+public function NbLines($w,$txt) {
     //Calcule le nombre de lignes qu'occupe un MultiCell de largeur w
 	$cw=&$this->CurrentFont['cw'];
 	if($w==0)

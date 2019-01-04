@@ -2,13 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_model.class.php,v 1.5 2015-04-17 12:50:24 vtouchard Exp $
+// $Id: map_model.class.php,v 1.8 2017-09-08 14:23:16 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($class_path."/map/map_hold.class.php");
 require_once($class_path."/map/map_layer_model_record.class.php");
 require_once($class_path."/map/map_layer_model_authority.class.php");
 require_once($class_path."/map/map_holds_reducer.class.php");
+require_once($class_path."/map/map_layer_model_location.class.php");
+require_once($class_path."/map/map_layer_model_sur_location.class.php");
 
 
 /**
@@ -58,7 +60,6 @@ class map_model {
 	
 	protected $cluster;
 
-
 	/**
 	 *  @param map_hold_polygon map_hold Emprise courante de la carte
 	 *  @param Array() ids Liste des identifiants des objets
@@ -87,8 +88,17 @@ class map_model {
   		$this->cluster = $cluster;
   		for($i=0 ; $i<count($this->ids) ; $i++){
    			$layer_model_class_name = $this->get_layer_model_class_name($this->ids[$i]['layer']);
-   			if($this->ids[$i]['layer']=='authority') $this->models[$this->ids[$i]['layer']] = new $layer_model_class_name($this->ids[$i]['type'],$this->ids[$i]['ids']);
-   			else $this->models[$this->ids[$i]['layer']] = new $layer_model_class_name($this->ids[$i]['ids']);
+   			if($this->ids[$i]['layer']=='authority') {
+   				
+   				$this->models[$this->ids[$i]['layer']] = new $layer_model_class_name($this->ids[$i]['type'],$this->ids[$i]['ids']);
+   			} elseif ($this->ids[$i]['layer'] == 'location' || $this->ids[$i]['layer']=='sur_location' ) {
+   				$this->models[$this->ids[$i]['layer']] = new $layer_model_class_name($this->ids[$i]['ids']);   				
+   				if (isset($this->ids[$i]['name']) && $this->ids[$i]['name']) {
+   					$this->models[$this->ids[$i]['layer']]->set_layer_model_name($this->ids[$i]['name']);
+   				}
+   			} else {
+   				$this->models[$this->ids[$i]['layer']] = new $layer_model_class_name($this->ids[$i]['ids']);
+   			}
   		}
   		if($this->map_hold == null){
   			$this->map_hold = $this->get_bounding_box();
@@ -146,7 +156,7 @@ class map_model {
  	public function get_objects( $id_layer) {
   		$objects = $this->models[$id_layer]->get_holds();
   		if($this->get_mode() == "edition" || $this->get_mode() == "visualisation" || $this->cluster === "false"){
-  			uasort($objects, array(map_holds_reducer, 'cmp_area'));
+  			uasort($objects, array('map_holds_reducer', 'cmp_area'));
   			return $objects;
   		}else{
   			$holds_reducer = new map_holds_reducer($this->map_hold,$objects);
@@ -185,6 +195,7 @@ class map_model {
 	 */
 	public function get_json_informations($mode_ajax, $url_base, $editable=false) {
 		$informations =array();
+		
 		foreach($this->models as $key => $layer_model){
 			$infos = $layer_model->get_informations();
 			if(!$mode_ajax){
@@ -200,7 +211,6 @@ class map_model {
 		return $informations;
 		
 	} // end of member function get_json_informations
-	
 	
 	protected function get_layer_model_class_name($layer=""){
 		if($layer){

@@ -16,13 +16,13 @@ class db_doc {
 	private $titre;
 	public $ID;
 
-	public function db_doc(){
+	public function __construct() {
 
 		$this->t_table=array();
 		$this->t_parcours=array();
 		$this->t_att=array();
 		$this->t_relation=array();
-		$this->titre="<center><h3>Base de donn&eacute;es PMB</h3></center>";
+		$this->titre="<h3>Base de donn&eacute;es PMB</h3>";
 		$this->ID=-1;
 	}
 
@@ -99,7 +99,7 @@ class db_doc {
 		//Construit le titre
 		if ($tag=='TITRE'&& count($att) ) {
 			$att['DATE']=date("d/m/Y");
-			$this->titre="<center><h3>".$att['NAME']."</h3></center>"."<center><h5>".$att['DATE']."</h5></center>";
+			$this->titre="<h3>".$att['NAME']."</h3>"."<h5>".$att['DATE']."</h5>";
 		}
 		
 	}

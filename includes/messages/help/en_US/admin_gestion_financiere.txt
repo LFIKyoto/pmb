@@ -1,4 +1,4 @@
-<h1>financial management of the borrowers</h1>
+<h2>financial management of the borrowers</h2>
 <p>With this module, you'll manage the financial operations related to the borrowers:
 </p>
 <ul>

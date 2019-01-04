@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frame_liste_items.php,v 1.2 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: frame_liste_items.php,v 1.6 2018-10-03 08:44:54 dgoron Exp $
 
 $base_path="./../..";
 $base_auth = "ADMINISTRATION_AUTH";
@@ -36,12 +36,12 @@ switch ($what) {
 	case "location_abts":
 		$titre = $msg["admin_abts_list"];
 		$link = $base_path."/catalog.php?categ=serials&sub=abon&serial_id=!!id_notice!!&abt_id=!!id!!";
-		$rqt = "select abt_id,abt_name from abts_abts where location_id ='".$item."' order by abt_name";
+		$rqt = "select abt_id,abt_name,num_notice from abts_abts where location_id ='".$item."' order by abt_name";
 		break;
 	case "location_collections_state":
 		$titre = $msg["admin_collections_state_list"];
 		$link = $base_path."/catalog.php?categ=serials&sub=collstate_form&id=!!id!!&serial_id=!!id_notice!!";
-		$rqt = "select collstate_id,state_collections from collections_state where location_id ='".$item."' order by state_collections";
+		$rqt = "select collstate_id,state_collections,id_serial from collections_state where location_id ='".$item."' order by state_collections";
 		break;
 	case "section_docs":
 		$titre = $msg["admin_docs_list"];
@@ -56,7 +56,7 @@ switch ($what) {
 	case "section_abts":
 		$titre = $msg["admin_abts_list"];
 		$link = $base_path."/catalog.php?categ=serials&sub=abon&serial_id=!!id_notice!!&abt_id=!!id!!";
-		$rqt = "select abt_id,abt_name from abts_abts where section_id ='".$item."' order by abt_name";
+		$rqt = "select abt_id,abt_name,num_notice from abts_abts where section_id ='".$item."' order by abt_name";
 		break;
 	case "statut_docs":
 		$titre = $msg["admin_docs_list"];
@@ -79,23 +79,28 @@ $rqt.=" limit $debut,$nb_per_page";
 
 $res = pmb_mysql_query($rqt,$dbh);
 $st = "odd";
-while (($data = pmb_mysql_fetch_array($res))) {
-	if ($st=="odd")
+while ($data = pmb_mysql_fetch_array($res)) {
+	if ($st=="odd") {
 		$st = "even";
-	else
+	} else {
 		$st = "odd";
-	
+	}
 	$lien = str_replace("!!id!!",$data[0],$link);
-	if ($data[2]) $lien = str_replace("!!id_notice!!",$data[2],$lien);
-	
-	$liste .= 	"<tr class='" .$st ."' onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='" . $st ."'\"  style='cursor: pointer'>
-					<td onClick=\"parent.location.href='".$lien."';\">".$data[1]."</td>
-				</tr>";
+	if (!empty($data[2])) {
+		$lien = str_replace("!!id_notice!!",$data[2],$lien);
+	} else {
+		$lien = str_replace("!!id_notice!!",0,$lien);
+	}
+	$liste .= "
+	<tr class='" .$st ."' onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='" . $st ."'\"  style='cursor: pointer'>
+		<td><a href='".$lien."' target='_blank'>".$data[1]."</a></td>
+	</tr>";
 }
 
 $global = "
 <div class='row'>
-	<div class='right'><a href='#' onClick='parent.kill_frame_items();return false;'><img src='" . $base_path . "/images/close.gif' border='0' align='right'></a></div>
+	<div class='right'><a href='#' onClick='parent.kill_frame_items();return false;'><img src='".get_url_icon('close.gif')."' border='0' class='align_right'></a></div>
+	<div class='row'>&nbsp;</div>
 	<h3>" . $titre . " (".$total.")</h3>
 	<table>	
 		!!liste!!
@@ -104,9 +109,9 @@ $global = "
 
 print str_replace("!!liste!!",$liste,$global);
 
-print "<div class='row'><div align='center'>";
+print "<div class='row'><div class='center'>";
 $url_base = $base_path."/admin/docs/frame_liste_items.php?what=".$what."&item=".$item."&total=".$total;
-$nav_bar = aff_pagination ($url_base, $total, $nb_per_page, $page, 10, false, true) ;
+$nav_bar = aff_pagination($url_base, $total, $nb_per_page, $page, 10, false, true);
 print $nav_bar;
 print "</div>";
 

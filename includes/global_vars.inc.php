@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: global_vars.inc.php,v 1.21 2015-05-06 13:28:43 dgoron Exp $
+// $Id: global_vars.inc.php,v 1.26 2018-08-17 10:33:03 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -93,10 +93,10 @@ function pt_register() {
 		for ($i = 1; $i < $num_args; $i++) {
 			$parameter = func_get_arg($i);
 			if (isset(${$varname}[$parameter])) {
-	        	global $$parameter;
+	        	global ${$parameter};
 	        	if (get_magic_quotes_gpc())
-				$$parameter = ${$varname}[$parameter];
-				else $$parameter = addslashes(${$varname}[$parameter]);
+				${$parameter} = ${$varname}[$parameter];
+				else ${$parameter} = addslashes(${$varname}[$parameter]);
 			}
 		}
 		
@@ -108,7 +108,7 @@ function pt_register() {
 
 // -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 // -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-if ((!isset($base_nosession) || !$base_nosession) && $_COOKIE["PhpMyBibli-SESSID"]) {
+if ((!isset($base_nosession) || !$base_nosession) && isset($_COOKIE["PhpMyBibli-SESSID"]) && $_COOKIE["PhpMyBibli-SESSID"]) {
 	header("Expires: Sat, 01 Jan 2000 00:00:00 GMT");
 	header("Last-Modified: ".gmdate("D, d M Y H:i:s")." GMT");
 	header("Cache-Control: post-check=0, pre-check=0",false);
@@ -120,18 +120,22 @@ if ((!isset($base_nosession) || !$base_nosession) && $_COOKIE["PhpMyBibli-SESSID
 //Si on a demandé la récupération d'un environnement...
 if (isset($_SESSION["last_required"]) && ($_SESSION["last_required"])&&($REQUEST_URI!="./print.php")) {
 	//Restauration
-	$_POST=$_SESSION["session_history"][$_SESSION["CURRENT"]][$_SESSION["last_required"]]["POST"];
-	$_GET=$_SESSION["session_history"][$_SESSION["CURRENT"]][$_SESSION["last_required"]]["GET"];
+	$_POST = array_merge($_SESSION["session_history"][$_SESSION["CURRENT"]][$_SESSION["last_required"]]["POST"], $_POST);
+	$_GET = array_merge($_SESSION["session_history"][$_SESSION["CURRENT"]][$_SESSION["last_required"]]["GET"], $_GET);
 	$_SESSION["last_required"]=false;
 } else if (isset($_SESSION["PRINT"]) && ($_SESSION["PRINT"])&&(substr($REQUEST_URI,-9)=="print.php")) {
-	$_POST=$_SESSION["PRINT"]["POST"];
-	$_GET=$_SESSION["PRINT"]["GET"];
-} else if (isset($_SESSION["PRINT_CART"]) && ($_SESSION["PRINT_CART"])&&(substr($REQUEST_URI,-14)=="print_cart.php")) {
-	$_POST=$_SESSION["PRINT_CART"]["POST"];
-	$_GET=$_SESSION["PRINT_CART"]["GET"];
+	$_POST = array_merge($_SESSION["PRINT"]["POST"], $_POST);
+	$_GET = array_merge($_SESSION["PRINT"]["GET"], $_GET);
+} else if (isset($_SESSION["PRINT_CART"]) && ($_SESSION["PRINT_CART"])&&(strpos($REQUEST_URI, 'print_cart.php') != false)) {
+	if (is_array($_SESSION["PRINT_CART"]["POST"])) {
+		$_POST = array_merge($_SESSION["PRINT_CART"]["POST"], $_POST);
+	}
+	if (is_array($_SESSION["PRINT_CART"]["GET"])) {
+		$_GET = array_merge($_SESSION["PRINT_CART"]["GET"], $_GET);
+	}
 } else if (isset($_SESSION["DOWNLOAD"]) && ($_SESSION["DOWNLOAD"])&&(substr($REQUEST_URI,-12)=="download.php")) {
-	$_POST=$_SESSION["DOWNLOAD"]["POST"];
-	$_GET=$_SESSION["DOWNLOAD"]["GET"];
+	$_POST = array_merge($_SESSION["DOWNLOAD"]["POST"], $_POST);
+	$_GET = array_merge($_SESSION["DOWNLOAD"]["GET"], $_GET);
 }
 
 /* VERSION SUPER GLOBALS */

@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_voices_list_ui.js,v 1.3 2015-02-09 11:17:12 vtouchard Exp $
+// $Id: nomenclature_voices_list_ui.js,v 1.7 2016-11-29 13:00:29 vtouchard Exp $
 
 define(["dojo/_base/declare","dojo/dom-construct", "dojo/topic",  "dojo/on", "dojo/_base/lang", "dijit/_WidgetBase", "dijit/registry", "apps/nomenclature/nomenclature_voice_ui", "apps/nomenclature/nomenclature_voice", "dojo/dom"], function(declare, domConstruct, topic, on,lang, _WidgetBase,registry, Voice_ui, Voice, dom){
 	/*
@@ -17,13 +17,12 @@ define(["dojo/_base/declare","dojo/dom-construct", "dojo/topic",  "dojo/on", "do
 		  	dom_node:null,
 		  	total_voices:0,
 		  	voices_node:null,
+		  	textarea_note:null,
+		  	hidden_note:null,
 
-		    constructor: function(params, dom_node){
+		    constructor: function(params){
 		    	this.events_handles = new Array();
 		    	this.voices_ui = new Array();
-		    	this.set_voices_list(params.voices_list);
-		    	this.set_nomenclature_voices_ui(params.nomenclature_voices_ui);
-		    	this.set_dom_node(dom_node);
 		    	this.events_handles.push(topic.subscribe('voice_ui', lang.hitch(this, this.handle_events)));
 		    	this.events_handles.push(topic.subscribe('voices_list', lang.hitch(this, this.handle_events)));
 		    	this.events_handles.push(topic.subscribe('nomenclature_voices', lang.hitch(this, this.handle_events)));
@@ -95,6 +94,26 @@ define(["dojo/_base/declare","dojo/dom-construct", "dojo/topic",  "dojo/on", "do
 		    	var th_voice = domConstruct.create('th', {innerHTML:registry.byId('nomenclature_datastore').get_message('nomenclature_js_instruments_header_voices'), style:{textAlign:'center'}}, header_line);
 		    	var th_effective = domConstruct.create('th', {innerHTML:registry.byId('nomenclature_datastore').get_message('nomenclature_js_instruments_header_effective'), style:{textAlign:'center'}}, header_line);
 		    	var th_bouton_delete = domConstruct.create('th', {style:{textAlign:'center'}}, header_line);
+		    	
+		    	var lib_note = domConstruct.create('div', {"class":'row'}, this.get_dom_node());
+		    	domConstruct.create('label', {
+		    		"class":'etiquette',
+		    		"for":this.get_dom_node().id+'_note',
+		    		innerHTML:registry.byId('nomenclature_datastore').get_message('nomenclature_js_voices_note')
+		    	}, lib_note);
+		    	var content_note = domConstruct.create('div', {"class":'row'}, this.get_dom_node());
+		    	this.textarea_note = domConstruct.create('textarea', {
+		    		id:this.get_dom_node().id+'_note',
+		    		name:this.get_dom_node().id+'_note',
+		    		"class":'saisie-80em',
+		    		wrap:'virtual',
+		    		rows:'3',
+		    		innerHTML:this.voices_list.nomenclature_voices.record_formation.get_note()
+		    	}, content_note);
+		    	this.own(on(this.textarea_note, 'keyup', lang.hitch(this, this.update_note)));
+		    	/** Création de l'input hidden de la note en vue de la sauvegarde **/
+		    	this.hidden_note = domConstruct.create('input', {type:'hidden', name:this.voices_list.nomenclature_voices.record_formation.get_hidden_field_name('notes'), value:this.voices_list.nomenclature_voices.record_formation.get_note()}, content_note);
+		    	
 		    	this.init_voices_ui();
 		    },
 		    
@@ -106,10 +125,8 @@ define(["dojo/_base/declare","dojo/dom-construct", "dojo/topic",  "dojo/on", "do
 		    		 * TODO: Add voice ui here with good params
 		    		 */
 		    		this.voices_node.style.display = "table";
-		    		//var new_voice_ui = new Voice_ui({id:this.get_dom_node().id+'_'+this.instruments_list.instruments[i].get_code()+'_'+this.get_total_voices()}, this.get_total_instruments(), this.get_instruments_node(), this.instruments_list.instruments[i]);
-		    		
 		    		var obj = {id:this.voices_list.voices[i].id, dom_node:this.get_voices_node(), indice:this.get_total_voices(), voice:this.voices_list.voices[i], voices_list_ui:this};
-			    	var new_voice_ui = new Voice_ui(obj, null);
+			    	var new_voice_ui = new Voice_ui(obj);
 			    	this.voices_ui.push(new_voice_ui);
 		    	}
 		    	this.voices_list.calc_abbreviation();
@@ -168,8 +185,6 @@ define(["dojo/_base/declare","dojo/dom-construct", "dojo/topic",  "dojo/on", "do
 		    		this.voices_node.style.display = "table";
 		    	}
 
-		    	var input_count = dom.byId(this.get_dom_node().id+'_count_voices');
-		    	input_count.value = parseInt(input_count.value)+1; 
 		    	var voice = new Voice("","");
 		    	voice.set_effective(1);
 		    	voice.set_order(this.voices_list.get_max_order()+1);
@@ -177,8 +192,9 @@ define(["dojo/_base/declare","dojo/dom-construct", "dojo/topic",  "dojo/on", "do
 		    	this.voices_list.add_voice(voice);
 		    	//Null est passé en 2eme parametre, si l'on passe un noeud, le widget le prendra automatiquement
 		    	var obj = {id:0, dom_node:this.get_voices_node(), indice:this.get_total_voices(), voice:voice, voices_list_ui:this};
-		    	var new_voice_ui = new Voice_ui(obj, null);
+		    	var new_voice_ui = new Voice_ui(obj);
 		    	this.voices_ui.push(new_voice_ui);
+		    	new_voice_ui.init_actions();
 			},
 			
 			get_voices_node: function() {
@@ -278,6 +294,14 @@ define(["dojo/_base/declare","dojo/dom-construct", "dojo/topic",  "dojo/on", "do
 			postCreate: function(){
 				topic.publish('voices_list_ui', 'ui_ready', {hash:this.voices_list.get_hash()});
 			},
-			
+			update_note: function() {
+		    	var note = this.textarea_note.value;
+		    	this.voices_list.nomenclature_voices.record_formation.set_note(note);
+		    	this.update_hidden_fields();
+		    },
+		    update_hidden_fields:function (){
+				this.hidden_note.value = this.voices_list.nomenclature_voices.record_formation.get_note();
+			},
+		    
 	    });
 	});

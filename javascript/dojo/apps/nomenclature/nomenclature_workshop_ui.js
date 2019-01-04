@@ -1,12 +1,12 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_workshop_ui.js,v 1.14 2015-02-09 14:45:18 dgoron Exp $
+// $Id: nomenclature_workshop_ui.js,v 1.23 2017-11-30 10:53:34 dgoron Exp $
 
 
-define(["dojo/_base/declare", "apps/nomenclature/nomenclature_instruments_list_ui", "apps/nomenclature/nomenclature_instruments_list", "dojo/on", "dojo/dom-construct", "dojo/topic", "dojo/_base/lang", "dijit/registry","dijit/_WidgetBase"], function(declare, Instruments_list_ui, Instruments_list, on, domConstruct, topic, lang, registry, _WidgetBase){
+define(["dojo/_base/declare", "apps/nomenclature/nomenclature_instruments_list_ui", "apps/nomenclature/nomenclature_instruments_list", "dojo/on", "dojo/dom-construct", "dojo/topic", "dojo/_base/lang", "dijit/registry","dijit/_WidgetBase", "dojo/dom-attr"], function(declare, Instruments_list_ui, Instruments_list, on, domConstruct, topic, lang, registry, _WidgetBase, domAttr){
 	/*
-	 *Classe nomenclature_workshop_ui. Classe générant la partie du formulaire liée a un atelier
+	 *Classe nomenclature_workshop_ui. Classe gï¿½nï¿½rant la partie du formulaire liï¿½e a un atelier
 	 */
 	  return declare("nomenclature_workshop_ui",[_WidgetBase], {
 			
@@ -20,6 +20,7 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_instruments_list_u
 		  	indice:0,
 		  	label:null,
 		  	inputs_array:null,
+		  	ajax_dispatched: false,
 		  	
 		    constructor: function(params){
 		    	this.inputs_array = new Array();
@@ -38,6 +39,10 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_instruments_list_u
 		    		case "instruments_list_ui_ready" : 
 		    			if(evt_args.hash.indexOf(this.workshop.get_hash())!=-1){
 		    				this.generate_inputs();
+		    				topic.publish('workshop_ui', 'workshop_ready', {
+				    			hash : this.workshop.get_hash(),
+				    			nomenclature_hash: this.workshop.nomenclature.get_hash()
+				    		});
 			    		}
 		    			break;
 		    	}
@@ -62,11 +67,10 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_instruments_list_u
 	    			hspace:'3', 
 	    			border:'0', 
 	    			onclick:'expandBase(\''+this.dom_construct_id+'\', true); return false;', 
-	    			title:'d\351tail', 
-	    			name:'imEx',
-	    			src:'./images/plus.gif'
+	    			title:'d\351tail',
+	    			src:pmbDojo.images.getImage('plus.gif')
 	    				}, noeud_princ);
-	    		
+	    		this.own(on(img_plus, 'click', lang.hitch(this, this.ajax_dispatch)));
 	    		domConstruct.create('label', {innerHTML:registry.byId('nomenclature_datastore').get_message('nomenclature_js_workshop_label')}, noeud_princ);
 	    		var label_txt = "";
 	    		if (this.workshop.get_label() != "") {
@@ -79,7 +83,7 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_instruments_list_u
 	    		}
 	    		this.abbreviation_node = domConstruct.create('span', {innerHTML:this.workshop.get_abbreviation()}, noeud_princ);
 	    		var link_delete = domConstruct.create('a', {onclick:''}, noeud_princ);
-	    		domConstruct.create('img', {src:'./images/trash.png', alt:registry.byId('nomenclature_datastore').get_message('nomenclature_js_workshop_delete'), title:registry.byId('nomenclature_datastore').get_message('nomenclature_js_workshop_delete')}, link_delete);
+	    		domConstruct.create('img', {src:pmbDojo.images.getImage('trash.png'), alt:registry.byId('nomenclature_datastore').get_message('nomenclature_js_workshop_delete'), title:registry.byId('nomenclature_datastore').get_message('nomenclature_js_workshop_delete')}, link_delete);
 		    	this.own(on(link_delete, "click", lang.hitch(this, this.publish_event, 'workshop_delete')));
 	    		
 	    		this.instruments_list_node = domConstruct.create('div', {
@@ -98,6 +102,14 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_instruments_list_u
 	    		this.input_name = domConstruct.create('input', {id:this.dom_construct_id+'_label',type:'text',value:this.workshop.get_label()}, this.instruments_list_node);
 	    		this.own(on(this.input_name, 'keyup', lang.hitch(this, this.update_label_workshop)));
 	    		
+	    		domConstruct.create('label', {innerHTML:registry.byId('nomenclature_datastore').get_message('nomenclature_js_workshop_undefined')}, this.instruments_list_node);
+	    		this.checkbox_undefined = domConstruct.create('input', {type:'checkbox'}, this.instruments_list_node);
+	    		
+	    		if(!parseInt(this.workshop.get_defined())) {
+	    			this.checkbox_undefined.checked = true;
+	    		}
+				this.own(on(this.checkbox_undefined, 'click', lang.hitch(this, this.update_defined_workshop)));
+				
 	    		this.init_instruments_list_ui();
 		    },
 
@@ -106,7 +118,8 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_instruments_list_u
 		    			id:this.workshop.instruments_list.get_hash(),
 		    			instruments_list:this.workshop.instruments_list,
 		    			dom_node:this.instruments_list_node,
-		    			mode:"workshop"
+		    			mode:"workshop",
+		    			workshop_ui:this
 		    	};
 		    	this.instruments_list_ui = new Instruments_list_ui(params);
 		    },
@@ -154,6 +167,11 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_instruments_list_u
 		    	this.label.innerHTML = ' / '+this.workshop.get_label();
 		    	this.generate_inputs();
 			},
+			update_defined_workshop: function(){
+				this.workshop.set_defined(((this.checkbox_undefined.checked)?0:1));
+				this.publish_event('workshop_state_changed');
+				this.generate_inputs();
+			},
 			publish_event: function(event_name){
 				var event_args = {};
 				event_args.hash = this.workshop.get_hash();
@@ -170,17 +188,30 @@ define(["dojo/_base/declare", "apps/nomenclature/nomenclature_instruments_list_u
 				}
 				this.instruments_list_ui.instruments_list.set_instruments(new Array());
 				this.workshop = null;
+				this.instruments_list_ui.destroy();
 				domConstruct.destroy(this.instruments_list_ui.get_dom_node());
 				domConstruct.destroy(this.dom_construct_id);
+				for(var i=0 ; i<this.inputs_array.length ; i++){
+					domConstruct.destroy(this.inputs_array[i]);
+				}
+				this.inputs_array = new Array();
 				this.inherited(arguments);
 			},
 			generate_inputs:function(){
 				for(var i=0 ; i<this.inputs_array.length ; i++){
 					domConstruct.destroy(this.inputs_array[i]);
 				}
+				this.inputs_array = new Array();
 				this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.workshop.get_hidden_field_name()+'[workshops]['+this.indice+'][label]', value:this.workshop.get_label()}, this.dom_node));
-				this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.workshop.get_hidden_field_name()+'[workshops]['+this.indice+'][id]', value:this.workshop.get_id()}, this.dom_node));
+				this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.workshop.get_hidden_field_name()+'[workshops]['+this.indice+'][id]', id:this.workshop.get_hidden_field_name()+'_workshops_'+this.workshop.get_order()+'_id', value:this.workshop.get_id()}, this.dom_node));
 				this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.workshop.get_hidden_field_name()+'[workshops]['+this.indice+'][order]', value:this.workshop.get_order()}, this.dom_node));
+				this.inputs_array.push(domConstruct.create('input',{type:'hidden', name:this.workshop.get_hidden_field_name()+'[workshops]['+this.indice+'][defined]', value:this.workshop.get_defined()}, this.dom_node));
 			},
+			ajax_dispatch: function() {
+				if (!this.ajax_dispatched) {
+					this.ajax_dispatched = true;
+					this.instruments_list_ui.init_instruments_action();
+				}
+			}
 	    });
 	});

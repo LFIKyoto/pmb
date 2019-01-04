@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: opac_searcher_autorities_skos_concepts.class.php,v 1.3 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: opac_searcher_autorities_skos_concepts.class.php,v 1.4 2016-06-15 14:59:56 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -88,5 +88,13 @@ class opac_searcher_autorities_skos_concepts extends opac_searcher_autorities {
 			$query = " and ".$this->object_key." in (select ".$this->object_key." from ".$this->object_fields_table." where code_champ = 4 and authority_num = ".($concept_scheme*1);
 		}
 		return $query;	
+	}
+	
+	
+	protected function _get_sign($sorted=false) {
+		global $concept_scheme;
+		$str_to_hash = parent::_get_sign($sorted);
+		$str_to_hash .= "&concept_scheme=".$concept_scheme;
+		return md5($str_to_hash);
 	}
 }

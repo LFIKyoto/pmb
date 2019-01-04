@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: websubscribe.inc.php,v 1.9 2015-06-02 13:24:51 dgoron Exp $
+// $Id: websubscribe.inc.php,v 1.13 2018-10-17 12:49:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "inc.php")) die("no access");
 
@@ -10,7 +10,7 @@ define('PBINSC_OK'		,    0);
 define('PBINSC_MAIL'	,    1);
 define('PBINSC_LOGIN'	,    2);
 define('PBINSC_BDD'		,    3);
-define('PBINSC_MAIL'	,    4);
+//define('PBINSC_MAIL'	,    4); //Error : Already defined
 define('PBINSC_INVALID'	,    5);
 define('PBINSC_INCONNUE',    6);
 define('PBINSC_CLE'		,    7);
@@ -22,7 +22,7 @@ require_once("$class_path/emprunteur.class.php");
 
 function generate_form_inscription() {
 	global $subs_form_create, $msg ;
-	global $f_nom, $f_prenom, $f_email;
+	global $f_nom, $f_prenom, $f_email, $f_login;
 	global $f_msg, $f_adr1, $f_adr2, $f_cp, $f_ville, $f_pays, $f_tel1;
 	
 	$subs_form_create = str_replace ("!!f_nom!!",				stripslashes($f_nom),						$subs_form_create);
@@ -98,13 +98,16 @@ function verif_validite_compte() {
 	$res = pmb_mysql_query($rqt,$dbh);
 	$obj=pmb_mysql_fetch_object($res);
 	$duree_adhesion=$obj->duree_adhesion;
-
+	if(!$duree_adhesion) {
+		$duree_adhesion = 365; //Valeur choisie par défaut pour éviter tout problème de paramétrage
+	}
+	
 	global $pmb_lecteurs_localises,$opac_websubscribe_show_location;
+	global $opac_websubscribe_empr_location;
 	if ($pmb_lecteurs_localises && $opac_websubscribe_show_location) {
 		global $empr_location_id;
-		$websubscribe_empr_location = ($empr_location_id ? $empr_location_id : 0);
+		$websubscribe_empr_location = ($empr_location_id ? $empr_location_id : $opac_websubscribe_empr_location);
 	} else {
-		global $opac_websubscribe_empr_location;
 		$websubscribe_empr_location = $opac_websubscribe_empr_location;
 	}
 	// clé de validation :
@@ -189,6 +192,8 @@ function verif_validite_compte() {
 		global $opac_biblio_name,$opac_biblio_email,$opac_url_base ;
 		$obj = str_replace("!!biblio_name!!",$opac_biblio_name,$msg[subs_mail_obj]) ;
 		$corps = str_replace("!!biblio_name!!",$opac_biblio_name,$msg[subs_mail_corps]) ;
+		$corps = str_replace("!!empr_first_name!!",$f_prenom,$corps) ;
+		$corps = str_replace("!!empr_last_name!!",$f_nom,$corps) ;
 		$lien_validation = "<a href='".$opac_url_base."subscribe.php?subsact=validation&login=$f_login&cle_validation=$cle_validation'>".$opac_url_base."subscribe.php?subsact=validation&login=$f_login&cle_validation=$cle_validation</a>";
 		$corps = str_replace("!!lien_validation!!",$lien_validation,$corps) ;
 		

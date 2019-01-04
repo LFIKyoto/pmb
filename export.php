@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export.php,v 1.7.4.1 2015-09-10 07:58:28 jpermanne Exp $
+// $Id: export.php,v 1.9 2017-08-07 07:42:00 dgoron Exp $
 
 // définition du minimum nécéssaire 
 $base_path=".";                            
@@ -53,6 +53,25 @@ switch($quoi) {
 					$exp .= "\n#charset=".$charset;
 					echo $exp ;
 					}			
+				break;
+			case "authorities_caddie" :
+				header("Content-Type: application/download\n");
+				header("Content-Disposition: atachement; filename=\"authorities_caddie_proc_".$id.".sql\"");
+			
+				$req="select type, name, requete, comment, autorisations, parameters from authorities_caddie_procs where idproc='$id' ";
+				$res = pmb_mysql_query($req,$dbh);
+				if ($p=pmb_mysql_fetch_object($res)) {
+					$exp="INSERT INTO authorities_caddie_procs set type='".addslashes($p->type)."', name='".addslashes($p->name)."', requete='".addslashes($p->requete)."', comment='".addslashes($p->comment)."', autorisations='1', parameters='".addslashes($p->parameters)."' ";
+					//nettoyage de l'entête des paramètres, pour les anciennes procédures
+					if($charset=='utf-8'){
+						$exp = str_replace('<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>', '<?xml version=\"1.0\" encoding=\"utf-8\"?>', $exp) ;
+					}elseif($charset=='iso-8859-1'){
+						$exp = str_replace('<?xml version=\"1.0\" encoding=\"utf-8\"?>', '<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>', $exp) ;
+					}
+					//tag pour l'encodage du contenu
+					$exp .= "\n#charset=".$charset;
+					echo $exp ;
+				}
 				break;
 			case "actionsperso" :
 				header("Content-Type: application/download\n");

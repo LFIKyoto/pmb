@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_collections.class.php,v 1.8 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: cms_collections.class.php,v 1.23 2018-08-24 12:24:31 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -94,43 +94,90 @@ class cms_collections extends cms_root{
 		global $msg,$charset;
 				
 		$list ="
-		<div class='row'>&nbsp</div>
-		<hr />
-		<script type='text/javascript'>
-			function document_change_background(id){
-				var doc = dojo.byId('document_'+id);
-				if(doc.className == 'document_item'){
-					doc.setAttribute('class','document_item document_item_selected');
-				}else{
-					doc.setAttribute('class','document_item');
-				}
-			}
-			require(['dojo/ready', 'dojox/widget/DialogSimple'], function(ready, Dialog) {
-					ready(function() {
-						openEditDialog = function(id){
-							try{
-								var dialog = dijit.byId('dialog_document');
-							}catch(e){}
-							if(!dialog){
-								var dialog = new Dialog({title:'',id:'dialog_document'});
-							}
-							var path ='./ajax.php?module=cms&categ=documents&caller=editorial_form&action=get_form&id='+id;
-							dialog.attr('href', path);
-							dialog.startup();
-							dialog.show();
+		<div id='el2Child_0' class='row' movable='yes' title=\"".htmlentities($msg['cms_documents_add'], ENT_QUOTES, $charset)."\">
+			<div class='row'>&nbsp;</div>
+			<hr />
+			<div id='collections_documents_form'>
+				<script type='text/javascript'>
+					function document_change_background(id){
+						var doc = dojo.byId('document_'+id);
+						if(doc.className == 'document_item'){
+							doc.setAttribute('class','document_item document_item_selected');
+						}else{
+							doc.setAttribute('class','document_item');
 						}
-					});
-				});
-			</script>
-		<h3>".htmlentities($msg['cms_documents_add'])."</h3>";
+					}
+					require(['dojo/ready', 'apps/pmb/PMBDojoxDialogSimple', 'apps/cms/CmsExpand'], function(ready, Dialog, CmsExpand) {
+							ready(function() {
+								openEditDialog = function(id){
+									try{
+										var dialog = dijit.byId('dialog_document');
+									}catch(e){}
+									if(!dialog){
+										var dialog = new Dialog({title:'',id:'dialog_document'});
+									}
+									var path ='./ajax.php?module=cms&categ=documents&caller=editorial_form&action=get_form&id='+id;
+									dialog.attr('href', path);
+									dialog.startup();
+									dialog.show();
+								}
+								var expand = new CmsExpand({expand_all_id :'expandall', collapse_all_id :'collapseall', context : 'collections_documents_form'});
+							});
+						});
+					</script>
+				<h3>".htmlentities($msg['cms_documents_add'])."</h3>
+				<script src='./javascript/tablist.js'></script>
+				<img id='expandall' style='border:0px' src='".get_url_icon('expand_all.gif')."'>
+				<img id='collapseall' style='border:0px' src='".get_url_icon('collapse_all.gif')."'>";
 		foreach($this->collections as $collection){
-			$coll_form = "<div class='row'>&nbsp;</div>";
-			$coll_form = $collection->get_documents_form($selected);
-			$coll_form.= "<div class='row'>&nbsp;</div>";
-			$list.=gen_plus('collection'.$collection->id,$collection->title." (".$collection->nb_doc." ".$msg['cms_document'].")",$coll_form);
+			$document_selected = $collection->get_documents_selected($selected);
+			$data = array(
+					"id" => $collection->id,
+					"domId" => "collection".$collection->id,
+					"categ" => "collection",
+					"action" => "get_documents_form",
+					"params" => array(
+							"selected" => $selected 
+					)
+			);
+			$data = encoding_normalize::json_encode($data);
+			
+			$html = "
+			<div class='row'></div>
+            <div id='documents_selected_".$collection->id."'>";
+			foreach($document_selected as $doc) {
+			    $html.= "<input type='hidden' name='cms_documents_linked[]' value='".$doc['id']."'/>";
+			}
+			$html.= "
+            </div>
+			<div id='collection".$collection->id."' class='notice-parent'>				
+				<img data='".$data."' src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='collection".$collection->id."Img' title='".$msg['plus_detail']."' style='border:0px; margin:3px 3px'>
+				<span class='notice-heada'>
+					".$collection->title." (".( count($document_selected) ? count($document_selected)." / " : "").$collection->nb_doc." ".$msg['cms_document'].")"."
+				</span>
+			</div>
+			<div id='collection".$collection->id."Child' class='notice-child' style='margin-bottom:6px;display:none;width:94%'></div>";
+					
+			$list.= $html;
 		}
+		$list.='</div>
+		</div>';
 		return $list;
 	}
+	
+	 public function get_collections_selector($name, $id){
+	 	global $msg, $charset;
+	 	
+	 	$select="<select name='".$name."'>";
+	 	foreach($this->collections as $collection){
+	 		if($collection->id == $id){
+				$selected = " selected='selected' ";
+			}else $selected = "";
+			$select.="<option value='".$collection->id."'".$selected.">".htmlentities($collection->title." (".$collection->nb_doc." ".$msg['cms_document'].")",ENT_QUOTES,$charset)."</option>";
+	 	}
+	 	$select.="</select>";
+	 	return $select;
+	 }
 }
 
 class cms_collection extends cms_root{
@@ -267,13 +314,17 @@ class cms_collection extends cms_root{
 	
 	public function get_documents(){
 		$this->documents =array();
-		$query = "select id_document from cms_documents where document_type_object = 'collection' and document_num_object='".$this->id."'";
+		$query = "select id_document from cms_documents where document_type_object = 'collection' and document_num_object='".$this->id."' order by document_title, id_document";
 		$result = pmb_mysql_query($query);
 		if(pmb_mysql_num_rows($result)){
 			while($row = pmb_mysql_fetch_object($result)){
 				$this->documents[] = new cms_document($row->id_document);
 			}
 		}
+	}
+	
+	public function get_id(){
+		return $this->id;
 	}
 	
 	public function get_documents_list(){
@@ -286,18 +337,33 @@ class cms_collection extends cms_root{
 		foreach($this->documents as $document){
 			$list.= $document->get_item_render("openEditDialog");
 		}
-		
+		$upload_max_filesize = ini_get('upload_max_filesize');
+		if (!$upload_max_filesize) {
+			$upload_max_filesize = 50000;
+		} else {
+			$upload_max_filesize = trim($upload_max_filesize);
+			$last = strtolower($upload_max_filesize[strlen($upload_max_filesize)-1]);
+			switch($last) {
+				// Le modifieur 'G' est disponible depuis PHP 5.1.0
+				case 'g':
+					$upload_max_filesize *= 1024;
+				case 'm':
+					$upload_max_filesize *= 1024;
+				case 'k':
+					$upload_max_filesize *= 1024;
+			}
+		}
 		$list.= "
 		</div>
-			<div id='dropTarget' class='dropTarget document_item'><p>".htmlentities($msg['drag_files_here'],ENT_QUOTES,$charset)."</p></div>
+			<div id='dropTarget' class='dropTarget document_item'><p style='pointer-events: none;'>".htmlentities($msg['drag_files_here'],ENT_QUOTES,$charset)."</p></div>
 			<link href='./javascript/dojo/snet/fileUploader/resources/uploader.css' rel='stylesheet' type='text/css'/>
 			<script type='text/javascript'>
-				require(['dojo/_base/kernel', 'dojo/ready', 'snet/fileUploader/Uploader', 'dojox/widget/DialogSimple'], function(kernel, ready, Uploader, Dialog) {
+				require(['dojo/_base/kernel', 'dojo/ready', 'snet/fileUploader/Uploader', 'apps/pmb/PMBDojoxDialogSimple'], function(kernel, ready, Uploader, Dialog) {
 					ready(function() {
 						var upl = new Uploader({
 							url: './ajax.php?module=ajax&categ=storage&sub=upload&id=".$this->num_storage."&type=collection&id_collection=".$this->id."',
 							dropTarget: 'dropTarget',
-							maxKBytes: 50000,
+							maxKBytes: ".($upload_max_filesize/1024).",
 							maxNumFiles: 10,
 							append_div: 'document_list'
 						});
@@ -320,6 +386,20 @@ class cms_collection extends cms_root{
 		
 		return $list;
 	}
+
+	public function get_documents_selected($used) {
+		$selected_list = array();
+		$this->get_documents();
+		foreach($this->documents as $document){
+			if(in_array($document->get_id(),$used)){
+				$selected_list[] = array(
+					'id' => $document->get_id(),
+					'form' => $document->get_item_form(true)
+				);	
+			}
+		}
+		return $selected_list;
+	}
 	
 	public function get_documents_form($used){
 		global $msg,$charset;
@@ -328,24 +408,40 @@ class cms_collection extends cms_root{
 		$form = "
 		<div class='row document_list' id='document_list_".$this->id."'>";
 		foreach($this->documents as $document){
-			if(in_array($document->id,$used)){
+			if(in_array($document->get_id(),$used)){
 				$selected = true;
 			}else{
 				$selected = false;
 			}
 			$form.=$document->get_item_form($selected);	
 		}
+		$upload_max_filesize = ini_get('upload_max_filesize');
+		if (!$upload_max_filesize) {
+			$upload_max_filesize = 50000;
+		} else {
+			$upload_max_filesize = trim($upload_max_filesize);
+			$last = strtolower($upload_max_filesize[strlen($upload_max_filesize)-1]);
+			switch($last) {
+				// Le modifieur 'G' est disponible depuis PHP 5.1.0
+				case 'g':
+					$upload_max_filesize *= 1024;
+				case 'm':
+					$upload_max_filesize *= 1024;
+				case 'k':
+					$upload_max_filesize *= 1024;
+			}
+		}
 		$form.="
 		</div>
-		<div id='dropTarget_".$this->id."' class='document_item dropTarget'><p>".htmlentities($msg['drag_files_here'],ENT_QUOTES,$charset)."</p></div>
+		<div id='dropTarget_".$this->id."' class='document_item dropTarget'><p style='pointer-events: none;'>".htmlentities($msg['drag_files_here'],ENT_QUOTES,$charset)."</p></div>
 		<link href='./javascript/dojo/snet/fileUploader/resources/uploader.css' rel='stylesheet' type='text/css'/>
 		<script type='text/javascript'>
-			require(['dojo/_base/kernel', 'dojo/ready', 'snet/fileUploader/Uploader', 'dojox/widget/DialogSimple'], function(kernel, ready, Uploader, Dialog) {
+			require(['dojo/_base/kernel', 'dojo/ready', 'snet/fileUploader/Uploader', 'apps/pmb/PMBDojoxDialogSimple'], function(kernel, ready, Uploader, Dialog) {
 				ready(function() {
 					var upl = new Uploader({
 						url: './ajax.php?module=ajax&categ=storage&sub=upload&id=".$this->num_storage."&type=collection&id_collection=".$this->id."&from=form',
 						dropTarget: 'dropTarget_".$this->id."',
-						maxKBytes: 50000,
+						maxKBytes: ".($upload_max_filesize/1024).",
 						maxNumFiles: 10,
 						append_div: 'document_list_".$this->id."'
 					});
@@ -356,37 +452,35 @@ class cms_collection extends cms_root{
 	}
 	
 	public function add_document($infos,$get_item_render=true,$from=''){
-		$result = "";
-		
-		$query = "insert into cms_documents set 
-			document_title = '".addslashes($infos['title'])."',
-			document_filename = '".addslashes($infos['filename'])."',
-			document_mimetype = '".addslashes($infos['mimetype'])."',
-			document_filesize = '".addslashes($infos['filesize'])."',	
-			document_vignette = '".addslashes($infos['vignette'])."',	
-			document_url = '".addslashes($infos['url'])."',
-			document_path = '".addslashes($infos['path'])."',
-			document_create_date = '".addslashes($infos['create_date'])."',	
-			document_num_storage = ".($infos['num_storage']*1).",
-			document_type_object = 'collection',
-			document_num_object = ".$this->id."	
-		";
-		if(pmb_mysql_query($query)){
-			if($get_item_render){
-				$document = new cms_document(pmb_mysql_insert_id());
-				$document->regen_vign();
-				if($from == "form"){
-					$result = $document->get_item_form(true);
-				}else{
-					$result = $document->get_item_render();
-				}
-			}else{
-				$result = true;
-			}
-		}else{
-			$result = false;
+		if (!trim($infos['title'])) {
+			$infos['title'] = $infos['filename'];
 		}
-		return $result;
+		
+		$document = new cms_document();
+		$document->set_title($infos['title'])
+			->set_filename($infos['filename'])
+			->set_mimetype($infos['mimetype'])
+			->set_filesize($infos['filesize'])
+			->set_vignette($infos['vignette'])
+			->set_url($infos['url'])
+			->set_path($infos['path'])
+			->set_create_date($infos['create_date'])
+			->set_num_storage($infos['num_storage'])
+			->set_type_object('collection')
+			->set_num_object($this->id);
+		
+		$document->save();
+		
+		if($document->get_id()){
+			if($get_item_render){
+				if($from == "form"){
+					return $document->get_item_form(true);
+				}
+				return $document->get_item_render();
+			}
+			return true;
+		}
+		return false;
 	}
 	
 	public function get_infos(){

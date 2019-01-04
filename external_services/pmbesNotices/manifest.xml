@@ -3,7 +3,7 @@
 ****************************************************************************************                
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)               
 ****************************************************************************************                
-$Id: manifest.xml,v 1.18 2013-02-20 16:09:28 mbertin Exp $ -->                                       
+$Id: manifest.xml,v 1.19 2018-01-23 15:13:18 shamel Exp $ -->                                       
 <manifest>                                                                                              
         <name>pmbesNotices</name>                                                                       
         <description>msg:pmbesNotices_description</description>                                         
@@ -409,6 +409,39 @@ $Id: manifest.xml,v 1.18 2013-02-20 16:09:28 mbertin Exp $ -->
 										<result name="administrative" type="scalar" dataType="noticeAdministrative" description="msg:fetchNoticesAdministrative_results_administrative"/>
                                 </result>                                                                                    
                         </outputs>                                                                                           
+                </method>
+                <method name="deleteNotices" comment="msg:deleteNotices_description" rights="" version="1.0" language_independant="false">
+                        <requirements>
+				           <pmb_requirement start_path="class" file="serials.class.php"/>
+				           <pmb_requirement start_path="class" file="notice.class.php"/>
+                        </requirements>
+                        <inputs>
+                        	<description></description>
+	                        <param name="tab_notice" type="array">
+	                                <param name="notice_id" type="scalar" dataType="integer"/>
+	                        </param>
+	                        <param name="forcage" type="scalar" dataType="boolean" />
+                        </inputs>
+                        <outputs>
+                        	<description></description>                        
+                             <result type="array" name="states" description="">
+                             	<result name="noticeId" type="scalar" dataType="integer" description="msg:deleteNotices_states"/>                             
+   								<result name="state" type="scalar" dataType="string" description="msg:deleteNotices_state"/>
+                             </result>
+                        </outputs>
                 </method>                      
+                <method name="checkdelnotice" comment="msg:check_del_notice_description" rights="" version="1.0" language_independant="false">
+                        <requirements>
+				           <pmb_requirement start_path="class" file="notice_relations_collection.class.php"/>
+                        </requirements>
+                        <inputs>
+                        	<description></description>
+                        	<param name="notice_id" type="scalar" dataType="integer"/>
+                        </inputs>
+                        <outputs>
+                        	<description></description>                        
+                             <result type="scalar" dataType="boolean" name="retour" description=""></result>
+                        </outputs>
+                </method>                
         </methods>
 </manifest>

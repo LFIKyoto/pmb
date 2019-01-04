@@ -1,4 +1,4 @@
-<h1>Tools</h1>
+<h2>Tools</h2>
 <p>Various options are available here.</p>
 </p>
 <b>Database cleanup</b> helps you with weeding the databases: deleting records without copies, etc.</p><p>

@@ -2,57 +2,16 @@
 // +--------------------------------------------------------------------------+
 // | PMB est sous licence GPL, la réutilisation du code est cadrée            |
 // +--------------------------------------------------------------------------+
-// $Id: print.php,v 1.73.2.2 2015-10-22 15:26:59 mbertin Exp $
+// $Id: print.php,v 1.113 2018-12-13 16:54:54 dgoron Exp $
 
 $base_path=".";
 require_once($base_path."/includes/init.inc.php");
-require_once("./includes/error_report.inc.php") ;
-require_once("./includes/global_vars.inc.php");
-require_once('./includes/opac_config.inc.php');
-	
-// récupération paramètres MySQL et connection á la base
-require_once('./includes/opac_db_param.inc.php');
-require_once('./includes/opac_mysql_connect.inc.php');
-$dbh = connection_mysql();
-// (si la connection est impossible, le script die ici).
 
-require_once("./includes/misc.inc.php");
-
-//Sessions !! Attention, ce doit être impérativement le premier include (à cause des cookies)
-require_once("./includes/session.inc.php");
-require_once('./includes/start.inc.php');
-require_once("./includes/check_session_time.inc.php");
-
-// récupération localisation
-require_once('./includes/localisation.inc.php');
-
-// version actuelle de l'opac
-require_once('./includes/opac_version.inc.php');
-
-//si les vues sont activées (à laisser après le calcul des mots vides)
-// Il n'est pas possible de chagner de vue à ce niveau
-if($opac_opac_view_activate){
-	if(!$pmb_opac_view_class) $pmb_opac_view_class= "opac_view";
-	require_once($base_path."/classes/".$pmb_opac_view_class.".class.php");
-
-	$opac_view_class= new $pmb_opac_view_class($_SESSION["opac_view"],$_SESSION["id_empr_session"]);
- 	if($opac_view_class->id){
- 		$opac_view_class->set_parameters();
- 		$opac_view_filter_class=$opac_view_class->opac_filters;
- 		$_SESSION["opac_view"]=$opac_view_class->id;
- 		if(!$opac_view_class->opac_view_wo_query) {
- 			$_SESSION['opac_view_query']=1;
- 		}
- 	} else {
- 		$_SESSION["opac_view"]=0;
- 	}
-	$css=$_SESSION["css"]=$opac_default_style;
-}
+//fichiers nécessaires au bon fonctionnement de l'environnement
+require_once($base_path."/includes/common_includes.inc.php");
 
 // fonctions de gestion de formulaire
-require_once('./includes/javascript/form.inc.php');
 require_once('./includes/templates/common.tpl.php');
-require_once('./includes/divers.inc.php');
 require_once('./includes/notice_categories.inc.php');
 
 // classe de gestion des catégories
@@ -66,14 +25,9 @@ require_once($base_path.'/classes/indexint.class.php');
 // classe d'affichage des tags
 require_once($base_path.'/classes/tags.class.php');
 
-require_once($base_path."/includes/marc_tables/".$pmb_indexation_lang."/empty_words");
-
 // pour l'affichage correct des notices
-require_once($base_path."/includes/templates/common.tpl.php");
 require_once($base_path."/includes/templates/notice.tpl.php");
 require_once($base_path."/includes/navbar.inc.php");
-require_once($base_path."/includes/notice_authors.inc.php");
-require_once($base_path."/includes/notice_categories.inc.php");
 require_once($base_path."/includes/explnum.inc.php");
 
 require_once('./classes/notice_affichage.class.php');
@@ -89,9 +43,38 @@ require_once($include_path."/mail.inc.php") ;
 if (file_exists($base_path.'/includes/ext_auth.inc.php')) require_once($base_path.'/includes/ext_auth.inc.php');
 
 // SECURITE
-$id_liste=$id_liste*1;
-
+if(isset($id_liste)) {
+	$id_liste=$id_liste*1;
+} else {
+	$id_liste=0;
+}
+if(isset($id_etagere)) {
+	$id_etagere=$id_etagere*1;
+} else {
+	$id_etagere=0;
+}
+if(!isset($action)) $action = '';
+if(!isset($output)) $output = '';
+if(!isset($current_search)) $current_search = '';
 $use_opac_url_base=1;
+
+//on log au début pour l'avoir même sur les impressions pdf ou non abouties
+global $pmb_logs_activate;
+if($pmb_logs_activate){
+	global $log, $infos_notice, $infos_expl;
+
+	if($_SESSION['user_code']) {
+		$res=pmb_mysql_query($log->get_empr_query());
+		if($res){
+			$empr_carac = pmb_mysql_fetch_array($res);
+			$log->add_log('empr',$empr_carac);
+		}
+	}
+	$log->add_log('num_session',session_id());
+	$log->add_log('expl',$infos_expl);
+	$log->add_log('docs',$infos_notice);
+	$log->save();
+}
 
 if (file_exists($include_path.'/print/print_options_subst.xml')){
 	$xml_print = new XMLlist($include_path.'/print/print_options_subst.xml');
@@ -103,12 +86,31 @@ $print_options = $xml_print->table;
 
 if (($action=="print_$lvl")&&($output=="tt")) {
 	header("Content-Type: application/word");
-	header("Content-Disposition: attachement; filename=liste.doc");
+	header('Content-Disposition: attachement; filename="liste.doc"');
 }
-$output_final = "<html><head><title>".$msg["print_title"]."</title>" .
-			 	'<meta http-equiv=Content-Type content="text/html; charset='.$charset.'" />'.
-				"</head><body> 
-				<script type='text/javascript' src='./includes/javascript/http_request.js'></script>
+
+$header_print = '';
+$footer_print = '';
+if($opac_print_cart_header_footer) {
+	$req = "select * from print_cart_tpl where id_print_cart_tpl='".$opac_print_cart_header_footer."'";
+	$resultat = pmb_mysql_query($req);
+	if (pmb_mysql_num_rows($resultat)) {
+		$r = pmb_mysql_fetch_object($resultat);
+		$header_print = $r->print_cart_tpl_header;
+		$footer_print = $r->print_cart_tpl_footer;
+	}
+}
+$output_final = '<!DOCTYPE html><html lang="'.get_iso_lang_code().'">
+		<head>
+			<meta charset="'.$charset.'" />
+			<title>'.$msg['print_title'].'</title>
+		</head><body class="popup">';
+if($action) {
+	$output_final.= $header_print;
+}
+
+if ($output!='email') {
+	$output_final.= "<script type='text/javascript' src='./includes/javascript/http_request.js'></script>
 				<script type='text/javascript' >
 					function setCheckboxes(the_form, the_objet, do_check) {
 						 var elts = document.forms[the_form].elements[the_objet+'[]'] ;
@@ -123,15 +125,41 @@ $output_final = "<html><head><title>".$msg["print_title"]."</title>" .
 						 return true;
 					} 
 				</script>";
+} else {
+	$emailexp = trim(stripslashes($emailexp));
+	if($emailexp) {
+		$output_final.= $msg['print_emailexp'].' '.$emailexp.'<br />';
+	}
+	$emailcontent = trim(stripslashes($emailcontent));
+	if($emailcontent) {
+		$output_final.= $msg['print_emailcontent'].' '.$emailcontent.'<br />';
+	}
+}
+
 
 if ($action!="print_$lvl") {
-	$output_final .= link_styles($css);
-	$output_final .= "<h3 class='print_options' >".$msg["print_options"]."</h3>";
-	$output_final .= "<form name='print_options' id='print_options' action='print.php?lvl=$lvl&action=print_$lvl' method='post'>";
+	$output_final.= link_styles($css);
+	$output_final.="<script type='text/javascript'>
+						// Fonction a utilisier pour l'encodage des URLs en javascript
+						function encode_URL(data){
+							var docCharSet = document.characterSet ? document.characterSet : document.charset;
+							if(docCharSet == \"UTF-8\"){
+								return encodeURIComponent(data);
+							}else{
+								return escape(data);
+							}
+						}
+					</script>";
+	$output_final.="<div id='att'></div>";
+	if($lvl) $output_final.="<h2 class='print_title'>".$msg["print_title_".$lvl]."</h2>";
+	else $output_final .="<h2 class='print_title'>".$msg["print_title"]."</h2>";
+	$output_final.= "<h3 class='print_options' >".$msg["print_options"]."</h3>";
+	$output_final.= "<form name='print_options' id='print_options' action='print.php?lvl=$lvl&action=print_$lvl' method='post'>";
 	if($id_liste) $output_final .= "<input type='hidden' name='id_liste' value='$id_liste'>";
+	if($id_etagere) $output_final .= "<input type='hidden' name='id_etagere' value='$id_etagere'>";
 	if($current_search) $output_final .= "<input type='hidden' name='current_search' value='$current_search'/>";
 	
-	 if(!$id_liste && !$current_search){
+	 if(!$id_liste && !$id_etagere && !$current_search){
 		 $script_selnoti = "
 			 <script type='text/javascript'>
 				function getSelectedNotice(){	
@@ -160,7 +188,7 @@ if ($action!="print_$lvl") {
 					return true;
 				}
 			";
-	 } elseif(!$id_liste) {
+	 } elseif(!$id_liste && !$id_etagere) {
 	 	$script_selnoti = "
 			 <script type='text/javascript'>
 	 			function getSelectedNotice(){
@@ -169,7 +197,7 @@ if ($action!="print_$lvl") {
 	 				}
 	 				return false;
 	 			}";
-	 } else {
+	 } elseif(!$id_etagere) {
 	 	 $script_selnoti = "
 			 <script type='text/javascript'>
 				function getSelectedNotice(){	
@@ -198,6 +226,12 @@ if ($action!="print_$lvl") {
 					return true;
 				}
 			";
+	 } else {
+	 	$script_selnoti = "
+			 <script type='text/javascript'>
+	 			function getSelectedNotice(){
+	 				return true;
+	 			}";
 	 }
 	$script_selnoti .= "
 			function hasSelectedExplnum(){
@@ -266,7 +300,10 @@ if ($action!="print_$lvl") {
 			    	document.getElementById('other_docnum_part').style.display='block';		    	
 			    	document.getElementById('docnum_part').style.display='none';	
 			    	document.getElementById('mail_part').style.display='block';				    	
-			    	document.getElementById('pdf_part').style.display='none';		    						    		    
+			    	document.getElementById('pdf_part').style.display='none';		    		
+			 		if(typeof ajax_resize_elements == 'function'){
+						ajax_resize_elements();
+					}
 				}
 				if(document.getElementById('docnum').checked){	    	
 			    	document.getElementById('other_docnum_part').style.display='none';			    	
@@ -286,7 +323,7 @@ if ($action!="print_$lvl") {
 				var docnum_part=document.getElementById('docnum_part');	
 				var wait = document.createElement('img');			
 				docnum_part.innerHTML = '';
-				wait.setAttribute('src','images/patience.gif');
+				wait.setAttribute('src','".get_url_icon('patience.gif')."');
 				wait.setAttribute('align','top');
 				docnum_part.appendChild(wait);
 				getSelectedNotice();
@@ -312,13 +349,18 @@ if ($action!="print_$lvl") {
 		<input type='radio' name='output' id='outp' onClick =\"sel_part_gestion();\" value='printer' ".($print_options['outp'] ? ' checked ' : '')."/><label for='outp'>&nbsp;".$msg["print_output_printer"]."</label><br />
 		<input type='radio' name='output' id='pdf' onClick =\"sel_part_gestion();\" value='pdf' ".($print_options['pdf'] ? ' checked ' : '')." /><label for='pdf'>&nbsp;".$msg["print_output_pdf"]."</label><br />
 		<input type='radio' name='output' id='outt' onClick =\"sel_part_gestion();\" value='tt' ".($print_options['outt'] ? ' checked ' : '')." /><label for='outt'>&nbsp;".$msg["print_output_writer"]."</label><br />
-		<input type='radio' name='output' id='oute' onClick =\"sel_part_gestion();\" value='email' ".($print_options['oute'] ? ' checked ' : '')."/><label for='oute'>&nbsp;".$msg["print_email"]."</label><br />
-		<input type='radio' name='output' id='docnum' onClick =\"sel_part_gestion();\" value='docnum' ".($print_options['docnum'] ? ' checked ' : '')."/><label for='docnum'>&nbsp;".$msg["print_output_docnum"]."</label>
-		&nbsp;&nbsp;
+		<input type='radio' name='output' id='oute' onClick =\"sel_part_gestion();\" value='email' ".($print_options['oute'] ? ' checked ' : '')."/><label for='oute'>&nbsp;".$msg["print_email"]."</label><br />";
+	if ($opac_print_explnum) {
+		$output_final .="	<input type='radio' name='output' id='docnum' onClick =\"sel_part_gestion();\" value='docnum' ".($print_options['docnum'] ? ' checked ' : '')."/><label for='docnum'>&nbsp;".$msg["print_output_docnum"]."</label>";
+	} else {
+		//On conserve un champ caché pour éviter les erreurs javascript
+		$output_final .="	<input type='hidden' id='docnum' value='0'/>";
+	}
+	$output_final .="	&nbsp;&nbsp;
 	</blockquote>
 	<input type='hidden' name='select_noti' id='select_noti' value='".(($lvl=="search") ? $_SESSION["tab_result_current_page"] : "")."'/>";
 	
-	if ($lvl!="search") {
+	if ($lvl!="search" && $lvl!="etagere") {
 		$output_final .= "<b>".$msg["print_select_record"]."</b>
 			<blockquote>
 				<input type='radio' name='number' onClick =\"sel_part_gestion();\" value='0' id='all' ".($print_options['all'] ? ' checked ' : '')."/><label for='all'>&nbsp;".$msg["print_all_records"]."</label><br />
@@ -326,11 +368,38 @@ if ($action!="print_$lvl") {
 			</blockquote>";
 	}
 	
-	$output_final .= "<div id='mail_part'>
-		<blockquote>
-			".$msg["print_emaildest"]."&nbsp;<input type='text' size='30' name='emaildest' value='' /><br />
-			&nbsp;&nbsp;&nbsp;".$msg["print_emailcontent"]."&nbsp;<textarea rows='4' cols='40' name='emailcontent' value=''></textarea><br />
-		</blockquote>
+	$output_final .= "
+	<div id='mail_part'>
+		<div class='row'>
+			<div>".$msg["print_emaildest"]."</div>";
+			$output_final.= "
+			<div class='row'>
+				<input type='text' id='emaildest_0' class='saisie-20emr' completion='empr_mail' name='emaildest[]' autfield='emaildest_id_0' value='' autocomplete='off'/>
+				<input type='button' class='bouton' value='X' onclick=\"document.getElementById('emaildest_0').value=''; document.getElementById('emaildest_id_0').value='';\">
+				<input class='bouton' value='+' onclick='add_dest_field(this);' counter='0' type='button'>
+				<input type='hidden' name='emaildest_id[]' id='emaildest_id_0'/>
+			</div>
+			<script type='text/javascript' src='./includes/javascript/http_request.js'></script>"; 
+	if(($opac_print_email_autocomplete == 1 && $_SESSION['id_empr_session']) || ($opac_print_email_autocomplete == 2)) {
+		$output_final.="<script type='text/javascript' src='./includes/javascript/ajax.js'></script>";
+		$output_final.= "<script type='text/javascript'>
+							ajax_parse_dom();
+						</script>";
+	}
+				
+	$output_final.="</div>
+		<div class='row'>
+			<div>".$msg["print_emailexp"]."</div>
+			<input type='text' size='30' name='emailexp' value='' />
+		</div>
+		<div class='row'>
+			<div>".$msg["print_emailobj_label"]."</div>
+			<input type='text' size='30' name='emailobj' value='".htmlentities(trim($msg["print_emailobjet"]." ".$opac_biblio_name." - ".formatdate(today())), ENT_QUOTES, $charset)."' />
+		</div>
+		<div class='row'>
+			<div>".$msg["print_emailcontent"]."</div>
+			<textarea rows='4' cols='40' id='emailcontent' name='emailcontent' value=''></textarea>
+		</div>
 	</div>
 	
 	
@@ -372,51 +441,106 @@ if ($action!="print_$lvl") {
 	</div> 
 	<div id='docnum_part'>	
 	</div> 
-	<center>
-	<input type='submit' value='".$msg["print_print"]."' class='bouton' onClick='return checkForSubmit();' />&nbsp;
+	<input type='submit' value='".$msg["print_validate"]."' class='bouton' onClick='return checkForSubmit();' />&nbsp;
 	<input type='button' value='".$msg["print_cancel"]."' class='bouton' onClick='self.close();'/>
-	</center>
 	";
 	$output_final .= "</form>
 		<script type='text/javascript'>
-		sel_part_gestion();
+			sel_part_gestion();
+			function add_dest_field(buttonClicked){
+				var currentCounter = buttonClicked.getAttribute('counter');
+				currentCounter++;
+				
+				var newLine = document.createElement('div');
+				newLine.setAttribute('class', 'row');
+				
+				var newInput = document.createElement('input');
+				newInput.setAttribute('class','saisie-20emr');
+				newInput.setAttribute('id', 'emaildest_'+currentCounter); 
+				newInput.setAttribute('completion','empr_mail');
+				newInput.setAttribute('name','emaildest[]');
+				newInput.setAttribute('autfield', 'emaildest_id_'+currentCounter);
+				newInput.setAttribute('value', '');
+				newInput.setAttribute('autocomplete', 'off');
+				newInput.setAttribute('type', 'text');
+				
+				var newInputId = document.createElement('input');
+				newInputId.setAttribute('id','emaildest_id_'+currentCounter);
+				newInputId.setAttribute('type','hidden');
+				newInputId.setAttribute('name','emaildest_id[]');
+				
+				
+				var newPurge = document.createElement('input');
+				newPurge.setAttribute('value','X');
+				newPurge.setAttribute('type','button');
+				newPurge.setAttribute('class','bouton');
+				newPurge.addEventListener('click', function(){
+					newInput.value=''; 
+					newInputId.value=''; 
+				});
+				
+				newLine.appendChild(newInput);
+				newLine.appendChild(newInputId);
+				newLine.appendChild(newPurge);
+				
+				buttonClicked.setAttribute('counter', currentCounter);
+				buttonClicked.parentElement.appendChild(newLine);
+				if(typeof ajax_pack_element == 'function'){
+					ajax_pack_element(newInput);
+				}
+			}
 		</script>"; 
 } elseif($output=="docnum"){
 	$docnum=new docnum_merge(0,$doc_num_list);
 	$docnum->merge();
 	exit;	 
 } else {
+	$opac_visionneuse_allow=0;
+	if(isset($notice_tpl) && $notice_tpl)$noti_tpl=new notice_tpl_gen($notice_tpl);
+	else $noti_tpl = '';
 	//print "<link rel=\"stylesheet\" href=\"./styles/".$css."/print.css\" />";
 	
-		$output_final .= "<style type='text/css'>
-			BODY { 	
-				font-size: 10pt;
-				font-family: verdana, geneva, helvetica, arial;
-				color:#000000;
-				}
-			td {
-				font-size: 10pt;
-				font-family: verdana, geneva, helvetica, arial;
-				color:#000000;
+	$output_final .= "<style type='text/css'>
+		BODY { 	
+			font-size: 10pt;
+			font-family: verdana, geneva, helvetica, arial;
+			color:#000000;
 			}
-			th {
-				font-size: 10pt;
-				font-family: verdana, geneva, helvetica, arial;
-				font-weight:bold;
-				color:#000000;
-				background:#DDDDDD;
-				text-align:left;
-			}
-			hr {
-				border:none;
-				border-bottom:1px solid #000000;
-			}
-			h3 {
-				font-size: 12pt;
-			}
-			</style>";
-	$opac_visionneuse_allow=0;
-	if($notice_tpl)$noti_tpl=new notice_tpl_gen($notice_tpl);
+		td {
+			font-size: 10pt;
+			font-family: verdana, geneva, helvetica, arial;
+			color:#000000;
+		}
+		th {
+			font-size: 10pt;
+			font-family: verdana, geneva, helvetica, arial;
+			font-weight:bold;
+			color:#000000;
+			background:#DDDDDD;
+			text-align:left;
+		}
+		hr {
+			border:none;
+			border-bottom:1px solid #000000;
+		}
+		h3 {
+			font-size: 12pt;
+		}
+		.vignetteimg {
+		    max-width: 140px;
+		    max-height: 200px;
+		    -moz-box-shadow: 1px 1px 5px #666666;
+		    -webkit-box-shadow: 1px 1px 5px #666666;
+		    box-shadow: 1px 1px 5px #666666;
+		}
+		.img_notice {
+			max-width: 140px;
+			max-height: 200px;
+		}
+		</style>";
+	if($noti_tpl) {
+		$output_final.=$noti_tpl->get_print_css_style();
+	}
 	
 	$notices = array();
 	switch ($action) {
@@ -444,10 +568,45 @@ if ($action!="print_$lvl") {
 				$notices = explode(",",$_SESSION["tab_result_current_page"]);
 			}
 			break;
+		case 'print_etagere':
+			$acces_j='';
+			if ($gestion_acces_active==1 && $gestion_acces_empr_notice==1) {
+				require_once($class_path."/acces.class.php");
+				$ac= new acces();
+				$dom_2= $ac->setDomain(2);
+				$acces_j = $dom_2->getJoin($_SESSION['id_empr_session'],4,'notice_id');
+			}
+			if($acces_j) {
+				$statut_j='';
+				$statut_r='';
+			} else {
+				$statut_j=',notice_statut';
+				$statut_r="and statut=id_notice_statut and ((notice_visible_opac=1 and notice_visible_opac_abon=0)".($_SESSION["user_code"]?" or (notice_visible_opac_abon=1 and notice_visible_opac=1)":"").")";
+			}
+			if($_SESSION["opac_view"] && $_SESSION["opac_view_query"] ){
+				$opac_view_restrict=" notice_id in (select opac_view_num_notice from  opac_view_notices_".$_SESSION["opac_view"].") ";
+				$statut_r.=" and ".$opac_view_restrict;
+			}
+			
+			$notices = array();
+			
+			$requete = "select distinct notice_id from caddie_content, etagere_caddie, notices ".$acces_j." ".$statut_j." ";
+			$requete.= "where etagere_id=".$id_etagere." and caddie_content.caddie_id=etagere_caddie.caddie_id and notice_id=object_id ".$statut_r." ";
+			$requete = sort::get_sort_etagere_query($requete);
+			
+			$res = pmb_mysql_query($requete);
+			while(($obj=pmb_mysql_fetch_object($res))) {
+				$notices[] = $obj->notice_id;
+			}
+			break;
 	}
-	if ($output=="pdf"){
-		$vignette=0; // pb d'affichage;
-	}	
+	
+	$show_what = array(
+			'short' => $short,
+			'header' => $header,
+			'vignette' => $vignette,
+			'expl' => $ex,
+	);
 	$notices_aff="";
 	if (count($notices)) {
 		$date_today = formatdate(today()) ;
@@ -461,44 +620,87 @@ if ($action!="print_$lvl") {
 			}
 		}
 		$output_final .= "<h3>".$date_today."&nbsp;".sprintf($msg["show_cart_n_notices"],count($notices))."</h3><hr style='border:none; border-bottom:solid #000000 3px;'/>";
-		
 		for ($i=0; $i<count($notices); $i++) {
 			$notice_aff="";
 			if($noti_tpl) {
 				$notice_aff.=$noti_tpl->build_notice(substr($notices[$i],0,2)!="es"?$notices[$i]:substr($notices[$i],2));
-				$output_final .= $notice_aff."<hr /> ";
+				$output_final .= $notice_aff."<br /> ";
 			} else{
-				if (substr($notices[$i],0,2)!="es") {
-					if (!$opac_notice_affichage_class) $opac_notice_affichage_class="notice_affichage";
-				} else $opac_notice_affichage_class="notice_affichage_unimarc";
-				$current = new $opac_notice_affichage_class((substr($notices[$i],0,2)!="es"?$notices[$i]:substr($notices[$i],2)),array(),0,1);
-				$current->do_header();
-				if ($type=='PUBLIC') {
-					$current->do_public($short,$ex);
-					if ($vignette) $current->do_image($current->notice_public,false);
+				if (substr($notices[$i],0,2)!="es" && $type=='PUBLIC' && $opac_notices_format==AFF_ETA_NOTICES_TEMPLATE_DJANGO) {
+					if($short) {
+						switch ($output) {
+							case 'pdf' :
+								$notice_aff = record_display::get_display_for_pdf_short($notices[$i], '', $show_what);
+								break;
+							case 'printer' :
+							default:
+								$notice_aff = record_display::get_display_for_printer_short($notices[$i], '', $show_what);
+						}
+					}else {
+						switch ($output) {
+							case 'pdf' :
+								$notice_aff = record_display::get_display_for_pdf_extended($notices[$i], '', $show_what);
+								break;
+							case 'printer' :
+							default:
+								$notice_aff = record_display::get_display_for_printer_extended($notices[$i], '', $show_what);
+						}
+					}
+					$output_final.= $notice_aff."<hr /> ";
 				} else {
-					$current->do_isbd($short,$ex);
-					if ($vignette) $current->do_image($current->notice_isbd,false);
+					if (substr($notices[$i],0,2)!="es") {
+						if (!$opac_notice_affichage_class) $opac_notice_affichage_class="notice_affichage";
+					} else {
+						$opac_notice_affichage_class="notice_affichage_unimarc";
+					}
+					$current = new $opac_notice_affichage_class((substr($notices[$i],0,2)!="es"?$notices[$i]:substr($notices[$i],2)),array(),0,1);
+					$notice_aff .= $current->get_print_css_style();
+					$current->do_header();
+					if ($type=='PUBLIC') {
+						$current->do_public($short,$ex);
+						if ($vignette) $current->do_image($current->notice_public,false);
+					} else {
+						$current->do_isbd($short,$ex);
+						if ($vignette) $current->do_image($current->notice_isbd,false);
+					}
+					//Icone type de Document
+					if (!isset($icon_doc)) {
+						$icon_doc = marc_list_collection::get_instance('icondoc');
+						$icon_doc = $icon_doc->table;
+					}
+					$icon = $icon_doc[$current->notice->niveau_biblio.$current->notice->typdoc];
+					$iconDoc = "";
+					if ($icon) {
+						if(!isset($biblio_doc)) {
+							$biblio_doc = marc_list_collection::get_instance('nivbiblio');
+							$biblio_doc = $biblio_doc->table;
+						}
+						$info_bulle_icon=$biblio_doc[$current->notice->niveau_biblio]." : ".$tdoc->table[$current->notice->typdoc];
+						$iconDoc="<img src=\"".get_url_icon($icon, 1)."\" alt=\"$info_bulle_icon\" title=\"$info_bulle_icon\" class='align_top'/>";
+					}
+					if ($header) {
+						$notice_aff .= "<h3>&nbsp;".$iconDoc.$current->notice_header."</h3>";
+					}
+					if ($current->notice->niveau_biblio =='s') {
+						$perio="<span class='fond-mere'>[".$msg['isbd_type_perio'].$bulletins."]</span>&nbsp;";
+					} elseif ($current->notice->niveau_biblio =='a') {
+						$perio="<span class='fond-article'>[".$msg['isbd_type_art']."]</span>&nbsp;";
+					} else $perio="";
+					if ($type=='PUBLIC') $notice_aff .= $perio.$current->notice_public; else $notice_aff .= $perio.$current->notice_isbd;
+					if ($ex) $notice_aff .= $current->affichage_expl ;
+					$output_final .= $notice_aff."<hr /> ";
 				}
-				//Icone type de Document
-				$icon = $icon_doc[$current->notice->niveau_biblio.$current->notice->typdoc];
-				$iconDoc = "";
-				if ($icon) {
-					$info_bulle_icon=$biblio_doc[$current->notice->niveau_biblio]." : ".$tdoc->table[$current->notice->typdoc];
-					$iconDoc="<img src=\"".get_url_icon($icon, 1)."\" alt=\"$info_bulle_icon\" title=\"$info_bulle_icon\" align='top' />";
-				}
-				if ($header) $notice_aff .= "<h3>".$iconDoc.$current->notice_header."</h3>";
-				if ($current->notice->niveau_biblio =='s') {
-					$perio="<span class='fond-mere'>[".$msg['isbd_type_perio'].$bulletins."]</span>&nbsp;";
-				} elseif ($current->notice->niveau_biblio =='a') {
-					$perio="<span class='fond-article'>[".$msg['isbd_type_art']."]</span>&nbsp;";
-				} else $perio="";
-				if ($type=='PUBLIC') $notice_aff .= $perio.$current->notice_public; else $notice_aff .= $perio.$current->notice_isbd;
-				if ($ex) $notice_aff .= $current->affichage_expl ;
-				$output_final .= $notice_aff."<hr /> ";
 			}
-			$notices_aff.=$notice_aff."<hr /> ";
+			$notices_aff.=$notice_aff;
+			if($noti_tpl) {
+				$notices_aff .= "<br /> ";
+			} else {
+				$notices_aff .= "<hr /> ";
+			}
 		}
+
+		$notices_aff = $header_print.$notices_aff.$footer_print;
+		$output_final .= $footer_print;
 		if ($charset!='utf-8') $output_final=cp1252Toiso88591($output_final);
 	}
 	
@@ -510,55 +712,54 @@ if($opac_parse_html){
 }
 
 if ($output=="pdf"){
-	//$notices_aff = preg_replace("/<img[^>]+\>/i", " ", $notices_aff);
-	$notices_aff=str_replace("<center>", "", $notices_aff);
-	$notices_aff=str_replace("</center>", "", $notices_aff);
-	if($charset != 'utf-8')$notices_aff=utf8_encode($notices_aff);
-	require_once($class_path.'/html2pdf/html2pdf.class.php');
-	$html2pdf = new HTML2PDF('P','A4','fr');
-	$html2pdf->WriteHTML($notices_aff);
-	$html2pdf->Output('diffusion.pdf');
+	if($charset != 'utf-8'){
+		if(function_exists("mb_convert_encoding")){
+			$notices_aff = mb_convert_encoding($notices_aff,"UTF-8","Windows-1252");
+		}else{
+			$notices_aff = utf8_encode($notices_aff);
+		}
+	}
+
+	require_once $class_path.'/mpdf/vendor/autoload.php';
+	
+	$mpdf = new mPDF();
+	$mpdf->autoScriptToLang = true;
+	$mpdf->autoLangToFont = true;
+	$mpdf->WriteHTML($notices_aff);
+	$mpdf->Output('diffusion.pdf','I');
 	exit;
 }
 
-if ($output!="email") 
-	print pmb_bidi($output_final."</body></html>") ;
-else {
+if ($output!='email') {
+	print pmb_bidi($output_final.'</body></html>') ;
+} else {
 	$headers  = "MIME-Version: 1.0\n";
 	$headers .= "Content-type: text/html; charset=".$charset."\n";
-	$res_envoi=mailpmb("", $emaildest,$msg["print_emailobj"]." $opac_biblio_name - $date_today ",($emailcontent ? $msg["print_emailcontent"].stripslashes($emailcontent)."<br />" : '').$output_final."<br /><br />".mail_bloc_adresse()."</body></html> ",$opac_biblio_name, $opac_biblio_email, $headers);
-	$vide_cache=filemtime("./styles/".$css."/".$css.".css");
-	if ($res_envoi) 
-		print "<html><head><meta http-equiv=Content-Type content=\"text/html; charset=".$charset."\" /><title>".$msg["print_title"]."</title></head><body><link rel=\"stylesheet\" href=\"./styles/".$css."/$css.css?".$vide_cache."\" />\n<br /><br /><center><h3>".sprintf($msg["print_emailsucceed"],$emaildest)."</h3><br />
-		<a href=\"\" onClick=\"self.close(); return false;\">".$msg["print_emailclose"]."</a></center></body></html>" ;
-	else 
-		echo "<html><head><meta http-equiv=Content-Type content=\"text/html; charset=".$charset."\" /><title>".$msg["print_title"]."</title></head><body><link rel=\"stylesheet\" href=\"./styles/".$css."/$css.css?".$vide_cache."\" />\n<br /><br /><center><h3>".sprintf($msg["print_emailfailed"],$emaildest)."</h3><br />
-		<a href=\"\" onClick=\"self.close(); return false;\">".$msg["print_emailclose"]."</a></center></body></html>" ;
-}		
-
-global $pmb_logs_activate;
-if($pmb_logs_activate){
-	global $log, $infos_notice, $infos_expl;
-
-	$rqt= " select empr_prof,empr_cp, empr_ville as ville, empr_year, empr_sexe,  empr_date_adhesion, empr_date_expiration, count(pret_idexpl) as nbprets, count(resa.id_resa) as nbresa, code.libelle as codestat, es.statut_libelle as statut, categ.libelle as categ, gr.libelle_groupe as groupe,dl.location_libelle as location 
-			from empr e
-			left join empr_codestat code on code.idcode=e.empr_codestat
-			left join empr_statut es on e.empr_statut=es.idstatut
-			left join empr_categ categ on categ.id_categ_empr=e.empr_categ
-			left join empr_groupe eg on eg.empr_id=e.id_empr
-			left join groupe gr on eg.groupe_id=gr.id_groupe
-			left join docs_location dl on e.empr_location=dl.idlocation
-			left join resa on e.id_empr=resa_idempr
-			left join pret on e.id_empr=pret_idempr
-			where e.empr_login='".addslashes($login)."'
-			group by resa_idempr, pret_idempr";
-	$res=pmb_mysql_query($rqt);
-	if($res){
-		$empr_carac = pmb_mysql_fetch_array($res);
-		$log->add_log('empr',$empr_carac);
+	$emailobj = trim(stripslashes($emailobj));
+	if (!$emailobj) {
+		$emailobj=$msg['print_emailobjet'].' '.$opac_biblio_name.' - '.$date_today;
 	}
-	$log->add_log('num_session',session_id());
-	$log->add_log('expl',$infos_expl);
-	$log->add_log('docs',$infos_notice);
-	$log->save();
+	
+	$mail_addresses = array();
+	foreach($emaildest as $i => $email){
+		if(isset($emaildest_id[$i]) && $emaildest_id[$i]){
+			$emaildest_id[$i]+= 0;
+			$query = "select empr_mail from empr where id_empr = ".$emaildest_id[$i];
+			$result = pmb_mysql_result(pmb_mysql_query($query), 0,0);
+			$mail_addresses[] = $result;
+		}else{
+			if($email){
+				$mail_addresses[] = $email;
+			}
+		}
+	}
+	$res_envoi=mailpmb('', implode(';',$mail_addresses), $emailobj, $output_final.'<br /><br />'.mail_bloc_adresse().'</body></html>', $opac_biblio_name, $opac_biblio_email, $headers);
+	$vide_cache=filemtime("./styles/".$css."/".$css.".css");
+	if ($res_envoi) { 
+		print "<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" /><title>".$msg["print_title"]."</title></head><body class='popup'><link rel=\"stylesheet\" href=\"./styles/".$css."/$css.css?".$vide_cache."\" />\n<br /><br /><h3>".sprintf($msg["print_emailsucceed"],implode(', ',$mail_addresses))."</h3><br />
+		<a href=\"\" onClick=\"self.close(); return false;\">".$msg["print_emailclose"]."</a></body></html>" ;
+	} else { 
+		echo "<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" /><title>".$msg["print_title"]."</title></head><body class='popup'><link rel=\"stylesheet\" href=\"./styles/".$css."/$css.css?".$vide_cache."\" />\n<br /><br /><h3>".sprintf($msg["print_emailfailed"],implode(', ',$mail_addresses))."</h3><br />
+		<a href=\"\" onClick=\"self.close(); return false;\">".$msg["print_emailclose"]."</a></body></html>" ;
+	}
 }

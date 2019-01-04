@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_skos_concept_datatype_preflabel_ui.class.php,v 1.5 2015-06-18 12:36:22 apetithomme Exp $
+// $Id: onto_skos_concept_datatype_preflabel_ui.class.php,v 1.9 2018-10-12 14:16:04 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,13 +12,26 @@ require_once($class_path.'/vedette/vedette_composee.class.php');
 class onto_skos_concept_datatype_preflabel_ui extends onto_common_datatype_small_text_card_ui{
 
 	public static function get_form($item_uri, $property, $restrictions,$datas, $instance_name, $flag){
-		global $msg,$charset,$ontology_tpl,$lang,$composed;
+		global $msg,$charset,$ontology_tpl,$composed, $grammar;
 		
+		$duplication = false;
+		if (isset($property->get_framework_params()->action) && $property->get_framework_params()->action == "duplicate") {
+		    $duplication = true;
+		}
 		$object_id = onto_common_uri::get_id($item_uri);
+		if (onto_common_uri::is_temp_uri($item_uri) && !empty($property->get_framework_params()->id) && $duplication) {		    
+		    $object_id = $property->get_framework_params()->id;
+		}
+		
 		if ($object_id) $vedette_id = vedette_link::get_vedette_id_from_object($object_id, TYPE_CONCEPT_PREFLABEL);
 		else $vedette_id = 0;
 		
-		$vedette_ui=new vedette_ui($vedette_id);
+		if (!$grammar) $grammar = 'rameau';
+		$vedette = new vedette_composee($vedette_id, $grammar);
+		if ($duplication) {
+		    $vedette->set_id(0);
+		}
+		$vedette_ui=new vedette_ui($vedette);
 		$form=$ontology_tpl['skos_concept_card_ui_wrapper'];
 		
 		// Si on a une vedette composée, on ne veut pas de valeur dans les champs classiques
@@ -27,7 +40,7 @@ class onto_skos_concept_datatype_preflabel_ui extends onto_common_datatype_small
 		}
 		
 		$form=str_replace("!!skos_concept_card_ui_parent_form!!", parent::get_form($item_uri, $property, $restrictions, $datas, $instance_name, $flag), $form);
-		$form=str_replace("!!skos_concept_card_ui_derived_form!!", $vedette_ui->get_form($property, 0, $instance_name), $form);
+		$form=str_replace("!!skos_concept_card_ui_derived_form!!", $vedette_ui->get_form($property->pmb_name, 0, $instance_name, $property->range[0]), $form);
 		
 		$form=str_replace("!!onto_row_label!!", htmlentities($property->label ,ENT_QUOTES,$charset), $form);
 		$form=str_replace("!!instance_name!!", htmlentities($instance_name ,ENT_QUOTES,$charset), $form);

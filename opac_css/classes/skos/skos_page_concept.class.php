@@ -2,22 +2,17 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: skos_page_concept.class.php,v 1.6 2015-04-16 16:09:56 arenou Exp $
+// $Id: skos_page_concept.class.php,v 1.13 2017-10-11 14:22:16 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
+require_once($class_path."/authorities/page/authority_page.class.php");
+
 /**
  * class skos_page_concept
  * Controler d'une Page OPAC représentant un concept de SKOS
  */
-class skos_page_concept {
-	
-	/**
-	 * Instance du concept
-	 * @var skos_concept
-	 */
-	private $concept;
+class skos_page_concept extends authority_page {
 	
 	/**
 	 * Constructeur d'une page concept
@@ -25,37 +20,24 @@ class skos_page_concept {
 	 * @return void
 	 */
 	public function __construct($concept_id) {
-		$concept_id+=0;
-		$this->concept = new skos_concept($concept_id);
+		$this->id = $concept_id*1;
+		$this->authority = new authority(0, $this->id, AUT_TABLE_CONCEPT);
+	}
+
+	protected function get_join_recordslist() {
+		return "JOIN index_concept ON notice_id = num_object";
 	}
 	
-	/**
-	 * Affiche les données renvoyées par les vues
-	 */
-	public function proceed(){
-		$authority = new authority("concept", $this->concept->get_id());
-		
- 		$context['authority']=array(
-			//affichage des termes génériques...
-			'broaders' => skos_view_concepts::get_broaders_list($this->concept->get_broaders()),
-			//affichage de l'intitulé du concept
-			'title' => skos_view_concept::get_concept($this->concept),
-			//affichage des termes spécifiques...
-			'narrowers' => skos_view_concepts::get_narrowers_list($this->concept->get_narrowers()),
-			//toutes les informations du concept
-			'details' => skos_view_concept::get_detail_concept($this->concept),
-			//affichage des concepts composé utilisant le concept
-			'composed_concepts' => skos_view_concepts::get_composed_concepts_list($this->concept->get_composed_concepts()),
-			//notices indexées
-			'recordslist' => skos_view_concept::get_notices_indexed_with_concept($this->concept),
-			//autorités indexées
-			'authoritieslist' => skos_view_concept::get_authorities_indexed_with_concept($this->concept)
- 		);
-		print $authority->render($context);
+	protected function get_clause_authority_id_recordslist() {
+		return "num_concept = ".$this->id." AND type_object = ".TYPE_NOTICE;
 	}
 	
+	protected function get_mode_recordslist() {
+		return "concept_see";
+	}
 	
-	public function get_indexed_notices(){
-		return $this->concept->get_indexed_notices();
+	protected function get_title_recordslist() {
+		global $msg, $charset;
+		return "";
 	}
 }

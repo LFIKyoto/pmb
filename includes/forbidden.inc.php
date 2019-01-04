@@ -5,11 +5,10 @@
 
 function forbidden($image_path='../images') {
 
-print "
-<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN'
-  'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
-<html xmlns='http://www.w3.org/1999/xhtml' lang='fr'>
-  <head>
+print "<!DOCTYPE html>
+<html>
+<head>
+	<meta charset=\"".$charset."\" />
   	<META HTTP-EQUIV=\"pragma\" CONTENT=\"no-cache\">
 	<META HTTP-EQUIV=\"expires\" CONTENT=\"Wed, 30 Sept 2001 12:00:00 GMT\">
     <title>
@@ -17,14 +16,14 @@ print "
     </title>
   </head>
   <body bgcolor=\"#ffffff\">
-  	$page
+  	
     <br />
 
     <br />
 
     <br />
 
-    <div align=\"center\">
+    <div class='center'>
     	<strong>PMB. Forbidden Zone</strong><br />
       <img src=\"$image_path/forbidden.jpg\" title=\"forbidden\" alt=\"forbidden\">
     </div>

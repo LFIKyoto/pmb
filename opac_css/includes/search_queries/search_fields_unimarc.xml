@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- $Id: search_fields_unimarc.xml,v 1.22 2015-02-27 09:09:09 jpermanne Exp $ -->
+<!-- $Id: search_fields_unimarc.xml,v 1.26 2016-11-16 07:58:15 jpermanne Exp $ -->
 <pmbfields>
 	<!-- Zone fixedFields :
 		Liste des champs de recherche possibles de la base de données
@@ -757,23 +757,23 @@
 	<dynamicFields>
 		<fieldType type="notices" prefix="d">
 			<field dataType="small_text" id="1">
-				<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+				<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+				<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="STARTWITH" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="STARTWITH" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="ENDWITH" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="ENDWITH" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="EXACT" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="EXACT" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
@@ -791,23 +791,23 @@
 				</query>
 			</field>
 			<field dataType="text" id="2">
-				<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+				<query for="CONTAINS_AT_LEAST" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist">
+				<query for="CONTAINS_ALL" multipleWords="yes" regDiacrit="yes" notAllowedFor="list,query_list,marclist,query_auth">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="STARTWITH" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="STARTWITH" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="ENDWITH" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="ENDWITH" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="EXACT" notAllowedFor="list,query_list,marclist" regDiacrit="no">
+				<query for="EXACT" notAllowedFor="list,query_list,marclist,query_auth" regDiacrit="no">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
@@ -829,19 +829,19 @@
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="LT" notAllowedFor="list,query_list,marclist">
+				<query for="LT" notAllowedFor="list,query_list,marclist,query_auth">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="GT" notAllowedFor="list,query_list,marclist">
+				<query for="GT" notAllowedFor="list,query_list,marclist,query_auth">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="LTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="LTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="GTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
@@ -859,19 +859,19 @@
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="LT" notAllowedFor="list,query_list,marclist">
+				<query for="LT" notAllowedFor="list,query_list,marclist,query_auth">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="GT" notAllowedFor="list,query_list,marclist">
+				<query for="GT" notAllowedFor="list,query_list,marclist,query_auth">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="LTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="LTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="GTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
@@ -889,19 +889,19 @@
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="LT" notAllowedFor="list,query_list,marclist">
+				<query for="LT" notAllowedFor="list,query_list,marclist,query_auth">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="GT" notAllowedFor="list,query_list,marclist">
+				<query for="GT" notAllowedFor="list,query_list,marclist,query_auth">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="LTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="LTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
-				<query for="GTEQ" notAllowedFor="list,query_list,marclist">
+				<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<repeat name="current_source" on="selected_sources" separator="," operator="union"/>
 					<main><![CDATA[select distinct recid as notice_id from entrepot_source_!!current_source!!]]></main>
 				</query>
@@ -918,7 +918,8 @@
 	</dynamicFields>
 	
 	<specialFields>
-		<field type="external_sources" title="msg:connecteurs_source_label" id="2" delnotallowed="yes" separator="Autres"/>	
+		<field type="external_sources" title="msg:connecteurs_source_label" id="2" delnotallowed="yes" separator="Autres"/>
+		<field type="facette" title="msg:search_facette" id="5" opacVisibility="no"/>	
 	</specialFields>
 	
 	<operators>
@@ -929,11 +930,11 @@
 		<operator name="STARTWITH">msg:commence_par_query</operator>
 		<operator name="ENDWITH">msg:finit_par_query</operator>
 		<operator name="EXACT">msg:exactement_comme_query</operator>
-		<operator name="EQ">=</operator>
-		<operator name="GT">&gt;</operator>
-		<operator name="LT">&lt;</operator>
-		<operator name="GTEQ">&gt;=</operator>
-		<operator name="LTEQ">&lt;=</operator>
+		<operator name="EQ">msg:eq_query</operator>
+		<operator name="GT">msg:gt_query</operator>
+		<operator name="LT">msg:lt_query</operator>
+		<operator name="GTEQ">msg:gteq_query</operator>
+		<operator name="LTEQ">msg:lteq_query</operator>
 		<operator name="ISEMPTY" emptyAllowed="yes">msg:est_vide_query</operator>
 		<operator name="ISNOTEMPTY" emptyAllowed="yes">msg:pas_vide_query</operator>
 	</operators>

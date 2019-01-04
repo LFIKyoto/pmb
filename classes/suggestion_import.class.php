@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestion_import.class.php,v 1.5 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: suggestion_import.class.php,v 1.6 2017-01-26 15:50:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,19 +12,27 @@ require_once ("$include_path/parser.inc.php");
 function _item_($param) {
 	global $catalog;
 	global $catalog_import;
-	$catalog[]=$param['IMPORTNAME'];
-	$catalog_import[]=$param['IMPORT'];
+	if(isset($param['IMPORTNAME'])) {
+		$catalog[]=$param['IMPORTNAME'];
+	} else {
+		$catalog[]='';
+	}
+	if(isset($param['IMPORT'])) {
+		$catalog_import[]=$param['IMPORT'];
+	} else {
+		$catalog_import[]='';
+	}
 }
 
 class suggestion_import{
 	
-	var $id_import=0;
+	public $id_import=0;
 	
-	function suggestion_import($id_imp=0){
+	public function __construct($id_imp=0){
 		$this->id_import = $id_imp;
 	}
 
-	function show_form(){
+	public function show_form(){
 		
 		global $import_sug_form, $dbh, $charset, $msg;
 		global $catalog;
@@ -59,8 +67,8 @@ class suggestion_import{
 		$option = "<option value='0'>".htmlentities($msg['acquisition_sugg_no_src'],ENT_QUOTES,$charset)."</option>";
 		while(($src=pmb_mysql_fetch_object($res))){
 			if($src->id_source == $source) $selected="selected";
+			else $selected ="";
 			$option .= "<option value='".$src->id_source."' $selected>".htmlentities($src->libelle_source,ENT_QUOTES,$charset)."</option>";
-			$selected ="";
 		}
 		$selecteur = "<select id='src_liste' name='src_liste'>".$option."</select>";	
 		$import_sug_form = str_replace('!!liste_source!!',$selecteur,$import_sug_form);
@@ -79,7 +87,7 @@ class suggestion_import{
 			   $select_import.="<option value=\"$i\">".$catalog[$i]."</option>\n";
 			}
 		}
-		$select_import .= "<option value='uni'>".$msg[acquisition_import_sugg_uni]."</option>";
+		$select_import .= "<option value='uni'>".$msg['acquisition_import_sugg_uni']."</option>";
 		$select_import.="</select>";
 		$import_sug_form = str_replace('!!liste_import!!',$select_import,$import_sug_form);
 		print $import_sug_form;

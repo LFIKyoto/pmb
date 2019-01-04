@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice.tpl.php,v 1.16 2012-07-30 12:22:15 ngantier Exp $
+// $Id: notice.tpl.php,v 1.19 2018-01-25 10:13:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
+if(!isset($largeur)) $largeur = '';
 // ce fichier contient des templates indiquant comment doit s'afficher une notice
 
 if ( ! defined( 'NOTICE_TMPL' ) ) {
@@ -66,6 +67,22 @@ if ( ! defined( 'NOTICE_TMPL' ) ) {
 // ex : !!notice_id_start!! ou !!notice_id_end!!
 
 // level 1 : affichage sur une ligne titre, auteur principal, disponibilité
+
+global $notice_level1_display;
+global $notice_level1_no_coll_info;
+global $notice_level1_no_author_info;
+global $notice_level1_no_authors_info;
+global $notice_level1_no_publisher_info;
+global $notice_level2_display;
+global $oldnotice_level2_display;
+global $notice_level2_no_coll_info;
+global $notice_level2_no_author_info;
+global $notice_level2_no_authors_info;
+global $notice_level2_no_publisher_info;
+global $notice_level3_display;
+global $notice_level4_display;
+global $notice_level5_display;
+  
 $notice_level1_display = "
 !!level1!!
 ";
@@ -137,7 +154,7 @@ NON UTILISE POUR L INSTANT voir 'list notices.inc.php' EFFACE par ER le 04/09/20
 
 // level 5 : affichage intermarc
 $notice_level5_display = "
-<table border='0' width='$largeur'>
+<table style='border:0px' width='$largeur'>
 			<tr>
 				<td class='listheader' colspan='2'>
 				<h3>".$msg["notice_display_intermarc"]."</h3>

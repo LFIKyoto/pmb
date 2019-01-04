@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_cache.class.php,v 1.1 2015-03-10 08:46:23 apetithomme Exp $
+// $Id: vedette_cache.class.php,v 1.2 2017-05-18 11:02:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -33,6 +33,9 @@ final class vedette_cache{
 	 * @return bool true if exists in the array, false otherwise
 	 */
 	public static function get_at_vedette_cache($vedette_object){
+		if(!isset(self::$vedette_cache_arrayObject[get_class($vedette_object)][self::get_index($vedette_object)])) {
+			self::$vedette_cache_arrayObject[get_class($vedette_object)][self::get_index($vedette_object)] = null;
+		}
 		if(is_null(self::$vedette_cache_arrayObject[get_class($vedette_object)][self::get_index($vedette_object)])){
 			return false;
 		}else{

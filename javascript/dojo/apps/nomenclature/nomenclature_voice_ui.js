@@ -1,22 +1,24 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_voice_ui.js,v 1.5 2015-02-09 11:16:42 vtouchard Exp $
+// $Id: nomenclature_voice_ui.js,v 1.14 2017-11-30 10:53:34 dgoron Exp $
 
-define(["dojo/_base/declare","dojo/dom-construct", "dojo/topic", "dijit/_WidgetBase", "dojo/on", "dojo/_base/lang","dijit/registry"], function(declare, domConstruct, topic, _WidgetBase, on, lang, registry){
+define(["dojo/_base/declare","dojo/dom-construct", "dojo/topic", "dijit/_WidgetBase", "dojo/on", "dojo/_base/lang","dijit/registry", "dojo/request/xhr"], function(declare, domConstruct, topic, _WidgetBase, on, lang, registry, xhr){
 	/*
-	 *Classe nomenclature_voice_ui. Classe gérant l'affichage d'une voix
+	 *Classe nomenclature_voice_ui. Classe gï¿½rant l'affichage d'une voix
 	 */
 	  return declare("voice_ui", [_WidgetBase],{
 			    
-		  	voice:null, /** instance du modele lié **/
+		  	voice:null, /** instance du modele liï¿½ **/
 		  	voices_list_ui:null, /** instance du parent ui **/
 		  	indice:0,
 		  	id:0,
 		  	events_handles: null,
 		  	table_node:null,
+		  	td_suppression: null,
+		  	record_id: 0,
 		  	
-		    constructor: function(params, not_node){
+		    constructor: function(params){
 		    	this.set_id(params.id);
 		    	this.set_voice(params.voice);
 		    	this.set_table_node(params.dom_node);
@@ -24,6 +26,7 @@ define(["dojo/_base/declare","dojo/dom-construct", "dojo/topic", "dijit/_WidgetB
 		    	this.set_voices_list_ui(params.voices_list_ui);
 		    	this.events_handles = new Array();
 		    	this.events_handles.push(topic.subscribe("voice_ui",lang.hitch(this, this.handle_events)));
+		    	this.events_handles.push(topic.subscribe("nomenclature_voices_ui",lang.hitch(this, this.handle_events)));
 		    },
 		    
 		    buildRendering: function(){ 
@@ -39,7 +42,7 @@ define(["dojo/_base/declare","dojo/dom-construct", "dojo/topic", "dijit/_WidgetB
 		    	this.domNode.setAttribute("highlight", "instru_highlight");
 		    	this.domNode.setAttribute("recepttype", "instru");
 		    	this.domNode.setAttribute("downlight", "instru_downlight");
-		    	this.domNode.setAttribute("dragicon", "./images/icone_drag_notice.png");
+		    	this.domNode.setAttribute("dragicon", pmbDojo.images.getImage('icone_drag_notice.png'));
 		    	this.domNode.setAttribute("handler", this.get_table_node().id+'_handle_'+this.voice.get_hash()+'_'+this.get_indice());
 		    	this.build_form();
 		    },
@@ -48,16 +51,25 @@ define(["dojo/_base/declare","dojo/dom-construct", "dojo/topic", "dijit/_WidgetB
 		    	switch(evt_type){
 		    	 	case "input_change" :
 		    	 		if(evt_args.hash == this.voice.get_hash()){
-		    	 			if(this.input_changed())
+		    	 			if(this.input_changed()){
+		    	 				this.update_record();
 		    	 				this.publish_event('voice_changed');
+		    	 			}
 		    	 		}
 		    			break;
+		    	 	case "nomenclature_voices_expanded":
+		    	 	case "nomenclature_voices_sync_from_abrege":
+		    	 		if (evt_args.hash == this.voices_list_ui.nomenclature_voices_ui.nomenclature_voices.get_hash()) {
+		    	 			this.init_actions();
+		    	 		}
+		    	 		break;
+		    	 	
 		    	}	
 		    },
 		    
 		    build_form: function(){
 		    	
-		    	/** Création d'un callback appellé a chaque édition d'un input de la voix **/
+		    	/** Crï¿½ation d'un callback appellï¿½ a chaque ï¿½dition d'un input de la voix **/
 		    	var callback_change = lang.hitch(this, function(){
 		    		topic.publish("voice_ui","input_change",{
 		    			hash : this.voice.get_hash(),
@@ -78,13 +90,13 @@ define(["dojo/_base/declare","dojo/dom-construct", "dojo/topic", "dijit/_WidgetB
 			    		})
 	    			}
 	    		}
-	    		/** Création du td draggable modifiant l'ordre de la voix ondrag **/
+	    		/** Crï¿½ation du td draggable modifiant l'ordre de la voix ondrag **/
 	    		var td_order = domConstruct.create('td', null, this.domNode);
 		    	var span_order = domConstruct.create('span', {style:{float:'left',paddingRight:'7px'}, id:this.get_table_node().id+'_handle_'+this.voice.get_hash()+'_'+this.get_indice()} , td_order);
 		    	this.span_order = domConstruct.create('span', {style:{position:'relative',paddingRight:'7px'}, innerHTML:this.voice.get_order(), id:this.get_table_node().id+'_order_label_'+this.voice.get_hash()+'_'+this.get_indice()} , td_order);
-		    	var img = domConstruct.create('img', {style:{width:"20px", verticalAlign:'middle'}, src:"./images/sort.png"}, span_order);
+		    	var img = domConstruct.create('img', {style:{width:"20px", verticalAlign:'middle'}, src:pmbDojo.images.getImage('sort.png')}, span_order);
 		    	
-		    	/** Création du champs voix, autocomplété **/
+		    	/** Crï¿½ation du champs voix, autocomplï¿½tï¿½ **/
 		    	var td_main_instr = domConstruct.create('td', null,this.domNode);
 		    	this.input_main_voice = domConstruct.create('input', {
 		    		name:this.get_id()+'_input_voice', 
@@ -96,9 +108,9 @@ define(["dojo/_base/declare","dojo/dom-construct", "dojo/topic", "dijit/_WidgetB
 		    		callback:"nomenclature_input_callback",
 		    		autfield:this.get_id()+'_input_voice'
 		    	},td_main_instr);
-		    	on(this.input_main_voice, 'change', callback_change);
+		    	this.own(on(this.input_main_voice, 'change', callback_change));
 		    	
-		    	/** Création du champs effectif **/
+		    	/** Crï¿½ation du champs effectif **/
 		    	var td_effective = domConstruct.create('td', null,this.domNode);
 		    	this.input_effective = domConstruct.create('input', {
 		    		name:this.get_id()+'_input_effective_voice', 
@@ -106,12 +118,15 @@ define(["dojo/_base/declare","dojo/dom-construct", "dojo/topic", "dijit/_WidgetB
 		    		type:'text', 
 		    		value:this.voice.get_effective()||"~",
 		    	}, td_effective);
-		    	on(this.input_effective, 'change', callback_change);
+		    	this.own(on(this.input_effective, 'change', callback_change));
 		    	
-		    	/** Création du bouton de suppression **/
-		    	var td_suppression = domConstruct.create('td', null, this.domNode);
-		    	var bouton_delete = domConstruct.create('input', {type:'button', value:'X'}, td_suppression);
-		    	on(bouton_delete, "click", lang.hitch(this, this.publish_event, 'voice_delete'));
+		    	/** Crï¿½ation du bouton de suppression **/
+		    	this.td_suppression = domConstruct.create('td', null, this.domNode);
+		    	var bouton_delete = domConstruct.create('input', {type:'button', value:'X', class:'bouton'}, this.td_suppression);
+		    	this.own(on(bouton_delete, "click", lang.hitch(this, function(){
+		    		this.delete_record_child();
+		    		this.publish_event('voice_delete');	
+		    	})));
 		    	this.ajax_parse();	
 		    	
 		    },
@@ -206,5 +221,132 @@ define(["dojo/_base/declare","dojo/dom-construct", "dojo/topic", "dijit/_WidgetB
 				this.span_order.innerHTML = order;
 				this.publish_event('voice_changed');
 			},
+			init_actions: function (){
+		    	if(this.voices_list_ui.nomenclature_voices_ui.nomenclature_voices.record_formation.get_record() != 0){
+		    		xhr("./ajax.php?module=ajax&categ=nomenclature&sub=record_child&action=get_child&id_parent="+this.voices_list_ui.nomenclature_voices_ui.nomenclature_voices.record_formation.get_record(), {
+						handleAs: "json",
+						method:"POST",
+						data:this.ajax_prepare_args()
+					}).then(lang.hitch(this,this.got_record),function(err){console.log(err)})
+		    	}
+		    },
+		    
+		    got_record : function(record_id) {
+		    	if(record_id!= 0){
+		    		this.record_id = record_id;
+		    		if(!this.show_record_button){
+			    		this.show_record_button = domConstruct.create("input",{
+			    			type: "button",
+			    			class: "bouton",
+			    			value: registry.byId("nomenclature_datastore").get_message("nomenclature_js_see_record")
+			    		},this.td_suppression);
+			    		this.own(on(this.show_record_button,"click",function(){
+			    			window.open("./catalog.php?categ=modif&id="+record_id);
+			    		}));
+		    		}
+		    	}else{
+		    		if(!this.create_record_button){
+			    		this.create_record_button = domConstruct.create("input",{
+			    			type: "button",
+			    			class: "bouton",
+			    			value: registry.byId("nomenclature_datastore").get_message("nomenclature_js_create_record")
+			    		},this.td_suppression);
+			    		this.own(on(this.create_record_button,"click",lang.hitch(this,this.create_record_button_callback)));
+		    		}
+		    	}
+		    },
+		    create_record_button_callback: function(){
+		    	if(this.voices_list_ui.nomenclature_voices_ui.ajax_save()){
+		    		this.create_record(lang.hitch(this, this.record_created), "create");
+		    	}
+		    },
+		    create_record: function(callback, action){
+	    		xhr("./ajax.php?module=ajax&categ=nomenclature&sub=record_child&action="+action+"&id_parent="+this.voices_list_ui.nomenclature_voices_ui.nomenclature_voices.record_formation.get_record(), {
+					handleAs: "json",
+					method:"POST",
+					data:this.ajax_prepare_args()
+				}).then(callback,function(err){console.log(err)});
+		    },
+		    
+		    create_child: function(){
+		    	if(!this.record_id){
+			    	this.create_record(lang.hitch(this, this.create_children_callback), "create_children");
+		    	} else {
+					topic.publish("voice_ui", "submanifestation_created", {
+						hash: this.voice.get_hash(),
+						is_new: false
+					});
+		    	}
+		    },
+		    create_children_callback: function(data){
+		    	if(data.new_record){
+		    		this.record_created(data);
+					topic.publish("voice_ui", "submanifestation_created", {
+						hash: this.voice.get_hash(),
+						is_new: true
+					});
+		    	}else{
+		    		this.got_record(data.id);
+					topic.publish("voice_ui", "submanifestation_created", {
+						hash: this.voice.get_hash(),
+						is_new: false
+					});
+		    	}
+		    },
+		    record_created: function(record){
+		    	if(record){
+		    		this.record_id = record.id;
+		    		if(!this.show_record_button){
+			    		this.show_record_button = domConstruct.create("input",{
+			    			type: "button",
+			    			class: "bouton",
+			    			value: registry.byId("nomenclature_datastore").get_message("nomenclature_js_see_record")
+			    		},this.td_suppression);
+			    		this.own(on(this.show_record_button,"click",function(){
+			    			window.open("./catalog.php?categ=modif&id="+record.id);
+			    		}));
+		    		}
+		    		if(this.create_record_button){
+		    			this.td_suppression.removeChild(this.create_record_button);	
+		    		}
+		    		topic.publish('voice_ui',"partial_record_created",{
+		    			hash: this.voice.get_hash(),
+		    			record_id: record.id,
+		    			record_title: record.title,
+		    			record_reverse_id_notices_relations : record.reverse_id_notices_relations,
+		    			record_reverse_num_reverse_link : record.reverse_num_reverse_link
+		    		});
+		    	}
+		    },
+		    ajax_prepare_args:function(){
+				var args = "&record_child_data[num_formation]="+this.voices_list_ui.nomenclature_voices_ui.nomenclature_voices.record_formation.formation.get_id();
+	    		args+="&record_child_data[num_type]="+(this.voices_list_ui.nomenclature_voices_ui.record_formation_ui.record_formation.get_type() ? this.voices_list_ui.nomenclature_voices_ui.record_formation_ui.record_formation.get_type().id : '0');
+	    		args+="&record_child_data[num_musicstand]=0";
+	    		args+="&record_child_data[num_instrument]=0";
+	    		args+="&record_child_data[num_nomenclature]="+this.voices_list_ui.nomenclature_voices_ui.nomenclature_voices.record_formation.get_id();
+	    		args+="&record_child_data[num_voice]="+this.voice.get_id();
+	    		args+="&record_child_data[num_workshop]=0";
+	    		args+="&record_child_data[effective]="+(this.voice.get_indefinite_effective() ? this.voices_list_ui.nomenclature_voices_ui.nomenclature_voices.indefinite_character : this.voice.get_effective());
+	    		args+="&record_child_data[order]="+this.voice.get_order();
+	    		return args;
+			},
+			update_record: function(){
+				if(this.record_id){
+					xhr("./ajax.php?module=ajax&categ=nomenclature&sub=record_child&action=update_record&id="+this.record_id, {
+						handleAs: "json",
+						method:"POST",
+						data:this.ajax_prepare_args()
+					});
+				}
+			},
+			delete_record_child: function(){
+				if(this.record_id){
+					xhr("./ajax.php?module=ajax&categ=nomenclature&sub=record_child&action=delete_record&id="+this.record_id, {
+						handleAs: "json",
+						method:"POST",
+						data:this.ajax_prepare_args()
+					});
+				}
+			}
 	    });
 	});

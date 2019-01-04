@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: reindex_cms.inc.php,v 1.2 2015-04-03 11:16:18 jpermanne Exp $
+// $Id: reindex_cms.inc.php,v 1.8 2017-11-22 11:07:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -17,7 +17,7 @@ $jauge_size = GAUGE_SIZE;
 $jauge_size .= "px";
 
 // initialisation de la borne de départ
-if (!isset($start)) {
+if (empty($start)) {
 	$start=$start_2=0;
 	//remise a zero de la table au début
 	pmb_mysql_query("TRUNCATE cms_editorial_words_global_index",$dbh);
@@ -36,7 +36,7 @@ if (!$count) {
 	$count+= pmb_mysql_result($notices, 0, 0);
 }
 	
-print "<br /><br /><h2 align='center'>".htmlentities($msg["nettoyage_reindex_cms"], ENT_QUOTES, $charset)."</h2>";
+print "<br /><br /><h2 class='center'>".htmlentities($msg["nettoyage_reindex_cms"], ENT_QUOTES, $charset)."</h2>";
 
 $NoIndex = 1;
 
@@ -50,14 +50,14 @@ if(pmb_mysql_num_rows($query)) {
 	}
 	$state .= "px";
 	// mise à jour de l'affichage de la jauge
-	print "<table border='0' align='center' width='$jauge_size' cellpadding='0'><tr><td class='jauge' width='100%'>";
-	print "<img src='../../images/jauge.png' width='$state' height='16px'></td></tr></table>";
+	print "<table border='0' class='' width='$jauge_size' cellpadding='0'><tr><td class='jauge' width='100%'>";
+	print "<div class='jauge'><img src='".get_url_icon('jauge.png')."' width='$state' height='16px'></div></td></tr></table>";
 		
 	// calcul pourcentage avancement
 	$percent = floor((($start+$start_2)/$count)*100);
 	if($percent>100) $percent = 50;
 	// affichage du % d'avancement et de l'état
-	print "<div align='center'>$percent%</div>";
+	print "<div class='center'>$percent%</div>";
 	while($row = pmb_mysql_fetch_assoc($query)) {		
 		// permet de charger la bonne langue, mot vide...
 		$article = new cms_article($row['id_article']);
@@ -89,15 +89,15 @@ if(pmb_mysql_num_rows($query)) {
 		}
 		$state .= "px";
 		// mise à jour de l'affichage de la jauge
-		print "<table border='0' align='center' width='$jauge_size' cellpadding='0'><tr><td class='jauge' width='100%'>";
-		print "<img src='../../images/jauge.png' width='$state' height='16px'></td></tr></table>";
+		print "<table border='0' class='' width='$jauge_size' cellpadding='0'><tr><td class='jauge' width='100%'>";
+		print "<div class='jauge'><img src='".get_url_icon('jauge.png')."' width='$state' height='16px'></div></td></tr></table>";
 	
 		// calcul pourcentage avancement
 		$percent = floor((($start+$start_2)/$count)*100);
 	
 		if($percent>100) $percent = 50;
 		// affichage du % d'avancement et de l'état
-		print "<div align='center'>$percent%</div>";
+		print "<div class='center'>$percent%</div>";
 	
 		while($row = pmb_mysql_fetch_assoc($query)) {
 			// permet de charger la bonne langue, mot vide...
@@ -106,7 +106,7 @@ if(pmb_mysql_num_rows($query)) {
 		}
 		pmb_mysql_free_result($query);
 	
-		$next = $start + $lot;
+		$next = $start_2 + $lot;
 		print "
 		<form class='form-$current_module' name='current_state' action='./clean.php' method='post'>
 		<input type='hidden' name='v_state' value=\"".urlencode($v_state)."\">
@@ -124,17 +124,9 @@ if(pmb_mysql_num_rows($query)) {
 		$spec = $spec - INDEX_CMS;
 		$not = pmb_mysql_query("SELECT 1 FROM cms_editorial_words_global_index group by num_obj,type", $dbh);
 		$compte = pmb_mysql_num_rows($not);
-		$v_state .= "<br /><img src=../../images/d.gif hspace=3>".htmlentities($msg["nettoyage_reindex_cms"], ENT_QUOTES, $charset)." :";
+		$v_state .= "<br /><img src='".get_url_icon('d.gif')."' hspace=3>".htmlentities($msg["nettoyage_reindex_cms"], ENT_QUOTES, $charset)." :";
 		$v_state .= $compte." ".htmlentities($msg["nettoyage_res_reindex_cms"], ENT_QUOTES, $charset);
-		print "
-			<form class='form-$current_module' name='process_state' action='./clean.php' method='post'>
-			<input type='hidden' name='v_state' value=\"".urlencode($v_state)."\">
-			<input type='hidden' name='spec' value=\"$spec\">
-			</form>
-			<script type=\"text/javascript\"><!--
-				document.forms['process_state'].submit();
-				-->
-			</script>";
+		print netbase::get_process_state_form($v_state, $spec);
 		pmb_mysql_query("ALTER TABLE cms_editorial_words_global_index ENABLE KEYS",$dbh);
 		pmb_mysql_query("ALTER TABLE cms_editorial_fields_global_index ENABLE KEYS",$dbh);
 	}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_uri.class.php,v 1.13 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: onto_common_uri.class.php,v 1.17 2018-01-22 09:16:28 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -29,7 +29,7 @@ class onto_common_uri {
 	 * dernière URI générée
 	 * @access private
 	 */
-	private static $last_uri;
+	static private $last_uri;
 
 	/**
 	 * Génère une nouvelle URI. Cette méthode est apellée par save() de onto_handler
@@ -40,7 +40,7 @@ class onto_common_uri {
 	 * @static
 	 * @access public
 	 */
-	public static function get_new_uri($class_uri, $uri_prefix="") {
+	static public function get_new_uri($class_uri, $uri_prefix="") {
 		global $dbh;
 		
 		if($uri_prefix){
@@ -86,7 +86,7 @@ class onto_common_uri {
 	 * @static
 	 * @access public
 	 */
-	public static function get_temp_uri($class_uri=""){
+	static public function get_temp_uri($class_uri=""){
 		$temp_uri = $class_uri."_temp_".(microtime(true)*10000);
 		self::set_new_uri($temp_uri);
 		return $temp_uri;
@@ -100,7 +100,7 @@ class onto_common_uri {
 	 * @return void
 	 * @access public
 	 */
-	public static function is_temp_uri($uri) {
+	static public function is_temp_uri($uri) {
 		if(preg_match("/\_temp\_/", $uri)){
 			return true;
 		}else{
@@ -114,22 +114,21 @@ class onto_common_uri {
 	 * @return void
 	 * @access public
 	 */
-	public static function get_last_uri() {
+	static public function get_last_uri() {
 		return self::$last_uri;
 	} // end of member function get_last_uri
 
-	public static function get_name_from_uri($uri,$pmb_name){
+	static public function get_name_from_uri($uri,$pmb_name){
 		$tmp=array();
 		$tmp=preg_split("/\/|\#/", $uri);
 		return trim($pmb_name.'_'.strtolower(end($tmp)));
 	}
 	
-	public static function set_new_uri($uri){
+	static public function set_new_uri($uri){
 		global $dbh;
 		$query = "select uri_id from onto_uri where uri ='".addslashes($uri)."'";
 		$result = pmb_mysql_query($query,$dbh);
 		if(pmb_mysql_num_rows($result)){
-			//ca existe déjà !
 			return pmb_mysql_result($result,0,0);
 		}
 		$query = "insert into onto_uri set uri = '".addslashes($uri)."'";
@@ -137,8 +136,9 @@ class onto_common_uri {
 		return pmb_mysql_insert_id($dbh);
 	}
 
-	public static function get_uri($id_uri){
+	static public function get_uri($id_uri){
 		global $dbh;
+		$uri = '';
 		$query = "select uri from onto_uri where uri_id ='".$id_uri."'";
 		$result = pmb_mysql_query($query,$dbh);
 		if($result && pmb_mysql_num_rows($result)){
@@ -147,8 +147,9 @@ class onto_common_uri {
 		return $uri;
 	} 
 	
-	public static function get_id($uri){
+	static public function get_id($uri){
 		global $dbh;
+		$id = 0;
 		$query = "select uri_id from onto_uri where uri = '".addslashes($uri)."'";
 		$result = pmb_mysql_query($query,$dbh);
 		if(pmb_mysql_num_rows($result)){
@@ -157,7 +158,7 @@ class onto_common_uri {
 		return $id;		
 	}
 	
-	public static function replace_temp_uri($temp_uri, $class_uri, $uri_prefix="") {
+	static public function replace_temp_uri($temp_uri, $class_uri, $uri_prefix="") {
 		global $dbh;
 		
 		if($uri_prefix){
@@ -192,5 +193,14 @@ class onto_common_uri {
 		//On initialise last_uri.
 		self::$last_uri=$last_uri;
 		return self::$last_uri;	
+	}
+	
+	/**
+	 * Supprime une uri de la table onto_uri
+	 * @param string $uri
+	 */
+	static public function delete_uri($uri) {
+		$query = 'delete from onto_uri where uri="'.addslashes($uri).'"';
+		pmb_mysql_query($query);
 	}
 } // end of onto_common_uri

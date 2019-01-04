@@ -1,4 +1,4 @@
-<h1>Administració de les importacions</h1>
+<h2>Administració de les importacions</h2>
 <p>Aquest apartat permet generar les importacions de dades associats a les obres
 o als exemplars.</p>
 <p>El procediment es realitza en diferents passos : definició del prestador 

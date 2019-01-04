@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: harvest.js,v 1.1 2012-01-25 15:20:35 ngantier Exp $
+// $Id: harvest.js,v 1.3 2017-11-30 12:50:43 dgoron Exp $
 
 
 
@@ -15,10 +15,10 @@ function serialcirc_diff_get_group_form(){
 	var url= './ajax.php?module=catalog&categ=serialcirc_diff&sub=group_form';		
 	url+='&num_abt='+num_abt;	
 	var id = document.getElementById('serialcirc_diff_form_type');
-	id.innerHTML =  '<div style=\"width:100%; height:30px;text-align:center\"><img style=\"padding 0 auto;\" src=\"./images/patience.gif\" id=\"collapseall\" border=\"0\"><\/div>' ;			
+	id.innerHTML =  '<div style=\"width:100%; height:30px;text-align:center\"><img style=\"padding 0 auto;\" src=\"'+pmb_img_patience+'\" id=\"collapseall\" border=\"0\"><\/div>' ;			
 	// On initialise la classe:
 	var req = new http_request();
-	// Exécution de la requette
+	// Exï¿½cution de la requette
 	if(req.request(url)) return 0;			
 	// contenu
 	id.innerHTML = req.get_text();
@@ -31,10 +31,10 @@ function serialcirc_diff_get_option_form(){
 	var url= './ajax.php?module=catalog&categ=serialcirc_diff&sub=option_form';		
 	url+='&num_abt='+num_abt;	
 	var id = document.getElementById('serialcirc_diff_form_type');
-	id.innerHTML =  '<div style=\"width:100%; height:30px;text-align:center\"><img style=\"padding 0 auto;\" src=\"./images/patience.gif\" id=\"collapseall\" border=\"0\"><\/div>' ;			
+	id.innerHTML =  '<div style=\"width:100%; height:30px;text-align:center\"><img style=\"padding 0 auto;\" src=\"'+pmb_img_patience+'\" id=\"collapseall\" border=\"0\"><\/div>' ;			
 	// On initialise la classe:
 	var req = new http_request();
-	// Exécution de la requette
+	// Exï¿½cution de la requette
 	if(req.request(url)) return 0;			
 	// contenu
 	id.innerHTML = req.get_text();
@@ -46,10 +46,10 @@ function serialcirc_diff_get_ficheformat_form(){
 	var url= './ajax.php?module=catalog&categ=serialcirc_diff&sub=ficheformat_form';		
 	url+='&num_abt='+num_abt;	
 	var id = document.getElementById('serialcirc_diff_form_type');
-	id.innerHTML =  '<div style=\"width:100%; height:30px;text-align:center\"><img style=\"padding 0 auto;\" src=\"./images/patience.gif\" id=\"collapseall\" border=\"0\"><\/div>' ;			
+	id.innerHTML =  '<div style=\"width:100%; height:30px;text-align:center\"><img style=\"padding 0 auto;\" src=\"'+pmb_img_patience+'\" id=\"collapseall\" border=\"0\"><\/div>' ;			
 	// On initialise la classe:
 	var req = new http_request();
-	// Exécution de la requette
+	// Exï¿½cution de la requette
 	if(req.request(url)) return 0;			
 	// contenu
 	id.innerHTML = req.get_text();
@@ -64,10 +64,10 @@ function serialcirc_diff_get_empr_form(id_diff){
 	url+='&num_abt='+num_abt;	
 	url+='&id_diff='+id_diff;
 	var id = document.getElementById('serialcirc_diff_form_type');
-	id.innerHTML =  '<div style=\"width:100%; height:30px;text-align:center\"><img style=\"padding 0 auto;\" src=\"./images/patience.gif\" id=\"collapseall\" border=\"0\"><\/div>' ;		
+	id.innerHTML =  '<div style=\"width:100%; height:30px;text-align:center\"><img style=\"padding 0 auto;\" src=\"'+pmb_img_patience+'\" id=\"collapseall\" border=\"0\"><\/div>' ;		
 	// On initialise la classe:
 	var req = new http_request();
-	// Exécution de la requette
+	// Exï¿½cution de la requette
 	if(req.request(url)) return 0;			
 	// contenu
 	id.innerHTML = req.get_text();
@@ -80,10 +80,10 @@ function serialcirc_diff_get_group_form(id_diff){
 	url+='&num_abt='+num_abt;	
 	url+='&id_diff='+id_diff;
 	var id = document.getElementById('serialcirc_diff_form_type');
-	id.innerHTML =  '<div style=\"width:100%; height:30px;text-align:center\"><img style=\"padding 0 auto;\" src=\"./images/patience.gif\" id=\"collapseall\" border=\"0\"><\/div>' ;			
+	id.innerHTML =  '<div style=\"width:100%; height:30px;text-align:center\"><img style=\"padding 0 auto;\" src=\"'+pmb_img_patience+'\" id=\"collapseall\" border=\"0\"><\/div>' ;			
 	// On initialise la classe:
 	var req = new http_request();
-	// Exécution de la requette
+	// Exï¿½cution de la requette
 	if(req.request(url)) return 0;			
 	// contenu
 	id.innerHTML = req.get_text();
@@ -97,7 +97,7 @@ function serialcirc_diff_group_resp_empr(suffixe){
 	document.getElementById('empr_resp_'+suffixe).value=document.getElementById('id_empr_'+suffixe).value;
 }
 function serialcirc_diff_group_add_empr(suffixe){
-	openPopUp('./select.php?what=emprunteur&caller=form_edition&param1=id_empr_'+suffixe+'&param2=libelle_member_'+suffixe+'&auto_submit=NO', 'select_empr', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes')
+	openPopUp('./select.php?what=emprunteur&caller=form_edition&param1=id_empr_'+suffixe+'&param2=libelle_member_'+suffixe+'&auto_submit=NO', 'selector')
 }
 function serialcirc_diff_group_add_line_empr(suffixe){
 	var empr_cpt=document.getElementById('empr_count').value;

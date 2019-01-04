@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.10 2013-12-24 13:08:33 ngantier Exp $
+// $Id: main.inc.php,v 1.11 2018-12-19 13:59:19 ngantier Exp $
 // Gestion financière
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
@@ -31,6 +31,12 @@ switch($sub) {
         print $admin_layout;
         echo window_title($database_window_title.$msg["admin_gestion_financiere"]." - ".$msg["transaction_admin"]);
         include("./admin/finance/transaction.inc.php");
+        break;
+    case 'transaction_payment_method':
+        $admin_layout = str_replace('!!menu_sous_rub!!', $msg["transaction_payment_method_admin"], $admin_layout);
+        print $admin_layout;
+        echo window_title($database_window_title.$msg["admin_gestion_financiere"]." - ".$msg["transaction_payment_method_admin"]);
+        include("./admin/finance/transaction_payment_method.inc.php");
         break;
     case 'cashdesk':
     	$admin_layout = str_replace('!!menu_sous_rub!!', $msg["cashdesk_admin"], $admin_layout);

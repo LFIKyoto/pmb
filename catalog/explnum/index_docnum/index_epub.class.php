@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: index_epub.class.php,v 1.1 2012-10-22 12:14:45 jpermanne Exp $
+// $Id: index_epub.class.php,v 1.3 2017-06-30 14:08:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,19 +13,19 @@ require_once($class_path."/epubData.class.php");
  */
 class index_epub{
 	
-	var $fichier='';
+	public $fichier='';
 	
-	function index_epub($filename, $mimetype='', $extension=''){
+	public function __construct($filename, $mimetype='', $extension=''){
 		$this->fichier = $filename;
 	}
 	
 	/**
 	 * Méthode qui retourne le texte à indexer des epub
 	 */
-	function get_text($filename){
+	public function get_text($filename){
 		global $charset;
 		
-		$epub=new epubData($this->fichier);
+		$epub=new epub_Data($this->fichier);
 		return $epub->getFullTextContent($charset);
 	}
 }

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_article.class.php,v 1.5 2012-11-15 09:47:33 arenou Exp $
+// $Id: cms_module_common_view_article.class.php,v 1.6 2018-08-24 08:44:59 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,7 +12,7 @@ class cms_module_common_view_article extends cms_module_common_view_django{
 		parent::__construct($id);
 		$this->default_template = "<h3>{{title}}</h3>
 <p>{{resume}}</p>
-<img src='{{logo.large}}'/>
+<img src='{{logo.large}}' alt=''/>
 <p>{{content}}</p>";
 	}
 	

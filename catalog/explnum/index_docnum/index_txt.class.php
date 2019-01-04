@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: index_txt.class.php,v 1.2 2012-03-23 14:10:19 dbellamy Exp $
+// $Id: index_txt.class.php,v 1.4 2017-08-10 09:19:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,20 +11,21 @@ if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
  */
 class index_txt{
 	
-	var $fichier='';
+	public $fichier='';
 	
 	/**
 	 * Constructeur
 	 */
-	function index_txt($filename, $mimetype='' , $extension=''){
+	public function __construct($filename, $mimetype='' , $extension=''){
 		$this->fichier = $filename;
 	}
 	
 	/**
 	 * Récupération du texte à indexer dans le fichier texte (.txt)
 	 */
-	function get_text($filename){
+	public function get_text($filename){
 		
+		$texte = '';
 		$fp = fopen($filename, "r");
 		while(!feof($fp)){
 			$line = fgets($fp,4096); 

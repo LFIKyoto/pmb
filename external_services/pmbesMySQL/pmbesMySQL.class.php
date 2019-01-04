@@ -2,32 +2,30 @@
 // +-------------------------------------------------+
 // | 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesMySQL.class.php,v 1.3 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: pmbesMySQL.class.php,v 1.4 2017-06-22 08:49:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/external_services.class.php");
 
 class pmbesMySQL extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 	
 	/*
 	 * @param CHECK ANALYZE REPAIR OPTIMIZE
 	 */
-	function mysqlTable($action) {
+	public function mysqlTable($action) {
 		global $pmb_set_time_limit, $dbh;
 		
 		if (SESSrights & ADMINISTRATION_AUTH) {

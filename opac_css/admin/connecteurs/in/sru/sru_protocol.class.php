@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sru_protocol.class.php,v 1.3.16.1 2015-09-11 08:53:13 jpermanne Exp $
+// $Id: sru_protocol.class.php,v 1.5 2017-04-20 16:25:29 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -19,25 +19,25 @@ define("SR_MODE_STYLESHEETS", 2);
 //Un petit parser-dom �l�gant
 //Auteur: FLORENT TETART
 class xml_dom_sru {
-	var $xml;
-	var $charset;
-	var $tree;
-	var $error=false;
-	var $error_message="";
-	var $depth=0;
-	var $last_elt=array();
-	var $n_elt=array();
-	var $cur_elt=array();
-	var $last_char=false;
+	public $xml;
+	public $charset;
+	public $tree;
+	public $error=false;
+	public $error_message="";
+	public $depth=0;
+	public $last_elt=array();
+	public $n_elt=array();
+	public $cur_elt=array();
+	public $last_char=false;
 	
-	function close_node() {
+	public function close_node() {
 		$this->last_elt[$this->depth-1]["CHILDS"][]=$this->cur_elt;
 		$this->last_char=false;
 		$this->cur_elt=$this->last_elt[$this->depth-1];
 		$this->depth--;
 	}
 	
-	function startElement($parser,$name,$attribs) {
+	public function startElement($parser,$name,$attribs) {
 		if ($this->last_char) $this->close_node();
 		$this->last_elt[$this->depth]=$this->cur_elt;
 		$this->cur_elt=array();
@@ -50,12 +50,12 @@ class xml_dom_sru {
 
 	}
 	
-	function endElement($parser,$name) {
+	public function endElement($parser,$name) {
 		if ($this->last_char) $this->close_node();
 		$this->close_node();
 	}
 	
-	function charElement($parser,$char) {
+	public function charElement($parser,$char) {
 		if ($this->last_char) $this->close_node();
 		if ($this->charset != 'utf-8') {
 			$char = utf8_decode($char);
@@ -68,7 +68,7 @@ class xml_dom_sru {
 		$this->depth++;
 	}
 	
-	function xml_dom_sru($xml,$charset="iso-8859-1") {
+	public function __construct($xml,$charset="iso-8859-1") {
 		$this->charset=$charset;
 		$this->cur_elt=array("NAME"=>"document","TYPE"=>"0");
 		
@@ -87,7 +87,7 @@ class xml_dom_sru {
 		$this->tree=$this->last_elt[0];
 	}
 	
-	function get_node($path,$node="") {
+	public function get_node($path,$node="") {
 		if ($node=="") $node=&$this->tree;
 		$paths=explode("/",$path);
 		for ($i=0; $i<count($paths); $i++) {
@@ -124,7 +124,7 @@ class xml_dom_sru {
 		return $node;
 	}
 	
-	function get_nodes($path,$node="") {
+	public function get_nodes($path,$node="") {
 		$n=0;
 		$nodes="";
 		while ($nod=$this->get_node($path."[$n]",$node)) {
@@ -134,14 +134,14 @@ class xml_dom_sru {
 		return $nodes;
 	}
 	
-	function get_sub_nodes($path, $node="") {
+	public function get_sub_nodes($path, $node="") {
 		$el_node = $this->get_node($path, $node);
 		if ($el_node['CHILDS']) 
 			return $el_node['CHILDS'];
 		return false;
 	}
 	
-	function get_datas($node,$force_entities=false) {
+	public function get_datas($node,$force_entities=false) {
 		$char="";
 		if ($node["TYPE"]!=1) return false;
 		//Recherche des fils et v�rification qu'il n'y a que du texte !
@@ -174,24 +174,24 @@ class xml_dom_sru {
 		return $char;
 	}
 	
-	function get_attributes($node) {
+	public function get_attributes($node) {
 		if ($node["TYPE"]!=1) return false;
 		return $node["ATTRIBS"];
 	}
 	
-	function get_node_name($node) {
+	public function get_node_name($node) {
 		return $node["NAME"];
 	}
 
-	function get_node_value($node) {
+	public function get_node_value($node) {
 		return $this->get_datas($node);
 	}
 	
-	function get_node_type($node) {
+	public function get_node_type($node) {
 		return $node["TYPE"];		
 	}
 	
-	function get_value($path,$node="") {
+	public function get_value($path,$node="") {
 		$value="";
 		$elt=$this->get_node($path,$node);
 		if ($elt) {
@@ -227,7 +227,7 @@ class xml_dom_sru {
 		return $value;
 	}
 	
-	function get_values($path,$node="") {
+	public function get_values($path,$node="") {
 		$n=0;
 		while ($elt=$this->get_node($path."[$n]",$node)) {
 			$elts[$n]=$elt;
@@ -271,18 +271,18 @@ class xml_dom_sru {
 }
 
 class xml_dom_explainresponse extends xml_dom_sru {
-	var $in_record_data=false;
-	var $remove_namespace_information = false;
-	var $tag_and_attribs_name_lowercase;
-	var $xlm_namespaces = array();
+	public $in_record_data=false;
+	public $remove_namespace_information = false;
+	public $tag_and_attribs_name_lowercase;
+	public $xlm_namespaces = array();
 		
-	function xml_dom_explainresponse($xml,$charset="iso-8859-1", $remove_namespace_information=false, $tag_and_attribs_name_lowercase=true) {
+	public function __construct($xml,$charset="iso-8859-1", $remove_namespace_information=false, $tag_and_attribs_name_lowercase=true) {
 		$this->remove_namespace_information = $remove_namespace_information;
 		$this->tag_and_attribs_name_lowercase = $tag_and_attribs_name_lowercase;
-		parent::xml_dom_sru($xml,$charset);
+		parent::__construct($xml,$charset);
 	}
 	
-	function startElement($parser,$name,$attribs) {
+	public function startElement($parser,$name,$attribs) {
 		
 		if ($this->remove_namespace_information) {
 			if (strpos($name, ':'))
@@ -297,24 +297,24 @@ class xml_dom_explainresponse extends xml_dom_sru {
 		parent::startElement($parser,$name,$attribs);
 	}
 	
-	function endElement($parser,$name) {
+	public function endElement($parser,$name) {
 		parent::endElement($parser,$name);		
 	}	
 }
 
 class xml_dom_RetrieveResponse extends xml_dom_sru {
-	var $in_record_data=false;
-	var $remove_namespace_information = false;
-	var $tag_and_attribs_name_lowercase;
-	var $xlm_namespaces = array();
+	public $in_record_data=false;
+	public $remove_namespace_information = false;
+	public $tag_and_attribs_name_lowercase;
+	public $xlm_namespaces = array();
 		
-	function xml_dom_RetrieveResponse($xml,$charset="iso-8859-1", $remove_namespace_information=false, $tag_and_attribs_name_lowercase=true) {
+	public function __construct($xml,$charset="iso-8859-1", $remove_namespace_information=false, $tag_and_attribs_name_lowercase=true) {
 		$this->remove_namespace_information = $remove_namespace_information;
 		$this->tag_and_attribs_name_lowercase = $tag_and_attribs_name_lowercase;
-		parent::xml_dom_sru($xml,$charset);
+		parent::__construct($xml,$charset);
 	}
 	
-	function startElement($parser,$name,$attribs) {
+	public function startElement($parser,$name,$attribs) {
 		if (!$this->in_record_data) {
 			foreach($attribs as $key => $value) {
 				if (preg_match('/.*:(.+)/', $key))
@@ -339,7 +339,7 @@ class xml_dom_RetrieveResponse extends xml_dom_sru {
 		parent::startElement($parser,$name,$attribs);
 	}
 	
-	function endElement($parser,$name) {
+	public function endElement($parser,$name) {
 		if ($this->tag_and_attribs_name_lowercase) {
 			$name = strtolower($name);			
 		}
@@ -352,38 +352,38 @@ class xml_dom_RetrieveResponse extends xml_dom_sru {
 
 //Classe d'analyse d'un r�sultat de requ�te
 class sru_analyse_request {
-	var $data = '';
-	var $operation;
-	var $result;
-	var $error = false;
-	var $error_message = '';
-	var $schema_config="";
-	var $style_sheets_to_apply;
-	var $mode;
+	public $data = '';
+	public $operation;
+	public $result;
+	public $error = false;
+	public $error_message = '';
+	public $schema_config="";
+	public $style_sheets_to_apply;
+	public $mode;
 	
-	function sru_analyse_request ($data, $operation, $schema_config="", $mode=SR_MODE_AUTO) {
+	public function __construct($data, $operation, $schema_config="", $mode=SR_MODE_AUTO) {
 		$this->data = $data;
 		$this->operation = $operation; 
 		$this->schema_config = $schema_config;
 		$this->mode = $mode;
 	}
 	
-	function process($charset='ISO-8859-1') {
+	public function process($charset='ISO-8859-1') {
 		return false;
 	} 
 }
 
 //Classe d'analyse des requ�tes "explain"
 class sru_analyse_explain extends sru_analyse_request {
-	var $data = '';
-	var $operation;
-	var $record_schema;
+	public $data = '';
+	public $operation;
+	public $record_schema;
 	
-	function sru_analyse_explain ($data, $operation, $schema_config="", $mode=SR_MODE_AUTO) {
-		parent::sru_analyse_request($data, $operation, $schema_config, $mode);
+	public function __construct($data, $operation, $schema_config="", $mode=SR_MODE_AUTO) {
+		parent::__construct($data, $operation, $schema_config, $mode);
 	}
 	
-	function process($charset='ISO-8859-1') {
+	public function process($charset='ISO-8859-1') {
 		$result = array();
 		$dom = new xml_dom_explainresponse($this->data, $charset, true);
 		$node = $dom->get_node('explainresponse/record');
@@ -587,16 +587,16 @@ class sru_analyse_explain extends sru_analyse_request {
 
 //Classe d'analyse des requ�tes "searchRetrieve"
 class sru_analyse_searchretrieve extends sru_analyse_request {
-	var $data = '';
-	var $operation;
-	var $error = false;
-	var $error_message = '';
+	public $data = '';
+	public $operation;
+	public $error = false;
+	public $error_message = '';
 	
-	function sru_analyse_searchretrieve ($data, $operation, $schema_config="", $mode=SR_MODE_AUTO) {
-		parent::sru_analyse_request($data, $operation, $schema_config, $mode);
+	public function __construct($data, $operation, $schema_config="", $mode=SR_MODE_AUTO) {
+		parent::__construct($data, $operation, $schema_config, $mode);
 	}
 	
-	function record_to_xml_unimarc($record, $style_sheets, $charset) {
+	public function record_to_xml_unimarc($record, $style_sheets, $charset) {
 		global $xslt_base_path;
 		global $debug;
 		if ($debug)
@@ -626,7 +626,7 @@ class sru_analyse_searchretrieve extends sru_analyse_request {
 		return $result;		
 	}
 	
-	function parse_record($node, $dom, $charset, $schema_config="") {
+	public function parse_record($node, $dom, $charset, $schema_config="") {
 		global $xslt_base_path;
 		
 		$result = array();
@@ -732,7 +732,7 @@ class sru_analyse_searchretrieve extends sru_analyse_request {
 		return $result;		
 	}
 	
-	function process($charset='ISO-8859-1') {
+	public function process($charset='ISO-8859-1') {
 		$result = array();
 		$dom = new xml_dom_RetrieveResponse($this->data, $charset, true);
 		$node = $dom->get_node('searchretrieveresponse');
@@ -776,22 +776,22 @@ class sru_analyse_searchretrieve extends sru_analyse_request {
 
 
 class sru_get_data {
-    var $error=false;
-    var $error_message="";
-    var $response_date;			//Date de r�ponse
-    var $charset="iso-8859-1";
-    var $time_out;				//Temps maximum d'interrogation de la source
-    var $xml_parser;			//Ressource parser
-    var $retry_after;			//D�lais avant r��ssai
-    var $data = '';
+    public $error=false;
+    public $error_message="";
+    public $response_date;			//Date de r�ponse
+    public $charset="iso-8859-1";
+    public $time_out;				//Temps maximum d'interrogation de la source
+    public $xml_parser;			//Ressource parser
+    public $retry_after;			//D�lais avant r��ssai
+    public $data = '';
     					
-    function sru_get_data($url="", $charset="iso-8859-1", $time_out="") {
+    public function __construct($url="", $charset="iso-8859-1", $time_out="") {
     	$this->charset=$charset;
     	$this->time_out=$time_out;
     	if ($url) $this->get_data($url);
     }
     
-    function parse_xml($ch,$data) {
+    public function parse_xml($ch,$data) {
     	if (!$this->retry_after) {
 	    	//Parse de la ressource
 	    	if (!xml_parse($this->xml_parser, $data)) {
@@ -803,7 +803,7 @@ class sru_get_data {
     	return strlen($data);
 	}
     
-    function verif_header($ch,$headers) {
+    public function verif_header($ch,$headers) {
     	$h=explode("\n",$headers);
     	for ($i=0; $i<count($h); $i++) {
     		$v=explode(":",$h[$i]);
@@ -812,7 +812,7 @@ class sru_get_data {
     	return strlen($headers);
     }
     
-    function get_data($url) {
+    public function get_data($url) {
     	//Remise � z�ro des erreurs
     	$this->error=false;
     	$this->error_message="";
@@ -872,18 +872,18 @@ class sru_get_data {
 } 	
 
 class sru_request {
-	var $base_url;
-	var $operation;
-	var $parameters;
-	var $operations_allowed = array("explain", "searchRetrieve");
-	var $error = false;
-	var $error_message = '';
-	var $data = '';
-	var $schema_config;
-	var $style_sheets_to_apply;
-	var $mode;
+	public $base_url;
+	public $operation;
+	public $parameters;
+	public $operations_allowed = array("explain", "searchRetrieve");
+	public $error = false;
+	public $error_message = '';
+	public $data = '';
+	public $schema_config;
+	public $style_sheets_to_apply;
+	public $mode;
 	
-	function sru_request($base_url, $operation, $parameters=array(), $schema_config='', $mode=SR_MODE_AUTO) {
+	public function __construct($base_url, $operation, $parameters=array(), $schema_config='', $mode=SR_MODE_AUTO) {
 		
 		if (!in_array($operation, $this->operations_allowed)) {
 			$this->error = true;
@@ -896,7 +896,7 @@ class sru_request {
 		$this->mode = $mode;
 	}
 	
-	function analyse_response($charset='ISO-8859-1') {
+	public function analyse_response($charset='ISO-8859-1') {
 		$parameters = '';
 		foreach ($this->parameters as $name => $value)
 			$parameters[] .= $name.'='.urlencode($value);

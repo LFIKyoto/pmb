@@ -2,21 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: avis_ajax.inc.php,v 1.11 2015-06-23 09:48:21 jpermanne Exp $
+// $Id: avis_ajax.inc.php,v 1.15 2017-11-23 13:52:08 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-require_once ($include_path."/interpreter/bbcode.inc.php");
+require_once ($class_path."/avis_records.class.php");
 
 switch($quoifaire){
-
 	case 'show_form':
 		show_form($id);
-	break;
+		break;
 	case 'update_avis':
 		update_avis($id);
-	break;
-
+		break;
 }
 
 function show_form($id){
@@ -30,11 +28,11 @@ function show_form($id){
 		if($charset != "utf-8") $desc=cp1252Toiso88591($desc);
 	}
 	if ($pmb_javascript_office_editor) {
-		$office_editor_cmd_quit="if (typeof(tinyMCE) != 'undefined') tinyMCE.execCommand('mceRemoveControl', true, 'avis_desc_".$id."');";
+		$office_editor_cmd_quit="if (typeof(tinyMCE) != 'undefined') tinyMCE_execCommand('mceRemoveControl', true, 'avis_desc_".$id."');";
 		$display .= "
 		<div class='row'>
 			<label class='etiquette'>$msg[avis_sujet]</label> <br />
-			<input type='texte' size='50' name='field_sujet_$id' id='field_sujet_$id' value='".htmlentities($sujet,ENT_QUOTES,$charset)."' />
+			<input type='text' size='50' name='field_sujet_$id' id='field_sujet_$id' value='".htmlentities($sujet,ENT_QUOTES,$charset)."' />
 		</div>
 		<div class='row'>
 			<label class='etiquette' >$msg[avis_comm]</label><br />
@@ -42,7 +40,7 @@ function show_form($id){
 			<textarea id='avis_desc_$id' name='avis_commentaire' cols='120' rows='20'>".htmlentities($desc,ENT_QUOTES,$charset)."</textarea>
 		</div>
 		<input type='button' class='bouton_small' name='save_avis_$id' id='save_avis_$id' value='$msg[avis_save]' />
-		<input type='button' class='bouton_small' name='mceToggleEditor' onclick=\"if (typeof(tinyMCE) != 'undefined') tinyMCE.execCommand('mceToggleEditor',false,'avis_desc_".$id."'); return false;\"  value='Edition'>
+		<input type='button' class='bouton_small' name='mceToggleEditor' onclick=\"if (typeof(tinyMCE) != 'undefined') tinyMCE_execCommand('mceToggleEditor',false,'avis_desc_".$id."'); return false;\"  value='Edition'>
 		<input type='button' class='bouton_small' name='exit_avis_$id' id='exit_avis_$id' value='$msg[avis_exit]' onclick=\"$office_editor_cmd_quit avis_exit('$id')\" />
 		";
 
@@ -50,7 +48,7 @@ function show_form($id){
 		$display .= "
 		<div class='row'>
 			<label class='etiquette'>$msg[avis_sujet]</label>
-			<input type='texte' class='saisie-20em' name='field_sujet_$id' id='field_sujet_$id' value='".htmlentities($sujet,ENT_QUOTES,$charset)."' />
+			<input type='text' class='saisie-20em' name='field_sujet_$id' id='field_sujet_$id' value='".htmlentities($sujet,ENT_QUOTES,$charset)."' />
 		</div>
 		<div class='row'>
 			<label class='etiquette' >$msg[avis_comm]</label>
@@ -73,36 +71,20 @@ function show_form($id){
 }
 
 function update_avis($id){
-	global $dbh,$desc, $sujet, $msg, $charset;
+	global $desc, $sujet, $msg, $charset;
+	global $pmb_avis_note_display_mode;
 	
 	header('Content-Type: text/html;charset='.$charset);
 
 	$req = "update avis set sujet='".$sujet."', commentaire='".$desc."' where id_avis='".$id."'";
-	pmb_mysql_query($req,$dbh);
+	pmb_mysql_query($req);
 
-	$requete = "select avis.note, avis.sujet, avis.commentaire, avis.id_avis, DATE_FORMAT(avis.dateAjout,'".$msg[format_date]."') as ladate, ";
-	$requete.= "empr_login, empr_nom, empr_prenom, ";
-	$requete.= "niveau_biblio, niveau_biblio, valide, notice_id ";
-	$requete.= "from avis ";
-	$requete.= "left join empr on empr.id_empr=avis.num_empr ";
-	$requete.= "left join notices on notices.notice_id=avis.num_notice ";
-	$requete.= "where id_avis='".$id."'";
-	$requete.= "order by index_serie, tnvol, index_sew ,dateAjout desc ";
-	$res = pmb_mysql_query($requete,$dbh);
-	while(($loc = pmb_mysql_fetch_object($res))){
-		$display = "
-			<div class='left'>
-				<input type='checkbox' name='valid_id_avis[]' id='valid_id_avis[]' value='$loc->id_avis' onClick=\"stop_evenement(event);\" />" ;
-		if (!$loc->valide) $display .=
-				"<font color='#CC0000'>".$msg[gestion_avis_note]." <span >".htmlentities($loc->note,ENT_QUOTES,$charset)." <b>".htmlentities($loc->sujet,ENT_QUOTES, $charset)."</b></span></font>";
-		else $display .=
-				"<font color='#00BB00'>".$msg[gestion_avis_note]." <span >".htmlentities($loc->note,ENT_QUOTES,$charset)." <b>".htmlentities($loc->sujet,ENT_QUOTES,$charset)."</b></span></font>";
-		if($charset != "utf-8") $loc->commentaire=cp1252Toiso88591($loc->commentaire);
-		$display .=  ", ".htmlentities($loc->ladate,ENT_QUOTES,$charset)." ".htmlentities($loc->empr_prenom." ".$loc->empr_nom,ENT_QUOTES,$charset)."
-			</div>
-			<div class='row'>".do_bbcode($loc->commentaire)."	</div>
-		";
-	}
-	print $display;
+	$query = "select id_avis,note,sujet,commentaire,DATE_FORMAT(dateajout,'".$msg['format_date']."') as ladate,empr_login,empr_nom, empr_prenom, valide
+		from avis 
+		left join empr on id_empr=num_empr 
+		where id_avis='".$id."'";
+	$result = pmb_mysql_query($query);
+	$row = pmb_mysql_fetch_object($result);
+	print avis_records::get_display_review($row);
 }
 ?>

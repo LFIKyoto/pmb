@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice.inc.php,v 1.12 2013-03-18 14:46:46 dgoron Exp $
+// $Id: notice.inc.php,v 1.16 2017-09-20 08:15:36 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -10,7 +10,7 @@ if($item) {
 	print "<h1>".$msg["400"]."</h1>";
 	$notice = new mono_display($item,1);
 	print pmb_bidi('<strong>'.$notice->header.'</strong><br />');
- }
+}
 switch($action) {
 	case 'add_item':
 		// cas du click sur le lien du panier
@@ -28,27 +28,17 @@ switch($action) {
 			$myCart->compte_items();
 		}
 		print "<script type='text/javascript'>window.close();</script>"; 
-	break;
+		break;
 	case 'new_cart':
-	 	$select_cart="
-		<select name='cart_type'>
-			<option value='NOTI' selected>$msg[caddie_de_NOTI]</option>
-			<option value='EXPL'>$msg[caddie_de_EXPL]</option>
-			<option value='BULL'>$msg[caddie_de_BULL]</option>
-		</select>
-		<input type='hidden' name='current_print' value='$current_print'/>";
-	 	$c_form=str_replace('!!cart_type_select!!', $select_cart, $cart_form);
-		print $c_form;
-	break;
+		break;
 	case 'del_cart':
 	case 'valid_new_cart':		
 	default:
-		if($current_print) {
+		if(isset($current_print) && $current_print) {
 			$action="print_prepare";
 			require_once("./print_cart.php");
-			
 		} else {
 			aff_paniers($item, "NOTI", "./cart.php?", "add_item", $msg["caddie_add_EXPL"], "", 0, 1, 1);
 		}	
-	break;
+		break;
 }

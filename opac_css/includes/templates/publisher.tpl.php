@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: publisher.tpl.php,v 1.11 2009-05-16 10:52:55 dbellamy Exp $
+// $Id: publisher.tpl.php,v 1.12 2018-01-25 10:13:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
@@ -29,6 +29,7 @@ if ( ! defined( 'EDITEUR_TMPL' ) ) {
 // !!colls!!     collections de l'éditeur
 // !!address!!   adresse complète
 
+global $publisher_level2_display;
 
 // level 2 : affichage général
 $publisher_level2_display = "

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_portfolio.class.php,v 1.4 2014-12-18 16:31:50 dgoron Exp $
+// $Id: cms_module_common_view_portfolio.class.php,v 1.6 2018-08-24 08:44:59 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,8 +15,8 @@ class cms_module_common_view_portfolio extends cms_module_common_view_django{
   <div class='document_item'>
    &nbsp;
    <div class='document_item_content'>
-    <a target='_blank' href='{{document.url}}' title='{% if document.name %}{{document.name}}{% else %}{{document.filename}}{% endif %}' alt='{% if document.name %}{{document.name}}{% else %}{{document.filename}}{% endif %}'>
-     <img src='{{document.thumbnails_url}}'/>
+    <a target='_blank' href='{{document.url}}' title='{% if document.name %}{{document.name}}{% else %}{{document.filename}}{% endif %}'>
+     <img src='{{document.thumbnails_url}}' alt=''/>
      <br />
      <p>{% if document.name %}{{document.name|limitstring 30 \"[...]\"}}{% else %}{{document.filename|limitstring 30 \"[...]\"}}{% endif %}
      <br />
@@ -64,7 +64,9 @@ class cms_module_common_view_portfolio extends cms_module_common_view_django{
 		if($this->parameters['visionneuse']){
 			for($i=0 ; $i<count($datas['documents']) ; $i++){
 				$str_to_replace = substr($render,strpos($render,$datas['documents'][$i]['url'])-1,strlen($datas['documents'][$i]['url'])+2);
-				$render = str_replace($str_to_replace, "'#' onclick='open_visionneuse(open_cms_visionneuse_".$this->id.",".$datas['documents'][$i]['id'].");return false;',", $render);
+				if(trim($str_to_replace)){
+					$render = str_replace($str_to_replace, "'#' onclick='open_visionneuse(open_cms_visionneuse_".$this->id.",".$datas['documents'][$i]['id'].");return false;'", $render);
+				}
 			}
 			$render.= "
 			<script type='text/javascript'>

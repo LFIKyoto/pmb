@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: display.inc.php,v 1.12 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: display.inc.php,v 1.14 2017-10-19 14:21:11 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -34,16 +34,16 @@ while ($ligne3=pmb_mysql_fetch_array($resultat3)) {
 		"&tri2=".$tri2."' >".$resultat_titre." / ".$resultat_auteur."</a>";
 	$retour_affichage.=zshow_isbd($resultat_isbd, $lien);
 	$retour_affichage.="<small><strong>( $resultat_bib_name / $resultat_bib_format )<br /></strong></small><br />";
-	}
+}
 
-$opt_tri[0][0] = "auteur";   $opt_tri[0][1] = $msg[z3950_auteur];
-$opt_tri[1][0] = "isbn";     $opt_tri[1][1] = $msg[z3950_isbn];
-$opt_tri[2][0] = "bib_nom";  $opt_tri[2][1] = $msg[z3950_serveur];
-$opt_tri[3][0] = "titre";    $opt_tri[3][1] = $msg[z3950_titre];
+$opt_tri[0][0] = "auteur";   $opt_tri[0][1] = $msg['z3950_auteur'];
+$opt_tri[1][0] = "isbn";     $opt_tri[1][1] = $msg['z3950_isbn'];
+$opt_tri[2][0] = "bib_nom";  $opt_tri[2][1] = $msg['z3950_serveur'];
+$opt_tri[3][0] = "titre";    $opt_tri[3][1] = $msg['z3950_titre'];
 
 print "<h1>$msg[z3950_result_rech]</h1>";
 
-$msg[z3950_nb_result] = str_replace('!!test_resultat!!', $test_resultat, $msg[z3950_nb_result]);
+$msg['z3950_nb_result'] = str_replace('!!test_resultat!!', $test_resultat, $msg['z3950_nb_result']);
 print "<b><i>$msg[z3950_nb_result]</i></b>&nbsp;&nbsp;&nbsp;&nbsp;";
 
 print "<a href=\"javascript:top.document.location='./catalog.php?categ=z3950&id_notice=$id_notice'\">$msg[z3950_autre_rech]</a>";
@@ -51,17 +51,17 @@ print "<br /><br /><form class='form-$current_module' method='post' action='./ca
 for ($i = 0; $i < 4 ; $i++) {
 	if ($tri1 == $opt_tri[$i][0]) echo "<option value=".$opt_tri[$i][0]." selected>".$opt_tri[$i][1]."</option>";
 		else echo "<option value=".$opt_tri[$i][0].">".$opt_tri[$i][1]."</option>";
-	}         
+}         
 print "</select>&nbsp;$msg[z3950_tri2]:<select name='tri2'>";
 for ($i = 0; $i < 4 ; $i++) {
 	if ($tri2 == $opt_tri[$i][0]) echo "<option value=".$opt_tri[$i][0]." selected>".$opt_tri[$i][1]."</option>";
 		else echo "<option value=".$opt_tri[$i][0].">".$opt_tri[$i][1]."</option>";
-	}
+}
 	
 print "</select><input type=\"hidden\" name=\"last_query_id\" value=\"$last_query_id\">\n";
 print "&nbsp;<input type='submit' name='submit' class='bouton' value='$msg[z3950_trier]'>";
 print "</form>";
 print "<br />$retour_affichage";
-if ($test_resultat==0) print "<p align='center'>$msg[z3950_no_result_rech]</p>\n" ;
+if ($test_resultat==0) print "<p class='center'>$msg[z3950_no_result_rech]</p>\n" ;
 	else print "<script type='text/javascript'>document.getElementById('premierresultat').focus();</script>" ;
 

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_editorial_publications_states.class.php,v 1.6 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: cms_editorial_publications_states.class.php,v 1.8 2016-09-21 09:57:59 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -132,7 +132,7 @@ class cms_editorial_publications_states {
 		if($cms_editorial_publication_state_id){
 			$cms_editorial_publication_state_id+=0;
 			$query = "update cms_editorial_publications_states set ";
-			$clause = "where id_publication_state = ".$cms_editorial_publication_state_id;
+			$clause = "where id_publication_state = '".$cms_editorial_publication_state_id."'";
 		}else{
 			$query = "insert into cms_editorial_publications_states set ";
 			$clause = "";
@@ -150,13 +150,13 @@ class cms_editorial_publications_states {
 		$id+=0;
 		if($id){
 			//on regarde si le statut est utilisé dans les rubriques
-			$query = "select id_section from cms_sections where section_publication_state = ".$id;
+			$query = "select id_section from cms_sections where section_publication_state = '".$id."'";
 			$result = pmb_mysql_query($query);
 			if(pmb_mysql_num_rows($result)){
 				$error = $msg['publication_state_used_in_section'];
 			}else{
 				//on regarde si le statut est utilisé dans les articles
-				$query = "select id_article from cms_articles where article_publication_state = ".$id;
+				$query = "select id_article from cms_articles where article_publication_state = '".$id."'";
 				$result = pmb_mysql_query($query);
 				if(pmb_mysql_num_rows($result)){
 					$error = $msg['publication_state_used_in_article'];
@@ -169,7 +169,7 @@ class cms_editorial_publications_states {
 				alert(\"".$msg['cant_delete'].". ".$error."\");
 			</script>";
 		}else{
-			$query = "delete from cms_editorial_publications_states where id_publication_state = ".$id;
+			$query = "delete from cms_editorial_publications_states where id_publication_state = '".$id."'";
 			pmb_mysql_query($query);
 		}
 	}

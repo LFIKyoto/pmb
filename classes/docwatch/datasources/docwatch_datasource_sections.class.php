@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_datasource_sections.class.php,v 1.4 2015-05-21 15:43:05 dgoron Exp $
+// $Id: docwatch_datasource_sections.class.php,v 1.8 2018-06-18 09:41:38 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -42,6 +42,7 @@ class docwatch_datasource_sections extends docwatch_datasource{
 				$rubrique_instance = new cms_section($id);
 				$rubrique_data = $rubrique_instance->format_datas();
 				$rubrique = array();
+				$rubrique['type'] = 'section';
 				$rubrique['num_section'] = $rubrique_data['id'];
 				$rubrique['title'] = $rubrique_data['title'];
 				$rubrique['summary'] = $rubrique_data['resume'];
@@ -49,10 +50,17 @@ class docwatch_datasource_sections extends docwatch_datasource{
 				$rubrique['logo_url'] = $rubrique_data['logo']['large'];
 				$rubrique['url'] = $this->get_constructed_link("section", $rubrique_data['id']);
 				if($rubrique_data['start_date'] == ""){
-					$rubrique['publication_date'] = $rubrique_data['create_date'];
+					$rubrique['publication_date'] = extraitdate($rubrique_data['create_date']);
 				}
 				else{
 					$rubrique['publication_date'] = $rubrique_data['start_date'];
+				}	
+				if(count($rubrique_data['descriptors'])){
+				    $descriptors = array();
+				    for($i=0 ; $i<count($rubrique_data['descriptors']) ; $i++){
+				        $descriptors[]  = array('id' => $rubrique_data['descriptors'][$i]['id']);
+				    }
+				    $rubrique['descriptors'] = $descriptors;
 				}
 				$rubriques_retour[] = $rubrique;
 			}

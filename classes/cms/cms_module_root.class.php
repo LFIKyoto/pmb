@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_root.class.php,v 1.39 2015-06-15 15:52:15 apetithomme Exp $
+// $Id: cms_module_root.class.php,v 1.57 2018-02-08 16:32:06 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -20,6 +20,9 @@ if(!defined("CMS_DEBUG_MODE_CONSOLE")){
 if(!defined("CMS_DEBUG_MODE_FILE")){
 	define("CMS_DEBUG_MODE_FILE",3);
 }
+if(!defined("CMS_DEBUG_MODE_DUMP")){
+	define("CMS_DEBUG_MODE_DUMP",4);
+}
 //l'autoload a quelques suprises
 global $cms_debug_mode;
 $cms_debug_mode = CMS_DEBUG_MODE_CONSOLE;
@@ -33,8 +36,9 @@ class cms_module_root {
 	protected $cms_build_env;
 	protected $module_folder;
 	protected $managed_params =array();
+	protected $module_class_name = '';
 	
-	function __construct(){
+	public function __construct(){
 		//on va chercher les messages...
 		$this->class_name = get_class($this);
 		$this->load_msg();
@@ -42,11 +46,17 @@ class cms_module_root {
 		$this->fetch_datas_cache();
 		if(!$this->hash){
 			$this->get_hash_from_form();
+		}else{
+			$var_name = $this->class_name."_hash";
+			global ${$var_name};
+			if(isset(${$var_name}) && is_array(${$var_name})){
+				array_shift(${$var_name});
+			}
 		}
 	}
 	
 	protected function fetch_datas_cache(){
-		if($tmp=cms_cache::get_at_cms_cache($this)){
+		if($this->id && ($tmp=cms_cache::get_at_cms_cache($this))){
 			$this->restore($tmp);
 		}else{
 			$this->fetch_datas();
@@ -151,12 +161,14 @@ class cms_module_root {
 		if(!$cache_msg_file || !is_array($cache_msg_file)){
 			$cache_msg_file=array();
 		}
-		if($cache_msg_file[$file]){
+		if(isset($cache_msg_file[$file])){
 			$this->msg=$cache_msg_file[$file];
 		}elseif(file_exists($file)){
 			$messages = new XMLlist($file);
 			$messages->analyser();
-			$this->msg = array_merge($this->msg, $messages->table);
+			if(is_array($messages->table)){
+				$this->msg = array_merge($this->msg, $messages->table);
+			}
 			$cache_msg_file[$file]=$this->msg;
 			return true;
 		}else{
@@ -244,6 +256,9 @@ class cms_module_root {
 			$mode = $cms_debug_mode;
 		}
 		switch ($mode){
+			case CMS_DEBUG_MODE_DUMP :
+				var_dump($elem);
+				break;
 			//impression à l'écran	
 			case CMS_DEBUG_MODE_PHP :			
 				highlight_string(print_r($elem,true));
@@ -254,7 +269,7 @@ class cms_module_root {
 				<!-- Debug/Verbose mode -->
 				<script type='text/javascript'>
 					if(typeof console != 'undefined') {
-						console.log(".json_encode(cms_module_root::utf8_normalize($elem)).");
+						console.log(".encoding_normalize::json_encode($elem).");
 					}
 				</script>";
 				break;
@@ -276,7 +291,7 @@ class cms_module_root {
 	public function get_default_language($module){
 		global $base_path;
 		//si c'est un module, on a déjà lu le manifest...
-		if($this->manifest){
+		if(isset($this->manifest)){
 			$default_language = $this->informations['default_language'];
 		}else{
 			//sinon, le cas des common est à part, on sait que c'est en français...
@@ -328,7 +343,7 @@ class cms_module_root {
 		}
 	}
 	
-	public function get_headers(){
+	public function get_headers($datas=array()){
 		return array();	
 	}
 
@@ -402,7 +417,7 @@ class cms_module_root {
 		if(method_exists($this,"get_dom_id")){
 			return $this->get_dom_id();
 		}else{
-			$query = "select cadre_object from cms_cadres where id_cadre = ".$this->cadre_parent;
+			$query = "select cadre_object from cms_cadres where id_cadre = '".$this->cadre_parent."'";
 			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				$obj = pmb_mysql_result($result,0,0);
@@ -413,6 +428,8 @@ class cms_module_root {
 	
 	protected function fetch_managed_datas($type){
 		global $dbh;
+		
+		$this->managed_datas = '';
 		switch($type){
 			case "conditions" :
 			case "datasources" :
@@ -422,7 +439,9 @@ class cms_module_root {
 					$result = pmb_mysql_query($query,$dbh);
 					if(pmb_mysql_num_rows($result)){
 						$datas = unserialize(pmb_mysql_result($result,0,0));
-						$this->managed_datas = $datas[$type][$this->class_name];
+						if(isset($datas[$type][$this->class_name])) {
+							$this->managed_datas = $datas[$type][$this->class_name];
+						}
 					}
 				}
 				break;
@@ -547,7 +566,7 @@ class cms_module_root {
 			
 			while( $row = pmb_mysql_fetch_object($result)){
 				$form.= "
-					<option value='".$row->id_page."' ".($row->id_page == $this->parameters['links'][$type]['page'] ? "selected='selected'" : "").">".$this->format_text($row->page_name)."</option>";
+					<option value='".$row->id_page."' ".(isset($this->parameters['links'][$type]['page']) && $row->id_page == $this->parameters['links'][$type]['page'] ? "selected='selected'" : "").">".$this->format_text($row->page_name)."</option>";
 			}
 		}
 		$form.="		
@@ -559,7 +578,7 @@ class cms_module_root {
 					}
 				</script>";
 		$href = "";
-		if($this->parameters['links'][$type]['page']){
+		if(isset($this->parameters['links'][$type]['page']) && $this->parameters['links'][$type]['page']){
 			$href = "./ajax.php?module=cms&elem=".$this->class_name."&categ=module&action=get_env&name=".$this->class_name."_page_".$type."_var"."&pageid=".$this->parameters['links'][$type]['page']."&var=".$this->parameters['links'][$type]['var'];
 		}
 		$form.="
@@ -592,11 +611,11 @@ class cms_module_root {
 		$page = $this->class_name."_link_".$type;
 		$var = $this->class_name."_page_".$type."_var";
 		
-		global $$page;
-		global $$var;
+		global ${$page};
+		global ${$var};
 		$this->parameters['links'][$type] = array(
-			'page' => $$page+0,
-			'var'  => $$var
+			'page' => ${$page}+0,
+			'var'  => ${$var}
 		);
 	}
 
@@ -604,7 +623,7 @@ class cms_module_root {
 		$link = "";
 		switch($type){
 			case "notice" :
-				if ($this->parameters['links'][$type]['page']) {
+				if (isset($this->parameters['links'][$type]['page']) && $this->parameters['links'][$type]['page']) {
 					$link = "./index.php?lvl=cmspage&pageid=".$this->parameters['links'][$type]['page']."&".$this->parameters['links'][$type]['var']."=".$value;
 				} else {
 					if (!$is_bulletin) {
@@ -615,13 +634,16 @@ class cms_module_root {
 				}
 				break;
 			case "shelve":
-				if ($this->parameters['links'][$type]['page']) {
+				if (isset($this->parameters['links'][$type]['page']) && $this->parameters['links'][$type]['page']) {
 					$link = "./index.php?lvl=cmspage&pageid=".$this->parameters['links'][$type]['page']."&".$this->parameters['links'][$type]['var']."=".$value;
 				} else {
 					$link = "./index.php?lvl=etagere_see&id=".$value;
 				}
 				break;
-			case "article":
+			case "shelve_to_cart":
+				$link = "cart_info.php?lvl=etagere_see&id=".$value;
+				break;
+			case "article" :
 			case "section" :
 			default :
 				$link = "./index.php?lvl=cmspage&pageid=".$this->parameters['links'][$type]['page']."&".$this->parameters['links'][$type]['var']."=".$value;
@@ -653,8 +675,8 @@ class cms_module_root {
 	
 	protected function get_value_from_form($name){
 		$var_name = $this->get_form_value_name($name);
-		global $$var_name;
-		return $$var_name;
+		global ${$var_name};
+		return ${$var_name};
 	}
 	
 	protected function get_hash_form(){
@@ -665,9 +687,9 @@ class cms_module_root {
 	public function get_hash_from_form(){
 		if(!$this->hash){
 			$var_name = $this->class_name."_hash";
-			global $$var_name;
-			if(is_array($$var_name)){
-				$this->hash = array_shift($$var_name);
+			global ${$var_name};
+			if(is_array(${$var_name})){
+				$this->hash = array_shift(${$var_name});
 			}
 		}
 	}
@@ -687,14 +709,14 @@ class cms_module_root {
 		$query = "insert into used_hash select cadre_content_hash as hash from cms_cadre_content";
 		pmb_mysql_query($query,$dbh);
 		//on nettoie !
-		$query = "delete from cms_hash left join used_hash on cms_hash.hash = used_hash.hash where used_hash is null";
+		$query = "delete cms_hash from cms_hash left join used_hash on cms_hash.hash = used_hash.hash where cms_hash.hash is null";
 		pmb_mysql_query($query,$dbh);
 	}
 	
 	protected function prefix_var_tree($tree,$prefix){
 		for($i=0 ; $i<count($tree) ; $i++){
 			$tree[$i]['var'] = $prefix.".".$tree[$i]['var'];
-			if($tree[$i]['children']){
+			if(isset($tree[$i]['children']) && $tree[$i]['children']){
 				$tree[$i]['children'] = $this->prefix_var_tree($tree[$i]['children'],$prefix);
 			}
 		}
@@ -702,6 +724,7 @@ class cms_module_root {
 	}
 	
 	protected static function clean_cp1252($str,$charset){
+		$cp1252_map = array();
 		switch($charset){
 			case "utf-8" :
 				$cp1252_map = array(
@@ -735,6 +758,7 @@ class cms_module_root {
 				);
 				break;
 			case "iso8859-1" :
+			case "iso-8859-1" :
 				$cp1252_map = array(
 					"\x80" => "EUR", /* EURO SIGN */
 					"\x82" => "\xab", /* SINGLE LOW-9 QUOTATION MARK */
@@ -767,5 +791,74 @@ class cms_module_root {
 				break;
 		}
 		return strtr($str, $cp1252_map);
+	}
+	
+	public static function get_platform(){
+		$user_agent = (isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : ''); 
+		
+		if((strpos($user_agent, "iPhone") !== FALSE) || (strpos($user_agent, "iPad") !== FALSE)){
+			$os = "iOS";
+		}elseif(strpos($user_agent, "Windows Phone") !== FALSE){
+			$os = "Windows Phone";
+		}elseif(strpos($user_agent, "Windows") !== FALSE){
+			$os = "Windows";
+		}elseif ((strpos($user_agent, "Mac") !== FALSE) || (strpos($user_agent, "PPC") !== FALSE)){
+			$os = "Mac";
+		}elseif (strpos($user_agent, "Android") !== FALSE){
+			$os = "Android";
+		}elseif (strpos($user_agent, "Linux") !== FALSE){
+			$os = "Linux";
+		}elseif (strpos($user_agent, "BlackBerry") !== FALSE){
+			$os = "BlackBerry";
+		}elseif (strpos($user_agent, "FreeBSD") !== FALSE){
+			$os = "FreeBSD";
+		}elseif (strpos($user_agent, "SunOS") !== FALSE){
+			$os = "SunOS";
+		}elseif (strpos($user_agent, "IRIX") !== FALSE){
+			$os = "IRIX";
+		}elseif (strpos($user_agent, "BeOS") !== FALSE){
+			$os = "BeOS";
+		}elseif (strpos($user_agent, "OS/2") !== FALSE){
+			$os = "OS/2";
+		}elseif (strpos($user_agent, "AIX") !== FALSE){
+			$os = "AIX";
+		}else{
+			$os = "Autre";
+		}
+		
+		return $os;
+	}
+	
+	public static function get_browser(){
+		$user_agent = (isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : ''); 
+		
+		if (strpos($user_agent, 'Opera') || strpos($user_agent, 'OPR/')){
+			$browser = 'Opera';
+		}elseif (strpos($user_agent, 'Edge')){
+			$browser = 'Edge';
+		}elseif (strpos($user_agent, 'Chrome')){
+			$browser = 'Chrome';
+		}elseif (strpos($user_agent, 'Safari')){
+			$browser = 'Safari';
+		}elseif (strpos($user_agent, 'Firefox')){
+			$browser = 'Firefox';
+		}elseif (strpos($user_agent, 'MSIE') || strpos($user_agent, 'Trident/7')){
+			$browser = 'Internet Explorer';
+		}elseif (strpos($user_agent, 'SamsungBrowser')){
+			$browser = 'Samsung Browser';
+		}else{
+			$browser = 'Other';
+		}
+		
+		return $browser;
+		
+	}
+	
+	public static function int_caster(&$item){
+		return $item*1;
+	} 
+	
+	public function get_id(){
+		return $this->id;
 	}
 }

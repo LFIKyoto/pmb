@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: track_clicks.js,v 1.1.2.3 2015-11-24 14:02:37 arenou Exp $
+// $Id: track_clicks.js,v 1.4 2015-11-24 14:03:26 arenou Exp $
 
 function _trackClick(event){
 	var el = event.srcElement || event.target;

@@ -2,14 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_aix.inc.php,v 1.8 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: func_aix.inc.php,v 1.10 2018-01-09 08:54:31 jpermanne Exp $
 
 
 if (stristr ( $_SERVER ['REQUEST_URI'], ".inc.php" ))
 	die ( "no access" );
 
 if ($categ == 'import' && $sub == 'import_inv' && $action == 'afterupload') {
-	
+
 	print "<div id='contenu-frame'>";
 	echo window_title ( $msg [520] . $msg [1003] . $msg [1001] );
 	import_inv ();
@@ -18,7 +18,7 @@ if ($categ == 'import' && $sub == 'import_inv' && $action == 'afterupload') {
 }
 
 if ($categ == 'import' && $sub == 'update_aut' && $action == 'afterupload') {
-	
+
 	print "<div id='contenu-frame'>";
 	echo window_title ( $msg [520] . $msg [1003] . $msg [1001] );
 	update_aut ();
@@ -27,6 +27,7 @@ if ($categ == 'import' && $sub == 'update_aut' && $action == 'afterupload') {
 }
 
 // DEBUT paramétrage propre à la base de données d'importation :
+global $class_path; //Nécessaire pour certaines inclusions
 require_once ($class_path . "/notice.class.php");
 require_once ($class_path . "/serials.class.php");
 require_once ($class_path . "/categories.class.php");
@@ -43,7 +44,7 @@ $tpl_beforeupload_expl .= "
 		        <input name=\"categ\" type=\"hidden\" value=\"import\" />
                 <input name=\"sub\" type=\"hidden\" value=\"import_inv\" />
                 <input name=\"action\" type=\"hidden\" value=\"afterupload\" />
-			</div>	
+			</div>
 		    <br />
 			<div class='row'>
 				<img src='../../images/licence.png' />
@@ -65,7 +66,7 @@ $tpl_beforeupload_expl .= "
 		        <input name=\"categ\" type=\"hidden\" value=\"import\" />
                 <input name=\"sub\" type=\"hidden\" value=\"update_aut\" />
                 <input name=\"action\" type=\"hidden\" value=\"afterupload\" />
-			</div>	
+			</div>
 		</div>
 		<div class='row'>
 			<input type='submit' class='bouton' value='Corriger les auteurs' />
@@ -74,11 +75,11 @@ $tpl_beforeupload_expl .= "
 	";
 
 function recup_noticeunimarc_suite($notice) {
-	
+
 	global $info_461, $info_463, $info_464;
 	global $info_606_a;
 	global $info_900, $info_901, $info_902, $info_903, $info_904, $info_905, $info_906;
-	
+
 	$info_461 = "";
 	$info_463 = "";
 	$info_464 = ""; //Compatibilite import memonotices
@@ -89,9 +90,9 @@ function recup_noticeunimarc_suite($notice) {
 	$info_904 = "";
 	$info_905 = "";
 	$info_906 = "";
-	
+
 	$record = new iso2709_record ( $notice, AUTO_UPDATE );
-	
+
 	for($i = 0; $i < count ( $record->inner_directory ); $i ++) {
 		$cle = $record->inner_directory [$i] ['label'];
 		switch ($cle) {
@@ -109,11 +110,11 @@ function recup_noticeunimarc_suite($notice) {
 				break;
 			default :
 				break;
-		
+
 		} /* end of switch */
-	
+
 	} /* end of for */
-	
+
 	$info_606_a = $record->get_subfield_array_array ( "606", "a" );
 	$info_900 = $record->get_subfield_array_array ( "900", "a" );
 	$info_901 = $record->get_subfield_array_array ( "901", "a" );
@@ -129,22 +130,22 @@ function recup_noticeunimarc_suite($notice) {
 function import_new_notice_suite() {
 	global $dbh;
 	global $notice_id, $bulletin_ex;
-	
+
 	global $info_461, $info_463, $info_464;
 	global $info_606_a;
 	global $info_900, $info_901, $info_902, $info_903, $info_904, $info_905, $info_906;
 	global $pmb_keyword_sep;
 	$bulletin_ex = 0;
 	$is_object = false;
-	
+
 	//compatibilite avec import memonotices
 	if (is_array ( $info_464 )) {
 		unset ( $info_461 );
 		unset ( $info_463 );
-		
+
 		$info_461 [0] ['t'] = $info_464 [0] ['t'];
 		$info_461 [0] ['9'] = 'lnk:perio';
-		
+
 		$info_463 [0] ['v'] = $info_464 [0] ['v'];
 		$info_463 [0] ['e'] = $info_464 [0] ['d'];
 		$info_463 [0] ['9'] = 'lnk:bull';
@@ -153,20 +154,20 @@ function import_new_notice_suite() {
 			$info_904 [0] = $dc;
 		}
 	}
-	
+
 	//Si article
 	if (is_array ( $info_461 ) && is_array ( $info_463 )) {
-		
+
 		//recuperation infos notice
 		$requete = "select * from notices where notice_id=$notice_id";
 		$resultat = pmb_mysql_query( $requete );
 		$r = pmb_mysql_fetch_object( $resultat );
-		
+
 		//Notice chapeau existe-t-elle ?
 		$requete = "select notice_id from notices where tit1='" . addslashes ( $info_461 [0] ['t'] ) . "' and niveau_hierar='1' and niveau_biblio='s'";
 		$resultat = pmb_mysql_query( $requete );
 		if (@pmb_mysql_num_rows( $resultat )) {
-			
+
 			//Si oui, récupération id
 			$chapeau_id = pmb_mysql_result( $resultat, 0, 0 );
 			//Bulletin existe-t-il ?
@@ -201,9 +202,9 @@ function import_new_notice_suite() {
 				}
 				$bulletin_id = $bulletin->update ( $info );
 			}
-		
+
 		} else {
-			
+
 			//Si non, création notice chapeau et bulletin
 			$chapeau = new serial ( );
 			$info = array ();
@@ -213,7 +214,7 @@ function import_new_notice_suite() {
 			$info ['typdoc'] = $r->typdoc;
 			$chapeau->update ( $info );
 			$chapeau_id = $chapeau->serial_id;
-			
+
 			$bulletin = new bulletinage ( "", $chapeau_id );
 			$info = array ();
 			$info ['bul_titre'] = "Bulletin " . $info_463 [0] ['v'];
@@ -238,9 +239,9 @@ function import_new_notice_suite() {
 			}
 			$bulletin_id = $bulletin->update ( $info );
 		}
-		
+
 		$bulletin_ex = $bulletin_id;
-		
+
 		if ($r->tit1 == '_OBJECT_BULLETIN_' || (is_array ( $info_464 ) && $info_464 [0] ['z'] == 'objet')) { //$info_464[0]['z']=='objet' >> Compatibilite import memonotices
 			$is_object = true;
 			//notice de bulletin a supprimer
@@ -251,15 +252,15 @@ function import_new_notice_suite() {
 			if (is_array ( $info_464 ) && $info_464 [0] ['p'] != '') {
 				$np = ", npages='" . addslashes ( $info_464 [0] ['p'] ) . "' ";
 			}
-			$requete = "update notices set niveau_biblio='a', niveau_hierar='2', year='".addslashes ( $info_463 [0] ['e'] )."'" . $np . ", date_parution='".$info ['date_date']."' where notice_id=$notice_id";
+			$requete = "update notices set niveau_biblio='a', niveau_hierar='2', code='', year='".addslashes ( $info_463 [0] ['e'] )."'" . $np . ", date_parution='".$info ['date_date']."' where notice_id=$notice_id";
 			pmb_mysql_query( $requete );
 			$requete = "insert into analysis (analysis_bulletin,analysis_notice) values($bulletin_id,$notice_id)";
 			pmb_mysql_query( $requete );
 		}
 	}
-	
+
 	if (! $is_object) {
-		
+
 		//Traitement du thésaurus
 		$unknown_desc = array ();
 		$ordre_categ = 0;
@@ -270,7 +271,7 @@ function import_new_notice_suite() {
 				//dans le thesaurus par defaut et dans la langue de l'interface
 				$libelle = addslashes ( $descripteur );
 				$categ_id = categories::searchLibelle ( $libelle );
-				
+
 				if ($categ_id) {
 					$requete = "INSERT INTO notices_categories (notcateg_notice,num_noeud,ordre_categorie) values($notice_id,$categ_id,$ordre_categ)";
 					pmb_mysql_query( $requete, $dbh );
@@ -288,13 +289,13 @@ function import_new_notice_suite() {
 			$il = trim ( pmb_mysql_result( $ril, 0, 0 ) );
 			if ($il)
 				$mots_cles = $il . $pmb_keyword_sep . $mots_cles;
-			
+
 			$requete = "update notices set index_l='" . addslashes ( $mots_cles ) . "', index_matieres=' " . addslashes ( strip_empty_words ( $mots_cles ) ) . " ' where notice_id=$notice_id";
 			pmb_mysql_query( $requete, $dbh );
 		}
-		
+
 		$notes = '';
-		
+
 		//Thème
 		$qn = "select idchamp from notices_custom where name='theme' ";
 		$rn = pmb_mysql_query( $qn, $dbh );
@@ -302,7 +303,7 @@ function import_new_notice_suite() {
 			$idc_theme = pmb_mysql_result( $rn, 0, 0 );
 		}
 		if (count ( $info_900 ) && $idc_theme) {
-			
+
 			for($i = 0; $i < count ( $info_900 ); $i ++) {
 				for($j = 0; $j < count ( $info_900 [$i] ); $j ++) {
 					$requete = "select notices_custom_list_value from notices_custom_lists where notices_custom_list_lib='" . addslashes ( $info_900 [$i] [$j] ) . "' and notices_custom_champ=$idc_theme ";
@@ -318,7 +319,7 @@ function import_new_notice_suite() {
 				}
 			}
 		}
-		
+
 		//Genres
 		$qn = "select idchamp from notices_custom where name='genre' ";
 		$rn = pmb_mysql_query( $qn, $dbh );
@@ -326,7 +327,7 @@ function import_new_notice_suite() {
 			$idc_genre = pmb_mysql_result( $rn, 0, 0 );
 		}
 		if (count ( $info_901 ) && $idc_genre) {
-			
+
 			for($i = 0; $i < count ( $info_901 ); $i ++) {
 				for($j = 0; $j < count ( $info_901 [$i] ); $j ++) {
 					$requete = "select notices_custom_list_value from notices_custom_lists where notices_custom_list_lib='" . addslashes ( $info_901 [$i] [$j] ) . "' and notices_custom_champ=$idc_genre ";
@@ -344,7 +345,7 @@ function import_new_notice_suite() {
 				}
 			}
 		}
-		
+
 		//Discipline
 		$qn = "select idchamp from notices_custom where name='discipline' ";
 		$rn = pmb_mysql_query( $qn, $dbh );
@@ -352,7 +353,7 @@ function import_new_notice_suite() {
 			$idc_discipline = pmb_mysql_result( $rn, 0, 0 );
 		}
 		if (count ( $info_902 ) && $idc_discipline) {
-			
+
 			for($i = 0; $i < count ( $info_902 ); $i ++) {
 				for($j = 0; $j < count ( $info_902 [$i] ); $j ++) {
 					$requete = "select notices_custom_list_value from notices_custom_lists where notices_custom_list_lib='" . addslashes ( $info_902 [$i] [$j] ) . "' and notices_custom_champ=$idc_discipline ";
@@ -370,7 +371,7 @@ function import_new_notice_suite() {
 				}
 			}
 		}
-		
+
 		//Type de nature
 		$qn = "select idchamp from notices_custom where name='type_nature' ";
 		$rn = pmb_mysql_query( $qn, $dbh );
@@ -388,10 +389,10 @@ function import_new_notice_suite() {
 			$idc_periode = pmb_mysql_result( $rn, 0, 0 );
 		}
 		if (count ( $info_905 )) {
-			
+
 			for($i = 0; $i < count ( $info_905 ); $i ++) {
 				for($j = 0; $j < count ( $info_905 [$i] ); $j ++) {
-					
+
 					//essai dans type de nature
 					$done = FALSE;
 					if ($idc_type_nature) {
@@ -404,7 +405,7 @@ function import_new_notice_suite() {
 							$done = TRUE;
 						}
 					}
-					
+
 					//essai dans genre
 					if (! $done && $idc_genre) {
 						$requete = "select notices_custom_list_value from notices_custom_lists where notices_custom_list_lib='" . addslashes ( $info_905 [$i] [$j] ) . "' and notices_custom_champ=$idc_genre ";
@@ -416,7 +417,7 @@ function import_new_notice_suite() {
 							$done = TRUE;
 						}
 					}
-					
+
 					//essai dans theme
 					if (! $done && $idc_theme) {
 						$requete = "select notices_custom_list_value from notices_custom_lists where notices_custom_list_lib='" . addslashes ( $info_905 [$i] [$j] ) . "' and notices_custom_champ=$idc_theme ";
@@ -428,7 +429,7 @@ function import_new_notice_suite() {
 							$done = TRUE;
 						}
 					}
-					
+
 					//essai dans discipline
 					if (! $done && $idc_discipline) {
 						$requete = "select notices_custom_list_value from notices_custom_lists where notices_custom_list_lib='" . addslashes ( $info_905 [$i] [$j] ) . "' and notices_custom_champ=$idc_discipline ";
@@ -440,7 +441,7 @@ function import_new_notice_suite() {
 							$done = TRUE;
 						}
 					}
-					
+
 					//essai dans pays
 					if (! $done) {
 						$done_pa = FALSE;
@@ -461,8 +462,8 @@ function import_new_notice_suite() {
 								}
 							}
 						}
-						
-						//essai dans periode 
+
+						//essai dans periode
 						$done_pe = FALSE;
 						if (! $done && $idc_periode) {
 							$i_periode = strip_empty_chars ( $info_905 [$i] [$j] );
@@ -484,25 +485,25 @@ function import_new_notice_suite() {
 						if ($done_pa && $done_pe)
 							$done = TRUE;
 					}
-					
+
 					//sinon dans notes
 					if (! $done) {
 						if ($notes)
 							$notes .= "\n";
 						$notes .= 'type de nature : ' . $info_905 [$i] [$j];
 					}
-				
+
 				}
 			}
 		}
-		
+
 		//Niveau
 		if (count ( $info_906 )) {
 			$qn = "select idchamp from notices_custom where name='niveau' ";
 			$rn = pmb_mysql_query( $qn, $dbh );
 			if (pmb_mysql_num_rows( $rn )) {
 				$idc_niveau = pmb_mysql_result( $rn, 0, 0 );
-				
+
 				for($i = 0; $i < count ( $info_906 ); $i ++) {
 					for($j = 0; $j < count ( $info_906 [$i] ); $j ++) {
 						$requete = "select notices_custom_list_value from notices_custom_lists where notices_custom_list_lib='" . addslashes ( $info_906 [$i] [$j] ) . "' and notices_custom_champ=$idc_niveau ";
@@ -521,7 +522,7 @@ function import_new_notice_suite() {
 				}
 			}
 		}
-		
+
 		//notes
 		if ($notes) {
 			$notes .= "\n";
@@ -529,7 +530,7 @@ function import_new_notice_suite() {
 			$q = "update notices set n_contenu=concat('" . $notes . "',n_contenu) where notice_id='" . $notice_id . "' ";
 			pmb_mysql_query( $q, $dbh );
 		}
-		
+
 		//Année de péremption
 		if ($info_903 [0]) {
 			$qn = "select idchamp from notices_custom where name='annee_peremption' ";
@@ -540,7 +541,7 @@ function import_new_notice_suite() {
 				pmb_mysql_query( $requete, $dbh );
 			}
 		}
-		
+
 		//Date de saisie
 		if ($info_904 [0]) {
 			$qn = "select idchamp from notices_custom where name='date_creation' ";
@@ -559,20 +560,20 @@ function import_new_notice_suite() {
 // TRAITEMENT DES EXEMPLAIRES ICI
 function traite_exemplaires() {
 	global $msg, $dbh;
-	
+
 	global $prix, $notice_id, $info_995, $typdoc_995, $tdoc_codage, $book_lender_id, $section_995, $sdoc_codage, $book_statut_id, $locdoc_codage, $codstatdoc_995, $statisdoc_codage, $cote_mandatory;
-	
+
 	global $info_461, $bulletin_ex;
-	
+
 	// lu en 010$d de la notice
 	$price = $prix [0];
-	
+
 	// la zone 995 est répétable
 	for($nb_expl = 0; $nb_expl < sizeof ( $info_995 ); $nb_expl ++) {
-		
+
 		/* RAZ expl */
 		$expl = array ();
-		
+
 		/* préparation du tableau à passer à la méthode */
 		$expl ['cb'] = $info_995 [$nb_expl] ['f'];
 		if (($bulletin_ex) && (is_array ( $info_461 ))) {
@@ -582,19 +583,19 @@ function traite_exemplaires() {
 			$expl ['notice'] = $notice_id;
 			$expl ['bulletin'] = 0;
 		}
-		
+
 		$data_doc = array ();
 		$data_doc ['duree_pret'] = 0; /* valeur par défaut */
 		$data_doc ['tdoc_codage_import'] = $info_995 [$nb_expl] ['r'];
 		$data_doc ['tdoc_libelle'] = $info_995 [$nb_expl] ['r'];
 		$data_doc ['tdoc_owner'] = 0;
 		$expl ['typdoc'] = docs_type::import ( $data_doc );
-		
+
 		$expl ['cote'] = $info_995 [$nb_expl] ['k'];
 		if (! trim ( $expl ['cote'] )) {
 			$expl ['cote'] = "INDETERMINE";
 		}
-		
+
 		$data_doc = array ();
 		if (! $info_995 [$nb_expl] ['q']) {
 			$info_995 [$nb_expl] ['q'] = "INDETERMINE";
@@ -603,15 +604,15 @@ function traite_exemplaires() {
 		$data_doc ['sdoc_codage_import'] = $info_995 [$nb_expl] ['q'];
 		$data_doc ['sdoc_owner'] = 0;
 		$expl ['section'] = docs_section::import ( $data_doc );
-		
+
 		$expl ['statut'] = $book_statut_id;
-		
+
 		$data_doc = array ();
 		$data_doc ['location_libelle'] = "CDI";
 		$data_doc ['locdoc_codage_import'] = "CDI";
 		$data_doc ['locdoc_owner'] = 0;
 		$expl ['location'] = docs_location::import ( $data_doc );
-		
+
 		$data_doc = array ();
 		if (! $info_995 [$nb_expl] ['q']) {
 			$info_995 [$nb_expl] ['q'] = "IN";
@@ -620,18 +621,18 @@ function traite_exemplaires() {
 		$data_doc ['statisdoc_codage_import'] = $info_995 [$nb_expl] ['q'];
 		$data_doc ['statisdoc_owner'] = 0;
 		$expl ['codestat'] = docs_codestat::import ( $data_doc );
-		
+
 		$expl ['note'] = $info_995 [$nb_expl] ['u'];
 		$expl ['prix'] = $price;
 		$expl ['expl_owner'] = $book_lender_id;
 		$expl ['cote_mandatory'] = $cote_mandatory;
-		
+
 		$expl_id = exemplaire::import ( $expl );
 		if ($expl_id == 0) {
 			$nb_expl_ignores ++;
 		}
-		
-	//debug : affichage zone 995 
+
+	//debug : affichage zone 995
 	/*
 		echo "995\$a =".$info_995[$nb_expl]['a']."<br />";
 		echo "995\$b =".$info_995[$nb_expl]['b']."<br />";
@@ -652,13 +653,13 @@ function traite_exemplaires() {
 
 // fonction spécifique d'export de la zone 995
 function export_traite_exemplaires($ex = array()) {
-	
+
 	$subfields ["a"] = $ex->lender_libelle;
 	$subfields ["c"] = $ex->lender_libelle;
 	$subfields ["f"] = $ex->expl_cb;
 	$subfields ["k"] = $ex->expl_cote;
 	$subfields ["u"] = $ex->expl_note;
-	
+
 	if ($ex->statusdoc_codage_import)
 		$subfields ["o"] = $ex->statusdoc_codage_import;
 	if ($ex->tdoc_codage_import)
@@ -669,34 +670,34 @@ function export_traite_exemplaires($ex = array()) {
 		$subfields ["q"] = $ex->sdoc_codage_import;
 	else
 		$subfields ["q"] = "u";
-	
+
 	global $export996;
 	$export996 ['f'] = $ex->expl_cb;
 	$export996 ['k'] = $ex->expl_cote;
 	$export996 ['u'] = $ex->expl_note;
-	
+
 	$export996 ['m'] = substr ( $ex->expl_date_depot, 0, 4 ) . substr ( $ex->expl_date_depot, 5, 2 ) . substr ( $ex->expl_date_depot, 8, 2 );
 	$export996 ['n'] = substr ( $ex->expl_date_retour, 0, 4 ) . substr ( $ex->expl_date_retour, 5, 2 ) . substr ( $ex->expl_date_retour, 8, 2 );
-	
+
 	$export996 ['a'] = $ex->lender_libelle;
 	$export996 ['b'] = $ex->expl_owner;
-	
+
 	$export996 ['v'] = $ex->location_libelle;
 	$export996 ['w'] = $ex->ldoc_codage_import;
-	
+
 	$export996 ['x'] = $ex->section_libelle;
 	$export996 ['y'] = $ex->sdoc_codage_import;
-	
+
 	$export996 ['e'] = $ex->tdoc_libelle;
 	$export996 ['r'] = $ex->tdoc_codage_import;
-	
+
 	$export996 ['1'] = $ex->statut_libelle;
 	$export996 ['2'] = $ex->statusdoc_codage_import;
 	$export996 ['3'] = $ex->pret_flag;
-	
+
 	global $export_traitement_exemplaires;
 	$export996 ['0'] = $export_traitement_exemplaires;
-	
+
 	return $subfields;
 
 }
@@ -704,9 +705,9 @@ function export_traite_exemplaires($ex = array()) {
 function import_inv() {
 	global $dbh;
 	global $text, $n, $t_xml;
-	
-	//La structure du fichier xml doit être la suivante : 
-	/*    
+
+	//La structure du fichier xml doit être la suivante :
+	/*
 	<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 	<inm:Results productTitle="Superdoc Premium" productVersion="9.00" xmlns:inm="http://www.inmagic.com/webpublisher/query">
 	<inm:Recordset setCount="241">
@@ -726,7 +727,7 @@ function import_inv() {
 	<inm:Inventaire />
 	</inm:Record>...
 	*/
-	
+
 	//Upload du fichier
 	if (! ($_FILES ['userfile'] ['tmp_name'])) {
 		print "Cliquez sur Pr&eacute;c&eacute;dent et choisissez un fichier";
@@ -737,27 +738,27 @@ function import_inv() {
 		exit ();
 	}
 	$fichier = @fopen ( "../../temp/" . basename ( $_FILES ['userfile'] ['tmp_name'] ), "r" );
-	
+
 	if ($fichier) {
-		
+
 		print "<br /><br />";
 		print "T&eacute;l&eacute;chargement du fichier effectu&eacute;.<br /><hr />";
-		
+
 		print "Traitement du fichier en cours.<br />";
-		
+
 		$nb_ok = 0;
 		$tab_err = array ();
-		
+
 		//definition header et footer
 		$header = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><inm:results>";
 		$footer = "</inm:results>";
-		
+
 		while ( ! feof ( $fichier ) ) {
-			
+
 			$buffer = "";
 			$deb = FALSE;
 			$i = 0;
-			
+
 			while ( $i < 200 && ! feof ( $fichier ) ) {
 				$line = fgets ( $fichier, 4096 );
 				if ((strpos ( $line, "<inm:Recordset" ) === FALSE) && (strpos ( $line, "<inm:Record" ) !== FALSE)) {
@@ -771,36 +772,36 @@ function import_inv() {
 					$i ++;
 				}
 			}
-			
+
 			if ($buffer) {
 				$buffer = $header . $buffer . $footer;
-				
+
 				//parse buffer
 				$text = '';
 				$t_xml = array ();
 				$n = 0;
-				
+
 				$encoding = "UTF-8";
 				$parser = xml_parser_create ( $encoding );
 				xml_parser_set_option ( $parser, XML_OPTION_TARGET_ENCODING, $encoding );
 				xml_parser_set_option ( $parser, XML_OPTION_CASE_FOLDING, true );
 				xml_set_element_handler ( $parser, "debutBalise", "finBalise" );
 				xml_set_character_data_handler ( $parser, "texte" );
-				
+
 				if (! xml_parse ( $parser, $buffer, TRUE )) {
 					die ( sprintf ( "erreur XML %s à la ligne: %d", xml_error_string ( xml_get_error_code ( $parser ) ), xml_get_current_line_number ( $parser ) ) );
 				}
 				xml_parser_free ( $parser );
-				
+
 				//traitement des enregistrements
 				for($i = 1; $i <= count ( $t_xml ); $i ++) {
-					
+
 					//il faut un cb exemplaire et un n° d'inventaire
 					$t_xml [$i] ['INM:CODE-BARRE'] [0] = trim ( $t_xml [$i] ['INM:CODE-BARRE'] [0] );
 					$t_xml [$i] ['INM:NUMERO-INVENTAIRE'] [0] = trim ( $t_xml [$i] ['INM:NUMERO-INVENTAIRE'] [0] );
-					
+
 					if (($t_xml [$i] ['INM:CODE-BARRE'] [0] != '') && ($t_xml [$i] ['INM:NUMERO-INVENTAIRE'] [0] != '')) {
-						
+
 						//id exemplaire
 						$expl_id = 0;
 						$q = "select expl_id from exemplaires where expl_cb='" . $t_xml [$i] ['INM:CODE-BARRE'] [0] . "' ";
@@ -811,7 +812,7 @@ function import_inv() {
 							$tab_err [] = $t_xml [$i] ['INM:ID'] [0];
 							continue;
 						}
-						
+
 						//insert n° inventaire
 						$qn = "select idchamp from expl_custom left join expl_custom_values on expl_custom_origine=idchamp where name='no_inventaire' and expl_custom_small_text is null ";
 						$rn = pmb_mysql_query( $qn, $dbh );
@@ -821,27 +822,27 @@ function import_inv() {
 							pmb_mysql_query( $requete, $dbh );
 							$nb_ok ++;
 						}
-					
+
 					}
 				}
 			}
 		}
-		
+
 		fclose ( $fichier );
 		unlink ( "../../temp/" . basename ( $_FILES ['userfile'] ['tmp_name'] ) );
 		print "Traitement du fichier termin&eacute;.";
 		print "<br /><hr />";
-		
+
 		print "Nombre de n° d&apos;inventaire import&eacute;s : " . $nb_ok . "<br />";
 		print "Nombre d'erreurs de traitement : " . count ( $tab_err ) . "<br /><hr />";
-		
+
 		if (count ( $tab_err )) {
 			for($i = 0; $i < count ( $tab_err ); $i ++) {
 				print "Erreur &agrave; l&apos;enregistrement n° " . $tab_err [$i] . "<br />";
 			}
 			print "<hr /><br />";
 		}
-	
+
 	} else {
 		print "Le fichier n&apos;a pu &ecirc;tre lu .";
 	}
@@ -852,9 +853,9 @@ require_once ($class_path . "/author.class.php");
 function update_aut() {
 	global $dbh;
 	global $text, $n, $t_xml;
-	
-	//Reprise des auteurs sans élément rejeté et des titres de notices lorsque tronqués. 
-	
+
+	//Reprise des auteurs sans élément rejeté et des titres de notices lorsque tronqués.
+
 	//Upload du fichier
 	if (! ($_FILES ['userfile'] ['tmp_name'])) {
 		print "Cliquez sur Pr&eacute;c&eacute;dent et choisissez un fichier";
@@ -865,29 +866,29 @@ function update_aut() {
 		exit ();
 	}
 	$fichier = @fopen ( "../../temp/" . basename ( $_FILES ['userfile'] ['tmp_name'] ), "r" );
-	
+
 	if ($fichier) {
-		
+
 		print "<br /><br />";
 		print "T&eacute;l&eacute;chargement du fichier effectu&eacute;.<br /><hr />";
-		
+
 		print "Traitement du fichier en cours.<br />";
-		
+
 		$nb_ok = 0;
 		$tab_err = array ();
-		
+
 		//definition header et footer
 		$header = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><inm:results>";
 		$footer = "</inm:results>";
-		
+
 		$compte = 0;
-		
+
 		while ( ! feof ( $fichier ) ) {
-			
+
 			$buffer = "";
 			$deb = FALSE;
 			$i = 0;
-			
+
 			while ( $i < 200 && ! feof ( $fichier ) ) {
 				$line = fgets ( $fichier, 4096 );
 				if ((strpos ( $line, "<inm:Recordset" ) === FALSE) && (strpos ( $line, "<inm:Record" ) !== FALSE)) {
@@ -901,40 +902,40 @@ function update_aut() {
 					$i ++;
 				}
 			}
-			
+
 			if ($buffer) {
 				$buffer = $header . $buffer . $footer;
-				
+
 				//parse buffer
 				$text = '';
 				$t_xml = array ();
 				$n = 0;
-				
+
 				$encoding = "UTF-8";
 				$parser = xml_parser_create ( $encoding );
 				xml_parser_set_option ( $parser, XML_OPTION_TARGET_ENCODING, $encoding );
 				xml_parser_set_option ( $parser, XML_OPTION_CASE_FOLDING, true );
 				xml_set_element_handler ( $parser, "debutBalise", "finBalise" );
 				xml_set_character_data_handler ( $parser, "texte" );
-				
+
 				if (! xml_parse ( $parser, $buffer, TRUE )) {
 					die ( sprintf ( "erreur XML %s à la ligne: %d", xml_error_string ( xml_get_error_code ( $parser ) ), xml_get_current_line_number ( $parser ) ) );
 				}
 				xml_parser_free ( $parser );
-				
+
 				$tmp_compte = $compte;
 				$tmp_val = array ();
 				//traitement des enregistrements
 				for($i = 1; $i <= count ( $t_xml ); $i ++) {
-					
+
 					//Il faut un code-barres d'exemplaire et un auteur sans element rejete
-					
+
 					$t_xml [$i] ['INM:CODE-BARRE'] [0] = trim ( $t_xml [$i] ['INM:CODE-BARRE'] [0] );
 					$q = "select notice_id,tit1 from notices join exemplaires on expl_notice=notice_id where expl_cb='" . $t_xml [$i] ['INM:CODE-BARRE'] [0] . "' ";
 					$r = pmb_mysql_query( $q, $dbh );
-					
+
 					if (pmb_mysql_num_rows( $r )) {
-						
+
 						$n = pmb_mysql_result( $r, 0, 0 );
 						$t = pmb_mysql_result( $r, 0, 1 );
 						/*
@@ -1006,7 +1007,7 @@ function update_aut() {
 								pmb_mysql_query( $q3, $dbh );
 							}
 						}
-						
+
 						if ($compte != $tmp_compte) {
 							print 'notice n° ' . $n . ' - ' . $t . '<br />';
 							foreach($tmp_val as $v) {
@@ -1021,21 +1022,21 @@ function update_aut() {
 				}
 			}
 		}
-		
+
 		fclose ( $fichier );
 		unlink ( "../../temp/" . basename ( $_FILES ['userfile'] ['tmp_name'] ) );
 		print "Traitement du fichier termin&eacute;.";
 		print "<br /><hr />";
-		
+
 		print "Nb total d'enregistrements modifi&eacute;s = " . $compte . '<br />';
-		
+
 		if (count ( $tab_err )) {
 			for($i = 0; $i < count ( $tab_err ); $i ++) {
 				print "Erreur &agrave; l&apos;enregistrement n° " . $tab_err [$i] . "<br />";
 			}
 			print "<hr /><br />";
 		}
-	
+
 	} else {
 		print "Le fichier n&apos;a pu &ecirc;tre lu .";
 	}
@@ -1047,12 +1048,12 @@ function debutBalise($parser, $tag, $att) {
 }
 
 function finBalise($parser, $tag) {
-	
+
 	global $text, $t_xml, $n;
 	if ($text === '')
 		return;
 	switch ($tag) {
-		
+
 		case 'INM:ID' :
 			$n = $n + 1;
 			$t_xml [$n] = array ();
@@ -1068,7 +1069,7 @@ function finBalise($parser, $tag) {
 }
 
 function texte($parser, $data) {
-	
+
 	global $text;
 	if (trim ( $data ))
 		$text .= $data;

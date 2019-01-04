@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: skos_concepts_list.class.php,v 1.6 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: skos_concepts_list.class.php,v 1.9 2018-05-18 10:14:00 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -20,6 +20,12 @@ class skos_concepts_list {
 	 * @var skos_concept
 	 */
 	private $concepts = array();
+	
+	/**
+	 * Tablea des concepts triés par schémas
+	 * @var array
+	 */
+	protected $concepts_by_schemes;
 	
 	/**
 	 * Définit les concepts depuis les concepts qui indexent un objet
@@ -65,6 +71,42 @@ class skos_concepts_list {
 	}
 	
 	/**
+	 * Retourne le tableau des concepts de la liste triés par schémas
+	 * @return skos_concept Tableau des concepts de la liste
+	 */
+	public function get_concepts_by_schemes() {
+		if (isset($this->concepts_by_schemes)) {
+			return $this->concepts_by_schemes;
+		}
+		foreach ($this->concepts as $concept) {
+			foreach ($concept->get_schemes() as $scheme_id => $scheme_label) {
+				if (!isset($this->concepts_by_schemes[$scheme_id])) {
+					$this->concepts_by_schemes[$scheme_id] = array(
+							'scheme_label' => $scheme_label,
+							'elements' => array()
+					);
+				}
+				$this->concepts_by_schemes[$scheme_id]['elements'][] = $concept;
+			}
+		}
+		return $this->concepts_by_schemes;
+	}
+
+	/**
+	 * Retourne le tableau des concepts de la liste sans schémas
+	 * @return skos_concept Tableau des concepts de la liste
+	 */
+	public function get_concepts_without_sheme() {
+		$concepts_no_schemes = array();
+		foreach ($this->concepts as $concept) {
+			if(!count($concept->get_schemes())) {
+				$concepts_no_schemes[] = $concept;			
+			}
+		}
+		return $concepts_no_schemes;
+	}
+	
+	/**
 	 * Retourne les concepts composés qui utilisent un élément
 	 * @param int $element_id Identifiant de l'élément
 	 * @param string $element_type Type de l'élément (Disponible dans vedette.xml)
@@ -83,5 +125,44 @@ class skos_concepts_list {
 			return false;
 		}
 		return true;
+	}
+	
+	/**
+	 * Retourne les concepts utilisés dans un schéma par libellé de schéma
+	 * @param string $label Label du schéma
+	 * @return skos_concept Tableau de concepts
+	 */
+	public function set_concepts_from_scheme_label($label) {
+		$query = "select ?concept where {
+				?scheme skos:prefLabel '".$label."' .
+				?concept skos:inScheme ?scheme
+			}";
+	
+		skos_datastore::query($query);
+		if(skos_datastore::num_rows()){
+			$results = skos_datastore::get_result();
+			foreach($results as $key=>$result){
+				$this->concepts[] = new skos_concept(0,$result->concept);
+			}
+		}
+	}
+	
+	/**
+	 * Retourne les concepts utilisés dans un schéma par uri de schéma
+	 * @param string $uri URI du schéma
+	 * @return skos_concept Tableau de concepts
+	 */
+	public function set_concepts_from_scheme_uri($uri) {
+		$query = "select ?concept where {
+				?concept skos:inScheme <".$uri.">
+			}";
+	
+		skos_datastore::query($query);
+		if(skos_datastore::num_rows()){
+			$results = skos_datastore::get_result();
+			foreach($results as $key=>$result){
+				$this->concepts[] = new skos_concept(0,$result->concept);
+			}
+		}
 	}
 } // fin de définition de la classe index_concept

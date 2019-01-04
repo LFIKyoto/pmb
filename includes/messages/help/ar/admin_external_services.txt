@@ -1,4 +1,4 @@
-<h1>Administration des services externes</h1>
+<h2>Administration des services externes</h2>
 
 <p>The external services are function aimed to be used by other programs in order to interac with PMB</p>
 

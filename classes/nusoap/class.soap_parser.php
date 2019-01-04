@@ -8,43 +8,43 @@
 * soap_parser class parses SOAP XML messages into native PHP values
 *
 * @author   Dietrich Ayala <dietrich@ganx4.com>
-* @version  $Id: class.soap_parser.php,v 1.2 2013-04-25 07:14:00 mbertin Exp $
+* @version  $Id: class.soap_parser.php,v 1.3 2017-04-19 12:37:02 dgoron Exp $
 * @access   public
 */
 class soap_parser extends nusoap_base {
 
-	var $xml = '';
-	var $xml_encoding = '';
-	var $method = '';
-	var $root_struct = '';
-	var $root_struct_name = '';
-	var $root_struct_namespace = '';
-	var $root_header = '';
-    var $document = '';			// incoming SOAP body (text)
+	public $xml = '';
+	public $xml_encoding = '';
+	public $method = '';
+	public $root_struct = '';
+	public $root_struct_name = '';
+	public $root_struct_namespace = '';
+	public $root_header = '';
+    public $document = '';			// incoming SOAP body (text)
 	// determines where in the message we are (envelope,header,body,method)
-	var $status = '';
-	var $position = 0;
-	var $depth = 0;
-	var $default_namespace = '';
-	var $namespaces = array();
-	var $message = array();
-    var $parent = '';
-	var $fault = false;
-	var $fault_code = '';
-	var $fault_str = '';
-	var $fault_detail = '';
-	var $depth_array = array();
-	var $debug_flag = true;
-	var $soapresponse = NULL;
-	var $responseHeaders = '';	// incoming SOAP headers (text)
-	var $body_position = 0;
+	public $status = '';
+	public $position = 0;
+	public $depth = 0;
+	public $default_namespace = '';
+	public $namespaces = array();
+	public $message = array();
+    public $parent = '';
+	public $fault = false;
+	public $fault_code = '';
+	public $fault_str = '';
+	public $fault_detail = '';
+	public $depth_array = array();
+	public $debug_flag = true;
+	public $soapresponse = NULL;
+	public $responseHeaders = '';	// incoming SOAP headers (text)
+	public $body_position = 0;
 	// for multiref parsing:
 	// array of id => pos
-	var $ids = array();
+	public $ids = array();
 	// array of id => hrefs => pos
-	var $multirefs = array();
+	public $multirefs = array();
 	// toggle for auto-decoding element content
-	var $decode_utf8 = true;
+	public $decode_utf8 = true;
 
 	/**
 	* constructor that actually does the parsing

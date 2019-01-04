@@ -2,12 +2,14 @@
 // +-------------------------------------------------+
 // Â© 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: refuse.inc.php,v 1.8 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: refuse.inc.php,v 1.16 2018-12-27 10:05:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+require_once($class_path."/list/transferts/list_transferts_refus_ui.class.php");
+
 // Titre de la fenêtre
-echo window_title($database_window_title.$msg[transferts_circ_menu_refuse].$msg[1003].$msg[1001]);
+echo window_title($database_window_title.$msg['transferts_circ_menu_refuse'].$msg[1003].$msg[1001]);
 
 //creation de l'objet transfert
 $obj_transfert = new transfert();
@@ -16,27 +18,8 @@ switch ($action) {
 
 	case "aff_supp":
 		//on affiche l'écran de validation de suppression
-		echo "<h1>" . $msg[transferts_circ_menu_titre] . " > " . $msg[transferts_circ_menu_refuse] . "</h1>";
-		
-		echo affiche_liste_valide(
-				$transferts_refus_liste_valide,
-				$transferts_refus_liste_valide_ligne,
-				"SELECT num_notice, num_bulletin, " .
-					"expl_cb as val_ex, lender_libelle, location_libelle as val_source, " .
-					"transferts_demande.date_creation as val_date_creation, date_visualisee as val_date_refus," .
-					"motif_refus as val_refusMotif, empr_cb as val_empr " .
-				"FROM transferts " .
-					"INNER JOIN transferts_demande ON id_transfert=num_transfert " .
-					"INNER JOIN exemplaires ON num_expl=expl_id " .
-					"INNER JOIN lenders ON idlender=expl_owner " .
-					"INNER JOIN docs_location ON num_location_source=idlocation " .
-					"LEFT JOIN resa ON resa_trans=id_resa " .
-					"LEFT JOIN empr ON resa_idempr=id_empr " .
-				"WHERE ".
-					"id_transfert IN (!!liste_numeros!!) ".
-					"AND etat_demande=4",
-				"circ.php?categ=trans&sub=".$sub
-				);
+		$list_transferts_refus_ui = new list_transferts_refus_ui(array('etat_demande' => 4));
+		print $list_transferts_refus_ui->get_display_valid_list();
 		break;
 
 	case "supp":
@@ -64,7 +47,7 @@ switch ($action) {
 			<div class='row'>&nbsp;</div>		
 			<div class='row'>		
 				<label class='etiquette'>".$msg["transferts_circ_refus_relance_retour"]."</label>
-				<input type='button' class='bouton' name='bt_date_retour' value='!!date_retour!!' onClick=\"var reg=new RegExp('(-)', 'g'); openPopUp('".$base_path."/select.php?what=calendrier&caller=form_circ_trans_redemande&date_caller='+form_circ_trans_redemande.date_retour.value.replace(reg,'')+'&param1=date_retour&param2=bt_date_retour&auto_submit=NO&date_anterieure=YES', 'date_adhesion', 250, 320, -2, -2, 'toolbar=no, dependent=yes, resizable=yes')\">
+				<input type='button' class='bouton' name='bt_date_retour' value='!!date_retour!!' onClick=\"var reg=new RegExp('(-)', 'g'); openPopUp('".$base_path."/select.php?what=calendrier&caller=form_circ_trans_redemande&date_caller='+form_circ_trans_redemande.date_retour.value.replace(reg,'')+'&param1=date_retour&param2=bt_date_retour&auto_submit=NO&date_anterieure=YES', 'calendar')\">
 				<input type='hidden' name='date_retour' value='!!date_retour_mysql!!'>
 			</div>
 		</div>
@@ -75,7 +58,7 @@ switch ($action) {
 		</form>
 		";
 		//affiche l'ecran pour proposer de relancer une nouvelle demande de transfert
-		echo "<h1>" . $msg[transferts_circ_menu_titre] . " > " . $msg[transferts_circ_menu_refuse] . "</h1>";
+		echo "<h1>" . $msg['transferts_circ_menu_titre'] . " > " . $msg['transferts_circ_menu_refuse'] . "</h1>";
 		
 		//on recupere les id de l'exemplaire
 		$idNotice = pmb_sql_value("SELECT num_notice FROM transferts WHERE id_transfert=".$transid);
@@ -121,6 +104,7 @@ switch ($action) {
 		//echo $rqt;
 		$res = pmb_mysql_query($rqt);
 		$st = "odd";
+		$liste = '';
 		while (($data = pmb_mysql_fetch_array($res))) {
 			$id_expl=$data[3];
 			$sel_expl=1;
@@ -178,7 +162,7 @@ switch ($action) {
 		<th></th>
 		<th>" . $msg["transferts_circ_resa_titre_cb"] . "</th>
 		<th>" . $msg["transferts_circ_resa_titre_localisation"] . "</th>
-		<th align='left'>".$msg[651]."</th>
+		<th class='align_left'>".$msg[651]."</th>
 		<th></th>
 		</tr>
 		!!liste!!
@@ -232,47 +216,10 @@ if ($action == "") {
 	}
 	//pas d'action donc affichage de la liste des transferts refusés
 
-	echo "<h1>" . $msg[transferts_circ_menu_titre] . " > " . $msg[transferts_circ_menu_refuse] . "</h1>";
+	echo "<h1>" . $msg['transferts_circ_menu_titre'] . " > " . $msg['transferts_circ_menu_refuse'] . "</h1>";
 	
-	
-	$filtres = "&nbsp;".$msg["transferts_circ_reception_filtre_source"].str_replace("!!nom_liste!!","f_source",$transferts_liste_localisations_tous);
-	$filtres = str_replace("!!liste_localisations!!", do_liste_localisation($f_source), $filtres);
-	
-	
-	$req =	"FROM transferts " .
-				"INNER JOIN transferts_demande ON id_transfert=num_transfert " .
-				"INNER JOIN exemplaires ON num_expl=expl_id " .
-				"INNER JOIN lenders ON idlender=expl_owner " .
-				"INNER JOIN docs_location ON num_location_source=idlocation " .
-				"LEFT JOIN resa ON resa_trans=id_resa " .
-				"LEFT JOIN empr ON resa_idempr=id_empr " .
-			"WHERE etat_transfert=0 " . //pas fini
-				"AND type_transfert=1 " . //aller-retour
-				"AND etat_demande=4 " . //Refus
-				"AND num_location_dest=".$deflt_docs_location; //pour le site de l'utilisateur
-	
-	if ($f_source)
-		$req .= " AND num_location_source=".$f_source;
-	
-	
-	echo affiche_liste(
-			$sub,
-			$page,
-			"SELECT num_notice, num_bulletin, id_transfert as val_id, " .
-				"expl_cb as val_ex, lender_libelle, location_libelle as val_source, " .
-				"transferts_demande.date_creation as val_date_creation, date_visualisee as val_date_refus," .
-				"motif_refus as val_refusMotif, empr_cb as val_empr " ,
-			$req,
-			$nb_per_page,
-			$transferts_refus_form_global,
-			$transferts_refus_tableau_definition,
-			$transferts_refus_tableau_ligne,
-			$transferts_refus_boutons_action,
-			$transferts_refus_pas_de_resultats,
-			"",
-			$filtres,
-			"&f_source=".$f_source 
-		);
+	$list_transferts_refus_ui = new list_transferts_refus_ui(array('etat_transfert' => 0, 'type_transfert' => 1, 'etat_demande' => 4, 'site_destination' => $deflt_docs_location, 'site_origine' => 0));
+	print $list_transferts_refus_ui->get_display_list();
 }
 
 ?>

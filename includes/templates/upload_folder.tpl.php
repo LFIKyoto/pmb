@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: upload_folder.tpl.php,v 1.3 2011-01-17 13:02:54 mbertin Exp $
+// $Id: upload_folder.tpl.php,v 1.5 2017-12-27 09:47:01 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -38,13 +38,6 @@ $rep_edit_form = "
 			}
 			return true;
 		}	
-		
-		function changeEtatNavig(){
-			if(document.getElementById('rep_navig').value == 1){
-				document.getElementById('rep_hash').options[1].selected = true;
-				document.getElementById('rep_sub').style.visibility= \"hidden\";
-			} 
-		}
 		function changeEtatHash(){
 			if(document.getElementById('rep_hash').value == 1){
 				document.getElementById('rep_navig').options[1].selected = true;	
@@ -61,19 +54,19 @@ $rep_edit_form = "
 			<label>$msg[upload_repertoire_nom] </label>
 		</div>
 		<div class='row'>
-			<input type='texte' class='saisie-80em' name='rep_nom' id='rep_nom' value='!!rep_nom!!'/>
+			<input type='text' class='saisie-80em' name='rep_nom' id='rep_nom' value='!!rep_nom!!'/>
 		</div> ";
 /* "		<div class='row'>
 			<label>$msg[upload_repertoire_url] </label>
 		</div>
 		<div class='row'>
-			<input type='texte' class='saisie-80em' name='rep_url' id='rep_url' value='!!rep_url!!' />
+			<input type='text' class='saisie-80em' name='rep_url' id='rep_url' value='!!rep_url!!' />
 		</div> */
 $rep_edit_form .="<div class='row'>
 			<label>$msg[upload_repertoire_path] </label>
 		</div>
 		<div class='row'>
-			<input type='texte' class='saisie-80em' name='rep_path' id='rep_path' value='!!rep_path!!' />
+			<input type='text' class='saisie-80em' name='rep_path' id='rep_path' value='!!rep_path!!' />
 		</div>
 		<div class='row'>
 			<div class='colonne3'>
@@ -88,7 +81,7 @@ $rep_edit_form .="<div class='row'>
 		</div>
 		<div class='row'>
 			<div class='colonne3'>
-				<select id='rep_navig' name='rep_navig' onchange=\"changeEtatNavig();\">
+				<select id='rep_navig' name='rep_navig'>
 					<option value='1' !!select_nav_yes!!>$msg[upload_repertoire_yes]</option>
 					<option value='0' !!select_nav_no!!>$msg[upload_repertoire_no]</option>
 				</select>

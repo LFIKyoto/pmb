@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: general.inc.php,v 1.5 2013-04-11 08:02:17 mbertin Exp $
+// $Id: general.inc.php,v 1.6 2017-10-26 10:16:36 dgoron Exp $
 
 //Administration générale des droits des services externes
 
@@ -65,20 +65,21 @@ for ($i=0; $i<count($group_list); $i++) {
 	$table_rights.= "<thead><td></td><th colspan='2'>".htmlentities($msg["external_services_general_methode"],ENT_QUOTES,$charset)."</th><th colspan='3'>".htmlentities($msg["external_services_general_utilisateurs_autorises"],ENT_QUOTES,$charset)."</th></thead>";
 	
 	//Pour chaque méthode
-	for ($j=0; $j<count($group["methods"]); $j++) {
-		$method=$group["methods"][$j];
-		
-		$rights=$es_rights->get_rights($group["name"],$method["name"]);
-		
-		$table_rights.= "<tr class='".($i%2?"even":"odd")."'>
-		".(!$j?"<td rowspan='".count($group["methods"])."'>&nbsp;</td>":"")."
-		<td><b>".htmlentities($method["name"],ENT_QUOTES,$charset)."</b></td><td><i>".htmlentities($method["description"],ENT_QUOTES,$charset)."</i></td>
-		<td></td>
-		<td></td>
-		<td>".users_list($group["name"],$method["name"],$rights->users,$rights_group->users)."</td>
-		</tr>";
+	if(isset($group["methods"]) && is_array($group["methods"])) {
+		for ($j=0; $j<count($group["methods"]); $j++) {
+			$method=$group["methods"][$j];
+			
+			$rights=$es_rights->get_rights($group["name"],$method["name"]);
+			
+			$table_rights.= "<tr class='".($i%2?"even":"odd")."'>
+			".(!$j?"<td rowspan='".count($group["methods"])."'>&nbsp;</td>":"")."
+			<td><b>".htmlentities($method["name"],ENT_QUOTES,$charset)."</b></td><td><i>".htmlentities($method["description"],ENT_QUOTES,$charset)."</i></td>
+			<td></td>
+			<td></td>
+			<td>".users_list($group["name"],$method["name"],$rights->users,$rights_group->users)."</td>
+			</tr>";
+		}
 	}
-	
 }
 $table_rights.= "</table>";
 

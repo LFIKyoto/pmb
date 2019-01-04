@@ -2,11 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dashboard_module.class.php,v 1.5 2015-06-10 07:50:18 dgoron Exp $
+// $Id: dashboard_module.class.php,v 1.20 2018-07-27 09:32:18 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($include_path."/h2o/h2o.php");
+require_once($class_path.'/event/events/event_dashboard.class.php');
+require_once($class_path.'/notice_relations.class.php');
+require_once($class_path.'/visits_statistics.class.php');
+require_once($class_path.'/user.class.php');
 
 class dashboard_module {
 	protected $alert_url="";		// URL à appeler pour les alertes
@@ -34,7 +38,11 @@ class dashboard_module {
 			$elements = $xml->getElementsByTagName("information");	
 			for($i=0 ; $i<$elements->length ; $i++){
 				$name = $this->charset_normalize($elements->item($i)->getElementsByTagName('name')->item(0)->nodeValue,"utf-8");
-				$query = $this->charset_normalize($elements->item($i)->getElementsByTagName('query')->item(0)->nodeValue,"utf-8");
+				if(isset($elements->item($i)->getElementsByTagName('query')->item(0)->nodeValue)) {
+					$query = $this->charset_normalize($elements->item($i)->getElementsByTagName('query')->item(0)->nodeValue,"utf-8");
+				} else {
+					$query = '';
+				}
 				if(!$query){
 					$fonction = $elements->item($i)->getElementsByTagName('fonction')->item(0);
 					$class = $contruct = $params = $internal = "";
@@ -84,8 +92,8 @@ class dashboard_module {
 						foreach ($vars as $var) {
 							if ($var["type"] == "global") {
 								$var_name = $var["name"];
-								global $$var_name;
-								$query = str_replace("!!".$var_name."!!", $$var_name, $query);
+								global ${$var_name};
+								$query = str_replace("!!".$var_name."!!", ${$var_name}, $query);
 							}
 						}
 					}
@@ -133,26 +141,30 @@ class dashboard_module {
 		return $html;
 	}
 	
-	public  function get_quick_params_form(){
-		return "";
+	public function get_quick_params_form(){
+		
 	}
+	
+	public function get_plugins_form(){
+		//Evenement publié à chaque affichage d'un formulaire de paramétrage rapide
+		$evt_handler = events_handler::get_instance();
+		$event = new event_dashboard("dashboard", "show");
+		$event->set_module($this->module);
+		$evt_handler->send($event);
+		return $event->get_content();
+	}
+	
 	public  function save_quick_params(){
 		return true;
 	}
 	
 	protected  function get_user_param_form($field){
 		global $msg,$dbh,$charset;
-		global $$field;
-		
+		global ${$field};
+		global $pmb_droits_explr_localises;
+		global $PMBuserid;
 		global $location_user_section;
 		$field_deb = substr($field,0,6);
-// 		$html="
-// 		<script type='text/javascript'>
-// 			function dashboard_save_params(name,value){
-// 				var req= new http_request();
-// 				req.request('./ajax.php?module=".$this->module."&categ=dashboard&sub=save_quick_params',1,'".$field."='+value,1,dashboard_params_saved);
-// 			}
-// 		</script>";
 		$html="";
 		
 		switch ($field_deb) {
@@ -162,14 +174,15 @@ class dashboard_module {
 						<div class='row'>
 							<div class='colonne60'>".$msg[$field]."&nbsp;:&nbsp;
 							</div>
-							<div class='colonne_suite'>".make_user_style_combo($$field)."
+							<div class='colonne_suite'>".make_user_style_combo(${$field})."
 							</div>
 						</div>\n";
 				} elseif ($field=="deflt_docs_location") {
 					//visibilité des exemplaires
-					if ($pmb_droits_explr_localises && $usr->explr_visible_mod) $where_clause_explr = "idlocation in (".$usr->explr_visible_mod.") and";
+					$explr_visible_mod = user::get_param($PMBuserid, 'explr_visible_mod');
+					if ($pmb_droits_explr_localises && $explr_visible_mod) $where_clause_explr = "idlocation in (".$explr_visible_mod.") and";
 					else $where_clause_explr = "";
-					$selector = gen_liste ("select distinct idlocation, location_libelle from docs_location, docsloc_section where $where_clause_explr num_location=idlocation order by 2 ", "idlocation", "location_libelle", 'form_'.$field, "dashboard_calcule_section(this);", $$field, "", "","","",0);
+					$selector = gen_liste ("select distinct idlocation, location_libelle from docs_location, docsloc_section where $where_clause_explr num_location=idlocation order by 2 ", "idlocation", "location_libelle", 'form_'.$field, "dashboard_calcule_section(this);", ${$field}, "", "","","",0);
 					$html.="
 						<div class='row'>
 							<div class='colonne60'>".$msg[$field]."&nbsp;:&nbsp;
@@ -178,9 +191,9 @@ class dashboard_module {
 							</div>
 						</div>\n";
 					//localisation de l'utilisateur pour le calcul de la section
-					$location_user_section = $$field;
+					$location_user_section = ${$field};
 				} elseif ($field=="deflt_collstate_location") {
-					$selector = gen_liste ("select distinct idlocation, location_libelle from docs_location order by 2 ", "idlocation", "location_libelle", 'form_'.$field, "", $$field, "", "","0",$msg["all_location"],0);
+					$selector = gen_liste ("select distinct idlocation, location_libelle from docs_location order by 2 ", "idlocation", "location_libelle", 'form_'.$field, "", ${$field}, "", "","0",$msg["all_location"],0);
 					$html.="
 						<div class='row'><div class='colonne60'>".
 						$msg[$field]."&nbsp;:&nbsp;</div>\n
@@ -188,7 +201,7 @@ class dashboard_module {
 						.$selector.
 						"</div></div>\n";
 				} elseif ($field=="deflt_resas_location") {
-					$selector = gen_liste ("select distinct idlocation, location_libelle from docs_location order by 2 ", "idlocation", "location_libelle", 'form_'.$field, "", $$field, "", "","0",$msg["all_location"],0);
+					$selector = gen_liste ("select distinct idlocation, location_libelle from docs_location order by 2 ", "idlocation", "location_libelle", 'form_'.$field, "", ${$field}, "", "","0",$msg["all_location"],0);
 					$html.="
 						<div class='row'><div class='colonne60'>".
 						$msg[$field]."&nbsp;:&nbsp;</div>\n
@@ -199,7 +212,8 @@ class dashboard_module {
 					// calcul des sections
 					$selector="";
 					if (!$location_user_section) $location_user_section = $deflt_docs_location;
-					if ($pmb_droits_explr_localises && $usr->explr_visible_mod) $where_clause_explr = "where idlocation in (".$usr->explr_visible_mod.")";
+					$explr_visible_mod = user::get_param($PMBuserid, 'explr_visible_mod');
+					if ($pmb_droits_explr_localises && $explr_visible_mod) $where_clause_explr = "where idlocation in (".$explr_visible_mod.")";
 					else $where_clause_explr = "";
 					$rqtloc = "SELECT idlocation FROM docs_location $where_clause_explr order by location_libelle";
 					$resloc = pmb_mysql_query($rqtloc, $dbh);
@@ -210,11 +224,11 @@ class dashboard_module {
 						if ($nbr_lignes) {
 							if ($loc->idlocation==$location_user_section ) $selector .= "<div id=\"dashboard_docloc_section".$loc->idlocation."\" style=\"display:block\">\r\n";
 							else $selector .= "<div id=\"dashboard_docloc_section".$loc->idlocation."\" style=\"display:none\">\r\n";
-							$selector .= "<select name='f_ex_section".$loc->idlocation."' id='f_ex_section".$loc->idlocation."'>\r\n";
+							$selector .= "<select name='f_ex_section".$loc->idlocation."'>";
 							while($line = pmb_mysql_fetch_row($result)) {
 								$selector .= "<option value='$line[0]' ";
-								$selector .= (($line[0] == $$field) ? "selected='selected' >" : '>');
-					 			$selector .= htmlentities($line[1],ENT_QUOTES, $charset).'</option>\r\n';
+								$selector .= (($line[0] == ${$field}) ? "selected='selected' >" : '>');
+					 			$selector .= htmlentities($line[1],ENT_QUOTES, $charset).'</option>';
 							}
 							$selector .= '</select></div>';
 						}
@@ -232,10 +246,10 @@ class dashboard_module {
 						$resupload = pmb_mysql_query($requpload, $dbh);
 						$selector .=  "<div id='upload_section'>";
 						$selector .= "<select name='form_deflt_upload_repertoire'>";
-						$selector .= "<option value='0'>".$msg[upload_repertoire_sql]."</option>";
+						$selector .= "<option value='0'>".$msg['upload_repertoire_sql']."</option>";
 						while(($repupload = pmb_mysql_fetch_object($resupload))){
 							$selector .= "<option value='".$repupload->repertoire_id."' ";
-							if ($$field == $repupload->repertoire_id ) {
+							if (${$field} == $repupload->repertoire_id ) {
 								$selector .= "selected='selected' ";
 							}
 							$selector .= ">";
@@ -266,7 +280,7 @@ class dashboard_module {
 						while ($j<$nb_liste) {
 							$liste_values = pmb_mysql_fetch_row( $resultat_liste );
 							$html.="<option value=\"".$liste_values[0]."\" " ;
-							if ($$field==$liste_values[0]) {
+							if (${$field}==$liste_values[0]) {
 								$html.="selected='selected' " ;
 							}
 							$html.=">".$liste_values[1]."</option>\n" ;
@@ -281,7 +295,7 @@ class dashboard_module {
 						$html.="<div class='row'><div class='colonne60'>".$msg[$field]."</div>\n
 							<div class='colonne_suite'>
 							<input type='checkbox' class='checkbox'";
-						if ($$field==1) $html.=" checked"; 
+						if (${$field}==1) $html.=" checked"; 
 						$html.=" value='1' name='form_$field'></div></div>\n" ;
 				} elseif ($field=="deflt_cashdesk"){
 					$requete="select * from cashdesk order by cashdesk_name";
@@ -307,7 +321,7 @@ class dashboard_module {
 						while ($j<$nb_liste) {
 							$liste_values = pmb_mysql_fetch_object( $resultat_liste );
 							$html.="<option value=\"".$liste_values->cashdesk_id."\" " ;
-							if ($$field==$liste_values->cashdesk_id) {
+							if (${$field}==$liste_values->cashdesk_id) {
 								$html.="selected" ;
 							}
 							$html.=">".htmlentities($liste_values->cashdesk_name,ENT_QUOTES,$charset)."</option>\n" ;
@@ -317,6 +331,17 @@ class dashboard_module {
 								</div>
 							</div>\n" ;
 					}
+				}elseif ($field=="deflt_printer") {
+					$html.="
+							<div class='row'>
+								<div class='colonne60'>".$msg[$field]."&nbsp;:&nbsp;
+								</div>\n
+								<div class='colonne_suite'>
+									<select name=\"form_".$field."\">
+										".raspberry::get_selector_options(${$field})."
+									</select>
+								</div>
+							</div>\n" ;
 				}else {
 					$deflt_table = substr($field,6);
 					if($deflt_table == "integration_notice_statut") $deflt_table= "notice_statut";
@@ -350,7 +375,7 @@ class dashboard_module {
 						while ($j<$nb_liste) {
 							$liste_values = pmb_mysql_fetch_row( $resultat_liste );
 							$html.="<option value=\"".$liste_values[0]."\" " ;
-							if ($$field==$liste_values[0]) {
+							if (${$field}==$liste_values[0]) {
 								$html.="selected='selected' " ;
 							}
 							$html.=">".$liste_values[1]."</option>\n" ;
@@ -368,13 +393,13 @@ class dashboard_module {
 					$html="<div class='row'><div class='colonne60'>".$msg[$field]."</div>\n
 						<div class='colonne_suite'>
 						<input type='checkbox' class='checkbox'";
-					if ($$field==1) $html.=" checked";
+					if (${$field}==1) $html.=" checked";
 					$html.=" value='1' name='form_$field'></div></div>\n" ;
 				} else {
 					$html.="<div class='row'>";
 					//if (strpos($msg[$field],'<br />')) $param_user .= "<br />";
 					$html.="<input type='checkbox' class='checkbox'";
-					if ($$field==1) $html.=" checked";
+					if (${$field}==1) $html.=" checked";
 					$html.=" value='1' name='form_$field'>\n
 						$msg[$field]
 						</div>\n";
@@ -384,27 +409,27 @@ class dashboard_module {
 			case "value_" :
 				switch ($field) {
 					case "value_deflt_fonction" :
-						$flist=new marc_list('function');
-						$f=$flist->table[$$field];
+						$flist = marc_list_collection::get_instance('function');
+						$f=$flist->table[${$field}];
 						$html.="<div class='row'><div class='colonne60'>
 						$msg[$field]&nbsp;:&nbsp;</div>\n
 						<div class='colonne_suite'>
 						<input type='text' class='saisie-30emr' id='form_value_deflt_fonction_libelle' name='form_value_deflt_fonction_libelle' value='".htmlentities($f,ENT_QUOTES, $charset)."' />
-						<input type='button' class='bouton_small' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=function&caller=userform&p1=form_value_deflt_fonction&p2=form_value_deflt_fonction_libelle', 'select_func0', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes')\" />
+						<input type='button' class='bouton_small' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=function&caller=userform&p1=form_value_deflt_fonction&p2=form_value_deflt_fonction_libelle', 'selector')\" />
 						<input type='button' class='bouton_small' value='X' onclick=\"this.form.elements['form_value_deflt_fonction'].value='';this.form.elements['form_value_deflt_fonction_libelle'].value='';return false;\" />
-						<input type='hidden' name='form_value_deflt_fonction' id='form_value_deflt_fonction' value=\"$$field\" />
+						<input type='hidden' name='form_value_deflt_fonction' id='form_value_deflt_fonction' value=\"${$field}\" />
 						</div></div><br />";
 						break;
 					case "value_deflt_lang" :
-						$llist=new marc_list('lang');
-						$l=$llist->table[$$field];
+						$llist = marc_list_collection::get_instance('lang');
+						$l=$llist->table[${$field}];
 						$html.="<div class='row'><div class='colonne60'>
 						$msg[$field]&nbsp;:&nbsp;</div>\n
 						<div class='colonne_suite'>
 						<input type='text' class='saisie-30emr' id='form_value_deflt_lang_libelle' name='form_value_deflt_lang_libelle' value='".htmlentities($l,ENT_QUOTES, $charset)."' />
-						<input type='button' class='bouton_small' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=lang&caller=userform&p1=form_value_deflt_lang&p2=form_value_deflt_lang_libelle', 'select_lang', 400, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes')\" />
+						<input type='button' class='bouton_small' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=lang&caller=userform&p1=form_value_deflt_lang&p2=form_value_deflt_lang_libelle', 'selector')\" />
 						<input type='button' class='bouton_small' value='X' onclick=\"this.form.elements['form_value_deflt_lang'].value='';this.form.elements['form_value_deflt_lang_libelle'].value='';return false;\" />
-						<input type='hidden' name='form_value_deflt_lang' id='form_value_deflt_lang' value=\"$$field\" />
+						<input type='hidden' name='form_value_deflt_lang' id='form_value_deflt_lang' value=\"${$field}\" />
 						</div></div><br />";
 						break;
 					case "value_deflt_relation" :
@@ -414,60 +439,14 @@ class dashboard_module {
 						$html.="<div class='row'><div class='colonne60'>
 						$msg[$field]&nbsp;:&nbsp;</div>\n
 						<div class='colonne_suite'>";
-						
-						$liste_type_relation_down=new marc_list("relationtypedown");
-						$liste_type_relation_up=new marc_list("relationtypeup");
-						$liste_type_relation_both=array();
-						
-						foreach($liste_type_relation_up->table as $key_up=>$val_up){
-							foreach($liste_type_relation_down->table as $key_down=>$val_down){
-								if($val_up==$val_down){
-									$liste_type_relation_both[$key_down]=$val_down;
-									unset($liste_type_relation_down->table[$key_down]);
-									unset($liste_type_relation_up->table[$key_up]);
-								}
-							}
-						}
-						
-						$html.="<select onchange='' name='form_".$field."' size='1'>
-						<optgroup class='erreur' label='$msg[notice_lien_montant]'>";
-						
-						foreach($liste_type_relation_up->table as $key=>$val){
-							if($key.'-up'==$$field){
-								$html.='<option  style="color:#000000" value="'.$key.'-up" selected="selected">'.$val.'</option>';
-							}else{
-								$html.='<option  style="color:#000000" value="'.$key.'-up">'.$val.'</option>';
-							}
-						}
-						$html.="</optgroup>
-						<optgroup class='erreur' label='$msg[notice_lien_descendant]'>";
-						
-						foreach($liste_type_relation_down->table as $key=>$val){
-							if($key.'-down'==$$field){
-								$html.='<option  style="color:#000000" value="'.$key.'-down" selected="selected" >'.$val.'</option>';
-							}else{
-								$html.='<option  style="color:#000000" value="'.$key.'-down">'.$val.'</option>';
-							}
-						}
-						$html.="</optgroup>
-						<optgroup class='erreur' label='$msg[notice_lien_symetrique]'>";
-						
-						foreach($liste_type_relation_both as $key=>$val){
-							if($key.'-down'==$$field){
-								$html.='<option  style="color:#000000" value="'.$key.'-down" selected="selected" >'.$val.'</option>';
-							}else{
-								$html.='<option  style="color:#000000" value="'.$key.'-down">'.$val.'</option>';
-							}
-						}
-						$html.="</optgroup>
-						</select>";
+						$html.= notice_relations::get_selector('form_'.$field, ${$field});
 						$html.="</div></div><br />";
 						break;
 					default :
 						$html.="<div class='row'><div class='colonne60'>
 						$msg[$field]&nbsp;:&nbsp;</div>\n
 						<div class='colonne_suite'>
-						<input type='text' class='saisie-20em' name='form_$field' value='".htmlentities($$field,ENT_QUOTES, $charset)."' />
+						<input type='text' class='saisie-20em' name='form_$field' value='".htmlentities(${$field},ENT_QUOTES, $charset)."' />
 						</div></div><br />";
 						break;
 				}
@@ -494,7 +473,7 @@ class dashboard_module {
 						while ($j<$nb_liste) {
 							$liste_values = pmb_mysql_fetch_row( $resultat_liste );
 							$html.="<option value=\"".$liste_values[0]."\" " ;
-							if ($$field==$liste_values[0]) {
+							if (${$field}==$liste_values[0]) {
 								$html.="selected='selected' " ;
 							}
 							$html.=">".$liste_values[1]."</option>\n" ;
@@ -520,7 +499,7 @@ class dashboard_module {
 						while ($j<$nb_liste) {
 							$liste_values = pmb_mysql_fetch_row( $resultat_liste );
 							$html.="<option value=\"".$liste_values[0]."\" " ;
-							if ($$field==$liste_values[0]) {
+							if (${$field}==$liste_values[0]) {
 								$html.="selected='selected' " ;
 							}
 							$html.=">".$liste_values[1]."</option>\n" ;
@@ -539,12 +518,12 @@ class dashboard_module {
 						$clang = $langues->table;
 					
 						$combo = "<select name='form_".$field."' id='form_".$field."' class='saisie-20em' >";
-						if(!$$field) $combo .= "<option value='' selected>--</option>";
+						if(!${$field}) $combo .= "<option value='' selected>--</option>";
 						else $combo .= "<option value='' >--</option>";
 						while(list($cle, $value) = each($clang)) {
 							// arabe seulement si on est en utf-8
 							if (($charset != 'utf-8' and $user_lang != 'ar') or ($charset == 'utf-8')) {
-								if(strcmp($cle, $$field) != 0) $combo .= "<option value='$cle'>$value ($cle)</option>";
+								if(strcmp($cle, ${$field}) != 0) $combo .= "<option value='$cle'>$value ($cle)</option>";
 								else $combo .= "<option value='$cle' selected>$value ($cle)</option>";
 							}
 						}
@@ -561,7 +540,7 @@ class dashboard_module {
 							$msg[$field]."&nbsp;:&nbsp;</div>\n";
 						$html.= "
 							<div class='colonne_suite'>";
-						$select_doc = new marc_select("doctype", "form_".$field, $$field, "");
+						$select_doc = new marc_select("doctype", "form_".$field, ${$field}, "");
 						$html.= $select_doc->display ;
 						$html.="</div></div>\n" ;
 						break;
@@ -572,7 +551,7 @@ class dashboard_module {
 							$msg[$field]."&nbsp;:&nbsp;</div>\n";
 						$html.= "
 							<div class='colonne_suite'>";
-						$select_doc = new marc_select("doctype", "form_".$field, $$field, "","0",$msg[$field."_parent"]);
+						$select_doc = new marc_select("doctype", "form_".$field, ${$field}, "","0",$msg[$field."_parent"]);
 						$html.= $select_doc->display ;
 						$html.="</div></div>\n" ;
 						break;
@@ -583,7 +562,7 @@ class dashboard_module {
 							$msg[$field]."&nbsp;:&nbsp;</div>\n";
 						$html.= "
 							<div class='colonne_suite'>";
-						$select_doc = new marc_select("$deflt_table", "form_".$field, $$field, "");
+						$select_doc = new marc_select("$deflt_table", "form_".$field, ${$field}, "");
 						$html.= $select_doc->display ;
 						$html.="</div></div>\n" ;
 						break;
@@ -603,6 +582,10 @@ class dashboard_module {
 					case "deflt3rubrique":
 						$q="select 0,'".addslashes($msg['deflt3none'])."' union ";
 						$q.="select id_rubrique, concat(budgets.libelle,':', rubriques.libelle) from rubriques join budgets on num_budget=id_budget order by 2 ";
+						break;
+					case "deflt3type_produit":
+						$q="select 0,'".addslashes($msg['deflt3none'])."' union ";
+						$q.="select id_produit, libelle from types_produits order by 2 ";
 						break;
 					case "deflt3dev_statut":
 						$t=actes::getStatelist(TYP_ACT_DEV);
@@ -641,7 +624,7 @@ class dashboard_module {
 					$html.= "<div class='colonne_suite'><select class='saisie-30em' name=\"form_".$field."\">";
 					foreach($t as $k=>$v) {
 						$html.="<option value=\"".$k."\" " ;
-						if ($$field==$k) {
+						if (${$field}==$k) {
 							$html.="selected='selected' " ;
 						}
 						$html.=">".htmlentities($v, ENT_QUOTES, $charset)."</option>\n" ;
@@ -652,11 +635,11 @@ class dashboard_module {
 	
 			case "speci_" :
 				$speci_func = substr($field, 6);
-				eval('$speci_user.= get_'.$speci_func.'($id, $$field, $i, \'userform\');');
+				eval('$speci_user.= get_'.$speci_func.'($id, ${$field}, $i, \'userform\');');
 				break;
 	
 			case "explr_" :
-				$$field=$$field;
+				${$field}=${$field};
 				break;
 			default :
 				break ;
@@ -709,6 +692,7 @@ class dashboard_module {
 			//on cherche le template qui va bien...
 			$html_templates = $xml_template->getElementsByTagName("content");
 			$template = array();
+			$end = false;
 			for($i=0 ; $i<$html_templates->length ; $i++){
 				if($i == 0 || $html_templates->length == 1){
 					$template = $this->charset_normalize($html_templates->item($i)->nodeValue,"utf-8");
@@ -719,7 +703,9 @@ class dashboard_module {
 						$current_lang = $this->charset_normalize($attributes->item($j)->nodeValue,"utf-8");
 						if($current_lang == $lang){
 							$template = $this->charset_normalize($html_templates->item($i)->nodeValue,"utf-8");
-							break(2);
+							//break(2);
+							$end = true;
+							break;
 						}
 					}
 					if($attributes->item($j)->nodeName == "default_lang"){
@@ -730,6 +716,7 @@ class dashboard_module {
 						}
 					}
 				}
+				if($end) break;
 			}
 			@ini_set("zend.ze1_compatibility_mode", "1");
 		}
@@ -751,6 +738,7 @@ class dashboard_module {
 		return $elem;
 	}
 	protected static function clean_cp1252($str,$charset){
+		$cp1252_map = array();
 		switch($charset){
 			case "utf-8" :
 				$cp1252_map = array(
@@ -784,6 +772,7 @@ class dashboard_module {
 				);
 				break;
 			case "iso8859-1" :
+			case "iso-8859-1" :
 				$cp1252_map = array(
 				"\x80" => "EUR", /* EURO SIGN */
 				"\x82" => "\xab", /* SINGLE LOW-9 QUOTATION MARK */
@@ -816,5 +805,15 @@ class dashboard_module {
 				break;
 		}
 		return strtr($str, $cp1252_map);
-	}	
+	}
+	
+	public function get_visits_statistics_form() {
+		global $empr_visits_statistics_active;
+		
+		if (!$empr_visits_statistics_active) {
+			return '';
+		}
+		$visits_statistics = new visits_statistics();
+		return $visits_statistics->get_form($this->module);
+	}
 }

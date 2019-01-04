@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: build.inc.php,v 1.1 2012-07-05 14:33:36 ngantier Exp $
+// $Id: build.inc.php,v 1.2 2017-08-29 12:20:10 jpermanne Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -28,7 +28,11 @@ switch($action) {
 		print $mailtpl->delete();
 		$mailtpls=new mailtpls();
 		print $mailtpls->get_list();
-	break;		
+	break;
+	case 'duplicate':
+		$mailtpl=new mailtpl($id_mailtpl);
+		print $mailtpl->get_form(true);
+		break;
 
 	default:
 		$mailtpls=new mailtpls();

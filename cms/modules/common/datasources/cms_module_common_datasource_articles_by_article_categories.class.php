@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_articles_by_article_categories.class.php,v 1.3 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: cms_module_common_datasource_articles_by_article_categories.class.php,v 1.5 2018-06-06 14:23:50 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -35,13 +35,44 @@ class cms_module_common_datasource_articles_by_article_categories extends cms_mo
 		);
 	}
 	
+	public function get_form(){
+	    $form = parent::get_form();
+	    $form.= '
+        <div class="row">
+            <div class="colonne3"><label for="'.$this->get_form_value_name('autopostage').'">'.$this->format_text($this->msg['cms_module_common_datasource_categories_use_autopostage']).'</label></div>
+            <div class="colonne_suite">
+                '.$this->format_text($this->msg['yes']).' <input type="radio" '.($this->parameters['autopostage'] == 1 ? 'checked="checked"' : '').' name="'.$this->get_form_value_name('autopostage').'" value="1"/>
+                '.$this->format_text($this->msg['no']).' <input type="radio" '.($this->parameters['autopostage'] == 0 ? 'checked="checked"' : '').' name="'.$this->get_form_value_name('autopostage').'" value="0"/></div>
+        </div>';
+	    
+	    return $form;
+	}
+	
+	public function save_form(){
+	    $this->parameters['autopostage'] = $this->get_value_from_form('autopostage');
+	    return parent::save_form();
+	}
+	
+	
 	/*
 	 * Récupération des données de la source...
 	 */
 	public function get_datas(){
 		$selector = $this->get_selected_selector();
 		if ($selector) {
-			$query = "select distinct id_article,if(article_start_date != '0000-00-00 00:00:00',article_start_date,article_creation_date) as publication_date from cms_articles join cms_articles_descriptors on id_article=num_article where num_article != '".$selector->get_value()."' and num_noeud in (select num_noeud from cms_articles_descriptors where num_article = '".$selector->get_value()."')";
+		    if($this->parameters['autopostage']){
+		        $query ='select id_article,if(article_start_date != "0000-00-00 00:00:00",article_start_date,article_creation_date) as publication_date 
+                from cms_articles_descriptors
+                join noeuds as articles_noeuds on articles_noeuds.id_noeud = cms_articles_descriptors.num_noeud
+                join noeuds as categ_noeuds on categ_noeuds.path like concat(articles_noeuds.path,"%") and articles_noeuds.id_noeud != categ_noeuds.id_noeud
+                join cms_articles_descriptors as cmd on categ_noeuds.id_noeud = cmd.num_noeud
+                where num_article='.($selector->get_value()*1).' group by id_article';
+		    }else{
+		        $query = "select distinct id_article,if(article_start_date != '0000-00-00 00:00:00',article_start_date,article_creation_date) as publication_date 
+                from cms_articles 
+                join cms_articles_descriptors on id_article=num_article 
+                where num_article != '".($selector->get_value()*1)."' and num_noeud in (select num_noeud from cms_articles_descriptors where num_article = '".($selector->get_value()*1)."')";
+		    }
 			if ($this->parameters["sort_by"] != "") {
 				$query .= " order by ".$this->parameters["sort_by"];
 				if ($this->parameters["sort_order"] != "") $query .= " ".$this->parameters["sort_order"];

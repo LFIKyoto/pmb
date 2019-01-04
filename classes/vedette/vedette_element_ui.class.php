@@ -2,12 +2,15 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_element_ui.class.php,v 1.3 2014-10-07 10:34:18 arenou Exp $
+// $Id: vedette_element_ui.class.php,v 1.4 2015-12-10 11:18:08 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 abstract class vedette_element_ui {
 
+	
+	protected static $created_boxes = array();
+	
 	/**
 	 * Boite de sélection de l'élément
 	 *

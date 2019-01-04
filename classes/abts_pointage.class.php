@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: abts_pointage.class.php,v 1.67.2.1 2015-11-05 13:21:13 jpermanne Exp $
+// $Id: abts_pointage.class.php,v 1.86 2018-12-20 11:00:19 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
 	die("no access");
@@ -17,15 +17,17 @@ require_once($base_path."/classes/rtf/Rtf.php");
 require_once($base_path."/classes/fpdf.class.php");
 require_once($base_path."/classes/ufpdf.class.php");
 require_once("$class_path/coordonnees.class.php");
+require_once($class_path."/cache_factory.class.php");
+require_once($class_path."/abts_status.class.php");
 	
 class abts_pointage {
-	var $num_notice; //notice id
-	var $print_mode = 0; //0 : rtf, 1 : pdf
-	var $error; //Erreur
-	var $error_message; //Message d'erreur
-	var $liste_rel=array(); 
+	public $num_notice; //notice id
+	public $print_mode = 0; //0 : rtf, 1 : pdf
+	public $error; //Erreur
+	public $error_message; //Message d'erreur
+	public $liste_rel=array(); 
 	
-	function abts_pointage($notice_id = "") {
+	public function __construct($notice_id = "") {
 		global $msg,$dbh;
 		
 		//Verif de l'id de la notice 
@@ -44,11 +46,11 @@ class abts_pointage {
 		}
 	}
 
-	function getData() {
+	public function getData() {
 
 	}
 
-	function get_bulletinage($clause_filter="",$order=" date_parution,tit1,ordre,abt_name ") {
+	public function get_bulletinage($clause_filter="",$order=" date_parution,tit1,ordre,abt_name ") {
 		global $msg;
 		global $dbh;
 		global $pointage_form, $pointage_list;
@@ -59,22 +61,27 @@ class abts_pointage {
 
 		if ($location_view == "") $location_view = $deflt_bulletinage_location;
 		if($this->num_notice) $and_rqt_notice=" and notice_id =". $this->num_notice ;
-		
+		else $and_rqt_notice="";
 		$cpt_a_recevoir = $cpt_en_retard = $cpt_en_alerte = 0;
-		$numero_modele = '';
+		$numero_modele = array();
+
+		$abts_status_where = '';
+		$abts_status_ids = abts_status::get_ids_bulletinage_active();
+		if(count($abts_status_ids)) {
+			$abts_status_where = " and abt_status in(".implode(',', $abts_status_ids).") ";
+		}
 		
 		$requete = "			
 		SELECT id_bull,num_abt,abts_grille_abt.date_parution,modele_id,type,numero,nombre,ordre,state,fournisseur,abt_name,num_notice,location_id,tit1,index_sew,date_debut, date_fin,cote
 		FROM abts_grille_abt ,abts_abts, notices
-		WHERE abt_id=num_abt and notice_id= num_notice ";
+		WHERE abt_id=num_abt and notice_id= num_notice ".$abts_status_where;
 		if ($location_view) $requete .= " and location_id='$location_view' ";
 		$requete .= " $and_rqt_notice $clause_filter
-		order by $order;
-		";
+		order by $order";
 
 		$memo_prochain=array();
 		$memo_abt_modele=array();
-
+		
 		$resultat = pmb_mysql_query($requete,$dbh);
 		if ($resultat) {
 			while ($r = pmb_mysql_fetch_object($resultat)) {
@@ -83,7 +90,7 @@ class abts_pointage {
 				$volume = "";
 				$tome = "";
 	
-				if (!$numero_modele[$r->modele_id]) {
+				if (!isset($numero_modele[$r->modele_id]) || !$numero_modele[$r->modele_id]) {
 					$requete = "SELECT modele_name,num_cycle,num_combien,num_increment,num_date_unite,num_increment_date,num_depart,vol_actif,vol_increment,vol_date_unite,vol_increment_numero,vol_increment_date,vol_cycle,vol_combien,vol_depart,tom_actif,tom_increment,tom_date_unite,tom_increment_numero,tom_increment_date,tom_cycle,tom_combien,tom_depart, format_aff 
 								FROM abts_modeles WHERE modele_id=$r->modele_id";
 					$resultat_n = pmb_mysql_query($requete,$dbh);
@@ -147,7 +154,7 @@ class abts_pointage {
 					$retard=3;
 				}else{		
 					if( $r->type != 2){
-						if (!$numero_modele[$r->modele_id][$r->num_abt]) {
+						if (!isset($numero_modele[$r->modele_id][$r->num_abt]) || !$numero_modele[$r->modele_id][$r->num_abt]) {
 							$requete = "SELECT num,vol, tome, delais,	critique FROM abts_abts_modeles WHERE modele_id=$r->modele_id and abt_id=$r->num_abt";
 							$resultat_n = pmb_mysql_query($requete,$dbh);
 							if ($r_abt = pmb_mysql_fetch_object($resultat_n)) {
@@ -177,7 +184,7 @@ class abts_pointage {
 					}
 					
 					if ($r->type == 1) {				
-						$numero_modele[$r->modele_id][abt_name] = $r->abt_name;
+						$numero_modele[$r->modele_id]['abt_name'] = $r->abt_name;
 						$libelle_abonnement = $numero_modele[$r->modele_id]['modele_name'] . " / " . $numero_modele[$r->modele_id]['abt_name'];			
 						
 						$numero = $numero_modele[$r->modele_id][$r->num_abt]['num'];
@@ -207,7 +214,7 @@ class abts_pointage {
 						}
 					}
 					else if ($r->type == 2) {				
-						$numero_modele[$r->modele_id][abt_name] = $r->abt_name;
+						$numero_modele[$r->modele_id]['abt_name'] = $r->abt_name;
 						$libelle_abonnement = $numero_modele[$r->modele_id]['modele_name'] . " / " . $numero_modele[$r->modele_id]['abt_name'];
 						
 						$volume = $numero_modele[$r->modele_id][$r->num_abt]['vol'];
@@ -287,13 +294,17 @@ class abts_pointage {
 						$fiche_prochain['location_id']=$r->location_id;
 						$fiche_prochain['TOM']=$tome;
 						$fiche_prochain['VOL']=$volume;
-						$fiche_prochain['NUM']=$numero;
+						if($r_prochain->numero){
+							$fiche_prochain['NUM']=$r_prochain->numero;
+						}else{
+							$fiche_prochain['NUM']=$numero;
+						}
 						$fiche_prochain['cote'] = $r->cote;
 						$fiche_prochain['perio_id'] = $r->num_notice;
 						$fiche_prochain['abt_id'] = $r->num_abt;
 						$fiche_prochain['modele_id'] = $r->modele_id;
 						$fiche_prochain['ordre'] = $r->ordre;
-						$fiche_prochain['type'] = $r->type;
+						$fiche_prochain['type'] = $r_prochain->type;
 						$fiche_prochain['abt_name'] = $r->abt_name;
 						
 						$memo_abt_modele[$abtModele]=$abtModele;
@@ -301,7 +312,7 @@ class abts_pointage {
 							$fiche_prochain['deja_bulletine'] = $deja_bulletine;
 							$memo_prochain[$r_prochain->date_parution."_".$r->tit1."_".$prochain_id_bull]=array($prochain_id_bull,$fiche_prochain);
 							break;
-						}else {
+						}elseif($r_prochain->type != 2){//Si c'est un hors série alors on ne le prend pas en compte dans le calcule du prochain numéro
 							$deja_bulletine++;
 						}
 					}								
@@ -346,7 +357,7 @@ class abts_pointage {
 				}
 				
 				if ($type == 1) {
-					$numero_modele[$modele_id][abt_name] = $abt_name;
+					$numero_modele[$modele_id]['abt_name'] = $abt_name;
 					$libelle_abonnement = $numero_modele[$modele_id]['modele_name'] . " / " . $numero_modele[$modele_id]['abt_name'];
 						
 					$numero = $numero_modele[$modele_id][$num_abt]['num'];
@@ -376,9 +387,11 @@ class abts_pointage {
 					}
 				}
 				else if ($type == 2) {
-					$numero_modele[$modele_id][abt_name] = $abt_name;
+					$numero_modele[$modele_id]['abt_name'] = $abt_name;
 					$libelle_abonnement = $numero_modele[$modele_id]['modele_name'] . " / " . $numero_modele[$modele_id]['abt_name'];
-						
+					
+					$numero=$this->fiche_bulletin[3][$obj]['NUM'];//Dans le cas où l'on a forcé un numéro pour le hors série
+					
 					$volume = $numero_modele[$modele_id][$num_abt]['vol'];
 					$tome = $numero_modele[$modele_id][$num_abt]['tom'];
 					$format_aff = $numero_modele[$modele_id]['format_aff'];
@@ -410,11 +423,25 @@ class abts_pointage {
 		return $this->fiche_bulletin;
 	}	
 
-	static function get_dashboard_info($location_view="") {
+	public static function get_dashboard_info($location_view="") {
 		global $msg;
 		global $dbh;
 		global $deflt_bulletinage_location;	
-				
+		
+		
+		$cache_php=cache_factory::getCache();
+		if ($cache_php) {
+			$key = SQL_SERVER.DATA_BASE."_dashboard_".$location_view;
+			$key_datetime = SQL_SERVER.DATA_BASE."_dashboard_datetime_".$location_view;
+			$tmp_key_datetime = $cache_php->getFromCache($key_datetime);
+			if($tmp_key_datetime){
+				$req = "select if('".$tmp_key_datetime."' > greatest(curdate(),(SELECT max(IF(UPDATE_TIME IS NULL,'3000-01-01 01:01:01',UPDATE_TIME)) from information_schema.tables where table_schema='".DATA_BASE."' and (table_name='abts_grille_abt' or table_name='abts_abts' or table_name='abts_abts_modeles'))),1,0)";
+				if ( pmb_sql_value($req) ) {
+					return $cache_php->getFromCache($key);
+				}
+			}
+		}
+		
 		$cpt_a_recevoir = $cpt_en_retard = $cpt_en_alerte = $prochain_numero = 0;
 		
 		$requete = "
@@ -441,7 +468,7 @@ class abts_pointage {
 		if ($resultat) {
 			while ($r = pmb_mysql_fetch_object($resultat)) {
 				// recheche des délais de retart 
-				if (!$numero_modele[$r->modele_id][$r->num_abt]) {
+				if (!isset($numero_modele[$r->modele_id][$r->num_abt])) {
 					$requete = "SELECT delais,	critique FROM abts_abts_modeles WHERE modele_id=$r->modele_id and abt_id=$r->num_abt";
 					$resultat_n = pmb_mysql_query($requete,$dbh);
 					if ($r_abt = pmb_mysql_fetch_object($resultat_n)) {
@@ -458,17 +485,24 @@ class abts_pointage {
 				}
 			}
 		}
-		return array(
+		
+		$ret = array(
 			'a_recevoir'=>$cpt_a_recevoir,
 			'en_retard'=>$cpt_en_retard,
 			'en_alerte'=>$cpt_en_alerte,
 			'prochain_numero'=>$prochain_numero
-		);			
+		);
+		
+		if ($cache_php) {
+			$cache_php->setInCache($key,$ret);
+			$cache_php->setInCache($key_datetime,pmb_sql_value("select now()"));
+		}
+		return $ret;
 	}	
 
 	
 	
-	function show_form() {
+	public function show_form() {
 		global $msg, $charset;
 		global $dbh;
 		global $pointage_form, $pointage_list;
@@ -509,7 +543,7 @@ class abts_pointage {
 			var vol=id_obj.getAttribute('vol');	
 			var tom=id_obj.getAttribute('tom');
 			
-			var url="./catalog/serials/pointage/pointage_exemplarise.php?id_bull="+obj+"&numero="+num+"&nume="+nume+"&vol="+vol+"&tom="+tom+"";
+			var url="./pointage_exemplarise.php?id_bull="+obj+"&numero="+num+"&nume="+nume+"&vol="+vol+"&tom="+tom+"";
 			bull_frame.src=url;
 			bull_resizeFrame(obj);
 			bull_frame.style.visibility="visible";	
@@ -581,7 +615,7 @@ class abts_pointage {
 			var id_obj=document.getElementById(obj_2);
 			var num=id_obj.getAttribute('num');
 			
-			var url="./catalog/serials/pointage/pointage_exemplarise.php?nonrecevable=1&id_bull="+obj+"&numero="+num+"";
+			var url="./pointage_exemplarise.php?nonrecevable=1&id_bull="+obj+"&numero="+num+"";
 			bull_frame.src=url;
 			bull_resizeFrame(obj);
 			bull_frame.style.visibility="visible";	
@@ -609,10 +643,10 @@ class abts_pointage {
 			document.location="./pdf.php?pdfdoc=abts_depasse&act=print&location_view="+value;
 		}		
 		function imprime_cote(expl_id) {
-			openPopUp("./ajax.php?module=circ&categ=periocirc&sub=print_cote&expl_id="+expl_id, "circulation", 600, 500, -2, -2, "toolbar=no, dependent=yes, resizable=yes");
+			openPopUp("./ajax.php?module=circ&categ=periocirc&sub=print_cote&expl_id="+expl_id, "circulation");
 		}		
 		function imprime_all_cote() {
-			openPopUp("./ajax.php?module=circ&categ=periocirc&sub=print_cote", "circulation", 600, 500, -2, -2, "toolbar=no, dependent=yes, resizable=yes");
+			openPopUp("./ajax.php?module=circ&categ=periocirc&sub=print_cote", "circulation");
 		}	
 ENDOFTEXT;
 		$link_bulletinage="";
@@ -644,7 +678,8 @@ ENDOFTEXT;
 		}
 		
 		$form = str_replace('!!localisation!!',$form_localisation , $form);
-		$header_table = "<table class='sortable'>			
+		$header_table = "<table class='sortable'>
+					<tr>			
 						<th>" .	$msg['pointage_label_date'] . "</th>
 						<th>" . $msg['pointage_label_notice'] . "</th>
 						<th>" . $msg['pointage_label_numero'] . "</th>
@@ -652,10 +687,12 @@ ENDOFTEXT;
 						<th>" . $msg['pointage_label_a_recevoir'] . "</th>
 						<th>" . $msg['pointage_label_recu'] . "</th>
 						<th>" . $msg['pointage_label_supprimer_et_conserver'] . "</th>
-						<th>" . $msg['pointage_label_voir_bulletin'] . "</th>	";													
+						<th></th>
+					</tr>";													
 		$liste_bulletin=$this->get_bulletinage();
 		$a_recevoir = $en_retard = $en_alerte = "";
 		$cpt_a_recevoir = $cpt_en_retard = $cpt_en_alerte = 0;					
+		$prochain_numero = 0;
 		
 		if($liste_bulletin){
 			//Tri par type de retard
@@ -674,7 +711,7 @@ ENDOFTEXT;
 					$contenu_tmp .= "<td><input name='".$id_bull."' id='".$id_bull."_1' checked='checked'  value='1' type='radio'></td>";
 					$contenu_tmp .= "<td><input name='".$id_bull."' id='".$id_bull."_2' value='2' nume='". $fiche['NUM']."' vol='". $fiche['VOL']."'	tom='". $fiche['TOM']."' num='". htmlentities($fiche['libelle_numero'],ENT_QUOTES, $charset)."'  type='radio' ".$fiche['link_recu']." ></td>";
 					$contenu_tmp .= "<td><input name='".$id_bull."' id='".$id_bull."_3' value='3' type='radio' ".$fiche['link_non_recevable']." ></td>";
-					$contenu_tmp .= "<td id='". $id_bull."_bul'>&nbsp</td>";
+					$contenu_tmp .= "<td id='". $id_bull."_bul'>&nbsp;</td>";
 					$contenu_tmp .= "</tr>";	
 					$contenu=$contenu_tmp.$contenu;
 								
@@ -704,13 +741,22 @@ ENDOFTEXT;
 		$pointage_list = str_replace('!!en_alerte!!', $en_alerte, $pointage_list);
 		// Gestion des abonnements qui arrive a terme
 		if(!$pmb_abt_end_delay || !is_numeric($pmb_abt_end_delay)) $pmb_abt_end_delay=30;
-		$header_table = "<table class='sortable'>			
+		$header_table = "<table class='sortable'>	
+				<tr>		
 					<th>" .	$msg['pointage_label_date_fin'] . "</th>		
-					<th>" . $msg['pointage_label_abonnement'] . "</th>";			
+					<th>" . $msg['pointage_label_abonnement'] . "</th>
+				</tr>";
+		
+		$abts_status_where = '';
+		$abts_status_ids = abts_status::get_ids_bulletinage_active();
+		if(count($abts_status_ids)) {
+			$abts_status_where = " and abt_status in(".implode(',', $abts_status_ids).") ";
+		}		
+		
 		$requete = "SELECT abt_id,abt_name,tit1,num_notice, date_fin
 					FROM abts_abts,notices
 					WHERE date_fin BETWEEN CURDATE() AND  DATE_ADD(CURDATE(), INTERVAL $pmb_abt_end_delay DAY)
-					and notice_id= num_notice";
+					and notice_id= num_notice ".$abts_status_where;
 		if ($location_view) $requete .= " and location_id='$location_view'";
 		$requete .= " ORDER BY date_fin,abt_name";
 		$resultat = pmb_mysql_query($requete,$dbh);	
@@ -733,12 +779,13 @@ ENDOFTEXT;
 		$requete = "SELECT abt_id,abt_name,tit1,num_notice, date_fin
 					FROM abts_abts,notices
 					WHERE date_fin < CURDATE()
-					and notice_id= num_notice";
+					and notice_id= num_notice ".$abts_status_where;
 		if ($location_view) $requete .= " and location_id='$location_view'";
 		$requete .= " ORDER BY date_fin,abt_name";	
 		$resultat = pmb_mysql_query($requete,$dbh);	
 		$cpt=0;
 		$contenu='';
+		$flag_imprime_abts_depasse=0;
 		while ($r = pmb_mysql_fetch_object($resultat)) {
 			if (++$cpt % 2) $pair_impair = "even"; else $pair_impair = "odd";
 			$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" ";
@@ -783,13 +830,13 @@ ENDOFTEXT;
 	}
 
 
-	function imprimer() {
+	public function imprimer() {
 		global $dbh;
 		global $msg;
 		global $include_path;
 	}
 
-	function proceed() {
+	public function proceed() {
 		global $act;
 		global $serial_id, $msg, $num_notice;
 		
@@ -806,7 +853,7 @@ ENDOFTEXT;
 	
 	
 	
-	function get_form_retard(){
+	public function get_form_retard(){
 		global $abts_gestion_retard_form_filter,$charset,$dbh,$msg;
 		global $location_view,$filter,$deflt_bulletinage_location;
 		global $abts_gestion_retard_fournisseur_first,$abts_gestion_retard_fournisseur_suite;
@@ -814,7 +861,7 @@ ENDOFTEXT;
 		
 		$form=$abts_gestion_retard_form_filter;
 		if($location_view == "") $location_view=$deflt_bulletinage_location;
-		$select_location = gen_liste("select distinct idlocation, location_libelle from docs_location, docsloc_section where num_location=idlocation order by 2 ", "idlocation", "location_libelle", 'location_view', "", $location_view, "", "", "0", $msg[all_location], 0);
+		$select_location = gen_liste("select distinct idlocation, location_libelle from docs_location, docsloc_section where num_location=idlocation order by 2 ", "idlocation", "location_libelle", 'location_view', "", $location_view, "", "", "0", $msg['all_location'], 0);
 		$form = str_replace("!!location_filter!!", $select_location, $form);
 		$form = str_replace("!!abts_state_selected_".$filter."!!", "selected='selected' ", $form);
 		$clause_filter="";
@@ -848,10 +895,15 @@ ENDOFTEXT;
 			$clause_fournisseur=" and( $clause_fournisseur ) ";
 		}
 		
+		$fourn_repetables = '';
 		if (sizeof($fournisseurs)==0) $max_fourn = 1 ;
 		else $max_fourn = sizeof($fournisseurs) ; 
 		for ($i = 0 ; $i < $max_fourn ; $i++) {
-			$fourn_id = $fournisseurs[$i]["id"] ;
+			if(isset($fournisseurs[$i]["id"])) {
+				$fourn_id = $fournisseurs[$i]["id"] ;
+			} else {
+				$fourn_id = 0;
+			}
 			
 			if ($i==0) $tmp_fourn = str_replace('!!ifourn!!', $i, $abts_gestion_retard_fournisseur_first) ;
 			else $tmp_fourn = str_replace('!!ifourn!!', $i, $abts_gestion_retard_fournisseur_suite) ;
@@ -873,7 +925,7 @@ ENDOFTEXT;
 		if($this->fiche_bulletin){
 			$i=0;
 		}
-		$js_tab_perio_bulletin=$form_bulletin_liste="";
+		$js_tab_perio_bulletin=$form_bulletin_liste=$form_perio_liste="";
 		$tab_bulletins_to_post=array();
 		$js_perio_bulletin=$js_perio_bulletin_start=0;
 		$i_perio=0;
@@ -912,8 +964,8 @@ ENDOFTEXT;
 				$form_bulletin=str_replace("!!bulletin_serialise!!", htmlentities(serialize($tab_bulletins_to_post), ENT_QUOTES,$charset), $form_bulletin);
 				
 				$form_bulletin=str_replace("!!bulletin_number!!", $i, $form_bulletin);			
-				$form_bulletin=str_replace("!!comment_gestion!!", $data_relance["first_line"]['comment_gestion'], $form_bulletin);
-				$form_bulletin=str_replace("!!comment_opac!!", $data_relance["first_line"]['comment_opac'], $form_bulletin);
+				$form_bulletin=str_replace("!!comment_gestion!!", isset($data_relance["first_line"]['comment_gestion']) ? $data_relance["first_line"]['comment_gestion'] : '', $form_bulletin);
+				$form_bulletin=str_replace("!!comment_opac!!",  isset($data_relance["first_line"]['comment_opac']) ? $data_relance["first_line"]['comment_opac'] : '', $form_bulletin);
 				if($data_relance["first_line"]['nb_relance']) {
 					$form_bulletin=str_replace("!!nb_relance!!", "<a href='#'  onClick=\"gestion_retard_view_histo(!!rel_id!!,".$data_relance["first_line"]['nb_relance'].");return false;\">".$data_relance["first_line"]['nb_relance']."</a>", $form_bulletin);
 				} else {
@@ -945,12 +997,13 @@ ENDOFTEXT;
 	}
 
 	
-	function get_comment_form($abt_id,$date_parution,$libelle_numero,$class_tr){
+	public function get_comment_form($abt_id,$date_parution,$libelle_numero,$class_tr){
 		global $dbh,$abts_gestion_retard_bulletin_relance,$charset;
 		
 		$rel_max=0;
 		$i=0;
 		$form_list="";
+		$first_line = array();
 		$req="SELECT * from perio_relance where rel_abt_num='".$abt_id."' and rel_date_parution='".$date_parution."' and  rel_libelle_numero='".addslashes($libelle_numero)."' order by rel_nb desc";		
 		$result = pmb_mysql_query($req,$dbh);
 		if(pmb_mysql_num_rows($result)){
@@ -1006,7 +1059,7 @@ ENDOFTEXT;
 		return $return_data;				
 	}
 	
-	function set_comment_retard($type=0){
+	public function set_comment_retard($type=0){
 		global $dbh;
 		global $bulletin, $comment;
 		if(!$comment || !$bulletin) return;
@@ -1027,7 +1080,7 @@ ENDOFTEXT;
 	}
 	
 	
-	function relance_retard(){
+	public function relance_retard(){
 		global $dbh;
 		global $sel_relance;	
 			
@@ -1079,7 +1132,7 @@ ENDOFTEXT;
 		return;			
 	}
 	
-	static function delete_retard($abt_id,$date_parution='',$libelle_numero=''){
+	public static function delete_retard($abt_id,$date_parution='',$libelle_numero=''){
 		global $dbh;		
 		$req="DELETE from perio_relance where rel_abt_num='".$abt_id."' ";
 		if($date_parution)	$req.=" and rel_date_parution='".$date_parution."'  ";
@@ -1087,7 +1140,7 @@ ENDOFTEXT;
 		@pmb_mysql_query($req,$dbh);
 	}
 	
-	function generate_PDF(){
+	public function generate_PDF(){
 		global $base_path,$charset, $msg, $biblio_logo;
 		global $biblio_name, $biblio_logo, $biblio_adr1, $biblio_adr2, $biblio_cp, $biblio_town, $biblio_state, $biblio_country, $biblio_phone, $biblio_email, $biblio_website ;
 		global $madame_monsieur;
@@ -1220,7 +1273,7 @@ ENDOFTEXT;
 		$ourPDF->OutPut();
 	}
 	
-	function generate_RTF(){
+	public function generate_RTF(){
 		
 		global  $base_path,$charset, $msg, $biblio_logo;
 		global $biblio_name, $biblio_logo, $biblio_adr1, $biblio_adr2, $biblio_cp, $biblio_town, $biblio_state, $biblio_country, $biblio_phone, $biblio_email, $biblio_website ;
@@ -1333,7 +1386,7 @@ ENDOFTEXT;
 		
 	
 	
-	function to_utf8($string){
+	public function to_utf8($string){
 		global $charset;		
 		if($charset != 'utf-8'){
 			return utf8_encode($string);
@@ -1341,11 +1394,12 @@ ENDOFTEXT;
 		return $string;
 	}
 	
-	function gen_plus_form($id, $titre, $contenu) {
+	public function gen_plus_form($id, $titre, $contenu) {
+		global $msg;
 		return "	
 			<div class='row'></div>
 			<div id='$id' class='notice-parent'>
-				<img src='./images/plus.gif' class='img_plus' name='imEx' id='$id" . "Img' title='".addslashes($msg['plus_detail'])."' border='0' onClick=\"expandBase('$id', true); return false;\" hspace='3'>
+				<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='$id" . "Img' title='".addslashes($msg['plus_detail'])."' style='border:0px; margin:3px 3px' onClick=\"expandBase('$id', true); return false;\">
 				<span class='notice-heada'>
 					$titre
 				</span>
@@ -1356,7 +1410,7 @@ ENDOFTEXT;
 			";
 	}
 	
-	function calc_alert() {
+	public function calc_alert() {
 		global $dbh;
 		global $location_view, $deflt_bulletinage_location,$pmb_abt_end_delay;
 		if ($location_view == "") $location_view = $deflt_bulletinage_location;
@@ -1404,10 +1458,15 @@ function increment_bulletin($modele_id, &$num,$num_abt) {
 			if ($num[$num_abt]['num'] > $num['num_combien']) {
 				$num[$num_abt]['num'] = $num['num_depart'];
 			}
-		} else { // numero cyclique selon la date
-			if (pmb_sql_value("SELECT DATEDIFF('" . $num[$num_abt]['num_date_fin_cycle'] . "','" . $num[$num_abt]['date_parution'] . "')") <= 0) {
+		} elseif($num[$num_abt]['num_date_fin_cycle'] && $num[$num_abt]['date_parution']){ // numero cyclique selon la date
+			while (pmb_sql_value("SELECT DATEDIFF('" . $num[$num_abt]['num_date_fin_cycle'] . "','" . $num[$num_abt]['date_parution'] . "')") <= 0) {
 				$num[$num_abt]['num'] = $num['num_depart'];
-				$num[$num_abt]['num_date_fin_cycle'] = pmb_sql_value("SELECT DATE_ADD('" . $num[$num_abt]['num_date_fin_cycle'] . "', INTERVAL " . $num['num_date_sql'] . ")");
+				$tmp_num_date_fin_cycle = pmb_sql_value("SELECT DATE_ADD('" . $num[$num_abt]['num_date_fin_cycle'] . "', INTERVAL " . $num['num_date_sql'] . ")");
+				if(($num[$num_abt]['num_date_fin_cycle'] == $tmp_num_date_fin_cycle) && (preg_match("/^0 /",trim($num['num_date_sql'])))){
+				      break;
+				}else{
+					$num[$num_abt]['num_date_fin_cycle'] = $tmp_num_date_fin_cycle;
+				}			
 			}
 		}
 	}
@@ -1422,10 +1481,15 @@ function increment_bulletin($modele_id, &$num,$num_abt) {
 			if ($modulo == 0) {
 				$num['inc_vol'] = 1;
 			}
-		} else { // volume s'incrémente selon la date 			
-			if (pmb_sql_value("SELECT DATEDIFF('" . $num[$num_abt]['vol_date_fin_cycle'] . "','" . $num[$num_abt]['date_parution'] . "')") <= 0) {
+		} elseif($num[$num_abt]['vol_date_fin_cycle'] && $num[$num_abt]['date_parution']){ // volume s'incrémente selon la date 			
+			while (pmb_sql_value("SELECT DATEDIFF('" . $num[$num_abt]['vol_date_fin_cycle'] . "','" . $num[$num_abt]['date_parution'] . "')") <= 0) {
 				$num[$num_abt]['vol']++;
-				$num[$num_abt]['vol_date_fin_cycle'] = pmb_sql_value("SELECT DATE_ADD('" . $num[$num_abt]['vol_date_fin_cycle'] . "', INTERVAL " . $num['vol_date_sql'] . ")");
+				$tmp_vol_date_fin_cycle = pmb_sql_value("SELECT DATE_ADD('" . $num[$num_abt]['vol_date_fin_cycle'] . "', INTERVAL " . $num['vol_date_sql'] . ")");
+				if(($num[$num_abt]['vol_date_fin_cycle'] == $tmp_vol_date_fin_cycle) && (preg_match("/^0 /",trim($num['vol_date_sql'])))){
+					break;
+				}else{
+					$num[$num_abt]['vol_date_fin_cycle'] = $tmp_vol_date_fin_cycle;
+				}
 			}
 		}
 		// Si volume est cyclique
@@ -1449,10 +1513,15 @@ function increment_bulletin($modele_id, &$num,$num_abt) {
 					$num['inc_tom'] = 1;
 				}
 			}
-		} else { // tome s'incrémente selon la date
-			if (pmb_sql_value("SELECT DATEDIFF('" . $num[$num_abt]['tom_date_fin_cycle'] . "','" . $num[$num_abt]['date_parution'] . "')") <= 0) {
+		} elseif($num[$num_abt]['tom_date_fin_cycle'] && $num[$num_abt]['date_parution']){ // tome s'incrémente selon la date
+			while (pmb_sql_value("SELECT DATEDIFF('" . $num[$num_abt]['tom_date_fin_cycle'] . "','" . $num[$num_abt]['date_parution'] . "')") <= 0) {
 				$num[$num_abt]['tom']++;
-				$num[$num_abt]['tom_date_fin_cycle'] = pmb_sql_value("SELECT DATE_ADD('" . $num[$num_abt]['tom_date_fin_cycle'] . "', INTERVAL " . $num['tom_date_sql'] . ")");
+				$tmp_tom_date_fin_cycle = pmb_sql_value("SELECT DATE_ADD('" . $num[$num_abt]['tom_date_fin_cycle'] . "', INTERVAL " . $num['tom_date_sql'] . ")");
+				if(($num[$num_abt]['tom_date_fin_cycle'] == $tmp_tom_date_fin_cycle) && (preg_match("/^0 /",trim($num['tom_date_sql'])))){
+					break;
+				}else{
+					$num[$num_abt]['tom_date_fin_cycle'] = $tmp_tom_date_fin_cycle;
+				}
 			}
 		}
 		// Si tome est cyclique

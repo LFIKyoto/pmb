@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fichier_saisie.inc.php,v 1.3 2012-02-09 12:47:51 dbellamy Exp $
+// $Id: fichier_saisie.inc.php,v 1.4 2017-04-20 16:25:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($idfiche)) $idfiche = 0;
+if(!isset($act)) $act = '';
 
 require_once($class_path."/fiche.class.php");
 

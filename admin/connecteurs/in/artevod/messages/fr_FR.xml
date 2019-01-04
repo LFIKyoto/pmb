@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: fr_FR.xml,v 1.2 2015-05-25 09:21:04 apetithomme Exp $ -->
+$Id: fr_FR.xml,v 1.3 2018-10-10 10:03:50 dgoron Exp $ -->
 
 <XMLlist>
 	<entry code="artevod_key">Identifiant pour l'authentification</entry>
@@ -21,4 +21,5 @@ $Id: fr_FR.xml,v 1.2 2015-05-25 09:21:04 apetithomme Exp $ -->
 	<entry code="artevod_enrichment_source">(source ArteVOD)</entry>
 	<entry code="artevod_enrichment_template">Template d'affichage de l'enrichissement</entry>
 	<entry code="artevod_private_key">Clé privée</entry>
+	<entry code="artevod_url_referer">URL référente</entry>
 </XMLlist>

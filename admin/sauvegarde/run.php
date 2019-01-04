@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: run.php,v 1.11 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: run.php,v 1.12 2017-10-23 10:13:00 ngantier Exp $
 
 //Sauvegarde des jeux : initialisation de la sauvegarde d'un jeu, création du fichier SQL et compression éventuelle, log
 $base_path="../..";
@@ -28,7 +28,7 @@ print "<div id=\"contenu-frame\">\n";
 echo "<h1>".$msg["sauv_misc_export_running"]."</h1>\n";
 echo "<form class='form-$current_module' name=\"sauv\" action=\"\" method=\"post\">\n";
 echo "<br /><br />";
-echo "<center><input type=\"button\" value=\"".$msg["sauv_annuler"]."\" onClick=\"document.location='launch.php';\" class=bouton></center>\n";
+echo "<input type=\"button\" value=\"".$msg["sauv_annuler"]."\" onClick=\"document.location='launch.php';\" class=bouton>\n";
 
 //Pour le premier jeux de sauvegarde de la liste restante
 $currentSauv=$sauvegardes[0];
@@ -69,7 +69,7 @@ $logid=pmb_mysql_insert_id();
 echo "<input type=\"hidden\" name=\"filename\" value=\"../../admin/backup/backups/".$log_file."\">\n";
 echo "<input type=\"hidden\" name=\"logid\" value=\"".$logid."\">\n";
 echo "<input type=\"hidden\" name=\"sauv_sauvegarde_nom\" value=\"".$res->sauv_sauvegarde_nom."\">\n";
-echo "<center><h2>".sprintf($msg["sauv_misc_export_SQL"],$res->sauv_sauvegarde_nom)."</h2></center>";
+echo "<h2>".sprintf($msg["sauv_misc_export_SQL"],$res->sauv_sauvegarde_nom)."</h2>";
 
 //Création du fichier d'export
 $fe=@fopen("../../admin/backup/backups/".$log_file,"w+");

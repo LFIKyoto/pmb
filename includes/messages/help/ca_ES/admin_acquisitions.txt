@@ -1,4 +1,4 @@
-<h1>Adquisicions</h1>
+<h2>Adquisicions</h2>
 </p><p>
 <b>Dades</b> fitxa d'identificació de la biblioteca.
 </p><p>

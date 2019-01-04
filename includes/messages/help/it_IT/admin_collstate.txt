@@ -1,4 +1,4 @@
-<h1>Amministrazione dello stato delle collezioni</h1>
+<h2>Amministrazione dello stato delle collezioni</h2>
 
 <p>La sezione <b>amministrazione dello stato delle collezioni</b> permette di definire i parametri da applicare alle collezioni di periodici.
 <ul>

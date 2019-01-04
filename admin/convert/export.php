@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export.php,v 1.14 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: export.php,v 1.15 2017-02-17 15:34:01 dgoron Exp $
 
 //Interface de lancement de l'import
 $base_path="../..";
@@ -19,10 +19,10 @@ require_once($class_path."/export_param.class.php");
 function _item_($param) {
 	global $catalog;
 	global $n_typ_total;
-	$t['NAME']=$param['EXPORTNAME'];
+	$t['NAME']=(isset($param['EXPORTNAME']) ? $param['EXPORTNAME'] : '');
 	$t['INDEX']=$n_typ_total;
 	$n_typ_total++;
-	if ($param['EXPORT']=="yes") $catalog[]=$t;
+	if (isset($param['EXPORT']) && $param['EXPORT']=="yes") $catalog[]=$t;
 }
 
 //Lecture des différents exports possibles
@@ -58,6 +58,7 @@ $lenders.="</select>\n";
 $form=str_replace("!!lenders!!",$lenders,$form);
 
 //Types de documents
+$typ_doc_lists = "";
 $requete="select idlender, lender_libelle from lenders";
 $resultat=pmb_mysql_query($requete);
 while (list($id_lender,$lender_libelle)=pmb_mysql_fetch_row($resultat)) {
@@ -75,6 +76,7 @@ $typ_doc_lists.="</div>";
 $form=str_replace("!!typ_doc_lists!!",$typ_doc_lists,$form);
 
 //Status
+$statut_lists = '';
 $requete="select idlender, lender_libelle from lenders";
 $resultat=pmb_mysql_query($requete);
 while (list($id_lender,$lender_libelle)=pmb_mysql_fetch_row($resultat)) {

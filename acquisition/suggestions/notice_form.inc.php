@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_form.inc.php,v 1.9 2013-01-29 09:09:30 dgoron Exp $
+// $Id: notice_form.inc.php,v 1.12 2017-09-28 09:23:37 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -70,6 +70,7 @@ if($sug->sugg_noti_unimarc){
 		$myNotice->tit1 = $sug->titre;
 		$myNotice->code = $sug->code;
 		$myNotice->prix = $sug->prix;
+		$myNotice->year = $sug->date_publi;
 	}
 	
 	$myNotice->action = "./acquisition.php?categ=sug&action=upd_notice&id_bibli=".$id_bibli."&id_sug=".$id_sug."&id=";
@@ -79,7 +80,7 @@ if($sug->sugg_noti_unimarc){
 	
 	//TODO A revoir pour le transfert des auteurs et éditeurs
 	if(!$myNotice->id) {
-		if($sug->auteur)print "<script type='text/javascript'>openPopUp('./select.php?what=auteur&caller=notice&param1=f_aut0_id&param2=f_aut0&deb_rech=".$sug->auteur."', 'select_aut1', 400, 400, 0, 0, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes');</script>";
-		if($sug->editeur)print "<script type='text/javascript'>openPopUp('./select.php?what=editeur&caller=notice&p1=f_ed1_id&p2=f_ed1&p3=f_coll_id&p4=f_coll&p5=f_subcoll_id&p6=f_subcoll&deb_rech=".$sug->editeur."', 'select_ed1', 400, 400, 30, 30, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes');</script>";
+		if($sug->auteur)print "<script type='text/javascript'>openPopUp('./select.php?what=auteur&caller=notice&param1=f_aut0_id&param2=f_aut0&deb_rech=".rawurlencode($sug->auteur)."', 'selector');</script>";
+		if($sug->editeur)print "<script type='text/javascript'>openPopUp('./select.php?what=editeur&caller=notice&p1=f_ed1_id&p2=f_ed1&p3=f_coll_id&p4=f_coll&p5=f_subcoll_id&p6=f_subcoll&deb_rech=".rawurlencode($sug->editeur)."', 'selector');</script>";
 	}
 }

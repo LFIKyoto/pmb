@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: copy_lieux.php,v 1.9 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: copy_lieux.php,v 1.10 2017-10-23 10:13:00 ngantier Exp $
 
 //if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -23,8 +23,8 @@ $res=pmb_mysql_fetch_object($resultat);
 
 //message
 print "<div id=\"contenu-frame\">\n";
-echo "<center><h1>".sprintf($msg["sauv_misc_warning_transfert"],$res->sauv_lieu_nom)."</h1></center>";
-echo "<br /><br /><center><a href=\"\" onClick=\"self.close();\">".$msg["sauv_misc_close_window"]."</a></center>";
+echo "<h1>".sprintf($msg["sauv_misc_warning_transfert"],$res->sauv_lieu_nom)."</h1>";
+echo "<br /><br /><a href=\"\" onClick=\"self.close();\">".$msg["sauv_misc_close_window"]."</a>";
 flush();
 $tfilecopy=explode("/",$filename);
 $filecopy=$tfilecopy[count($tfilecopy)-1];

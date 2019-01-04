@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // ? 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: import_ldap.inc.php,v 1.15 2015-04-01 12:22:01 mbertin Exp $
+// $Id: import_ldap.inc.php,v 1.18 2017-11-21 12:01:00 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -222,23 +222,23 @@ function show_users_ldap($uu,$pag,$npp) {
 
 	$npp_ctrl="
 	<input type='text' class='saisie-4emc' name='npp' value='$npp' />
-	<input type='image' src='./images/tick.gif' border='0' alt='$msg[708]' hspace='0' align='middle' title='$msg[708]'  class='bouton-nav' name='btsubmit' value='=' />
+	<input type='image' src='".get_url_icon('tick.gif')."' border='0' alt='$msg[708]' hspace='0' title='$msg[708]'  class='align_middle bouton-nav' name='btsubmit' value='=' />
 	";
 
 	if($precp > 0){
 		//$nav_bar .= "<input type='submit' class='bouton' name='btsubmit' value='<' />";
-		$nav_barL = "<input type='image' src='./images/left.gif' border='0' alt='$msg[48]' hspace='0' align='middle' title='$msg[48]' class='bouton-nav' name='btsubmit' value='<' />";
+		$nav_barL = "<input type='image' src='".get_url_icon('left.gif')."' border='0' alt='$msg[48]' hspace='0' title='$msg[48]' class='align_middle bouton-nav' name='btsubmit' value='<' />";
 	}else{
 		//$nav_bar .= "<input type='submit' class='bouton' name='btsubmit' value='<' />";
-		$nav_barL = "<input  disabled type='image' src='./images/left.gif' border='0' alt='$msg[48]' hspace='0' align='middle' title='$msg[48]' class='bouton-nav' name='btsubmit' value='<' />";
+		$nav_barL = "<input  disabled type='image' src='".get_url_icon('left.gif')."' border='0' alt='$msg[48]' hspace='0' title='$msg[48]' class='align_middle bouton-nav' name='btsubmit' value='<' />";
 	}
 
 	$nav_barC = "$pag/$npag";
 
 	if($nextp<=$npag) {
-		$nav_barR .= "<input type='image' src='./images/right.gif' border='0' alt='$msg[49]' hspace='0' align='middle' title='$msg[48]'  class='bouton-nav' name='btsubmit' value='>' />";
+		$nav_barR .= "<input type='image' src='".get_url_icon('right.gif')."' border='0' alt='$msg[49]' hspace='0' title='$msg[48]'  class='align_middle bouton-nav' name='btsubmit' value='>' />";
 	}else{
-		$nav_barR = "<input disabled type='image' src='./images/right.gif' border='0' alt='$msg[49]' hspace='0' align='middle' title='$msg[48]'  class='bouton-nav' name='btsubmit' value='>' /> ";
+		$nav_barR = "<input disabled type='image' src='".get_url_icon('right.gif')."' border='0' alt='$msg[49]' hspace='0' title='$msg[48]'  class='align_middle bouton-nav' name='btsubmit' value='>' /> ";
 	}
 
 
@@ -251,14 +251,14 @@ function show_users_ldap($uu,$pag,$npp) {
 		$cc=explode('|',$auu[$k]);
 		if ($cc[0]){
 			$usr_entry="
-				<td valign='top'>
+				<td style='vertical-align:top'>
 					<input type='checkbox' id='id_to_del$r' name='usrdel[]' value='$cc[0]'/>
 				</td>
-				<td valign='top'>
+				<td style='vertical-align:top'>
 					$cc[0]
 				</td>";
 		for ($j=2;$j<count($cc);$j++){
-				$usr_entry .= "<td valign='top'>$cc[$j]</td>";
+				$usr_entry .= "<td style='vertical-align:top'>$cc[$j]</td>";
 		}
 
 		if ($k % 2) {
@@ -270,7 +270,7 @@ function show_users_ldap($uu,$pag,$npp) {
 		$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"setCheckboxColumn('id_to_del$r')\" ";
 
 		$usr_list .= "<tr class='$pair_impair' $tr_javascript style='cursor: pointer'>
-										<td valign='top'>$usr_entry</td>
+										<td style='vertical-align:top'>$usr_entry</td>
 							</tr>";
 		}
 
@@ -302,7 +302,7 @@ function show_users_ldap($uu,$pag,$npp) {
 	// affichage du lien pr?c?dent si n?c?ssaire
 //    if($precp > 0){
 //        $nav_bar .= "<a href='$PHP_SELF?action=categ=empr&sub=ldap&action=ldapOK&xpag=$precp'>
-//                     <img src='./images/left.gif' border='0' alt='$msg[48]' hspace='6' align='middle' title='$msg[48]' ///></a>";
+//                     <img src='".get_url_icon('left.gif')."' border='0' alt='$msg[48]' hspace='6' class='align_middle' title='$msg[48]' ///></a>";
 //    }
 //    for($i = 1; $i <= $npag; $i++) {
 //        if($i==$pag){
@@ -311,7 +311,7 @@ function show_users_ldap($uu,$pag,$npp) {
 //    }
 //    if($nextp<=$npag) {
 //        $nav_bar .= "<a href='$PHP_SELF?categ=empr&sub=ldap&action=ldapOK&xpag=$nextp'>
-//           <img src='./images/right.gif' border='0' alt='$msg[49]' hspace='6' align='middle' title='$msg[49]' /></a>";
+//           <img src='".get_url_icon('right.gif')."' border='0' alt='$msg[49]' hspace='6' class='align_middle' title='$msg[49]' /></a>";
 //    }
 
 

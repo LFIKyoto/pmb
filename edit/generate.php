@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: generate.php,v 1.17 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: generate.php,v 1.18 2017-01-31 15:41:41 dgoron Exp $
 
 //modifié 12/2007 François CEROVETTI pour affichage code en clair avec police vectorielle.
 // lire exemple de valeurs adaptées à 65 etiquettes AVERY A4 plus bas:
@@ -12,6 +12,8 @@ $base_auth = "";
 $base_title = "PDF";
 $base_noheader=1;
 require_once ("$base_path/includes/init.inc.php");  
+
+if(!isset($truc)) $truc = '';
 
 include("$class_path/fpdf.class.php");
 include("$class_path/ufpdf.class.php");

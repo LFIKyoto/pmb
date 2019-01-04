@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: affichage.inc.php,v 1.5 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: affichage.inc.php,v 1.8 2017-07-12 15:15:01 tsamson Exp $
 
 
 // affiche un tableau de parametres
@@ -13,7 +13,8 @@ function admin_affiche_params($sub,$tab_param,$tab_gen,$tab_ligne,$tab_ligne_sep
 	$lignesTableau = "";
 	
 	foreach ($tab_param as $param) {
-		
+		if (!isset($param["separateur"])) $param["separateur"] = '';
+		if (!isset($param["params"])) $param["params"] = '';
 		if ($param["separateur"]!="") {
 				$tmpLigne = str_replace("!!lib_separateur!!",$param["separateur"],$tab_ligne_sep);
 		} else {
@@ -34,26 +35,27 @@ function admin_affiche_params($sub,$tab_param,$tab_gen,$tab_ligne,$tab_ligne_sep
 				//pour un champ texte
 				case "text":
 					$varGlobal= $param["prefix"]."_".$param["nom"];
-					global $$varGlobal;
-					$tmpLigne = str_replace("!!val_param!!", $$varGlobal, $tmpLigne);
+					global ${$varGlobal};
+					$tmpLigne = str_replace("!!val_param!!", ${$varGlobal}, $tmpLigne);
 					break;
 	
 				
 				//pour une liste venant d'une requete
 				case "select":
 					$varGlobal = $param["prefix"]."_".$param["nom"];
-					global $$varGlobal;
+					global ${$varGlobal};
 
 					foreach($param["val"] as $lgOpt) {
+						if (!isset($lgOpt["valeur"])) $lgOpt["valeur"] = '';
 						if ($lgOpt["valeur"]!="") {
 							//c'est une valeur fixe
-							if ($lgOpt["valeur"]==$$varGlobal) {
+							if ($lgOpt["valeur"]==${$varGlobal}) {
 								$tmpLigne = str_replace("!!val_param!!",$lgOpt["lib"], $tmpLigne);
 								break;
 							}
 						} else {
 							//c'est une requete
-							$res = pmb_mysql_query(str_replace("!!id!!",$$varGlobal,$lgOpt["affichage"]));
+							$res = pmb_mysql_query(str_replace("!!id!!",${$varGlobal},$lgOpt["affichage"]));
 							if ($res) {
 								//il y a un resultat a la requete
 								$tmpLigne = str_replace("!!val_param!!", pmb_mysql_result($res,0), $tmpLigne);
@@ -84,14 +86,15 @@ function admin_affiche_params($sub,$tab_param,$tab_gen,$tab_ligne,$tab_ligne_sep
 
 //affiche un tableau de parametres en modification
 function admin_modif_params($sub,$tab_param,$tab_gen,$tab_ligne,$tab_ligne_sep) {
-	global $charset;
+	global $msg, $charset;
 	//initialisation des variables
 	$nb = 0;
 	$lignesTableau = "";
 	$actionsScript = "";
 	
 	foreach ($tab_param as $param) {
-		
+		if (!isset($param["separateur"])) $param["separateur"] = '';
+		if (!isset($param["params"])) $param["params"] = '';
 		if ($param["separateur"]!="") {
 				$tmpLigne = str_replace("!!lib_separateur!!",$param["separateur"],$tab_ligne_sep);
 		} else {
@@ -111,28 +114,29 @@ function admin_modif_params($sub,$tab_param,$tab_gen,$tab_ligne,$tab_ligne_sep) 
 				//pour un champ texte
 				case "text":
 					$varGlobal= $param["prefix"]."_".$param["nom"];
-					global $$varGlobal;
-					$tmpInput = "<input type=\"text\" class=\"\" name=\"".$param["champ"]."\" value=\"".htmlentities($$varGlobal, ENT_QUOTES, $charset)."\" ".$param["params"].">";
+					global ${$varGlobal};
+					$tmpInput = "<input type=\"text\" class=\"\" name=\"".$param["champ"]."\" value=\"".htmlentities(${$varGlobal}, ENT_QUOTES, $charset)."\" ".$param["params"].">";
 					$tmpLigne = str_replace("!!input_param!!",$tmpInput, $tmpLigne);
 					break;
 	
 				//pour une liste de valeurs fixes
 				case "select":
 					$varGlobal = $param["prefix"]."_".$param["nom"];
-					global $$varGlobal;
+					global ${$varGlobal};
 					
 					$tmpInput = "<select name='".$param["champ"]."' ".$param["params"].">";
 					foreach($param["val"] as $lgOpt) {
+						if (!isset($lgOpt["valeur"])) $lgOpt["valeur"] = '';
 						if ($lgOpt["valeur"]!="") {
 							$tmpInput .= "<option value='".$lgOpt["valeur"]."'";
-							if ($$varGlobal==$lgOpt["valeur"])
+							if (${$varGlobal}==$lgOpt["valeur"])
 								$tmpInput .= " selected";
 							$tmpInput .= ">".$lgOpt["lib"]."</option>";
 						} else {
 							$res = pmb_mysql_query($lgOpt["liste"]);
 							while($val = pmb_mysql_fetch_array($res)) {
 								$tmpInput .= "<option value='".$val[0]."'";
-								if ($$varGlobal==$val[0])
+								if (${$varGlobal}==$val[0])
 									$tmpInput .= " selected";
 								$tmpInput .= ">".$val[1]."</option>";
 							}
@@ -156,7 +160,7 @@ function admin_modif_params($sub,$tab_param,$tab_gen,$tab_ligne,$tab_ligne_sep) 
 	
 	//on precise quels parametres pour la modif
 	$res_affiche = str_replace("!!sub!!",$sub, $res_affiche);
-	$res_affiche = str_replace("!!titre!!", $msg ["admin_tranferts_" . $sub], $res_affiche);
+	$res_affiche = str_replace("!!titre!!", $msg["admin_tranferts_" . $sub], $res_affiche);
 	
 	return $res_affiche;
 	
@@ -284,7 +288,7 @@ function admin_modif_statuts_defaut($id) {
 	$tmpString = str_replace("!!selStatut!!",$value[2],$tmpString);
 	
 	//la liste des statuts
-	$rqt = "SELECT idstatut, statut_libelle FROM docs_statut";
+	$rqt = "SELECT idstatut, statut_libelle FROM docs_statut order by statut_libelle";
 	$res = pmb_mysql_query($rqt);
 	$tmpOpt = "";
 	while ($value = pmb_mysql_fetch_array($res)) {

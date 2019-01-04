@@ -2,16 +2,16 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_history.inc.php,v 1.3 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: search_history.inc.php,v 1.4 2016-11-15 13:35:23 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 if($idcaddie) {
 	$myCart = new caddie($idcaddie);
-	print pmb_bidi(aff_cart_titre ($myCart));
+	print pmb_bidi($myCart->aff_cart_titre());
 	switch ($action) {
 		case 'pointe_item':
-			print aff_cart_nb_items ($myCart) ;
+			print $myCart->aff_cart_nb_items();
 			switch ($myCart->type) {
 				case "EXPL" :
 					$sc=new search(true,"search_fields_expl");
@@ -46,12 +46,12 @@ if($idcaddie) {
 					}
 	    		}
 	    		print "<h3>".$msg["caddie_menu_pointage_apres_pointage"]."</h3>";
-				print pmb_bidi(aff_cart_nb_items ($myCart)) ;
+				print pmb_bidi($myCart->aff_cart_nb_items());
 				print $sc->show_search_history($idcaddie, $myCart->type, "./catalog.php?categ=caddie&sub=pointage&moyen=search_history", "pointe_item");
 			}
 			break;
 		default:
-			print pmb_bidi(aff_cart_nb_items ($myCart));
+			print pmb_bidi($myCart->aff_cart_nb_items());
 			switch ($myCart->type) {
 				case "EXPL" :
 					$sc=new search(true,"search_fields_expl");

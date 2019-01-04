@@ -2,7 +2,7 @@
 // +--------------------------------------------------------------------------+
 // | PMB est sous licence GPL, la réutilisation du code est cadrée            |
 // +--------------------------------------------------------------------------+
-// $Id: print.php,v 1.42 2015-06-05 13:16:35 dgoron Exp $
+// $Id: print.php,v 1.62 2018-12-20 11:00:19 mbertin Exp $
 
 //Impression
 
@@ -15,12 +15,17 @@ $base_noheader=1;
 
 require($base_path."/includes/init.inc.php");
 
+if(!isset($action_print)) $action_print = '';
+
 if (($action_print=="")&&($_SESSION["PRINT"])) {
 	if ($_SESSION["PRINT"]["output"]=="tt") {
 		header("Content-Type: application/word");
 		header("Content-Disposition: attachement; filename=liste.doc");
 	}
 }
+if(!isset($sort_id)) $sort_id = 0;
+if(!isset($pager)) $pager = '';
+if(!isset($permalink)) $permalink = '';
 
 require_once($class_path."/mono_display.class.php");
 require_once($include_path."/notice_authors.inc.php");
@@ -47,29 +52,33 @@ if (file_exists($include_path.'/print/print_options_subst.xml')){
 $xml_print->analyser();
 $print_options = $xml_print->table;
 
+header ("Content-Type: text/html; charset=$charset");
 if ($action_print=="print_prepare") {
-	header ("Content-Type: text/html; charset=$charset");
 	print $std_header;
 	print "<h3>".$msg["print_options"]."</h3>\n";
+	print "<script type='text/javascript' src='./javascript/ajax.js'></script>";
 	print "
+	<div id='att'></div>
 	<script type='text/javascript'>
-	function sel_part_gestion(){
-		if(document.getElementById('outp').checked){
-			document.getElementById('mail_part').style.display='none';
+		function sel_part_gestion(){
+			if(document.getElementById('outp').checked){
+				document.getElementById('mail_part').style.display='none';
+			}
+			if(document.getElementById('outt').checked){
+				document.getElementById('mail_part').style.display='none';
+			}
+			if(document.getElementById('oute').checked){
+				document.getElementById('mail_part').style.display='block';
+				ajax_resize_elements();
+			}
 		}
-		if(document.getElementById('outt').checked){
-			document.getElementById('mail_part').style.display='none';
-		}
-		if(document.getElementById('oute').checked){
-			document.getElementById('mail_part').style.display='block';
-		}
-	}
 	</script>";
 	print "<form name='print_options' action='print.php?action_print=print' method='post'>
 	<b>".$msg["print_size"]."</b>";
-	if(!$notice_id) 
+	if(!isset($notice_id) || !$notice_id) 
 	print"
 	<blockquote>
+		<input type='radio' name='pager' id='selected_elements' value='2' ".($print_options['selected_elements'] ? ' checked ' : '')."/><label for='selected_elements'>&nbsp;".$msg["print_size_selected_elements"]."</label><br />
 		<input type='radio' name='pager' id='current_page' value='1' ".($print_options['current_page'] ? ' checked ' : '')."/><label for='current_page'>&nbsp;".$msg["print_size_current_page"]."</label><br />
 		<input type='radio' name='pager' id='all' value='0' ".($print_options['all'] ? ' checked ' : '')."/><label for='all'>&nbsp;".$msg["print_size_all"]."</label>
 	</blockquote>";
@@ -130,15 +139,76 @@ if ($action_print=="print_prepare") {
 		<input type='radio' name='output' id='oute' onClick =\"sel_part_gestion();\" value='email' ".($print_options['oute'] ? ' checked ' : '')."/><label for='oute'>&nbsp;".$msg["print_output_email"]."</label><br />
 	</blockquote>
 	<div id='mail_part'>
-		<blockquote>
-			&nbsp;&nbsp;".$msg["print_emaildest"]."<input type='text' name='emaildest' value='' /><br />
-			&nbsp;&nbsp;&nbsp;".$msg["523"]."&nbsp;<textarea rows='4' cols='40' name='emailcontent' value=''></textarea><b
-		</blockquote>
+		<div class='row'>
+			<div>".$msg["print_emaildest"]."</div>
+			<input type='text' id='emaildest_0' class='saisie-20emr' completion='empr_mail' name='emaildest[]' autfield='emaildest_id_0' value='' autocomplete='off'/>
+			<input type='button' class='bouton' value='X' onclick=\"document.getElementById('emaildest_0').value=''; document.getElementById('emaildest_id_0').value='';\">
+			<input class='bouton' value='+' onclick='add_dest_field(this);' counter='0' type='button'>
+			<input type='hidden' name='emaildest_id[]' id='emaildest_id_0'/>
+		</div>
+		<div class='row'>
+			<div>".$msg["print_emailobj_label"]."</div>
+			<input type='text' size='40' name='emailobj' value='".htmlentities(trim($msg["print_emailobj"]." ".$opac_biblio_name." - ".formatdate(today())), ENT_QUOTES, $charset)."' />
+		</div>
+		<div id='emailContent' class='row'>
+			<div>".$msg["523"]."</div><textarea rows='4' cols='45' name='emailcontent' value=''></textarea>
+		</div>
+		
 	</div>
 	<input type='hidden' name='current_print' value='$current_print'/>
-	<input type='hidden' name='notice_id' value='$notice_id'/>".$sort_info."
-	<center><input type='submit' value='".$msg["print_print"]."' class='bouton'/>&nbsp;<input type='button' value='".$msg["print_cancel"]."' class='bouton' onClick='self.close();'/></center>";
-	print "</form><script type='text/javascript'>sel_part_gestion();</script></body></html>";
+	<input type='hidden' name='selected_objects' value='$selected_objects'/>
+	<input type='hidden' name='notice_id' value='".(isset($notice_id) ? $notice_id : '')."'/>".$sort_info."
+	<span style='text-align:center'><input type='submit' value='".$msg["print_print"]."' class='bouton'/>&nbsp;<input type='button' value='".$msg["print_cancel"]."' class='bouton' onClick='self.close();'/></span>";
+	print "</form>
+	<script type='text/javascript' src='".$base_path."/javascript/popup.js'></script>
+	<script type='text/javascript'>
+		function add_dest_field(buttonClicked){
+			var currentCounter = buttonClicked.getAttribute('counter');
+			currentCounter++;
+			
+			var newLine = document.createElement('div');
+			newLine.setAttribute('class', 'row');
+			
+			var newInput = document.createElement('input');
+			newInput.setAttribute('class','saisie-20emr');
+			newInput.setAttribute('id', 'emaildest_'+currentCounter); 
+			newInput.setAttribute('completion','empr_mail');
+			newInput.setAttribute('name','emaildest[]');
+			newInput.setAttribute('autfield', 'emaildest_id_'+currentCounter);
+			newInput.setAttribute('value', '');
+			newInput.setAttribute('autocomplete', 'off');
+			newInput.setAttribute('type', 'text');
+			
+			var newInputId = document.createElement('input');
+			newInputId.setAttribute('id','emaildest_id_'+currentCounter);
+			newInputId.setAttribute('type','hidden');
+			newInputId.setAttribute('name','emaildest_id[]');
+			
+			
+			var newPurge = document.createElement('input');
+			newPurge.setAttribute('value','X');
+			newPurge.setAttribute('type','button');
+			newPurge.setAttribute('class','bouton');
+			newPurge.addEventListener('click', function(){
+				newInput.value=''; 
+				newInputId.value=''; 
+			});
+			
+			newLine.appendChild(newInput);
+			newLine.appendChild(newInputId);
+			newLine.appendChild(newPurge);
+			
+			buttonClicked.setAttribute('counter', currentCounter);
+			buttonClicked.parentElement.parentElement.insertBefore(newLine, document.getElementById('emailContent')); 
+			ajax_pack_element(newInput);
+		}
+			
+		sel_part_gestion();
+		if(getSelectedObjects('opener')) {
+			document.getElementById('selected_elements').checked = 'checked';
+		}
+		ajax_parse_dom(); 
+	</script></body></html>";
 }
 
 if ($action_print=="print") {
@@ -148,9 +218,12 @@ if ($action_print=="print") {
 		$_SESSION["PRINT"]["ex"]=$ex;
 		$_SESSION["PRINT"]["exnum"]=$exnum;
 		$_SESSION["PRINT"]["output"]=$output;
+		$_SESSION["PRINT"]["emailobj"]=$emailobj;
 		$_SESSION["PRINT"]["emaildest"]=$emaildest;
+		$_SESSION["PRINT"]["emaildest_id"]=$emaildest_id;
 		$_SESSION["PRINT"]["emailcontent"]=$emailcontent;
 		$_SESSION["PRINT"]["pager"]=$pager;
+		$_SESSION["PRINT"]["selected_objects"]=(!empty($selected_objects) ? explode(',', $selected_objects) : array());
 		$_SESSION["PRINT"]["notice_id"]=$notice_id;
 		$_SESSION["PRINT"]["permalink"]=$permalink;
 		$_SESSION["PRINT"]["vignette"]=$vignette;
@@ -164,9 +237,12 @@ if ($action_print=="print") {
 		$_SESSION["PRINT"]["ex"]=$ex;
 		$_SESSION["PRINT"]["exnum"]=$exnum;
 		$_SESSION["PRINT"]["output"]=$output;
+		$_SESSION["PRINT"]["emailobj"]=$emailobj;
 		$_SESSION["PRINT"]["emaildest"]=$emaildest;
+		$_SESSION["PRINT"]["emaildest_id"]=$emaildest_id;
 		$_SESSION["PRINT"]["emailcontent"]=$emailcontent;
 		$_SESSION["PRINT"]["pager"]=$pager;
+		$_SESSION["PRINT"]["selected_objects"]=(!empty($selected_objects) ? explode(',', $selected_objects) : array());
 		$_SESSION["PRINT"]["notice_id"]=$notice_id;
 		$_SESSION["PRINT"]["permalink"]=$permalink;
 		$_SESSION["PRINT"]["vignette"]=$vignette;
@@ -189,20 +265,26 @@ if (($action_print=="")&&($_SESSION["PRINT"])) {
 	if($environement["notice_id"]){
 		$requete="select notice_id from notices where notice_id=".$environement["notice_id"];
 	} elseif ($environement["TEXT_QUERY"]) {
+		if (is_array($environement["TEXT_LIST_QUERY"]) && count($environement["TEXT_LIST_QUERY"])) {
+			foreach($environement["TEXT_LIST_QUERY"] as $query) {
+				@pmb_mysql_query($query);
+			}
+		}
 		$requete=preg_replace('/limit\s+[0-9]\s*,*\s*[0-9]*\s*$/','',$environement["TEXT_QUERY"],1);
 	} else {
 		switch ($environement["SEARCH_TYPE"]) {
 			case "extended":
 				$sh=new search();
 				$table=$sh->make_search();
-				$requete="select notice_id from $table";
+				$requete = "select notice_id from $table";
 				break;
 			case "cart":
-				$requete="select object_id as notice_id from caddie_content join notices where caddie_id=".$idcaddie." and object_id=notice_id order by index_sew";
+				$requete = "select object_id as notice_id from caddie_content join notices where caddie_id=".$idcaddie." and object_id=notice_id";
+				$requete .= " order by index_sew";
 				break;
 		}
 	}
-	if ($environement["pager"]) {
+	if (!empty($environement["pager"])) {
 		$start= $nb_per_page_search*($environement["PAGE"]-1);
 		$nbLimit = $nb_per_page_search;
 		$limit="limit ".$start.",$nb_per_page_search";
@@ -211,7 +293,7 @@ if (($action_print=="")&&($_SESSION["PRINT"])) {
 		$nbLimit = -1;
 	}
 	
-	if ($environement["sort_id"]) {
+	if (!empty($environement["sort_id"])) {
 		$sort = new sort('notices','base');
 		$requete = $sort->appliquer_tri($environement["sort_id"] , $requete, "notice_id", $start, $nbLimit);
 	}else{
@@ -222,8 +304,17 @@ if (($action_print=="")&&($_SESSION["PRINT"])) {
 	if (!$environement["vignette"]) {
 		$pmb_book_pics_show = 0;
 	}
+	$pheader = "<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" /><title>".$msg['print_title']."</title></head><body>";
+	if($environement['output']=='email') {
+		$environement['emailcontent'] = trim(stripslashes($environement['emailcontent']));
+		if ($environement['emailcontent']) {
+			$pheader.= $msg['523'].$environement['emailcontent'].'<br />';
+		}
+	}
 	
-	$pheader = '<html><head><title>'.$msg['print_title'].'</title><meta http-equiv=Content-Type content="text/html; charset='.$charset.'" /></head><body>';
+	if($_SESSION["PRINT"]["notice_tpl"])	$noti_tpl=new notice_tpl_gen($_SESSION["PRINT"]["notice_tpl"]);
+	else $noti_tpl=0;
+	
 	$pheader.= '<style type="text/css">
 		body { 	
 			font-size: 10pt;
@@ -251,68 +342,98 @@ if (($action_print=="")&&($_SESSION["PRINT"])) {
 		h3 {
 			font-size: 12pt;
 			color:#000000;
-		} 
+		}
+		.vignetteimg {
+		    max-width: 140px;
+		    max-height: 200px;
+		    -moz-box-shadow: 1px 1px 5px #666666;
+		    -webkit-box-shadow: 1px 1px 5px #666666;
+		    box-shadow: 1px 1px 5px #666666;
+		}
+		.img_notice {
+			max-width: 140px;
+			max-height: 200px;
+		}
 		</style>';
-	
-	$output_final.= $pheader;
+	if($noti_tpl) {
+		$pheader.=$noti_tpl->get_print_css_style();
+	}
+	$output_final = $pheader;
 
 	$date_today = formatdate(today()) ;
 	if (pmb_mysql_num_rows($resultat) != 1) {
 		$output_final.= '<h3>'.$date_today.'&nbsp;'.sprintf($msg["print_n_notices"],pmb_mysql_num_rows($resultat)).'</h3>';
 	}
-	//$output_final.= '<hr style="border:none;border-bottom:solid #000000 3px;"/>';
-	$output_final.= '<br>';
-	
-	if($_SESSION["PRINT"]["notice_tpl"])	$noti_tpl=new notice_tpl_gen($_SESSION["PRINT"]["notice_tpl"]);
+	$output_final.= '<br />';
 
 	while (($r=pmb_mysql_fetch_object($resultat))) {
-		if($noti_tpl) {
-			$output_final.=$noti_tpl->build_notice($r->notice_id,$deflt2docs_location);
-			$output_final.="<hr />";
-		} else{
-			$n=pmb_mysql_fetch_object(@pmb_mysql_query("select * from notices where notice_id=".$r->notice_id));
-			if($n->niveau_biblio != 's' && $n->niveau_biblio != 'a') {
-				if($environement['output']=='email'||$environement['output']=='tt'){
-					$mono=new mono_display($n,$environement["short"],"",$environement["ex"],"","","",0,4,$environement["exnum"]);
-				}else{
-					$mono=new mono_display($n,$environement["short"],"",$environement["ex"],"","","",0,1,$environement["exnum"]);
+		if ($environement["pager"] != 2 || in_array($r->notice_id, $environement['selected_objects'])) {
+			if($noti_tpl) {
+				$output_final.=$noti_tpl->build_notice($r->notice_id,$deflt2docs_location);
+				$output_final.="<br />";
+			} else{
+				$n=pmb_mysql_fetch_object(@pmb_mysql_query("select * from notices where notice_id=".$r->notice_id));
+				if($n->niveau_biblio != 's' && $n->niveau_biblio != 'a') {
+					if($environement['output']=='email'||$environement['output']=='tt'){
+						$mono=new mono_display($n,$environement["short"],"",$environement["ex"],"","","",0,4,$environement["exnum"]);
+					}else{
+						$mono=new mono_display($n,$environement["short"],"",$environement["ex"],"","","",0,1,$environement["exnum"]);
+					}
+					if ($environement['header']) {
+						$output_final.= '<b>'.$mono->header.'</b><br /><br />';
+					}
+					$output_final.= $mono->isbd;
+				} else {
+					if($environement['output']=='email'||$environement['output']=='tt'){
+						$serial = new serial_display($n, $environement["short"], "", "", "", "", "", 0,4,$environement["exnum"] );
+					}else{
+						$serial = new serial_display($n, $environement["short"], "", "", "", "", "", 0,1,$environement["exnum"] );
+					}
+					if ($environement['header']) {
+						$output_final.= '<b>'.$serial->header.'</b><br /><br />';
+					}
+					$output_final.= $serial->isbd;
+				}		
+				if($environement['permalink']) {
+					$output_final .= "<br /><a href='".$pmb_opac_url."index.php?lvl=notice_display&id=".$r->notice_id."'>".substr($pmb_opac_url."index.php?lvl=notice_display&id=".$r->notice_id,0,80)."</a><br />";
 				}
-				if ($environement["header"]) $output_final.= '<b>'.$mono->header.'</b><br /><br />';
-				$output_final.= $mono->isbd;
-			} else {
-				if($environement['output']=='email'||$environement['output']=='tt'){
-					$serial = new serial_display($n, $environement["short"], "", "", "", "", "", 0,4,$environement["exnum"] );
-				}else{
-					$serial = new serial_display($n, $environement["short"], "", "", "", "", "", 0,1,$environement["exnum"] );
-				}
-				if ($environement["header"]) $output_final.= '<b>'.$serial->header.'</b><br /><br />';
-				$output_final.= $serial->isbd;
-			}		
-			if($environement["permalink"])
-				$output_final .= "<br /><a href='".$pmb_opac_url."index.php?lvl=notice_display&id=".$r->notice_id."'>".substr($pmb_opac_url."index.php?lvl=notice_display&id=".$r->notice_id,0,80)."</a><br />";
-			//$output_final.="<hr />";
-			$output_final.= "<br>";
-		}	
+				$output_final.= "<hr />";
+			}	
+		}
 	}
-	if ($charset!='utf-8') $output_final=cp1252Toiso88591($output_final);
+	if ($charset!='utf-8') {
+		$output_final=cp1252Toiso88591($output_final);
+	}
 	switch($environement['output']) {
 		
 		case 'email':
 			$headers  = "MIME-Version: 1.0\n";
 			$headers .= "Content-type: text/html; charset=".$charset."\n";
-			
-			$f_objet_mail = $msg['print_emailobj']." - $biblio_name - $date_today ";
-			$f_message_to_send = "";
-			if ($environement["emailcontent"]) $f_message_to_send .= $msg["523"].stripslashes($environement["emailcontent"])."<br />";
-			$f_message_to_send .= $output_final.'<br /><br />'.mail_bloc_adresse()."</body></html> ";
-			$emaildest=$_SESSION["PRINT"]["emaildest"];
-			
-			$res_envoi=mailpmb("", $emaildest, $f_objet_mail, $f_message_to_send, $PMBuserprenom." ".$PMBusernom, $PMBuseremail, $headers, "", $PMBuseremailbcc);
-			
+			$mail_addresses = array();
+			foreach($environement['emaildest'] as $i => $email){
+				if(isset($environement['emaildest_id'][$i]) && $environement['emaildest_id'][$i]){
+					$environement['emaildest_id'][$i]+= 0;
+					$query = "select empr_mail from empr where id_empr = ".$environement['emaildest_id'][$i];
+					$result = pmb_mysql_result(pmb_mysql_query($query), 0,0);
+					$mail_addresses[] = $result;
+				}else{
+					if($email){
+						$mail_addresses[] = $email;
+					}
+				}
+			}
+			$emailobj=$_SESSION['PRINT']['emailobj'];
+			$f_objet_mail = trim(stripslashes($emailobj));
+			if (!$f_objet_mail) {
+				$f_objet_mail=$msg['print_emailobj'].' '.$opac_biblio_name.' - '.$date_today;
+			}
+			$f_message_to_send = $output_final.'<br /><br />'.mail_bloc_adresse().'</body></html>';
+			$emaildest=$_SESSION['PRINT']['emaildest'];
+			$res_envoi=mailpmb('', implode(';',$mail_addresses), $f_objet_mail, $f_message_to_send, $PMBuserprenom.' '.$PMBusernom, $PMBuseremail, $headers, '', $PMBuseremailbcc);
 			if ($res_envoi) {
-				print "$pheader\n<br /><br /><center><h3>".sprintf($msg["print_emailsucceed"],$emaildest)."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["print_emailclose"]."</a></center></body></html>" ;
+				print $pheader."<br /><br /><h3>".sprintf($msg["print_emailsucceed"],implode(', ',$mail_addresses))."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["print_emailclose"]."</a></body></html>" ;
 			} else {
-				print "$pheader\n<br /><br /><center><h3>".sprintf($msg["print_emailfailed"],$emaildest)."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["print_emailclose"]."</a></center></body></html>" ;
+				print $pheader."<br /><br /><h3>".sprintf($msg["print_emailfailed"],implode(', ',$mail_addresses))."</h3><br /><a href=\"\" onClick=\"self.close(); return false;\">".$msg["print_emailclose"]."</a></body></html>" ;
 			}
 			break;	
 		case 'printer':

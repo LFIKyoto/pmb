@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: analysis_move.inc.php,v 1.1.2.2 2015-11-05 09:17:03 jpermanne Exp $
+// $Id: analysis_move.inc.php,v 1.4 2017-11-22 11:07:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -46,16 +46,16 @@ if ($acces_m==0) {
 		// lien vers la notice chapeau
 		$link_parent = "<a href=\"./catalog.php?categ=serials\">";
 		$link_parent .= $msg[4010]."</a>";
-		$link_parent .= "<img src=\"./images/d.gif\" align=\"middle\" hspace=\"5\">";
+		$link_parent .= "<img src='".get_url_icon('d.gif')."' class='align_middle' hspace=\"5\">";
 		$link_parent .= "<a href=\"./catalog.php?categ=serials&sub=view&serial_id=";
-		$link_parent .= $myBul->bulletin_notice."\">".$myBul->tit1.'</a>';
-		$link_parent .= "<img src=\"./images/d.gif\" align=\"middle\" hspace=\"5\">";
+		$link_parent .= $myBul->bulletin_notice."\">".$myBul->get_serial()->tit1.'</a>';
+		$link_parent .= "<img src='".get_url_icon('d.gif')."' class='align_middle' hspace=\"5\">";
 		$link_parent .= "<a href=\"./catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=$bul_id\">";
 		if ($myBul->bulletin_numero) $link_parent .= $myBul->bulletin_numero." ";
 		if ($myBul->mention_date) $link_parent .= " (".$myBul->mention_date.") "; 
 		$link_parent .= "[".$myBul->aff_date_date."]";  
-		$link_parent .= "</a> <img src=\"./images/d.gif\" align=\"middle\" hspace=\"5\">";
-		$link_parent .= "<h3>".$myAnalysis->analysis_tit1."</h3>";
+		$link_parent .= "</a> <img src='".get_url_icon('d.gif')."' class='align_middle' hspace=\"5\">";
+		$link_parent .= "<h3>".$myAnalysis->tit1."</h3>";
 		
 		print pmb_bidi("<div class='row'><div class='perio-barre'>".$link_parent."</div></div><br />");
 		

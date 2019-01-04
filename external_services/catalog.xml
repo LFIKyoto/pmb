@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: catalog.xml,v 1.16 2015-03-17 10:39:28 abacarisse Exp $ -->
+$Id: catalog.xml,v 1.21 2018-06-08 08:10:27 vtouchard Exp $ -->
 
 <catalog>
 	<item name="pmbesSearch" id="1"/>
@@ -40,4 +40,9 @@ $Id: catalog.xml,v 1.16 2015-03-17 10:39:28 abacarisse Exp $ -->
     <item name="pmbesDatabase" id="31"/>
     <item name="pmbesIndex" id="32"/>
     <item name="pmbesScanDocnum" id="33"/>
+    <item name="pmbesDocwatches" id="34"/>
+    <item name="pmbesCairn" id="35"/>
+    <item name="pmbesContributions" id="36"/>
+    <item name="pmbesChklnk" id="37"/>
+    <item name="pmbesPNB" id="38"/>
 </catalog>

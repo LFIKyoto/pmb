@@ -2,13 +2,16 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: actes.class.php,v 1.38 2015-07-16 12:16:52 jpermanne Exp $
+// $Id: actes.class.php,v 1.45 2018-04-23 13:25:26 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
-global $pmb_indexation_lang;
+
 require_once($base_path.'/acquisition/achats/func_achats.inc.php');
 require_once($include_path.'/misc.inc.php');
-require_once($include_path.'/marc_tables/'.$pmb_indexation_lang.'/empty_words');
+global $pmb_indexation_lang;
+if($pmb_indexation_lang) {
+	require_once($include_path.'/marc_tables/'.$pmb_indexation_lang.'/empty_words');
+}
 
 require_once("$class_path/liens_actes.class.php");
 require_once("$class_path/audit.class.php");
@@ -18,6 +21,8 @@ if(!defined('TYP_ACT_CDE')) define('TYP_ACT_CDE', 0);	//				0 = Commande
 if(!defined('TYP_ACT_DEV')) define('TYP_ACT_DEV', 1);	//				1 = Demande de devis
 if(!defined('TYP_ACT_LIV')) define('TYP_ACT_LIV', 2);	//				2 = Bon de Livraison
 if(!defined('TYP_ACT_FAC')) define('TYP_ACT_FAC', 3);	//				3 = Facture
+if(!defined('TYP_ACT_LOC_CDE')) define('TYP_ACT_LOC_CDE', 4);	//		4 = Demande de location
+if(!defined('TYP_ACT_LOC_FAC')) define('TYP_ACT_LOC_FAC', 5);	//		5 = Facture de Location
 
 if(!defined('STA_ACT_ALL')) define('STA_ACT_ALL', -1);	//Statut acte	-1 = Tous
 if(!defined('STA_ACT_AVA')) define('STA_ACT_AVA', 1);	//				1 = A valider
@@ -30,51 +35,46 @@ if(!defined('STA_ACT_ARC')) define('STA_ACT_ARC', 32);	//				32 = Archivé
 
 class actes{
 	
-	var $id_acte = 0;							//Identifiant de l'acte	
-	var $date_acte = '0000-00-00';				//date de création de l'acte
-	var $numero = '';							//Numero de l'acte
-	var $nom_acte = '';							//Nom de l'acte
-	var $type_acte = 0;							//Type d'acte (0 = Commande, 1 = Demande de devis, 2 = Bon de Livraison, 3 = Facture, ...)
-	var $statut = 0;							//Statut de l'acte (
+	public $id_acte = 0;							//Identifiant de l'acte	
+	public $date_acte = '0000-00-00';				//date de création de l'acte
+	public $numero = '';							//Numero de l'acte
+	public $nom_acte = '';							//Nom de l'acte
+	public $type_acte = 0;							//Type d'acte (0 = Commande, 1 = Demande de devis, 2 = Bon de Livraison, 3 = Facture, ...)
+	public $statut = 0;							//Statut de l'acte (
 												//Commande			1=A valider, 2=En cours, 4=Livrée, 8=Facturée, 16=Payée, 32=Archivée
 												//Demande Devis		2=En cours, 4=Reçu, 32=Archivé
 												//Bon de Livraison	4=Recu, 32=Archivé
 												//Facture			4=Reçue, 16=Payée, 32=Archivée
-	var $date_paiement = '0000-00-00';			//Date du paiement (pré-paiement)
-	var $num_paiement = 0;						//Numéro de virement, chèque, ...
-	var $num_entite = 0;						//Identifiant de l'entité sur laquelle est affectée la acte
-	var $num_fournisseur = 0;					//Identifiant du fournisseur associé
-	var $num_contact_livr = 0;					//Identifiant du contact pour l'adresse de livraison
-	var $num_contact_fact = 0;					//Identifiant du contact pour l'adresse de facturation
+	public $date_paiement = '0000-00-00';			//Date du paiement (pré-paiement)
+	public $num_paiement = 0;						//Numéro de virement, chèque, ...
+	public $num_entite = 0;						//Identifiant de l'entité sur laquelle est affectée la acte
+	public $num_fournisseur = 0;					//Identifiant du fournisseur associé
+	public $num_contact_livr = 0;					//Identifiant du contact pour l'adresse de livraison
+	public $num_contact_fact = 0;					//Identifiant du contact pour l'adresse de facturation
 //TODO 	Voir suppression num_exercice
-	var $num_exercice = 0;						//Identifiant de l'exercice auquel est affecté l'acte
-	var $commentaires = '';						//Lignes de commentaires de gestion
-	var $reference = '';						//Référence fournisseur
-	var $index_acte = '';						//Champ de recherche fulltext
-	var $commentaires_i = '';					//Lignes de commentaires imprimés sur la commande
-	var $devise = '';							//Devise de la commande
-	var $date_ech = '0000-00-00';				//Echeance acte
-	var $date_valid = '0000-00-00';				//Date de validation
+	public $num_exercice = 0;						//Identifiant de l'exercice auquel est affecté l'acte
+	public $commentaires = '';						//Lignes de commentaires de gestion
+	public $reference = '';						//Référence fournisseur
+	public $index_acte = '';						//Champ de recherche fulltext
+	public $commentaires_i = '';					//Lignes de commentaires imprimés sur la commande
+	public $devise = '';							//Devise de la commande
+	public $date_ech = '0000-00-00';				//Echeance acte
+	public $date_valid = '0000-00-00';				//Date de validation
 	
-	 
 	//Constructeur.	 
-	function actes($id_acte=0) {
-		
-		if ($id_acte) {
-			$this->id_acte = $id_acte;
+	public function __construct($id_acte=0) {
+		$this->id_acte = $id_acte+0;
+		if ($this->id_acte) {
 			$this->load();	
+		} else {
+			$this->date_acte = today();
 		}
-
 	}	
 	
-	
 	// charge une acte à partir de la base.
-	function load(){
-	
-		global $dbh;
-		
+	public function load(){
 		$q = "select * from actes where id_acte = '".$this->id_acte."' ";
-		$r = pmb_mysql_query($q, $dbh) ;
+		$r = pmb_mysql_query($q) ;
 		$obj = pmb_mysql_fetch_object($r);
 		$this->date_acte = $obj->date_acte;
 		$this->numero = $obj->numero;
@@ -87,7 +87,7 @@ class actes{
 		$this->num_fournisseur = $obj->num_fournisseur;
 		$this->num_contact_livr = $obj->num_contact_livr;
 		$this->num_contact_fact = $obj->num_contact_fact;
-//TODO Voir suppression num_exercice
+		//TODO Voir suppression num_exercice
 		$this->num_exercice = $obj->num_exercice;
 		$this->commentaires = $obj->commentaires;
 		$this->reference = $obj->reference;
@@ -95,23 +95,20 @@ class actes{
 		$this->devise = $obj->devise;
 		$this->date_ech = $obj->date_ech;
 		$this->date_valid = $obj->date_valid;
-
 	}
-
 	
 	// enregistre un acte en base.
-	function save(){
-		
-		global $dbh, $num_cde,$num_dev;
+	public function save(){
+		global $num_cde,$num_dev;
 		
 		if ( !$this->num_entite  || !$this->num_fournisseur ) die("Erreur de création actes");
 		
 		//récupération du libelle fournisseur
 		$q = "select raison_sociale from entites where id_entite = '".$this->num_fournisseur."' ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 
-		$fou = pmb_mysql_result($r, 0, 0);
-		
+		$fou = pmb_mysql_result($r, 0, 0);		
+		$num = '';
 		if($this->type_acte == TYP_ACT_CDE)
 			$num = trim($num_cde);
 		else if($this->type_acte == TYP_ACT_DEV)
@@ -141,9 +138,8 @@ class actes{
 			$q.= "date_valid = '".$this->date_valid."', ";
 			$q.= "index_acte = ' ".$this->numero." ".strip_empty_words($fou)." ".strip_empty_words($this->commentaires)." ".strip_empty_words($this->reference)." ' "; 
 			$q.= "where id_acte = '".$this->id_acte."' ";
-			$r = pmb_mysql_query($q, $dbh);
-			audit::insert_modif(AUDIT_ACQUIS, $this->id_acte);
-		
+			$r = pmb_mysql_query($q);
+			audit::insert_modif(AUDIT_ACQUIS, $this->id_acte);		
 		} else {
 			if ($num!='') {
 				$this->numero=$num;
@@ -170,61 +166,47 @@ class actes{
 			$q.= "date_ech = '".$this->date_ech."', ";
 			$q.= "date_valid = '".$this->date_valid."', ";
 			$q.= "index_acte = ' ".strip_empty_words($this->numero)." ".strip_empty_words($fou)." ".strip_empty_words($this->commentaires)." ".strip_empty_words($this->reference)." ' "; 
-			$r = pmb_mysql_query($q, $dbh);
-			$this->id_acte = pmb_mysql_insert_id($dbh);
-			audit::insert_creation(AUDIT_ACQUIS, $this->id_acte);		
+			$r = pmb_mysql_query($q);
+			$this->id_acte = pmb_mysql_insert_id();
+			audit::insert_creation(AUDIT_ACQUIS, $this->id_acte);	
 		}
 	}
 
-
 	//supprime un acte de la base
-	function delete($id_acte= 0) {
-		
-		global $dbh;
-
+	public function delete($id_acte= 0) {
 		if(!$id_acte) $id_acte = $this->id_acte; 	
 
 		actes::deleteLignes($id_acte);
 		liens_actes::delete($id_acte);
 		$q = "delete from actes where id_acte = '".$id_acte."' ";
-		pmb_mysql_query($q, $dbh);
+		pmb_mysql_query($q);
 		audit::delete_audit(AUDIT_ACQUIS, $id_acte);
 
 	}
 
-
 	//supprime les lignes d'un acte
-	static function deleteLignes($id_acte) {
-
-		global $dbh;	
-
+	public static function deleteLignes($id_acte) {
+		$query = "delete from lignes_actes_applicants where ligne_acte_num in (select id_ligne from lignes_actes where num_acte=".$id_acte.") ";
+		pmb_mysql_query($query);
+		
 		$q = "delete from lignes_actes where num_acte = '".$id_acte."' ";
-		pmb_mysql_query($q, $dbh);
+		pmb_mysql_query($q);
 	}
 
-
 	//supprime les lignes de l'acte non comprises dans le tableau de lignes
-	function cleanLignes($id_acte = 0, $tab_lig=array()) {
-		
-		global $dbh;
-
+	public function cleanLignes($id_acte = 0, $tab_lig=array()) {
 		if(!$id_acte) $id_acte=$this->id_acte;
 		if(count($tab_lig)==0) return;
 
 		$list_lig=implode("','", $tab_lig);
 		$q = "delete from lignes_actes where num_acte='".$id_acte."' and id_ligne not in ('".$list_lig."')";
-		pmb_mysql_query($q, $dbh);
-				
+		pmb_mysql_query($q);
 	}
 	
-	
-	
 	//Recherche la prochaine echeance d'une commande en cours 
-	static function getNextLivr($id_acte) {
-		
-		global $dbh;
+	public static function getNextLivr($id_acte) {
 		$q = "select min((date_format(date_ech, '%Y%m%d'))) from lignes_actes where num_acte = '".$id_acte."' and (('2' & statut) = '0') ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		if (pmb_mysql_num_rows($r)) {
 			$res = pmb_mysql_result($r,0,0);
 			$res = substr($res,0,4).'-'.substr($res,4,2).'-'.substr($res,6,2);
@@ -232,45 +214,31 @@ class actes{
 		return $res;
 	}
 
-
 	// calcule le numéro d'un acte en base.
 	// Il faut d'abord avoir renseigné le numéro d'entité et le type d'acte
-	function calc(){
-	
+	public function calc(){
 		$this->numero = calcNumero($this->num_entite, $this->type_acte);
-
 	}
 
-
 	// Retourne les lignes d'un acte
-	static function getLignes($id_acte=0, $param=0){
-	
-		global $dbh;
-		
+	public static function getLignes($id_acte=0, $param=0){
 		//if(!$id_acte) $id_acte = $this->id_acte;
 		$q = "select * from lignes_actes where num_acte = '".$id_acte."' ";
 		if($param) $q.="and ".$param." ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		return $r; 
-
 	}
-
 
 //TODO Voir suppression num_exercice 
 	//Retourne la liste des actes appartenant à l'exercice passé en paramètres
-	static function listByExercice($num_exercice){
-	
-		global $dbh;
-		
+	public static function listByExercice($num_exercice){
 		$q = "select id_acte from actes where num_exercice = '".$num_exercice."' ";
-		$r = pmb_mysql_query($q, $dbh);
+		$r = pmb_mysql_query($q);
 		return $r; 
 	}
 
-
 	//Retourne un tableau de la liste des etats possibles pour un acte en fonction de son type (valeur, libelle)
-	static function getStatelist($type_acte, $all=TRUE) {
-		
+	public static function getStatelist($type_acte, $all=TRUE) {
 		global $msg;
 		$t=array();
 		switch($type_acte) {
@@ -310,27 +278,16 @@ class actes{
 		return $t;
 	}
 	
-	
-	function update_statut($id_acte=0) {
-		
-		global $dbh;
-		
+	public function update_statut($id_acte=0) {
 		if(!$id_acte) $id_acte = $this->id_acte;
 		$q = "update actes set statut='".$this->statut."' where id_acte='".$id_acte."' ";
-		pmb_mysql_query($q, $dbh);
+		pmb_mysql_query($q);
 	}
-	
 
 	//optimization de la table actes
-	function optimize() {
-		
-		global $dbh;
-		
-		$opt = pmb_mysql_query('OPTIMIZE TABLE actes', $dbh);
+	public function optimize() {
+		$opt = pmb_mysql_query('OPTIMIZE TABLE actes');
 		return $opt;
-				
 	}
-	
-				
 }
 ?>

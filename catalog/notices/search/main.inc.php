@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.13 2014-10-30 16:14:59 dgoron Exp $
+// $Id: main.inc.php,v 1.15 2017-06-02 14:46:13 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -15,6 +15,7 @@ require_once("$class_path/authperso.class.php");
 $authpersos= new authpersos();
 $info_authpersos=$authpersos->get_data();
 
+$tpl_authperso = '';
 foreach($info_authpersos as $authperso){
 	if($authperso['gestion_search'] != 2) continue; // pas de boutton
 
@@ -28,8 +29,14 @@ foreach($info_authpersos as $authperso){
 	$authperso_list_name[$authperso['id']+1000]=$authperso['name'];
 }
 
-for($i=0;$i<count($menu_search);$i++) {	
-	$menu_search[$i] = str_replace("<!-- !!authpersos!! -->",$tpl_authperso,$menu_search[$i]);
+for($i=0;$i<count($menu_search);$i++) {
+	if(isset($menu_search[$i])) {
+		$menu_search[$i] = str_replace("<!-- !!authpersos!! -->",$tpl_authperso,$menu_search[$i]);
+	}
+}
+// spécifique autorités perso
+if(isset($menu_search[1000])) {
+	$menu_search[1000] = str_replace("<!-- !!authpersos!! -->",$tpl_authperso,$menu_search[1000]);
 }
 
 if($id) {

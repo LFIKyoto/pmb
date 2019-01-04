@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lettre.class.php,v 1.4 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: lettre.class.php,v 1.7 2017-12-06 13:35:29 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,21 +15,21 @@ require_once ("$class_path/author.class.php");
 
 class lettre{
 	
-	var $biblio_info = "";
-	var $lecteur_info = "";
-	var $groupe_info = "";
-	var $amendes_info = "";
-	var $expl_info = "";
-	var $idempr = 0;
-	var $id_groupe = 0;
-	var $lettreXml = "";
-	var $entete = "";
-	var $type_lettre = "";
+	public $biblio_info = "";
+	public $lecteur_info = "";
+	public $groupe_info = "";
+	public $amendes_info = "";
+	public $expl_info = "";
+	public $idempr = 0;
+	public $id_groupe = 0;
+	public $lettreXml = "";
+	public $entete = "";
+	public $type_lettre = "";
 	
 	/*
 	 * Constructeur
 	 */
-	function lettre($id_empr=0,$type_lettre="",$id_groupe=0){
+	public function __construct($id_empr=0,$type_lettre="",$id_groupe=0){
 		$this->idempr = $id_empr;
 		$this->type_lettre = $type_lettre;
 		$this->id_groupe = $id_groupe;
@@ -49,11 +49,11 @@ class lettre{
 	/*
 	 * Retourne le Xml bien formé
 	 */
-	function getXml(){
+	public function getXml(){
 		return $this->lettreXml;
 	}
 	
-	function construire_xml($type_lettre){
+	public function construire_xml($type_lettre){
 		$this->lettreXml .= "<lettre>\n";
 		$this->lettreXml .= $this->entete;
 		$this->lettreXml .= "</lettre>\n";
@@ -62,7 +62,7 @@ class lettre{
 	/*
 	 * Bloc d'info de la biblio
 	 */
-	function biblio_info() {
+	public function biblio_info() {
 	
 		global $biblio_name, $biblio_logo, $biblio_adr1, $biblio_adr2, $biblio_cp, $biblio_town, $biblio_state, $biblio_country, $biblio_phone, $biblio_email, $biblio_website ;
 		global $msg, $charset ;
@@ -91,7 +91,7 @@ class lettre{
 	/*
 	 * Bloc info du lecteur
 	 */
-	function lecteur_info($id_empr){
+	public function lecteur_info($id_empr){
 		
 		global $msg, $dbh,$charset,$niveau, $forcename;
 		
@@ -135,7 +135,7 @@ class lettre{
 		if ($empr->empr_ville != "") $this->lecteur_info .= "\t\t<town>".htmlspecialchars($empr->empr_ville,ENT_QUOTES,$charset)."</town>\n" ;
 		if ($empr->empr_pays != "") $this->lecteur_info .= "\t\t<country>".htmlspecialchars($empr->empr_pays,ENT_QUOTES,$charset)."</country>\n" ;
 		if ($empr->empr_tel1 != "") 
-			$this->lecteur_info .= "\t\t<phone1>".htmlspecialchars($msg['fpdf_tel1']." ".$empr->empr_tel1,ENT_QUOTES,$charset)."</phone1>\n" ;
+			$this->lecteur_info .= "\t\t<phone1>".htmlspecialchars($msg['fpdf_tel']." ".$empr->empr_tel1,ENT_QUOTES,$charset)."</phone1>\n" ;
 		if ($empr->empr_tel2 != "") 
 			$this->lecteur_info .= "\t\t<phone2>".htmlspecialchars($msg['fpdf_tel2']." ".$empr->empr_tel2,ENT_QUOTES,$charset)."</phone2>\n";
 		if ($empr->empr_mail != "")
@@ -158,7 +158,7 @@ class lettre{
 	/*
 	 * Info du groupe
 	 */
-	function groupe_info($id_groupe,$no_cb=false) {
+	public function groupe_info($id_groupe,$no_cb=false) {
 		global $dbh, $charset;
 		global $pmb_pdf_font;
 		global $pmb_afficher_numero_lecteur_lettres;
@@ -179,7 +179,7 @@ class lettre{
 	/*
 	 * Bloc des amendes
 	 */
-	function print_amendes($valeur,$frais_relance) {
+	public function print_amendes($valeur,$frais_relance) {
 		$this->amendes_info = "\t<fees>\n";
 		$this->amendes_info .= "\t\t<fees_amount>".htmlspecialchars(comptes::format_simple($valeur),ENT_QUOTES,$charset)."</fees_amount>\n";
 		$this->amendes_info .= "\t\t<postal_charge>".htmlspecialchars(comptes::format_simple($frais_relance),ENT_QUOTES,$charset)."</postal_charge>\n";
@@ -194,11 +194,11 @@ class lettre{
  */
 class lettre_relance extends lettre {
 
-	function lettre_relance($id_empr=0,$type_lettre,$id_groupe=0){
-		$this->lettre($id_empr,$type_lettre,$id_groupe);
+	public function __construct($id_empr=0,$type_lettre,$id_groupe=0){
+		parent::__construct($id_empr,$type_lettre,$id_groupe);
 	}
 	
-	function construire_xml($type_lettre){
+	public function construire_xml($type_lettre){
 		$this->lettreXml .= "<lettre>\n";
 		$this->lettreXml .= $this->entete;
 		$this->lettreXml .= "<specifics>\n"; 
@@ -219,7 +219,7 @@ class lettre_relance extends lettre {
 		$this->lettreXml .= "</lettre>\n";
 	}	
 	
-	function lettre_retard_par_lecteur($id_empr) {
+	public function lettre_retard_par_lecteur($id_empr) {
 		global $dbh, $msg ,$pmb_gestion_financiere, $pmb_gestion_amende, $niveau;
 		
 		//Pour les amendes
@@ -285,7 +285,7 @@ class lettre_relance extends lettre {
 		return $retards;
 	} 
 	
-	function expl_retard($cb_doc,$niveau=0,$id_empr=0) {
+	public function expl_retard($cb_doc,$niveau=0,$id_empr=0) {
 	
 		global $msg, $dbh, $charset;
 		global $pmb_gestion_financiere, $pmb_gestion_amende;
@@ -318,7 +318,7 @@ class lettre_relance extends lettre {
 			$indice = $as[$i] ;
 			$auteur_1 = $responsabilites["auteurs"][$indice] ;
 			$auteur = new auteur($auteur_1["id"]);
-			$aut1_libelle[]= $auteur->isbd_entry;
+			$aut1_libelle[]= $auteur->get_isbd();
 			
 		}
 		if ($aut1_libelle) {
@@ -361,7 +361,7 @@ class lettre_relance extends lettre {
 		
 	}
 	
-	function lettre_retard_par_groupe($id_groupe, $lecteurs_ids=array()) {
+	public function lettre_retard_par_groupe($id_groupe, $lecteurs_ids=array()) {
 
 		global $dbh, $msg;
 		global $pmb_hide_biblioinfo_letter;
@@ -387,11 +387,11 @@ class lettre_relance extends lettre {
  */
 class lettre_reservation extends lettre{
 	
-	var $id_empr_tmp = array();
-	var $notice_resa = "";
-	var $notice_resa_planning = "";
+	public $id_empr_tmp = array();
+	public $notice_resa = "";
+	public $notice_resa_planning = "";
 	
-	function lettre_reservation($ids_resa=array(),$type_lettre){
+	public function __construct($ids_resa=array(),$type_lettre){
 		global $dbh;
 		
 		if($type_lettre=='lettre_resa_planning'){
@@ -404,13 +404,13 @@ class lettre_reservation extends lettre{
 		
 		while (($resa_validee=pmb_mysql_fetch_object($res))){
 			if(array_search($resa_validee->resa_idempr,$this->id_empr_tmp) === false){
-				$this->lettre($resa_validee->resa_idempr,$type_lettre);
+				parent::__construct($resa_validee->resa_idempr,$type_lettre);
 				$this->id_empr_tmp[]=$resa_validee->resa_idempr;	
 			}
 		}
 	}
 	
-	function construire_xml($type_lettre){
+	public function construire_xml($type_lettre){
 		$this->notice_resa = "";
 		$this->lettreXml .= "<lettre>\n";
 		$this->lettreXml .= $this->entete;
@@ -430,7 +430,7 @@ class lettre_reservation extends lettre{
 		$this->lettreXml .= "</lettre>\n";
 	}	
 	
-	function lettre_resa($id_empr,$type_lettre=""){
+	public function lettre_resa($id_empr,$type_lettre=""){
 		global $dbh;
 		
 		if($type_lettre == 'lettre_resa_planning'){
@@ -453,9 +453,7 @@ class lettre_reservation extends lettre{
 	/* 
 	 * Info de la ligne de resa pour une notice sur la lettre de confirmation de réservation
 	 */
-	function notice_resa($id_resa_print) {
-		
-		
+	public function notice_resa($id_resa_print) {
 		global $msg, $dbh, $charset;
 		global $pmb_transferts_actif,$transferts_choix_lieu_opac;
 		
@@ -468,23 +466,7 @@ class lettre_reservation extends lettre{
 		$expl = pmb_mysql_fetch_object($res);
 		
 		$responsabilites = get_notice_authors(($expl->m_id+$expl->s_id)) ;
-		$as = array_search ("0", $responsabilites["responsabilites"]) ;
-		if ($as!== FALSE && $as!== NULL) {
-			$auteur_0 = $responsabilites["auteurs"][$as] ;
-			$auteur = new auteur($auteur_0["id"]);
-			$header_aut .= $auteur->isbd_entry;
-		} else {
-				$aut1_libelle=array();
-				$as = array_keys ($responsabilites["responsabilites"], "1" ) ;
-			for ($i = 0 ; $i < count($as) ; $i++) {
-				$indice = $as[$i] ;
-				$auteur_1 = $responsabilites["auteurs"][$indice] ;
-				$auteur = new auteur($auteur_1["id"]);
-				$aut1_libelle[]= $auteur->isbd_entry;
-			}
-				
-			$header_aut .= implode (", ",$aut1_libelle) ;
-		}
+		$header_aut = gen_authors_header($responsabilites);
 		$header_aut ? $auteur=" / ".$header_aut : $auteur="";
 		
 		$rqt_detail = "select resa_confirmee, resa_cb,location_libelle, expl_cote from resa 
@@ -535,7 +517,7 @@ class lettre_reservation extends lettre{
 	/*
 	 * Bloc d'info notice_resa_planning
 	 */
-	function notice_resa_planning($id_resa_print) {
+	public function notice_resa_planning($id_resa_print) {
 	
 		global $msg, $dbh, $charset;
 		
@@ -548,23 +530,7 @@ class lettre_reservation extends lettre{
 		$expl = pmb_mysql_fetch_object($res);
 		
 		$responsabilites = get_notice_authors($expl->notice_id) ;
-			
-		$as = array_search ("0", $responsabilites["responsabilites"]) ;
-		if ($as!== FALSE && $as!== NULL) {
-			$auteur_0 = $responsabilites["auteurs"][$as] ;
-			$auteur = new auteur($auteur_0["id"]);
-			$header_aut .= $auteur->isbd_entry;
-		} else {
-			$aut1_libelle=array();
-			$as = array_keys ($responsabilites["responsabilites"], "1" ) ;
-			for ($i = 0 ; $i < count($as) ; $i++) {
-				$indice = $as[$i] ;
-				$auteur_1 = $responsabilites["auteurs"][$indice] ;
-				$auteur = new auteur($auteur_1["id"]);
-				$aut1_libelle[]= $auteur->isbd_entry;
-			}
-			$header_aut .= implode (", ",$aut1_libelle) ;
-		}
+		$header_aut = gen_authors_header($responsabilites);		$header_aut ? $auteur=" / ".$header_aut : $auteur="";
 		$header_aut ? $auteur=" / ".$header_aut : $auteur="";
 		
 		$this->notice_resa_planning .= "\t<notice_resa>\n";

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_objects_controler.class.php,v 1.4 2015-03-20 16:13:57 vtouchard Exp $
+// $Id: map_objects_controler.class.php,v 1.8 2016-11-05 14:49:08 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($class_path."/map/map_hold.class.php");
@@ -35,6 +35,7 @@ class map_objects_controler {
 	 */
 	protected $mode;
 
+	public $id_dom = '';
 
 	/**
 	 * Constructeur.
@@ -57,6 +58,7 @@ class map_objects_controler {
 		$this->ids=$ids;
 		$this->type=$type;
   		$this->objects = array();
+  		$this->id_dom = $type;
 	
   		switch($this->type){
   			case TYPE_RECORD :
@@ -69,12 +71,24 @@ class map_objects_controler {
   				$items = array(
 	  				'layer' => "authority",
 	  				'ids' => $this->ids
+  				);  		
+  				break; 
+  			case TYPE_LOCATION :
+  				$items = array(
+  					'layer' => "location",
+  					'ids' => $this->ids
   				);  				
-  				break;  			
+  				break;
+  			case TYPE_SUR_LOCATION :
+  				$items = array(
+  					'layer' => "sur_location",
+  					'ids' => $this->ids
+  				);
+  				break;			
   		}
 	   	$this->objects[] = $items;
 	   	$this->fetch_datas();
-	   	$this->model = new map_model(null, $this->objects,$pmb_map_max_holds);
+	   	$this->model = new map_model(null, $this->objects,$opac_map_max_holds);
 	   	$this->model->set_mode("visualisation");
   	} // end of member function __construct
 
@@ -99,18 +113,11 @@ class map_objects_controler {
   	
   		$map_hold = $this->get_bounding_box();
   		if($map_hold){
-	  		$coords = $map_hold->get_coords();
-	  		if(!count($coords))return "";
-	  		$lats = $longs = array();
-	  		for($i=0 ; $i<count($coords) ; $i++){
-	  			$lats[] = $coords[$i]->get_decimal_lat();
-	  			$longs[] = $coords[$i]->get_decimal_long();
-	  		}
-	  		$lats = array_unique($lats);
-	  		$longs = array_unique($longs);
-	  		sort($lats);
-	  		sort($longs);
-	  		return "mode:\"visualization\", initialFit: [ ".$longs[0]." , ".$lats[0]." , ".$longs[1]." , ".$lats[1]."], layers : ".json_encode($this->model->get_json_informations(false, $opac_url_base,$this->editable));
+  			$coords = $map_hold->get_coords();
+  			if(!count($coords)) {
+  				return "";
+  			}	  		
+	  		return "mode:\"visualization\", type:\"" . $this->type . "\", initialFit: [ ".self::get_coord_initialFit($coords)."], layers : ".json_encode($this->model->get_json_informations(false, $opac_url_base,$this->editable));
   		}else{
   			return "";
   		}
@@ -121,11 +128,10 @@ class map_objects_controler {
   	}
   	
   	
-  	public function get_map() {
+  	public function get_map($suffix='', $id_img_plus = "") {
   		global $opac_map_base_layer_type;
   		global $opac_map_base_layer_params;
-  		global $opac_map_size_notice_view;
-	  	
+
   		$json_informations = $this->get_json_informations();
   		$map = "";
   		if($json_informations){
@@ -137,17 +143,114 @@ class map_objects_controler {
 	   			if($layer_params['name']) $baselayer.=",baseLayerName:\"".$layer_params['name']."\"";
 	  			if($layer_params['url']) $baselayer.=",baseLayerUrl:\"".$layer_params['url']."\"";
 	  			if($layer_params['options']) $baselayer.=",baseLayerOptions:".json_encode($layer_params['options']);
-	  		}
-	  		
-	  		$size=explode("*",$opac_map_size_notice_view);
-	  		if(count($size)!=2)$map_size="width:800px; height:480px;";
-	  		$map_size= "width:".$size[0]."px; height:".$size[1]."px;";
-
+	  		}	  			  		
 	  		$map = "
-	  		<div id='map_objet_".$this->type."_".$id."' data-dojo-type='apps/map/map_controler' style='$map_size' data-dojo-props='mode:\"visualization\",".$baselayer.", ".$this->get_json_informations()."'></div>";
+	  		<div id='map_objet_".$this->id_dom."_" . $id . $suffix ."' data-dojo-type='".$this->get_map_controler_name()."' style='".$this->get_map_size()."' data-dojo-props='mode:\"visualization\",".$baselayer.", ".$json_informations.", id_img_plus:\"". $id_img_plus ."\"'></div>";
   		}
   		return $map;
   	}
+
+  	public function get_map_controler_name(){
+  		return "apps/map/map_controler";
+  	}
   	
+  	public function get_map_size() {
+  		global $opac_map_size_notice_view;
+  		global $opac_map_size_location_view;
+  		global $charset;
+                
+  		switch($this->type){
+  			case TYPE_SUR_LOCATION :
+  				// no break
+  			case TYPE_LOCATION :
+  				$size=explode("*",$opac_map_size_location_view);
+  				break;
+  			case TYPE_RECORD :
+  				// no break
+  			case AUT_TABLE_AUTHORS :
+  				// no break
+  			default:
+  				$size=explode("*",$opac_map_size_notice_view);
+  				break;
+  		}
+  		if(count($size)!=2) {
+                    $map_size="width:100%; height:400px;";
+  		} else {
+                    if (is_numeric($size[0])) {
+                        $size[0] = $size[0] . "px";
+                    }
+                    if (is_numeric($size[1])) {
+                        $size[1] = $size[1] . "px";
+                    }
+                    $map_size= "width:".$size[0]."; height:".$size[1].";";
+  		}
+  		
+                if ($charset != "utf8") {
+                   $map_size = utf8_encode($map_size);
+                }
+  		return $map_size;
+  	}
+  	   	
+  	public static function get_coord_initialFit($tab_coords) {
+  		 
+  		$lats_longs = $lats = $longs = array();
+  		for($i=0 ; $i<count($tab_coords) ; $i++){
+  			$lats_longs[] = $tab_coords[$i]->get_decimal_lat().'/'.$tab_coords[$i]->get_decimal_long();
+  		}
+  		$lats_longs = array_unique($lats_longs);
+  	
+  		//Cas de figure avec une seule coordonnée enregistrée
+  		if (!isset($lats_longs[1])) {
+  			$lats_longs[1] = $lats_longs[0];
+  		}
+  			
+  		//initialisation des variables avec les valeurs extremes
+  		$lat_min = 90;
+  		$lat_max = -90;
+  		$long_min = 180;
+  		$long_max = -180;
+  		//On explode
+  		foreach($lats_longs as $lat_long){
+  			$tmp_coord = explode('/',$lat_long);
+  			$lat = $tmp_coord[0];
+  			$long = $tmp_coord[1];
+  			 
+  			if ($lat < $lat_min) {
+  				$lat_min = $lat;
+  			}
+  			if ($lat > $lat_max ) {
+  				$lat_max = $lat;
+  			}
+  			if ($long < $long_min) {
+  				$long_min = $long;
+  			}
+  			if ($long > $long_max ) {
+  				$long_max = $long;
+  			}
+  		}
+                //  Ajout d'une marge pour ne pas coller les empruntes au bords de la carte
+                if($long_min) {
+                    $long_min = $long_min - ($long_min/100*6);
+                } else {
+                    $long_min = $long_min + ($long_min/100*6);
+                }
+                if($lat_min) {
+                    $lat_min=$lat_min - ($lat_min/100*6);
+                }else {                    
+                    $lat_min=$lat_min + ($lat_min/100*6);
+                }
+                if($long_max) {
+                    $long_max=$long_max + ($long_max/100*6);
+                }else {
+                    $long_max=$long_max - ($long_max/100*6);
+                }
+                if($lat_max) {
+                    $lat_max=$lat_max + ($lat_max/100*6);
+                }else {
+                    $lat_max=$lat_max - ($lat_max/100*6);                    
+                }
+              //  print "<br>ooooo".$long_min." , ".$lat_min." , ".$long_max." , ".$lat_max;
+  		return $long_min." , ".$lat_min." , ".$long_max." , ".$lat_max;
+  	}
 
 } // end of map_objects_controler

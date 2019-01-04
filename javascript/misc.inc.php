@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: misc.inc.php,v 1.13 2015-06-10 07:22:18 jpermanne Exp $
+// $Id: misc.inc.php,v 1.15 2018-09-24 08:30:44 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -52,6 +52,8 @@ function reverse_html_entities() {
 		function reverse_html_entities(text) {
 		    
 		    text = replace_texte(text,'&quot;',unescape('%22'));
+			text = replace_texte(text,'&apos;',unescape('%27'));
+			text = replace_texte(text,'&#039;',unescape('%27'));
 		    text = replace_texte(text,'&amp;',unescape('%26'));
 		    text = replace_texte(text,'&lt;',unescape('%3C'));
 		    text = replace_texte(text,'&gt;',unescape('%3E'));
@@ -248,6 +250,7 @@ function jscript_unload_question() {
 
 function auto_hide_getprefs() {
 	global $current_module;
+	if(!isset($_SESSION["AutoHide"][$current_module])) $_SESSION["AutoHide"][$current_module] = '';
 	if(!$_SESSION["AutoHide"][$current_module] or sizeof($_SESSION["AutoHide"][$current_module])<1){
 		$trueids="0";
 	} else {

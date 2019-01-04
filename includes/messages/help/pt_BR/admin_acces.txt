@@ -1,4 +1,4 @@
-<h1>Gerenciamento de direitos de acesso</h1>
+<h2>Gerenciamento de direitos de acesso</h2>
 
 <p>Permite definir os direitos de uso de recursos de software.</p>
 <br />

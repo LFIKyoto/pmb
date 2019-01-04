@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_shelve.class.php,v 1.4 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: cms_module_common_selector_shelve.class.php,v 1.5 2015-12-16 11:50:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 //require_once($base_path."/cms/modules/common/selectors/cms_module_selector.class.php");
@@ -34,7 +34,7 @@ class cms_module_common_selector_shelve extends cms_module_common_selector{
 	}
 	
 	protected function gen_select(){
-		$query= "select idetagere, name from etagere where (validite = 1) or (now() <= validite_date_fin and now()>= validite_date_deb)";
+		$query= "select idetagere, name from etagere where (validite = 1) or (now() <= validite_date_fin and now()>= validite_date_deb) order by name";
 		$result = pmb_mysql_query($query);
 		$select = "
 					<select name='".$this->get_form_value_name("id_shelve")."[]'>";

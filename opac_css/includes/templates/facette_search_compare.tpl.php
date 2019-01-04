@@ -2,11 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: facette_search_compare.tpl.php,v 1.3 2014-06-30 14:15:56 abacarisse Exp $
+// $Id: facette_search_compare.tpl.php,v 1.6 2018-01-25 10:13:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
 global $base_path,$charset,$msg;
+global $facette_search_compare_wrapper;
+global $facette_search_compare_header;
+global $facette_search_compare_line;
+global $facette_search_compare_element;
+global $facette_search_compare_hidden_line;
+global $facette_search_compare_hidden_element;
 
 $facette_search_compare_wrapper="
 <style>
@@ -71,7 +77,7 @@ $facette_search_compare_wrapper="
 			line.style.display='';
 			line.previousElementSibling.setAttribute('class',line.previousElementSibling.getAttribute('class')+' compare_line_toggled');
 			if(current_line.firstElementChild.lastElementChild && current_line.firstElementChild.lastElementChild.nodeName=='IMG'){
-				current_line.firstElementChild.lastElementChild.setAttribute('src','$base_path/images/minus.gif');
+				current_line.firstElementChild.lastElementChild.setAttribute('src','".get_url_icon("minus.gif")."');
 				current_line.firstElementChild.lastElementChild.setAttribute('class','img_plus');
 			}
 			
@@ -81,7 +87,7 @@ $facette_search_compare_wrapper="
 			line.previousElementSibling.setAttribute('class',line_classes.replace(' compare_line_toggled',''));
 			
 			if(current_line.firstElementChild.lastElementChild && current_line.firstElementChild.lastElementChild.nodeName=='IMG'){
-				current_line.firstElementChild.lastElementChild.setAttribute('src','$base_path/images/plus.gif');
+				current_line.firstElementChild.lastElementChild.setAttribute('src','".get_url_icon("plus.gif")."');
 				current_line.firstElementChild.lastElementChild.setAttribute('class','img_plus');
 			}
 		}
@@ -124,7 +130,7 @@ $facette_search_compare_wrapper="
 	function compare_see_more(hidden_element,notices_ids){
 		var req = new http_request();
 		var sended_datas={'json_notices_ids':notices_ids};
-		req.request(\"./ajax.php?module=ajax&categ=facette&sub=compare_see_more\",true,'sended_datas='+encodeURIComponent(JSON.stringify(sended_datas)),true,function(data){
+		req.request(\"./ajax.php?module=ajax&categ=!!categ!!&sub=compare_see_more\",true,'sended_datas='+encodeURIComponent(JSON.stringify(sended_datas)),true,function(data){
 			var jsonArray = JSON.parse(data);
 			
 			var parent=hidden_element.parentElement;
@@ -157,7 +163,7 @@ $facette_search_compare_header="
 $facette_search_compare_line="
 	<tr class='compare_line !!even_odd!!' onclick='!!compare_line_onclick!!'>
 		<td class='first_collumn'>
-			<img src='$base_path/images/plus.gif' class='img_plus'/>
+			<img src='".get_url_icon("plus.gif")."' class='img_plus'/>
 			!!groupedby_libelle!!
 		</td>
 		!!compare_line_elements!!

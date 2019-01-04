@@ -2,21 +2,21 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nav_collections.class.php,v 1.3 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: nav_collections.class.php,v 1.6 2017-10-27 13:39:50 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path,$base_path,$include_path;
 
 class nav_collections {    
-    function nav_collections($id_vue,$local_msg) {
+    public function __construct($id_vue,$local_msg) {
     	$this->id_vue=$id_vue;
     	$this->path="nav_collections";
     	$this->msg=$local_msg;
     	$this->fetch_data();    	   	
     }
     
-    function fetch_data() {
+    public function fetch_data() {
 		global $dbh;
 			
 		$this->selected_list=array();
@@ -44,15 +44,15 @@ class nav_collections {
 		return true;
  	}
        
-	function get_all_elements(){	
+	public function get_all_elements(){	
 		return $this->ids;
 	}
     	
-	function get_elements(){		
+	public function get_elements(){		
 		return $this->all_ids;
 	}		
 	
-	function get_form(){
+	public function get_form(){
 		global $msg;
 		global $tpl_liste_item_tableau,$tpl_liste_item_tableau_ligne;
 		
@@ -63,7 +63,10 @@ class nav_collections {
 		// liste des lien de recherche directe
 		$liste="";
 		// pour toute les recherche de l'utilisateur
+		$liste_id = array();
+		
 		for($i=0;$i<count($this->liste_item);$i++) {
+			$liste_id[] = 'nav_collections_selected_'.$this->liste_item[$i]->id;
 			if ($i % 2) $pair_impair = "even"; else $pair_impair = "odd";			
 	        $td_javascript=" ";
 	        $tr_surbrillance = "onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='".$pair_impair."'\" ";
@@ -80,10 +83,16 @@ class nav_collections {
 			$liste.=$line;
 		}
 		$tpl_liste_item_tableau = str_replace('!!lignes_tableau!!',$liste , $tpl_liste_item_tableau);
-		return $forms_search.$tpl_liste_item_tableau;	
+		
+		if (count($liste_id)) {
+			$tpl_liste_item_tableau .= "<input type='button' class='bouton_small align_middle' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(\"".implode("|",$liste_id)."\",1);'>";
+			$tpl_liste_item_tableau .= "<input type='button' class='bouton_small align_middle' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(\"".implode("|",$liste_id)."\",0);'>";
+		}
+		
+		return $tpl_liste_item_tableau;
 	}	
 	
-	function save_form(){
+	public function save_form(){
 		global $dbh;
 
 		$req="delete FROM opac_filters where opac_filter_view_num=".$this->id_vue." and  opac_filter_path='".$this->path."' ";

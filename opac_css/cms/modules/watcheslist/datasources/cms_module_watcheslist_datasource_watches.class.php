@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_watcheslist_datasource_watches.class.php,v 1.4 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: cms_module_watcheslist_datasource_watches.class.php,v 1.5 2016-09-20 10:25:42 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -45,16 +45,16 @@ class cms_module_watcheslist_datasource_watches extends cms_module_common_dataso
 			$return = array();
 			if (count($selector->get_value()) > 0) {
 				foreach ($selector->get_value() as $value) {
-					$return[] = $value;
+					$return[] = $value*1;
 				}
 			}
 			
 			if(count($return)){
 				$watcheslist = array();
-				$query = "select id_watch from docwatch_watches where id_watch in (".implode(",",$return).")";
+				$query = "select id_watch from docwatch_watches where id_watch in ('".implode("','",$return)."')";
 				if ($this->parameters["sort_by"] != "") {
-					$query .= " order by ".$this->parameters["sort_by"];
-					if ($this->parameters["sort_order"] != "") $query .= " ".$this->parameters["sort_order"];
+					$query .= " order by ".addslashes($this->parameters["sort_by"]);
+					if ($this->parameters["sort_order"] != "") $query .= " ".addslashes($this->parameters["sort_order"]);
 				}
 				$result = pmb_mysql_query($query,$dbh);
 				if ($result) {

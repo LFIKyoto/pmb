@@ -1,4 +1,4 @@
-<h1>Financial management</h1>
+<h2>Financial management</h2>
 <p>This module allows you to manage financial transactions related to member's subscriptions:</p>
 <ul>
 <li>membership

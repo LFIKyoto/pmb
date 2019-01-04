@@ -2,11 +2,12 @@
 // +-------------------------------------------------+
 // ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: edition_func.inc.php,v 1.7 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: edition_func.inc.php,v 1.12 2018-03-22 16:09:14 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($class_path."/parametres_perso.class.php");
+require_once($class_path."/editions_datasource.class.php");
 
 // Affichage tabulaire du contenu d'un caddie
 function afftab_empr_cart_objects ($idcaddie=0, $flag="" , $no_flag = "" ) {
@@ -63,13 +64,13 @@ switch($dest) {
 		$rqt_tout = "select id_empr,empr_cb,empr_nom,empr_prenom,empr_adr1,empr_adr2,empr_cp,empr_ville,empr_pays,empr_mail,empr_tel1,empr_tel2,empr_prof,empr_year,";
 		$rqt_tout .=" empr_categ.libelle as categ,";
 		$rqt_tout .=" empr_codestat.libelle as code_stat,statut_libelle,location_libelle,type_abt_libelle,";
-		$rqt_tout .=" empr_creation,empr_modif,empr_sexe,empr_login,empr_date_adhesion,empr_date_expiration,empr_msg,empr_lang,empr_ldap,last_loan_date,date_fin_blocage,total_loans";
-		$rqt_tout .=" from empr left join type_abts on id_type_abt=type_abt, empr_categ, empr_codestat, empr_statut, docs_location";
-		$rqt_tout .=" where id_empr='".$empr[object_id]."' and empr_categ=id_categ_empr and empr_codestat=idcode and empr_statut=idstatut and empr_location=idlocation";
+		$rqt_tout .=" empr_creation,empr_modif,empr_sexe,empr_login,empr_date_adhesion,empr_date_expiration,empr_msg,empr_lang,empr_ldap,last_loan_date,date_fin_blocage,total_loans, group_concat(libelle_groupe separator ' ; ') as 'libelle_groupe'";
+		$rqt_tout .=" from empr left join empr_groupe on id_empr = empr_id left join groupe on id_groupe = groupe_id left join type_abts on id_type_abt=type_abt, empr_categ, empr_codestat, empr_statut, docs_location";
+		$rqt_tout .=" where id_empr='".$empr['object_id']."' and empr_categ=id_categ_empr and empr_codestat=idcode and empr_statut=idstatut and empr_location=idlocation";
 		if (!$entete) {
-			extrait_info_empr($rqt_tout, 1, $empr[flag]);
+			extrait_info_empr($rqt_tout, 1, $empr['flag']);
 			$entete=1;
-			} else extrait_info_empr($rqt_tout, 0, $empr[flag]);
+			} else extrait_info_empr($rqt_tout, 0, $empr['flag']);
 		} // fin de liste
 return;
 }
@@ -94,29 +95,31 @@ function extrait_info_empr ($sql="", $entete=1, $flag="") {
 	$nbr_champs = @pmb_mysql_num_fields($res);
              		
 	if ($nbr_lignes) {
+		if($nbr_lignes) {
+			$editions_datasource['lenders'] = new editions_datasource('lenders');
+		}
 		switch($dest) {
 			case "TABLEAU":
 				if ($entete) {
-					$worksheet->write_string((1+$debligne_excel),0,$msg["caddie_mess_edition_".$entete_bloc]);
+// 					$worksheet->write_string((1+$debligne_excel),0,$msg["caddie_mess_edition_".$entete_bloc]);
 					$debligne_excel++ ;
-				}
-				for($i=0; $i < $nbr_champs; $i++) {
-					// entête de colonnes
-					$fieldname = pmb_mysql_field_name($res, $i);
-					if ($entete) {
-						$worksheet->write_string((1+$debligne_excel),0,$msg['caddie_action_marque']);
-						$worksheet->write_string((1+$debligne_excel),($i+1),${fieldname});
+					$worksheet->write_string((1+$debligne_excel),0,$msg['caddie_action_marque']);
+					for($i=0; $i < $nbr_champs; $i++) {
+						// entête de colonnes
+						$fieldname = pmb_mysql_field_name($res, $i);
+						if(isset($editions_datasource['lenders']->struct_format['empr_'.$fieldname])) {
+							$worksheet->write_string((1+$debligne_excel),($i+1),$editions_datasource['lenders']->struct_format['empr_'.$fieldname]['label']);
+						} else {
+							$worksheet->write_string((1+$debligne_excel),($i+1),$fieldname);
+						}
 					}
-				}
-				if ($entete) {
 					$worksheet->write_string((1+$debligne_excel),($nbr_champs+1),"DESCR");
 					for($i=0; $i < $max_perso; $i++) {
 						$perso = pmb_mysql_fetch_object($res_compte1) ;
 						$worksheet->write_string((1+$debligne_excel),($nbr_champs+2+$i),$perso->titre);
 					}
+					$debligne_excel++ ;
 				}
-				if ($entete) $debligne_excel++ ;
-             		        		
 				for($i=0; $i < $nbr_lignes; $i++) {
 					$debligne_excel++;
 					$row = pmb_mysql_fetch_row($res);
@@ -142,17 +145,21 @@ function extrait_info_empr ($sql="", $entete=1, $flag="") {
 			case "TABLEAUHTML":
 				if ($entete) {
 					if ($etat_table) echo "\n</table>";
-					echo "<h3>".$msg["caddie_mess_edition_".$entete_bloc]."</h3>";
-					echo "\n<table><th align='left'>".$msg['caddie_action_marque']."</th>";
+// 					echo "<h3>".$msg["caddie_mess_edition_".$entete_bloc]."</h3>";
+					echo "\n<table><th class='align_left'>".$msg['caddie_action_marque']."</th>";
 					$etat_table = 1 ;
 					for($i=0; $i < $nbr_champs; $i++) {
 						$fieldname = pmb_mysql_field_name($res, $i);
-						print("<th align='left'>${fieldname}</th>");
+						if(isset($editions_datasource['lenders']->struct_format['empr_'.$fieldname])) {
+							print("<th class='align_left'>".$editions_datasource['lenders']->struct_format['empr_'.$fieldname]['label']."</th>");
+						} else {
+							print("<th class='align_left'>".$fieldname."</th>");
+						}
 					}
-					print "<th align='left'>DESCR</th>" ;
+					print "<th class='align_left'>DESCR</th>" ;
 					for($i=0; $i < $max_perso; $i++) {
 						$perso = pmb_mysql_fetch_object($res_compte1) ;
-						print "<th align='left'>".$perso->titre."</th>" ;
+						print "<th class='align_left'>".$perso->titre."</th>" ;
 					}
 				}
 				for($i=0; $i < $nbr_lignes; $i++) {
@@ -183,17 +190,21 @@ function extrait_info_empr ($sql="", $entete=1, $flag="") {
 			default:
 				if ($entete) {
 					if ($etat_table) echo "\n</table>";
-					echo "<h3>".$msg["caddie_mess_edition_".$entete_bloc]."</h3>";
-					echo "\n<table><th align='left'>".$msg['caddie_action_marque']."</th>";
+// 					echo "<h3>".$msg["caddie_mess_edition_".$entete_bloc]."</h3>";
+					echo "\n<table><th class='align_left'>".$msg['caddie_action_marque']."</th>";
 					$etat_table = 1 ;
 					for($i=0; $i < $nbr_champs; $i++) {
 						$fieldname = pmb_mysql_field_name($res, $i);
-						print("<th align='left'>${fieldname}</th>");
+						if(isset($editions_datasource['lenders']->struct_format['empr_'.$fieldname])) {
+							print("<th class='align_left'>".$editions_datasource['lenders']->struct_format['empr_'.$fieldname]['label']."</th>");
+						} else {
+							print("<th class='align_left'>".$fieldname."</th>");
+						}
 					}
-					print "<th align='left'>DESCR</th>" ;
+					print "<th class='align_left'>DESCR</th>" ;
 					for($i=0; $i < $max_perso; $i++) {
 						$perso = pmb_mysql_fetch_object($res_compte1) ;
-						print "<th align='left'>".$perso->titre."</th>" ;
+						print "<th class='align_left'>".$perso->titre."</th>" ;
 					}
 				}
 				$odd_even=0;

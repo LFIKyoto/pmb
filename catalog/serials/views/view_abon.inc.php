@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: view_abon.inc.php,v 1.3 2007-08-08 15:02:53 ngantier Exp $
+// $Id: view_abon.inc.php,v 1.4 2017-06-22 10:19:48 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -16,4 +16,5 @@ $abonnements=new abts_abonnements($serial_id,$location);
 $bulletins.=$abonnements->show_list();
 
 $bulletins.= "</form>" ;
+$pages_display = "";
 ?>

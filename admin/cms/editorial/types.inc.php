@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: types.inc.php,v 1.3 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: types.inc.php,v 1.4 2017-01-25 16:43:50 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($quoi)) $quoi = '';
 
 require_once($class_path."/cms/cms_editorial_types.class.php");
 require_once($class_path."/cms/cms_editorial_parametres_perso.class.php");

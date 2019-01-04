@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: infopages.inc.php,v 1.7 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: infopages.inc.php,v 1.8 2016-11-14 15:31:27 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -33,7 +33,9 @@ for ($ip=0; $ip<count($idpages); $ip++) {
 				$info_etagere_str=substr($lu,$pos+13,$pos_fin-$pos-13);
 				$info_etagere = array();
 				$info_etagere = explode(",",$info_etagere_str);
-	
+				if(!count($info_etagere) || !($info_etagere[0])){
+					break;
+				}
 				// $info_etagere[0] = id
 				// $info_etagere[1] = nb max notices affichées
 				// $info_etagere[2] = mode d'affichage

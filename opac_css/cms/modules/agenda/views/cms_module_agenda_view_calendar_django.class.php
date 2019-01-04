@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_agenda_view_calendar_django.class.php,v 1.3 2015-03-12 11:12:33 mbertin Exp $
+// $Id: cms_module_agenda_view_calendar_django.class.php,v 1.9 2018-08-24 08:44:59 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -33,7 +33,7 @@ le {{event.event_start.format_value}}
 {% endif%} : {{event.title}}
 </h3>
 <blockquote>
-<img src='{{event.logo.large}}'/>
+<img src='{{event.logo.large}}' alt=''/>
 <p>{{event.resume}}<br/><a href='{{event.link}}'>plus d'infos...<a/></p>
 </blockquote>
 {% endfor %}
@@ -105,7 +105,7 @@ le {{event.event_start.format_value}}
 		$events = array();
 		if(count($datas['events'])){
 			foreach($datas['events'] as $event){
-				if($event['event_start']){
+				if(isset($event['event_start']) && $event['event_start']){
 					$events[] =$event;
 					$styles[$event['id_type']] = array("color" => $event['color'], "calendar" => $this->format_text($event['calendar']));
 					if($nb_displayed<$this->parameters['nb_displayed_events_under']) {
@@ -119,7 +119,7 @@ le {{event.event_start.format_value}}
 		
 		$html_to_display = "
 		<div id='cms_module_calendar_".$this->id."' data-dojo-props='onChange : cms_module_agenda_highlight_events,getClassForDate:cms_module_agenda_get_class_day'; dojoType='dijit.Calendar' style='width:100%;'></div>";
-
+		
 		$html_to_display.="
 			<style>
 		";
@@ -152,8 +152,13 @@ le {{event.event_start.format_value}}
 						end_day.setHours(1,0,0,0);
 					}else end_day = false;
 					if((date.valueOf()>=start_day.valueOf() && (end_day && date.valueOf()<=end_day.valueOf())) || date.valueOf()==start_day.valueOf()){
-						if(classname) classname+=' ';
-						classname+='cms_module_agenda_event_'+event.id_type;
+						if (classname.indexOf('cms_module_agenda_event_'+event.id_type) === -1) classname+='cms_module_agenda_event_'+event.id_type;
+						if (classname) {
+							classname+= ' ';
+							if(classname.indexOf('cms_module_agenda_multiple_events') === -1) {
+								classname+=' cms_module_agenda_multiple_events ';
+							}
+						}
 					}
 				});
 				return classname;
@@ -195,7 +200,7 @@ le {{event.event_start.format_value}}
 		$render_datas['legends'] = $styles;
 		
 		//on rappelle le tout...
-		return cms_module_common_view_django::render($render_datas);
+		return parent::render($render_datas);
 
 	}
 	
@@ -224,7 +229,7 @@ le {{event.event_start.format_value}}
 						)
 					)
 		);
-		$format_data = array_merge($format_data,cms_module_common_view_django::get_format_data_structure());
+		$format_data = array_merge($format_data,parent::get_format_data_structure());
 		return $format_data;
 	}
 	

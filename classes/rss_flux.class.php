@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rss_flux.class.php,v 1.14 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: rss_flux.class.php,v 1.15 2017-02-01 15:19:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,46 +12,41 @@ class rss_flux {
 // ---------------------------------------------------------------
 //		proprietes de la classe
 // ---------------------------------------------------------------
-	var $id_rss_flux = 0;	
-	var $nom_rss_flux = ""; 
-	var $link_rss_flux = "" ;
-	var $descr_rss_flux = "" ;
-	var $lang_rss_flux = "" ;
-	var $copy_rss_flux = "" ;
-	var $editor_rss_flux = "" ;
-	var $webmaster_rss_flux = "" ;
-	var $ttl_rss_flux = 0 ;
-	var $img_url_rss_flux = "" ;
-	var $img_title_rss_flux = "" ;
-	var $img_link_rss_flux = "" ;
+	public $id_rss_flux = 0;	
+	public $nom_rss_flux = ""; 
+	public $link_rss_flux = "" ;
+	public $descr_rss_flux = "" ;
+	public $lang_rss_flux = "" ;
+	public $copy_rss_flux = "" ;
+	public $editor_rss_flux = "" ;
+	public $webmaster_rss_flux = "" ;
+	public $ttl_rss_flux = 0 ;
+	public $img_url_rss_flux = "" ;
+	public $img_title_rss_flux = "" ;
+	public $img_link_rss_flux = "" ;
 
-	var	$format_flux = "";
-	var $export_court_flux = 0;
-	var $tpl_rss_flux = 0;
+	public $format_flux = "";
+	public $export_court_flux = 0;
+	public $tpl_rss_flux = 0;
 	
-	var	$nb_paniers = 0;
-	var	$nb_bannettes = 0;
-	var	$num_paniers = array();
-	var	$num_bannettes = array();
-	var	$notices = "";
+	public $nb_paniers = 0;
+	public $nb_bannettes = 0;
+	public $num_paniers = array();
+	public $num_bannettes = array();
+	public $notices = "";
 	
 	// ---------------------------------------------------------------
 	//		constructeur
 	// ---------------------------------------------------------------
-	function rss_flux($id=0) {
-		if ($id) {
-			$this->id_rss_flux = $id;
-			$this->getData();
-		} else {
-			$this->id_rss_flux = 0;
-			$this->getData();
-		}
+	public function __construct($id=0) {
+		$this->id_rss_flux = $id+0;
+		$this->getData();
 	}
 	
 	// ---------------------------------------------------------------
 	//		getData() : recuperation infos
 	// ---------------------------------------------------------------
-	function getData() {
+	public function getData() {
 		global $dbh;
 		
 		if (!$this->id_rss_flux) {
@@ -119,7 +114,7 @@ class rss_flux {
 	// ---------------------------------------------------------------
 	//		show_form : affichage du formulaire de saisie
 	// ---------------------------------------------------------------
-	function show_form() {
+	public function show_form() {
 	
 		global $msg, $charset;
 		global $dsi_flux_form;
@@ -135,7 +130,7 @@ class rss_flux {
 			$button_delete ='';
 		}
 		
-		$sel_notice_tpl=notice_tpl_gen::gen_tpl_select("notice_tpl",$this->tpl_rss_flux,$onchange);
+		$sel_notice_tpl=notice_tpl_gen::gen_tpl_select("notice_tpl",$this->tpl_rss_flux);
 	
 		$sel_default_format="<select name='format_flux'>";
 		if(!$this->format_flux){
@@ -227,7 +222,7 @@ class rss_flux {
 	// ---------------------------------------------------------------
 	//		delete() : suppression 
 	// ---------------------------------------------------------------
-	function delete() {
+	public function delete() {
 		global $dbh;
 		global $msg;
 		
@@ -244,7 +239,7 @@ class rss_flux {
 	// ---------------------------------------------------------------
 	//		update 
 	// ---------------------------------------------------------------
-	function update($temp) {
+	public function update($temp) {
 	
 		global $dbh;
 		
@@ -290,7 +285,7 @@ class rss_flux {
 	// ---------------------------------------------------------------
 	//		compte_elements() : methode pour pouvoir recompter en dehors !
 	// ---------------------------------------------------------------
-	function compte_elements() {
+	public function compte_elements() {
 		global $dbh ;
 		
 		$this->nb_paniers=0;

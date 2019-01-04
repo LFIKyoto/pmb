@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_ui.class.php,v 1.6 2015-07-01 07:58:32 vtouchard Exp $
+// $Id: vedette_ui.class.php,v 1.18 2018-12-17 23:09:30 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -24,8 +24,8 @@ class vedette_ui {
 	 * @return void
 	 * @access public
 	 */
-	public function __construct($id_vedette_composee=0) {
-		$this->vedette_composee=new vedette_composee($id_vedette_composee);
+	public function __construct(vedette_composee $vedette_composee) {
+		$this->vedette_composee = $vedette_composee;
 	}
 	
 	/**
@@ -51,21 +51,25 @@ class vedette_ui {
 	 * @return string
 	 * @access public
 	 */
-	public function get_form($property, $order, $instance_name){
-		global $dbh,$base_path,$charset,$lang;
+	public function get_form($property_name, $order, $instance_name, $property_type = "",$no_add_script=1){
+		global $dbh,$base_path,$charset,$lang,$pmb_allow_authorities_first_page;
 		global $vedette_tpl;
 		
+		$form_html = '';
 		//TODO Retirer le style brut
-		$form_html=$vedette_tpl['css'].$vedette_tpl['form_body'];
+		if(!$order && $no_add_script){
+			$form_html.=$vedette_tpl['css'].$vedette_tpl['form_body_script'];
+		}
+		$form_html.=$vedette_tpl['form_body'];
 		
 		if (!count($this->vedette_composee->get_elements())) {
 			$form_html = str_replace("!!vedette_composee_apercu!!", "", $form_html);
 		} else {
-			$form_html = str_replace("!!vedette_composee_apercu!!", $this->vedette_composee->get_label(), $form_html);
+			$form_html = str_replace("!!vedette_composee_apercu!!", htmlentities($this->vedette_composee->get_label(), ENT_QUOTES, $charset), $form_html);
 		}
 		$form_html = str_replace("!!vedette_composee_id!!", $this->vedette_composee->get_id(), $form_html);
-		
-		$form_html = str_replace("!!vedette_composee_type!!", $property->range[0], $form_html);
+		$form_html = str_replace("!!vedette_composee_type!!", $property_type, $form_html);
+		$form_html = str_replace("!!vedette_composee_grammar!!", htmlentities($this->vedette_composee->get_config_filename(), ENT_QUOTES, $charset), $form_html);
 		
 		//les champs disponibles
 		$available_fields_html='';
@@ -73,18 +77,27 @@ class vedette_ui {
 		$get_vedette_element_switchcases = "";
 		
 		foreach($this->vedette_composee->get_available_fields() as $key=>$available_field){
-			$vedette_element_ui_class_name = vedette_element::search_vedette_element_ui_class_name($available_field["class_name"]);
-			if($available_field['params']){
-				$available_fields_scripts .= $vedette_element_ui_class_name::get_create_box_js($available_field['params']);
-			}else {
- 				$available_fields_scripts .= $vedette_element_ui_class_name::get_create_box_js();
+			if (empty($available_field['params'])) {
+				$available_field['params'] = array();
 			}
-			
-			$get_vedette_element_switchcases .= str_replace("!!vedette_type!!", $available_field["class_name"], $vedette_tpl["vedette_composee_get_vedette_element_switchcase"]);
+			$vedette_element_ui_class_name = vedette_element::search_vedette_element_ui_class_name($available_field["class_name"]);
+			$js_class_name = $available_field["class_name"];
+			$authid=0;
+			if(!empty($available_field['params']['id_authority'])){
+				$authid=$available_field['params']['id_authority'];
+				if (method_exists($vedette_element_ui_class_name, 'get_js_class_name')) {
+					$js_class_name = $vedette_element_ui_class_name::get_js_class_name($available_field['params']);
+				}
+			}
+			$available_fields_scripts.= $vedette_element_ui_class_name::get_create_box_js($available_field['params']);
+			$get_vedette_element_switchcases.= str_replace("!!vedette_type!!", $js_class_name, $vedette_tpl["vedette_composee_get_vedette_element_switchcase"]);
 			
 			$tmp_html=$vedette_tpl['vedette_composee_available_field'];
 			$tmp_html = str_replace("!!available_field_id!!", $key, $tmp_html);
-			$tmp_html = str_replace("!!available_field_type!!", $available_field["class_name"], $tmp_html);
+			$tmp_html = str_replace("!!available_field_type!!", $js_class_name, $tmp_html);
+			$tmp_html = str_replace("!!available_field_num!!", $available_field['num'], $tmp_html);
+			$tmp_html = str_replace("!!authid!!", $authid, $tmp_html);
+			$tmp_html = str_replace("!!vedette_element_params!!", encoding_normalize::json_encode($available_field['params']), $tmp_html);
 			
 			$tmp_html=str_replace("!!vedette_composee_available_field_label!!", get_msg_to_display($available_field['name']), $tmp_html);
 			$available_fields_html.=$tmp_html;
@@ -92,6 +105,8 @@ class vedette_ui {
 		$form_html=str_replace("!!available_fields_scripts!!", $available_fields_scripts, $form_html);
 		$form_html=str_replace("!!vedette_composee_available_fields!!", $available_fields_html, $form_html);
 		$form_html=str_replace("!!get_vedette_element_switchcases!!", $get_vedette_element_switchcases, $form_html);
+		$form_html=str_replace("!!direct_search!!", $pmb_allow_authorities_first_page, $form_html);
+		
 		
 		//les zones de subdivision
 		$subdivisions_html='';
@@ -103,14 +118,13 @@ class vedette_ui {
 			$tmp_html = $vedette_tpl['vedette_composee_subdivision'];
 			$tab_vedette_elements[$subdivision["order"]] = array();
 			
-			if ($subdivision["min"]) $tmp_html = str_replace("!!vedette_composee_subdivision_cardmin!!", $subdivision["min"], $tmp_html);
+			if (isset($subdivision["min"]) && $subdivision["min"]) $tmp_html = str_replace("!!vedette_composee_subdivision_cardmin!!", $subdivision["min"], $tmp_html);
 			else $tmp_html = str_replace("!!vedette_composee_subdivision_cardmin!!", "", $tmp_html);
-			if ($subdivision["max"]) $tmp_html = str_replace("!!vedette_composee_subdivision_cardmax!!", $subdivision["max"], $tmp_html);
+			if (isset($subdivision["max"]) && $subdivision["max"]) $tmp_html = str_replace("!!vedette_composee_subdivision_cardmax!!", $subdivision["max"], $tmp_html);
 			else $tmp_html = str_replace("!!vedette_composee_subdivision_cardmax!!", "", $tmp_html);
 			$tmp_html = str_replace("!!vedette_composee_subdivision_order!!", $subdivision["order"], $tmp_html);
 			$elements_html='';
 			if($elements=$this->vedette_composee->get_at_elements_subdivision($subdivision['code'])){
-				
 				// tableau pour la gestion de l'ordre à l'intérieur d'une subdivision
 				$elements_order = array();
 				
@@ -120,20 +134,21 @@ class vedette_ui {
 					$elements_order[] = $position;
 					
 					$tab_vedette_elements[$subdivision["order"]][$position] = $element->get_isbd();
-					
 					$element_ui_class_name = vedette_element::search_vedette_element_ui_class_name(get_class($element));
-					if($element->params){
-						$current_element_html = str_replace("!!vedette_composee_element_form!!", $element_ui_class_name::get_form($element->params), $current_element_html);
+					$params = $element->get_params();
+					$current_element_html = str_replace("!!vedette_composee_element_form!!", $element_ui_class_name::get_form($params), $current_element_html);
+					if(!empty($params['label'])){
+						$autority_type = get_msg_to_display($params["label"]);
 					}else{
-						$current_element_html = str_replace("!!vedette_composee_element_form!!", $element_ui_class_name::get_form(), $current_element_html);
+						$field_class_name = $this->vedette_composee->get_at_available_field_class_name(get_class($element));
+						$autority_type = get_msg_to_display($field_class_name["name"]);
 					}
 					$current_element_html = str_replace("!!vedette_composee_element_order!!", $position, $current_element_html);
 					$current_element_html = str_replace("!!vedette_composee_element_type!!", get_class($element), $current_element_html);
-					$current_element_html = str_replace("!!vedette_element_rawlabel!!", $element->get_isbd(), $current_element_html);
-					$field_class_name = $this->vedette_composee->get_at_available_field_class_name(get_class($element));
-                    $autority_type = get_msg_to_display($field_class_name["name"]);
-					$current_element_html = str_replace("!!vedette_element_label!!", "[".$autority_type."] ".$element->get_isbd(), $current_element_html);
+					$current_element_html = str_replace("!!vedette_element_rawlabel!!", htmlentities($element->get_isbd(), ENT_QUOTES, $charset), $current_element_html);					
+					$current_element_html = str_replace("!!vedette_element_label!!", htmlentities(($element->get_id() ? "[".$autority_type."] ".$element->get_isbd() : ''), ENT_QUOTES, $charset), $current_element_html);
 					$current_element_html = str_replace("!!vedette_element_id!!", $element->get_id(), $current_element_html);
+					$current_element_html = str_replace("!!vedette_element_available_field_num!!", $element->get_num_available_field(), $current_element_html);
 					
 					$elements_html.=$current_element_html;
 				}
@@ -143,7 +158,7 @@ class vedette_ui {
 				$tmp_html = str_replace("!!vedette_composee_subdivision_elements!!", "", $tmp_html);
 				$tmp_html = str_replace("!!elements_order!!", "", $tmp_html);
 			}
-			$tmp_html=str_replace("!!vedette_composee_subdivision_label!!", get_msg_to_display($subdivision['name']), $tmp_html);
+			$tmp_html=str_replace("!!vedette_composee_subdivision_label!!", get_msg_to_display((isset($subdivision['name']) ? $subdivision['name'] : '')), $tmp_html);
 			$tmp_html=str_replace("!!vedette_composee_subdivision_id!!", $subdivision['code'], $tmp_html);
 			
 			$subdivisions_html.=$tmp_html;
@@ -151,9 +166,9 @@ class vedette_ui {
 		$form_html=str_replace("!!vedette_composee_subdivisions!!", $subdivisions_html, $form_html);
 		$form_html=str_replace("!!caller!!", $instance_name, $form_html);
 		$form_html=str_replace("!!vedette_composee_order!!", $order, $form_html);
-		$form_html=str_replace("!!property_name!!", $property->pmb_name."_composed", $form_html);
+		$form_html=str_replace("!!property_name!!", $property_name."_composed", $form_html);
 		$form_html=str_replace("!!tab_vedette_elements!!", encoding_normalize::json_encode($tab_vedette_elements), $form_html);
-		$form_html=str_replace("!!vedette_separator!!", htmlentities($this->vedette_composee->get_separator(), ENT_QUOTES), $form_html);
+		$form_html=str_replace("!!vedette_separator!!", htmlentities($this->vedette_composee->get_separator(), ENT_QUOTES, $charset), $form_html);
 		
 		return $form_html;
 	}

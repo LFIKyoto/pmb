@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.12 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: main.inc.php,v 1.13 2015-12-01 10:48:57 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-require('./admin/param/param_func.inc.php');
+require_once('./admin/param/param_func.inc.php');
 
 $admin_layout = str_replace('!!menu_sous_rub!!', $msg[1600], $admin_layout);
 print $admin_layout;

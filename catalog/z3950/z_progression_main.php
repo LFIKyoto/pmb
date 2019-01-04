@@ -5,7 +5,7 @@
 // |                                                                          |
 // | Ces scripts sont basés sur le travail de Quentin CHEVILLON               |
 // +-------------------------------------------------+
-// $Id: z_progression_main.php,v 1.18 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: z_progression_main.php,v 1.19 2017-01-31 15:41:41 dgoron Exp $
 
 // définition du minimum nécéssaire 
 $base_path="../..";
@@ -20,15 +20,17 @@ require_once ("$include_path/marc_tables/$pmb_indexation_lang/empty_words");
 require_once ("$class_path/iso2709.class.php");
 require_once ("z3950_func.inc.php");
 
+if(!isset($tri1)) $tri1 = '';
+if(!isset($tri2)) $tri2 = '';
 
 //
 // On détermine les Bibliothèques sélectionnées
 //
 if ( ($clause=="")) {
-	echo $msg[z3950_no_bib_selectetd];
+	echo $msg['z3950_no_bib_selectetd'];
 	echo "<a href=\"#\" onclick='history.go(-1); return false;'>$msg[z3950_autre_rech]</a>&nbsp;";
 	die();
-	}
+}
 $selection_bib="where bib_id in (".$clause.") ";
 //
 // On récupère ID_query et on met à jour la base pour une prochaine recherche

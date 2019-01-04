@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vig_num.php,v 1.12 2015-05-18 10:11:04 dgoron Exp $
+// $Id: vig_num.php,v 1.13 2018-06-14 09:07:19 mbertin Exp $
 
 // définition du minimum nécéssaire 
 $base_path     = ".";                            
@@ -12,7 +12,8 @@ $base_noheader = 1;
 $base_nocheck  = 1;
 $base_nobody   = 1;
 
-require_once ("$base_path/includes/init.inc.php");  
+require_once ("$base_path/includes/init.inc.php");
+session_write_close();//Fermeture de la session dès que possible
 require_once("$class_path/curl.class.php");
 
 $explnum_id = $explnum_id+0;

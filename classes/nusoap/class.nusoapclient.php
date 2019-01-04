@@ -19,37 +19,37 @@
 * unset($soapclient);
 *
 * @author   Dietrich Ayala <dietrich@ganx4.com>
-* @version  $Id: class.nusoapclient.php,v 1.3 2013-04-11 08:14:12 mbertin Exp $
+* @version  $Id: class.nusoapclient.php,v 1.5 2017-07-12 15:15:00 tsamson Exp $
 * @access   public
 */
 class soapclient extends nusoap_base  {
 
-	var $username = '';
-	var $password = '';
-	var $authtype = '';
-	var $certRequest = array();
-	var $requestHeaders = false;	// SOAP headers in request (text)
-	var $responseHeaders = '';		// SOAP headers from response (incomplete namespace resolution) (text)
-	var $document = '';				// SOAP body response portion (incomplete namespace resolution) (text)
-	var $endpoint;
-	var $forceEndpoint = '';		// overrides WSDL endpoint
-    var $proxyhost = '';
-    var $proxyport = '';
-	var $proxyusername = '';
-	var $proxypassword = '';
-    var $xml_encoding = '';			// character set encoding of incoming (response) messages
-	var $http_encoding = false;
-	var $timeout = 0;				// HTTP connection timeout
-	var $response_timeout = 30;		// HTTP response timeout
-	var $endpointType = '';			// soap|wsdl, empty for WSDL initialization error
-	var $persistentConnection = false;
-	var $defaultRpcParams = false;	// This is no longer used
-	var $request = '';				// HTTP request
-	var $response = '';				// HTTP response
-	var $responseData = '';			// SOAP payload of response
-	var $cookies = array();			// Cookies from response or for request
-    var $decode_utf8 = true;		// toggles whether the parser decodes element content w/ utf8_decode()
-	var $operations = array();		// WSDL operations, empty for WSDL initialization error
+	public $username = '';
+	public $password = '';
+	public $authtype = '';
+	public $certRequest = array();
+	public $requestHeaders = false;	// SOAP headers in request (text)
+	public $responseHeaders = '';		// SOAP headers from response (incomplete namespace resolution) (text)
+	public $document = '';				// SOAP body response portion (incomplete namespace resolution) (text)
+	public $endpoint;
+	public $forceEndpoint = '';		// overrides WSDL endpoint
+    public $proxyhost = '';
+    public $proxyport = '';
+	public $proxyusername = '';
+	public $proxypassword = '';
+    public $xml_encoding = '';			// character set encoding of incoming (response) messages
+	public $http_encoding = false;
+	public $timeout = 0;				// HTTP connection timeout
+	public $response_timeout = 30;		// HTTP response timeout
+	public $endpointType = '';			// soap|wsdl, empty for WSDL initialization error
+	public $persistentConnection = false;
+	public $defaultRpcParams = false;	// This is no longer used
+	public $request = '';				// HTTP request
+	public $response = '';				// HTTP response
+	public $responseData = '';			// SOAP payload of response
+	public $cookies = array();			// Cookies from response or for request
+    public $decode_utf8 = true;		// toggles whether the parser decodes element content w/ utf8_decode()
+	public $operations = array();		// WSDL operations, empty for WSDL initialization error
 	
 	/*
 	 * fault related variables
@@ -58,22 +58,22 @@ class soapclient extends nusoap_base  {
 	 * @var      fault
 	 * @access   public
 	 */
-	var $fault;
+	public $fault;
 	/**
 	 * @var      faultcode
 	 * @access   public
 	 */
-	var $faultcode;
+	public $faultcode;
 	/**
 	 * @var      faultstring
 	 * @access   public
 	 */
-	var $faultstring;
+	public $faultstring;
 	/**
 	 * @var      faultdetail
 	 * @access   public
 	 */
-	var $faultdetail;
+	public $faultdetail;
 
 	/**
 	* constructor
@@ -647,9 +647,9 @@ class soapclient extends nusoap_base  {
 					$paramArrayStr = '';
 					$paramCommentStr = '';
 					foreach ($opData['input']['parts'] as $name => $type) {
-						$paramStr .= "\$$name, ";
-						$paramArrayStr .= "'$name' => \$$name, ";
-						$paramCommentStr .= "$type \$$name, ";
+						$paramStr .= "\${$name}, ";
+						$paramArrayStr .= "'$name' => \${$name}, ";
+						$paramCommentStr .= "$type \${$name}, ";
 					}
 					$paramStr = substr($paramStr, 0, strlen($paramStr)-2);
 					$paramArrayStr = substr($paramArrayStr, 0, strlen($paramArrayStr)-2);

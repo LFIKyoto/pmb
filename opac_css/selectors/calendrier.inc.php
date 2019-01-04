@@ -2,8 +2,18 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: calendrier.inc.php,v 1.5 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: calendrier.inc.php,v 1.10 2017-11-21 12:01:00 dgoron Exp $
 
+
+if(!isset($auto_submit)) $auto_submit='';
+if(!isset($date_anterieure)) $date_anterieure='';
+if(!isset($format_return)) $format_return='';
+if(!isset($func_to_call)) $func_to_call='';
+if(!isset($after)) $after='';
+if(!isset($func_other_to_call)) $func_other_to_call='';
+if(!isset($sub_param1)) $sub_param1='';
+if(!isset($date)) $date='';
+if(!isset($act)) $act='';
 
 print $popup_header;
 // deux parametres ajoutés avec initialisation de façon à ne pas perturber la prolongation du prêt
@@ -27,13 +37,13 @@ function set_parent(f_caller, id_value, libelle_value)
 {
 	window.opener.document.forms[f_caller].elements['$param1'].value = id_value;
 	window.opener.document.forms[f_caller].elements['$param2'].value = libelle_value;
-	
+
 	var after = new String('$after');
 	if (after.length != 0 ) window.opener.eval('$after');
 	" ;
 	if ($auto_submit=="YES") echo "	window.opener.document.forms[f_caller].submit();";
 	echo "
-	window.close();
+		window.close();
 }
 -->
 </script>
@@ -101,13 +111,13 @@ $calend= <<<ENDOFTEXT
 	}
 	</script>
 		
-	<form name="Cal" id="Cal" method='post' action='!!post_url!!'><center>
+	<form name="Cal" id="Cal" method='post' action='!!post_url!!'><span style='text-align:center'>
 	<input type='text' name='DirectDate' size=10 value='!!date_caller!!'>
 	<input type='hidden' name='act' value='calc_date'>
 	<input type='hidden' id='date_directe' name='date' value='!!date_caller!!'>	
 	<input type='hidden' id='format_return' name='format_return' value='!!format_return!!'>
 	<input type='submit' class="bouton_small" value="!!commit_button!!" style="font-weight: bold" onClick="if(CheckDataAjax()) submit();">
-	</center></form>	
+	</span></form>	
 ENDOFTEXT;
 	
 	$calend = str_replace("!!commit_button!!" ,$msg["calendrier_date_submit"], $calend);	
@@ -253,16 +263,16 @@ function calendar($date = '') {
 		.calendarTable'.$param['calendar_id'].' {  background-color: '.$param['border_color'].'; border: 1px '.$param['border_color'].' solid}
 		-->
 		</style>';
-	$output .= '<TABLE border="0" width="180" class="calendarTable'.$param['calendar_id'].'" cellpadding="2" cellspacing="1">'."\n";
+	$output .= '<TABLE style="width:180px; border:0px" class="calendarTable'.$param['calendar_id'].'" cellpadding="2" cellspacing="1">'."\n";
 	$output .= '!!fleches!!' ;
 	
 	// Displaying the current month/year
 	if ($param['show_month'] == 1) {
 		$output .= '<TR>'."\n";
-		$output .= '	<TD colspan="'.$param['calendar_columns'].'" align="center" class="calendarTop'.$param['calendar_id'].'">'."\n";
+		$output .= '	<TD colspan="'.$param['calendar_columns'].'" class="calendarTop'.$param['calendar_id'].' center">'."\n";
 		### Insert an img at will
 		if ($param['use_img'] ) {
-			$output .= '<IMG src="./images/mois.gif">';
+			$output .= '<IMG src="'.get_url_icon('mois.gif').'">';
 		}
 		$output .= '		'.$current_month_name.' '.$current_year."\n";
 		$output .= '	</TD>'."\n";
@@ -271,7 +281,7 @@ function calendar($date = '') {
 		
 	// Building the table row with the days
 	if ($param['show_day'] == 1) {
-		$output .= '<TR align="center">'."\n";
+		$output .= '<TR class="center">'."\n";
 		$output .= '	<TD class="calendarHeader'.$param['calendar_id'].'"><B>'.$msg[1018].'</B></TD>'."\n";
 		$output .= '	<TD class="calendarHeader'.$param['calendar_id'].'"><B>'.$msg[1019].'</B></TD>'."\n";
 		$output .= '	<TD class="calendarHeader'.$param['calendar_id'].'"><B>'.$msg[1020].'</B></TD>'."\n";
@@ -284,7 +294,7 @@ function calendar($date = '') {
 		$first_day_pos = 1;	
 	}
 	
-	$output .= '<TR align="center">';
+	$output .= '<TR class="center">';
 	$int_counter = 0;
 	for ($i = 1; $i < $first_day_pos; $i++) {
 		$output .= '<TD class="calendarDays'.$param['calendar_id'].'">&nbsp;</TD>'."\n";
@@ -295,14 +305,14 @@ function calendar($date = '') {
 		$i_2 = ($i < 10) ? '0'.$i : $i;		
 		### Row start
 		if ((($i + $first_day_pos-1) % $param['calendar_columns']) == 1 && $i != 1) {
-			$output .= '<TR align="center">'."\n";
+			$output .= '<TR class="center">'."\n";
 			$int_counter = 0;
 		}
 		if (($i == $current_day) && ($same_date == 1)) {
 			if ($format_return == "IN") {
-				$output .= '<TD class="calendarToday'.$param['calendar_id'].'" align="center"><A href="#" onclick="set_parent(\''.$caller.'\', \''.$current_year.'-'.$current_month_2.'-'.$i_2.'\', \''.formatdate_input($current_year.'-'.$current_month_2.'-'.$i_2).'\')">'.$i.'</A></TD>'."\n";
+				$output .= '<TD class="calendarToday'.$param['calendar_id'].' center"><A href="#" onclick="set_parent(\''.$caller.'\', \''.$current_year.'-'.$current_month_2.'-'.$i_2.'\', \''.formatdate_input($current_year.'-'.$current_month_2.'-'.$i_2).'\')">'.$i.'</A></TD>'."\n";
 			} else {
-				$output .= '<TD class="calendarToday'.$param['calendar_id'].'" align="center"><A href="#" onclick="set_parent(\''.$caller.'\', \''.$current_year.'-'.$current_month_2.'-'.$i_2.'\', \''.formatdate($current_year.'-'.$current_month_2.'-'.$i_2).'\')">'.$i.'</A></TD>'."\n";
+				$output .= '<TD class="calendarToday'.$param['calendar_id'].' center"><A href="#" onclick="set_parent(\''.$caller.'\', \''.$current_year.'-'.$current_month_2.'-'.$i_2.'\', \''.formatdate($current_year.'-'.$current_month_2.'-'.$i_2).'\')">'.$i.'</A></TD>'."\n";
 			}
 		}elseif ($param['link_on_day'] != '') {
 				
@@ -370,10 +380,10 @@ function calendar($date = '') {
 		$test_next_month = $resdate->test_next_month;
 		$test_next_year  = $resdate->test_next_year;	
 		if ($param['use_img']) {
-			$g 	= '<IMG src="./images/g.gif" border="0" title="'.$msg['calendrier_mois_prececent'].'">';
-			$gg = '<IMG src="./images/gg.gif" border="0" title="'.$msg['calendrier_annee_prececente'].'">';
-			$d 	= '<IMG src="./images/d.gif" border="0" title="'.$msg['calendrier_mois_suivant'].'">';
-			$dd = '<IMG src="./images/dd.gif" border="0" title="'.$msg['calendrier_annee_suivante'].'">';
+			$g 	= '<IMG src="'.get_url_icon('g.gif').'" style="border:0px" title="'.$msg['calendrier_mois_prececent'].'">';
+			$gg = '<IMG src="'.get_url_icon('gg.gif').'" style="border:0px" title="'.$msg['calendrier_annee_prececente'].'">';
+			$d 	= '<IMG src="'.get_url_icon('d.gif').'" style="border:0px" title="'.$msg['calendrier_mois_suivant'].'">';
+			$dd = '<IMG src="'.get_url_icon('dd.gif').'" style="border:0px" title="'.$msg['calendrier_annee_suivante'].'">';
 		}else {
 			$g 	= '&lt;';
 			$gg = '&lt;&lt;';

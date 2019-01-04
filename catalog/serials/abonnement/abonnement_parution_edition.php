@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: abonnement_parution_edition.php,v 1.7 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: abonnement_parution_edition.php,v 1.11 2018-11-14 15:12:37 ngantier Exp $
 
 // définition du minimum nécéssaire
 $base_path="./../../..";
@@ -22,7 +22,7 @@ $templates = <<<ENDOFFILE
 				}				
 			</script>
 <div style='width: 90%;'>
-	<div id="bouton_fermer_notice_preview" class="right"><a href='#' onClick='parent.kill_frame_periodique();return false;'>X</a></div>
+	<div id="bouton_fermer_notice_preview" class="right"><a href='#' class='panel-close' onClick='parent.kill_frame_periodique();return false;'><i class='fa fa-times' aria-hidden='true'></i></a></div>
 	!!form!!
 </div>						
 ENDOFFILE;
@@ -53,7 +53,7 @@ function gen_hors_serie($id,$modele_name,$checked,$nom,$numero) {
 
 
 $form="<form class='form-$current_module' id='form_modele' name='form_modele' method='post' action='./abonnement_parution_edition.php?abonnement_id=$abonnement_id&date_parution=$date_parution'>
-	<div class='row'  ALIGN='center'>!!date_parution!!</div>			
+	<div class='row center'>!!date_parution!!</div>			
 	<div class='row'>
 	".$msg["abonnements_edition_serie"]." : 
 	</div>
@@ -73,7 +73,7 @@ $form="<form class='form-$current_module' id='form_modele' name='form_modele' me
 $type_doc=0;
 switch ($act) {
 	case 'update':	
-		$requete = "delete FROM abts_grille_abt WHERE num_abt='$abonnement_id' and date_parution ='$date_parution' and state='0' ";
+		$requete = "delete FROM abts_grille_abt WHERE num_abt='$abonnement_id' and date_parution ='$date_parution'  ";
 		pmb_mysql_query($requete, $dbh);	
 		$requete = "SELECT  distinct (modele_name) ,abts_grille_abt.modele_id from abts_modeles, abts_grille_abt where num_abt='$abonnement_id' and abts_grille_abt.modele_id = abts_modeles.modele_id ";
 		$resultat=pmb_mysql_query($requete);
@@ -95,23 +95,21 @@ switch ($act) {
 							ordre='$i' ";
 				pmb_mysql_query($requete, $dbh);
 				$type_serie=1;			
-				}
+			}
 
 			if (isset($check_hors_serie[$modele_id])){	
 				$numero= $numero[$modele_id];
 				$requete = "INSERT INTO abts_grille_abt SET num_abt='$abonnement_id', date_parution ='$date_parution', modele_id = '$modele_id', type = '2', numero='$numero', nombre='1', ordre='1' ";
 				pmb_mysql_query($requete, $dbh);
 				$type_horsserie=2;					
-				}				
-			}		
+			}				
+		}		
 		$type_doc=	$type_horsserie+$type_serie;
 		$form="<script type='text/javascript'>Fermer('$date_parution','$type_doc');</script>";
 	break;
-
 	case 'change':
 		$form="<script type='text/javascript'>Fermer('$date_parution','$type_doc');</script>";		
-	break;	
-
+	break;
 	default:			
 		$series="";
 		$hors_series="";
@@ -126,7 +124,7 @@ switch ($act) {
 				$resultat_nb=pmb_mysql_query($requete);
 				if($r_nb=pmb_mysql_fetch_object($resultat_nb)){
 					$nombre=$r_nb->nombre;					
-					}
+				}
 				$series.=gen_serie($modele_id,$modele_name,$nombre);
 				$checked="";
 				$numero="";
@@ -135,13 +133,13 @@ switch ($act) {
 				if($r_nb=pmb_mysql_fetch_object($resultat_nb)){
 					$numero=$r_nb->numero;
 					$checked= "checked";
-					}		
+				}		
 				$hors_series.=gen_hors_serie($modele_id,$modele_name,$checked,$nom,$numero);
-				}
 			}
-			$form=str_replace("!!series!!",$series,$form);
-			$form=str_replace("!!hors_series!!",$hors_series,$form);
-			$form=str_replace("!!date_parution!!",formatdate($date_parution),$form);
+		}
+		$form=str_replace("!!series!!",$series,$form);
+		$form=str_replace("!!hors_series!!",$hors_series,$form);
+		$form=str_replace("!!date_parution!!",formatdate($date_parution),$form);
 		break;
 	}
 	

@@ -106,7 +106,7 @@ class Rtf {
 	 * Rtf constructor.
 	 * @access public
 	 */
-	function Rtf() {	  
+	function __construct() {	  
 		$this->addFont('Times new Roman');	
 	}  
 	   
@@ -376,7 +376,7 @@ class Rtf {
 	 */
 	function sendRtf($fileName = "simple") {	
 		$this->prepare();			
-		header('Content-Disposition: attachment; filename='.$fileName.'.rtf');
+		header('Content-Disposition: attachment; filename="'.$fileName.'.rtf"');
 		header('Content-type: application/msword'); 
 		header("Expires: 0");
 	    header("Cache-Control: must-revalidate, post-check=0,pre-check=0");

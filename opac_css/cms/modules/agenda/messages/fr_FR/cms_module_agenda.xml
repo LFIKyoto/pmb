@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: cms_module_agenda.xml,v 1.4 2015-03-10 14:58:57 dgoron Exp $ -->
+$Id: cms_module_agenda.xml,v 1.5 2017-02-02 10:59:48 ngantier Exp $ -->
 
 <XMLlist>
 	<entry code='cms_module_agenda_view_calendar'>Vue en Calendrier</entry>
@@ -21,4 +21,6 @@ $Id: cms_module_agenda.xml,v 1.4 2015-03-10 14:58:57 dgoron Exp $ -->
 	<entry code='cms_module_agenda_calendar_start_date'>Champ à utiliser pour le début d'un évènement</entry>
 	<entry code='cms_module_agenda_calendar_end_date'>Champ à utiliser pour la fin d'un évènement</entry>
 	<entry code='cms_module_agenda_delete_calendar'>Etes-vous sur de vouloir supprimer ce calendrier ?</entry>
+	<entry code='cms_module_agenda_view_carousel'>Vue en Carrousel</entry>
+	<entry code='cms_module_agenda_view_carousel_responsive'>Vue en Carrousel responsive</entry>
 </XMLlist>

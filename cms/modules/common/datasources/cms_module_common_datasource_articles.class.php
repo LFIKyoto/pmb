@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_articles.class.php,v 1.7 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: cms_module_common_datasource_articles.class.php,v 1.8 2016-09-21 13:09:44 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -48,7 +48,7 @@ class cms_module_common_datasource_articles extends cms_module_common_datasource
 			}
 			$return = $this->filter_datas("articles",$return);
 			if(count($return)){
-				$query = "select id_article,if(article_start_date != '0000-00-00 00:00:00',article_start_date,article_creation_date) as publication_date from cms_articles where id_article in (".implode(",",$return).")";
+				$query = "select id_article,if(article_start_date != '0000-00-00 00:00:00',article_start_date,article_creation_date) as publication_date from cms_articles where id_article in ('".implode("','",$return)."')";
 				if ($this->parameters["sort_by"] != "") {
 					$query .= " order by ".$this->parameters["sort_by"];
 					if ($this->parameters["sort_order"] != "") $query .= " ".$this->parameters["sort_order"];

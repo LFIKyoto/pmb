@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lettre-relance-adhesion.inc.php,v 1.19 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: lettre-relance-adhesion.inc.php,v 1.22 2018-06-26 12:46:25 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($empr_categ_filter)) $empr_categ_filter = '';
+if(!isset($empr_codestat_filter)) $empr_codestat_filter = '';
 
 require_once("$class_path/marc_table.class.php");
 require_once("$class_path/mono_display.class.php");
@@ -14,36 +17,38 @@ require_once("$class_path/emprunteur.class.php");
 
 // la formule de politesse du bas (le signataire)
 $var = "pdflettreadhesion_fdp";
-eval ("\$fdp=\"".$$var."\";");
-
+eval ("\$fdp=\"".addslashes(${$var})."\";");
+$fdp = stripslashes($fdp);
 
 // le "Madame, Monsieur," ou tout autre truc du genre "Cher adhérent,"
 $var = "pdflettreadhesion_madame_monsieur";
-eval ("\$madame_monsieur=\"".$$var."\";");
+eval ("\$madame_monsieur=\"".addslashes(${$var})."\";");
+$madame_monsieur = stripslashes($madame_monsieur);
 
 // le texte
 $var = "pdflettreadhesion_texte";
-eval ("\$texte=\"".$$var."\";");
+eval ("\$texte=\"".addslashes(${$var})."\";");
+$texte = stripslashes($texte);
 
 // la marge gauche des pages
 $var = "pdflettreadhesion_marge_page_gauche";
-$marge_page_gauche = $$var;
+$marge_page_gauche = ${$var};
 
 // la marge droite des pages
 $var = "pdflettreadhesion_marge_page_droite";
-$marge_page_droite = $$var;
+$marge_page_droite = ${$var};
 
 // la largeur des pages
 $var = "pdflettreadhesion_largeur_page";
-$largeur_page = $$var;
+$largeur_page = ${$var};
 
 // la hauteur des pages
 $var = "pdflettreadhesion_hauteur_page";
-$hauteur_page = $$var;
+$hauteur_page = ${$var};
 
 // le format des pages
 $var = "pdflettreadhesion_format_page";
-$format_page = $$var;
+$format_page = ${$var};
 
 $taille_doc=array($largeur_page,$hauteur_page);
 
@@ -59,13 +64,21 @@ if ($action=="print_all") {
 	}
 
 	// filtré par un statut sélectionné
+	$restrict_statut="";
 	if ($empr_statut_edit) {
 		if ($empr_statut_edit!=0) $restrict_statut = " AND empr_statut='$empr_statut_edit' ";
-			else $restrict_statut="";
-	} 
+	}
+	$restrict_categ = '';
+	if($empr_categ_filter) {
+		$restrict_categ = " AND empr_categ= '".$empr_categ_filter."' ";
+	}
+	$restrict_codestat = '';
+	if($empr_codestat_filter) {
+		$restrict_codestat = " AND empr_codestat= '".$empr_codestat_filter."' ";
+	}
 	$requete = "SELECT empr.id_empr, empr.empr_nom, empr.empr_prenom FROM empr ";
 	$restrict_empr = " WHERE 1 ";
-	$restrict_requete = $restrict_empr.$restrict_localisation.$restrict_statut." and ".$restricts;
+	$restrict_requete = $restrict_empr.$restrict_localisation.$restrict_statut.$restrict_categ.$restrict_codestat." and ".$restricts;
 	$requete .= $restrict_requete;
 	if ($empr_relance_adhesion==1) $requete.=" and empr_mail=''";
 	$requete .= " ORDER BY empr_nom, empr_prenom ";

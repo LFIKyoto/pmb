@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: storage.class.php,v 1.3 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: storage.class.php,v 1.4 2018-10-18 10:08:16 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -104,9 +104,17 @@ class storage {
  		$protocol = $_SERVER["SERVER_PROTOCOL"];
  		
  		if (!isset($headers['Content-Length'])) {
- 			header($protocol.' 411 Length Required');
- 			exit('Header \'Content-Length\' not set.');
- 		}
+	    	if (!isset($headers['CONTENT_LENGTH'])) {
+	    		if (!isset($headers['X-File-Size'])) {
+	    			header($protocol.' 411 Length Required');
+	    			exit('Header \'Content-Length\' not set.');
+	    		}else{
+	    			$headers['Content-Length']=preg_replace('/\D*/', '', $headers['X-File-Size']);
+	    		}
+	    	}else{
+	    		$headers['Content-Length']=$headers['CONTENT_LENGTH'];
+	    	}
+	    }
  		
  		/*if (isset($headers['Content-Type'], $headers['X-File-Size'], $headers['X-File-Name']) &&
  		 ($headers['Content-Type'] === 'multipart/form-data' || $headers['Content-Type'] === 'application/octet-stream; charset=UTF-8')) {*/
@@ -125,7 +133,6 @@ class storage {
  			$memoryLimit = $this->getBytes(ini_get('memory_limit'));
  			$limit = min($maxUpload, $maxPost, $memoryLimit);
  			if ($headers['Content-Length'] > $limit) {
- 				return false;
  				header($protocol.' 403 Forbidden');
  				exit('File size to big. Limit is '.$limit. ' bytes.');
  			}
@@ -144,8 +151,8 @@ class storage {
  		
  			// Since I don't know if the header content-length can be spoofed/is reliable, I check the file size again after it is uploaded
  			if (mb_strlen($file->content) > $limit) {
- 				return false;
  				header($protocol.' 403 Forbidden');
+ 				return false;
  			}
  			$this->numWrittenBytes = file_put_contents("./temp/".$file->name, $file->content);
  			if ($this->numWrittenBytes !== false) {
@@ -156,11 +163,10 @@ class storage {
  				}
  				return $success;
  			}else {
- 				return false;
  				header($protocol.' 505 Internal Server Error');
+ 				return false;
  			}
  		}else {
- 			return false;
  			header($protocol.' 500 Internal Server Error');
  			$this->debug($headers);
  			exit('Correct headers are not set.');

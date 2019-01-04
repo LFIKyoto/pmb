@@ -2,11 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: datatype.inc.php,v 1.6 2013-12-19 09:44:41 dgoron Exp $
+// $Id: datatype.inc.php,v 1.7 2018-09-20 15:07:30 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($base_path."/includes/divers.inc.php");
+
+global $datatype_list, $chk_type_list, $format_list;
 
 $datatype_list=array("small_text"=>$msg["parperso_datatype_text"],"text"=>$msg["parperso_datatype_huge_text"],"integer"=>$msg["parperso_datatype_integer"],"date"=>$msg["parperso_datatype_date"],"float"=>$msg["parperso_datatype_float"]);
 $chk_type_list=array("small_text"=>"chk_type_small_text","text"=>"chk_type_text","integer"=>"chk_type_integer","date"=>"chk_type_date","float"=>"chk_type_float");

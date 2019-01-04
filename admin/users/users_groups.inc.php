@@ -2,11 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: users_groups.inc.php,v 1.5 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: users_groups.inc.php,v 1.6 2017-09-14 08:46:45 ngantier Exp $
 
 // gestion des groupes d'utilisateurs
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+require_once($class_path.'/event/events/event_users_group.class.php');
 
 $admin_layout = str_replace('!!menu_sous_rub!!', htmlentities($msg['admin_usr_grp_ges'], ENT_QUOTES, $charset), $admin_layout);
 print $admin_layout;
@@ -97,6 +99,12 @@ function group_form($libelle='', $id=0) {
 	global $msg, $charset;
 	global $admin_group_form;
 	
+	//Evenement publié 	
+	$evt_handler = events_handler::get_instance();
+	$event = new event_users_group("users_group", "group_form");
+	$event->set_group_id($id);
+	$evt_handler->send($event);
+
 	$admin_group_form = str_replace('!!id!!', $id, $admin_group_form);
 
 	if(!$id) {
@@ -129,8 +137,15 @@ switch($action) {
 			} else {
 				$q = "INSERT INTO users_groups (grp_id, grp_name) VALUES (0, '$form_libelle') ";
 				pmb_mysql_query($q, $dbh);
+				$id = pmb_mysql_insert_id($dbh);
 			}
 		}
+		//Evenement publié
+		$evt_handler = events_handler::get_instance();
+		$event = new event_users_group("users_group", "save_form");
+		$event->set_group_id($id);
+		$evt_handler->send($event);
+		
 		show_group_list();
 		break;
 	case 'add':
@@ -161,6 +176,13 @@ switch($action) {
 			if ($total==0) {
 				$q = "DELETE FROM users_groups WHERE grp_id='$id' ";
 				pmb_mysql_query($q, $dbh);
+
+				//Evenement publié
+				$evt_handler = events_handler::get_instance();
+				$event = new event_users_group("users_group", "delete");
+				$event->set_group_id($id);
+				$evt_handler->send($event);
+				
 				show_group_list();
 			} else {
 				error_message(	$msg['admin_usr_grp_ges'], htmlentities($msg['admin_usr_grp_del_imp'], ENT_QUOTES, $charset), 1);

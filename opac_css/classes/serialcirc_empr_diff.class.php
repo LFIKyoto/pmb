@@ -2,26 +2,26 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_empr_diff.class.php,v 1.3 2015-04-03 11:16:18 jpermanne Exp $
+// $Id: serialcirc_empr_diff.class.php,v 1.4 2017-05-05 09:12:15 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/mail.inc.php");
 
 class serialcirc_empr_diff {
-	var $empr_id;				//id empr
-	var $id_serialcirc;			//id serialcirc
-	var $num_abt;				//id de l'abonnement
-	var $virtual;				//circulation virtuelle
-	var $rank = false;			//rang
-	var $expl_id;				//id exemplaire
-	var $check_activate;		//booléen définissant si pointage 
-	var $expl_infos = array();	//infos exemplaires
-	var $serial_infos=array();	//infos périodiques
-	var $current_empr;			//id de lecteur en possession du pério
-	var $state;					//flag : circulation débutée au non
-	var $bulletine_date;		//date de bulletinnage...
-	var $duration_before_start;	// durée avt le démarrage de la circulation
-	var $start_date;			// date de démarrage de la circulation
+	public $empr_id;				//id empr
+	public $id_serialcirc;			//id serialcirc
+	public $num_abt;				//id de l'abonnement
+	public $virtual;				//circulation virtuelle
+	public $rank = false;			//rang
+	public $expl_id;				//id exemplaire
+	public $check_activate;		//booléen définissant si pointage 
+	public $expl_infos = array();	//infos exemplaires
+	public $serial_infos=array();	//infos périodiques
+	public $current_empr;			//id de lecteur en possession du pério
+	public $state;					//flag : circulation débutée au non
+	public $bulletine_date;		//date de bulletinnage...
+	public $duration_before_start;	// durée avt le démarrage de la circulation
+	public $start_date;			// date de démarrage de la circulation
 
 
 	public function __construct($empr_id,$id_serialcirc,$expl_id=0){

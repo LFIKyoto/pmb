@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bul_expl_update.inc.php,v 1.33 2015-04-16 11:39:22 jpermanne Exp $
+// $Id: bul_expl_update.inc.php,v 1.37 2017-08-09 10:20:19 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once("$class_path/serialcirc_diff.class.php");
 require_once($class_path."/serialcirc.class.php");
+require_once($class_path.'/audit.class.php');
 
 // mise a jour de l'entete de page
 if(!$expl_id) {
@@ -42,26 +43,6 @@ if ($acces_m==0) {
 
 } else {
 		
-	
-	// le form d'exemplaire renvoit :
-	// Je nettoie ce qui me parait devoir etre nettoye
-	
-	// $bul_id
-	// $id_form
-	// $org_cb
-	// $expl_id
-	// $expl_bulletin
-	// $expl_typdoc
-	$expl_cote = clean_string($expl_cote);
-	// $expl_section
-	// $expl_statut
-	// $expl_location
-	// $expl_codestat
-	$expl_note = clean_string($expl_note);
-	$expl_comment = clean_string($f_ex_comment);
-	$expl_prix = clean_string($expl_prix);
-	// $expl_owner
-	
 	//Verification des champs personalises
 	$p_perso=new parametres_perso("expl");
 	$nberrors=$p_perso->check_submited_fields();
@@ -90,94 +71,25 @@ if ($acces_m==0) {
 	} else {
 		$expl_cb = $f_ex_cb;
 	}
-	
-	// on prepare la date de creation ou modification
-	$expl_date = today();
-	
+		
 	// on recupere les valeurs 
-	$formlocid="f_ex_section".$expl_location ;
-	$expl_section=$$formlocid ;
+	$formlocid="f_ex_section".$f_ex_location ;
+	$f_ex_section=${$formlocid} ;
 	
 	if(!is_numeric($f_ex_nbparts) || !$f_ex_nbparts) $f_ex_nbparts=1;
 	
-	$transfert_origine="";
-	if($expl_id){
-		$rqt = "SELECT id_transfert FROM transferts, transferts_demande WHERE num_transfert=id_transfert and etat_transfert=0 AND num_expl='".$expl_id."' " ;
-		$res = pmb_mysql_query( $rqt );
-		if (!pmb_mysql_num_rows($res)){
-			// pas de transfert en cours, on met à jour transfert_location_origine
-			$transfert_origine= ", transfert_location_origine='$expl_location', transfert_statut_origine='$expl_statut', transfert_section_origine='$expl_section' ";
-		}
-	}else{
-		// en création
-		$transfert_origine= ", transfert_location_origine='$expl_location', transfert_statut_origine='$expl_statut', transfert_section_origine='$expl_section' ";
-	}
-	
-	// preparation de la requete
-	if($expl_id) {
-
-		$audit=new audit();
-		$audit->get_old_infos("SELECT expl_statut, expl_location, transfert_location_origine, transfert_statut_origine, transfert_section_origine, expl_owner FROM exemplaires WHERE expl_cb='$expl_cb' ");
-
-		// update de l'exemplaire
-		// on prepare la requete
-		$values = "expl_cb='$expl_cb'";
-		$values .= ", expl_typdoc='$expl_typdoc'";
-		$values .= ", expl_cote='$expl_cote'";
-		$values .= ", expl_section='$expl_section'";
-		$values .= ", expl_statut='$expl_statut'";
-		$values .= ", expl_location='$expl_location' $transfert_origine ";
-		$values .= ", expl_codestat='$expl_codestat'";
-		$values .= ", expl_note='$expl_note'";
-		$values .= ", expl_comment='$expl_comment'";
-		$values .= ", expl_prix='$expl_prix'";
-		$values .= ", expl_owner='$expl_owner'";
-		$values .= ", type_antivol='$type_antivol'";
-		$values .= ", expl_nbparts='$f_ex_nbparts'";
-		$requete = "UPDATE exemplaires SET $values WHERE expl_id=$expl_id AND expl_notice=0 LIMIT 1";
-		$myQuery = pmb_mysql_query($requete, $dbh);		
-		$audit->get_new_infos("SELECT expl_statut, expl_location, transfert_location_origine, transfert_statut_origine, transfert_section_origine, expl_owner FROM exemplaires WHERE expl_cb='$expl_cb' ");
-		$audit->save_info_modif(AUDIT_EXPL, $expl_id,"bul_expl_update.inc.php");
+	$exemplaire = new exemplaire($expl_cb, $expl_id, 0, $expl_bulletin);
+	$exemplaire->set_properties_from_form();
+	$exemplaire->save();
 		
-	} else {
-		// insertion d'un nouvel exemplaire
-		$values = "expl_cb='$expl_cb'";
-		$values .= ", expl_notice='0'";
-		$values .= ", expl_bulletin='$expl_bulletin'";
-		$values .= ", expl_typdoc='$expl_typdoc'";
-		$values .= ", expl_cote='$expl_cote'";
-		$values .= ", expl_section='$expl_section'";
-		$values .= ", expl_statut='$expl_statut'";
-		$values .= ", expl_location='$expl_location' $transfert_origine ";
-		$values .= ", expl_codestat='$expl_codestat'";
-		$values .= ", expl_note='$expl_note'";
-		$values .= ", expl_comment='$expl_comment'";
-		$values .= ", expl_prix='$expl_prix'";
-		$values .= ", expl_owner='$expl_owner'";
-		$values .= ", type_antivol='$type_antivol'";
-		$values .= ", expl_nbparts='$f_ex_nbparts'";
-		$requete = "INSERT INTO exemplaires set $values , create_date=sysdate() ";
-		$myQuery = pmb_mysql_query($requete, $dbh);
-		$expl_id=pmb_mysql_insert_id();
-		audit::insert_creation(AUDIT_EXPL, $expl_id) ;
+	if(isset($abt_id) && $abt_id && isset($serial_circ_add) && $serial_circ_add) {		
+		$serialcirc_diff=new serialcirc_diff(0,$abt_id);
+			// Si c'est à faire circuler
+		if($serialcirc_diff->id){ 
+			$serialcirc_diff->add_circ_expl($expl_id);
+		}
 	}
-	
-	if($abt_id && $serial_circ_add)		
-	$serialcirc_diff=new serialcirc_diff(0,$abt_id);
-		// Si c'est à faire circuler
-	if($serialcirc_diff->id){ 
-		$serialcirc_diff->add_circ_expl($expl_id);
-	}
-	
-	// traitement des concepts
-	if($thesaurus_concepts_active == 1){
-		$index_concept = new index_concept($expl_id, TYPE_EXPL);
-		$index_concept->save();
-	}
-	
-	//Insertion des champs personalises
-	$p_perso->rec_fields_perso($expl_id);
-	
+		
 	// Mise a jour de la table notices_mots_global_index pour toutes les notices en relation avec l'exemplaire
 	$req_maj="SELECT bulletin_notice,num_notice, analysis_notice FROM bulletins LEFT JOIN analysis ON analysis_bulletin=bulletin_id WHERE bulletin_id='".$expl_bulletin."'";
 	$res_maj=pmb_mysql_query($req_maj);
@@ -200,10 +112,10 @@ if ($acces_m==0) {
 	}
 	
 	$id_form = md5(microtime());
-	print "<div class='row'><div class='msg-perio'>".$msg[maj_encours]."</div></div>";
+	print "<div class='row'><div class='msg-perio'>".$msg['maj_encours']."</div></div>";
 	$retour = "./catalog.php?categ=serials&sub=view&sub=bulletinage&action=view&bul_id=$expl_bulletin";
 	
-	if ($pointage) {
+	if (isset($pointage) && $pointage) {
 		$templates="<script type='text/javascript'>
 	
 			function Fermer(obj,type_doc) {		

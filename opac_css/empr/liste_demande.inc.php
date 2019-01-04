@@ -2,9 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: liste_demande.inc.php,v 1.6 2014-04-02 12:51:25 mhoestlandt Exp $
+// $Id: liste_demande.inc.php,v 1.7 2017-06-02 13:04:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($iddemande)) $iddemande = 0; else $iddemande += 0;
+if(!isset($idaction)) $idaction = 0; else $idaction += 0;
+if(!isset($idnote)) $idnote = 0; else $idnote += 0;
+if(!isset($idaction)) $idaction = 0; else $idaction += 0;
 
 require_once($base_path.'/includes/templates/demandes.tpl.php');
 require_once($base_path.'/classes/demandes.class.php');

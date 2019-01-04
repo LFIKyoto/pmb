@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum_doc.class.php,v 1.5 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: explnum_doc.class.php,v 1.6 2017-06-30 14:08:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,18 +10,18 @@ require_once($include_path.'/explnum.inc.php');
 
 class explnum_doc{
 	
-	var $explnum_doc_id = 0;
-	var $explnum_doc_nomfichier = '';
-	var $explnum_doc_contenu = '';
-	var $explnum_doc_mime = '';
-	var $explnum_doc_extfichier = '';
-	var $explnum_doc_file=array();
-	var $explnum_doc_url ='';
+	public $explnum_doc_id = 0;
+	public $explnum_doc_nomfichier = '';
+	public $explnum_doc_contenu = '';
+	public $explnum_doc_mime = '';
+	public $explnum_doc_extfichier = '';
+	public $explnum_doc_file=array();
+	public $explnum_doc_url ='';
 	
 	/*
 	 * Constructeur
 	 */
-	function explnum_doc($id_expl=0){
+	public function __construct($id_expl=0){
 		global $dbh;
 		
 		$this->explnum_doc_id = $id_expl;
@@ -55,7 +55,7 @@ class explnum_doc{
 	/*
 	 * Suppression
 	 */
-	function delete(){
+	public function delete(){
 		global $dbh;
 
 		$req = "delete from explnum_doc where id_explnum_doc='".$this->explnum_doc_id."'";
@@ -66,7 +66,7 @@ class explnum_doc{
 	/*
 	 * Enregistrement
 	 */
-	function save(){
+	public function save(){
 		global $dbh;
 		
 		if(!$this->explnum_doc_id){
@@ -97,7 +97,7 @@ class explnum_doc{
 	/*
 	 * Charge le fichier
 	 */
-	function load_file($file_info=array()){
+	public function load_file($file_info=array()){
 		
 		if($file_info){
 			$this->explnum_doc_file = $file_info;
@@ -109,7 +109,7 @@ class explnum_doc{
 	 * Analyse du fichier pour en récupérer le contenu et les infos
 	 */
 	
-	function analyse_file(){
+	public function analyse_file(){
 		
 		if($this->explnum_doc_file){
 			
@@ -142,7 +142,7 @@ class explnum_doc{
 	/*
 	 * Affecte un nom de fichier si il a été défini
 	 */
-	function setName($nom=''){
+	public function setName($nom=''){
 		if($nom)
 			$this->explnum_doc_nomfichier = stripslashes($nom);
 	}
@@ -150,7 +150,7 @@ class explnum_doc{
 	/*
 	 * Affiche les documents numériques dans un tableau
 	 */
-	function show_docnum_table($docnum_tab=array(),$action){
+	public function show_docnum_table($docnum_tab=array(),$action){
 		global $charset;
 		
 		create_tableau_mimetype();

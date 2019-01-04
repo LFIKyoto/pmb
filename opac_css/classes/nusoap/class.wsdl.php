@@ -7,44 +7,44 @@
 * parses a WSDL file, allows access to it's data, other utility methods
 * 
 * @author   Dietrich Ayala <dietrich@ganx4.com>
-* @version  $Id: class.wsdl.php,v 1.5 2013-04-25 07:14:00 mbertin Exp $
+* @version  $Id: class.wsdl.php,v 1.6 2017-04-19 12:37:02 dgoron Exp $
 * @access public 
 */
 class wsdl extends nusoap_base {
 	// URL or filename of the root of this WSDL
-    var $wsdl; 
+    public $wsdl; 
     // define internal arrays of bindings, ports, operations, messages, etc.
-    var $schemas = array();
-    var $currentSchema;
-    var $message = array();
-    var $complexTypes = array();
-    var $messages = array();
-    var $currentMessage;
-    var $currentOperation;
-    var $portTypes = array();
-    var $currentPortType;
-    var $bindings = array();
-    var $currentBinding;
-    var $ports = array();
-    var $currentPort;
-    var $opData = array();
-    var $status = '';
-    var $documentation = false;
-    var $endpoint = ''; 
+    public $schemas = array();
+    public $currentSchema;
+    public $message = array();
+    public $complexTypes = array();
+    public $messages = array();
+    public $currentMessage;
+    public $currentOperation;
+    public $portTypes = array();
+    public $currentPortType;
+    public $bindings = array();
+    public $currentBinding;
+    public $ports = array();
+    public $currentPort;
+    public $opData = array();
+    public $status = '';
+    public $documentation = false;
+    public $endpoint = ''; 
     // array of wsdl docs to import
-    var $import = array(); 
+    public $import = array(); 
     // parser vars
-    var $parser;
-    var $position = 0;
-    var $depth = 0;
-    var $depth_array = array();
+    public $parser;
+    public $position = 0;
+    public $depth = 0;
+    public $depth_array = array();
 	// for getting wsdl
-	var $proxyhost = '';
-    var $proxyport = '';
-	var $proxyusername = '';
-	var $proxypassword = '';
-	var $timeout = 0;
-	var $response_timeout = 30;
+	public $proxyhost = '';
+    public $proxyport = '';
+	public $proxyusername = '';
+	public $proxypassword = '';
+	public $timeout = 0;
+	public $response_timeout = 30;
 
     /**
      * constructor

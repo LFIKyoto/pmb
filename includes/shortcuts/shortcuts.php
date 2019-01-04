@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: shortcuts.php,v 1.10 2014-05-07 09:30:08 Alexandre Exp $
+// $Id: shortcuts.php,v 1.12 2017-09-07 13:48:47 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "shortcuts.php")) die("no access");
 
@@ -12,6 +12,7 @@ if ( ! defined( 'SHORTCUTS' ) ) {
 $escape = 27;
 
 print "
+<script type='text/javascript' src='./javascript/select.js'></script>
 <script type='text/javascript'>
 <!--
 // affichage des raccourcis
@@ -24,6 +25,8 @@ function touche(e) {
 	if (!e) var e = window.event;
 	if (e.keyCode) key = e.keyCode;
 		else if (e.which) key = e.which;
+		window.clearTimeout(timer);
+		kill_frame('frame_shortcuts');
 	
 	top.document.getElementById('keystatus').firstChild.nodeValue='$msg[97] - '+String.fromCharCode(key);
 	top.document.getElementById('keystatus').style.color='#FF0000';
@@ -42,7 +45,7 @@ function touche(e) {
 		default:	
 			switch(key) {
 ";
-if($raclavier)
+if(isset($raclavier) && $raclavier)
 while(list($cle, $key) = each($raclavier)) {
 	print "				case ".ord(pmb_strtolower($key[0]))." : document.location='$key[1]'; break;\n";
 	}
@@ -69,6 +72,7 @@ function backhome(e){
 			}
 		}		
 		if (propagate) {
+			timer=setTimeout('ShowShortcuts()',2000);
 			top.document.getElementById('keystatus').firstChild.nodeValue='$msg[97]';
 			top.document.getElementById('keystatus').style.color='#FF0000';
 			window.focus();
@@ -79,8 +83,9 @@ function backhome(e){
 
 document.onkeydown=backhome;
 
-
-
+function ShowShortcuts(){
+	frame_shortcuts('./includes/shortcuts/frame_shortcuts.php')
+}
 
 //-->
 </script>

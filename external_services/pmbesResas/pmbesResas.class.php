@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesResas.class.php,v 1.3 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: pmbesResas.class.php,v 1.7 2018-10-22 12:47:47 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,22 +10,20 @@ require_once($class_path."/external_services.class.php");
 require_once($class_path."/bannette.class.php");
 
 class pmbesResas extends external_services_api_class {
-	var $error=false;		//Y-a-t-il eu une erreur
-	var $error_message="";	//Message correspondant à l'erreur
 	
-	function restore_general_config() {
+	public function restore_general_config() {
 		
 	}
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	
-	function save_general_config() {
+	public function save_general_config() {
 		
 	}
 		
-	function list_empr_resas($empr_id) {
+	public function list_empr_resas($empr_id) {
 		global $dbh;
 		global $msg;
 		
@@ -50,7 +48,7 @@ class pmbesResas extends external_services_api_class {
 		}
 	}
 	
-	function get_empr_information($idempr) {
+	public function get_empr_information($idempr) {
 		global $pmb_lecteurs_localises, $deflt_docs_location;
 		global $dbh;
 		global $msg;
@@ -76,7 +74,7 @@ class pmbesResas extends external_services_api_class {
 		}			
 	}
 	
-	function get_empr_information_and_resas($empr_id) {
+	public function get_empr_information_and_resas($empr_id) {
 		return array(
 			"information" => $this->get_empr_information($empr_id),
 			"resas_ids" => $this->list_empr_resas($empr_id)
@@ -86,7 +84,7 @@ class pmbesResas extends external_services_api_class {
 	/* appuie sur la function resa_list de resa_func.inc.php */
 	/* montrerquoi => validees,invalidees,valid_noconf 
 	 * condition => encours,depassee */
-//	function listResas($idnotice=0, $idbulletin=0, $idempr=0, $order="", $condition = "", $montrerquoi='',$f_loc='') {
+//	public function listResas($idnotice=0, $idbulletin=0, $idempr=0, $order="", $condition = "", $montrerquoi='',$f_loc='') {
 //		global $deflt_docs_location, $pmb_lecteurs_localises;
 //		
 //		/* Mis à la place du paramètre where */
@@ -341,7 +339,7 @@ class pmbesResas extends external_services_api_class {
 //		return $result;
 //	}
 
-	function generatePdfResasReaders($tresas, $location_biblio=0) {
+	public function generatePdfResasReaders($tresas, $location_biblio=0) {
 		global $dbh,$ourPDF, $fpdf,$deflt2docs_location;
 		global $fdp, $after_list, $limite_after_list,$before_list, $madame_monsieur;
 		global $nb_1ere_page,$nb_par_page,$taille_bloc_expl,$debut_expl_1er_page,$debut_expl_page;
@@ -356,78 +354,78 @@ class pmbesResas extends external_services_api_class {
 			
 			// la formule de politesse du bas (le signataire)
 			$var = "pdflettreresa_fdp";
-			global $$var;
-			eval ("\$fdp=\"".$$var."\";");
+			global ${$var};
+			eval ("\$fdp=\"".${$var}."\";");
 			
 			// le texte après la liste des ouvrages en résa
 			$var = "pdflettreresa_after_list";
-			global $$var;
-			eval ("\$after_list=\"".$$var."\";");
+			global ${$var};
+			eval ("\$after_list=\"".${$var}."\";");
 			
 			// la position verticale limite du texte after_liste (si >, saut de page et impression)
 			$var = "pdflettreresa_limite_after_list";
-			global $$var;
-			$limite_after_list = $$var;
+			global ${$var};
+			$limite_after_list = ${$var};
 					
 			// le texte avant la liste des ouvrges en réservation
 			$var = "pdflettreresa_before_list";
-			global $$var;
-			eval ("\$before_list=\"".$$var."\";");
+			global ${$var};
+			eval ("\$before_list=\"".${$var}."\";");
 			
 			// le "Madame, Monsieur," ou tout autre truc du genre "Cher adhérent,"
 			$var = "pdflettreresa_madame_monsieur";
-			global $$var;
-			eval ("\$madame_monsieur=\"".$$var."\";");
+			global ${$var};
+			eval ("\$madame_monsieur=\"".${$var}."\";");
 			
 			// le nombre de blocs notices à imprimer sur la première page
 			$var = "pdflettreresa_nb_1ere_page";
-			global $$var;
-			$nb_1ere_page = $$var;
+			global ${$var};
+			$nb_1ere_page = ${$var};
 			
 			// le nombre de blocs notices à imprimer sur les pages suivantes
 			$var = "pdflettreresa_nb_par_page";
-			global $$var;
-			$nb_par_page = $$var;
+			global ${$var};
+			$nb_par_page = ${$var};
 			
 			// la taille d'un bloc notices 
 			$var = "pdflettreresa_taille_bloc_expl";
-			global $$var;
-			$taille_bloc_expl = $$var;
+			global ${$var};
+			$taille_bloc_expl = ${$var};
 			
 			// la position verticale du premier bloc notice sur la première page
 			$var = "pdflettreresa_debut_expl_1er_page";
-			global $$var;
-			$debut_expl_1er_page = $$var;
+			global ${$var};
+			$debut_expl_1er_page = ${$var};
 			
 			// la position verticale du premier bloc notice sur les pages suivantes
 			$var = "pdflettreresa_debut_expl_page";
-			global $$var;
-			$debut_expl_page = $$var;
+			global ${$var};
+			$debut_expl_page = ${$var};
 			
 			// la marge gauche des pages
 			$var = "pdflettreresa_marge_page_gauche";
-			global $$var;
-			$marge_page_gauche = $$var;
+			global ${$var};
+			$marge_page_gauche = ${$var};
 			
 			// la marge droite des pages
 			$var = "pdflettreresa_marge_page_droite";
-			global $$var;
-			$marge_page_droite = $$var;
+			global ${$var};
+			$marge_page_droite = ${$var};
 			
 			// la largeur des pages
 			$var = "pdflettreresa_largeur_page";
-			global $$var;
-			$largeur_page = $$var;
+			global ${$var};
+			$largeur_page = ${$var};
 			
 			// la hauteur des pages
 			$var = "pdflettreresa_hauteur_page";
-			global $$var;
-			$hauteur_page = $$var;
+			global ${$var};
+			$hauteur_page = ${$var};
 			
 			// le format des pages
 			$var = "pdflettreresa_format_page";
-			global $$var;
-			$format_page = $$var;
+			global ${$var};
+			$format_page = ${$var};
 		
 			$taille_doc=array($largeur_page,$hauteur_page);
 			
@@ -449,7 +447,7 @@ class pmbesResas extends external_services_api_class {
 		}
 	}
 		
-	function confirmResaReader($id_resa=0, $id_empr_concerne=0, $f_loc=0) {
+	public function confirmResaReader($id_resa=0, $id_empr_concerne=0, $f_loc=0) {
 		global $dbh;
 		global $msg, $charset;
 		global $PMBuserid, $PMBuseremailbcc ;
@@ -487,19 +485,19 @@ class pmbesResas extends external_services_api_class {
 			$headers .= "Content-type: text/html; charset=".$charset."\n";
 		
 			$var = "pdflettreresa_fdp";
-			eval ("\$pdflettreresa_fdp=\"".$$var."\";");
+			eval ("\$pdflettreresa_fdp=\"".${$var}."\";");
 		
 			// le texte après la liste des ouvrages en résa
 			$var = "pdflettreresa_after_list";
-			eval ("\$pdflettreresa_after_list=\"".$$var."\";");
+			eval ("\$pdflettreresa_after_list=\"".${$var}."\";");
 				
 			// le texte avant la liste des ouvrges en réservation
 			$var = "pdflettreresa_before_list";
-			eval ("\$pdflettreresa_before_list=\"".$$var."\";");
+			eval ("\$pdflettreresa_before_list=\"".${$var}."\";");
 			
 			// le "Madame, Monsieur," ou tout autre truc du genre "Cher adhérent,"
 			$var = "pdflettreresa_madame_monsieur";
-			eval ("\$pdflettreresa_madame_monsieur=\"".$$var."\";");
+			eval ("\$pdflettreresa_madame_monsieur=\"".${$var}."\";");
 					
 			$tab_resa = array();
 			while ($empr=pmb_mysql_fetch_object($result)) {
@@ -509,7 +507,7 @@ class pmbesResas extends external_services_api_class {
 				pmb_mysql_query($rqt_maj, $dbh);
 				if (($pdflettreresa_priorite_email==1 || $pdflettreresa_priorite_email==2) && $empr->empr_mail) {
 					$to = $empr->empr_prenom." ".$empr->empr_nom." <".$empr->empr_mail.">";
-					$output_final = "<html><body>" ;
+					$output_final = "<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" /></head><body>" ;
 					$pdflettreresa_madame_monsieur=str_replace("!!empr_first_name!!", $empr->empr_prenom,$pdflettreresa_madame_monsieur);
 					$output_final .= "$pdflettreresa_madame_monsieur <br />".$pdflettreresa_before_list ;
 					if($empr->niveau_biblio == 'm' || $empr->niveau_biblio == 'b'){
@@ -548,7 +546,7 @@ class pmbesResas extends external_services_api_class {
 					$output_final .= "<br /><br />".mail_bloc_adresse() ;
 					$output_final .= "</body></html> ";
 					if(is_resa_confirme($empr->id_resa)) {
-						$res_envoi=mailpmb($empr->empr_prenom." ".$empr->empr_nom, $empr->empr_mail,$msg["mail_obj_resa_validee"]." : ".$empr->empr_prenom." ".mb_strtoupper($empr->empr_nom,$charset)." (".$empr->empr_cb.")",$output_final,$biblio_name, $biblio_email, $headers, "", $PMBuseremailbcc, 1);	
+						$res_envoi=mailpmb($empr->empr_prenom." ".$empr->empr_nom, $empr->empr_mail, sprintf($msg["mail_obj_resa_validee"], " : ".$empr->empr_prenom." ".mb_strtoupper($empr->empr_nom,$charset)." (".$empr->empr_cb.")"),$output_final,$biblio_name, $biblio_email, $headers, "", $PMBuseremailbcc, 1);	
 					}	
 					if (!$res_envoi || $pdflettreresa_priorite_email==2) {
 						if(is_resa_confirme($empr->id_resa)) array_push($tab_resa,$empr->id_resa);
@@ -568,7 +566,7 @@ class pmbesResas extends external_services_api_class {
 		}
 	}
 	
-//	function generatePdfResaReader($id_empr, $f_loc) {
+//	public function generatePdfResaReader($id_empr, $f_loc) {
 //		global $dbh,$ourPDF, $fpdf;
 //		global $fdp, $after_list, $limite_after_list,$before_list, $madame_monsieur;
 //		global $nb_1ere_page,$nb_par_page,$taille_bloc_expl,$debut_expl_1er_page,$debut_expl_page;
@@ -578,78 +576,78 @@ class pmbesResas extends external_services_api_class {
 //		
 //		// la formule de politesse du bas (le signataire)
 //		$var = "pdflettreresa_fdp";
-//		global $$var;
-//		eval ("\$fdp=\"".$$var."\";");
+//		global ${$var};
+//		eval ("\$fdp=\"".${$var}."\";");
 //		
 //		// le texte après la liste des ouvrages en résa
 //		$var = "pdflettreresa_after_list";
-//		global $$var;
-//		eval ("\$after_list=\"".$$var."\";");
+//		global ${$var};
+//		eval ("\$after_list=\"".${$var}."\";");
 //		
 //		// la position verticale limite du texte after_liste (si >, saut de page et impression)
 //		$var = "pdflettreresa_limite_after_list";
-//		global $$var;
-//		$limite_after_list = $$var;
+//		global ${$var};
+//		$limite_after_list = ${$var};
 //				
 //		// le texte avant la liste des ouvrges en réservation
 //		$var = "pdflettreresa_before_list";
-//		global $$var;
-//		eval ("\$before_list=\"".$$var."\";");
+//		global ${$var};
+//		eval ("\$before_list=\"".${$var}."\";");
 //		
 //		// le "Madame, Monsieur," ou tout autre truc du genre "Cher adhérent,"
 //		$var = "pdflettreresa_madame_monsieur";
-//		global $$var;
-//		eval ("\$madame_monsieur=\"".$$var."\";");
+//		global ${$var};
+//		eval ("\$madame_monsieur=\"".${$var}."\";");
 //		
 //		// le nombre de blocs notices à imprimer sur la première page
 //		$var = "pdflettreresa_nb_1ere_page";
-//		global $$var;
-//		$nb_1ere_page = $$var;
+//		global ${$var};
+//		$nb_1ere_page = ${$var};
 //		
 //		// le nombre de blocs notices à imprimer sur les pages suivantes
 //		$var = "pdflettreresa_nb_par_page";
-//		global $$var;
-//		$nb_par_page = $$var;
+//		global ${$var};
+//		$nb_par_page = ${$var};
 //		
 //		// la taille d'un bloc notices 
 //		$var = "pdflettreresa_taille_bloc_expl";
-//		global $$var;
-//		$taille_bloc_expl = $$var;
+//		global ${$var};
+//		$taille_bloc_expl = ${$var};
 //		
 //		// la position verticale du premier bloc notice sur la première page
 //		$var = "pdflettreresa_debut_expl_1er_page";
-//		global $$var;
-//		$debut_expl_1er_page = $$var;
+//		global ${$var};
+//		$debut_expl_1er_page = ${$var};
 //		
 //		// la position verticale du premier bloc notice sur les pages suivantes
 //		$var = "pdflettreresa_debut_expl_page";
-//		global $$var;
-//		$debut_expl_page = $$var;
+//		global ${$var};
+//		$debut_expl_page = ${$var};
 //		
 //		// la marge gauche des pages
 //		$var = "pdflettreresa_marge_page_gauche";
-//		global $$var;
-//		$marge_page_gauche = $$var;
+//		global ${$var};
+//		$marge_page_gauche = ${$var};
 //		
 //		// la marge droite des pages
 //		$var = "pdflettreresa_marge_page_droite";
-//		global $$var;
-//		$marge_page_droite = $$var;
+//		global ${$var};
+//		$marge_page_droite = ${$var};
 //		
 //		// la largeur des pages
 //		$var = "pdflettreresa_largeur_page";
-//		global $$var;
-//		$largeur_page = $$var;
+//		global ${$var};
+//		$largeur_page = ${$var};
 //		
 //		// la hauteur des pages
 //		$var = "pdflettreresa_hauteur_page";
-//		global $$var;
-//		$hauteur_page = $$var;
+//		global ${$var};
+//		$hauteur_page = ${$var};
 //		
 //		// le format des pages
 //		$var = "pdflettreresa_format_page";
-//		global $$var;
-//		$format_page = $$var;
+//		global ${$var};
+//		$format_page = ${$var};
 //	
 //		$taille_doc=array($largeur_page,$hauteur_page);
 //		
@@ -660,7 +658,7 @@ class pmbesResas extends external_services_api_class {
 //		return $ourPDF;
 //	}
 	
-	function infos_biblio($location_biblio=0) {
+	public function infos_biblio($location_biblio=0) {
 		global $dbh;
 		global $pmb_lecteurs_localises;
 		global $biblio_name, $biblio_adr1, $biblio_adr2, $biblio_cp, $biblio_town, $biblio_state, $biblio_country, $biblio_phone, $biblio_email,$biblio_website;
@@ -691,58 +689,58 @@ class pmbesResas extends external_services_api_class {
 			/*** Informations provenant des paramètres généraux - on ne parle donc pas de multi-localisations **/
 			// nom de la structure
 			$var = "opac_biblio_name";
-			global $$var;
-			eval ("\$biblio_name=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_name=\"".${$var}."\";");
 		
 			// logo de la structure
 			$var = "opac_logo";
-			global $$var;
-			eval ("\$biblio_logo=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_logo=\"".${$var}."\";");
 		
 			// adresse principale
 			$var = "opac_biblio_adr1";
-			global $$var;
-			eval ("\$biblio_adr1=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_adr1=\"".${$var}."\";");
 			
 			// adresse secondaire
 			$var = "opac_biblio_adr2";
-			global $$var;
-			eval ("\$biblio_adr2=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_adr2=\"".${$var}."\";");
 			
 			// code postal
 			$var = "opac_biblio_cp";
-			global $$var;
-			eval ("\$biblio_cp=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_cp=\"".${$var}."\";");
 			
 			// ville
 			$var = "opac_biblio_town";
-			global $$var;
-			eval ("\$biblio_town=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_town=\"".${$var}."\";");
 			
 			// Etat
 			$var = "opac_biblio_state";
-			global $$var;
-			eval ("\$biblio_state=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_state=\"".${$var}."\";");
 			
 			// pays
 			$var = "opac_biblio_country";
-			global $$var;
-			eval ("\$biblio_country=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_country=\"".${$var}."\";");
 			
 			// telephone
 			$var = "opac_biblio_phone";
-			global $$var;
-			eval ("\$biblio_phone=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_phone=\"".${$var}."\";");
 			
 			// adresse mail
 			$var = "opac_biblio_email";
-			global $$var;
-			eval ("\$biblio_email=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_email=\"".${$var}."\";");
 			
 			//site web
 			$var = "opac_biblio_website";
-			global $$var;
-			eval ("\$biblio_website=\"".$$var."\";");
+			global ${$var};
+			eval ("\$biblio_website=\"".${$var}."\";");
 		}
 	}
 }

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rubriques.inc.php,v 1.16 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: rubriques.inc.php,v 1.19 2017-10-19 14:04:50 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -27,6 +27,10 @@ print $sel_search;
 print $jscript;
 show_results($dbh, $nbr_lignes, $page);
 
+//fonction de tri des rubriques par libellé
+function sort_array_rub($a,$b) {
+	return $a['lib_rub_no_html']>$b['lib_rub_no_html'];
+}
 
 // affichage des membres de la page
 function show_results($dbh, $nbr_lignes=0, $page=0) {
@@ -56,11 +60,23 @@ function show_results($dbh, $nbr_lignes=0, $page=0) {
 		$id_bud = 0;
 
 		print "<div class=\"row\"><table><tr><th>".htmlentities($msg['acquisition_rub'], ENT_QUOTES, $charset)."</th><th>".htmlentities($msg['acquisition_rub_sol'], ENT_QUOTES, $charset)."</th></tr>";
-		
+		$arrayRub=array();
 		while($row = pmb_mysql_fetch_object($res)) {
 							
 			$new_id_bud = $row->num_budget;
 			if ($new_id_bud != $id_bud) {
+				//Affichage des rubriques précédentes
+				if (count($arrayRub)) {
+					//tri des rubriques par ordre alphabétique
+					usort($arrayRub, "sort_array_rub");
+					foreach ($arrayRub as $rub) {
+						print "<tr><td><div class='child_tab'>";
+						print pmb_bidi("
+								<a href='#' onclick=\"set_parent('$caller', '".$rub["id_rubrique"]."', '".htmlentities(addslashes($rub["lib_bud"].":".$rub["lib_rub_no_html"]),ENT_QUOTES, $charset)."' )\" ><span ".$rub["cl"].">".$rub["lib_rub"]."</span></a>
+					</div></td><td style='text-align:right;'><span ".$rub["cl"].">".$rub["sol"]."</span></td></tr>");
+					}
+				}
+				//Affichage budget
 				$id_bud = $new_id_bud;
 				print pmb_bidi("<tr><td>".htmlentities($row->lib_bud, ENT_QUOTES, $charset)."</td>");
 				if($row->type_budget) {
@@ -74,8 +90,9 @@ function show_results($dbh, $nbr_lignes=0, $page=0) {
 					$aff_glo = false;
 				}
 				print "<td></td></tr>";
+				//Rubriques
+				$arrayRub=array();
 			}
-			
 			$tab_rub = rubriques::listAncetres($row->id_rubrique, true);
 			
 			$lib_rub = '';
@@ -93,20 +110,34 @@ function show_results($dbh, $nbr_lignes=0, $page=0) {
 				if($cal >= $mnt*($row->seuil_alerte/100)) $alert = true; else $alert = false;
 			}				
 			if ($alert) $cl = "class='erreur' "; else $cl= '';
-											 
-			print "<tr><td><div class='child_tab'>";						 
-			print pmb_bidi("
-			<a href='#' onclick=\"set_parent('$caller', '$row->id_rubrique', '".htmlentities(addslashes($row->lib_bud.":".$lib_rub_no_html),ENT_QUOTES, $charset)."' )\" ><span ".$cl.">".$lib_rub."</span></a>
-			</div></td><td style='text-align:right;'><span ".$cl.">".$sol."</span></td></tr>");
 			
-
+			$arrayRub[] = array(
+					"id_rubrique"=>$row->id_rubrique,
+					"lib_bud"=>$row->lib_bud,
+					"lib_rub_no_html"=>$lib_rub_no_html,
+					"cl"=>$cl,
+					"lib_rub"=>$lib_rub,
+					"sol"=>$sol
+			);			
 		}
+
+		//Affichage des rubriques restantes
+		if (count($arrayRub)) {
+			//tri des rubriques par ordre alphabétique
+			usort($arrayRub, "sort_array_rub");
+			foreach ($arrayRub as $rub) {
+				print "<tr><td><div class='child_tab'>";
+				print pmb_bidi("
+						<a href='#' onclick=\"set_parent('$caller', '".$rub["id_rubrique"]."', '".htmlentities(addslashes($rub["lib_bud"].":".$rub["lib_rub_no_html"]),ENT_QUOTES, $charset)."' )\" ><span ".$rub["cl"].">".$rub["lib_rub"]."</span></a>
+					</div></td><td style='text-align:right;'><span ".$rub["cl"].">".$rub["sol"]."</span></td></tr>");
+			}
+		}		
 		
 		print "</table>";
 		pmb_mysql_free_result($res);
 
 		// affichage pagination
-		print "<hr /><div align='center'>";
+		print "<hr /><div class='center'>";
 		if(!$acquisition_budget_show_all){
 			$base_url.="&elt_query=".$elt_query;
 			$nav_bar = aff_pagination ($base_url, $nbr_lignes, $nb_per_page, $page, 10, true, true) ;

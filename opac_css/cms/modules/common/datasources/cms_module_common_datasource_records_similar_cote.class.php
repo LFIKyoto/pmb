@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_records_similar_cote.class.php,v 1.5 2015-04-09 16:19:51 arenou Exp $
+// $Id: cms_module_common_datasource_records_similar_cote.class.php,v 1.6 2016-09-20 14:33:53 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -34,15 +34,15 @@ class cms_module_common_datasource_records_similar_cote extends cms_module_commo
 			$value = $selector->get_value();
 			if($value!= 0){
 				//on part du premier exemplaire...
-				$query ="select expl_cote from exemplaires where expl_notice = ".$value." order by expl_cote  limit 1 ";
+				$query ="select expl_cote from exemplaires where expl_notice = '".($value*1)."' order by expl_cote  limit 1 ";
 				$result = pmb_mysql_query($query,$dbh);
 				if(pmb_mysql_num_rows($result) > 0){
 					$row = pmb_mysql_fetch_object($result);
 					$cote = $row->expl_cote;
 					$query = "
-					(select distinct expl_notice,expl_cote from exemplaires where expl_notice!=0 and expl_bulletin = 0 and expl_cote >= '".$cote."' and expl_notice = ".$value." order by expl_cote asc limit 5)
+					(select distinct expl_notice,expl_cote from exemplaires where expl_notice!=0 and expl_bulletin = 0 and expl_cote >= '".$cote."' and expl_notice = '".($value*1)."' order by expl_cote asc limit 5)
 						union 
-					(select distinct expl_notice,expl_cote from exemplaires where expl_notice!=0 and expl_bulletin = 0 and expl_cote < '".$cote."' and expl_notice = ".$value." order by expl_cote desc limit 5)" ;
+					(select distinct expl_notice,expl_cote from exemplaires where expl_notice!=0 and expl_bulletin = 0 and expl_cote < '".$cote."' and expl_notice = '".($value*1)."' order by expl_cote desc limit 5)" ;
 					
 					$result = pmb_mysql_query($query,$dbh);
 					if(pmb_mysql_num_rows($result) > 0){

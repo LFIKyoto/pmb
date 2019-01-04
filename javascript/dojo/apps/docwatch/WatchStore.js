@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: WatchStore.js,v 1.23 2015-03-19 09:49:24 dgoron Exp $
+// $Id: WatchStore.js,v 1.27 2018-11-07 12:24:44 dgoron Exp $
 
 
 define(["dojo/_base/declare", "apps/pmb/Store", "dojo/request/xhr", "dojo/_base/lang", "dojo/topic"], function(declare,PMBStore, xhr, lang, topic){
@@ -62,11 +62,19 @@ define(["dojo/_base/declare", "apps/pmb/Store", "dojo/request/xhr", "dojo/_base/
 				break;
 				case "watch":
 					item.parent_category= parentID;
+					var retourQuery = this.query({id:item.id,parent_category:item.parent_category, type:"watch"});
+					if(retourQuery.length > 0){
+						object.treeID = retourQuery[0].treeID;
+					}
 					item.ttl = object.ttl;
 					item.desc = object.desc;	
 					item.logo_url = object.logo_url;
 					item.record_default_type = object.record_default_type;
 					item.record_default_status = object.record_default_status;
+                    item.record_default_index_lang = object.record_default_index_lang;
+                    item.record_default_lang = object.record_default_lang;
+                    item.record_default_lang_libelle = object.record_default_lang_libelle;
+                    item.record_default_is_new = object.record_default_is_new;
 					item.article_default_parent = object.article_default_parent;
 					item.article_default_content_type = object.article_default_content_type;
 					item.article_default_publication_status = object.article_default_publication_status;
@@ -77,6 +85,14 @@ define(["dojo/_base/declare", "apps/pmb/Store", "dojo/request/xhr", "dojo/_base/
 					item.opac_link = object.opac_link;
 					item.allowed_users = object.allowed_users;
 					item.nb_sources = object.nb_sources;
+					item.watch_rss_link = object.watch_rss_link;
+					item.watch_rss_lang = object.watch_rss_lang;
+					item.watch_rss_copyright = object.watch_rss_copyright;
+					item.watch_rss_editor = object.watch_rss_editor;
+					item.watch_rss_webmaster = object.watch_rss_webmaster;
+					item.watch_rss_image_title = object.watch_rss_image_title;
+					item.watch_rss_image_website = object.watch_rss_image_website;
+					item.boolean_expression = object.boolean_expression;
 					break;
 				case "source":
 					item.parent_watch= parentID;

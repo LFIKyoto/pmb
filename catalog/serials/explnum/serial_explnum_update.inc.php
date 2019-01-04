@@ -6,11 +6,14 @@
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-// mise à jour de l'entete de page
-echo str_replace('!!page_title!!', $msg[4000].$msg[1003].$msg[explnum_doc_associe], $serial_header);
+require_once($class_path."/entities/entities_serials_explnum_controller.class.php");
 
-$retour = "./catalog.php?categ=serials&sub=view&serial_id=$f_notice";
-$explnum = new explnum($f_explnum_id);
-$explnum->mise_a_jour($f_notice, $f_bulletin, $f_nom, $f_url, $retour, $conservervignette, $f_statut_chk, $f_explnum_statut);	
+// mise à jour de l'entete de page
+echo str_replace('!!page_title!!', $msg[4000].$msg[1003].$msg['explnum_doc_associe'], $serial_header);
+
+$entities_serials_explnum_controller = new entities_serials_explnum_controller($f_explnum_id);
+$entities_serials_explnum_controller->set_serial_id($f_notice);
+$entities_serials_explnum_controller->set_action('explnum_update');
+$entities_serials_explnum_controller->proceed();
 
 ?>

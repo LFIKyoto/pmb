@@ -2,22 +2,23 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: download_docnum.inc.php,v 1.2 2015-05-06 13:56:38 dgoron Exp $
+// $Id: download_docnum.inc.php,v 1.5 2018-12-13 16:46:16 dgoron Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 //gestion des droits
 require_once($class_path."/acces.class.php");
+require_once($class_path."/explnum.class.php");
 
 switch($sub){
 	case 'gen_list':	
 		if($select_noti){
 			$id_notices = explode(",",$select_noti);
-		} else $id_notices=$_SESSION["cart"];	
+		} else $id_notices=$_SESSION["cart"];
 		doc_num_gen_list($id_notices);
 		break;
 }
 function doc_num_gen_list($id_notices){
-	global $msg,$dbh, $gestion_acces_active,$gestion_acces_empr_notice;
+	global $msg,$dbh, $gestion_acces_active,$gestion_acces_empr_notice,$gestion_acces_empr_docnum;
 	global $opac_allow_download_docnums,$opac_url_base;
 	
 	if (!$opac_allow_download_docnums) return;
@@ -70,9 +71,23 @@ function doc_num_gen_list($id_notices){
 				}			
 				$expl_num=pmb_mysql_fetch_array($res_restriction_abo);
 			
-				if( $rights & 16 || (is_null($dom_2) && $expl_num["explnum_visible_opac"] && (!$expl_num["explnum_visible_opac_abon"] || ($expl_num["explnum_visible_opac_abon"] && $_SESSION["user_code"])))){
+				//droits d'acces emprunteur/document numérique
+				if ($gestion_acces_active==1 && $gestion_acces_empr_docnum==1) {
+					$ac= new acces();
+					$dom_3= $ac->setDomain(3);
+					$docnum_rights= $dom_3->getRights($_SESSION['id_empr_session'],$explnum_id);
+				}
+					
+				//Accessibilité (Consultation/Téléchargement) sur le document numérique aux abonnés en opac
+				$req_restriction_docnum_abo = "SELECT explnum_download_opac, explnum_download_opac_abon FROM explnum,explnum_statut WHERE explnum_id='".$explnum_id."' AND explnum_docnum_statut=id_explnum_statut ";
+					
+				$result_docnum=pmb_mysql_query($req_restriction_docnum_abo);
+				$docnum_expl_num=pmb_mysql_fetch_array($result_docnum,PMB_MYSQL_ASSOC);
+				
+				if( ($rights & 16 || (is_null($dom_2) && $expl_num["explnum_visible_opac"] && (!$expl_num["explnum_visible_opac_abon"] || ($expl_num["explnum_visible_opac_abon"] && $_SESSION["user_code"]))))
+				&& ($docnum_rights & 8 || (is_null($dom_3) && $docnum_expl_num["explnum_download_opac"] && (!$docnum_expl_num["explnum_download_opac_abon"] || ($docnum_expl_num["explnum_download_opac_abon"] && $_SESSION["user_code"]))))){
 					if (($ligne->explnum_data)||($ligne->explnum_path)) {
-						$explnum_list[] = $ligne;
+						$explnum_list[] = $ligne->explnum_id;
 					}
 				}
 			}	
@@ -80,9 +95,9 @@ function doc_num_gen_list($id_notices){
 	}
 	if (count($explnum_list)) {
 		if ($opac_allow_download_docnums == 1) {
-			foreach ($explnum_list as $explnum) {
+			foreach ($explnum_list as $explnum_id) {
 				print "<script type='text/javascript'>
-					window.open('".$opac_url_base."doc_num_data.php?explnum_id=".$explnum->explnum_id."&force_download=1','_blank','');
+					window.open('".$opac_url_base."doc_num_data.php?explnum_id=".$explnum_id."&force_download=1','_blank','');
 					</script>";
 			}
 		}
@@ -94,8 +109,9 @@ function doc_num_gen_list($id_notices){
 			$filename="temp/pmb_".$filename.".zip";
 			$res = $zip->open($filename, ZipArchive::CREATE);
 			if ($res) {
-				foreach ($explnum_list as $explnum) {
-					$zip->addFromString(reg_diacrit(basename($explnum->path)),file_get_contents($opac_url_base."doc_num_data.php?explnum_id=".$explnum->explnum_id));
+				foreach ($explnum_list as $explnum_id) {
+					$explnum = new explnum($explnum_id);
+					$zip->addFromString(reg_diacrit($explnum->get_file_name()),$explnum->get_file_content());
 				}			
 				$zip->close();
 				
@@ -114,5 +130,10 @@ function doc_num_gen_list($id_notices){
 				@unlink($filename);
 			}
 		}
+	} else {
+		print "<script type='text/javascript'>
+					alert('".$msg["download_docnum_no_doc"]."');
+					window.close();
+				</script>";
 	}
 }

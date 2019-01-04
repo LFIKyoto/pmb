@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_root.class.php,v 1.6 2014-08-07 14:31:53 arenou Exp $
+// $Id: onto_common_root.class.php,v 1.8 2017-03-21 13:13:29 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -56,6 +56,12 @@ class onto_common_root {
 	public $onto_name;
 	
 	/**
+	 * Store de données
+	 * @var onto_store
+	 * @access private
+	 */
+	protected $data_store;
+	/**
 	 * 
 	 *
 	 * @param string uri
@@ -81,5 +87,14 @@ class onto_common_root {
 	
 	public function set_onto_name($onto_name){
 		$this->onto_name = $onto_name;
+	}
+	
+	public function set_data_store($data_store){
+		$this->data_store = $data_store;
+	}
+
+	public function get_ontology()
+	{
+		return $this->ontology;
 	}
 } // end of onto_common_root

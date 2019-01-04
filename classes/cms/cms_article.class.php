@@ -2,13 +2,12 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_article.class.php,v 1.19.4.3 2015-11-26 08:38:53 jpermanne Exp $
+// $Id: cms_article.class.php,v 1.33 2018-03-13 16:36:11 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/cms/cms_editorial.class.php");
-
-
+require_once($class_path.'/audit.class.php');
 
 class cms_article extends cms_editorial {
 	
@@ -49,10 +48,6 @@ class cms_article extends cms_editorial {
 		if(strpos($this->end_date,"0000-00-00")!== false){
 			$this->end_date = "";
 		}
-
-		$this->get_descriptors();
-		$this->get_fields_type();
-		$this->get_documents();
 	}
 
 	public function save(){
@@ -77,7 +72,7 @@ class cms_article extends cms_editorial {
 		article_title = '".addslashes($this->title)."', 
 		article_resume = '".addslashes($this->resume)."', 
 		article_contenu = '".addslashes($this->contenu)."',
-		article_publication_state ='".addslashes($this->publication_state)."', 
+		article_publication_state = '".addslashes($this->publication_state)."', 
 		article_start_date = '".addslashes($this->start_date)."', 
 		article_end_date = '".addslashes($this->end_date)."', 
 		num_section = '".addslashes($this->num_parent)."', 
@@ -91,6 +86,7 @@ class cms_article extends cms_editorial {
 		//on commence par tout retirer...
 		$del = "delete from cms_articles_descriptors where num_article = '".$this->id."'";
 		pmb_mysql_query($del,$dbh);
+		$this->get_descriptors();
 		for($i=0 ; $i<count($this->descriptors) ; $i++){
 			$rqt = "insert into cms_articles_descriptors set num_article = '".$this->id."', num_noeud = '".$this->descriptors[$i]."',article_descriptor_order='".$i."'";
 			pmb_mysql_query($rqt,$dbh);
@@ -102,6 +98,9 @@ class cms_article extends cms_editorial {
 		//enfin les éléments du type de contenu
 		$types = new cms_editorial_types("article");
 		$types->save_type_form($this->num_type,$this->id);
+		
+		$this->save_concepts();
+		
 		$this->maj_indexation();
 		
 		$this->save_documents();
@@ -112,9 +111,9 @@ class cms_article extends cms_editorial {
 		
 		//Audit
 		if (!$audit_id) {
-			audit::insert_creation (AUDIT_EDITORIAL_ARTICLE, $this->id) ;
+			audit::insert_creation(AUDIT_EDITORIAL_ARTICLE, $this->id);
 		} else {
-			audit::insert_modif (AUDIT_EDITORIAL_ARTICLE, $this->id) ;
+			audit::insert_modif(AUDIT_EDITORIAL_ARTICLE, $this->id);
 		}
 	}
 
@@ -144,6 +143,7 @@ class cms_article extends cms_editorial {
 		$id = pmb_mysql_insert_id();
 		
 		//au tour des descripteurs...
+		$this->get_descriptors();
 		for($i=0 ; $i<count($this->descriptors) ; $i++){
 			$rqt = "insert into cms_articles_descriptors set num_article = '".$id."', num_noeud = '".$this->descriptors[$i]."',article_descriptor_order='".$i."'";
 			pmb_mysql_query($rqt,$dbh);
@@ -157,7 +157,7 @@ class cms_article extends cms_editorial {
 		$types->duplicate_type_form($this->num_type,$id,$this->id);
 		$new_article->maj_indexation();
 		
-		$new_article->documents_linked = $this->documents_linked;
+		$new_article->documents_linked = $this->get_documents();
 		$new_article->save_documents();
 		
 		//audit
@@ -165,8 +165,7 @@ class cms_article extends cms_editorial {
 	}
 	
 	public function get_parent_selector(){
-		$opts.=$this->_recurse_parent_select();
-		return $opts;
+		return $this->_recurse_parent_select();
 	}
 	
 	protected function _recurse_parent_select($parent=0,$lvl=0){
@@ -174,7 +173,7 @@ class cms_article extends cms_editorial {
 		global $msg;
 		global $dbh;
 		$opts = "";
-		$rqt = "select id_section, section_title from cms_sections where section_num_parent = '".$parent."'";
+		$rqt = "select id_section, section_title from cms_sections where section_num_parent = '".($parent*1)."'";
 		$res = pmb_mysql_query($rqt,$dbh);
 		if(pmb_mysql_num_rows($res)){
 			while($row = pmb_mysql_fetch_object($res)){
@@ -198,13 +197,15 @@ class cms_article extends cms_editorial {
 	}
 	
 	public function format_datas(){
+		global $thesaurus_concepts_active;
 		$parent = new cms_section($this->num_parent);
 		$documents = array();
+		$this->get_documents();
 		foreach($this->documents_linked as $id_doc){
 			$document = new cms_document($id_doc);
 			$documents[] = $document->format_datas();
 		}
-		return array(
+		$formatted_data = array(
 			'id' => $this->id,
 			'parent' => $parent->format_datas(false,false),
 			'title' => $this->title,
@@ -213,15 +214,21 @@ class cms_article extends cms_editorial {
 			'publication_state' => $this->publication_state,
 			'start_date' => format_date($this->start_date),
 			'end_date' => format_date($this->end_date),
-			'descriptors' => $this->descriptors,
+			'descriptors' => $this->get_descriptors(),
 			'content' => $this->contenu,
+			'num_type' => $this->num_type,
+			'fields_type' => $this->get_fields_type(),
 			'type' => $this->type_content,
-			'fields_type' => $this->fields_type,
-			'create_date' => $this->create_date,
+			'create_date' => format_date($this->create_date),
 			'documents' => $documents,
 			'nb_documents' => count($documents),
-			'last_update_date' => format_date($this->last_update_date)
+			'last_update_date' => format_date($this->last_update_date),
+			'permalink' => $this->get_permalink()
 		);
+		if($thesaurus_concepts_active == 1){
+			$formatted_data['concepts'] = $this->index_concept->get_concepts();
+		}
+		return $formatted_data;
 	}
 	
 	public static function get_format_data_structure($type="article",$full=true){

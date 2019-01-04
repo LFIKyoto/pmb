@@ -1,4 +1,4 @@
-<h1>Administration des Autorit&eacute;s</h1>
+<h2>Administration des Autorit&eacute;s</h2>
 
 <p>La section <b>administration des autorit&eacute;s</b> permet de d&eacute;finir les param&egrave;tres de l&apos;application pour les notices.
 <ul>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: emprunteur.class.php,v 1.20.2.1 2015-09-10 12:32:12 mbertin Exp $
+// $Id: emprunteur.class.php,v 1.29 2018-06-05 08:31:02 vtouchard Exp $
 
 // classe emprunteur
 //	inclure :
@@ -16,44 +16,47 @@ class emprunteur {
 	//---------------------------------------------------------
 	//			Propriétés
 	//---------------------------------------------------------
-	var $id		= 0		;	// id MySQL emprunteur
-	var $cb		= ''	;	// code barre emprunteur
-	var $nom	= ''	;	// nom emprunteur
-	var $prenom	= ''	;	// prénom emprunteur
-	var $adr1	= ''	;	// adresse ligne 1
-	var $adr2	= ''	;	// adresse ligne 2
-	var $cp		= ''	;	// code postal
-	var $ville	= ''	;	// ville
-	var $mail	= ''	;	// adresse email
-	var $tel1	= ''	;	// téléphone 1
-	var $tel2	= ''	;	// téléphone 2
-	var $prof	= ''	;	// profession
-	var $birth	= ''	;	// année de naissance
-	var $categ 	= 0		;	// catégorie emprunteur
-	var $cat_l	= ''	;	// libellé catégorie emprunteur
-	var $cstat	= 0		;	// code statistique
-	var $cstat_l= 0		;	// libellé code statistique
-	var $cdate	= ''	;	// date de création
-	var $mdate	= ''	;	// date de modification
-	var $adate	= ''	;	// date d'abonnement
-	var $rdate	= ''	;	// date de réabonnement
-	var $sexe	= 0		;	// sexe de l'emprunteur
-	var $login	= ''	;	// login pour services OPAC
-	var $pwd 	= ''	;	// mot de passe OPAC
-	var $date_adhesion   = ''	;	// début adhésion
-	var $date_expiration = ''	;	// fin adhésion
-	var $aff_date_adhesion   = '';	// début adhésion formatée
-	var $aff_date_expiration = '';	// fin adhésion formatée
-	var $prets			;	// array contenant les prêts de l'emprunteur
-	var $reservations	;	// array contenant les réservations pour l'emprunteur
-	var $message = ''	;	// chaîne contenant les messages emprunteurs
-	var $fiche = ''		;	// code HTML de la fiche lecteur
-	var $serious_message=FALSE;	// niveau du message (sérieux si TRUE)
-
+	public $id		= 0		;	// id MySQL emprunteur
+	public $cb		= ''	;	// code barre emprunteur
+	public $nom	= ''	;	// nom emprunteur
+	public $prenom	= ''	;	// prénom emprunteur
+	public $adr1	= ''	;	// adresse ligne 1
+	public $adr2	= ''	;	// adresse ligne 2
+	public $cp		= ''	;	// code postal
+	public $ville	= ''	;	// ville
+	public $mail	= ''	;	// adresse email
+	public $tel1	= ''	;	// téléphone 1
+	public $tel2	= ''	;	// téléphone 2
+	public $prof	= ''	;	// profession
+	public $birth	= ''	;	// année de naissance
+	public $categ 	= 0		;	// catégorie emprunteur
+	public $cat_l	= ''	;	// libellé catégorie emprunteur
+	public $cstat	= 0		;	// code statistique
+	public $cstat_l= 0		;	// libellé code statistique
+	public $cdate	= ''	;	// date de création
+	public $mdate	= ''	;	// date de modification
+	public $adate	= ''	;	// date d'abonnement
+	public $rdate	= ''	;	// date de réabonnement
+	public $sexe	= 0		;	// sexe de l'emprunteur
+	public $login	= ''	;	// login pour services OPAC
+	public $pwd 	= ''	;	// mot de passe OPAC
+	public $date_adhesion   = ''	;	// début adhésion
+	public $date_expiration = ''	;	// fin adhésion
+	public $aff_date_adhesion   = '';	// début adhésion formatée
+	public $aff_date_expiration = '';	// fin adhésion formatée
+	public $prets			;	// array contenant les prêts de l'emprunteur
+	public $reservations	;	// array contenant les réservations pour l'emprunteur
+	public $message = ''	;	// chaîne contenant les messages emprunteurs
+	public $fiche = ''		;	// code HTML de la fiche lecteur
+	public $serious_message=FALSE;	// niveau du message (sérieux si TRUE)
+	public $devices;			// liste des liseuses compatibles avec le PNB
+	protected $pnb_password;	// mot de passe utilisé dans le PNB (pour l'ouverture des epubs)
+	protected $pnb_password_hint; //Indice du mot de passe du pnb
 	// <----------------- constructeur ------------------>
-	function emprunteur($id=0, $message='', $niveau_message=FALSE) {
+	public function __construct($id=0, $message='', $niveau_message=FALSE) {
 	
 		// initialisation des propriétés si l'id est défini
+		$id +=0;
 		if($id) {
 			$this->id = $id;
 			$this->serious_message = $niveau_message;
@@ -66,7 +69,7 @@ class emprunteur {
 	}
 
 	//   renseignement des propriétés avec requête MySQL
-	function fetch_info() {
+	public function fetch_info() {
 		global $msg ;
 		global $dbh;
 	
@@ -74,8 +77,8 @@ class emprunteur {
 			return FALSE;
 	
 		$requete = "SELECT e.*, c.libelle AS code1, s.libelle AS code2, date_format(empr_date_adhesion, '".$msg["format_date_sql"]."') as aff_empr_date_adhesion, date_format(empr_date_expiration, '".$msg["format_date_sql"]."') as aff_empr_date_expiration  FROM empr e, empr_categ c, empr_codestat s";
-		$requete .= " WHERE e.id_empr='".addslashes($this->id);
-		$requete .= "' AND c.id_categ_empr=e.empr_categ";
+		$requete .= " WHERE e.id_empr='".$this->id."' " ;
+		$requete .= " AND c.id_categ_empr=e.empr_categ";
 		$requete .= " AND s.idcode=e.empr_codestat";
 		$requete .= " LIMIT 1";
 		$result = pmb_mysql_query($requete, $dbh);
@@ -85,7 +88,6 @@ class emprunteur {
 		// affectation des propriétés
 		$this->cb		= $empr->empr_cb			;	// code barre emprunteur
 		$this->nom		= $empr->empr_nom			;	// nom emprunteur
-		print pmb_bidi($this->nom);
 		$this->prenom	= $empr->empr_prenom		;	// prénom emprunteur
 		$this->adr1		= $empr->empr_adr1			;	// adresse ligne 1
 		$this->adr2		= $empr->empr_adr2			;	// adresse ligne 2
@@ -114,11 +116,11 @@ class emprunteur {
 		//	$this->message	= $empr->empr_???	;	// chaîne contenant les messages emprunteurs
 		//	$this->adate	= $empr->empr_???	;	// date d'abonnement
 		//	$this->rdate	= $empr->empr_???	;	// date de réabonnement
-		if($this->message)
-			$this->message	= $empr->message.'<hr />'.$this->message;
-		else
-			$this->message = $empr->message;
-	
+		if($this->message){
+			$this->message	= $empr->empr_msg.'<hr />'.$this->message;
+		}else{
+			$this->message = $empr->empr_msg;
+		}
 		// récupération du tableau des exemplaires empruntés
 		// il nous faut : code barre exemplaire, titre/auteur, type doc, date de prêt, date de retour
 		$requete = "select e.expl_cb, e.expl_notice, p.pret_date, p.pret_retour, t.tdoc_libelle, date_format(pret_date, '".$msg["format_date_sql"]."') as aff_pret_date, date_format(pret_retour, '".$msg["format_date_sql"]."') as aff_pret_retour, if (pret_retour< CURDATE(),1 ,0 ) as retard ";
@@ -133,12 +135,12 @@ class emprunteur {
 			$notice = new notice_affichage($pret->expl_notice,0,0,0);
 			$notice->do_header();
 			$this->prets[] = array(
-						cb => $pret->expl_cb,
-						libelle => $notice->notice_header,
-						typdoc => $pret->tdoc_libelle,
-						date_pret => $pret->aff_pret_date,
-						date_retour => $pret->aff_pret_retour,
-						org_ret_date => str_replace('-', '', $pret->pret_retour)
+						'cb' => $pret->expl_cb,
+						'libelle' => $notice->notice_header,
+						'typdoc' => $pret->tdoc_libelle,
+						'date_pret' => $pret->aff_pret_date,
+						'date_retour' => $pret->aff_pret_retour,
+						'org_ret_date' => str_replace('-', '', $pret->pret_retour)
 						);
 	
 		}
@@ -148,7 +150,7 @@ class emprunteur {
 	}
 
 	// fabrication de la fiche lecteur
-	function do_fiche() {
+	public function do_fiche() {
 		global $empr_tmpl;
 		global $msg;
 	
@@ -198,6 +200,7 @@ class emprunteur {
 			// voir la localisation retenue par Eric
 		else {
 			// constitution du code HTML
+			$prets_list = "";
 			while(list($cle, $valeur) = each($this->prets)) {
 				$prets_list .= "
 				<tr>
@@ -234,7 +237,7 @@ class emprunteur {
 	}
 
 	// récupération de la liste des réservations pour l'emprunteur
-	function fetch_resa() {
+	public function fetch_resa() {
 		global $dbh;
 		global $msg ;
 	
@@ -281,7 +284,7 @@ class emprunteur {
 	
 			if($rang <= $total_dispo) {
 				// un exemplaire est disponible pour le réservataire (affichage : disponible)
-				$situation = "<font color='#ff0000'><strong>".$msg["available"]."</strong></font>";
+				$situation = "<span style='color:#ff0000'><strong>".$msg["available"]."</strong></span>";
 			} else {
 				if($total_dispo) {
 					// un ou des exemplaires sont disponibles, mais pas pour ce réservataire (affichage : reservé)
@@ -304,7 +307,7 @@ class emprunteur {
 			$affiche .= "<td class='strip'>$rang/$total_resa</td>";
 			$affiche .= "<td class='strip'>$situation</td>";
 			$del_link = "<a href='./circ.php?categ=resa&id_empr=".$this->id.'&id_notice='.$resa->resa_idnotice."&delete=1'>";
-			$affiche .= "<td align='center'>$del_link<img border='0' src='./images/trash.gif'></a></td></tr>";
+			$affiche .= "<td class='center'>$del_link<img style='border:0px' src='".get_url_icon('trash.gif')."'></a></td></tr>";
 		}
 		return $affiche;
 	
@@ -313,7 +316,7 @@ class emprunteur {
 	// <----------------- get_rank() ------------------>
 	//   calcul du rang d'un emprunteur sur une réservation
 	
-	function get_rank($id_empr, $id_notice) {
+	public function get_rank($id_empr, $id_notice) {
 		global $dbh;
 		$rank = 1;
 		$query = "select * from resa where resa_idnotice=".$id_notice." order by resa_date";
@@ -326,7 +329,7 @@ class emprunteur {
 		return $rank;
 	}
 
-	static function get_hashed_password($empr_login='',$empr_password='') {
+	public static function get_hashed_password($empr_login='',$empr_password='') {
 		global $dbh;
 	
 		$id_empr = 0;
@@ -344,7 +347,7 @@ class emprunteur {
 		}
 	}
 
-	static function hash_password($empr_login='',$empr_password='') {
+	public static function hash_password($empr_login='',$empr_password='') {
 		global $dbh;
 		global $opac_empr_password_salt;
 		if (!$opac_empr_password_salt) {
@@ -361,17 +364,12 @@ class emprunteur {
 			}
 		}
 		if ($id_empr) {
-			$rqt = "show tables like 'empr_passwords'";
-			if (pmb_mysql_num_rows(mysql_query($rqt,$dbh))) {
-				$q = "update empr_passwords set empr_password='".addslashes($empr_password)."' where id_empr='".$id_empr."'";
-				pmb_mysql_query($q,$dbh);
-			}
 			$q = "update empr set empr_password='".addslashes(password::gen_hash($empr_password, $id_empr))."', empr_password_is_encrypted = 1 where empr_login='".addslashes($empr_login)."'";
 			pmb_mysql_query($q,$dbh);
 		}
 	}
 
-	static function update_digest($empr_login='',$empr_password='') {
+	public static function update_digest($empr_login='',$empr_password='') {
 		global $dbh, $pmb_url_base;
 	
 		if (!$empr_login) return;
@@ -380,7 +378,86 @@ class emprunteur {
 		pmb_mysql_query($q,$dbh);
 	
 	}
+	
+	public function get_devices(){
+		if(!isset($this->devices)){
+			$this->devices = array();
+			$query = 'select device_id from empr_devices where empr_num = '.$this->id;
+			$result = pmb_mysql_query($query);
+			if(pmb_mysql_num_rows($result)){
+				while($row = pmb_mysql_fetch_assoc($result)){
+					$this->devices[] = $row['device_id'];
+				}
+			}
+		}
+		return $this->devices;
+	}
+	
+	public function set_devices($devices_id){
+		$this->devices = $devices_id;
+	}
+	
+	public function save_devices(){
+		$query = "delete from empr_devices where empr_num = ".$this->id;
+		pmb_mysql_query($query);
+		if(isset($this->devices) && is_array($this->devices) && count($this->devices)){
+			$query = 'insert into empr_devices (empr_num, device_id) values ';
+			$sub_query = '';
+			foreach($this->devices as $device_id){
+				if($sub_query){
+					$sub_query.= ',';
+				}
+				$sub_query.= '('.$this->id.', '.$device_id.') ';
+			}
+			$query.= $sub_query;
+			pmb_mysql_query($query);
+		}
+	}
 
+	public function get_pnb_password(){
+		return $this->pnb_password;
+	}
+	
+	public function get_pnb_password_hint(){
+		return $this->pnb_password_hint;
+	}
+	
+	public function set_pnb_password($pnb_password){
+		$this->pnb_password = $pnb_password;
+	}
+	
+	public function set_pnb_password_hint($pnb_password_hint){
+		$this->pnb_password_hint = $pnb_password_hint;
+	}
+	
+	public function save_pnb_password(){
+		/**
+		 * TODO : fonction d'initialisation du mot de passe au cas ou 
+		 * d'autres paramètres sont ajoutés (afin de ne pas avoir a réentrer le mot de passe à chaque fois
+		 */
+		if(!empty($this->pnb_password)){
+			$password = base64_encode(hash('sha256', $this->pnb_password));
+			$query = "update empr set empr_pnb_password = '".$password."' where id_empr = ".$this->id;
+			pmb_mysql_query($query);
+		}
+	}
+	
+	public function save_pnb_password_hint(){
+		$query = "update empr set empr_pnb_password_hint = '".$this->pnb_password_hint."' where id_empr = ".$this->id;
+		pmb_mysql_query($query);
+	}
+	
+	public function init_pnb_parameters(){
+		$query = 'select empr_pnb_password, empr_pnb_password_hint from empr where id_empr = '.$this->id;
+		$result = pmb_mysql_query($query);
+		
+		if(pmb_mysql_num_rows($result)){
+			$parameters = pmb_mysql_fetch_assoc($result);
+			$this->pnb_password = $parameters['empr_pnb_password'];
+			$this->pnb_password_hint = $parameters['empr_pnb_password_hint'];
+		}
+	}
+	
 } # fin de déclaration classe emprunteur
 
 } # fin de définition

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_tpl_print_fields.class.php,v 1.2 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: serialcirc_tpl_print_fields.class.php,v 1.5 2018-01-05 15:32:18 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,12 +10,12 @@ require_once("$class_path/serialcirc_print_fields.class.php");
 
 class serialcirc_tpl_print_fields extends serialcirc_print_fields {
 	
-	function serialcirc_tpl_print_fields($id_tpl_serialcirc=0) {
+	public function __construct($id_tpl_serialcirc=0) {
 		$this->id=$id_tpl_serialcirc+0;
 		$this->fetch_data();
 	}
 	
-	function fetch_data() {
+	public function fetch_data() {
 		global $dbh;
 		
 		$this->p_perso = new parametres_perso("empr");
@@ -30,7 +30,7 @@ class serialcirc_tpl_print_fields extends serialcirc_print_fields {
 		}	
 	}
 
-	function save_form(){
+	public function save_form(){
 		global $dbh;
 	
 		$this->get_fields();
@@ -38,7 +38,7 @@ class serialcirc_tpl_print_fields extends serialcirc_print_fields {
 		pmb_mysql_query($req,$dbh);
 	}
 	
-	function up_order($tablo){	
+	public function up_order($tablo){	
 		global $dbh;
 		
 		$liste = explode(",",$tablo);
@@ -50,17 +50,17 @@ class serialcirc_tpl_print_fields extends serialcirc_print_fields {
 		$this->circ_tpl = $new_circ_tpl;
 	}
 	
-	function add_field(){
+	public function add_field(){
 		global $select_field;
 		
 		$this->get_fields();
 		$cpt=count($this->circ_tpl);
 		$data=explode('_',$select_field);
 		$this->circ_tpl[$cpt]['type']=$data[0];
-		$this->circ_tpl[$cpt]['id']=$data[1];
+		$this->circ_tpl[$cpt]['id']=(isset($data[1]) ? $data[1] : '');
 	}	
 	
-	function del_field(){
+	public function del_field(){
 		global $index;
 		global $order_tpl;
 		
@@ -71,7 +71,7 @@ class serialcirc_tpl_print_fields extends serialcirc_print_fields {
 		}
 	}
 	
-	function get_fields(){
+	public function get_fields(){
 		global $field_list;
 	
 		$this->circ_tpl=array();
@@ -82,8 +82,8 @@ class serialcirc_tpl_print_fields extends serialcirc_print_fields {
 			$this->circ_tpl[$cpt]['type']=$data[0];
 			$this->circ_tpl[$cpt]['id']=$data[2];
 			$val_label=$field."_label";
-			global $$val_label;
-			$this->circ_tpl[$cpt]['label']=  $$val_label;
+			global ${$val_label};
+			$this->circ_tpl[$cpt]['label']=  ${$val_label};
 			$cpt++;
 		}
 	}

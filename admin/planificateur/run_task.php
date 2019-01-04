@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: run_task.php,v 1.7.4.1 2015-09-24 09:12:21 dgoron Exp $
+// $Id: run_task.php,v 1.17 2018-05-31 08:48:15 dgoron Exp $
 
 $base_path="..";
 $base_title="";
@@ -14,40 +14,36 @@ $base_nosession=1;
 $class_path = $base_path."/classes";
 $include_path = $base_path."/includes";
 
-if ($tmp=trim($argv[6])){
+if (isset($argv[6]) && $tmp=trim($argv[6])){
 	$database=$tmp;
 }
+if(!isset($_SERVER['REQUEST_URI'])) $_SERVER['REQUEST_URI'] = '';
 
 require_once($include_path."/init.inc.php");
 require_once($include_path."/db_param.inc.php");
 require_once($include_path."/mysql_connect.inc.php");
 require_once($class_path."/external_services.class.php");
-require_once($class_path."/tache.class.php");
 require_once($class_path."/connecteurs_out.class.php");
+require_once($class_path."/scheduler/scheduler_log.class.php");
+require_once($class_path."/scheduler/scheduler_planning.class.php");
 
 $dbh = connection_mysql();
 
-if (!$user_id) $user_id=$argv[4];
+if (empty($user_id)) $user_id=$argv[4];
 
-$requete_nom = "SELECT nom, prenom, user_email, userid, username, rights, user_lang, deflt_docs_location, deflt2docs_location  FROM users 
+$requete_nom = "SELECT userid, username, rights, user_lang FROM users 
 	LEFT JOIN es_esgroups on userid=esgroup_pmbusernum
 	LEFT JOIN es_esusers on esgroup_id=esuser_groupnum
 	WHERE esuser_id=$user_id";
-$res_nom = pmb_mysql_query($requete_nom, $dbh);
+$res_nom = pmb_mysql_query($requete_nom);
 @$param_nom = pmb_mysql_fetch_object( $res_nom );
-$lang = $param_nom->user_lang ;
-$PMBusernom=$param_nom->nom ;
-$PMBuserprenom=$param_nom->prenom ;
-$PMBuseremail=$param_nom->user_email ;
-$deflt_docs_location=$param_nom->deflt_docs_location;
-$deflt2docs_location=$param_nom->deflt2docs_location; 	
-// pour que l'id user soit dispo partout
-define('SESSuserid'	, $param_nom->userid);
-$PMBuserid = $param_nom->userid;
-$PMBusername = $param_nom->username;
 
-//droits utilisateurs
+$lang = $param_nom->user_lang ;
+define('SESSuserid'	, $param_nom->userid);
 define('SESSrights'	, $param_nom->rights);
+define('SESSlogin'	, $param_nom->username);
+
+load_user_param();
 
 $messages = new XMLlist("$include_path/messages/$lang.xml", 0);
 $messages->analyser();
@@ -55,8 +51,15 @@ $msg = $messages->table;
 
 
 function run_task($id_tache, $type_tache, $id_planificateur, $num_es_user, $connectors_out_source_id) {
-	global $base_path,$dbh;
 	global $PMBuserid;
+	global $base_path;
+	//Utiles pour le chargement des require
+	global $class_path;
+	global $include_path;
+	global $javascript_path;
+	global $styles_path;
+	global $msg,$charset;
+	global $current_module;
 
 	@ini_set('zend.ze1_compatibility_mode',0);
 	
@@ -91,11 +94,13 @@ function run_task($id_tache, $type_tache, $id_planificateur, $num_es_user, $conn
 	
 	foreach ($param["ACTION"] as $anitem) {
 		if($type_tache == $anitem["ID"]) {
-			require_once($base_path."/admin/planificateur/".$anitem["NAME"]."/".$anitem["NAME"].".class.php");
+			scheduler_log::open('scheduler_'.$anitem["NAME"].'_task_'.$id_tache.'.log');
+			require_once($base_path."/admin/planificateur/".$anitem["PATH"]."/".$anitem["NAME"].".class.php");
 			$obj_type = new $anitem["NAME"]($id_tache);
 			$obj_type->setEsProxy($proxy);
 			$obj_type->execute();
-			$obj_type->checkParams($id_planificateur);
+			$scheduler_planning = new scheduler_planning($id_planificateur);
+			$scheduler_planning->checkParams();
 		}
 	}
 }

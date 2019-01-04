@@ -2,20 +2,20 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: tables.inc.php,v 1.11 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: tables.inc.php,v 1.14 2017-12-28 16:55:03 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // on récupére la liste des tables
 
-$result = pmb_mysql_query("SHOW TABLES FROM ".DATA_BASE);
+$result = pmb_mysql_query("SHOW TABLES FROM `".DATA_BASE."`");
 $i = 0;
 
 while($i < pmb_mysql_num_rows($result)) {
 	$table[$i] = pmb_mysql_tablename($result, $i);
 
-	$desc[$i] = "<table >";
-	$desc[$i] .= "<tr><th><strong>Field</strong></th><th><strong>Type</strong></th><th><strong>Null</strong></th><th><strong>Key</strong></th><th><strong>Default</strong></th><th><strong>Extra</strong></th></tr>";
+	$desc[$i] = "<table class='ux-table ux-table-striped'>";
+	$desc[$i] .= "<thead><tr><th><strong>Field</strong></th><th><strong>Type</strong></th><th><strong>Null</strong></th><th><strong>Key</strong></th><th><strong>Default</strong></th><th><strong>Extra</strong></th></tr></thead>";
 
 	$requete = "DESCRIBE $table[$i]";
 	$res = pmb_mysql_query($requete, $dbh);
@@ -58,7 +58,7 @@ while($i < pmb_mysql_num_rows($result)) {
 <?php
 
 while(list($cle,$valeur)=each($desc)) {
-	print "content[$cle] = \"$valeur\";\n";
+	print "content[".$cle."] = \"".$valeur."\";\n";
 }
 
 ?>
@@ -71,10 +71,10 @@ while(list($cle,$valeur)=each($desc)) {
 </script>
 
 <?php
-
+print "<div class='div-contenu'><div class='row tableListe'>";
 // affichage du résultat
 while(list($cle,$valeur)=each($table)) {
-	print "<a href=\"javascript:show_table('$valeur',$cle)\">$valeur</a><br /><span id='$valeur'></span>\n";
-	}
-
-print "<p><small>$msg[717]</small></p>";
+	print "<div class='row'><a href=\"javascript:show_table('sql_tables_".$valeur."',".$cle.")\">".$valeur."</a><div id='sql_tables_".$valeur."'></div>\n</div>";
+}
+print "</div></div>";
+print "<p><small>".$msg['717']."</small></p>";

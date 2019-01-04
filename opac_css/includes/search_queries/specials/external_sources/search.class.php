@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.class.php,v 1.25 2015-05-15 12:55:21 jpermanne Exp $
+// $Id: search.class.php,v 1.27 2017-07-12 15:15:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,13 +12,13 @@ require_once($class_path."/connecteurs.class.php");
 //Classe de gestion de la recherche spécial "combine"
 
 class external_sources {
-	var $id;
-	var $n_ligne;		//Numéro de ligne du critère dans la multi-critère
-	var $params;		//
-	var $search;		//Classe d'origine de la recherche
+	public $id;
+	public $n_ligne;		//Numéro de ligne du critère dans la multi-critère
+	public $params;		//
+	public $search;		//Classe d'origine de la recherche
 
 	//Constructeur
-    function external_sources($id,$n_ligne,$params,&$search) {
+    public function __construct($id,$n_ligne,$params,&$search) {
     	$this->id=$id;
     	$this->n_ligne=$n_ligne;
     	$this->params=$params;
@@ -26,21 +26,21 @@ class external_sources {
     }
     
     //fonction de récupération des opérateurs disponibles pour ce champ spécial (renvoie un tableau d'opérateurs)
-    function get_op() {
+    public function get_op() {
     	$operators = array();
     	$operators["EQ"]="=";
     	return $operators;
     }
     
-    function get_input_box() {
+    public function get_input_box() {
     	global $msg,$charset;
     	
     	//Récupération de la valeur de saisie
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
     	
-    	if ((!$valeur)&&($_SESSION["checked_sources"])) $valeur=$_SESSION["checked_sources"];
+    	if ((!$valeur)&&(isset($_SESSION["checked_sources"]))) $valeur=$_SESSION["checked_sources"];
     	if (!is_array($valeur)) $valeur=array();
     	
     	//Recherche des sources
@@ -64,23 +64,23 @@ class external_sources {
     
    
     //fonction de conversion de la saisie en quelque chose de compatible avec l'environnement
-    function transform_input() {
+    public function transform_input() {
     }
     
     //fonction de création de la requête (retourne une table temporaire)
-    function make_search() {	
+    public function make_search() {	
     	global $search;
     	global $selected_sources;
 
     	//On modifie l'opérateur suivant !!
     	$inter_next="inter_".($this->n_ligne+1)."_".$search[$this->n_ligne+1];
-    	global $$inter_next;
-    	if ($$inter_next) $$inter_next="or";
+    	global ${$inter_next};
+    	if (${$inter_next}) ${$inter_next}="or";
 
     	//Récupération de la valeur de saisie
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
     	global $charset, $class_path,$include_path,$base_path;
     	
     	//Override le timeout du serveur mysql, pour être sûr que le socket dure assez longtemps pour aller jusqu'aux ajouts des résultats dans la base. 
@@ -154,7 +154,7 @@ class external_sources {
     }
     
     //fonction de traduction littérale de la requête effectuée (renvoie un tableau des termes saisis)
-    function make_human_query() {
+    public function make_human_query() {
     	global $msg;
     	global $include_path;
     	
@@ -162,8 +162,8 @@ class external_sources {
     	
     	//Récupération de la valeur de saisie 
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
-    	global $$valeur_;
-    	$valeur=$$valeur_;
+    	global ${$valeur_};
+    	$valeur=${$valeur_};
     	
     	if(isset($valeur) && is_array($valeur) && count($valeur)){
     		$requete="select name from connectors_sources where source_id in (".implode(",",$valeur).") and opac_allowed=1";
@@ -175,12 +175,12 @@ class external_sources {
 		return $litteral;    
     }
      
-    function make_unimarc_query() {
+    public function make_unimarc_query() {
     	return array();
     }
     
 	//fonction de vérification du champ saisi ou sélectionné
-    function is_empty($valeur) {
+    public function is_empty($valeur) {
     	if (count($valeur)) return false; else return true;
     }
 }

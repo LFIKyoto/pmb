@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: zattr.inc.php,v 1.12 2015-04-03 11:16:27 jpermanne Exp $
+// $Id: zattr.inc.php,v 1.13 2017-10-27 13:42:55 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -85,7 +85,7 @@ function zattr_form($zbib_id="", $zattr_libelle="", $zattr_attr="") {
 		$admin_zattr_form = str_replace('!!bib_id!!', "", $admin_zattr_form);
 		// here the combo box must be enabled because the user is adding a new attr.
 		$select = "<div class='row'>
-				<div class='colonne4' align='right'>
+				<div class='colonne4 align_right'>
 					<label class='etiquette'>$msg[zattr_libelle] &nbsp;</label>
 				</div>
 				<div class='colonne_suite'> ";

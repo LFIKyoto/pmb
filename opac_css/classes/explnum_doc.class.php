@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum_doc.class.php,v 1.4.4.1 2015-09-24 15:48:16 dgoron Exp $
+// $Id: explnum_doc.class.php,v 1.7 2018-08-24 08:44:59 plmrozowski Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,17 +10,17 @@ require_once($include_path.'/explnum.inc.php');
 
 class explnum_doc{
 	
-	var $explnum_doc_id = 0;
-	var $explnum_doc_nomfichier = '';
-	var $explnum_doc_contenu = '';
-	var $explnum_doc_mime = '';
-	var $explnum_doc_extfichier = '';
-	var $explnum_doc_file=array();
+	public $explnum_doc_id = 0;
+	public $explnum_doc_nomfichier = '';
+	public $explnum_doc_contenu = '';
+	public $explnum_doc_mime = '';
+	public $explnum_doc_extfichier = '';
+	public $explnum_doc_file=array();
 	
 	/*
 	 * Constructeur
 	 */
-	function explnum_doc($id_expl=0){
+	public function __construct($id_expl=0){
 		global $dbh;
 		
 		$this->explnum_doc_id = $id_expl;
@@ -51,7 +51,7 @@ class explnum_doc{
 	/*
 	 * Enregistrement
 	 */
-	function save(){
+	public function save(){
 		global $dbh;
 		
 		if(!$this->explnum_doc_id){
@@ -79,7 +79,7 @@ class explnum_doc{
 	/*
 	 * Charge le fichier
 	 */
-	function load_file($file_info=array()){
+	public function load_file($file_info=array()){
 		
 		if($file_info){
 			$this->explnum_doc_file = $file_info;
@@ -91,7 +91,7 @@ class explnum_doc{
 	 * Analyse du fichier pour en récupérer le contenu et les infos
 	 */
 	
-	function analyse_file(){
+	public function analyse_file(){
 		
 		if($this->explnum_doc_file){
 			
@@ -124,7 +124,7 @@ class explnum_doc{
 	/*
 	 * Affiche les documents numériques dans un tableau
 	*/
-	function show_docnum_table($docnum_tab=array()){
+	public function show_docnum_table($docnum_tab=array()){
 		global $charset;
 	
 		create_tableau_mimetype();
@@ -138,7 +138,7 @@ class explnum_doc{
 				if($nb_doc == 1) $display .= "<tr>";
 				$alt = htmlentities($docnum_tab[$i]['explnum_doc_nomfichier'],ENT_QUOTES,$charset).' - '.htmlentities($docnum_tab[$i]['explnum_doc_mimetype'],ENT_QUOTES,$charset);
 				$display .= "<td class='docnum' style='width:25%;border:1px solid #CCCCCC;padding : 5px 5px'>
-				<a target='_blank' alt='$alt' title='$alt' href=\"./explnum_doc.php?explnumdoc_id=".$docnum_tab[$i]['id_explnum_doc']."\">
+				<a target='_blank' title='$alt' href=\"./explnum_doc.php?explnumdoc_id=".$docnum_tab[$i]['id_explnum_doc']."\">
 				<img src='".get_url_icon('mimetype/'.icone_mimetype($docnum_tab[$i]['explnum_doc_mimetype'],$docnum_tab[$i]['explnum_doc_extfichier']))."' alt='$alt' title='$alt' >
 				</a>
 				<br />

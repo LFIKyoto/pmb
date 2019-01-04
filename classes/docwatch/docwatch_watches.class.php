@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // Â© 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_watches.class.php,v 1.5 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: docwatch_watches.class.php,v 1.7 2017-06-12 14:32:37 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -26,6 +26,13 @@ class docwatch_watches extends docwatch_root{
 	public $num_parent;
 	public $children = array();
 	public $watches = array();
+	
+	/**
+	 * analyse_query par veille
+	 * @var array
+	 */
+	public static $aq_members = array();
+	
 	/**
 	 * @return void
 	 * @access public
@@ -41,7 +48,7 @@ class docwatch_watches extends docwatch_root{
 	 * 
 	 */
 	public function fetch_datas(){
-		global $dbh;
+		global $dbh, $PMBuserid;
 		
 		if ($this->id) {
 			$query = "select category_title, category_num_parent from docwatch_categories where id_category=".$this->id;
@@ -59,7 +66,7 @@ class docwatch_watches extends docwatch_root{
 		while($row = pmb_mysql_fetch_object($result)) {
 			$docwatch_watch = new docwatch_watch($row->id_watch);
 			//Gestion des droits utilisateurs (on affiche uniquement les veilles paramétrées pour le current user)
-			if(in_array(SESSuserid,$docwatch_watch->get_allowed_users())){
+			if(in_array(SESSuserid,$docwatch_watch->get_allowed_users()) || ($PMBuserid==1)){
 				$this->watches[] = $docwatch_watch->get_informations();
 			}
 		}
@@ -70,5 +77,33 @@ class docwatch_watches extends docwatch_root{
 		}
 	}
 	
+	public static function contains_boolean_expression($item_id, $watch_id) {
+		$contains = true;
+		$item_id += 0;
+		$watch_id += 0;
+		$query = "select watch_boolean_expression from docwatch_watches where id_watch =".$watch_id;
+		$result = pmb_mysql_query($query);
+		$row = pmb_mysql_fetch_object($result);
+		if($row->watch_boolean_expression != '') {
+			if(!isset(static::$aq_members[$watch_id])) {
+				$aq=new analyse_query($row->watch_boolean_expression);
+				if (!$aq->error) {
+					static::$aq_members[$watch_id]=$aq->get_query_members("docwatch_items","item_index_wew","item_index_sew","id_item");
+				} else {
+					static::$aq_members[$watch_id]=false;
+				}
+			}
+			if(is_array(static::$aq_members[$watch_id])) {
+				$query = "select id_item from docwatch_items where id_item=".$item_id." and ".static::$aq_members[$watch_id]["where"]." ";
+				$result = pmb_mysql_query($query);
+				if($result) {
+					if(!pmb_mysql_num_rows($result)) {
+						$contains = false;
+					}
+				}
+			}
+		}
+		return $contains;
+	}
 
 } // end of docwatch_watches

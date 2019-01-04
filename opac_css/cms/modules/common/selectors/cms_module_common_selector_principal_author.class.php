@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_principal_author.class.php,v 1.2 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: cms_module_common_selector_principal_author.class.php,v 1.3 2016-09-20 14:33:53 vtouchard Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -31,7 +31,7 @@ class cms_module_common_selector_principal_author extends cms_module_common_sele
 			);
 			if($sub_selector->get_value()){
 				$this->value['record'] = $sub_selector->get_value();
-				$query = "select responsability_author from responsability where responsability_notice = ".$sub_selector->get_value()." and responsability_type = 0";
+				$query = "select responsability_author from responsability where responsability_notice = '".($sub_selector->get_value()*1)."' and responsability_type = 0";
 				$result = pmb_mysql_query($query);
 				if(pmb_mysql_num_rows($result)){
 					$row = pmb_mysql_fetch_object($result);

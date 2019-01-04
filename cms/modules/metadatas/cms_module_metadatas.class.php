@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_metadatas.class.php,v 1.4 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: cms_module_metadatas.class.php,v 1.9 2017-11-30 10:00:36 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -21,8 +21,8 @@ class cms_module_metadatas extends cms_module_common_module {
 	
 		$form="
 		<h3>".$this->format_text($this->msg['cms_module_metadatas_manage_title'])."</h3>
-		<div dojoType='dijit.layout.BorderContainer' style='width: 100%; height: 800px;'>
-			<div dojoType='dijit.layout.ContentPane' region='left' splitter='true' style='width:300px;' >";
+		<div data-dojo-type='dijit/layout/BorderContainer' style='width: 100%; height: 800px;'>
+			<div data-dojo-type='dijit/layout/ContentPane' region='left' splitter='true' style='width:300px;' >";
 		if($this->managed_datas['module']['metadatas']){
 			foreach($this->managed_datas['module']['metadatas'] as $key => $group_metadatas){
 				$form.="
@@ -30,7 +30,7 @@ class cms_module_metadatas extends cms_module_common_module {
 						<a href='".$base_path."/cms.php?categ=manage&sub=".str_replace("cms_module_","",$this->class_name)."&quoi=module&metadatas=".$key."&action=get_form'>".$this->format_text($group_metadatas['name'])."</a>
 					&nbsp;
 						<a href='".$base_path."/cms.php?categ=manage&sub=".str_replace("cms_module_","",$this->class_name)."&quoi=module&metadatas_delete=".$key."&action=save_form' onclick='return confirm(\"".$this->format_text($this->msg['cms_module_metadatas_group_delete_metadatas'])."\")'>
-							<img src='".$base_path."/images/trash.png' alt='".$this->format_text($this->msg['cms_module_root_delete'])."' title='".$this->format_text($this->msg['cms_module_root_delete'])."'/>
+							<img src='".get_url_icon('trash.png')."' alt='".$this->format_text($this->msg['cms_module_root_delete'])."' title='".$this->format_text($this->msg['cms_module_root_delete'])."'/>
 						</a>
 					</p>";
 			}
@@ -40,7 +40,7 @@ class cms_module_metadatas extends cms_module_common_module {
 			";
 		$form.="
 			</div>
-			<div dojoType='dijit.layout.ContentPane' region='center' >";
+			<div data-dojo-type='dijit/layout/ContentPane' region='center' >";
 		if($metadatas){
 			$form.=$this->get_managed_form_start(array('metadatas'=>$metadatas));
 			$form.=$this->get_managed_metadatas_form($metadatas);
@@ -83,12 +83,16 @@ class cms_module_metadatas extends cms_module_common_module {
 		global $opac_url_base;
 		global $base_path;
 	
-		$infos = array();
 		if($metadatas != "new"){
 			$infos = $this->managed_datas['module']['metadatas'][$metadatas];
-		}
-		if ($metadatas == "new"){
-			$infos['group_template'] = '<meta property="{{key_metadata}}" content="{{value_metadata}}" />';
+		} else {
+			$infos = array(
+					'name' => '',
+					'prefix' => '',
+					'separator' => '',
+					'group_template' => '<meta property="{{key_metadata}}" content="{{value_metadata}}" />',
+					'replace' => ''
+			);
 		}
 		$form="
 			<div class='row'>
@@ -147,30 +151,46 @@ class cms_module_metadatas extends cms_module_common_module {
 					<label for='cms_module_metadatas_group_add_metadata'>".$this->format_text($this->msg['cms_module_metadatas_group_add_metadata'])."</label>
 				</div>
 				<div class='colonne-suite'>
-					<input type='button' class='bouton' name='cms_module_metadatas_group_bt_add_line' id='cms_module_metadatas_group_bt_add_line' value=\"".$this->format_text($this->msg['cms_module_metadatas_group_bt_add_line'])."\" onclick=\"if(!dojo.byId('cms_module_metadatas_group_key_metadata')) {load_metadata_form()}\"/>
+					<input type='button' class='bouton' name='cms_module_metadatas_group_bt_add_line' id='cms_module_metadatas_group_bt_add_line' value=\"".$this->format_text($this->msg['cms_module_metadatas_group_bt_add_line'])."\" onclick=\"load_metadata_form()\"/>
 					<script type='text/javascript'>
 						var last = ".$this->get_next_item_id($metadatas).";
-						function load_metadata_form(){
+						function load_metadata_form(key){
+							var elem = {};
+							if(key) {
+								var response = cms_module_metadatas_get_tab_item(key);
+								elem = dojo.fromJson(response);
+							} else {
+								key = '';
+								elem.label = '';
+								elem.desc = '';
+								elem.default_template = '';
+							}	
 							var content = dojo.byId('cms_module_metadatas_metadata_form');
-							var row = cms_create_element('".$this->format_text($this->msg['cms_module_metadatas_group_key_metadata'])."','text','cms_module_metadatas_group_key_metadata','');
+							content.innerHTML = '';
+							var row = cms_create_element('".$this->format_text($this->msg['cms_module_metadatas_group_key_metadata'])."','text','cms_module_metadatas_group_key_metadata',key);
 							content.appendChild(row);
-							var row = cms_create_element('".$this->format_text($this->msg['cms_module_metadatas_group_label_metadata'])."','text','cms_module_metadatas_group_label_metadata','');
+							var row = cms_create_element('".$this->format_text($this->msg['cms_module_metadatas_group_label_metadata'])."','text','cms_module_metadatas_group_label_metadata',elem.label);
 							content.appendChild(row);
-							var row = cms_create_element('".$this->format_text($this->msg['cms_module_metadatas_group_desc_metadata'])."','text','cms_module_metadatas_group_desc_metadata','');
+							var row = cms_create_element('".$this->format_text($this->msg['cms_module_metadatas_group_desc_metadata'])."','text','cms_module_metadatas_group_desc_metadata',elem.desc);
 							content.appendChild(row);
-							var row = cms_create_element('".$this->format_text($this->msg['cms_module_metadatas_group_default_template_metadata'])."','textarea','cms_module_metadatas_group_default_template_metadata','');
+							var row = cms_create_element('".$this->format_text($this->msg['cms_module_metadatas_group_default_template_metadata'])."','textarea','cms_module_metadatas_group_default_template_metadata',elem.default_template);
 							content.appendChild(row);
 								
-							content.appendChild(cms_create_button('ajouter','".$this->format_text($this->msg['cms_module_metadatas_group_add_button_metadata'])."'));
-							dojo.byId('ajouter').onclick = function() {
-								add_metadata();
+							if(key) {
+								content.appendChild(cms_create_button('edit','".$this->format_text($this->msg['cms_module_metadatas_group_modify_button_metadata'])."'));
+								document.getElementById('cms_module_metadatas_group_key_metadata').setAttribute('disabled', 'disabled');
+							} else {
+								content.appendChild(cms_create_button('edit','".$this->format_text($this->msg['cms_module_metadatas_group_add_button_metadata'])."'));
+							}
+							dojo.byId('edit').onclick = function() {
+								edit_metadata(key);
 							}
 						}
 					</script>
 				</div>
 			</div>
 			<div class='row'><hr/></div>
-			<div dojoType='dojox.layout.ContentPane' id='cms_module_metadatas_metadata_form' class='row'>
+			<div id='cms_module_metadatas_metadata_form' class='row'>
 			</div>
 			<div class='row'>&nbsp;</div>";
 		//composition du groupe de méta-données...
@@ -178,50 +198,19 @@ class cms_module_metadatas extends cms_module_common_module {
 			<script type='text/javascript'>
 				var elements_infos= new Object();
 				
-				function add_metadata(){	
+				function edit_metadata(key){
 					elements_infos= new Object();
 				
-					var key = document.getElementById('cms_module_metadatas_group_key_metadata').value;
 					var label = document.getElementById('cms_module_metadatas_group_label_metadata').value;
 					var desc = document.getElementById('cms_module_metadatas_group_desc_metadata').value;
 					var default_template = document.getElementById('cms_module_metadatas_group_default_template_metadata').value;
-
-					if(!key)	return;
-					if (document.getElementById('tr_metadata_'+key)) return;
-					if(!label) return;
-					
-					var tr = document.createElement('TR');
-					tr.setAttribute('id', 'tr_metadata_'+key);
-				
-					// clé			
-					var td = document.createElement('TD');
-					td.appendChild(document.createTextNode(key));	
-					tr.appendChild(td);
-					
-					// label			
-					var td = document.createElement('TD');
-					td.appendChild(document.createTextNode(label));	
-					tr.appendChild(td);
-				
-					// description			
-					var td = document.createElement('TD');
-					td.appendChild(document.createTextNode(desc));	
-					tr.appendChild(td);
-				
-					// template par défaut			
-					var td = document.createElement('TD');
-					td.appendChild(document.createTextNode(default_template));	
-					tr.appendChild(td);
-					
-					// suppression	
-					var td = document.createElement('TD');
-					var supr = document.createElement('input');
-			        supr.setAttribute('type', 'button');
-			        supr.setAttribute('value', 'X');
-			        supr.setAttribute('class', 'bouton');	
-					supr.onclick=function(){del_metadata(key);};			        
-					td.appendChild(supr);
-					tr.appendChild(td);
+					if(key) {
+						var adding = false;
+					} else {
+						var key = document.getElementById('cms_module_metadatas_group_key_metadata').value;
+						var adding = true;
+					}
+					if(!key || !label)	return;
 				
 					elements_infos[key] = {
 						label : label,
@@ -230,8 +219,60 @@ class cms_module_metadatas extends cms_module_common_module {
 					};
 				
 					cms_module_metadatas_update_tab_items(elements_infos);
-					document.getElementById('metadatas_group_list').appendChild(tr);
 				
+					if(!adding) {
+						document.getElementById('td_metadata_label_'+key).innerHTML = label;
+						document.getElementById('td_metadata_desc_'+key).innerHTML = desc;
+						document.getElementById('td_metadata_default_template_'+key).innerHTML = default_template;
+					} else {
+						var tr = document.createElement('TR');
+						tr.setAttribute('id', 'tr_metadata_'+key);
+					
+						// edit			
+						var td = document.createElement('TD');
+						var img = document.createElement('img');
+				        img.setAttribute('src', '".get_url_icon('b_edit.png')."');
+				        img.setAttribute('title', \"".$this->format_text($this->msg['cms_module_metadatas_group_edit_metadata'])."\");
+						img.onclick=function(){load_metadata_form(key);};			        
+						td.appendChild(img);
+						tr.appendChild(td);
+				
+						// clé			
+						var td = document.createElement('TD');
+						td.setAttribute('id', 'td_metadata_key_'+key);
+						td.appendChild(document.createTextNode(key));	
+						tr.appendChild(td);
+						
+						// label			
+						var td = document.createElement('TD');
+						td.setAttribute('id', 'td_metadata_label_'+key);
+						td.appendChild(document.createTextNode(label));	
+						tr.appendChild(td);
+					
+						// description			
+						var td = document.createElement('TD');
+						td.setAttribute('id', 'td_metadata_desc_'+key);
+						td.appendChild(document.createTextNode(desc));	
+						tr.appendChild(td);
+					
+						// template par défaut			
+						var td = document.createElement('TD');
+						td.setAttribute('id', 'td_metadata_default_template_'+key);
+						td.appendChild(document.createTextNode(default_template));	
+						tr.appendChild(td);
+						
+						// suppression	
+						var td = document.createElement('TD');
+						var supr = document.createElement('input');
+				        supr.setAttribute('type', 'button');
+				        supr.setAttribute('value', 'X');
+				        supr.setAttribute('class', 'bouton');	
+						supr.onclick=function(){del_metadata(key);};			        
+						td.appendChild(supr);
+						tr.appendChild(td);
+						
+						document.getElementById('metadatas_group_list').appendChild(tr);
+					}
 					dojo.byId('cms_module_metadatas_group_key_metadata').value='';
 					dojo.byId('cms_module_metadatas_group_label_metadata').value='';
 					dojo.byId('cms_module_metadatas_group_desc_metadata').value='';
@@ -254,14 +295,23 @@ class cms_module_metadatas extends cms_module_common_module {
 					var response = http.request('".$this->get_ajax_link(array('do' => "del_tab", 'metadatas' => $metadatas))."',true,'&suppr_element='+elem);
 					return response;
 				}
+				function cms_module_metadatas_get_tab_item(elem){
+					var http = new http_request();
+					var response = http.request('".$this->get_ajax_link(array('do' => "get_tab", 'metadatas' => $metadatas))."',true,'&get_element='+elem);
+					if(response == 0){
+						return http.get_text();
+					}
+					return '';
+				}
 			</script>
 			<div class='row'><hr/>
 			</div>
-			<div class='row' id='cms_module_metadatas_tab_container' dojoType='dijit.layout.ContentPane'>
+			<div class='row' id='cms_module_metadatas_tab_container' data-dojo-type='dijit/layout/ContentPane'>
 				<div id='cms_module_metadatas_group'>
 					<div class='row'>
 						<table id='metadatas_group_list' name='metadatas_group_list'>
 							<tr>
+								<th></th>
 								<th>".$this->format_text($this->msg['cms_module_metadatas_group_key_metadata'])."</th>
 								<th>".$this->format_text($this->msg['cms_module_metadatas_group_label_metadata'])."</th>
 								<th>".$this->format_text($this->msg['cms_module_metadatas_group_desc_metadata'])."</th>
@@ -279,10 +329,11 @@ class cms_module_metadatas extends cms_module_common_module {
 		
 			$elt_tpl="
 			<tr id='tr_metadata_!!item_key!!'>
-				<td>!!item_key!!</td>
-				<td>!!item_label!!</td>
-				<td>!!item_desc!!</td>
-				<td>!!item_default_template!!</td>
+				<td><img src='".get_url_icon('b_edit.png')."' title=\"".$this->format_text($this->msg['cms_module_metadatas_group_edit_metadata'])."\" onclick=\"load_metadata_form('!!item_key!!');\" /></td>
+				<td id='td_metadata_key_!!item_key!!'>!!item_key!!</td>
+				<td id='td_metadata_label_!!item_key!!'>!!item_label!!</td>
+				<td id='td_metadata_desc_!!item_key!!'>!!item_desc!!</td>
+				<td id='td_metadata_default_template_!!item_key!!'>!!item_default_template!!</td>
 				<td>
 					<input class='bouton' type='button' value='X' onclick=\"del_metadata('!!item_key!!');\" >
 				</td>
@@ -312,6 +363,11 @@ class cms_module_metadatas extends cms_module_common_module {
 		global $metadatas;
 		$response = array();
 		switch($do){
+			case "get_tab" :
+				global $get_element;
+				$response['content'] = json_encode($this->managed_datas['module']['metadatas'][$metadatas]['items'][$get_element]);
+				$response['content-type'] = "application/json";
+				break;
 			case "del_tab" :
 				global $suppr_element;
 				
@@ -331,15 +387,22 @@ class cms_module_metadatas extends cms_module_common_module {
 				if($charset != 'utf-8'){
 					$suppr_element = utf8_encode($suppr_element);
 				}
+				
 				if ($suppr_element) {
 					if (count($items['items'])) {
 						if (array_key_exists($suppr_element, $items['items'])) {
-							array_splice($items['items'],$key_exists,1);
+							$tmp_items = array();
+							foreach($items['items'] as $key=>$item_values) {
+								if($key != $suppr_element) {
+									$tmp_items[$key] = $item_values;
+								}
+							}
+							$items['items'] = $tmp_items;
 						}
 					}
 				}
 				$this->managed_datas['module']['metadatas'][$metadatas]['items'] = $items["items"];
-				$query = "replace into cms_managed_modules set managed_module_name = '".$this->class_name."', managed_module_box = '".$this->addslashes(serialize($this->managed_datas))."'";
+				$query = "replace into cms_managed_modules set managed_module_name = '".addslashes($this->class_name)."', managed_module_box = '".$this->addslashes(serialize($this->managed_datas))."'";
 				pmb_mysql_query($query);
 				$response['content'] = "OK";
 				$response['content-type'] = "application/json";
@@ -375,7 +438,7 @@ class cms_module_metadatas extends cms_module_common_module {
 					}
 				}
 				$this->managed_datas['module']['metadatas'][$metadatas]['items'] = $items["items"];
-				$query = "replace into cms_managed_modules set managed_module_name = '".$this->class_name."', managed_module_box = '".$this->addslashes(serialize($this->managed_datas))."'";
+				$query = "replace into cms_managed_modules set managed_module_name = '".addslashes($this->class_name)."', managed_module_box = '".$this->addslashes(serialize($this->managed_datas))."'";
 				pmb_mysql_query($query);
 				$response['content'] = "OK";
 				$response['content-type'] = "application/json";
@@ -395,10 +458,10 @@ class cms_module_metadatas extends cms_module_common_module {
 	function _get_max_item_id($items,$max){
 		if(is_array($items)){
 			foreach($items as $item){
-				if(count($item['children'])){
+				if(isset($item['children']) && count($item['children'])){
 					$max = $this->_get_max_item_id($item['children'],$max);
 				}
-				if($item['id'] > $max){
+				if(isset($item['id']) && $item['id'] > $max){
 					$max = $item['id'];
 				}
 			}

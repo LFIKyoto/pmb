@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_agenda_datasource_agenda.class.php,v 1.8 2015-04-03 11:16:29 jpermanne Exp $
+// $Id: cms_module_agenda_datasource_agenda.class.php,v 1.10 2017-03-02 17:00:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -34,7 +34,7 @@ class cms_module_agenda_datasource_agenda extends cms_module_common_datasource{
 			case "cms_module_agenda_selector_calendars" :
 				if($selector){
 					$calendars = array();
-					$query = "select managed_module_box from cms_managed_modules join cms_cadres on id_cadre = ".$this->cadre_parent." and cadre_object = managed_module_name";
+					$query = "select managed_module_box from cms_managed_modules join cms_cadres on id_cadre = '".($this->cadre_parent*1)."' and cadre_object = managed_module_name";
 					$result = pmb_mysql_query($query);
 					$events=array();
 					if(pmb_mysql_num_rows($result)){
@@ -43,7 +43,7 @@ class cms_module_agenda_datasource_agenda extends cms_module_common_datasource{
 						$calendars = $selector->get_value();
 						foreach($calendars as $calendar){
 							$elem = $infos['module']['calendars'][$calendar];
-							$query="select id_article from cms_articles where article_num_type = ".$elem['type'];
+							$query="select id_article from cms_articles where article_num_type = '".($elem['type']*1)."'";
 							$result = pmb_mysql_query($query);
 							if($result && pmb_mysql_num_rows($result)){
 								$articles = array();
@@ -81,7 +81,7 @@ class cms_module_agenda_datasource_agenda extends cms_module_common_datasource{
 					$art = new cms_article($selector->get_value());
 					$event = $art->format_datas();
 					//allons chercher les infos du calendrier associé à cet évènement
-					$query = "select managed_module_box from cms_managed_modules join cms_cadres on id_cadre = ".$this->cadre_parent." and cadre_object = managed_module_name";
+					$query = "select managed_module_box from cms_managed_modules join cms_cadres on id_cadre = '".($this->cadre_parent*1)."' and cadre_object = managed_module_name";
 					$result = pmb_mysql_query($query);
 					if(pmb_mysql_num_rows($result)){
 						$box = pmb_mysql_result($result,0,0);
@@ -110,7 +110,7 @@ class cms_module_agenda_datasource_agenda extends cms_module_common_datasource{
 				break;
 			case "cms_module_agenda_selector_calendars_date" :
 				if($selector){
-					$query = "select managed_module_box from cms_managed_modules join cms_cadres on id_cadre = ".$this->cadre_parent." and cadre_object = managed_module_name";
+					$query = "select managed_module_box from cms_managed_modules join cms_cadres on id_cadre = '".($this->cadre_parent*1)."' and cadre_object = managed_module_name";
 					$result = pmb_mysql_query($query);
 					if(pmb_mysql_num_rows($result)){
 						$box = pmb_mysql_result($result,0,0);
@@ -119,7 +119,7 @@ class cms_module_agenda_datasource_agenda extends cms_module_common_datasource{
 						$time = mktime(0,0,0,substr($datas['date'],5,2),substr($datas['date'],8,2),substr($datas['date'],0,4));
 						foreach($datas['calendars'] as $calendar){
 							$elem = $infos['module']['calendars'][$calendar];
-							$query="select id_article from cms_articles where article_num_type = ".$elem['type'];
+							$query="select id_article from cms_articles where article_num_type = '".($elem['type']*1)."'";
 							$result = pmb_mysql_query($query);
 							if(pmb_mysql_num_rows($result)){
 								$articles = array();
@@ -161,10 +161,10 @@ class cms_module_agenda_datasource_agenda extends cms_module_common_datasource{
 	
 	
 	public static function sort_event($a,$b){
-		if($a['event_start']['time'] > $b['event_start']['time']){
+		if(isset($a['event_start']) && ($a['event_start']['time'] > $b['event_start']['time'])){
 			return 1;
-		}else if($a['event_start']['time'] == $b['event_start']['time']){
-			if($a['event_end']['time'] > $b['event_end']['time']){
+		}else if(isset($a['event_start']) && ($a['event_start']['time'] == $b['event_start']['time'])){
+			if(isset($a['event_end']) && ($a['event_end']['time'] > $b['event_end']['time'])){
 				return 1;
 			}else{
 				return -1;
