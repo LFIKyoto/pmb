@@ -1,6 +1,0 @@
-<h2>Actualités du LFIK</h2>
-{% for item in items %}
-<blockquote>
-<h4><a href='{{item.link}}' target='_blank'>{{item.title}}</a></h4>
-</blockquote>
-{% endfor %}
